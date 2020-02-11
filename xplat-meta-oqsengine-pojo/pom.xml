@@ -11,5 +11,8 @@
 
     <artifactId>xplat-meta-oqsengine-pojo</artifactId>
 
+    <properties>
+        <checkstyle.skip>false</checkstyle.skip>
+    </properties>
 
 </project>

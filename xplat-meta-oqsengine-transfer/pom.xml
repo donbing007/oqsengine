@@ -11,5 +11,8 @@
 
     <artifactId>xplat-meta-oqsengine-transfer</artifactId>
 
+    <properties>
+        <checkstyle.skip>false</checkstyle.skip>
+    </properties>
 
 </project>

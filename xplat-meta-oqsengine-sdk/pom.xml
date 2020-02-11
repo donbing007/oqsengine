@@ -12,4 +12,8 @@
     <artifactId>xplat-meta-oqsengine-sdk</artifactId>
 
 
+    <properties>
+        <checkstyle.skip>false</checkstyle.skip>
+    </properties>
+
 </project>

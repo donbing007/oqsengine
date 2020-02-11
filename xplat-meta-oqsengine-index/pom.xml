@@ -12,4 +12,8 @@
     <artifactId>xplat-meta-oqsengine-index</artifactId>
 
 
+    <properties>
+        <checkstyle.skip>false</checkstyle.skip>
+    </properties>
+
 </project>
