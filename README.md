@@ -2,7 +2,7 @@
 
 为元数据提供统一下的对象查询储存引擎.
 
-#项目模块说明
+#项目结构说明
 
 增删模块请同步.
 
@@ -13,3 +13,5 @@
 * xplat-meta-oqsengine-pojo 相关封装对象定义.(EntityClass等)
 * xplat-meta-oqsengine-sdk SDK 实现.
 * xplat-meta-oqsengine-transfer 通信实现.
+
+包名前辍统一使用 `com.xforceplus.ultraman.oqsengine`
