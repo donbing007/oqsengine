@@ -1,5 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.pojo.contract.data;
 
+import com.xforceplus.ultraman.oqsengine.pojo.auth.Authorization;
+import com.xforceplus.ultraman.oqsengine.pojo.contract.Result;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityValue;
+
 import java.io.Serializable;
 
 /**
@@ -9,5 +15,5 @@ import java.io.Serializable;
  * @since 1.8
  */
 public class BuildEntityResult implements Serializable {
-
+    private Long id;
 }

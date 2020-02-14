@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.contract.meta;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.Bo;
+
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 模块同步对象.
@@ -9,5 +12,7 @@ import java.io.Serializable;
  * @since 1.8
  */
 public class ModuleUpgrade implements Serializable {
-
+    private Long id;
+    private String version;
+    private List<Bo> bos;
 }

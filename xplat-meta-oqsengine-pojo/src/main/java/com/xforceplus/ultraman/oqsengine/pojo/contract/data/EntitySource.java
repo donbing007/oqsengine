@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.contract.data;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityClass;
+
 import java.io.Serializable;
 
 /**
@@ -9,5 +12,5 @@ import java.io.Serializable;
  * @since 1.8
  */
 public class EntitySource implements Serializable {
-
+   private Entity entity;
 }

@@ -1,6 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.pojo.contract.meta;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.Api;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.Field;
+
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 业务对象结果对象.
@@ -9,5 +14,9 @@ import java.io.Serializable;
  * @since 1.8
  */
 public class BoResult implements Serializable {
-
+    private Long id;
+    private String code;
+    private EntityClass entityClass;
+    private List<Field> fields;
+    private List<Api> apis;
 }

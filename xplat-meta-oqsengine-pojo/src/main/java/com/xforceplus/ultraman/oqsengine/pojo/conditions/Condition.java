@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.conditions;
 
+import com.xforceplus.ultraman.oqsengine.pojo.enums.Link;
 import lombok.Data;
 
 import java.io.Serializable;

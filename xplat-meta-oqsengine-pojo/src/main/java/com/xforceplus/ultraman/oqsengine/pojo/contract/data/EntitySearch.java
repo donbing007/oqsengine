@@ -1,5 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.pojo.contract.data;
 
+import com.xforceplus.ultraman.oqsengine.pojo.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.conditions.Order;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+
 import java.io.Serializable;
 
 /**
@@ -9,5 +15,5 @@ import java.io.Serializable;
  * @since 1.8
  */
 public class EntitySearch implements Serializable {
-
+    private EntitySource entitySource;
 }

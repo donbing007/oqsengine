@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.contract.data;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.Entity;
+
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 删除数据对象返回结果.
@@ -9,5 +12,5 @@ import java.io.Serializable;
  * @since 1.8
  */
 public class SearchEntityResult implements Serializable {
-
+    private List<Entity> entities;
 }

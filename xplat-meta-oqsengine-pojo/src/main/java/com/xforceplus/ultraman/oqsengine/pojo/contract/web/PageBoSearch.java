@@ -9,5 +9,6 @@ import java.io.Serializable;
  * @since 1.8
  */
 public class PageBoSearch implements Serializable {
-
+    private Long id;
+    private String code;
 }

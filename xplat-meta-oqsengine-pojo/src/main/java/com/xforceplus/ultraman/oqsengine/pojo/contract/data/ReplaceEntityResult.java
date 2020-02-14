@@ -9,5 +9,6 @@ import java.io.Serializable;
  * @since 1.8
  */
 public class ReplaceEntityResult implements Serializable {
+    private Long id;
 
 }
