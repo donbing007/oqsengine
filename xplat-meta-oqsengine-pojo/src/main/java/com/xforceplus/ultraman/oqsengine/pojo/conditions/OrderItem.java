@@ -14,5 +14,8 @@ import java.io.Serializable;
 public class OrderItem implements Serializable {
     private String name;
     private String alias;
-    private Function function;
+    /**
+     * 是否正序排列，默认 true
+     */
+    private boolean asc = true;
 }
