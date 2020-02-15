@@ -57,6 +57,7 @@ public class Authorization implements Serializable {
         if (!(o instanceof Authorization)) return false;
         Authorization authorization = (Authorization) o;
         return Objects.equals(getRole(), authorization.getRole()) &&
+            Objects.equals(getAppId(),authorization.getAppId()) &&
             Objects.equals(getTenantId(), authorization.getTenantId());
     }
 

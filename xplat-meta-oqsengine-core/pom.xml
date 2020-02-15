@@ -15,6 +15,10 @@
         <checkstyle.skip>false</checkstyle.skip>
     </properties>
 
+    <dependencies>
+
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>

@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto;
 
-import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * 字段对象.
@@ -10,7 +10,6 @@ import java.io.Serializable;
  * @author wangzheng
  * @since 1.8
  */
-@Data
 public class Field implements Serializable {
 
     /**
@@ -23,4 +22,49 @@ public class Field implements Serializable {
      */
     private String fieldType;
 
+    public Field() {
+    }
+
+    public Field(String name, String fieldType) {
+        this.name = name;
+        this.fieldType = fieldType;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getFieldType() {
+        return fieldType;
+    }
+
+    public void setFieldType(String fieldType) {
+        this.fieldType = fieldType;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Field)) return false;
+        Field field = (Field) o;
+        return Objects.equals(getName(), field.getName()) &&
+                Objects.equals(getFieldType(), field.getFieldType());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName(), getFieldType());
+    }
+
+    @Override
+    public String toString() {
+        return "Field{" +
+                "name='" + name + '\'' +
+                ", fieldType='" + fieldType + '\'' +
+                '}';
+    }
 }

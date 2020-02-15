@@ -1,9 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.contract.data;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityClass;
+import com.xforceplus.ultraman.oqsengine.core.metadata.IEntity;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * 数据保存对象.
@@ -12,5 +12,34 @@ import java.io.Serializable;
  * @since 1.8
  */
 public class EntitySource implements Serializable {
-   private Entity entity;
+   private IEntity entity;
+
+   public EntitySource() {
+   }
+
+   public EntitySource(IEntity entity) {
+      this.entity = entity;
+   }
+
+   public IEntity getEntity() {
+      return entity;
+   }
+
+   public void setEntity(IEntity entity) {
+      this.entity = entity;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof EntitySource)) return false;
+      EntitySource that = (EntitySource) o;
+      return Objects.equals(getEntity(), that.getEntity());
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(getEntity());
+   }
+
 }

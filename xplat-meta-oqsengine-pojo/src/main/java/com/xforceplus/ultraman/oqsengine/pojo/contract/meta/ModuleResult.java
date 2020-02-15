@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.contract.meta;
 
+import com.xforceplus.ultraman.oqsengine.pojo.contract.Result;
+
 import java.io.Serializable;
+import java.util.Collection;
 
 /**
  * 模块数据同步结果对象.
@@ -8,6 +11,17 @@ import java.io.Serializable;
  * @author wangzheng
  * @since 1.8
  */
-public class ModuleResult implements Serializable {
+public class ModuleResult extends Result implements Serializable {
 
+    public ModuleResult(Object status) {
+        super(status);
+    }
+
+    public ModuleResult(Object status, String message) {
+        super(status, message);
+    }
+
+    public ModuleResult(Object status, Collection values, String message) {
+        super(status, values, message);
+    }
 }

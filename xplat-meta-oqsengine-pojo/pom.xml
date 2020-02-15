@@ -16,9 +16,9 @@
     </properties>
     <dependencies>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>xplat-meta-oqsengine-core</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
     <build>

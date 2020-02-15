@@ -1,18 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto;
 
-import lombok.Data;
+import com.xforceplus.ultraman.oqsengine.core.metadata.IEntityValue;
 
-import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-/**
- * 元数据对象-数据对象.
- * @version 0.1 2020/2/13 15:30
- * @author wangzheng
- * @since 1.8
- */
-@Data
-public class EntityValue implements Serializable {
+public class EntityValue<K,V> implements IEntityValue {
     /**
      * 元数据boId
      */
@@ -24,6 +18,77 @@ public class EntityValue implements Serializable {
     /**
      * 数据信息
      */
-    private String value;//这部分采用的结构有疑虑
+    private Map<K,V> value;
 
+    @Override
+    public Long id() {
+        return null;
+    }
+
+    @Override
+    public List<IEntityValue> entityValues() {
+        return null;
+    }
+
+    @Override
+    public Map values() {
+        return null;
+    }
+
+    public EntityValue() {
+    }
+
+    public EntityValue(Long id, List<EntityValue> entityValues, Map<K, V> value) {
+        this.id = id;
+        this.entityValues = entityValues;
+        this.value = value;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public List<EntityValue> getEntityValues() {
+        return entityValues;
+    }
+
+    public void setEntityValues(List<EntityValue> entityValues) {
+        this.entityValues = entityValues;
+    }
+
+    public Map<K, V> getValue() {
+        return value;
+    }
+
+    public void setValue(Map<K, V> value) {
+        this.value = value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EntityValue)) return false;
+        EntityValue<?, ?> that = (EntityValue<?, ?>) o;
+        return Objects.equals(getId(), that.getId()) &&
+                Objects.equals(getEntityValues(), that.getEntityValues()) &&
+                Objects.equals(getValue(), that.getValue());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getEntityValues(), getValue());
+    }
+
+    @Override
+    public String toString() {
+        return "EntityValue{" +
+                "id=" + id +
+                ", entityValues=" + entityValues +
+                ", value=" + value +
+                '}';
+    }
 }

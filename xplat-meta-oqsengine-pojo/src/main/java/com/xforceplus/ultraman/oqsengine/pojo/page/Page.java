@@ -1,9 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.page;
 
-import com.xforceplus.ultraman.oqsengine.pojo.conditions.Order;
+
+import com.xforceplus.ultraman.oqsengine.core.conditions.interfaces.IConditions;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -35,7 +35,59 @@ public class Page<T> implements Serializable {
     private long current = 1;
 
     /**
-     * 排序字段信息
+     * 查询条件信息
      */
-    private Order order;
+    private IConditions conditions;
+
+    public Page() {
+    }
+
+    public Page(List<T> rows, Summary summary, long size, long current, IConditions conditions) {
+        this.rows = rows;
+        this.summary = summary;
+        this.size = size;
+        this.current = current;
+        this.conditions = conditions;
+    }
+
+    public List<T> getRows() {
+        return rows;
+    }
+
+    public void setRows(List<T> rows) {
+        this.rows = rows;
+    }
+
+    public Summary getSummary() {
+        return summary;
+    }
+
+    public void setSummary(Summary summary) {
+        this.summary = summary;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
+    }
+
+    public long getCurrent() {
+        return current;
+    }
+
+    public void setCurrent(long current) {
+        this.current = current;
+    }
+
+    public IConditions getConditions() {
+        return conditions;
+    }
+
+    public void setConditions(IConditions conditions) {
+        this.conditions = conditions;
+    }
+
 }

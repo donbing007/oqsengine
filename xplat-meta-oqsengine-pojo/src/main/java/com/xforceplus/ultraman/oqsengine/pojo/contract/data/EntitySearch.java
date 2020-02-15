@@ -1,12 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.contract.data;
 
-import com.xforceplus.ultraman.oqsengine.pojo.conditions.Condition;
-import com.xforceplus.ultraman.oqsengine.pojo.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.conditions.Order;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * 数据查询对象.
@@ -16,4 +11,32 @@ import java.io.Serializable;
  */
 public class EntitySearch implements Serializable {
     private EntitySource entitySource;
+
+    public EntitySearch() {
+    }
+
+    public EntitySearch(EntitySource entitySource) {
+        this.entitySource = entitySource;
+    }
+
+    public EntitySource getEntitySource() {
+        return entitySource;
+    }
+
+    public void setEntitySource(EntitySource entitySource) {
+        this.entitySource = entitySource;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EntitySearch)) return false;
+        EntitySearch that = (EntitySearch) o;
+        return Objects.equals(getEntitySource(), that.getEntitySource());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getEntitySource());
+    }
 }

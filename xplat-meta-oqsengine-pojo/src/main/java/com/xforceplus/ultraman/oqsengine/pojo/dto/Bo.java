@@ -1,9 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto;
 
-import lombok.Data;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 元数据对象.
@@ -11,7 +11,6 @@ import java.util.List;
  * @author wangzheng
  * @since 1.8
  */
-@Data
 public class Bo implements Serializable {
     /**
      * 对象id.
@@ -34,4 +33,82 @@ public class Bo implements Serializable {
      */
     private List<Bo> bos;
 
+    public Bo() {
+    }
+
+    public Bo(Long id, String code, List<Api> apis, List<Field> fields, List<Bo> bos) {
+        this.id = id;
+        this.code = code;
+        this.apis = apis;
+        this.fields = fields;
+        this.bos = bos;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public List<Api> getApis() {
+        return apis;
+    }
+
+    public void setApis(List<Api> apis) {
+        this.apis = apis;
+    }
+
+    public List<Field> getFields() {
+        return fields;
+    }
+
+    public void setFields(List<Field> fields) {
+        this.fields = fields;
+    }
+
+    public List<Bo> getBos() {
+        return bos;
+    }
+
+    public void setBos(List<Bo> bos) {
+        this.bos = bos;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Bo)) return false;
+        Bo bo = (Bo) o;
+        return Objects.equals(getId(), bo.getId()) &&
+                Objects.equals(getCode(), bo.getCode()) &&
+                Objects.equals(getApis(), bo.getApis()) &&
+                Objects.equals(getFields(), bo.getFields()) &&
+                Objects.equals(getBos(), bo.getBos());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getCode(), getApis(), getFields(), getBos());
+    }
+
+    @Override
+    public String toString() {
+        return "Bo{" +
+                "id=" + id +
+                ", code='" + code + '\'' +
+                ", apis=" + apis +
+                ", fields=" + fields +
+                ", bos=" + bos +
+                '}';
+    }
 }
