@@ -44,6 +44,8 @@
         <module>xplat-meta-oqsengine-sdk</module>
         <module>xplat-meta-oqsengine-masterdb</module>
         <module>xplat-meta-oqsengine-index</module>
+        <module>xplat-meta-oqsengine-storage</module>
+        <module>xplat-meta-oqsengine-common</module>
     </modules>
 
     <distributionManagement>
@@ -73,8 +75,13 @@
             <dependency>
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
-                <version>8.0.18</version>
-                <scope>runtime</scope>
+                <version>8.0.19</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>42.2.10</version>
             </dependency>
 
             <dependency>
