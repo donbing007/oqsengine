@@ -18,7 +18,7 @@ public class EntityClass implements IEntityClass {
     /**
      * 子对象结构信息
      */
-    private List<EntityClass> entityClasss;
+    private List<IEntityClass> entityClasss;
     /**
      * 对象属性信息
      */
@@ -47,7 +47,7 @@ public class EntityClass implements IEntityClass {
     public EntityClass() {
     }
 
-    public EntityClass(Long id, String relaton, List<EntityClass> entityClasss, List<Field> fields) {
+    public EntityClass(Long id, String relaton, List<IEntityClass> entityClasss, List<Field> fields) {
         this.id = id;
         this.relaton = relaton;
         this.entityClasss = entityClasss;
@@ -70,11 +70,11 @@ public class EntityClass implements IEntityClass {
         this.relaton = relaton;
     }
 
-    public List<EntityClass> getEntityClasss() {
+    public List<IEntityClass> getEntityClasss() {
         return entityClasss;
     }
 
-    public void setEntityClasss(List<EntityClass> entityClasss) {
+    public void setEntityClasss(List<IEntityClass> entityClasss) {
         this.entityClasss = entityClasss;
     }
 
