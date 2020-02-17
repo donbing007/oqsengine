@@ -9,37 +9,24 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>xplat-meta-oqsengine-masterdb</artifactId>
+    <artifactId>xplat-meta-oqsengine-storage</artifactId>
 
     <dependencies>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>xplat-meta-oqsengine-storage</artifactId>
+            <artifactId>xplat-meta-oqsengine-pojo</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>xplat-meta-oqsengine-common</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
 
     </dependencies>
