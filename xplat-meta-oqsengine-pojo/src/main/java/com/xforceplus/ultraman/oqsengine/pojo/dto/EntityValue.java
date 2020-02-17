@@ -1,24 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto;
 
 import com.xforceplus.ultraman.oqsengine.core.metadata.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.core.metadata.IValue;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
-public class EntityValue<K,V> implements IEntityValue {
+public class EntityValue implements IEntityValue {
     /**
      * 元数据boId
      */
     private Long id;
+
     /**
-     * 子对象数据信息
+     * Entity的值集合
      */
-    private List<EntityValue> entityValues;
-    /**
-     * 数据信息
-     */
-    private Map<K,V> value;
+    private List<IValue> values;
 
     @Override
     public Long id() {
@@ -26,22 +23,23 @@ public class EntityValue<K,V> implements IEntityValue {
     }
 
     @Override
-    public List<IEntityValue> entityValues() {
+    public IValue getValue(String fieldName) {
         return null;
     }
 
     @Override
-    public Map values() {
+    public IEntityValue setValue(IValue value,String fieldType) {
         return null;
     }
 
-    public EntityValue() {
+    @Override
+    public List<IValue> values() {
+        return null;
     }
 
-    public EntityValue(Long id, List<EntityValue> entityValues, Map<K, V> value) {
-        this.id = id;
-        this.entityValues = entityValues;
-        this.value = value;
+    @Override
+    public IEntityValue setValues(List<IValue> values) {
+        return null;
     }
 
     public Long getId() {
@@ -52,43 +50,26 @@ public class EntityValue<K,V> implements IEntityValue {
         this.id = id;
     }
 
-    public List<EntityValue> getEntityValues() {
-        return entityValues;
+    public List<IValue> getValues() {
+        return values;
     }
 
-    public void setEntityValues(List<EntityValue> entityValues) {
-        this.entityValues = entityValues;
-    }
-
-    public Map<K, V> getValue() {
-        return value;
-    }
-
-    public void setValue(Map<K, V> value) {
-        this.value = value;
+    public EntityValue(Long id, List<IValue> values) {
+        this.id = id;
+        this.values = values;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof EntityValue)) return false;
-        EntityValue<?, ?> that = (EntityValue<?, ?>) o;
+        EntityValue that = (EntityValue) o;
         return Objects.equals(getId(), that.getId()) &&
-                Objects.equals(getEntityValues(), that.getEntityValues()) &&
-                Objects.equals(getValue(), that.getValue());
+                Objects.equals(getValues(), that.getValues());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getEntityValues(), getValue());
-    }
-
-    @Override
-    public String toString() {
-        return "EntityValue{" +
-                "id=" + id +
-                ", entityValues=" + entityValues +
-                ", value=" + value +
-                '}';
+        return Objects.hash(getId(), getValues());
     }
 }

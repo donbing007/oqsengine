@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.metadata;
 
 import java.io.Serializable;
+import java.util.List;
 
 public interface IEntity extends Serializable {
     /**
@@ -16,8 +17,8 @@ public interface IEntity extends Serializable {
     public IEntityClass entityClass();
 
     /**
-     * 获得该对象的数据对象
+     * 获得该对象的数据对象集合
      * @return 本对象的数据对象
      */
-    public IEntityValue entityValue();
+    public List<IEntityValue> entityValue();
 }

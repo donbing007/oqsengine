@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.core.metadata.IEntity;
 import com.xforceplus.ultraman.oqsengine.core.metadata.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.core.metadata.IEntityValue;
 
+import java.util.List;
 import java.util.Objects;
 
 public class Entity implements IEntity {
@@ -15,11 +16,11 @@ public class Entity implements IEntity {
     /**
      * 数据结构
      */
-    private EntityClass entityClass;
+    private IEntityClass entityClass;
     /**
      * 数据集合
      */
-    private EntityValue entityValue;
+    private List<IEntityValue> entityValues;
 
 
     @Override
@@ -33,8 +34,8 @@ public class Entity implements IEntity {
     }
 
     @Override
-    public IEntityValue entityValue() {
-        return entityValue;
+    public List<IEntityValue> entityValue() {
+        return entityValues;
     }
 
     public Entity() {
@@ -43,7 +44,7 @@ public class Entity implements IEntity {
     public Entity(Long id, EntityClass entityClass, EntityValue entityValue) {
         this.id = id;
         this.entityClass = entityClass;
-        this.entityValue = entityValue;
+        this.entityValues = entityValues;
     }
 
     public Long getId() {
@@ -54,20 +55,20 @@ public class Entity implements IEntity {
         this.id = id;
     }
 
-    public EntityClass getEntityClass() {
+    public IEntityClass getEntityClass() {
         return entityClass;
     }
 
-    public void setEntityClass(EntityClass entityClass) {
+    public void setEntityClass(IEntityClass entityClass) {
         this.entityClass = entityClass;
     }
 
-    public EntityValue getEntityValue() {
-        return entityValue;
+    public List<IEntityValue> getEntityValues() {
+        return entityValues;
     }
 
-    public void setEntityValue(EntityValue entityValue) {
-        this.entityValue = entityValue;
+    public void setEntityValues(List<IEntityValue> entityValues) {
+        this.entityValues = entityValues;
     }
 
     @Override
@@ -77,12 +78,12 @@ public class Entity implements IEntity {
         Entity entity = (Entity) o;
         return Objects.equals(getId(), entity.getId()) &&
                 Objects.equals(getEntityClass(), entity.getEntityClass()) &&
-                Objects.equals(getEntityValue(), entity.getEntityValue());
+                Objects.equals(getEntityValues(), entity.getEntityValues());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getEntityClass(), getEntityValue());
+        return Objects.hash(getId(), getEntityClass(), getEntityValues());
     }
 
     @Override
@@ -90,7 +91,7 @@ public class Entity implements IEntity {
         return "Entity{" +
                 "id=" + id +
                 ", entityClass=" + entityClass +
-                ", entityValue=" + entityValue +
+                ", entityValues=" + entityValues +
                 '}';
     }
 }
