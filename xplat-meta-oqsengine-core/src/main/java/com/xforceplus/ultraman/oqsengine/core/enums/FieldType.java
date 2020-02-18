@@ -3,8 +3,7 @@ package com.xforceplus.ultraman.oqsengine.core.enums;
 public enum FieldType {
     BOOLEAN("Boolean"),
     ENUM("Enum"),
-    LOCALDATE("LocalDate"),
-    LOCALTIME("LocalTime"),
+    DATATIME("DataTime"),
     LONG("Long"),
     STRING("String");
 
