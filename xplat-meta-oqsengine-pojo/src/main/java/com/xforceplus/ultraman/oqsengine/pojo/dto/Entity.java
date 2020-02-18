@@ -53,6 +53,16 @@ public class Entity implements IEntity {
         return entityValue;
     }
 
+    @Override
+    public ILink valueLink() {
+        return null;
+    }
+
+    @Override
+    public ILink refLink() {
+        return null;
+    }
+
     public Entity() {
     }
 

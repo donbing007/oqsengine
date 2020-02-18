@@ -21,4 +21,16 @@ public interface IEntity extends Serializable {
      * @return 本对象的数据对象
      */
     public IEntityValue entityValue();
+
+    /**
+     * 值关联信息
+     * @return 关联的对象
+     */
+    public ILink valueLink();
+
+    /**
+     * 继承关联-服务端
+     * @return 关联的对象
+     */
+    public ILink refLink();
 }
