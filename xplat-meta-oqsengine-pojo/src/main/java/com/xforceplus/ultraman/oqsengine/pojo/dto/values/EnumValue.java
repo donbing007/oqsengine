@@ -1,68 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
-import com.xforceplus.ultraman.oqsengine.core.metadata.IValue;
+/**
+ *  枚举值.
+ * @author wangzheng dongbin
+ * @version 0.1 2020/2/18 20:54
+ * @since 1.8
+ */
+public class EnumValue extends AbstractValue<String> {
 
-import java.util.Objects;
-
-public class EnumValue implements IValue<String> {
-    private String name;
-    private String value;
-    @Override
-    public String getName() {
-        return null;
+    public EnumValue(String name, String value) {
+        super(name, value);
     }
 
     @Override
-    public String getValue(String name) {
-        return null;
-    }
-
-    @Override
-    public String setValue(String name, String value) {
-        return null;
-    }
-
-    @Override
-    public String valueToString() {
-        return null;
-    }
-
-    @Override
-    public Long valueToLong() {
-        return null;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof EnumValue)) return false;
-        EnumValue enumValue = (EnumValue) o;
-        return Objects.equals(getName(), enumValue.getName()) &&
-                Objects.equals(getValue(), enumValue.getValue());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getName(), getValue());
-    }
-
-    @Override
-    public String toString() {
-        return "EnumValue{" +
-                "name='" + name + '\'' +
-                ", value='" + value + '\'' +
-                '}';
+    public long valueToLong() {
+        return 0;
     }
 }
