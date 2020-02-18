@@ -8,7 +8,7 @@ import java.util.Objects;
 
 public class EntityValue implements IEntityValue {
     /**
-     * 元数据boId
+     * 数据Id
      */
     private Long id;
 
