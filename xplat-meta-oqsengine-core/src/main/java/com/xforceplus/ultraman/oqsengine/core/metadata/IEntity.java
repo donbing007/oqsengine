@@ -20,5 +20,5 @@ public interface IEntity extends Serializable {
      * 获得该对象的数据对象集合
      * @return 本对象的数据对象
      */
-    public List<IEntityValue> entityValue();
+    public IEntityValue entityValue();
 }

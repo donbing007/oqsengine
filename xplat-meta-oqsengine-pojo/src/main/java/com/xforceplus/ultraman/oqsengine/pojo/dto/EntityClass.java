@@ -14,7 +14,7 @@ public class EntityClass implements IEntityClass {
     /**
      * 关系信息
      */
-    private String relaton;
+    private String relation;
     /**
      * 子对象结构信息
      */
@@ -49,7 +49,7 @@ public class EntityClass implements IEntityClass {
 
     public EntityClass(Long id, String relaton, List<IEntityClass> entityClasss, List<Field> fields) {
         this.id = id;
-        this.relaton = relaton;
+        this.relation = relation;
         this.entityClasss = entityClasss;
         this.fields = fields;
     }
@@ -62,12 +62,12 @@ public class EntityClass implements IEntityClass {
         this.id = id;
     }
 
-    public String getRelaton() {
-        return relaton;
+    public String getRelation() {
+        return relation;
     }
 
-    public void setRelaton(String relaton) {
-        this.relaton = relaton;
+    public void setRelation(String relation) {
+        this.relation = relation;
     }
 
     public List<IEntityClass> getEntityClasss() {
@@ -92,21 +92,21 @@ public class EntityClass implements IEntityClass {
         if (!(o instanceof EntityClass)) return false;
         EntityClass that = (EntityClass) o;
         return Objects.equals(getId(), that.getId()) &&
-                Objects.equals(getRelaton(), that.getRelaton()) &&
+                Objects.equals(getRelation(), that.getRelation()) &&
                 Objects.equals(getEntityClasss(), that.getEntityClasss()) &&
                 Objects.equals(getFields(), that.getFields());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getRelaton(), getEntityClasss(), getFields());
+        return Objects.hash(getId(), getRelation(), getEntityClasss(), getFields());
     }
 
     @Override
     public String toString() {
         return "EntityClass{" +
                 "id=" + id +
-                ", relaton='" + relaton + '\'' +
+                ", relation='" + relation + '\'' +
                 ", entityClasss=" + entityClasss +
                 ", fields=" + fields +
                 '}';
