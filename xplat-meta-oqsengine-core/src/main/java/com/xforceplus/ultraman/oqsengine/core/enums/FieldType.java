@@ -1,0 +1,25 @@
+package com.xforceplus.ultraman.oqsengine.core.enums;
+
+public enum FieldType {
+    BOOLEAN("Boolean"),
+    ENUM("Enum"),
+    LOCALDATE("LocalDate"),
+    LOCALTIME("LocalTime"),
+    LONG("Long"),
+    STRING("String");
+
+    private String type;
+
+    FieldType(String type) {
+        this.type = type;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+}

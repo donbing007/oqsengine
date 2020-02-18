@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto;
 
 
+import com.xforceplus.ultraman.oqsengine.core.enums.FieldType;
+
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -20,12 +22,12 @@ public class Field implements Serializable {
     /**
      * 字段类型
      */
-    private String fieldType;
+    private FieldType fieldType;
 
     public Field() {
     }
 
-    public Field(String name, String fieldType) {
+    public Field(String name, FieldType fieldType) {
         this.name = name;
         this.fieldType = fieldType;
     }
@@ -38,11 +40,11 @@ public class Field implements Serializable {
         this.name = name;
     }
 
-    public String getFieldType() {
+    public FieldType getFieldType() {
         return fieldType;
     }
 
-    public void setFieldType(String fieldType) {
+    public void setFieldType(FieldType fieldType) {
         this.fieldType = fieldType;
     }
 
