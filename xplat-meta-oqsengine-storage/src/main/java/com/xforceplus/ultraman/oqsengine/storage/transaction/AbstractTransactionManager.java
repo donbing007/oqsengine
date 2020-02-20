@@ -6,11 +6,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- *
  * The main responsibilities are as follows.
- *
+ * <p>
  * 1. Keep running transactions.
- *
+ * <p>
  * 2. Restore the transaction to the thread context.
  *
  * @author dongbin
@@ -44,7 +43,9 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
     @Override
     public void bind(Transaction tx) {
+
         CURRENT_TRANSACTION.set(tx);
+
         holder.put(tx.id(), tx);
     }
 
@@ -63,5 +64,13 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         }
 
         holder.remove(tx.id());
+    }
+
+    public void destroy() throws SQLException {
+        for (Transaction tx : holder.values()) {
+            tx.rollback();
+        }
+
+        holder.clear();
     }
 }

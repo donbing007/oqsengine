@@ -4,6 +4,8 @@ package com.xforceplus.ultraman.oqsengine.storage.selector;
 import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
 
 /**
+ * 数字后辍的表名选择器.
+ *
  * @author dongbin
  * @version 0.1 2020/2/16 19:18
  * @since 1.8
@@ -21,6 +23,6 @@ public class NumberIndexTableNameHashSelector implements Selector<String> {
     @Override
     public String select(String key) {
         int code = Time33Hash.build().hash(key);
-        return baseTableName + (code % size);
+        return baseTableName + (Math.abs(code % size));
     }
 }

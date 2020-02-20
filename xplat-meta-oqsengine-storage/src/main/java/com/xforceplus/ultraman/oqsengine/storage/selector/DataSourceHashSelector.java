@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 基于 Hash 方法的 datasoruce 选择器.
  *
  * @author dongbin
  * @version 0.1 2020/2/16 19:12
@@ -23,7 +24,8 @@ public class DataSourceHashSelector implements Selector<DataSource> {
 
     @Override
     public DataSource select(String key) {
-        int code = Time33Hash.build().hash(key);
-        return multipleDatasource.get(code % multipleDatasource.size());
+        int address = Math.abs(Time33Hash.build().hash(key) % multipleDatasource.size());
+
+        return multipleDatasource.get(address);
     }
 }

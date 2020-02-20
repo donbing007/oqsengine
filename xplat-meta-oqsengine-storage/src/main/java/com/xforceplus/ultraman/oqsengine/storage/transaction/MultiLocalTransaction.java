@@ -112,15 +112,18 @@ public class MultiLocalTransaction implements Transaction {
 
     private void throwSQLExceptionIfNecessary(List<SQLException> exHolder) throws SQLException {
         if (!exHolder.isEmpty()) {
-            SQLException combinationEx = new SQLException();
+            StringBuilder sqlStatue = new StringBuilder();
+            StringBuilder message = new StringBuilder();
             for (SQLException ex : exHolder) {
-                combinationEx.setNextException(ex);
+                sqlStatue.append("\"").append(ex.getSQLState()).append("\" ");
+                message.append("\"").append(ex.getMessage()).append("\" ");
+
             }
 
             // commit 或者 rollback 的异常都将标示为 rollback 状态.
             rollback = true;
 
-            throw combinationEx;
+            throw new SQLException(message.toString(), sqlStatue.toString());
         }
     }
 }
