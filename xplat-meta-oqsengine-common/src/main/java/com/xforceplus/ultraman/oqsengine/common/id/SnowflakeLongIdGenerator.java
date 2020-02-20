@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.common.id;
 
-public class SnowflakeIdGenerator implements LongIdGenerator {
+public class SnowflakeLongIdGenerator implements LongIdGenerator {
 
         public static final int NODE_SHIFT = 10;
         public static final int SEQ_SHIFT = 12;
@@ -13,7 +13,7 @@ public class SnowflakeIdGenerator implements LongIdGenerator {
 
         private int node;
 
-        public SnowflakeIdGenerator(int node) {
+        public SnowflakeLongIdGenerator(int node) {
             if (node < 0 || node > MAX_NODE) {
                 throw new IllegalArgumentException(String.format("node is between %s and %s", 0, MAX_NODE));
             }

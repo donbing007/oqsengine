@@ -1,11 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.common.hash;
 
 /**
+ * Time33 hash 实现.
  * @author dongbin
  * @version 0.1 2020/2/16 19:23
  * @since 1.8
  */
-public class Time33Hash {
+public class Time33Hash implements Hash{
 
     /**
      * 标示值.
@@ -35,12 +36,14 @@ public class Time33Hash {
      * @param key 需要进行哈希计算的key.
      * @return 哈希结果.
      */
+    @Override
     public int hash(String key) {
         if (key == null) {
             return 0;
         }
         char c;
-        int hashCode = 0;
+        // 经验值,分布更好. 001 010 100 000 101
+        int hashCode = 5831;
         int keyLen = key.length();
         for (int count = 0; count < keyLen; count++) {
             c = key.charAt(count);
@@ -72,7 +75,7 @@ public class Time33Hash {
      */
     @Override
     public int hashCode() {
-        return MARK_CODE.hashCode();
+        return this.hash(MARK_CODE);
     }
 
     /**
