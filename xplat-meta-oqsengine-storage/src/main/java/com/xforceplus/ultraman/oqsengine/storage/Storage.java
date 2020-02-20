@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage;
 
-import com.xforceplus.ultraman.oqsengine.core.metadata.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 
 import java.sql.SQLException;
 
@@ -19,7 +18,7 @@ public interface Storage {
      * @param entity target entity.
      * @throws SQLException Storage error.
      */
-    long build(IEntity entity) throws SQLException;
+    void build(IEntity entity) throws SQLException;
 
     /**
      * Replace the information of the target Entity.

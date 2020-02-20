@@ -1,7 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.core.enums;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.enums;
 
 
-import com.xforceplus.ultraman.oqsengine.core.conditions.ISqlSegment;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ISqlSegment;
 
 /**
  * SQL 保留关键字枚举

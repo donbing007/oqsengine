@@ -1,12 +1,8 @@
-package com.xforceplus.ultraman.oqsengine.core.conditions;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
-import com.xforceplus.ultraman.oqsengine.core.conditions.interfaces.ICondition;
-import com.xforceplus.ultraman.oqsengine.core.tools.StringUtils;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.interfaces.ICondition;
 
 import java.util.Collection;
-import java.util.Map;
-
-import static java.util.Objects.isNull;
 
 public class Condition<T, R, Children extends Condition<T, R, Children, Param>, Param> implements ICondition,ISqlSegment {
 

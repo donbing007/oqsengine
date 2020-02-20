@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+
 /**
  * 表示 boolean 的属性名.
  * @author wangzheng dongbin
@@ -9,8 +11,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 public class BooleanValue extends AbstractValue<Boolean> {
 
 
-    public BooleanValue(String name, Boolean value) {
-        super(name, value);
+    public BooleanValue(Field field, Boolean value) {
+        super(field, value);
     }
 
     @Override

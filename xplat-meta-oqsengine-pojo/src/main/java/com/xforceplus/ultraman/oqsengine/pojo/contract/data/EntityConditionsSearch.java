@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.contract.data;
 
-import com.xforceplus.ultraman.oqsengine.core.conditions.interfaces.IConditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.interfaces.IConditions;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 
 import java.io.Serializable;

@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
-import com.xforceplus.ultraman.oqsengine.core.metadata.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 
 import java.util.Objects;
 
@@ -12,17 +12,17 @@ import java.util.Objects;
  */
 public abstract class AbstractValue<V> implements IValue<V> {
 
-    private String name;
+    private Field field;
     private V value;
 
-    public AbstractValue(String name, V value) {
-        this.name = name;
+    public AbstractValue(Field field, V value) {
+        this.field = field;
         this.value = value;
     }
 
     @Override
-    public String getName() {
-        return name;
+    public Field getField() {
+        return null;
     }
 
     @Override
@@ -40,13 +40,21 @@ public abstract class AbstractValue<V> implements IValue<V> {
         if (this == o) return true;
         if (!(o instanceof AbstractValue)) return false;
         AbstractValue<?> that = (AbstractValue<?>) o;
-        return Objects.equals(getName(), that.getName()) &&
+        return Objects.equals(getField(), that.getField()) &&
             Objects.equals(getValue(), that.getValue());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getValue());
+        return Objects.hash(getField(), getValue());
+    }
+
+    @Override
+    public String toString() {
+        return "AbstractValue{" +
+            "field=" + field +
+            ", value=" + value +
+            '}';
     }
 
     @Override

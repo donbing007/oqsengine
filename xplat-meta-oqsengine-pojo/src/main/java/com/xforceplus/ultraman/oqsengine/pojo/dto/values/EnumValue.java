@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+
 /**
  *  枚举值.
  * @author wangzheng dongbin
@@ -8,8 +10,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
  */
 public class EnumValue extends AbstractValue<String> {
 
-    public EnumValue(String name, String value) {
-        super(name, value);
+    public EnumValue(Field field, String value) {
+        super(field, value);
     }
 
     @Override

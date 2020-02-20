@@ -1,14 +1,16 @@
-package com.xforceplus.ultraman.oqsengine.core.metadata;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public interface IEntityValue {
     /**
      * 获得数据对象的id
      * @return 数据对象的id
      */
-    public Long id();
+    public long id();
 
     /**
      * 获得该对象指定属性的数据
@@ -22,13 +24,13 @@ public interface IEntityValue {
      * @param value
      * @return
      */
-    public IEntityValue setValue(IValue value,String fieldType);
+    public IEntityValue addValue(IValue value);
 
     /**
      * 数据对象的数据信息
      * @return IValue对象
      */
-    public List<IValue> values();
+    public Collection<IValue> values();
 
     /**
      * 添加多个值对象

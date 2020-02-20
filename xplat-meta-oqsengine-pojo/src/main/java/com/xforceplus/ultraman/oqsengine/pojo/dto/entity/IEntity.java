@@ -1,14 +1,13 @@
-package com.xforceplus.ultraman.oqsengine.core.metadata;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import java.io.Serializable;
-import java.util.List;
 
 public interface IEntity extends Serializable {
     /**
      * 获得本对象的id - 数据id
      * @return 数据对象的id
      */
-    public Long id();
+    public long id();
 
     /**
      * 获得该对象结构对象
@@ -23,14 +22,20 @@ public interface IEntity extends Serializable {
     public IEntityValue entityValue();
 
     /**
-     * 值关联信息
-     * @return 关联的对象
+     * 继承家族关系.
+     * @return 家族信息.
      */
-    public ILink valueLink();
+    public IEntityFamily family();
 
     /**
-     * 继承关联-服务端
-     * @return 关联的对象
+     * 指向关联对象的"外键".
+     * @return 外键集合.
      */
-    public ILink refLink();
+    public IEntityValue refs();
+
+    /**
+     * 当前数据版本号.
+     * @return 版本号.
+     */
+    public int version();
 }

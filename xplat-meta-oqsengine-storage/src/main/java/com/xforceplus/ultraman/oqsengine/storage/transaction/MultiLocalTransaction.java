@@ -108,7 +108,6 @@ public class MultiLocalTransaction implements Transaction {
 
         }
 
-
     }
 
     private void throwSQLExceptionIfNecessary(List<SQLException> exHolder) throws SQLException {

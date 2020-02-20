@@ -1,6 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.core.conditions.interfaces;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.interfaces;
 
-import com.xforceplus.ultraman.oqsengine.core.enums.Link;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.enums.Link;
 
 import java.io.Serializable;
 

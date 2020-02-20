@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.core.conditions;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
 import java.io.Serializable;
 

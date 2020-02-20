@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto;
 
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;

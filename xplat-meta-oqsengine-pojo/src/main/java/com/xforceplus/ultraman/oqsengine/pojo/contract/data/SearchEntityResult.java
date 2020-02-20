@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.contract.data;
 
-import com.xforceplus.ultraman.oqsengine.core.metadata.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.Result;
 
 import java.io.Serializable;

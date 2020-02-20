@@ -1,4 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.core.metadata;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
+
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 
 /**
  * 表示一个 entity 的属性值.
@@ -7,10 +9,10 @@ package com.xforceplus.ultraman.oqsengine.core.metadata;
 public interface IValue<T> {
 
     /**
-     * 获得属性名
-     * @return 属性名称.
+     * 属性值相关的字段信息.
+     * @return 字段信息.
      */
-    public String getName();
+    public Field getField();
 
     /**
      * 根据属性名拿到值

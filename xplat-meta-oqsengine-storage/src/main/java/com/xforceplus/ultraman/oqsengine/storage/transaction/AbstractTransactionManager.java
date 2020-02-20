@@ -49,8 +49,19 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     }
 
     @Override
-    public void unbind(Transaction tx) {
+    public void unbind() {
         CURRENT_TRANSACTION.remove();
     }
 
+    @Override
+    public void finish(Transaction tx) {
+        Transaction current = getCurrent();
+        if (current != null) {
+            if (current.id() == tx.id()) {
+                unbind();
+            }
+        }
+
+        holder.remove(tx.id());
+    }
 }

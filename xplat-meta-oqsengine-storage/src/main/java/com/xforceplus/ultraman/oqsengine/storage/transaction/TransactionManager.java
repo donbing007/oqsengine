@@ -11,17 +11,38 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 public interface TransactionManager {
 
     /**
-     *
-     * @return
+     * 创建新的事务.
+     * @return 新事务.
      */
     Transaction create();
 
+    /**
+     * 获取当前上下文绑定的事务.
+     * @return 事务.
+     */
     Transaction getCurrent();
 
+    /**
+     * 重建事务.
+     * @param id 事务 id.
+     */
     void rebind(long id);
 
+    /**
+     * 绑定一个非受管事务.
+     * @param tx 事务.
+     */
     void bind(Transaction tx);
 
-    void unbind(Transaction tx);
+    /**
+     * 让事务不再绑定到当前上下文.
+     */
+    void unbind();
+
+    /**
+     * 结束某个事务.
+     * @param tx 目标事务.
+     */
+    void finish(Transaction tx);
 
 }

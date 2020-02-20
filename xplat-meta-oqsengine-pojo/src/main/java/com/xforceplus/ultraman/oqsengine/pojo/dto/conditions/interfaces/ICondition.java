@@ -1,8 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.core.conditions.interfaces;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.interfaces;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * 条件封装

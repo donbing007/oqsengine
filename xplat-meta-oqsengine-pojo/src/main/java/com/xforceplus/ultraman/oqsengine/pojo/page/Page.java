@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.page;
 
 
-import com.xforceplus.ultraman.oqsengine.core.conditions.interfaces.IConditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.interfaces.IConditions;
 
 import java.io.Serializable;
 import java.util.Collections;

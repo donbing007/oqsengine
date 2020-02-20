@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.contract.meta;
 
 import com.xforceplus.ultraman.oqsengine.pojo.contract.Result;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.Api;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 
 import java.io.Serializable;
 import java.util.Collection;
