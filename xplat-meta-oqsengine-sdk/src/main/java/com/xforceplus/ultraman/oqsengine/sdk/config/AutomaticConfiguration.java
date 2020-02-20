@@ -3,12 +3,14 @@ package com.xforceplus.ultraman.oqsengine.sdk.config;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ConditionalOnClass(name = "org.springframework.boot.context.properties.bind.Binder")
 @ConfigurationProperties(prefix = "xplat.meta.oqsengine")
 @EnableConfigurationProperties(AutomaticConfiguration.class)
+@ComponentScan(value = "com.xforceplus.ultraman.oqsengine.sdk.*")
 public class AutomaticConfiguration {
     //grpc相关属性配置
     private String host = "127.0.0.1";
