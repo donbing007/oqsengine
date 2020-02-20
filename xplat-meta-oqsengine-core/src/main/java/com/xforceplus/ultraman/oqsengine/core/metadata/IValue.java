@@ -7,6 +7,12 @@ package com.xforceplus.ultraman.oqsengine.core.metadata;
 public interface IValue<T> {
 
     /**
+     * 获取属性id
+     * @return返回属性id
+     */
+    public Long getId();
+
+    /**
      * 获得属性名
      * @return 属性名称.
      */

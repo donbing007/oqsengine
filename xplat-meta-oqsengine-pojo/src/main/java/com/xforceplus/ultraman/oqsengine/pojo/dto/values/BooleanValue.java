@@ -9,8 +9,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 public class BooleanValue extends AbstractValue<Boolean> {
 
 
-    public BooleanValue(String name, Boolean value) {
-        super(name, value);
+    public BooleanValue(Long id, String name, Boolean value) {
+        super(id, name, value);
     }
 
     @Override

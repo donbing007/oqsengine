@@ -17,8 +17,8 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
      */
     public static final ZoneId zoneId = ZoneId.of("Asia/Shanghai");
 
-    public DateTimeValue(String name, LocalDateTime value) {
-        super(name, value);
+    public DateTimeValue(Long id, String name, LocalDateTime value) {
+        super(id, name, value);
     }
 
     @Override

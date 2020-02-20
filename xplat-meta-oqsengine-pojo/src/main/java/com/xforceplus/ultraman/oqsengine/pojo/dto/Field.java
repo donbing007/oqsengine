@@ -15,6 +15,11 @@ import java.util.Objects;
 public class Field implements Serializable {
 
     /**
+     * 字段ID
+     */
+    private Long id;
+
+    /**
      * 字段名称
      */
     private String name;
@@ -27,9 +32,18 @@ public class Field implements Serializable {
     public Field() {
     }
 
-    public Field(String name, FieldType fieldType) {
+    public Field(Long id, String name, FieldType fieldType) {
+        this.id = id;
         this.name = name;
         this.fieldType = fieldType;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -53,20 +67,22 @@ public class Field implements Serializable {
         if (this == o) return true;
         if (!(o instanceof Field)) return false;
         Field field = (Field) o;
-        return Objects.equals(getName(), field.getName()) &&
-                Objects.equals(getFieldType(), field.getFieldType());
+        return Objects.equals(getId(), field.getId()) &&
+                Objects.equals(getName(), field.getName()) &&
+                getFieldType() == field.getFieldType();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getFieldType());
+        return Objects.hash(getId(), getName(), getFieldType());
     }
 
     @Override
     public String toString() {
         return "Field{" +
-                "name='" + name + '\'' +
-                ", fieldType='" + fieldType + '\'' +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", fieldType=" + fieldType +
                 '}';
     }
 }

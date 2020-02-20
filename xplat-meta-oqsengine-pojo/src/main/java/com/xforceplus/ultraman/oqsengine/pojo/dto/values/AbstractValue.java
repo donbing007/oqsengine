@@ -12,13 +12,18 @@ import java.util.Objects;
  */
 public abstract class AbstractValue<V> implements IValue<V> {
 
+    private Long id;
     private String name;
     private V value;
 
-    public AbstractValue(String name, V value) {
+    public AbstractValue(Long id, String name, V value) {
+        this.id = id;
         this.name = name;
         this.value = value;
     }
+
+    @Override
+    public Long getId() {return id;}
 
     @Override
     public String getName() {
@@ -40,13 +45,14 @@ public abstract class AbstractValue<V> implements IValue<V> {
         if (this == o) return true;
         if (!(o instanceof AbstractValue)) return false;
         AbstractValue<?> that = (AbstractValue<?>) o;
-        return Objects.equals(getName(), that.getName()) &&
-            Objects.equals(getValue(), that.getValue());
+        return Objects.equals(getId(), that.getId()) &&
+                Objects.equals(getName(), that.getName()) &&
+                Objects.equals(getValue(), that.getValue());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getValue());
+        return Objects.hash(getId(), getName(), getValue());
     }
 
     @Override

@@ -8,8 +8,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
  */
 public class EnumValue extends AbstractValue<String> {
 
-    public EnumValue(String name, String value) {
-        super(name, value);
+    public EnumValue(Long id, String name, String value) {
+        super(id, name, value);
     }
 
     @Override

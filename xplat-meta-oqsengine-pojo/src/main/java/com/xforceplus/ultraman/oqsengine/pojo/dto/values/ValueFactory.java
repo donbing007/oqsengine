@@ -22,16 +22,16 @@ public final class ValueFactory {
      * @param type 逻辑类型.
      * @return IValue 实例.
      */
-    public static IValue buildValue(String name, long value, FieldType type) {
+    public static IValue buildValue(Long id, String name, long value, FieldType type) {
         switch(type) {
             case LONG:
-                return new LongValue(name, value);
+                return new LongValue(id, name, value);
             case DATATIME: {
                 Instant instant = Instant.ofEpochMilli(value);
-                return new DateTimeValue(name, LocalDateTime.ofInstant(instant, DateTimeValue.zoneId));
+                return new DateTimeValue(id, name, LocalDateTime.ofInstant(instant, DateTimeValue.zoneId));
             }
             case BOOLEAN: {
-                return new BooleanValue(name, value == 0? false : true);
+                return new BooleanValue(id, name, value == 0? false : true);
             }
             default: {
                 throw new UnsupportedOperationException("Unsupported operation, this should be a program BUG.");
@@ -47,12 +47,12 @@ public final class ValueFactory {
      * @param type 逻辑类型.
      * @return IValue 实例.
      */
-    public static IValue buildValue(String name, String value, FieldType type) {
+    public static IValue buildValue(Long id, String name, String value, FieldType type) {
         switch(type) {
             case LONG:
-                return new StringValue(name, value);
+                return new StringValue(id, name, value);
             case ENUM: {
-                return new EnumValue(name, value);
+                return new EnumValue(id, name, value);
             }
             default: {
                 throw new UnsupportedOperationException("Unsupported operation, this should be a program BUG.");

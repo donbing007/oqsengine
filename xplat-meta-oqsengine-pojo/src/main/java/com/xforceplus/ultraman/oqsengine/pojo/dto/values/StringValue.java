@@ -8,8 +8,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
  */
 public class StringValue extends AbstractValue<String> {
 
-    public StringValue(String name, String value) {
-        super(name, value);
+    public StringValue(Long id, String name, String value) {
+        super(id, name, value);
     }
 
     @Override
