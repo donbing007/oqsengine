@@ -3,21 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>xplat-meta-oqsengine</artifactId>
+        <artifactId>xplat-meta-oqsengine-transfer</artifactId>
         <groupId>com.xforceplus.ultraman</groupId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>xplat-meta-oqsengine-transfer</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>xplat-meta-oqsengine-sdk-client</module>
-        <module>xplat-meta-oqsengine-sdk-server</module>
-    </modules>
+    <artifactId>xplat-meta-oqsengine-sdk-server</artifactId>
 
-    <properties>
-        <checkstyle.skip>false</checkstyle.skip>
-    </properties>
 
 </project>

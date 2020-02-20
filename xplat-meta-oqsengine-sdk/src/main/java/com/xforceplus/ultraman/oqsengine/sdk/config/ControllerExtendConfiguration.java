@@ -13,8 +13,8 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import java.util.List;
 
-@Configuration
-@Component
+//@Configuration
+//@Component
 public class ControllerExtendConfiguration extends WebMvcConfigurationSupport {
 
     @Override

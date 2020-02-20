@@ -25,29 +25,42 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <optional>true</optional>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
-            <optional>true</optional>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <optional>true</optional>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
-            <optional>true</optional>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.metamodel</groupId>
+            <artifactId>MetaModel-pojo</artifactId>
+            <version>5.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.metamodel</groupId>
+            <artifactId>MetaModel-json</artifactId>
+            <version>5.3.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.xforceplus.xplat-galaxy.ultraman.metadata</groupId>
+            <artifactId>config-client</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>

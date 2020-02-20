@@ -9,33 +9,33 @@
     <packaging>pom</packaging>
     <version>0.1.0-SNAPSHOT</version>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <configLocation>../checkstyle.xml</configLocation>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                    <excludes>**/*Grpc.java</excludes>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>checkstyle</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <configuration>
-                            <failOnViolation>true</failOnViolation>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+<!--    <build>-->
+<!--        <plugins>-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-checkstyle-plugin</artifactId>-->
+<!--                <version>3.1.0</version>-->
+<!--                <configuration>-->
+<!--                    <configLocation>../checkstyle.xml</configLocation>-->
+<!--                    <encoding>${project.build.sourceEncoding}</encoding>-->
+<!--                    <includeTestSourceDirectory>true</includeTestSourceDirectory>-->
+<!--                    <excludes>**/*Grpc.java</excludes>-->
+<!--                </configuration>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>checkstyle</id>-->
+<!--                        <phase>validate</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>check</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <failOnViolation>true</failOnViolation>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
+<!--        </plugins>-->
+<!--    </build>-->
     <modules>
         <module>xplat-meta-oqsengine-core</module>
         <module>xplat-meta-oqsengine-transfer</module>
@@ -123,6 +123,21 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <repositories>
+        <repository>
+            <id>alimaven</id>
+            <name>aliyun maven</name>
+            <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
