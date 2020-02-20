@@ -1,19 +1,40 @@
 package com.xforceplus.ultraman.oqsengine.sdk.controller;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.PageBo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 @RestController
 public class UltFormSettingController {
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     /**
      * 部署动态表单
      * @return
      */
     @GetMapping("/api/{tenantId}/{appCode}/forms/{id}/deployments" )
-    public String deploymentsForm(@PathVariable String tenantId,@PathVariable String appCode,@PathVariable String id) {
-        return tenantId+appCode+id;
+    public Object deploymentsForm(@PathVariable String tenantId,@PathVariable String appCode,@PathVariable String id) {
+        String accessUri = "http://localhost:8080";
+        String url = String.format("%s/pages/%s/deployments"
+                , accessUri
+                , id);
+        HttpHeaders headers = new HttpHeaders();
+        MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
+        headers.setContentType(type);
+        headers.add("Accept", MediaType.APPLICATION_JSON.toString());
+        HttpEntity authorizeEntity = new HttpEntity(headers);
+        ResponseEntity<PageBo> result = restTemplate.getForEntity(url,PageBo.class);
+        System.out.println(result);
+        return result;
     }
 
     /**
