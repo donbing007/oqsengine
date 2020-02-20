@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.pojo.page;
+package com.xforceplus.ultraman.oqsengine.sdk.vo;
 
 public class Summary {
 
