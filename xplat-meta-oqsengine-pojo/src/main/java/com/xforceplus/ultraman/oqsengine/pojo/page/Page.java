@@ -2,10 +2,17 @@ package com.xforceplus.ultraman.oqsengine.pojo.page;
 
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.interfaces.IConditions;
+import com.xforceplus.ultraman.oqsengine.pojo.page.interfaces.IPage;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * 分页对象.
@@ -13,17 +20,18 @@ import java.util.List;
  * @author wangzheng
  * @since 1.8
  */
-public class Page<T> implements Serializable {
+public class Page<T> implements IPage<T> {
+
+    private static final long serialVersionUID = 8545996863226528798L;
+
     /**
      * 查询数据列表
      */
     private List<T> rows = Collections.emptyList();
-
     /**
-     * 统计数据
+     * 統計數據
      */
     private Summary summary = new Summary();
-
     /**
      * 每页显示条数，默认 10
      */
@@ -35,6 +43,16 @@ public class Page<T> implements Serializable {
     private long current = 1;
 
     /**
+     * 自动优化 COUNT SQL
+     */
+    private boolean optimizeCountSql = true;
+
+    /**
+     * 是否进行 count 查询
+     */
+    private boolean isSearchCount = true;
+
+    /**
      * 查询条件信息
      */
     private IConditions conditions;
@@ -42,52 +60,148 @@ public class Page<T> implements Serializable {
     public Page() {
     }
 
-    public Page(List<T> rows, Summary summary, long size, long current, IConditions conditions) {
-        this.rows = rows;
-        this.summary = summary;
-        this.size = size;
-        this.current = current;
-        this.conditions = conditions;
+    /**
+     * 分页构造函数
+     *
+     * @param current 当前页
+     * @param size    每页显示条数
+     */
+    public Page(long current, long size) {
+        this(current, size, 0);
     }
 
+    public Page(long current, long size, long total) {
+        this(current, size, total, true);
+    }
+
+    public Page(long current, long size, boolean isSearchCount) {
+        this(current, size, 0, isSearchCount);
+    }
+
+    public Page(long current, long size, long total, boolean isSearchCount) {
+        if (current > 1) {
+            this.current = current;
+        }
+        this.size = size;
+        this.summary.setTotal(total);
+        this.isSearchCount = isSearchCount;
+    }
+
+    /**
+     * 是否存在上一页
+     *
+     * @return true / false
+     */
+    public boolean hasPrevious() {
+        return this.current > 1;
+    }
+
+    /**
+     * 是否存在下一页
+     *
+     * @return true / false
+     */
+    public boolean hasNext() {
+        return this.current < this.getPages();
+    }
+
+    @Override
     public List<T> getRows() {
-        return rows;
+        return this.rows;
     }
 
-    public void setRows(List<T> rows) {
+    @Override
+    public Page<T> setRows(List<T> rows) {
         this.rows = rows;
+        return this;
     }
 
+    @Override
+    public long getTotal() {
+        return this.summary.getTotal();
+    }
+
+    @Override
+    public Page<T> setTotal(long total) {
+        this.summary.setTotal(total);
+        return this;
+    }
+
+    @Override
     public Summary getSummary() {
-        return summary;
+
+        return this.summary;
     }
 
-    public void setSummary(Summary summary) {
+    @Override
+    public Page<T> setSummary(Summary summary) {
         this.summary = summary;
+        return this;
     }
 
+    @Override
     public long getSize() {
-        return size;
+        return this.size;
     }
 
-    public void setSize(long size) {
+    @Override
+    public Page<T> setSize(long size) {
         this.size = size;
+        return this;
     }
 
+    @Override
     public long getCurrent() {
-        return current;
+        return this.current;
     }
 
-    public void setCurrent(long current) {
+    @Override
+    public Page<T> setCurrent(long current) {
         this.current = current;
+        return this;
     }
 
+
+
+    @Override
+    public boolean isSearchCount() {
+        if (summary.getTotal() < 0) {
+            return false;
+        }
+        return isSearchCount;
+    }
+
+    @Override
     public IConditions getConditions() {
-        return conditions;
+        return this.conditions;
     }
 
-    public void setConditions(IConditions conditions) {
+    @Override
+    public IPage<T> setConditions(IConditions conditions) {
         this.conditions = conditions;
+        return this;
+    }
+
+    public Page<T> setSearchCount(boolean isSearchCount) {
+        this.isSearchCount = isSearchCount;
+        return this;
+    }
+
+    public Page<T> setOptimizeCountSql(boolean optimizeCountSql) {
+        this.optimizeCountSql = optimizeCountSql;
+        return this;
+    }
+    /**
+     * IPage 的泛型转换
+     *
+     * @param mapper 转换函数
+     * @param <R>    转换后的泛型
+     * @return 转换泛型后的 IPage
+     */
+    @SuppressWarnings("unchecked")
+    public <R> IPage<R> convert(Function<? super T, ? extends R> mapper) {
+        List<R> collect = this.getRows().stream().map(mapper).collect(toList());
+        return ((IPage<R>) this).setRows(collect);
     }
 
 }
