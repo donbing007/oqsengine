@@ -1,0 +1,88 @@
+{
+  "properties": [
+    {
+      "name": "xplat.meta.oqsengine.host",
+      "type": "java.lang.String",
+      "sourceType": "com.xforceplus.ultraman.oqsengine.sdk.config.AutomaticConfiguration",
+      "description": "server name or ip.",
+      "defaultValue": "127.0.0.1"
+    },
+    {
+      "name": "xplat.meta.oqsengine.port",
+      "type": "java.lang.Integer",
+      "sourceType": "com.xforceplus.ultraman.oqsengine.sdk.config.AutomaticConfiguration",
+      "description": "server port.",
+      "defaultValue": "8206"
+    },
+    {
+      "name": "xplat.meta.oqsengine.debug",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.xforceplus.ultraman.oqsengine.sdk.config.AutomaticConfiguration",
+      "description": "Is it in debug mode?",
+      "defaultValue": "false"
+    },
+    {
+      "name": "xplat.meta.oqsengine.manual",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.xforceplus.ultraman.oqsengine.sdk.config.AutomaticConfiguration",
+      "description": "Is it in manual mode?",
+      "defaultValue": "false"
+    },
+    {
+      "name": "xplat.meta.oqsengine.readTimeoutMs",
+      "type": "java.lang.Long",
+      "sourceType": "com.xforceplus.ultraman.oqsengine.sdk.config.AutomaticConfiguration",
+      "description": "client read timeout(ms).",
+      "defaultValue": "200"
+    },
+    {
+      "name": "xplat.meta.oqsengine.heartbeatTimeoutSeconds",
+      "type": "java.lang.Long",
+      "sourceType": "com.xforceplus.ultraman.oqsengine.sdk.config.AutomaticConfiguration",
+      "description": "client health timeout.",
+      "defaultValue": "30"
+    },
+    {
+      "name": "xplat.meta.oqsengine.heartbeatIntervalSeconds",
+      "type": "java.lang.Long",
+      "sourceType": "com.xforceplus.ultraman.oqsengine.sdk.config.AutomaticConfiguration",
+      "description": "client health interval.",
+      "defaultValue": "30"
+    },
+    {
+      "name": "xplat.meta.oqsengine.includeRex",
+      "type": "java.lang.String",
+      "sourceType": "com.xforceplus.ultraman.oqsengine.sdk.config.AutomaticConfiguration",
+      "description": "include DataSource bean name pattern.",
+      "defaultValue": "(.*)"
+    },
+    {
+      "name": "xplat.meta.oqsengine.permissions.tenant",
+      "type": "java.lang.String",
+      "sourceType": "com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig",
+      "description": "Auth info tenant.",
+      "defaultValue": ""
+    },
+    {
+      "name": "xplat.meta.oqsengine.permissions.appId",
+      "type": "java.lang.String",
+      "sourceType": "com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig",
+      "description": "Auth info appId..",
+      "defaultValue": "5"
+    },
+    {
+      "name": "xplat.meta.oqsengine.permissions.role",
+      "type": "java.lang.String",
+      "sourceType": "com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig",
+      "description": "Mock auth role.",
+      "defaultValue": "1"
+    },
+    {
+      "name": "xplat.meta.oqsengine.permissions.env",
+      "type": "java.lang.String",
+      "sourceType": "com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig",
+      "description": "Mock auth env.",
+      "defaultValue": "1"
+    }
+  ]
+}
