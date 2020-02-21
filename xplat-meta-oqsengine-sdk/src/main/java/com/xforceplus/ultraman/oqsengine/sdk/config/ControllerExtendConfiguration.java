@@ -11,15 +11,17 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.util.List;
 
 //@Configuration
 //@Component
-public class ControllerExtendConfiguration extends WebMvcConfigurationSupport {
+//public class ControllerExtendConfiguration extends WebMvcConfigurationSupport {
+public class ControllerExtendConfiguration implements WebMvcConfigurer {
 
-    @Override
+//    @Override
     public RequestMappingHandlerMapping createRequestMappingHandlerMapping() {
         return new MyRequestMappingHandler();
     }

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.controller;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.PageBo;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +18,9 @@ public class UltFormSettingController {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private FormBoMapLocalStore formBoMapLocalStore;
+
     /**
      * 部署动态表单
      * @return
@@ -27,11 +31,6 @@ public class UltFormSettingController {
         String url = String.format("%s/pages/%s/deployments"
                 , accessUri
                 , id);
-        HttpHeaders headers = new HttpHeaders();
-        MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
-        headers.setContentType(type);
-        headers.add("Accept", MediaType.APPLICATION_JSON.toString());
-        HttpEntity authorizeEntity = new HttpEntity(headers);
         ResponseEntity<PageBo> result = restTemplate.getForEntity(url,PageBo.class);
         System.out.println(result);
         return result;

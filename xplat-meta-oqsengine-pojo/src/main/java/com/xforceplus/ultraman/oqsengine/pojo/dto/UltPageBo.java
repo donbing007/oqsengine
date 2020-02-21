@@ -5,6 +5,11 @@ import java.util.Objects;
 public class UltPageBo {
 
     /**
+     * 配置的id
+     */
+    private Long settingId;
+
+    /**
      * 业务对象名称
      */
     private String boName;
@@ -22,10 +27,19 @@ public class UltPageBo {
     public UltPageBo() {
     }
 
-    public UltPageBo(String boName, String boCode, String setting) {
+    public UltPageBo(Long settingId, String boName, String boCode, String setting) {
+        this.settingId = settingId;
         this.boName = boName;
         this.boCode = boCode;
         this.setting = setting;
+    }
+
+    public Long getSettingId() {
+        return settingId;
+    }
+
+    public void setSettingId(Long settingId) {
+        this.settingId = settingId;
     }
 
     public String getBoName() {
@@ -57,13 +71,14 @@ public class UltPageBo {
         if (this == o) return true;
         if (!(o instanceof UltPageBo)) return false;
         UltPageBo ultPageBo = (UltPageBo) o;
-        return Objects.equals(getBoName(), ultPageBo.getBoName()) &&
+        return Objects.equals(getSettingId(), ultPageBo.getSettingId()) &&
+                Objects.equals(getBoName(), ultPageBo.getBoName()) &&
                 Objects.equals(getBoCode(), ultPageBo.getBoCode()) &&
                 Objects.equals(getSetting(), ultPageBo.getSetting());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getBoName(), getBoCode(), getSetting());
+        return Objects.hash(getSettingId(), getBoName(), getBoCode(), getSetting());
     }
 }
