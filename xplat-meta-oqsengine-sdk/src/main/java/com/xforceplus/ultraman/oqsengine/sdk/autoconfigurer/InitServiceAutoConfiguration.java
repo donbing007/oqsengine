@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.DictInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.ModuleInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.DictMapLocalStore;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.xplat.galaxy.grpc.spring.EnableGrpcServiceClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
@@ -42,6 +44,17 @@ public class InitServiceAutoConfiguration {
         return DictMapLocalStore.create();
     }
 
+    //添加pageBo
+    @Bean("pageBoMapLocalStore")
+    public PageBoMapLocalStore pageBoLocalStore() {
+        return PageBoMapLocalStore.create();
+    }
+
+    //添加formBo
+    @Bean("formBoMapLocalStore")
+    public FormBoMapLocalStore formBoLocalStore() {
+        return FormBoMapLocalStore.create();
+    }
 
     @Bean
     public DictInitService dictInitService(){
