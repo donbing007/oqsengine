@@ -5,7 +5,10 @@ import com.xforceplus.ultraman.metadata.grpc.Api;
 import com.xforceplus.ultraman.metadata.grpc.BoUp;
 import com.xforceplus.ultraman.metadata.grpc.Field;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
-import com.xforceplus.ultraman.oqsengine.sdk.store.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.enums.FieldType;
+import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ApiItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.FieldItem;
@@ -23,6 +26,7 @@ import org.apache.metamodel.util.SimpleTableDef;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils.getRowValue;
 
@@ -145,6 +149,47 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
             insert("bos", boUp);
         });
+    }
+
+    /**
+     * TODO nested object
+     * @param tenantId
+     * @param appCode
+     * @param boId
+     * @return
+     */
+    @Override
+    public Optional<EntityClass> load(String tenantId, String appCode, String boId) {
+
+        DataSet boDs = dc.query()
+                .from("bos")
+                .selectAll().where("id").eq(boId).execute();
+
+        if(boDs.next()){
+            Row row = boDs.getRow();
+
+
+            DataSet fieldDs = dc.query().from("fields")
+                    .selectAll().where("boId").eq(boId).execute();
+
+            List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> fields = fieldDs.toRows().stream()
+                    .map(this::toField)
+                    .collect(Collectors.toList());
+            EntityClass entityClass = new EntityClass(Long.valueOf(boId), "", Collections.emptyList(), null, fields);
+            return Optional.of(entityClass);
+        }
+
+        return Optional.empty();
+    }
+
+    private com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field toField(Row row){
+
+        Long id = RowUtils.getRowValue(row, "id").map(String::valueOf).map(Long::valueOf).orElse(-1l);
+        String name = RowUtils.getRowValue(row, "name").map(String::valueOf).orElse("");
+        FieldType fieldType = RowUtils.getRowValue(row, "fieldType").map(String::valueOf).map(FieldType::valueOf).orElse(FieldType.STRING);
+        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field field =
+                new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field(id, name, fieldType);
+        return field;
     }
 
     synchronized private void clearAllBoIdRelated(String boId){

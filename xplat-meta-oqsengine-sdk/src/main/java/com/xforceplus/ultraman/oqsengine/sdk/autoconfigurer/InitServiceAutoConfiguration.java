@@ -13,7 +13,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
-@ConditionalOnProperty(value = "xplat.oqsengine.sdk.enabled")
+@ConditionalOnProperty(value = "xplat.oqsengine.sdk.enabled", matchIfMissing = )
 @AutoConfigureOrder
 @EnableGrpcServiceClients
 public class InitServiceAutoConfiguration {

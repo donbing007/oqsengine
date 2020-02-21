@@ -1,7 +1,10 @@
-package com.xforceplus.ultraman.oqsengine.sdk.store;
+package com.xforceplus.ultraman.oqsengine.sdk.store.repository;
 
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
+
+import java.util.Optional;
 
 public interface MetadataRepository {
 
@@ -9,4 +12,6 @@ public interface MetadataRepository {
 
     //save
     void save(ModuleUpResult moduleUpResult, String tenantId, String appId);
+
+    Optional<EntityClass> load(String tenantId, String appCode, String boId);
 }

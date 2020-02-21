@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.controller;
 
-import com.xforceplus.ultraman.oqsengine.sdk.store.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
 import org.springframework.beans.factory.annotation.Autowired;
