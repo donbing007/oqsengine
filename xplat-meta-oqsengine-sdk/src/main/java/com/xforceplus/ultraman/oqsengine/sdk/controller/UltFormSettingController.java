@@ -40,7 +40,7 @@ public class UltFormSettingController {
      */
     @GetMapping("/api/{tenantId}/{appCode}/forms/{id}/deployments" )
     public Response deploymentsForm(@PathVariable String tenantId,@PathVariable String appCode,@PathVariable String id) {
-        String accessUri = "http://localhost:8080";
+        String accessUri = "http://ultraman.paas-t.xforceplus.com/api/global/pfcp";
         String url = String.format("%s/forms/%s/deployments"
                 , accessUri
                 , id);

@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.controller;
 import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltPage;
+import com.xforceplus.ultraman.oqsengine.sdk.config.AutomaticConfiguration;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
@@ -14,6 +15,8 @@ import org.apache.metamodel.data.Row;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -33,6 +36,9 @@ public class UltFormSettingControllerTest {
 
     private RestTemplate restTemplate = new RestTemplate();
 
+    @Value("${xplat.meta.oqsengine.host}")
+    private String url;
+
 //    @Mock
 //    private FormBoMapLocalStore formBoMapLocalStore;
 
@@ -42,6 +48,7 @@ public class UltFormSettingControllerTest {
      */
     @Test
     public void deploymentsPage() {
+        System.out.println(url);
         String accessUri = "http://localhost:8080";
         String url = String.format("%s/forms/%s/deployments"
                 , accessUri
