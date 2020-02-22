@@ -36,9 +36,6 @@ public class UltFormSettingControllerTest {
 
     private RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${xplat.meta.oqsengine.host}")
-    private String url;
-
 //    @Mock
 //    private FormBoMapLocalStore formBoMapLocalStore;
 
@@ -48,8 +45,7 @@ public class UltFormSettingControllerTest {
      */
     @Test
     public void deploymentsPage() {
-        System.out.println(url);
-        String accessUri = "http://localhost:8080";
+        String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
         String url = String.format("%s/forms/%s/deployments"
                 , accessUri
                 , "1230708278908764162");

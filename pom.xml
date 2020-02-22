@@ -7,7 +7,7 @@
     <groupId>com.xforceplus.ultraman</groupId>
     <artifactId>xplat-meta-oqsengine</artifactId>
     <packaging>pom</packaging>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.1-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -64,14 +64,14 @@
 
     <distributionManagement>
         <repository>
-            <id>xplat-releases</id>
+            <id>releases</id>
             <name>Nexus Release Repository</name>
-            <url>http://120.27.140.65:8081/nexus/content/repositories/releases/</url>
+            <url>${repository.host}/content/repositories/releases/</url>
         </repository>
         <snapshotRepository>
-            <id>xplat-snapshots</id>
+            <id>snapshots</id>
             <name>Nexus Snapshot Repository</name>
-            <url>http://120.27.140.65:8081/nexus/content/repositories/snapshots</url>
+            <url>${repository.host}/content/repositories/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
     <dependencyManagement>
@@ -144,6 +144,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <checkstyle.skip>true</checkstyle.skip>
+        <repository.host>http://120.27.140.65:8081/nexus</repository.host>
     </properties>
 
 </project>

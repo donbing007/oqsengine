@@ -39,7 +39,7 @@ public class UltPageSettingController {
      */
     @GetMapping("/api/{tenantId}/{appCode}/pages/{id}/deployments" )
     public Response deploymentsPage(@PathVariable String tenantId,@PathVariable String appCode,@PathVariable String id) {
-        String accessUri = "http://ultraman.paas-t.xforceplus.com/api/global/pfcp";
+        String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
         String url = String.format("%s/pages/%s/deployments"
                 , accessUri
                 , id);
