@@ -1,0 +1,241 @@
+package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
+
+import com.alibaba.fastjson.JSON;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
+import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
+import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.helper.StorageTypeHelper;
+import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.optimizer.SphinxQLQueryOptimizer;
+import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * 基于 SphinxQL 的索引储存实现.
+ *
+ * @author dongbin
+ * @version 0.1 2020/2/17 17:16
+ * @since 1.8
+ */
+public class SphinxQLIndexStorage implements IndexStorage {
+
+    private static final String BUILD_SQL =
+        String.format("insert into oqsindex (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)",
+            FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
+            FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
+    private static final String REPLACE_SQL =
+        String.format("replace into oqsindex (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)",
+            FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
+            FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
+    private static final String DELETE_SQL = "delete from oqsindex where id = ?";
+    private static final String SELECT_SQL = "select id, pref, cref from oqsindex where entity = ? and %s limit ? ?";
+    private static final String SELECT_COUNT_SQL = "select count(id) as count from oqsindex where entity = ? and %s";
+
+    private SphinxQLQueryOptimizer queryOptimizer;
+
+    private Selector<DataSource> writerDataSourceSelector;
+
+    private Selector<DataSource> searchDataSourceSelector;
+
+    private TransactionExecutor transactionExecutor;
+
+    public SphinxQLIndexStorage(
+        SphinxQLQueryOptimizer queryOptimizer,
+        Selector<DataSource> writerDataSourceSelector,
+        Selector<DataSource> searchDataSourceSelector,
+        TransactionExecutor transactionExecutor) {
+
+        this.queryOptimizer =  queryOptimizer;
+        this.writerDataSourceSelector = writerDataSourceSelector;
+        this.searchDataSourceSelector = searchDataSourceSelector;
+        this.transactionExecutor = transactionExecutor;
+    }
+
+    @Override
+    public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page) throws SQLException {
+
+        return (Collection<EntityRef>) transactionExecutor.execute(
+            new DataSourceShardingTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
+            @Override
+            public Object run(TransactionResource resource) throws SQLException {
+                String whereCondition = queryOptimizer.optimizeConditions(conditions).build(conditions);
+                if (!page.isSinglePage()) {
+                    String countSql = String.format(SELECT_COUNT_SQL,whereCondition);
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(countSql);
+                    st.setLong(1, entityClass.id());
+                    ResultSet rs = st.executeQuery();
+                    long count = 0;
+                    while(rs.next()) {
+                        count = rs.getLong("count");
+                        break;
+                    }
+                    page.setTotalCount(count);
+                }
+
+                PageScope scope = page.getNextPage();
+                String sql = String.format(SELECT_SQL, whereCondition);
+                PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+                st.setLong(1, entityClass.id());
+                st.setLong(2, scope.startLine);
+                st.setLong(3, scope.endLine);
+                ResultSet rs = st.executeQuery();
+                List<EntityRef> refs = new ArrayList((int) page.getPageSize());
+                while(rs.next()) {
+                    refs.add(new EntityRef(
+                       rs.getLong(FieldDefine.ID),
+                       rs.getLong(FieldDefine.PREF),
+                       rs.getLong(FieldDefine.CREF)
+                    ));
+                }
+
+                return refs;
+            }
+        });
+    }
+
+    @Override
+    public void build(IEntity entity) throws SQLException {
+        doBuildOrReplace(entity, false);
+    }
+
+    @Override
+    public void replace(IEntity entity) throws SQLException {
+        doBuildOrReplace(entity, true);
+    }
+
+    @Override
+    public void delete(IEntity entity) throws SQLException {
+        checkId(entity);
+
+        transactionExecutor.execute(new DataSourceShardingTask(writerDataSourceSelector, Long.toString(entity.id())) {
+
+            @Override
+            public Object run(TransactionResource resource) throws SQLException {
+
+                PreparedStatement st = ((Connection) resource.value()).prepareStatement(DELETE_SQL);
+                st.setLong(1, entity.id()); // id
+
+                int size = st.executeUpdate();
+                final int onlyOne = 1;
+                if (size != onlyOne) {
+                    throw new SQLException(String.format("Entity{%s} could not be delete successfully.", entity.toString()));
+                }
+
+                return null;
+            }
+        });
+
+    }
+
+    private void doBuildOrReplace(IEntity entity, boolean replacement) throws SQLException {
+        checkId(entity);
+        final String sql = replacement ? REPLACE_SQL : BUILD_SQL;
+
+        transactionExecutor.execute(
+            new DataSourceShardingTask(writerDataSourceSelector, Long.toString(entity.id())) {
+
+                @Override
+                public Object run(TransactionResource resource) throws SQLException {
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+
+                    // id, entity, pref, cref, numerfields, stringfields
+                    st.setLong(1, entity.id()); // id
+                    st.setLong(2, entity.entityClass().id()); // entity
+                    st.setLong(3, entity.family().parent()); // pref
+                    st.setLong(4, entity.family().child()); // cref
+                    // numberfields
+                    st.setString(5, serializeJson(entity.entityValue(), entity.refs()));
+                    // stringfields
+                    st.setString(6, serializeFull(entity.entityValue(), entity.refs()));
+                    int size = st.executeUpdate();
+
+                    // 成功只应该有一条语句影响
+                    final int onlyOne = 1;
+                    if (size == onlyOne) {
+                        return entity.id();
+                    } else {
+                        throw new SQLException(
+                            String.format(
+                                "Entity{%s} could not be %s successfully.",
+                                entity.toString(),
+                                replacement ? "replace" : "build"
+                            ));
+                    }
+                }
+            });
+    }
+
+    /**
+     * fieldId + fieldvalue(unicode) + space + fieldId + fieldvalue(unicode)....n
+     */
+    private static String serializeFull(IEntityValue entityValue, IEntityValue refs) {
+        StringBuilder buff = new StringBuilder();
+        entityValue.values().stream().forEach(v -> {
+            buff.append(SphinxQLHelper.serializeFull(v));
+            buff.append(" ");
+        });
+
+        refs.values().stream().forEach(v -> {
+            buff.append(SphinxQLHelper.serializeFull(v));
+            buff.append(" ");
+        });
+
+        return buff.toString();
+    }
+
+    /**
+     * {
+     * "{fieldId}" : fieldValue
+     * }
+     */
+    private static String serializeJson(IEntityValue values, IEntityValue refs) {
+        // key = fieldId
+        Map<String, Object> data = values.values().stream().collect(Collectors.toMap(
+            v -> Long.toString(v.getField().id()),
+            v -> {
+                StorageType current = StorageTypeHelper.findStorageType(v.getField().type());
+                if (current == StorageType.STRING) {
+                    return SphinxQLHelper.escapeString(v.valueToString());
+                } else {
+                    return v.valueToLong();
+                }
+            },
+            (v0, v1) -> v0));
+
+        data.putAll(refs.values().stream().collect(Collectors.toMap(
+            v -> Long.toString(v.getField().id()),
+            IValue::valueToLong,
+            (v0, v1) -> v0)));
+
+        return JSON.toJSONString(data);
+    }
+
+
+    private void checkId(IEntity entity) throws SQLException {
+        if (entity.id() == 0) {
+            throw new SQLException("Invalid entity`s id.");
+        }
+    }
+}

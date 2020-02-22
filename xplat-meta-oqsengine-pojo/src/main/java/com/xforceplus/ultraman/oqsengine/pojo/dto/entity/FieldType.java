@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.pojo.dto.enums;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 public enum FieldType {
     BOOLEAN("Boolean"),

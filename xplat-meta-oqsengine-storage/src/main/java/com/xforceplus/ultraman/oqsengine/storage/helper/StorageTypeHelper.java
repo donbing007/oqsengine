@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.helper;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.enums.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 
 import java.util.HashMap;

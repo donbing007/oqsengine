@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.contract.data;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.interfaces.IConditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 
 import java.io.Serializable;
@@ -14,13 +14,13 @@ import java.util.Objects;
  */
 public class EntityConditionsSearch implements Serializable {
     private EntitySource entitySource;
-    private IConditions conditions;
+    private Conditions conditions;
     private Page page;
 
     public EntityConditionsSearch() {
     }
 
-    public EntityConditionsSearch(EntitySource entitySource, IConditions conditions, Page page) {
+    public EntityConditionsSearch(EntitySource entitySource, Conditions conditions, Page page) {
         this.entitySource = entitySource;
         this.conditions = conditions;
         this.page = page;
@@ -34,11 +34,11 @@ public class EntityConditionsSearch implements Serializable {
         this.entitySource = entitySource;
     }
 
-    public IConditions getConditions() {
+    public Conditions getConditions() {
         return conditions;
     }
 
-    public void setConditions(IConditions conditions) {
+    public void setConditions(Conditions conditions) {
         this.conditions = conditions;
     }
 

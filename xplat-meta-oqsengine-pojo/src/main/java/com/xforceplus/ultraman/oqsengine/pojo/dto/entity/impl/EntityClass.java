@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 import java.util.*;
 
@@ -25,7 +26,7 @@ public class EntityClass implements IEntityClass {
     /**
      * 对象属性信息
      */
-    private List<Field> fields = Collections.emptyList();
+    private List<IEntityField> fields = Collections.emptyList();
 
     public EntityClass() {
     }
@@ -59,18 +60,18 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
-    public List<Field> fields() {
+    public List<IEntityField> fields() {
         return new ArrayList<>(fields);
     }
 
     @Override
-    public Optional<Field> field(String name) {
-        return fields.stream().filter(f -> name.equals(f.getName())).findFirst();
+    public Optional<IEntityField> field(String name) {
+        return fields.stream().filter(f -> name.equals(f.name())).findFirst();
     }
 
     @Override
-    public Optional<Field> field(long id) {
-        return fields.stream().filter(f -> id == f.getId()).findFirst();
+    public Optional<IEntityField> field(long id) {
+        return fields.stream().filter(f -> id == f.id()).findFirst();
     }
 
     @Override

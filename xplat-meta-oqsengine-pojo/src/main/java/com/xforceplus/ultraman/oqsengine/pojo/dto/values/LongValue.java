@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 /**
  * 表示一个整数.
@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
  */
 public class LongValue extends AbstractValue<Long> {
 
-    public LongValue(Field field, Long value) {
+    public LongValue(IEntityField field, Long value) {
         super(field, value);
     }
 

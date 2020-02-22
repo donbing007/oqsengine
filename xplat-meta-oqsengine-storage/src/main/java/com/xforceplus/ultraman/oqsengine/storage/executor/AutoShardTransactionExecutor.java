@@ -18,7 +18,7 @@ import java.util.Optional;
  * @version 0.1 2020/2/17 15:41
  * @since 1.8
  */
-public class AutoTransactionExecutor implements TransactionExecutor {
+public class AutoShardTransactionExecutor implements TransactionExecutor {
 
     private TransactionManager transactionManager;
 
@@ -27,13 +27,20 @@ public class AutoTransactionExecutor implements TransactionExecutor {
      *
      * @param transactionManager 事务管理器.
      */
-    public AutoTransactionExecutor(TransactionManager transactionManager) {
+    public AutoShardTransactionExecutor(TransactionManager transactionManager) {
         this.transactionManager = transactionManager;
     }
 
     @Override
     public Object execute(Task task) throws SQLException {
-        DataSource targetDataSource = task.getDataSourceSelector().select(task.getShardKey());
+        DataSourceShardingTask shardTask = null;
+        if (DataSourceShardingTask.class.isInstance(task)) {
+            shardTask = (DataSourceShardingTask) task;
+        } else {
+            throw new SQLException("Task types other than DataSourceShardingTask are not supported.");
+        }
+
+        DataSource targetDataSource = shardTask.getDataSourceSelector().select(shardTask.getShardKey());
 
         TransactionResource resource;
         Transaction tx = transactionManager.getCurrent();

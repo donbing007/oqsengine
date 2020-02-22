@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 /**
  *  枚举值.
@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
  */
 public class EnumValue extends AbstractValue<String> {
 
-    public EnumValue(Field field, String value) {
+    public EnumValue(IEntityField field, String value) {
         super(field, value);
     }
 

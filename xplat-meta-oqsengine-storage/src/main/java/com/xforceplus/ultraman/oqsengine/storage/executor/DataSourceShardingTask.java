@@ -9,7 +9,7 @@ import javax.sql.DataSource;
  * @version 0.1 2020/2/17 20:07
  * @since 1.8
  */
-public abstract class DataSourceShardingTask implements Task {
+public abstract class DataSourceShardingTask implements ShardDataSourceTask {
 
     private Selector<DataSource> dataSourceSelector;
     private String shardKey;

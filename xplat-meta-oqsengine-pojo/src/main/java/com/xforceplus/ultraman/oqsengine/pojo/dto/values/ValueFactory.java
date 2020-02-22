@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 
 import java.time.Instant;
@@ -20,8 +21,8 @@ public final class ValueFactory {
      * @param value 储存值.
      * @return IValue 实例.
      */
-    public static IValue buildValue(Field field, long value) {
-        switch(field.getFieldType()) {
+    public static IValue buildValue(IEntityField field, long value) {
+        switch(field.type()) {
             case LONG:
                 return new LongValue(field, value);
             case DATATIME: {
@@ -44,8 +45,8 @@ public final class ValueFactory {
      * @param value 储存值.
      * @return IValue 实例.
      */
-    public static IValue buildValue(Field field, String value) {
-        switch(field.getFieldType()) {
+    public static IValue buildValue(IEntityField field, String value) {
+        switch(field.type()) {
             case LONG:
                 return new StringValue(field, value);
             case ENUM: {

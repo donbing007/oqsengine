@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 import java.io.Serializable;
 
 public interface IEntity extends Serializable {
+
     /**
      * 获得本对象的id - 数据id
      * @return 数据对象的id
@@ -32,6 +33,12 @@ public interface IEntity extends Serializable {
      * @return 外键集合.
      */
     public IEntityValue refs();
+
+    /**
+     * 重置 id.
+     * @param id 新的 id.
+     */
+    public void resetId(long id);
 
     /**
      * 当前数据版本号.

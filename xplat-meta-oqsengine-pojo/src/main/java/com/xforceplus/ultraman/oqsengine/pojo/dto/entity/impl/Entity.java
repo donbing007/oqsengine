@@ -10,6 +10,9 @@ import java.util.Objects;
  */
 public class Entity implements IEntity {
 
+    private static final IEntityFamily EMPTY_FAMILY = new EntityFamily(0, 0);
+    private static final IEntityValue EMPTY_REFS = new EntityValue(0);
+
     /**
      * 数据id
      */
@@ -26,12 +29,12 @@ public class Entity implements IEntity {
     /**
      * 继承关系.
      */
-    private IEntityFamily family;
+    private IEntityFamily family = EMPTY_FAMILY;
 
     /**
      * 外键集合.
      */
-    private IEntityValue refs;
+    private IEntityValue refs = EMPTY_REFS;
 
     /**
      * 数据版本
@@ -69,20 +72,43 @@ public class Entity implements IEntity {
     }
 
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue) {
-        this(id, entityClass, entityValue,0);
+        this(id, entityClass, entityValue, null, null, 0);
     }
 
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, int version) {
-        this(id, entityClass, entityValue, new EntityValue(id), new EntityFamily(0,0), version);
+        this(id, entityClass, entityValue, null, null, version);
     }
 
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, IEntityValue refs, IEntityFamily family, int version) {
+        if (entityClass == null) {
+            throw new IllegalArgumentException("Invalid class meta information.");
+        }
+
+        if (entityValue == null) {
+            throw new IllegalArgumentException("Invalid attribute value.");
+        }
+
         this.id = id;
         this.entityClass = entityClass;
         this.entityValue = entityValue;
-        this.family = family;
-        this.refs = refs;
+        if (family != null) {
+            this.family = family;
+        }
+        if (refs != null) {
+            this.refs = refs;
+        }
+
         this.version = version;
+    }
+
+    /**
+     * 重置 id 为新的 id.
+     *
+     * @param id 新的 id.
+     */
+    @Override
+    public void resetId(long id) {
+        this.id = id;
     }
 
     @Override

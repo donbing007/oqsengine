@@ -11,6 +11,14 @@
 
     <artifactId>xplat-meta-oqsengine-pojo</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
     <properties>
         <checkstyle.skip>false</checkstyle.skip>
     </properties>

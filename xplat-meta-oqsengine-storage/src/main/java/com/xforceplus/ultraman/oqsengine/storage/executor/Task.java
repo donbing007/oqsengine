@@ -7,13 +7,18 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 
 /**
+ * 表示一个任务.
  * @author dongbin
  * @version 0.1 2020/2/17 15:22
  * @since 1.8
  */
-public interface Task {
+public interface Task<V> {
 
-    Selector<DataSource> getDataSourceSelector();
-    String getShardKey();
-    Object run(TransactionResource resource) throws SQLException;
+    /**
+     * 执行任务.
+     * @param resource
+     * @return
+     * @throws SQLException
+     */
+    Object run(V resource) throws SQLException;
 }

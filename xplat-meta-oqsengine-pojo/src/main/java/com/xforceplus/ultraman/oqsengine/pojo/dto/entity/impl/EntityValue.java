@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 
@@ -14,11 +15,10 @@ public class EntityValue implements IEntityValue {
     /**
      * Entity的值集合
      */
-    private Map<Field, IValue> values;
+    private Map<IEntityField, IValue> values;
 
     public EntityValue(long id) {
         this.id = id;
-        values = new HashMap();
     }
 
     @Override
@@ -28,26 +28,41 @@ public class EntityValue implements IEntityValue {
 
     @Override
     public IValue getValue(String fieldName) {
+        if (values == null) {
+            return null;
+        }
         return values.get(fieldName);
     }
 
     @Override
     public IEntityValue addValue(IValue value) {
+        lazyInit();
+
         values.put(value.getField(), value);
         return this;
     }
 
     @Override
     public Collection<IValue> values() {
+        if (values == null) {
+            return Collections.emptyList();
+        }
         return values.values();
     }
 
     @Override
     public IEntityValue setValues(List<IValue> values) {
+        lazyInit();
         values.stream().forEach(v -> {
             this.values.put(v.getField(), v);
         });
         return this;
+    }
+
+    private void lazyInit() {
+        if (this.values == null) {
+            this.values = new HashMap<>();
+        }
     }
 
     @Override
@@ -72,7 +87,7 @@ public class EntityValue implements IEntityValue {
     public String toString() {
         return "EntityValue{" +
             "id=" + id +
-            ", values=" + values +
+            ", values=" + values != null ? values.toString() : "NULL" +
             '}';
     }
 }

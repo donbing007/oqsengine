@@ -412,6 +412,7 @@ public class Page implements Externalizable, Cloneable {
      * @param out 写入流.
      * @throws IOException I/O异常.
      */
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeBoolean(singlePage);
         out.writeLong(pageSize);
@@ -429,6 +430,7 @@ public class Page implements Externalizable, Cloneable {
      * @throws IOException I/O异常.
      * @throws ClassNotFoundException 没有找到类.
      */
+    @Override
     public void readExternal(ObjectInput in)
             throws IOException, ClassNotFoundException {
         singlePage = in.readBoolean();

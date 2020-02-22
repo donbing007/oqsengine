@@ -1,11 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.storage.index;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.interfaces.IConditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
 
+import java.sql.SQLException;
 import java.util.Collection;
 
 /**
@@ -23,6 +25,7 @@ public interface IndexStorage extends Storage {
      * @param conditions 搜索条件.
      * @return
      */
-     Collection<EntityRef> select(IConditions conditions, IEntityClass entityClass, Page page);
+     Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
+         throws SQLException ;
 
 }

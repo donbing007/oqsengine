@@ -11,7 +11,7 @@ import org.junit.After;
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
-public class AutoTransactionExecutorTest {
+public class AutoShardTransactionExecutorTest {
 
     @Before
     public void before() throws Exception {

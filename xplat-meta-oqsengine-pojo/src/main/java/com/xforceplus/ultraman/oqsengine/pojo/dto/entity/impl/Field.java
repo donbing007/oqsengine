@@ -1,18 +1,20 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.enums.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * 字段对象.
- * @version 0.1 2020/2/13 15:30
+ *
  * @author wangzheng
+ * @version 0.1 2020/2/13 15:30
  * @since 1.8
  */
-public class Field implements Serializable {
+public class Field implements IEntityField, Serializable {
 
     /**
      * 字段的标识.
@@ -38,17 +40,6 @@ public class Field implements Serializable {
         this.fieldType = fieldType;
     }
 
-    public long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public FieldType getFieldType() {
-        return fieldType;
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -59,14 +50,14 @@ public class Field implements Serializable {
             return false;
         }
         Field field = (Field) o;
-        return getId() == field.getId() &&
-            Objects.equals(getName(), field.getName()) &&
-            getFieldType() == field.getFieldType();
+        return id == field.id &&
+            Objects.equals(name, field.name) &&
+            fieldType == field.fieldType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getName(), getFieldType());
+        return Objects.hash(id, name, fieldType);
     }
 
     @Override
@@ -76,5 +67,20 @@ public class Field implements Serializable {
             ", name='" + name + '\'' +
             ", fieldType=" + fieldType +
             '}';
+    }
+
+    @Override
+    public long id() {
+        return id;
+    }
+
+    @Override
+    public String name() {
+        return name;
+    }
+
+    @Override
+    public FieldType type() {
+        return fieldType;
     }
 }

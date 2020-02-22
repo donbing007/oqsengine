@@ -1,15 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -36,6 +40,20 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Override
     public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Page page) throws SQLException {
-        return Collections.emptyList();
+        return selectByConditions(conditions, entityClass, null, page);
+    }
+
+    @Override
+    public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
+        throws SQLException {
+        Collection<EntityRef> refs = indexStorage.select(conditions, entityClass, sort, page);
+
+        return buildEntities(refs);
+    }
+
+    private Collection<IEntity> buildEntities(Collection<EntityRef> refs) {
+        //TODO: 还未实现.
+
+        throw new UnsupportedOperationException();
     }
 }

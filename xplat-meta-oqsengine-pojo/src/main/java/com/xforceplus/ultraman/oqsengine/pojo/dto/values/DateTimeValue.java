@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -19,7 +19,7 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
      */
     public static final ZoneId zoneId = ZoneId.of("Asia/Shanghai");
 
-    public DateTimeValue(Field field, LocalDateTime value) {
+    public DateTimeValue(IEntityField field, LocalDateTime value) {
         super(field, value);
     }
 

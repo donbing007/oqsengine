@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -34,19 +32,20 @@ public interface IEntityClass {
      * 本对象的属性信息
      * @return 属性集合
      */
-    public List<Field> fields();
+    public List<IEntityField> fields();
 
     /**
      * 本地对象指定字段的信息.
      * @param name 字段名称.
      * @return 字段信息.
      */
-    public Optional<Field> field(String name);
+    public Optional<IEntityField> field(String name);
 
     /**
      * 使用字段 ID 获取属性信息.
      * @param id 属性ID.
      * @return 属性名称.
      */
-    public Optional<Field> field(long id);
+    public Optional<IEntityField> field(long id);
+
 }

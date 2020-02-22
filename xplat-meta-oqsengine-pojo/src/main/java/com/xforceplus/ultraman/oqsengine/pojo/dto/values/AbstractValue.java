@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 
 import java.util.Objects;
@@ -12,17 +13,17 @@ import java.util.Objects;
  */
 public abstract class AbstractValue<V> implements IValue<V> {
 
-    private Field field;
+    private IEntityField field;
     private V value;
 
-    public AbstractValue(Field field, V value) {
+    public AbstractValue(IEntityField field, V value) {
         this.field = field;
         this.value = value;
     }
 
     @Override
-    public Field getField() {
-        return null;
+    public IEntityField getField() {
+        return this.field;
     }
 
     @Override
@@ -37,8 +38,12 @@ public abstract class AbstractValue<V> implements IValue<V> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof AbstractValue)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof AbstractValue)) {
+            return false;
+        }
         AbstractValue<?> that = (AbstractValue<?>) o;
         return Objects.equals(getField(), that.getField()) &&
             Objects.equals(getValue(), that.getValue());

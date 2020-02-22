@@ -2,15 +2,10 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.enums.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.ValueFactory;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
@@ -21,14 +16,12 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -57,90 +50,23 @@ public class SQLMasterStorage implements MasterStorage {
         "select entity, version, time, pref, cref, deleted, attribute, refs from %s where id in (%s)";
 
 
-    @Resource(name = "masterDataSourceSelector")
+
     private Selector<DataSource> dataSourceSelector;
 
-    @Resource(name = "masterTableSelector")
     private Selector<String> tableNameSelector;
 
-    @Resource
     private TransactionExecutor transactionExecutor;
 
-
-    /**
-     *
-     * {
-     *     "numberAttribute": 1, # 普通数字属性
-     *     "stringAttribute": "value" # 普通字符串属性.
-     * }
-     */
-    private IEntityValue toEntityValue(long id, IEntityClass entityClass, String json, FieldType rowFieldType) throws SQLException {
-        JSONObject object = JSON.parseObject(json);
-
-        Map<Long, Field> fieldMap = null;
-        if (rowFieldType == null) {
-             fieldMap = entityClass.fields()
-                .stream().collect(Collectors.toMap(Field::getId, f -> f, (f0, f1) -> f0));
-        }
-
-        Field field = null;
-        StorageType storageType;
-        long jsonlongValue;
-        String jsonStringValue;
-        IEntityValue values = new EntityValue(id);
-        FieldType fieldType;
-        for (String fieldId : object.keySet()) {
-
-            if (rowFieldType != null) {
-
-                fieldType = rowFieldType;
-
-            } else {
-
-                field = fieldMap.get(fieldId);
-
-                if (field == null) {
-                    continue;
-                }
-
-                fieldType = field.getFieldType();
-
-            }
-
-            storageType = StorageTypeHelper.findStorageType(fieldType);
-            switch(storageType) {
-                case LONG: {
-                    jsonlongValue = object.getLongValue(fieldId);
-                    values.addValue(ValueFactory.buildValue(field, jsonlongValue));
-                    break;
-                }
-                case STRING: {
-                    jsonStringValue = object.getString(fieldId);
-                    values.addValue(ValueFactory.buildValue(field, jsonStringValue));
-                    break;
-                }
-                default: {
-                    logger.warn("Unsupported storage properties.[entity:{}, class:{}, fieldId:{}]"
-                        , id, entityClass.id(), field.getId());
-                }
-            }
-
-        }
-
-        return values;
+    public SQLMasterStorage(
+        Selector<DataSource> dataSourceSelector,
+        Selector<String> tableNameSelector,
+        TransactionExecutor transactionExecutor) {
+        this.dataSourceSelector = dataSourceSelector;
+        this.tableNameSelector = tableNameSelector;
+        this.transactionExecutor = transactionExecutor;
     }
 
-    // 属性名称使用的是属性 id.
-    private String toJson(IEntityValue values) {
 
-        JSONObject object = new JSONObject(values.values().stream().collect(
-            Collectors.toMap(
-                v -> Long.toString(v.getField().getId()),
-                IValue::getValue,
-                (v0, v1) -> v0)));
-        return object.toJSONString();
-
-    }
 
     @Override
     public Optional<IEntity> select(long id, IEntityClass entityClass) throws SQLException {
@@ -186,7 +112,7 @@ public class SQLMasterStorage implements MasterStorage {
     @Override
     public Collection<IEntity> selectMultiple(Map<IEntityClass, int[]> ids) throws SQLException {
         //TODO: 还未实现. by dongbin 2020/02/19
-        return Collections.emptyList();
+        throw new UnsupportedOperationException();
     }
 
 
@@ -292,5 +218,87 @@ public class SQLMasterStorage implements MasterStorage {
         if (entity.id() == 0) {
             throw new SQLException("Invalid entity`s id.");
         }
+    }
+
+    /**
+     *
+     * {
+     *     "numberAttribute": 1, # 普通数字属性
+     *     "stringAttribute": "value" # 普通字符串属性.
+     * }
+     */
+    private IEntityValue toEntityValue(long id, IEntityClass entityClass, String json, FieldType rowFieldType) throws SQLException {
+        JSONObject object = JSON.parseObject(json);
+
+        Map<Long, IEntityField> fieldMap = null;
+        if (rowFieldType == null) {
+            fieldMap = entityClass.fields()
+                .stream().collect(Collectors.toMap(IEntityField::id, f -> f, (f0, f1) -> f0));
+        }
+
+        IEntityField field = null;
+        StorageType storageType;
+        long jsonlongValue;
+        String jsonStringValue;
+        IEntityValue values = new EntityValue(id);
+        FieldType fieldType;
+        for (String fieldId : object.keySet()) {
+
+            if (rowFieldType != null) {
+
+                fieldType = rowFieldType;
+
+            } else {
+
+                field = fieldMap.get(fieldId);
+
+                if (field == null) {
+                    continue;
+                }
+
+                fieldType = field.type();
+
+            }
+
+            storageType = StorageTypeHelper.findStorageType(fieldType);
+            switch(storageType) {
+                case LONG: {
+                    jsonlongValue = object.getLongValue(fieldId);
+                    values.addValue(ValueFactory.buildValue(field, jsonlongValue));
+                    break;
+                }
+                case STRING: {
+                    jsonStringValue = object.getString(fieldId);
+                    values.addValue(ValueFactory.buildValue(field, jsonStringValue));
+                    break;
+                }
+                default: {
+                    logger.warn("Unsupported storage properties.[entity:{}, class:{}, fieldId:{}]"
+                        , id, entityClass.id(), field.id());
+                }
+            }
+
+        }
+
+        return values;
+    }
+
+    // 属性名称使用的是属性 id.
+    private String toJson(IEntityValue values) {
+
+        JSONObject object = new JSONObject(values.values().stream().collect(
+            Collectors.toMap(
+                v -> Long.toString(v.getField().id()),
+                v -> {
+                    StorageType current = StorageTypeHelper.findStorageType(v.getField().type());
+                    if (current == StorageType.STRING) {
+                        return v.valueToString();
+                    } else {
+                        return v.valueToLong();
+                    }
+                },
+                (v0, v1) -> v0)));
+        return object.toJSONString();
+
     }
 }
