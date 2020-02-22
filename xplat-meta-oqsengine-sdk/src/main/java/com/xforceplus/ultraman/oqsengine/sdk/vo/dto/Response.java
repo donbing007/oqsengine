@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
 //TODO build
-public class Response<T extends ResponseItem> {
+public class Response<T> {
 
     private String code;
 

@@ -1,11 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.sdk.store.repository;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltPage;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.UltPageBo;
 import com.xforceplus.ultraman.oqsengine.sdk.store.MapLocalStore;
 import org.apache.metamodel.delete.DeleteFrom;
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
