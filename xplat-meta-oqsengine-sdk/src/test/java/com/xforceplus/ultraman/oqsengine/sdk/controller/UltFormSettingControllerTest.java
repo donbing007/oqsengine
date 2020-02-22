@@ -67,7 +67,7 @@ public class UltFormSettingControllerTest {
      * @return
      */
     @Test
-    public Response pageBoSeetings() {
+    public void pageBoSeetings() {
         FormBoMapLocalStore formBoMapLocalStore = FormBoMapLocalStore.create();
         DataSet ds = null;
         if(!StringUtils.isEmpty("1230708278908764162")) {
@@ -85,15 +85,12 @@ public class UltFormSettingControllerTest {
             if (items.size() == 1){
                 response.setResult(items.get(0));
             }
-            return response;
 
         }else {
             Response<ResponseList<UltPage>> response = new Response<>();
 
             response.setMessage("未传id");
             response.setCode("1");
-
-            return response;
         }
     }
 
