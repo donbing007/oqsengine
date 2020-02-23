@@ -12,6 +12,9 @@ public interface IEntityClass {
      */
     public long id();
 
+
+    public String code();
+
     /**
      * 获得本对象和父对象的关系 - 从父对象往下描述 - 父对象只有1个。
      * @return 根对象默认为Null，OneToOne为OTO，OneToMany为OTM

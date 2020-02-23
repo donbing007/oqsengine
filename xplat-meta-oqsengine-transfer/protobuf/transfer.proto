@@ -3,3 +3,128 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "com.xforceplus.ultraman.oqsengine.sdk";
 option java_outer_classname = "EntityResourceProto";
+
+
+service EntityService {
+
+    rpc begin ( TransactionUp ) returns (OperationResult);
+
+    rpc build (EntityUp) returns (OperationResult);
+
+    rpc replace (EntityUp) returns (OperationResult);
+
+    rpc remove ( EntityUp ) returns (OperationResult);
+
+    rpc selectOne ( EntityUp ) returns ( OperationResult );
+
+    rpc selectByConditions ( SelectByCondition ) returns ( OperationResult );
+
+    rpc commit ( TransactionUp ) returns (OperationResult);
+
+    rpc rollBack ( TransactionUp ) returns (OperationResult);
+
+}
+
+message SelectByCondition {
+    EntityUp entity = 1;
+    int32 pageNo = 2;
+    int32 pageSize = 3;
+    ConditionsUp conditions = 4;
+    repeated FieldSortUp sort = 5;
+}
+
+message ConditionsUp {
+    repeated FieldConditionUp fields = 1;
+}
+
+message FieldSortUp {
+    string code = 1;
+    enum Order {
+      asc = 0;
+      desc = 1;
+    }
+    Order order = 2;
+    FieldUp field = 3;
+}
+
+message FieldConditionUp {
+    string code = 1;
+    enum Op {
+        eq = 0;
+        like = 1;
+        in = 2;
+        ge_le = 3;
+        ge_lt = 4;
+        gt_le = 5;
+        gt_lt = 6;
+        gt = 7;
+        ge = 8;
+        lt = 9;
+        le = 10;
+    }
+    Op operation = 2;
+    repeated string values = 3;
+    FieldUp field = 4;
+}
+
+message OperationResult {
+    enum Code {
+        OK = 0;
+        FAILED = 1;
+        EXCEPTION = 2;
+        NETWORK_ERR = 3;
+        OTHER = 4;
+    }
+    Code code = 1; //code
+    string message = 2; //message
+    repeated EntityUp queryResult = 3;
+    string transactionResult = 4;
+    int32 affectedRow = 5;
+    repeated int64 ids = 6;
+    int32 totalRow = 7;
+}
+
+message TransactionUp {
+    string id = 1;
+    string service = 2;
+    string tansType = 3;
+}
+
+message EntityUp {
+
+    int64 id = 1;
+
+    string relation = 2;
+
+    repeated EntityUp entityClasses = 3;
+
+    EntityUp extendEntityClass = 4;
+
+    repeated FieldUp fields = 5;
+
+    repeated ValueUp values = 6;
+
+    int64 objId = 7;
+
+    string code = 8;
+}
+
+message ValueUp {
+   string value = 1;
+   string name = 2;
+   string fieldType = 3;
+   int64 fieldId = 4;
+}
+
+message FieldUp {
+    int64 id = 1; //字段id
+    string name = 2; // 字段名称
+    string fieldType = 3; // 字段类型
+    string code = 4;
+    string displayType = 5;
+    string editable = 6;
+    string enumCode = 7;
+    string maxLength = 8;
+    string required = 9;
+    string searchable = 10;
+}

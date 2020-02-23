@@ -168,6 +168,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         if(boDs.next()){
             Row row = boDs.getRow();
 
+            String code = RowUtils.getRowValue(row, "code").toString();
 
             DataSet fieldDs = dc.query().from("fields")
                     .selectAll().where("boId").eq(boId).execute();
@@ -175,7 +176,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> fields = fieldDs.toRows().stream()
                     .map(this::toField)
                     .collect(Collectors.toList());
-            EntityClass entityClass = new EntityClass(Long.valueOf(boId), "", Collections.emptyList(), null, fields);
+            EntityClass entityClass = new EntityClass(Long.valueOf(boId), code, "", Collections.emptyList(), null, fields);
             return Optional.of(entityClass);
         }
 

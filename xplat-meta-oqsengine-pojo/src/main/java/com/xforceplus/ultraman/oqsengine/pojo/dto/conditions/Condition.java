@@ -17,6 +17,7 @@ public class Condition<T, R, Children extends Condition<T, R, Children, Param>, 
      */
     public Condition(){
 
+
     }
 
     @Override

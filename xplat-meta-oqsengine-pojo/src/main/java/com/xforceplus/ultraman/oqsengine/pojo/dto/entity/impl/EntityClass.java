@@ -9,6 +9,8 @@ public class EntityClass implements IEntityClass {
      * 元数据boId
      */
     private long id;
+
+    private String code;
     /**
      * 关系信息
      */
@@ -30,8 +32,9 @@ public class EntityClass implements IEntityClass {
     public EntityClass() {
     }
 
-    public EntityClass(Long id, String relation, List<IEntityClass> entityClasss, IEntityClass extendEntityClass, List<Field> fields) {
+    public EntityClass(Long id, String code, String relation, List<IEntityClass> entityClasss, IEntityClass extendEntityClass, List<Field> fields) {
         this.id = id;
+        this.code = code;
         this.relation = relation;
         this.entityClasss = entityClasss;
         this.extendEntityClass = extendEntityClass;
@@ -41,6 +44,11 @@ public class EntityClass implements IEntityClass {
     @Override
     public long id() {
         return id;
+    }
+
+    @Override
+    public String code() {
+        return code;
     }
 
     @Override
