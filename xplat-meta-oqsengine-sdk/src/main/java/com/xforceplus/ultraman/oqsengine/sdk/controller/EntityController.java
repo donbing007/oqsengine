@@ -31,23 +31,24 @@ public class EntityController {
         //find bo
         Optional<EntityClass> entityClassOp = entityService.load(tenantId, appCode, boId);
 
-        Response rep = new Response();
-        Map<String, String> result = null;
 
         if(entityClassOp.isPresent()) {
-            result = entityService.findOne(entityClassOp.get(), Long.valueOf(id));
-        }
-
-        if(result != null){
+            Either<String, Map<String, String>> either =
+                    entityService.findOne(entityClassOp.get(), Long.valueOf(id));
+            Response rep = new Response();
             rep.setCode("1");
-            rep.setMessage("查询成功");
-            rep.setResult(result);
-        }else{
-            rep.setCode("-1");
-            rep.setMessage("查询记录不存在");
+            if(either.isRight()){
+                rep.setMessage("获取成功");
+                rep.setResult(either.get());
+            }else{
+                rep.setCode("-1");
+                rep.setMessage(either.getLeft());
+
+            }
+            return rep;
         }
 
-        return rep;
+        return Response.Error("查询记录不存在");
     }
 
     @DeleteMapping("/api/{tenantId}/{appCode}/bos/{boid}/entities/{id}")

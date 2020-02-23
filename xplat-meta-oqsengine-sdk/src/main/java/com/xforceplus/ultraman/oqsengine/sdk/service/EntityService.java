@@ -44,14 +44,18 @@ public class EntityService {
         return metadataRepository.load(tenantId, appCode, boId);
     }
 
-    public Map<String, String> findOne(EntityClass entityClass, Long id) {
+    public Either<String, Map<String, String>> findOne(EntityClass entityClass, Long id) {
 
         OperationResult queryResult = entityServiceClient.selectOne()
 //                    .addHeader("transaction-id", "1")
                 .invoke(toEntityUpBuilder(entityClass, id).build())
                 .toCompletableFuture().join();
 
-        return toResultMap(queryResult.getQueryResultList().get(0));
+        if(queryResult.getCode() == OperationResult.Code.OK){
+            return Either.right(toResultMap(queryResult.getQueryResultList().get(0)));
+        }else{
+            return Either.left(queryResult.getMessage());
+        }
     }
 
     private EntityUp toEntityUp(IEntityClass entityClass) {
