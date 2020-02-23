@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.metadata.grpc.Api;
 import com.xforceplus.ultraman.metadata.grpc.BoUp;
 import com.xforceplus.ultraman.metadata.grpc.Field;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.enums.FieldType;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
@@ -23,7 +24,9 @@ import org.apache.metamodel.pojo.PojoDataContext;
 import org.apache.metamodel.pojo.TableDataProvider;
 import org.apache.metamodel.schema.Table;
 import org.apache.metamodel.util.SimpleTableDef;
+import org.graalvm.util.CollectionsUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -151,6 +154,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         });
     }
 
+
+
     /**
      * TODO nested object
      * @param tenantId
@@ -170,17 +175,54 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
             String code = RowUtils.getRowValue(row, "code").toString();
 
-            DataSet fieldDs = dc.query().from("fields")
-                    .selectAll().where("boId").eq(boId).execute();
+            String parentId =  RowUtils.getRowValue(row, "parentId").toString();
 
-            List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> fields = fieldDs.toRows().stream()
-                    .map(this::toField)
-                    .collect(Collectors.toList());
-            EntityClass entityClass = new EntityClass(Long.valueOf(boId), code, "", Collections.emptyList(), null, fields);
+            List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> fields = loadFields(boId);
+
+            EntityClass parentEntityClass = null;
+            if(!StringUtils.isEmpty(parentId)){
+                //if has parents
+                DataSet parent = dc.query()
+                        .from("bos")
+                        .selectAll().where("id")
+                        .eq(parentId).execute();
+                if(parent.next()){
+                    Row parentRow = parent.getRow();
+                    String parentCode = RowUtils.getRowValue(parentRow, "code").toString();
+                    List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> parentFields = loadFields(parentId);
+                    parentEntityClass = new EntityClass(Long.valueOf(parentId), parentCode, "", Collections.emptyList(), null, parentFields);
+                }
+            }
+
+            List<IEntityClass> entityClasses = new ArrayList<>();
+
+            //find sub TODO need this?
+            DataSet subEntities = dc.query()
+                    .from("bos")
+                    .selectAll().where("parentId")
+                    .eq(boId).execute();
+
+            while(subEntities.next()){
+                Row subRow = subEntities.getRow();
+                String subId = RowUtils.getRowValue(subRow, "id").toString();
+                String subCode = RowUtils.getRowValue(subRow, "code").toString();
+                EntityClass sub = new EntityClass(Long.valueOf(subId), subCode, "", Collections.emptyList(), null, loadFields(subId));
+                entityClasses.add(sub);
+            }
+
+            EntityClass entityClass = new EntityClass(Long.valueOf(boId), code, "", entityClasses, parentEntityClass, fields);
             return Optional.of(entityClass);
         }
 
         return Optional.empty();
+    }
+
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadFields(String id){
+        DataSet fieldDs = dc.query().from("fields")
+                .selectAll().where("boId").eq(id).execute();
+        return fieldDs.toRows().stream()
+                .map(this::toField)
+                .collect(Collectors.toList());
     }
 
     private com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field toField(Row row){

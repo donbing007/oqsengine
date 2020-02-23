@@ -21,7 +21,7 @@ public class EntityController {
     @Autowired
     private EntityService entityService;
 
-    @GetMapping("/api/{tenantId}/{appCode}/bos/{boId}entities/{id}")
+    @GetMapping("/api/{tenantId}/{appCode}/bos/{boId}/entities/{id}")
     public Response<Map<String, String>> singleQuery(
             @PathVariable String tenantId,
             @PathVariable String appCode,
@@ -189,7 +189,7 @@ public class EntityController {
      * }
      */
 
-    @PostMapping("/api/{tenantId}/{appCode}/bos/{boid}/entities")
+    @PostMapping("/api/{tenantId}/{appCode}/bos/{boid}/entities/query")
     public Response<RowItem<Map<String, String>>> conditionQuery(@PathVariable String tenantId,
                                                                  @PathVariable String appCode,
                                                                  @PathVariable String boId,
