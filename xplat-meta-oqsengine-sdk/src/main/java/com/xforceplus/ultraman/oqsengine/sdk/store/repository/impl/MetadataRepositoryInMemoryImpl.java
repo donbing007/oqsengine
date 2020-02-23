@@ -5,9 +5,9 @@ import com.xforceplus.ultraman.metadata.grpc.Api;
 import com.xforceplus.ultraman.metadata.grpc.BoUp;
 import com.xforceplus.ultraman.metadata.grpc.Field;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.enums.FieldType;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ApiItem;
@@ -24,7 +24,6 @@ import org.apache.metamodel.pojo.PojoDataContext;
 import org.apache.metamodel.pojo.TableDataProvider;
 import org.apache.metamodel.schema.Table;
 import org.apache.metamodel.util.SimpleTableDef;
-import org.graalvm.util.CollectionsUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
@@ -97,11 +98,11 @@ public class EntityService {
         return builder;
     }
 
-    private FieldUp toFieldUp(Field field){
+    private FieldUp toFieldUp(IEntityField field){
         return FieldUp.newBuilder()
-                .setCode(field.getName())
-                .setFieldType(field.getFieldType().name())
-                .setId(field.getId())
+                .setCode(field.name())
+                .setFieldType(field.type().name())
+                .setId(field.id())
                 .build();
     }
 
@@ -119,12 +120,12 @@ public class EntityService {
         List<ValueUp> values = body.entrySet().stream()
                 .map(entry -> {
                     String key = entry.getKey();
-                    Optional<Field> fieldOp = getKeyFromEntityClass(entityClass, key);
+                    Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
 
                     return fieldOp.map(field -> {
                         return ValueUp.newBuilder()
-                                .setFieldId(field.getId())
-                                .setFieldType(field.getFieldType().getType())
+                                .setFieldId(field.id())
+                                .setFieldType(field.type().getType())
                                 .setValue(entry.getValue().toString())
                                 .build();
                     });
@@ -138,7 +139,7 @@ public class EntityService {
     }
 
     //TODO sub search
-    private Optional<Field> getKeyFromEntityClass(EntityClass entityClass, String key ){
+    private Optional<IEntityField> getKeyFromEntityClass(EntityClass entityClass, String key ){
         return entityClass.field(key);
     }
 

@@ -1,107 +1,48 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.interfaces.ICondition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 
-import java.util.Collection;
+import java.io.Serializable;
 
-public class Condition<T, R, Children extends Condition<T, R, Children, Param>, Param> implements ICondition,ISqlSegment {
+/**
+ * 表示一个查询条件.
+ */
+public class Condition implements Serializable {
 
-    private String name;
+    private IEntityField field;
 
-    private String value;
+    private IValue value;
 
-    private String fieldType;
+    private ConditionOperator operator;
 
     /**
-     * 构造函数
+     * 构造一个查询条件.
+     *
+     * @param field    目标字段.
+     * @param operator 操作符.
+     * @param value    值.
      */
-    public Condition(){
+    public Condition(IEntityField field, ConditionOperator operator, IValue value) {
+        this.field = field;
+        this.operator = operator;
+        this.value = value;
+    }
 
+    public IEntityField getField() {
+        return field;
+    }
 
+    public IValue getValue() {
+        return value;
+    }
+
+    public ConditionOperator getOperator() {
+        return operator;
     }
 
     @Override
-    public Object eq(Object column, Object val) {
-        return null;
-    }
-
-    @Override
-    public Object ne(Object column, Object val) {
-        return null;
-    }
-
-    @Override
-    public Object gt(Object column, Object val) {
-        return null;
-    }
-
-    @Override
-    public Object ge(Object column, Object val) {
-        return null;
-    }
-
-    @Override
-    public Object lt(Object column, Object val) {
-        return null;
-    }
-
-    @Override
-    public Object le(Object column, Object val) {
-        return null;
-    }
-
-    @Override
-    public Object between(Object column, Object val1, Object val2) {
-        return null;
-    }
-
-    @Override
-    public Object notBetween(Object column, Object val1, Object val2) {
-        return null;
-    }
-
-    @Override
-    public Object like(Object column, Object val) {
-        return null;
-    }
-
-    @Override
-    public Object notLike(Object column, Object val) {
-        return null;
-    }
-
-    @Override
-    public Object likeLeft(Object column, Object val) {
-        return null;
-    }
-
-    @Override
-    public Object likeRight(Object column, Object val) {
-        return null;
-    }
-
-    @Override
-    public Object groupBy(Object[] columns) {
-        return null;
-    }
-
-    @Override
-    public Object orderBy(boolean isAsc, Object[] columns) {
-        return null;
-    }
-
-    @Override
-    public Object notIn(Object column, Collection coll) {
-        return null;
-    }
-
-    @Override
-    public Object in(Object column, Collection coll) {
-        return null;
-    }
-
-    @Override
-    public String getSqlSegment() {
-        return null;
+    public String toString() {
+        return field.name() + operator.getSymbol() + value.getValue().toString();
     }
 }
