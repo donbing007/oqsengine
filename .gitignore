@@ -78,7 +78,6 @@ fabric.properties
 
 .idea/
 *.iml
-target/
 *.xml.versionsBackup
 .classpath
 .project

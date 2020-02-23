@@ -1,8 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
+import org.springframework.stereotype.Component;
+
 import java.util.Map;
 import java.util.TreeMap;
 
+@Component
 public class ThreadlocalContextHolder {
 
     private ThreadLocal<Map<String, Object>> contextThreadLocal = new ThreadLocal<>();

@@ -39,7 +39,7 @@ public class UltFormSettingController {
      * 部署动态表单
      * @return
      */
-    @PostMapping("/forms/{id}/deployments" )
+    @PostMapping("/form-settings/{id}/deployments" )
     public Response deploymentsForm(@PathVariable String id) {
         String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
         String url = String.format("%s/forms/%s/deployments"

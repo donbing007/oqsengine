@@ -122,7 +122,6 @@ public class EntityService {
                 .setId(entity.id())
                 .setCode(entity.code())
                 .addAllFields(entity.fields().stream().map(this::toFieldUp).collect(Collectors.toList()))
-                .setRelation(entity.relation())
                 .build();
     }
 
@@ -304,13 +303,13 @@ public class EntityService {
             select.setPageSize(condition.getPageSize());
         }
 
-        if(condition.getConditions() != null){
-            select.setConditions(toConditionsUp(condition.getConditions()));
-        }
+//        if(condition.getConditions() != null){
+//            select.setConditions(toConditionsUp(condition.getConditions()));
+//        }
 
-        if(condition.getSort() != null){
-            select.addAllSort(toSortUp(condition.getSort()));
-        }
+//        if(condition.getSort() != null){
+//            select.addAllSort(toSortUp(condition.getSort()));
+//        }
 
         SelectByCondition selectByCondition = select.build();
 
@@ -331,10 +330,10 @@ public class EntityService {
         }
     }
 
-    private ConditionsUp toConditionsUp(Conditions conditions) {
-        ConditionsUp conditionsUpBuilder = ConditionsUp.
-        return null;
-    }
+//    private ConditionsUp toConditionsUp(Conditions conditions) {
+//        ConditionsUp conditionsUpBuilder = ConditionsUp.
+//        return null;
+//    }
 
     private Map<String, String> filterItem(Map<String, String> values, String mainEntityCode, EntityItem entityItem){
 

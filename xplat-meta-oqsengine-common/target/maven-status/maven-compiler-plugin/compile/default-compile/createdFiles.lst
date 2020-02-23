@@ -1,0 +1,7 @@
+com\xforceplus\ultraman\oqsengine\common\id\IncreasingOrderLongIdGenerator.class
+com\xforceplus\ultraman\oqsengine\common\define\SystemProperty.class
+com\xforceplus\ultraman\oqsengine\common\hash\Hash.class
+com\xforceplus\ultraman\oqsengine\common\id\IdGenerator.class
+com\xforceplus\ultraman\oqsengine\common\hash\Time33Hash.class
+com\xforceplus\ultraman\oqsengine\common\id\LongIdGenerator.class
+com\xforceplus\ultraman\oqsengine\common\id\SnowflakeLongIdGenerator.class

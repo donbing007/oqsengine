@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer;
 
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
+import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.DictInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.ModuleInitService;
@@ -17,7 +18,7 @@ import org.springframework.context.annotation.Bean;
 
 @ConditionalOnProperty(value = "xplat.oqsengine.sdk.enabled", matchIfMissing = true)
 @AutoConfigureOrder
-@EnableGrpcServiceClients
+@EnableGrpcServiceClients(basePackages = { "com.xforceplus.ultraman.metadata.grpc",  "com.xforceplus.ultraman.oqsengine.sdk"})
 public class InitServiceAutoConfiguration {
 
 
