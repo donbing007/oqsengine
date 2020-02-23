@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -38,8 +39,8 @@ public class UltFormSettingController {
      * 部署动态表单
      * @return
      */
-    @GetMapping("/api/{tenantId}/{appCode}/forms/{id}/deployments" )
-    public Response deploymentsForm(@PathVariable String tenantId,@PathVariable String appCode,@PathVariable String id) {
+    @PostMapping("/forms/{id}/deployments" )
+    public Response deploymentsForm(@PathVariable String id) {
         String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
         String url = String.format("%s/forms/%s/deployments"
                 , accessUri
@@ -65,8 +66,8 @@ public class UltFormSettingController {
      * 根据表单id获取详细json配置
      * @return
      */
-    @GetMapping("/api/{tenantId}/{appCode}/form-settings/{id}" )
-    public Response pageBoSeetings(@PathVariable String tenantId,@PathVariable String appCode,@PathVariable String id) {
+    @GetMapping("/form-settings/{id}" )
+    public Response pageBoSeetings(@PathVariable String id) {
         DataSet ds = null;
         if(!StringUtils.isEmpty(id)) {
             ds = formBoMapLocalStore.query().selectAll()

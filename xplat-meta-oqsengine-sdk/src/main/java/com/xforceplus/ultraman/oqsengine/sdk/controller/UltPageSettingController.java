@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -37,8 +38,8 @@ public class UltPageSettingController {
      * 部署页面
      * @return
      */
-    @GetMapping("/api/{tenantId}/{appCode}/pages/{id}/deployments" )
-    public Response deploymentsPage(@PathVariable String tenantId,@PathVariable String appCode,@PathVariable String id) {
+    @PostMapping("/pages/{id}/deployments" )
+    public Response deploymentsPage(@PathVariable String id) {
         String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
         String url = String.format("%s/pages/%s/deployments"
                 , accessUri
@@ -64,8 +65,8 @@ public class UltPageSettingController {
      * 获取页面bo列表
      * @return
      */
-    @GetMapping("/api/{tenantId}/{appCode}/pages/{id}/bo-settings" )
-    public Response pageBos(@PathVariable String tenantId,@PathVariable String appCode,@PathVariable String id) {
+    @GetMapping("/pages/{id}/bo-settings" )
+    public Response pageBos(@PathVariable String id) {
 
         DataSet ds = null;
         if(!StringUtils.isEmpty(id)) {
@@ -97,8 +98,8 @@ public class UltPageSettingController {
      * 根据业务对象id获取详细json配置
      * @return
      */
-    @GetMapping("/api/{tenantId}/{appCode}/bo-settings/{id}" )
-    public Response pageBoSeetings(@PathVariable String tenantId,@PathVariable String appCode,@PathVariable String id) {
+    @GetMapping("/bo-settings/{id}" )
+    public Response pageBoSeetings(@PathVariable String id) {
 
         DataSet ds = null;
         if(!StringUtils.isEmpty(id)) {
