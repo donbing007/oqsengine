@@ -1,49 +1,54 @@
 package com.xforceplus.ultraman.oqsengine.sdk.controller;
 
 import com.alibaba.fastjson.JSON;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.PageBo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltPage;
+import com.xforceplus.ultraman.oqsengine.sdk.config.AutomaticConfiguration;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ResponseList;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.UltPageBoItem;
 import org.apache.metamodel.data.DataSet;
 import org.apache.metamodel.data.Row;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController
-public class UltFormSettingController {
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@ContextConfiguration(classes = UltFormSettingControllerTest.class)
+@WebAppConfiguration
+public class UltFormSettingControllerTest {
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private RestTemplate restTemplate = new RestTemplate();
 
-    @Autowired
-    private FormBoMapLocalStore formBoMapLocalStore;
+//    @Mock
+//    private FormBoMapLocalStore formBoMapLocalStore;
 
     /**
-     * 部署动态表单
+     * 动态表单
      * @return
      */
-    @GetMapping("/api/{tenantId}/{appCode}/forms/{id}/deployments" )
-    public Response deploymentsForm(@PathVariable String tenantId,@PathVariable String appCode,@PathVariable String id) {
+    @Test
+    public void deploymentsPage() {
         String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
         String url = String.format("%s/forms/%s/deployments"
                 , accessUri
-                , id);
+                , "1230708278908764162");
         Response<UltForm> result = new Response<UltForm>();
         try {
             result = restTemplate.getForObject(url,Response.class);
@@ -51,13 +56,12 @@ public class UltFormSettingController {
                 //将List转成Entity
                 UltForm ultForm = JSON.parseObject(JSON.toJSONString(result.getResult()),UltForm.class);
                 //将数据保存到内存中
+                FormBoMapLocalStore formBoMapLocalStore = FormBoMapLocalStore.create();
                 formBoMapLocalStore.save(ultForm);
             }
-            return result;
         }catch (Exception e){
             result.setCode("400");
             result.setMessage("部署失败");
-            return result;
         }
     }
 
@@ -65,13 +69,14 @@ public class UltFormSettingController {
      * 根据表单id获取详细json配置
      * @return
      */
-    @GetMapping("/api/{tenantId}/{appCode}/form-settings/{id}" )
-    public Response pageBoSeetings(@PathVariable String tenantId,@PathVariable String appCode,@PathVariable String id) {
+    @Test
+    public void pageBoSeetings() {
+        FormBoMapLocalStore formBoMapLocalStore = FormBoMapLocalStore.create();
         DataSet ds = null;
-        if(!StringUtils.isEmpty(id)) {
+        if(!StringUtils.isEmpty("1230708278908764162")) {
             ds = formBoMapLocalStore.query().selectAll()
                     .where("id")
-                    .eq(id)
+                    .eq("1230708278908764162")
                     .execute();
 
             List<Row> rows = ds.toRows();
@@ -83,15 +88,12 @@ public class UltFormSettingController {
             if (items.size() == 1){
                 response.setResult(items.get(0));
             }
-            return response;
 
         }else {
             Response<ResponseList<UltPage>> response = new Response<>();
 
             response.setMessage("未传id");
             response.setCode("1");
-
-            return response;
         }
     }
 
