@@ -7,9 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
-import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
-import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Conditions;
-import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.EntityItem;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.*;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
@@ -28,6 +26,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class EntityService {
@@ -168,8 +167,6 @@ public class EntityService {
     private EntityUp toEntityUp(EntityClass entityClass, Long id,  Map<String, Object> body){
         EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
 
-        builder.getFieldsList();
-
         List<ValueUp> values = body.entrySet().stream()
                 .map(entry -> {
                     String key = entry.getKey();
@@ -219,7 +216,7 @@ public class EntityService {
         String transId = contextService.get(ContextService.StringKeys.TransactionKey);
         SingleResponseRequestBuilder<EntityUp, OperationResult> removeBuilder = entityServiceClient.remove();
         if(transId != null){
-            removeBuilder.addHeader("transaction-id", "1");
+            removeBuilder.addHeader("transaction-id", transId);
         }
 
         OperationResult updateResult =
@@ -303,9 +300,9 @@ public class EntityService {
             select.setPageSize(condition.getPageSize());
         }
 
-//        if(condition.getConditions() != null){
-//            select.setConditions(toConditionsUp(condition.getConditions()));
-//        }
+        if(condition.getConditions() != null){
+            select.setConditions(toConditionsUp(entityClass, condition.getConditions()));
+        }
 
 //        if(condition.getSort() != null){
 //            select.addAllSort(toSortUp(condition.getSort()));
@@ -330,10 +327,57 @@ public class EntityService {
         }
     }
 
-//    private ConditionsUp toConditionsUp(Conditions conditions) {
-//        ConditionsUp conditionsUpBuilder = ConditionsUp.
-//        return null;
-//    }
+    private List<FieldSortUp> toSortUp(List<FieldSort> sort) {
+        return sort.stream().map(x -> {
+            return FieldSortUp.newBuilder()
+                    .setCode(x.getField())
+                    .setOrder(FieldSortUp.Order.valueOf(x.getOrder()))
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * flatten all the conditions to field condition
+     * @param conditions
+     * @return
+     */
+    private ConditionsUp toConditionsUp(EntityClass entityClass, Conditions conditions) {
+        ConditionsUp.Builder conditionsUpBuilder = ConditionsUp.newBuilder();
+
+        Stream<Optional<FieldConditionUp>> filedStream = conditions.getFields().stream().map(fieldCondition -> {
+            return toFieldCondition(entityClass, fieldCondition);
+        });
+
+        Stream<Optional<FieldConditionUp>> entityStream = conditions.getEntities().stream().flatMap(entityCondition -> {
+            return toFieldCondition(entityClass, entityCondition);
+        } );
+        conditionsUpBuilder.addAllFields(Stream.concat(filedStream, entityStream)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList()));
+        return conditionsUpBuilder.build();
+    }
+
+    private Optional<FieldConditionUp> toFieldCondition(IEntityClass entityClass, FieldCondition fieldCondition){
+
+        Optional<IEntityField> fieldOp = entityClass.field(fieldCondition.getCode());
+
+        return fieldOp.map(x -> FieldConditionUp.newBuilder()
+                .setCode(fieldCondition.getCode())
+                .setOperation(FieldConditionUp.Op.valueOf(fieldCondition.getOperation().name()))
+                .addAllValues(fieldCondition.getValues())
+                .setField(toFieldUp(fieldOp.get()))
+                .build());
+    }
+
+    private Stream<Optional<FieldConditionUp>> toFieldCondition(EntityClass entityClass, SubFieldCondition subFieldCondition){
+        return entityClass.entityClasss().stream()
+                .filter(x -> x.code().equals( subFieldCondition.getCode()))
+                .flatMap(entity -> subFieldCondition
+                        .getFields()
+                        .stream()
+                        .map(subField -> toFieldCondition(entity, subField)));
+    }
 
     private Map<String, String> filterItem(Map<String, String> values, String mainEntityCode, EntityItem entityItem){
 
