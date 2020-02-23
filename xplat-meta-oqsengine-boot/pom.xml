@@ -32,5 +32,11 @@
             <version>0.1.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.xforceplus.ultraman</groupId>
+            <artifactId>xplat-meta-oqsengine-core</artifactId>
+            <version>0.1.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 </project>
