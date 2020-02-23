@@ -3,6 +3,13 @@ package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 //TODO build
 public class Response<T> {
 
+    public static <T> Response<T> Error(String message){
+        Response rep = new Response<>();
+        rep.setMessage(message);
+        rep.setCode("-1");
+        return rep;
+    }
+
     private String code;
 
     private String message;
