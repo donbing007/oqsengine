@@ -224,7 +224,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         OperationResult result = null;
 
         try {
-            transactionManagementService.commit(id);
+
+            transactionManager.rebind(id);
+            transactionManagementService.commit();
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
                     .setMessage("事务提交成功")
@@ -246,7 +248,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         OperationResult result = null;
 
         try {
-            transactionManagementService.rollback(id);
+            transactionManager.rebind(id);
+            transactionManagementService.rollback();
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
                     .setMessage("事务提交成功")
@@ -298,7 +301,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return new EntityClass(
                 entityUp.getId()
                 , entityUp.getCode()
-                , entityUp.getRelation()
+                , null
                 , Collections.emptyList()
                 , null
                 , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
@@ -342,7 +345,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         }
     }
 
-    private IEntityField toFieldEntity(FieldUp fieldUp){
+    private Field toFieldEntity(FieldUp fieldUp){
         //g id, String name, FieldType fieldType
         return new Field(fieldUp.getId(), fieldUp.getName(), FieldType.valueOf(fieldUp.getFieldType()));
     }
@@ -352,7 +355,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         IEntityClass entityClass = new EntityClass(
                 entityUp.getId()
                 , entityUp.getCode()
-                , entityUp.getRelation()
+                , null
                 , entityUp.getEntityClassesList().stream().map(this::toRawEntityClass).collect(Collectors.toList())
                 , toRawEntityClass(entityUp.getExtendEntityClass())
                 , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())

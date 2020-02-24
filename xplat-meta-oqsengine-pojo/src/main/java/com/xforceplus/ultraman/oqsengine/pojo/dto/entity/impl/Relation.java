@@ -92,4 +92,14 @@ public class Relation {
     public int hashCode() {
         return Objects.hash(getName(), getRelationType(), isIdentity(), getEntityField());
     }
+
+    @Override
+    public String toString() {
+        return "Relation{" +
+                "name='" + name + '\'' +
+                ", relationType='" + relationType + '\'' +
+                ", identity=" + identity +
+                ", entityField=" + entityField +
+                '}';
+    }
 }
