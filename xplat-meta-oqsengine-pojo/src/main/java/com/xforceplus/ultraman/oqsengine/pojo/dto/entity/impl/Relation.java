@@ -16,7 +16,7 @@ public class Relation {
     /**
      * 关系类型 - 使用关系的code填入
      */
-    private String code;
+    private String relationType;
 
     /**
      * 是否使用主键作为关系字段 - true代表是。- 目前只支持主键模式
@@ -36,13 +36,13 @@ public class Relation {
      *
      * 关系类型默认都是long
      */
-    private IEntityValue entityValues;
+    private IEntityField entityField;
 
-    public Relation(String name, String code, boolean identity, IEntityValue entityValues) {
+    public Relation(String name, String relationType, boolean identity, IEntityField entityField) {
         this.name = name;
-        this.code = code;
+        this.relationType = relationType;
         this.identity = identity;
-        this.entityValues = entityValues;
+        this.entityField = entityField;
     }
 
     public String getName() {
@@ -53,12 +53,12 @@ public class Relation {
         this.name = name;
     }
 
-    public String getCode() {
-        return code;
+    public String getRelationType() {
+        return relationType;
     }
 
-    public void setCode(String code) {
-        this.code = code;
+    public void setRelationType(String relationType) {
+        this.relationType = relationType;
     }
 
     public boolean isIdentity() {
@@ -69,12 +69,12 @@ public class Relation {
         this.identity = identity;
     }
 
-    public IEntityValue getEntityValues() {
-        return entityValues;
+    public IEntityField getEntityField() {
+        return entityField;
     }
 
-    public void setEntityValues(IEntityValue entityValues) {
-        this.entityValues = entityValues;
+    public void setEntityField(IEntityField entityField) {
+        this.entityField = entityField;
     }
 
     @Override
@@ -84,22 +84,12 @@ public class Relation {
         Relation relation = (Relation) o;
         return isIdentity() == relation.isIdentity() &&
                 Objects.equals(getName(), relation.getName()) &&
-                Objects.equals(getCode(), relation.getCode()) &&
-                Objects.equals(getEntityValues(), relation.getEntityValues());
+                Objects.equals(getRelationType(), relation.getRelationType()) &&
+                Objects.equals(getEntityField(), relation.getEntityField());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getCode(), isIdentity(), getEntityValues());
-    }
-
-    @Override
-    public String toString() {
-        return "Relation{" +
-                "name='" + name + '\'' +
-                ", code='" + code + '\'' +
-                ", identity=" + identity +
-                ", entityValues=" + entityValues +
-                '}';
+        return Objects.hash(getName(), getRelationType(), isIdentity(), getEntityField());
     }
 }
