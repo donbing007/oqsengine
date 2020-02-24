@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 public class NoOrHaveRanageConditionsBuilder implements ConditionsBuilder<String> {
     @Override
     public String build(Conditions conditions) {
-        return null;
+        //TODO: 还未实现 by dongbin.
+        throw new UnsupportedOperationException();
     }
 }

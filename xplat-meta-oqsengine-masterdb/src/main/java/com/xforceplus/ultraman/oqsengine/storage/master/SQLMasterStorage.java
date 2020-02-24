@@ -16,6 +16,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,34 +40,24 @@ public class SQLMasterStorage implements MasterStorage {
 
 
     private static final String BUILD_SQL =
-        "insert into %s (id, entity, version, time, pref, cref, deleted, attribute,refs) values(?,?,?,?,?,?,?,?,?)";
+        "insert into %s (id, entity, version, time, pref, cref, deleted, attribute) values(?,?,?,?,?,?,?,?,?)";
     private static final String REPLACE_SQL =
         "update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
     private static final String DELETE_SQL =
         "update %s set version = version + 1, deleted = ?, time = ? where id = ? and version = ?";
     private static final String SELECT_SQL =
-        "select entity, version, time, pref, cref, deleted, attribute, refs from %s where id = ?";
+        "select entity, version, time, pref, cref, deleted, attribute from %s where id = ?";
     private static final String SELECT_IN_SQL =
-        "select entity, version, time, pref, cref, deleted, attribute, refs from %s where id in (%s)";
+        "select entity, version, time, pref, cref, deleted, attribute from %s where id in (%s)";
 
-
-
+    @Resource(name = "masterDataSourceSelector")
     private Selector<DataSource> dataSourceSelector;
 
+    @Resource(name = "tableNameSelector")
     private Selector<String> tableNameSelector;
 
+    @Resource(name = "storageTransactionExecutor")
     private TransactionExecutor transactionExecutor;
-
-    public SQLMasterStorage(
-        Selector<DataSource> dataSourceSelector,
-        Selector<String> tableNameSelector,
-        TransactionExecutor transactionExecutor) {
-        this.dataSourceSelector = dataSourceSelector;
-        this.tableNameSelector = tableNameSelector;
-        this.transactionExecutor = transactionExecutor;
-    }
-
-
 
     @Override
     public Optional<IEntity> select(long id, IEntityClass entityClass) throws SQLException {
@@ -96,7 +87,6 @@ public class SQLMasterStorage implements MasterStorage {
                             id,
                             entityClass,
                             toEntityValue(id, entityClass, rs.getString("attribute"), null),
-                            toEntityValue(id, entityClass, rs.getString("refs"), FieldType.LONG),
                             new EntityFamily(rs.getLong("pref"), rs.getLong("cref")),
                             rs.getInt("version")
                         );
@@ -138,7 +128,6 @@ public class SQLMasterStorage implements MasterStorage {
                     st.setLong(6, entity.family().child()); // cref
                     st.setBoolean(7, false); // deleted
                     st.setString(8,toJson(entity.entityValue())); // attribute
-                    st.setString(9, toJson(entity.refs())); // refs
 
                     int size = st.executeUpdate();
 

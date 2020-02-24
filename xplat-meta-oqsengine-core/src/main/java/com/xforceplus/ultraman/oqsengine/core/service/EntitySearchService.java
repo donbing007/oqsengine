@@ -51,3 +51,5 @@ public interface EntitySearchService {
     Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
         throws SQLException;
 }
+
+

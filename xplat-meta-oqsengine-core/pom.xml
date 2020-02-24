@@ -12,6 +12,7 @@
     <artifactId>xplat-meta-oqsengine-core</artifactId>
 
     <dependencies>
+
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-index</artifactId>

@@ -18,13 +18,11 @@ public interface TransactionManagementService {
 
     /**
      * 提交一个事务.
-     * @param id 事务 id.
      */
-    void commit(long id) throws SQLException;
+    void commit() throws SQLException;
 
     /**
      * 回滚一个事务.
-     * @param id 事务 id.
      */
-    void rollback(long id) throws SQLException;
+    void rollback() throws SQLException;
 }

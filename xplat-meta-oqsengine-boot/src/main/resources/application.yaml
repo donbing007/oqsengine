@@ -1,5 +1,14 @@
+instance:
+  id: 0
+
 grpc:
   server:
     port: 8082
 server:
   port: 8085
+
+storage:
+  master:
+    shard:
+      tableName: "big_entity"
+      size: 1

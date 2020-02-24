@@ -28,8 +28,7 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
     }
 
     @Override
-    public void commit(long id) throws SQLException {
-        transactionManager.rebind(id);
+    public void commit() throws SQLException {
 
         Transaction tx = transactionManager.getCurrent();
         tx.commit();
@@ -38,8 +37,7 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
     }
 
     @Override
-    public void rollback(long id) throws SQLException {
-        transactionManager.rebind(id);
+    public void rollback() throws SQLException {
 
         Transaction tx = transactionManager.getCurrent();
         tx.rollback();

@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
@@ -18,9 +17,11 @@ import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.optimizer.SphinxQLQueryOptimizer;
+import com.xforceplus.ultraman.oqsengine.storage.query.QueryOptimizer;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -53,25 +54,17 @@ public class SphinxQLIndexStorage implements IndexStorage {
     private static final String SELECT_SQL = "select id, pref, cref from oqsindex where entity = ? and %s limit ? ?";
     private static final String SELECT_COUNT_SQL = "select count(id) as count from oqsindex where entity = ? and %s";
 
-    private SphinxQLQueryOptimizer queryOptimizer;
+    @Resource(name = "indexQueryOptimizer")
+    private QueryOptimizer<String> queryOptimizer;
 
+    @Resource(name ="indexWriteDataSourceSelector")
     private Selector<DataSource> writerDataSourceSelector;
 
+    @Resource(name = "indexSearchDataSourceSelector")
     private Selector<DataSource> searchDataSourceSelector;
 
+    @Resource(name = "storageTransactionExecutor")
     private TransactionExecutor transactionExecutor;
-
-    public SphinxQLIndexStorage(
-        SphinxQLQueryOptimizer queryOptimizer,
-        Selector<DataSource> writerDataSourceSelector,
-        Selector<DataSource> searchDataSourceSelector,
-        TransactionExecutor transactionExecutor) {
-
-        this.queryOptimizer =  queryOptimizer;
-        this.writerDataSourceSelector = writerDataSourceSelector;
-        this.searchDataSourceSelector = searchDataSourceSelector;
-        this.transactionExecutor = transactionExecutor;
-    }
 
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page) throws SQLException {
@@ -165,10 +158,10 @@ public class SphinxQLIndexStorage implements IndexStorage {
                     st.setLong(2, entity.entityClass().id()); // entity
                     st.setLong(3, entity.family().parent()); // pref
                     st.setLong(4, entity.family().child()); // cref
-                    // numberfields
-                    st.setString(5, serializeJson(entity.entityValue(), entity.refs()));
-                    // stringfields
-                    st.setString(6, serializeFull(entity.entityValue(), entity.refs()));
+                    // attribute
+                    st.setString(5, serializeJson(entity.entityValue()));
+                    // full
+                    st.setString(6, serializeFull(entity.entityValue()));
                     int size = st.executeUpdate();
 
                     // 成功只应该有一条语句影响
@@ -190,14 +183,9 @@ public class SphinxQLIndexStorage implements IndexStorage {
     /**
      * fieldId + fieldvalue(unicode) + space + fieldId + fieldvalue(unicode)....n
      */
-    private static String serializeFull(IEntityValue entityValue, IEntityValue refs) {
+    private static String serializeFull(IEntityValue entityValue) {
         StringBuilder buff = new StringBuilder();
         entityValue.values().stream().forEach(v -> {
-            buff.append(SphinxQLHelper.serializeFull(v));
-            buff.append(" ");
-        });
-
-        refs.values().stream().forEach(v -> {
             buff.append(SphinxQLHelper.serializeFull(v));
             buff.append(" ");
         });
@@ -210,7 +198,7 @@ public class SphinxQLIndexStorage implements IndexStorage {
      * "{fieldId}" : fieldValue
      * }
      */
-    private static String serializeJson(IEntityValue values, IEntityValue refs) {
+    private static String serializeJson(IEntityValue values) {
         // key = fieldId
         Map<String, Object> data = values.values().stream().collect(Collectors.toMap(
             v -> Long.toString(v.getField().id()),
@@ -223,11 +211,6 @@ public class SphinxQLIndexStorage implements IndexStorage {
                 }
             },
             (v0, v1) -> v0));
-
-        data.putAll(refs.values().stream().collect(Collectors.toMap(
-            v -> Long.toString(v.getField().id()),
-            IValue::valueToLong,
-            (v0, v1) -> v0)));
 
         return JSON.toJSONString(data);
     }
