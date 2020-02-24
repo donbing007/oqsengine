@@ -1,7 +1,0 @@
-com\xforceplus\ultraman\oqsengine\storage\transaction\AbstractTransactionManagerTest.class
-com\xforceplus\ultraman\oqsengine\storage\transaction\AbstractTransactionManagerTest$MockTransactionManager.class
-com\xforceplus\ultraman\oqsengine\storage\executor\AutoShardTransactionExecutorTest.class
-com\xforceplus\ultraman\oqsengine\storage\selector\DataSourceHashSelectorTest.class
-com\xforceplus\ultraman\oqsengine\storage\selector\NumberIndexTableNameHashSelectorTest.class
-com\xforceplus\ultraman\oqsengine\storage\transaction\MultiLocalTransactionTest.class
-com\xforceplus\ultraman\oqsengine\storage\transaction\MultiLocalTransactionTest$MockResource.class
