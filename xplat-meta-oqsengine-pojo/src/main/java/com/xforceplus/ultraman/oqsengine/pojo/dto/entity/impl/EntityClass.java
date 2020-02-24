@@ -15,7 +15,7 @@ public class EntityClass implements IEntityClass {
     /**
      * 关系信息
      */
-    private String relation;
+    private List<Relation> relations;
     /**
      * 子对象结构信息
      */
@@ -33,10 +33,10 @@ public class EntityClass implements IEntityClass {
     public EntityClass() {
     }
 
-    public EntityClass(Long id, String code, String relation, List<IEntityClass> entityClasss, IEntityClass extendEntityClass, List<IEntityField> fields) {
+    public EntityClass(Long id, String code, List<Relation> relations, List<IEntityClass> entityClasss, IEntityClass extendEntityClass, List<Field> fields) {
         this.id = id;
         this.code = code;
-        this.relation = relation;
+        this.relations = relations;
         this.entityClasss = entityClasss;
         this.extendEntityClass = extendEntityClass;
         this.fields = new ArrayList<>(fields);
@@ -53,8 +53,8 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
-    public String relation() {
-        return relation;
+    public List<Relation> relations() {
+        return relations;
     }
 
     @Override
@@ -92,7 +92,7 @@ public class EntityClass implements IEntityClass {
         }
         EntityClass that = (EntityClass) o;
         return id == that.id &&
-            Objects.equals(relation, that.relation) &&
+            Objects.equals(relations, that.relations) &&
             Objects.equals(entityClasss, that.entityClasss) &&
             Objects.equals(extendEntityClass, that.extendEntityClass) &&
             Objects.equals(fields, that.fields);
@@ -100,14 +100,14 @@ public class EntityClass implements IEntityClass {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, relation, entityClasss, extendEntityClass, fields);
+        return Objects.hash(id, relations, entityClasss, extendEntityClass, fields);
     }
 
     @Override
     public String toString() {
         return "EntityClass{" +
             "id=" + id +
-            ", relation='" + relation + '\'' +
+            ", relations='" + relations + '\'' +
             ", entityClasss=" + entityClasss +
             ", extendEntityClass=" + extendEntityClass +
             ", fields=" + fields +

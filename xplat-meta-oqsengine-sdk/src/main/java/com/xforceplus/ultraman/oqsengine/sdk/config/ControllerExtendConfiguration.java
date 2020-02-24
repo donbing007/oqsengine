@@ -16,12 +16,12 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import java.util.List;
 
-//@Configuration
-//@Component
-//public class ControllerExtendConfiguration extends WebMvcConfigurationSupport {
-public class ControllerExtendConfiguration implements WebMvcConfigurer {
+@Configuration
+@Component
+public class ControllerExtendConfiguration extends WebMvcConfigurationSupport {
+//public class ControllerExtendConfiguration implements WebMvcConfigurer {
 
-//    @Override
+    @Override
     public RequestMappingHandlerMapping createRequestMappingHandlerMapping() {
         return new MyRequestMappingHandler();
     }

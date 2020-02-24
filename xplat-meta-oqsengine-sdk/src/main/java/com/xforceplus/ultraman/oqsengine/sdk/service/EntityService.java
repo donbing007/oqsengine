@@ -121,7 +121,6 @@ public class EntityService {
                 .setId(entity.id())
                 .setCode(entity.code())
                 .addAllFields(entity.fields().stream().map(this::toFieldUp).collect(Collectors.toList()))
-                .setRelation(entity.relation())
                 .build();
     }
 
@@ -305,9 +304,9 @@ public class EntityService {
             select.setConditions(toConditionsUp(entityClass, condition.getConditions()));
         }
 
-        if(condition.getSort() != null){
-            select.addAllSort(toSortUp(condition.getSort()));
-        }
+//        if(condition.getSort() != null){
+//            select.addAllSort(toSortUp(condition.getSort()));
+//        }
 
         SelectByCondition selectByCondition = select.build();
 
@@ -379,7 +378,6 @@ public class EntityService {
                         .stream()
                         .map(subField -> toFieldCondition(entity, subField)));
     }
-
 
     private Map<String, String> filterItem(Map<String, String> values, String mainEntityCode, EntityItem entityItem){
 
