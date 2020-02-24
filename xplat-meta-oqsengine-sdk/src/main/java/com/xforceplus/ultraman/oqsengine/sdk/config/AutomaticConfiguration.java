@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnClass(name = "org.springframework.boot.context.properties.bind.Binder")
 @ConfigurationProperties(prefix = "xplat.meta.oqsengine")
 @EnableConfigurationProperties(AutomaticConfiguration.class)
-@ComponentScan(value = "com.xforceplus.ultraman.oqsengine.sdk.*")
+@ComponentScan(value = "com.xforceplus.ultraman.oqsengine")
 public class AutomaticConfiguration {
     //grpc相关属性配置
     private String host = "127.0.0.1";
@@ -26,6 +26,9 @@ public class AutomaticConfiguration {
     private String includeRex = "(.*)";
 
     private boolean debug = false;
+
+    //pfcp相关配置
+    private String pfbcAccessUri = "http://pfcp.phoenix-t.xforceplus.com";
 
     private AuthSearcherConfig authSearcherConfig = new AuthSearcherConfig();
 
@@ -102,5 +105,13 @@ public class AutomaticConfiguration {
 
     public void setControllerExtendConfiguration(ControllerExtendConfiguration controllerExtendConfiguration) {
         this.controllerExtendConfiguration = controllerExtendConfiguration;
+    }
+
+    public String getPfbcAccessUri() {
+        return pfbcAccessUri;
+    }
+
+    public void setPfbcAccessUri(String pfbcAccessUri) {
+        this.pfbcAccessUri = pfbcAccessUri;
     }
 }

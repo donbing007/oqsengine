@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -14,10 +16,10 @@ public interface IEntityClass {
     public String code();
 
     /**
-     * 获得本对象和父对象的关系 - 从父对象往下描述 - 父对象只有1个。
+     * 关系信息的集合
      * @return 根对象默认为Null，OneToOne为OTO，OneToMany为OTM
      */
-    public String relation();
+    public List<Relation> relations();
 
     /**
      * 获得本对象的下一级子对象
