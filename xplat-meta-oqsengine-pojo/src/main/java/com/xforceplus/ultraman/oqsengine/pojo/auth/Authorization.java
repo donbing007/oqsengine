@@ -13,6 +13,7 @@ public class Authorization implements Serializable {
     private Long appId;
     private String role;
     private Long tenantId;
+    private String env;
 
     public Authorization() {
     }
@@ -21,6 +22,13 @@ public class Authorization implements Serializable {
         this.appId = appId;
         this.role = role;
         this.tenantId = tenantId;
+    }
+
+    public Authorization(Long appId, String role, Long tenantId, String env) {
+        this.appId = appId;
+        this.role = role;
+        this.tenantId = tenantId;
+        this.env = env;
     }
 
     public Authorization(String role, Long tenantId) {
@@ -51,27 +59,37 @@ public class Authorization implements Serializable {
         this.tenantId = tenantId;
     }
 
+    public String getEnv() {
+        return env;
+    }
+
+    public void setEnv(String env) {
+        this.env = env;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Authorization)) return false;
-        Authorization authorization = (Authorization) o;
-        return Objects.equals(getRole(), authorization.getRole()) &&
-            Objects.equals(getAppId(),authorization.getAppId()) &&
-            Objects.equals(getTenantId(), authorization.getTenantId());
+        Authorization that = (Authorization) o;
+        return Objects.equals(getAppId(), that.getAppId()) &&
+                Objects.equals(getRole(), that.getRole()) &&
+                Objects.equals(getTenantId(), that.getTenantId()) &&
+                Objects.equals(getEnv(), that.getEnv());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getRole(), getTenantId());
+        return Objects.hash(getAppId(), getRole(), getTenantId(), getEnv());
     }
 
     @Override
     public String toString() {
-        return "Auth{" +
-            "appId='" + appId + '\'' +
-            ", role='" + role + '\'' +
-            ", tenant='" + tenantId + '\'' +
-            '}';
+        return "Authorization{" +
+                "appId=" + appId +
+                ", role='" + role + '\'' +
+                ", tenantId=" + tenantId +
+                ", env='" + env + '\'' +
+                '}';
     }
 }

@@ -1,9 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.sdk.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.xforceplus.ultraman.oqsengine.pojo.auth.Authorization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.PageBo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltPage;
+import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
@@ -35,6 +37,9 @@ public class UltFormSettingController {
     @Autowired
     private FormBoMapLocalStore formBoMapLocalStore;
 
+    @Autowired
+    private AuthSearcherConfig config;
+
     /**
      * 部署动态表单
      * @return
@@ -45,14 +50,20 @@ public class UltFormSettingController {
         String url = String.format("%s/forms/%s/deployments"
                 , accessUri
                 , id);
-        Response<UltForm> result = new Response<UltForm>();
+        Authorization auth = new Authorization();
+        auth.setAppId(Long.parseLong(config.getAppId()));
+        auth.setTenantId(Long.parseLong(config.getTenant()));
+        auth.setEnv(config.getEnv());
+        Response<List<UltForm>> result = new Response<List<UltForm>>();
         try {
-            result = restTemplate.getForObject(url,Response.class);
+//            result = restTemplate.getForObject(url,Response.class);
+            result = restTemplate.postForObject(url, auth,Response.class);
             if (result.getResult()!=null){
-                //将List转成Entity
-                UltForm ultForm = JSON.parseObject(JSON.toJSONString(result.getResult()),UltForm.class);
-                //将数据保存到内存中
-                formBoMapLocalStore.save(ultForm);
+                List<UltForm> ultForms = result.getResult();
+                for (int i = 0;i<ultForms.size();i++) {
+                    UltForm saveUltForm = JSON.parseObject(JSON.toJSONString(ultForms.get(i)),UltForm.class);
+                    formBoMapLocalStore.save(saveUltForm);
+                }
             }
             return result;
         }catch (Exception e){
@@ -70,19 +81,35 @@ public class UltFormSettingController {
     public Response pageBoSeetings(@PathVariable String id) {
         DataSet ds = null;
         if(!StringUtils.isEmpty(id)) {
+            Response<UltForm> response = new Response<>();
             ds = formBoMapLocalStore.query().selectAll()
-                    .where("id")
+                    .where("refFormId")
                     .eq(id)
                     .execute();
+            List<Row> trows = ds.toRows();
+            if (ds!=null && trows!=null && trows.size() > 0){
+                ResponseList<UltForm> items = trows.stream().
+                        map(this::toUltForm).collect(Collectors.toCollection(ResponseList::new));
+                response.setMessage("查询成功");
+                response.setCode("1");
+                if (items.size() == 1) {
+                    response.setResult(items.get(0));
+                }
+            }else {
+                ds = formBoMapLocalStore.query().selectAll()
+                        .where("id")
+                        .eq(id)
+                        .execute();
 
-            List<Row> rows = ds.toRows();
-            ResponseList<UltForm> items = rows.stream().map(this::toUltForm).collect(Collectors.toCollection(ResponseList::new));
+                List<Row> rows = ds.toRows();
+                ResponseList<UltForm> items = rows.stream().
+                        map(this::toUltForm).collect(Collectors.toCollection(ResponseList::new));
 
-            Response<UltForm> response = new Response<>();
-            response.setMessage("查询成功");
-            response.setCode("1");
-            if (items.size() == 1){
-                response.setResult(items.get(0));
+                response.setMessage("查询成功");
+                response.setCode("1");
+                if (items.size() == 1) {
+                    response.setResult(items.get(0));
+                }
             }
             return response;
 
@@ -101,6 +128,9 @@ public class UltFormSettingController {
         ultForm.setId(Long.parseLong(RowUtils.getRowValue(row, "id").map(Object::toString).orElse("")));
         ultForm.setName(RowUtils.getRowValue(row, "name").map(Object::toString).orElse(""));
         ultForm.setCode(RowUtils.getRowValue(row, "code").map(Object::toString).orElse(""));
+        ultForm.setRefFormId(Long.parseLong(RowUtils.getRowValue(row, "refFormId").map(Object::toString).orElse("")));
+        ultForm.setTenantId(Long.parseLong(config.getTenant()));
+        ultForm.setTenantName(RowUtils.getRowValue(row, "tenantName").map(Object::toString).orElse(""));
         ultForm.setSetting(RowUtils.getRowValue(row, "setting").map(Object::toString).orElse(""));
         return ultForm;
     }

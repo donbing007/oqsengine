@@ -189,7 +189,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                     Row parentRow = parent.getRow();
                     String parentCode = RowUtils.getRowValue(parentRow, "code").toString();
                     List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> parentFields = loadFields(parentId);
-                    parentEntityClass = new EntityClass(Long.valueOf(parentId), parentCode, "", Collections.emptyList(), null, parentFields);
+                    parentEntityClass = new EntityClass(Long.valueOf(parentId), parentCode, null, Collections.emptyList(), null, parentFields);
                 }
             }
 
@@ -205,11 +205,11 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 Row subRow = subEntities.getRow();
                 String subId = RowUtils.getRowValue(subRow, "id").toString();
                 String subCode = RowUtils.getRowValue(subRow, "code").toString();
-                EntityClass sub = new EntityClass(Long.valueOf(subId), subCode, "", Collections.emptyList(), null, loadFields(subId));
+                EntityClass sub = new EntityClass(Long.valueOf(subId), subCode, null, Collections.emptyList(), null, loadFields(subId));
                 entityClasses.add(sub);
             }
 
-            EntityClass entityClass = new EntityClass(Long.valueOf(boId), code, "", entityClasses, parentEntityClass, fields);
+            EntityClass entityClass = new EntityClass(Long.valueOf(boId), code, null, entityClasses, parentEntityClass, fields);
             return Optional.of(entityClass);
         }
 

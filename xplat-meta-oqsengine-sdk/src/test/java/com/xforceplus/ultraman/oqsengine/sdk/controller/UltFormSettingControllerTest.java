@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.xforceplus.ultraman.oqsengine.pojo.auth.Authorization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltPage;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AutomaticConfiguration;
@@ -18,6 +19,9 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
@@ -43,24 +47,30 @@ public class UltFormSettingControllerTest {
      * 动态表单
      * @return
      */
-    @Test
+//    @Test
     public void deploymentsPage() {
         String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
+//        String accessUri = "http://localhost:8080";
         String url = String.format("%s/forms/%s/deployments"
                 , accessUri
-                , "1230708278908764162");
-        Response<UltForm> result = new Response<UltForm>();
+                , "1231472494170529793");
+        Authorization auth = new Authorization();
+        auth.setTenantId(Long.parseLong("1141603295426236416"));
+        Response<List<UltForm>> result = new Response<List<UltForm>>();
         try {
-            result = restTemplate.getForObject(url,Response.class);
+            result = restTemplate.postForObject(url, auth,Response.class);
             if (result.getResult()!=null){
+                List<UltForm> ultForms = result.getResult();
+                for (int i = 0;i<ultForms.size();i++) {
+                    UltForm saveUltForm = JSON.parseObject(JSON.toJSONString(ultForms.get(i)),UltForm.class);
+                }
                 //将List转成Entity
-                UltForm ultForm = JSON.parseObject(JSON.toJSONString(result.getResult()),UltForm.class);
+//                UltForm ultForm = JSON.parseObject(JSON.toJSONString(result.getResult()),UltForm.class);
                 //将数据保存到内存中
-                FormBoMapLocalStore formBoMapLocalStore = FormBoMapLocalStore.create();
-                formBoMapLocalStore.save(ultForm);
+//                formBoMapLocalStore.save(ultForm);
             }
         }catch (Exception e){
-            result.setCode("400");
+            result.setCode("204");
             result.setMessage("部署失败");
         }
     }

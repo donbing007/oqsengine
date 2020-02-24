@@ -42,7 +42,7 @@ public class UltPageSettingControllerTest {
      * 部署页面
      * @return
      */
-    @Test
+//    @Test
     public void deploymentsPage() {
         String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
         String url = String.format("%s/pages/%s/deployments"
@@ -78,7 +78,7 @@ public class UltPageSettingControllerTest {
      * 获取页面bo列表
      * @return
      */
-    @Test
+//    @Test
     public void pageBos() {
         PageBoMapLocalStore pageBoMapLocalStore = PageBoMapLocalStore.create();
         DataSet ds = null;
