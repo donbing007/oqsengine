@@ -1,9 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 
 import java.util.Iterator;
@@ -24,7 +26,6 @@ public class NoOrNorRanageConditionsBuilder implements ConditionsBuilder<String>
         Iterator<ConditionNode> nodes = conditions.iterator();
         ConditionNode node = null;
         ValueConditionNode valueConditionNode = null;
-        IValue conditionValue;
 
         StringBuilder buff = new StringBuilder();
         buff.append("MATCH('@").append(FieldDefine.FULL_FIELDS).append(" ");

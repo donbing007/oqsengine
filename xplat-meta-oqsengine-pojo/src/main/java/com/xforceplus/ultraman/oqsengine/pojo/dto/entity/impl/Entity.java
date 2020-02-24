@@ -5,13 +5,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import java.util.Objects;
 
 /**
- * 默认情况下,不能进行 Link 查询.
- * 需要指定Link 查询器实现.
+ * 表示实际 entity 实体.
  */
 public class Entity implements IEntity {
 
     private static final IEntityFamily EMPTY_FAMILY = new EntityFamily(0, 0);
-    private static final IEntityValue EMPTY_REFS = new EntityValue(0);
 
     /**
      * 数据id
@@ -30,11 +28,6 @@ public class Entity implements IEntity {
      * 继承关系.
      */
     private IEntityFamily family = EMPTY_FAMILY;
-
-    /**
-     * 外键集合.
-     */
-    private IEntityValue refs = EMPTY_REFS;
 
     /**
      * 数据版本
@@ -62,24 +55,19 @@ public class Entity implements IEntity {
     }
 
     @Override
-    public IEntityValue refs() {
-        return refs;
-    }
-
-    @Override
     public int version() {
         return version;
     }
 
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue) {
-        this(id, entityClass, entityValue, null, null, 0);
+        this(id, entityClass, entityValue, null, 0);
     }
 
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, int version) {
-        this(id, entityClass, entityValue, null, null, version);
+        this(id, entityClass, entityValue, null, version);
     }
 
-    public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, IEntityValue refs, IEntityFamily family, int version) {
+    public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, IEntityFamily family, int version) {
         if (entityClass == null) {
             throw new IllegalArgumentException("Invalid class meta information.");
         }
@@ -93,9 +81,6 @@ public class Entity implements IEntity {
         this.entityValue = entityValue;
         if (family != null) {
             this.family = family;
-        }
-        if (refs != null) {
-            this.refs = refs;
         }
 
         this.version = version;
@@ -123,13 +108,12 @@ public class Entity implements IEntity {
         return id == entity.id &&
             version == entity.version &&
             Objects.equals(entityClass, entity.entityClass) &&
-            Objects.equals(entityValue, entity.entityValue) &&
-            Objects.equals(refs, entity.refs);
+            Objects.equals(entityValue, entity.entityValue);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, entityClass, entityValue, refs, version);
+        return Objects.hash(id, entityClass, entityValue, version);
     }
 
     @Override
@@ -138,7 +122,6 @@ public class Entity implements IEntity {
             "id=" + id +
             ", entityClass=" + entityClass +
             ", entityValue=" + entityValue +
-            ", refs=" + refs +
             ", version=" + version +
             '}';
     }

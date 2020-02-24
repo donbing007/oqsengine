@@ -33,7 +33,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private LongIdGenerator idGenerator;
 
-    @Resource
+    @Resource(name = "serviceTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
     @Resource
@@ -41,6 +41,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private IndexStorage indexStorage;
+
 
     @Override
     public long build(IEntity entity) throws SQLException {
@@ -165,8 +166,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 newValues.addValue(v);
             });
 
-        //TODO: 外键关系未分离.
-        return new Entity(entity.id(), entityClass, newValues, null, family, entity.version());
+        return new Entity(entity.id(), entityClass, newValues, family, entity.version());
     }
 
 }

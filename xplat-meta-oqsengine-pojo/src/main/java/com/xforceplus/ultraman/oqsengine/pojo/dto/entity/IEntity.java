@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import java.io.Serializable;
 
+/**
+ * entity 实体定义.
+ */
 public interface IEntity extends Serializable {
 
     /**
@@ -27,12 +30,6 @@ public interface IEntity extends Serializable {
      * @return 家族信息.
      */
     public IEntityFamily family();
-
-    /**
-     * 指向关联对象的"外键".
-     * @return 外键集合.
-     */
-    public IEntityValue refs();
 
     /**
      * 重置 id.
