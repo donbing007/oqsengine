@@ -19,10 +19,10 @@ import org.springframework.context.annotation.Configuration;
 public class CommonConfiguration {
 
 
-    @Value("{storage.master.shard.tableName}")
+    @Value("${storage.master.name}")
     private String masterTableName;
 
-    @Value("{storage.master.shard.size}")
+    @Value("${storage.master.shard.size}")
     private int masterSize;
 
     @Value("${instance.id}")

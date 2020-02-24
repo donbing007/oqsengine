@@ -16,10 +16,10 @@ import com.xforceplus.ultraman.oqsengine.storage.helper.StorageTypeHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.optimizer.SphinxQLQueryOptimizer;
 import com.xforceplus.ultraman.oqsengine.storage.query.QueryOptimizer;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -43,16 +43,16 @@ import java.util.stream.Collectors;
 public class SphinxQLIndexStorage implements IndexStorage {
 
     private static final String BUILD_SQL =
-        String.format("insert into oqsindex (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)",
+        String.format("insert into %s (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)",
             FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
             FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
     private static final String REPLACE_SQL =
-        String.format("replace into oqsindex (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)",
+        String.format("replace into %s (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)",
             FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
             FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
-    private static final String DELETE_SQL = "delete from oqsindex where id = ?";
-    private static final String SELECT_SQL = "select id, pref, cref from oqsindex where entity = ? and %s limit ? ?";
-    private static final String SELECT_COUNT_SQL = "select count(id) as count from oqsindex where entity = ? and %s";
+    private static final String DELETE_SQL = "delete from %s where id = ?";
+    private static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? and %s limit ? ?";
+    private static final String SELECT_COUNT_SQL = "select count(id) as count from %s where entity = ? and %s";
 
     @Resource(name = "indexQueryOptimizer")
     private QueryOptimizer<String> queryOptimizer;
@@ -66,6 +66,9 @@ public class SphinxQLIndexStorage implements IndexStorage {
     @Resource(name = "storageTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
+    @Value("${storage.index.name}")
+    private String indexTableName;
+
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page) throws SQLException {
 
@@ -75,7 +78,7 @@ public class SphinxQLIndexStorage implements IndexStorage {
             public Object run(TransactionResource resource) throws SQLException {
                 String whereCondition = queryOptimizer.optimizeConditions(conditions).build(conditions);
                 if (!page.isSinglePage()) {
-                    String countSql = String.format(SELECT_COUNT_SQL,whereCondition);
+                    String countSql = String.format(SELECT_COUNT_SQL,indexTableName, whereCondition);
                     PreparedStatement st = ((Connection) resource.value()).prepareStatement(countSql);
                     st.setLong(1, entityClass.id());
                     ResultSet rs = st.executeQuery();
@@ -88,7 +91,7 @@ public class SphinxQLIndexStorage implements IndexStorage {
                 }
 
                 PageScope scope = page.getNextPage();
-                String sql = String.format(SELECT_SQL, whereCondition);
+                String sql = String.format(SELECT_SQL, indexTableName, whereCondition);
                 PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
                 st.setLong(1, entityClass.id());
                 st.setLong(2, scope.startLine);
@@ -127,7 +130,8 @@ public class SphinxQLIndexStorage implements IndexStorage {
             @Override
             public Object run(TransactionResource resource) throws SQLException {
 
-                PreparedStatement st = ((Connection) resource.value()).prepareStatement(DELETE_SQL);
+                String sql = String.format(DELETE_SQL, indexTableName);
+                PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
                 st.setLong(1, entity.id()); // id
 
                 int size = st.executeUpdate();
@@ -144,7 +148,7 @@ public class SphinxQLIndexStorage implements IndexStorage {
 
     private void doBuildOrReplace(IEntity entity, boolean replacement) throws SQLException {
         checkId(entity);
-        final String sql = replacement ? REPLACE_SQL : BUILD_SQL;
+        final String sql = String.format(replacement ? REPLACE_SQL : BUILD_SQL, indexTableName);
 
         transactionExecutor.execute(
             new DataSourceShardingTask(writerDataSourceSelector, Long.toString(entity.id())) {

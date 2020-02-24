@@ -9,6 +9,8 @@ server:
 
 storage:
   master:
+    name: "oqsengine"
     shard:
-      tableName: "big_entity"
       size: 1
+  index:
+    name: "oqsengine"
