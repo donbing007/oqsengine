@@ -51,7 +51,7 @@ public class Entity implements IEntity {
 
     @Override
     public IEntityFamily family() {
-        return null;
+        return family;
     }
 
     @Override

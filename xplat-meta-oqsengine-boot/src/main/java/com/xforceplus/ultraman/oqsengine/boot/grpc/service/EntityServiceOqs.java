@@ -6,10 +6,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -287,8 +284,14 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 .build();
     }
 
+    //TODO version
     private IEntity toEntity(EntityUp in){
         return new Entity(in.getId(), toEntityClass(in), toEntityValue(in));
+    }
+
+    //TODO
+    private IEntityFamily toEntityFamily(EntityUp in) {
+        return null;
     }
 
     private Conditions toConditions(ConditionsUp conditionsUp){
