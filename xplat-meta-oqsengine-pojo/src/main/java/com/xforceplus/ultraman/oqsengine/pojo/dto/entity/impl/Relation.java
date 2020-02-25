@@ -14,6 +14,11 @@ public class Relation {
     private String name;
 
     /**
+     * 关联对象Id
+     */
+    private long entityClassId;
+
+    /**
      * 关系类型 - 使用关系的code填入
      */
     private String relationType;
@@ -38,8 +43,12 @@ public class Relation {
      */
     private IEntityField entityField;
 
-    public Relation(String name, String relationType, boolean identity, IEntityField entityField) {
+    public Relation() {
+    }
+
+    public Relation(String name, long entityClassId, String relationType, boolean identity, IEntityField entityField) {
         this.name = name;
+        this.entityClassId = entityClassId;
         this.relationType = relationType;
         this.identity = identity;
         this.entityField = entityField;
@@ -51,6 +60,14 @@ public class Relation {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public long getEntityClassId() {
+        return entityClassId;
+    }
+
+    public void setEntityClassId(long entityClassId) {
+        this.entityClassId = entityClassId;
     }
 
     public String getRelationType() {
@@ -82,7 +99,8 @@ public class Relation {
         if (this == o) return true;
         if (!(o instanceof Relation)) return false;
         Relation relation = (Relation) o;
-        return isIdentity() == relation.isIdentity() &&
+        return getEntityClassId() == relation.getEntityClassId() &&
+                isIdentity() == relation.isIdentity() &&
                 Objects.equals(getName(), relation.getName()) &&
                 Objects.equals(getRelationType(), relation.getRelationType()) &&
                 Objects.equals(getEntityField(), relation.getEntityField());
@@ -90,7 +108,18 @@ public class Relation {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getRelationType(), isIdentity(), getEntityField());
+        return Objects.hash(getName(), getEntityClassId(), getRelationType(), isIdentity(), getEntityField());
+    }
+
+    @Override
+    public String toString() {
+        return "Relation{" +
+                "name='" + name + '\'' +
+                ", entityClassId=" + entityClassId +
+                ", relationType='" + relationType + '\'' +
+                ", identity=" + identity +
+                ", entityField=" + entityField +
+                '}';
     }
 
     @Override

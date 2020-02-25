@@ -23,29 +23,19 @@ public class DictController {
     @Autowired
     private DictMapLocalStore store;
 
-    @GetMapping("/api/{tenantId}/{appCode}/enum/{id}/options")
-    public Response<ResponseList<DictItem>> getDict(@PathVariable("tenantId") String tenantId
-            , @PathVariable("appCode") String appCode
-            , @PathVariable("id") String enumId
+    @GetMapping("/enum/{id}/options")
+    public Response<ResponseList<DictItem>> getDict(@PathVariable("id") String enumId
             , @RequestParam(required = false) String enumCode
     ){
 
         DataSet ds = null;
         if(StringUtils.isEmpty(enumCode)) {
             ds = store.query().selectAll()
-                    .where("tenantId")
-                    .eq(tenantId)
-                    .and("appId")
-                    .eq(appCode)
-                    .and("dictId")
+                    .where("dictId")
                     .eq(enumId).execute();
         }else{
             ds = store.query().selectAll()
-                    .where("tenantId")
-                    .eq(tenantId)
-                    .and("appId")
-                    .eq(appCode)
-                    .and("dictId")
+                    .where("dictId")
                     .eq(enumId)
                     .and("code").eq(enumCode)
                     .execute();

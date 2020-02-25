@@ -16,10 +16,8 @@ public class ModuleController {
     private MetadataRepository metadataRepository;
 
     //TODO tenantId and appCode not used currently
-    @GetMapping("/api/{tenantId}/{appCode}/bos/{id}/entityClass")
-    public Response<BoItem> getBoDetails(@PathVariable String tenantId
-                 , @PathVariable String appCode
-                 , @PathVariable String id){
+    @GetMapping("/bos/{id}/entityClass")
+    public Response<BoItem> getBoDetails(@PathVariable String id){
 
         Response<BoItem> response = new Response<>();
         BoItem boItem = metadataRepository.getBoDetailById(id);
