@@ -4,22 +4,21 @@
 package com.xforceplus.ultraman.oqsengine.sdk;
 
 /**
- * Protobuf type {@code ValueUp}
+ * Protobuf type {@code RelationUp}
  */
-public  final class ValueUp extends
+public  final class RelationUp extends
     com.google.protobuf.GeneratedMessageV3 implements
-    // @@protoc_insertion_point(message_implements:ValueUp)
-    ValueUpOrBuilder {
+    // @@protoc_insertion_point(message_implements:RelationUp)
+    RelationUpOrBuilder {
 private static final long serialVersionUID = 0L;
-  // Use ValueUp.newBuilder() to construct.
-  private ValueUp(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  // Use RelationUp.newBuilder() to construct.
+  private RelationUp(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-  private ValueUp() {
-    value_ = "";
+  private RelationUp() {
     name_ = "";
-    fieldType_ = "";
-    fieldId_ = 0L;
+    relationType_ = "";
+    identity_ = false;
   }
 
   @Override
@@ -27,7 +26,7 @@ private static final long serialVersionUID = 0L;
   getUnknownFields() {
     return this.unknownFields;
   }
-  private ValueUp(
+  private RelationUp(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -56,24 +55,31 @@ private static final long serialVersionUID = 0L;
           case 10: {
             String s = input.readStringRequireUtf8();
 
-            value_ = s;
+            name_ = s;
             break;
           }
           case 18: {
             String s = input.readStringRequireUtf8();
 
-            name_ = s;
+            relationType_ = s;
             break;
           }
-          case 26: {
-            String s = input.readStringRequireUtf8();
+          case 24: {
 
-            fieldType_ = s;
+            identity_ = input.readBool();
             break;
           }
-          case 32: {
+          case 34: {
+            FieldUp.Builder subBuilder = null;
+            if (entityField_ != null) {
+              subBuilder = entityField_.toBuilder();
+            }
+            entityField_ = input.readMessage(FieldUp.parser(), extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom(entityField_);
+              entityField_ = subBuilder.buildPartial();
+            }
 
-            fieldId_ = input.readInt64();
             break;
           }
         }
@@ -90,54 +96,20 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return EntityResourceProto.internal_static_ValueUp_descriptor;
+    return EntityResourceProto.internal_static_RelationUp_descriptor;
   }
 
   protected FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return EntityResourceProto.internal_static_ValueUp_fieldAccessorTable
+    return EntityResourceProto.internal_static_RelationUp_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            ValueUp.class, ValueUp.Builder.class);
+            RelationUp.class, RelationUp.Builder.class);
   }
 
-  public static final int VALUE_FIELD_NUMBER = 1;
-  private volatile Object value_;
-  /**
-   * <code>string value = 1;</code>
-   */
-  public String getValue() {
-    Object ref = value_;
-    if (ref instanceof String) {
-      return (String) ref;
-    } else {
-      com.google.protobuf.ByteString bs =
-          (com.google.protobuf.ByteString) ref;
-      String s = bs.toStringUtf8();
-      value_ = s;
-      return s;
-    }
-  }
-  /**
-   * <code>string value = 1;</code>
-   */
-  public com.google.protobuf.ByteString
-      getValueBytes() {
-    Object ref = value_;
-    if (ref instanceof String) {
-      com.google.protobuf.ByteString b =
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (String) ref);
-      value_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
-
-  public static final int NAME_FIELD_NUMBER = 2;
+  public static final int NAME_FIELD_NUMBER = 1;
   private volatile Object name_;
   /**
-   * <code>string name = 2;</code>
+   * <code>string name = 1;</code>
    */
   public String getName() {
     Object ref = name_;
@@ -152,7 +124,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string name = 2;</code>
+   * <code>string name = 1;</code>
    */
   public com.google.protobuf.ByteString
       getNameBytes() {
@@ -168,47 +140,68 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int FIELDTYPE_FIELD_NUMBER = 3;
-  private volatile Object fieldType_;
+  public static final int RELATIONTYPE_FIELD_NUMBER = 2;
+  private volatile Object relationType_;
   /**
-   * <code>string fieldType = 3;</code>
+   * <code>string relationType = 2;</code>
    */
-  public String getFieldType() {
-    Object ref = fieldType_;
+  public String getRelationType() {
+    Object ref = relationType_;
     if (ref instanceof String) {
       return (String) ref;
     } else {
       com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       String s = bs.toStringUtf8();
-      fieldType_ = s;
+      relationType_ = s;
       return s;
     }
   }
   /**
-   * <code>string fieldType = 3;</code>
+   * <code>string relationType = 2;</code>
    */
   public com.google.protobuf.ByteString
-      getFieldTypeBytes() {
-    Object ref = fieldType_;
+      getRelationTypeBytes() {
+    Object ref = relationType_;
     if (ref instanceof String) {
       com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (String) ref);
-      fieldType_ = b;
+      relationType_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
     }
   }
 
-  public static final int FIELDID_FIELD_NUMBER = 4;
-  private long fieldId_;
+  public static final int IDENTITY_FIELD_NUMBER = 3;
+  private boolean identity_;
   /**
-   * <code>int64 fieldId = 4;</code>
+   * <code>bool identity = 3;</code>
    */
-  public long getFieldId() {
-    return fieldId_;
+  public boolean getIdentity() {
+    return identity_;
+  }
+
+  public static final int ENTITYFIELD_FIELD_NUMBER = 4;
+  private FieldUp entityField_;
+  /**
+   * <code>.FieldUp entityField = 4;</code>
+   */
+  public boolean hasEntityField() {
+    return entityField_ != null;
+  }
+  /**
+   * <code>.FieldUp entityField = 4;</code>
+   */
+  public FieldUp getEntityField() {
+    return entityField_ == null ? FieldUp.getDefaultInstance() : entityField_;
+  }
+  /**
+   * <code>.FieldUp entityField = 4;</code>
+   */
+  public FieldUpOrBuilder getEntityFieldOrBuilder() {
+    return getEntityField();
   }
 
   private byte memoizedIsInitialized = -1;
@@ -223,17 +216,17 @@ private static final long serialVersionUID = 0L;
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (!getValueBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, value_);
-    }
     if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, name_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
     }
-    if (!getFieldTypeBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, fieldType_);
+    if (!getRelationTypeBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, relationType_);
     }
-    if (fieldId_ != 0L) {
-      output.writeInt64(4, fieldId_);
+    if (identity_ != false) {
+      output.writeBool(3, identity_);
+    }
+    if (entityField_ != null) {
+      output.writeMessage(4, getEntityField());
     }
     unknownFields.writeTo(output);
   }
@@ -243,18 +236,19 @@ private static final long serialVersionUID = 0L;
     if (size != -1) return size;
 
     size = 0;
-    if (!getValueBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, value_);
-    }
     if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, name_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
     }
-    if (!getFieldTypeBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, fieldType_);
+    if (!getRelationTypeBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, relationType_);
     }
-    if (fieldId_ != 0L) {
+    if (identity_ != false) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(4, fieldId_);
+        .computeBoolSize(3, identity_);
+    }
+    if (entityField_ != null) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(4, getEntityField());
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -266,20 +260,23 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof ValueUp)) {
+    if (!(obj instanceof RelationUp)) {
       return super.equals(obj);
     }
-    ValueUp other = (ValueUp) obj;
+    RelationUp other = (RelationUp) obj;
 
     boolean result = true;
-    result = result && getValue()
-        .equals(other.getValue());
     result = result && getName()
         .equals(other.getName());
-    result = result && getFieldType()
-        .equals(other.getFieldType());
-    result = result && (getFieldId()
-        == other.getFieldId());
+    result = result && getRelationType()
+        .equals(other.getRelationType());
+    result = result && (getIdentity()
+        == other.getIdentity());
+    result = result && (hasEntityField() == other.hasEntityField());
+    if (hasEntityField()) {
+      result = result && getEntityField()
+          .equals(other.getEntityField());
+    }
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -291,83 +288,85 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
-    hash = (37 * hash) + VALUE_FIELD_NUMBER;
-    hash = (53 * hash) + getValue().hashCode();
     hash = (37 * hash) + NAME_FIELD_NUMBER;
     hash = (53 * hash) + getName().hashCode();
-    hash = (37 * hash) + FIELDTYPE_FIELD_NUMBER;
-    hash = (53 * hash) + getFieldType().hashCode();
-    hash = (37 * hash) + FIELDID_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        getFieldId());
+    hash = (37 * hash) + RELATIONTYPE_FIELD_NUMBER;
+    hash = (53 * hash) + getRelationType().hashCode();
+    hash = (37 * hash) + IDENTITY_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getIdentity());
+    if (hasEntityField()) {
+      hash = (37 * hash) + ENTITYFIELD_FIELD_NUMBER;
+      hash = (53 * hash) + getEntityField().hashCode();
+    }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
   }
 
-  public static ValueUp parseFrom(
+  public static RelationUp parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static ValueUp parseFrom(
+  public static RelationUp parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static ValueUp parseFrom(
+  public static RelationUp parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static ValueUp parseFrom(
+  public static RelationUp parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static ValueUp parseFrom(byte[] data)
+  public static RelationUp parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static ValueUp parseFrom(
+  public static RelationUp parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static ValueUp parseFrom(java.io.InputStream input)
+  public static RelationUp parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static ValueUp parseFrom(
+  public static RelationUp parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static ValueUp parseDelimitedFrom(java.io.InputStream input)
+  public static RelationUp parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static ValueUp parseDelimitedFrom(
+  public static RelationUp parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static ValueUp parseFrom(
+  public static RelationUp parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static ValueUp parseFrom(
+  public static RelationUp parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -379,7 +378,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(ValueUp prototype) {
+  public static Builder newBuilder(RelationUp prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   public Builder toBuilder() {
@@ -394,25 +393,25 @@ private static final long serialVersionUID = 0L;
     return builder;
   }
   /**
-   * Protobuf type {@code ValueUp}
+   * Protobuf type {@code RelationUp}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:ValueUp)
-      ValueUpOrBuilder {
+      // @@protoc_insertion_point(builder_implements:RelationUp)
+      RelationUpOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return EntityResourceProto.internal_static_ValueUp_descriptor;
+      return EntityResourceProto.internal_static_RelationUp_descriptor;
     }
 
     protected FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return EntityResourceProto.internal_static_ValueUp_fieldAccessorTable
+      return EntityResourceProto.internal_static_RelationUp_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              ValueUp.class, ValueUp.Builder.class);
+              RelationUp.class, RelationUp.Builder.class);
     }
 
-    // Construct using com.xforceplus.ultraman.oqsengine.sdk.ValueUp.newBuilder()
+    // Construct using com.xforceplus.ultraman.oqsengine.sdk.RelationUp.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
@@ -429,40 +428,48 @@ private static final long serialVersionUID = 0L;
     }
     public Builder clear() {
       super.clear();
-      value_ = "";
-
       name_ = "";
 
-      fieldType_ = "";
+      relationType_ = "";
 
-      fieldId_ = 0L;
+      identity_ = false;
 
+      if (entityFieldBuilder_ == null) {
+        entityField_ = null;
+      } else {
+        entityField_ = null;
+        entityFieldBuilder_ = null;
+      }
       return this;
     }
 
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return EntityResourceProto.internal_static_ValueUp_descriptor;
+      return EntityResourceProto.internal_static_RelationUp_descriptor;
     }
 
-    public ValueUp getDefaultInstanceForType() {
-      return ValueUp.getDefaultInstance();
+    public RelationUp getDefaultInstanceForType() {
+      return RelationUp.getDefaultInstance();
     }
 
-    public ValueUp build() {
-      ValueUp result = buildPartial();
+    public RelationUp build() {
+      RelationUp result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
       return result;
     }
 
-    public ValueUp buildPartial() {
-      ValueUp result = new ValueUp(this);
-      result.value_ = value_;
+    public RelationUp buildPartial() {
+      RelationUp result = new RelationUp(this);
       result.name_ = name_;
-      result.fieldType_ = fieldType_;
-      result.fieldId_ = fieldId_;
+      result.relationType_ = relationType_;
+      result.identity_ = identity_;
+      if (entityFieldBuilder_ == null) {
+        result.entityField_ = entityField_;
+      } else {
+        result.entityField_ = entityFieldBuilder_.build();
+      }
       onBuilt();
       return result;
     }
@@ -494,30 +501,29 @@ private static final long serialVersionUID = 0L;
       return (Builder) super.addRepeatedField(field, value);
     }
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof ValueUp) {
-        return mergeFrom((ValueUp)other);
+      if (other instanceof RelationUp) {
+        return mergeFrom((RelationUp)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(ValueUp other) {
-      if (other == ValueUp.getDefaultInstance()) return this;
-      if (!other.getValue().isEmpty()) {
-        value_ = other.value_;
-        onChanged();
-      }
+    public Builder mergeFrom(RelationUp other) {
+      if (other == RelationUp.getDefaultInstance()) return this;
       if (!other.getName().isEmpty()) {
         name_ = other.name_;
         onChanged();
       }
-      if (!other.getFieldType().isEmpty()) {
-        fieldType_ = other.fieldType_;
+      if (!other.getRelationType().isEmpty()) {
+        relationType_ = other.relationType_;
         onChanged();
       }
-      if (other.getFieldId() != 0L) {
-        setFieldId(other.getFieldId());
+      if (other.getIdentity() != false) {
+        setIdentity(other.getIdentity());
+      }
+      if (other.hasEntityField()) {
+        mergeEntityField(other.getEntityField());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -532,11 +538,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      ValueUp parsedMessage = null;
+      RelationUp parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (ValueUp) e.getUnfinishedMessage();
+        parsedMessage = (RelationUp) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -546,78 +552,9 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private Object value_ = "";
-    /**
-     * <code>string value = 1;</code>
-     */
-    public String getValue() {
-      Object ref = value_;
-      if (!(ref instanceof String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        String s = bs.toStringUtf8();
-        value_ = s;
-        return s;
-      } else {
-        return (String) ref;
-      }
-    }
-    /**
-     * <code>string value = 1;</code>
-     */
-    public com.google.protobuf.ByteString
-        getValueBytes() {
-      Object ref = value_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b =
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (String) ref);
-        value_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>string value = 1;</code>
-     */
-    public Builder setValue(
-        String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-
-      value_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>string value = 1;</code>
-     */
-    public Builder clearValue() {
-
-      value_ = getDefaultInstance().getValue();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>string value = 1;</code>
-     */
-    public Builder setValueBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-
-      value_ = value;
-      onChanged();
-      return this;
-    }
-
     private Object name_ = "";
     /**
-     * <code>string name = 2;</code>
+     * <code>string name = 1;</code>
      */
     public String getName() {
       Object ref = name_;
@@ -632,7 +569,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string name = 2;</code>
+     * <code>string name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -648,7 +585,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string name = 2;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setName(
         String value) {
@@ -661,7 +598,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string name = 2;</code>
+     * <code>string name = 1;</code>
      */
     public Builder clearName() {
 
@@ -670,7 +607,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string name = 2;</code>
+     * <code>string name = 1;</code>
      */
     public Builder setNameBytes(
         com.google.protobuf.ByteString value) {
@@ -684,99 +621,216 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private Object fieldType_ = "";
+    private Object relationType_ = "";
     /**
-     * <code>string fieldType = 3;</code>
+     * <code>string relationType = 2;</code>
      */
-    public String getFieldType() {
-      Object ref = fieldType_;
+    public String getRelationType() {
+      Object ref = relationType_;
       if (!(ref instanceof String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         String s = bs.toStringUtf8();
-        fieldType_ = s;
+        relationType_ = s;
         return s;
       } else {
         return (String) ref;
       }
     }
     /**
-     * <code>string fieldType = 3;</code>
+     * <code>string relationType = 2;</code>
      */
     public com.google.protobuf.ByteString
-        getFieldTypeBytes() {
-      Object ref = fieldType_;
+        getRelationTypeBytes() {
+      Object ref = relationType_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (String) ref);
-        fieldType_ = b;
+        relationType_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
     /**
-     * <code>string fieldType = 3;</code>
+     * <code>string relationType = 2;</code>
      */
-    public Builder setFieldType(
+    public Builder setRelationType(
         String value) {
       if (value == null) {
     throw new NullPointerException();
   }
 
-      fieldType_ = value;
+      relationType_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>string fieldType = 3;</code>
+     * <code>string relationType = 2;</code>
      */
-    public Builder clearFieldType() {
+    public Builder clearRelationType() {
 
-      fieldType_ = getDefaultInstance().getFieldType();
+      relationType_ = getDefaultInstance().getRelationType();
       onChanged();
       return this;
     }
     /**
-     * <code>string fieldType = 3;</code>
+     * <code>string relationType = 2;</code>
      */
-    public Builder setFieldTypeBytes(
+    public Builder setRelationTypeBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
 
-      fieldType_ = value;
+      relationType_ = value;
       onChanged();
       return this;
     }
 
-    private long fieldId_ ;
+    private boolean identity_ ;
     /**
-     * <code>int64 fieldId = 4;</code>
+     * <code>bool identity = 3;</code>
      */
-    public long getFieldId() {
-      return fieldId_;
+    public boolean getIdentity() {
+      return identity_;
     }
     /**
-     * <code>int64 fieldId = 4;</code>
+     * <code>bool identity = 3;</code>
      */
-    public Builder setFieldId(long value) {
+    public Builder setIdentity(boolean value) {
 
-      fieldId_ = value;
+      identity_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>int64 fieldId = 4;</code>
+     * <code>bool identity = 3;</code>
      */
-    public Builder clearFieldId() {
+    public Builder clearIdentity() {
 
-      fieldId_ = 0L;
+      identity_ = false;
       onChanged();
       return this;
+    }
+
+    private FieldUp entityField_ = null;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        FieldUp, FieldUp.Builder, FieldUpOrBuilder> entityFieldBuilder_;
+    /**
+     * <code>.FieldUp entityField = 4;</code>
+     */
+    public boolean hasEntityField() {
+      return entityFieldBuilder_ != null || entityField_ != null;
+    }
+    /**
+     * <code>.FieldUp entityField = 4;</code>
+     */
+    public FieldUp getEntityField() {
+      if (entityFieldBuilder_ == null) {
+        return entityField_ == null ? FieldUp.getDefaultInstance() : entityField_;
+      } else {
+        return entityFieldBuilder_.getMessage();
+      }
+    }
+    /**
+     * <code>.FieldUp entityField = 4;</code>
+     */
+    public Builder setEntityField(FieldUp value) {
+      if (entityFieldBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        entityField_ = value;
+        onChanged();
+      } else {
+        entityFieldBuilder_.setMessage(value);
+      }
+
+      return this;
+    }
+    /**
+     * <code>.FieldUp entityField = 4;</code>
+     */
+    public Builder setEntityField(
+        FieldUp.Builder builderForValue) {
+      if (entityFieldBuilder_ == null) {
+        entityField_ = builderForValue.build();
+        onChanged();
+      } else {
+        entityFieldBuilder_.setMessage(builderForValue.build());
+      }
+
+      return this;
+    }
+    /**
+     * <code>.FieldUp entityField = 4;</code>
+     */
+    public Builder mergeEntityField(FieldUp value) {
+      if (entityFieldBuilder_ == null) {
+        if (entityField_ != null) {
+          entityField_ =
+            FieldUp.newBuilder(entityField_).mergeFrom(value).buildPartial();
+        } else {
+          entityField_ = value;
+        }
+        onChanged();
+      } else {
+        entityFieldBuilder_.mergeFrom(value);
+      }
+
+      return this;
+    }
+    /**
+     * <code>.FieldUp entityField = 4;</code>
+     */
+    public Builder clearEntityField() {
+      if (entityFieldBuilder_ == null) {
+        entityField_ = null;
+        onChanged();
+      } else {
+        entityField_ = null;
+        entityFieldBuilder_ = null;
+      }
+
+      return this;
+    }
+    /**
+     * <code>.FieldUp entityField = 4;</code>
+     */
+    public FieldUp.Builder getEntityFieldBuilder() {
+
+      onChanged();
+      return getEntityFieldFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>.FieldUp entityField = 4;</code>
+     */
+    public FieldUpOrBuilder getEntityFieldOrBuilder() {
+      if (entityFieldBuilder_ != null) {
+        return entityFieldBuilder_.getMessageOrBuilder();
+      } else {
+        return entityField_ == null ?
+            FieldUp.getDefaultInstance() : entityField_;
+      }
+    }
+    /**
+     * <code>.FieldUp entityField = 4;</code>
+     */
+    private com.google.protobuf.SingleFieldBuilderV3<
+        FieldUp, FieldUp.Builder, FieldUpOrBuilder>
+        getEntityFieldFieldBuilder() {
+      if (entityFieldBuilder_ == null) {
+        entityFieldBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            FieldUp, FieldUp.Builder, FieldUpOrBuilder>(
+                getEntityField(),
+                getParentForChildren(),
+                isClean());
+        entityField_ = null;
+      }
+      return entityFieldBuilder_;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -789,39 +843,39 @@ private static final long serialVersionUID = 0L;
     }
 
 
-    // @@protoc_insertion_point(builder_scope:ValueUp)
+    // @@protoc_insertion_point(builder_scope:RelationUp)
   }
 
-  // @@protoc_insertion_point(class_scope:ValueUp)
-  private static final ValueUp DEFAULT_INSTANCE;
+  // @@protoc_insertion_point(class_scope:RelationUp)
+  private static final RelationUp DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new ValueUp();
+    DEFAULT_INSTANCE = new RelationUp();
   }
 
-  public static ValueUp getDefaultInstance() {
+  public static RelationUp getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<ValueUp>
-      PARSER = new com.google.protobuf.AbstractParser<ValueUp>() {
-    public ValueUp parsePartialFrom(
+  private static final com.google.protobuf.Parser<RelationUp>
+      PARSER = new com.google.protobuf.AbstractParser<RelationUp>() {
+    public RelationUp parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new ValueUp(input, extensionRegistry);
+      return new RelationUp(input, extensionRegistry);
     }
   };
 
-  public static com.google.protobuf.Parser<ValueUp> parser() {
+  public static com.google.protobuf.Parser<RelationUp> parser() {
     return PARSER;
   }
 
   @Override
-  public com.google.protobuf.Parser<ValueUp> getParserForType() {
+  public com.google.protobuf.Parser<RelationUp> getParserForType() {
     return PARSER;
   }
 
-  public ValueUp getDefaultInstanceForType() {
+  public RelationUp getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 
