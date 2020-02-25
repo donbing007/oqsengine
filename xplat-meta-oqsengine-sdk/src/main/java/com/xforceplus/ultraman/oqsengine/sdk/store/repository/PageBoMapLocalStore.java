@@ -17,7 +17,7 @@ public class PageBoMapLocalStore extends MapLocalStore {
 
     public static PageBoMapLocalStore create(){
         return new PageBoMapLocalStore("pageBos", "pageBo",
-                new String[]{"settingId", "id", "appId", "name", "code", "tenantId", "tenantName", "version", "boName", "boCode", "setting"}
+                new String[]{"settingId", "id", "appId", "name", "code", "refPageId", "tenantId", "tenantName", "version", "boName", "boCode", "setting"}
         , null, false, null);
     }
 
@@ -36,6 +36,7 @@ public class PageBoMapLocalStore extends MapLocalStore {
             map.put("appId", ultPage.getAppId());
             map.put("name", ultPage.getName());
             map.put("code", ultPage.getCode());
+            map.put("refPageId",ultPage.getRefPageId());
             map.put("tenantId", ultPage.getTenantId());
             map.put("tenantName", ultPage.getTenantName());
             map.put("version", ultPage.getVersion());

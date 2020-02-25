@@ -22,6 +22,16 @@ public class UltPageBoItem {
     private String boCode;
 
     /**
+     * 租户id
+     */
+    private Long tenantId;
+
+    /**
+     * 租户名称
+     */
+    private String tenantName;
+
+    /**
      * 配置信息
      */
     private String setting;
@@ -64,5 +74,21 @@ public class UltPageBoItem {
 
     public void setSetting(String setting) {
         this.setting = setting;
+    }
+
+    public Long getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(Long tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public String getTenantName() {
+        return tenantName;
+    }
+
+    public void setTenantName(String tenantName) {
+        this.tenantName = tenantName;
     }
 }
