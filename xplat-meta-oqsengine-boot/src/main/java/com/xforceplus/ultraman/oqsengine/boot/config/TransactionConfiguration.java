@@ -16,7 +16,7 @@ import javax.annotation.Resource;
  * @version 0.1 2020/2/24 17:08
  * @since 1.8
  */
-@Configuration
+//@Configuration
 public class TransactionConfiguration {
 
     @Resource

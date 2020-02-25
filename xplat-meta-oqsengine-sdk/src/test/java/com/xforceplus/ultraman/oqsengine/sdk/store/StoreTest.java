@@ -383,6 +383,9 @@ public class StoreTest {
         EntityService entityService = new EntityService(repository, null, null);
 
         Map<String, Object> data = new HashMap<>();
+
+        data.put("", "");
+
         EntityUp entity = entityService.toEntityUp(entityclassA.get(), null, data);
 
         System.out.println(entity);

@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
  * @version 0.1 2020/2/24 17:02
  * @since 1.8
  */
-@Configuration
+//@Configuration
 public class StorageConfiguration {
 
 

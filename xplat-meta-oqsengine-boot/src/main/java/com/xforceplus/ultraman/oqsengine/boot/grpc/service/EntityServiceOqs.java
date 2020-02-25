@@ -32,16 +32,16 @@ import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType.LONG;
 @Component
 public class EntityServiceOqs implements EntityServicePowerApi {
 
-    @Autowired
+    @Autowired(required = false)
     private EntityManagementService entityManagementService;
 
-    @Autowired
+    @Autowired(required = false)
     private EntitySearchService entitySearchService;
 
-    @Autowired
+    @Autowired(required = false)
     private TransactionManagementService transactionManagementService;
 
-    @Autowired
+    @Autowired(required = false)
     private TransactionManager transactionManager;
 
 

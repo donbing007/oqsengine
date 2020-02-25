@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.*;
@@ -187,6 +188,7 @@ public class EntityService {
                 .map(entry -> {
                     String key = entry.getKey();
                     Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
+                    Optional<IEntityField> fieldOpRel = getKeyFromRelation(entityClass, key);
 
                     return fieldOp.map(field -> {
                         return ValueUp.newBuilder()
@@ -202,6 +204,10 @@ public class EntityService {
 
         builder.addAllValues(values);
         return builder.build();
+    }
+
+    private Optional<IEntityField> getKeyFromRelation(EntityClass entityClass, String key) {
+        return entityClass.relations().stream().filter(x ->  x.getName().equals(key)).map(Relation::getEntityField).findFirst();
     }
 
     //TODO sub search
