@@ -18,8 +18,6 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.FieldItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.SoloItem;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.apache.metamodel.UpdateCallback;
-import org.apache.metamodel.UpdateScript;
 import org.apache.metamodel.UpdateSummary;
 import org.apache.metamodel.UpdateableDataContext;
 import org.apache.metamodel.data.DataSet;
@@ -31,7 +29,6 @@ import org.apache.metamodel.pojo.TableDataProvider;
 import org.apache.metamodel.schema.Table;
 import org.apache.metamodel.util.SimpleTableDef;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.function.Function;
@@ -186,6 +183,10 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                     String boCode = RowUtils.getRowValue(bo, "code")
                             .map(String::valueOf)
                             .orElse("");
+
+                    SoloItem soloItem = new SoloItem();
+                    soloItem.setId(Long.valueOf(joinBoId));
+
                     return new FieldItem(
                               boCode.concat(".id")
                             , boCode.concat(".id")
@@ -196,7 +197,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                             , "false"
                             , null
                             , null
-                            , new SoloItem());
+                            , soloItem);
                 }
                 return null;
             });
@@ -268,7 +269,13 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      */
     private Optional<Tuple2<Relation, IEntityClass>> loadRelationEntityClass(String boId, Row relRow, String boCode){
 
-        String relationType = RowUtils.getRowValue(relRow, "relType").map(String::valueOf).orElse("");
+        String relationType = RowUtils.getRowValue(relRow, "relType")
+                            .map(String::valueOf)
+                            .orElse("");
+        Long joinBoId = RowUtils.getRowValue(relRow, "joinBoId")
+                            .map(String::valueOf)
+                            .map(Long::valueOf)
+                            .orElse(0L);
 
         return findOneById("bos", boId).map(row -> {
             Optional<IEntityClass> parentEntityClass = RowUtils
@@ -293,18 +300,17 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                     || relationType.equalsIgnoreCase("manytoone")){
                 //Field is from main id
                 field = ConvertHelper.toEntityClassFieldFromRel(relRow, subCode);
-                relation = new Relation(subCode, relationType, true, field);
+                relation = new Relation(subCode, joinBoId, relationType, true, field);
 
             }else{
                 //relation is onetomany
                 field = ConvertHelper.toEntityClassFieldFromRel(relRow, boCode);
-                relation = new Relation(boCode, relationType, true, field);
+                relation = new Relation(boCode, joinBoId, relationType, true, field);
             }
 
             return Tuple.of(relation, entityClass);
         });
     }
-
 
     /**
      * TODO nested object
@@ -341,7 +347,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                     .eq(boId)
                     .execute();
 
-            List<Tuple2<Relation, IEntityClass>> relatedEntityClassList = relDs.toRows().stream().map(relRow -> {
+            List<Row> relsRows = relDs.toRows();
+
+            List<Tuple2<Relation, IEntityClass>> relatedEntityClassList = relsRows.stream().map(relRow -> {
                 Optional<String> relatedBoIdOp = RowUtils.getRowValue(relRow, "joinBoId").map(String::valueOf);
                 return relatedBoIdOp.flatMap(x -> {
                     return loadRelationEntityClass(x, relRow, code);
@@ -353,18 +361,25 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             List<IEntityClass> entityClassList = new LinkedList<>();
             List<Relation> relationList = new LinkedList<>();
 
+            List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> allFields = new LinkedList<>();
+            allFields.addAll(fields);
+
             relatedEntityClassList.forEach(tuple -> {
                 entityClassList.add(tuple._2());
                 relationList.add(tuple._1());
             });
 
-            EntityClass entityClass = new EntityClass(Long.valueOf(boId), code, relationList, entityClassList, parentEntityClassOp.orElse(null), fields);
+            List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> refFields = loadRelationField(relsRows);
+            allFields.addAll(refFields);
+
+            EntityClass entityClass = new EntityClass(Long.valueOf(boId)
+                    , code, relationList, entityClassList
+                    , parentEntityClassOp.orElse(null), allFields);
             return Optional.of(entityClass);
         }
 
         return Optional.empty();
     }
-
 
     private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadFields(String id){
         DataSet fieldDs = dc.query().from("fields")

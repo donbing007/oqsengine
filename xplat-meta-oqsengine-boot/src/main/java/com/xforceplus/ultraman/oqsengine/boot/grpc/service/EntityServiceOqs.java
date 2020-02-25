@@ -323,6 +323,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         try {
             Objects.requireNonNull(value, "值不能为空");
             FieldType fieldTypeE = FieldType.valueOf(fieldType);
+            //TODO fix field
             IEntityField entityField = new Field(id, name, fieldTypeE);
             IValue retValue = null;
             switch(fieldTypeE){
@@ -348,7 +349,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     private Field toFieldEntity(FieldUp fieldUp){
         //g id, String name, FieldType fieldType
-        return new Field(fieldUp.getId(), fieldUp.getName(), FieldType.valueOf(fieldUp.getFieldType()));
+        //        this.searchType = searchType;
+        //        this.maxSize = maxSize;
+        //        this.mixSize = mixSize;
+        return new Field(fieldUp.getId()
+                , fieldUp.getName()
+                , FieldType.valueOf(fieldUp.getFieldType())
+        );
     }
 
     private IEntityClass toEntityClass(EntityUp entityUp){

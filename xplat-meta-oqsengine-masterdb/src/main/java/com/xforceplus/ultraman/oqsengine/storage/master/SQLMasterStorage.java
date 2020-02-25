@@ -42,7 +42,7 @@ public class SQLMasterStorage implements MasterStorage {
 
 
     private static final String BUILD_SQL =
-        "insert into %s (id, entity, version, time, pref, cref, deleted, attribute) values(?,?,?,?,?,?,?,?,?)";
+        "insert into %s (id, entity, version, time, pref, cref, deleted, attribute) values(?,?,?,?,?,?,?,?)";
     private static final String REPLACE_SQL =
         "update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
     private static final String DELETE_SQL =

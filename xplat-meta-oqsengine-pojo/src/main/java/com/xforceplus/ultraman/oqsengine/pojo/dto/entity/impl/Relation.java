@@ -121,14 +121,4 @@ public class Relation {
                 ", entityField=" + entityField +
                 '}';
     }
-
-    @Override
-    public String toString() {
-        return "Relation{" +
-                "name='" + name + '\'' +
-                ", relationType='" + relationType + '\'' +
-                ", identity=" + identity +
-                ", entityField=" + entityField +
-                '}';
-    }
 }
