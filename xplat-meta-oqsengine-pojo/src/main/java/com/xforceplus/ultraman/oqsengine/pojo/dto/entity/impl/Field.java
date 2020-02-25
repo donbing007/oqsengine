@@ -50,6 +50,12 @@ public class Field implements IEntityField, Serializable {
     public Field() {
     }
 
+    public Field(long id, String name, FieldType fieldType) {
+        this.id = id;
+        this.name = name;
+        this.fieldType = fieldType;
+    }
+
     public Field(long id, String name, FieldType fieldType, boolean searchType, int maxSize, int mixSize) {
         this.id = id;
         this.name = name;
