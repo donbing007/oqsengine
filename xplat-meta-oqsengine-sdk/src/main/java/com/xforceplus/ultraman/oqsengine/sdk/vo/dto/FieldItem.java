@@ -22,6 +22,23 @@ public class FieldItem {
 
     SoloItem relationshipEntity;
 
+    public FieldItem(){
+    }
+
+    public FieldItem(String code, String name, String type, String maxLength, String editable
+            , String searchable, String required, String enumCode, String displayType, SoloItem relationshipEntity) {
+        this.code = code;
+        this.name = name;
+        this.type = type;
+        this.maxLength = maxLength;
+        this.editable = editable;
+        this.searchable = searchable;
+        this.required = required;
+        this.enumCode = enumCode;
+        this.displayType = displayType;
+        this.relationshipEntity = relationshipEntity;
+    }
+
     public String getCode() {
         return code;
     }
@@ -100,5 +117,21 @@ public class FieldItem {
 
     public void setRelationshipEntity(SoloItem relationshipEntity) {
         this.relationshipEntity = relationshipEntity;
+    }
+
+    @Override
+    public String toString() {
+        return "FieldItem{" +
+                "code='" + code + '\'' +
+                ", name='" + name + '\'' +
+                ", type='" + type + '\'' +
+                ", maxLength='" + maxLength + '\'' +
+                ", editable='" + editable + '\'' +
+                ", searchable='" + searchable + '\'' +
+                ", required='" + required + '\'' +
+                ", enumCode='" + enumCode + '\'' +
+                ", displayType='" + displayType + '\'' +
+                ", relationshipEntity=" + relationshipEntity +
+                '}';
     }
 }

@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.util.ConvertHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ApiItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.FieldItem;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.SoloItem;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.apache.metamodel.UpdateCallback;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils.getRowValue;
@@ -133,9 +135,13 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     @Override
     public BoItem getBoDetailById(String id) {
 
-        DataSet boDetails = dc.query().from("bos").selectAll().where("id").eq(id).execute();
+        DataSet boDetails = dc.query().from("bos")
+                .selectAll()
+                .where("id").eq(id)
+                .execute();
 
         if(boDetails.next()){
+            Row ds = boDetails.getRow();
             DataSet apis = dc.query()
                     .from("apis")
                     .selectAll().where("boId").eq(id).execute();
@@ -149,11 +155,63 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
             List<FieldItem> fieldItemList = toFieldItemList(fields);
 
+            //deal with rel
+            DataSet rels = dc.query()
+                    .from("rels")
+                    .selectAll()
+                    .where("boId").eq(id).execute();
+
+            List<Row> rows = rels.toRows();
+
+            List<String> relIds = rows
+                    .stream()
+                    .map(x -> RowUtils.getRowValue(x, "joinBoId")
+                            .map(String::valueOf).orElse(""))
+                    .collect(Collectors.toList());
+
+            List<FieldItem> relField = this.loadRelationField(rows, row -> {
+
+                String joinBoId = RowUtils.getRowValue(row, "joinBoId")
+                                          .map(String::valueOf)
+                                          .orElse("");
+
+                DataSet boDs = dc.query().from("bos")
+                        .selectAll()
+                        .where("id").eq(joinBoId)
+                        .execute();
+
+                if(boDs.next()){
+
+                    Row bo = boDs.getRow();
+                    String boCode = RowUtils.getRowValue(bo, "code")
+                            .map(String::valueOf)
+                            .orElse("");
+                    return new FieldItem(
+                              boCode.concat(".id")
+                            , boCode.concat(".id")
+                            , FieldType.LONG.getType()
+                            , ""
+                            , "false"
+                            , "true"
+                            , "false"
+                            , null
+                            , null
+                            , new SoloItem());
+                }
+                return null;
+            });
+
+            List<FieldItem> fieldTotalItems = new LinkedList<>();
+            fieldTotalItems.addAll(fieldItemList);
+            fieldTotalItems.addAll(relField);
+
             BoItem boItem = new BoItem();
             boItem.setApi(apiItemMap);
-            boItem.setFields(fieldItemList);
-            //TODO not set
-            boItem.setSubEntities(Collections.emptyList());
+            boItem.setFields(fieldTotalItems);
+            boItem.setParentEntityId(
+                    RowUtils.getRowValue(ds, "parentId")
+                    .map(String::valueOf).orElse(""));
+            boItem.setSubEntities(relIds);
 
             return boItem;
         }
@@ -359,6 +417,16 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 return null;
             }
         }).filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private <U> List<U> loadRelationField(List<Row> relations, Function<Row, U> mapper){
+        return relations.stream().filter(row -> {
+            return RowUtils.getRowValue(row,"relType")
+                    .map(String::valueOf)
+                    .filter(type -> type.equalsIgnoreCase("onetoone") || type.equalsIgnoreCase("manytoone"))
+                    .isPresent();
+        }).map(mapper).filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 

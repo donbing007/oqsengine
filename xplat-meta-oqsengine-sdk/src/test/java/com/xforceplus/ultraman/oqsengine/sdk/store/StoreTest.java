@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.metadata.grpc.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.MetadataRepositoryInMemoryImpl;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
 import org.junit.Test;
 
 import java.util.Optional;
@@ -338,6 +339,26 @@ public class StoreTest {
         System.out.println("A:" + entityclassA.get());
         System.out.println("B:" + entityclassB.get());
         System.out.println("C:" + entityclassC.get());
+    }
+
+    @Test
+    public void loadDetailsFor(){
+        MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
+
+        ModuleUpResult result = ModuleUpResult.newBuilder()
+                .addBoUps(boupMultiExtendRelation())
+                .addBoUps(boupParent())
+                .build();
+
+        repository.save(result, "1", "1");
+        Optional<EntityClass> entityclassA = repository.load("1", "1", "11112");
+        Optional<EntityClass> entityclassB = repository.load("1", "1", "1111");
+        Optional<EntityClass> entityclassC = repository.load("1", "1", "111111");
+
+
+        BoItem boItem = repository.getBoDetailById("11112");
+
+        System.out.println(boItem);
     }
 
 }
