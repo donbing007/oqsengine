@@ -24,6 +24,11 @@ public class UltPage {
     private String code;
 
     /**
+     * 定制来源页面id
+     */
+    private Long refPageId;
+
+    /**
      * 租户id
      */
     private Long tenantId;
@@ -46,14 +51,16 @@ public class UltPage {
     public UltPage() {
     }
 
-    public UltPage(Long id, Long appId, String name, String code, Long tenantId, String tenantName, String version) {
+    public UltPage(Long id, Long appId, String name, String code, Long refPageId, Long tenantId, String tenantName, String version, List<UltPageBo> pageBoVos) {
         this.id = id;
         this.appId = appId;
         this.name = name;
         this.code = code;
+        this.refPageId = refPageId;
         this.tenantId = tenantId;
         this.tenantName = tenantName;
         this.version = version;
+        this.pageBoVos = pageBoVos;
     }
 
     public Long getId() {
@@ -120,6 +127,14 @@ public class UltPage {
         this.pageBoVos = pageBoVos;
     }
 
+    public Long getRefPageId() {
+        return refPageId;
+    }
+
+    public void setRefPageId(Long refPageId) {
+        this.refPageId = refPageId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -129,6 +144,7 @@ public class UltPage {
                 Objects.equals(getAppId(), ultPage.getAppId()) &&
                 Objects.equals(getName(), ultPage.getName()) &&
                 Objects.equals(getCode(), ultPage.getCode()) &&
+                Objects.equals(getRefPageId(), ultPage.getRefPageId()) &&
                 Objects.equals(getTenantId(), ultPage.getTenantId()) &&
                 Objects.equals(getTenantName(), ultPage.getTenantName()) &&
                 Objects.equals(getVersion(), ultPage.getVersion()) &&
@@ -137,6 +153,6 @@ public class UltPage {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getAppId(), getName(), getCode(), getTenantId(), getTenantName(), getVersion(), getPageBoVos());
+        return Objects.hash(getId(), getAppId(), getName(), getCode(), getRefPageId(), getTenantId(), getTenantName(), getVersion(), getPageBoVos());
     }
 }

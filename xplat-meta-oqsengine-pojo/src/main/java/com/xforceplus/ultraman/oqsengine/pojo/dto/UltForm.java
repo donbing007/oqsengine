@@ -21,6 +21,11 @@ public class UltForm {
     private String code;
 
     /**
+     * 定制来源表单id
+     */
+    private Long refFormId;
+
+    /**
      * 租户id
      */
     private Long tenantId;
@@ -43,11 +48,12 @@ public class UltForm {
     public UltForm() {
     }
 
-    public UltForm(Long id, Long appId, String name, String code, Long tenantId, String tenantName, String setting, String version) {
+    public UltForm(Long id, Long appId, String name, String code, Long refFormId, Long tenantId, String tenantName, String setting, String version) {
         this.id = id;
         this.appId = appId;
         this.name = name;
         this.code = code;
+        this.refFormId = refFormId;
         this.tenantId = tenantId;
         this.tenantName = tenantName;
         this.setting = setting;
@@ -118,6 +124,14 @@ public class UltForm {
         this.version = version;
     }
 
+    public Long getRefFormId() {
+        return refFormId;
+    }
+
+    public void setRefFormId(Long refFormId) {
+        this.refFormId = refFormId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -127,6 +141,7 @@ public class UltForm {
                 Objects.equals(getAppId(), ultForm.getAppId()) &&
                 Objects.equals(getName(), ultForm.getName()) &&
                 Objects.equals(getCode(), ultForm.getCode()) &&
+                Objects.equals(getRefFormId(), ultForm.getRefFormId()) &&
                 Objects.equals(getTenantId(), ultForm.getTenantId()) &&
                 Objects.equals(getTenantName(), ultForm.getTenantName()) &&
                 Objects.equals(getSetting(), ultForm.getSetting()) &&
@@ -135,6 +150,6 @@ public class UltForm {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getAppId(), getName(), getCode(), getTenantId(), getTenantName(), getSetting(), getVersion());
+        return Objects.hash(getId(), getAppId(), getName(), getCode(), getRefFormId(), getTenantId(), getTenantName(), getSetting(), getVersion());
     }
 }

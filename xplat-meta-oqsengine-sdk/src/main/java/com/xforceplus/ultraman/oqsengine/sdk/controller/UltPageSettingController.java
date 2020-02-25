@@ -1,10 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.sdk.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.xforceplus.ultraman.oqsengine.pojo.auth.Authorization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.PageBo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltPage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltPageBo;
+import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.DictItem;
@@ -16,12 +18,11 @@ import org.apache.metamodel.data.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,9 @@ public class UltPageSettingController {
     @Autowired
     private PageBoMapLocalStore pageBoMapLocalStore;
 
+    @Autowired
+    private AuthSearcherConfig config;
+
     /**
      * 部署页面
      * @return
@@ -44,14 +48,24 @@ public class UltPageSettingController {
         String url = String.format("%s/pages/%s/deployments"
                 , accessUri
                 , id);
-        Response<UltPage> result = new Response<UltPage>();
+        Authorization auth = new Authorization();
+        auth.setAppId(Long.parseLong(config.getAppId()));
+//        auth.setTenantId(Long.parseLong(config.getTenant()));
+        auth.setEnv(config.getEnv());
+        Response<List<UltPage>> result = new Response<List<UltPage>>();
         try {
-            result = restTemplate.getForObject(url,Response.class);
+            result = restTemplate.postForObject(url, auth,Response.class);
             if (result.getResult()!=null){
+                List<UltPage> ultPages = result.getResult();
+                for (int i = 0;i<ultPages.size();i++) {
+                    UltPage saveUltPage = JSON.parseObject(JSON.toJSONString(ultPages.get(i)),UltPage.class);
+                    pageBoMapLocalStore.save(saveUltPage);
+                }
+
                 //将List转成Entity
-                UltPage ultPage = JSON.parseObject(JSON.toJSONString(result.getResult()),UltPage.class);
+//                UltPage ultPage = JSON.parseObject(JSON.toJSONString(result.getResult()),UltPage.class);
                 //将数据保存到内存中
-                pageBoMapLocalStore.save(ultPage);
+//                pageBoMapLocalStore.save(ultPage);
             }
             return result;
         }catch (Exception e){
@@ -66,27 +80,43 @@ public class UltPageSettingController {
      * @return
      */
     @GetMapping("/pages/{id}/bo-settings" )
-    public Response pageBos(@PathVariable String id) {
+    public Response pageBos(HttpServletRequest request, @PathVariable String id) {
 
         DataSet ds = null;
+        String tenantId = request.getParameter("tenantId");
         if(!StringUtils.isEmpty(id)) {
-            ds = pageBoMapLocalStore.query().selectAll()
-                    .where("id")
-                    .eq(id)
-                    .execute();
-
-            List<Row> rows = ds.toRows();
-            ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
-
             Response<ResponseList<UltPageBoItem>> response = new Response<>();
-            response.setMessage("查询成功");
-            response.setCode("1");
-            response.setResult(items);
+            List<Row> trows = new ArrayList<>();
+            if (!StringUtils.isEmpty(tenantId)){
+                ds = pageBoMapLocalStore.query().selectAll()
+                        .where("refPageId")
+                        .eq(id)
+                        .and("tenantId")
+                        .eq(tenantId)
+                        .execute();
+                trows = ds.toRows();
+            }
+            if (ds!=null && trows!=null && trows.size() > 0){
+                ResponseList<UltPageBoItem> items = trows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
+                response.setMessage("查询成功");
+                response.setCode("1");
+                response.setResult(items);
+            }else {
+                ds = pageBoMapLocalStore.query().selectAll()
+                        .where("id")
+                        .eq(id)
+                        .execute();
+                List<Row> rows = ds.toRows();
+                ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
+                response.setMessage("查询成功");
+                response.setCode("1");
+                response.setResult(items);
+            }
+
             return response;
 
         }else {
             Response<ResponseList<UltPage>> response = new Response<>();
-
             response.setMessage("未传id");
             response.setCode("1");
 
@@ -103,6 +133,7 @@ public class UltPageSettingController {
 
         DataSet ds = null;
         if(!StringUtils.isEmpty(id)) {
+            Response<UltPageBoItem> response = new Response<>();
             ds = pageBoMapLocalStore.query().selectAll()
                     .where("settingId")
                     .eq(id)
@@ -110,8 +141,6 @@ public class UltPageSettingController {
 
             List<Row> rows = ds.toRows();
             ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBoSeeting).collect(Collectors.toCollection(ResponseList::new));
-
-            Response<UltPageBoItem> response = new Response<>();
             response.setMessage("查询成功");
             response.setCode("1");
             if (items.size() == 1){
@@ -135,6 +164,10 @@ public class UltPageSettingController {
         ultPageBoItem.setId(Long.parseLong(RowUtils.getRowValue(row, "settingId").map(Object::toString).orElse("")));
         ultPageBoItem.setPageId(Long.parseLong(RowUtils.getRowValue(row, "id").map(Object::toString).orElse("")));
         ultPageBoItem.setBoCode(RowUtils.getRowValue(row, "boCode").map(Object::toString).orElse(""));
+        if (!"".equals(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse(""))){
+            ultPageBoItem.setTenantId(Long.parseLong(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse("")));
+        }
+        ultPageBoItem.setTenantName(RowUtils.getRowValue(row, "tenantName").map(Object::toString).orElse(""));
         ultPageBoItem.setBoName(RowUtils.getRowValue(row, "boName").map(Object::toString).orElse(""));
         return ultPageBoItem;
     }
