@@ -18,12 +18,10 @@ import org.apache.metamodel.data.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -52,7 +50,7 @@ public class UltPageSettingController {
                 , id);
         Authorization auth = new Authorization();
         auth.setAppId(Long.parseLong(config.getAppId()));
-        auth.setTenantId(Long.parseLong(config.getTenant()));
+//        auth.setTenantId(Long.parseLong(config.getTenant()));
         auth.setEnv(config.getEnv());
         Response<List<UltPage>> result = new Response<List<UltPage>>();
         try {
@@ -82,16 +80,22 @@ public class UltPageSettingController {
      * @return
      */
     @GetMapping("/pages/{id}/bo-settings" )
-    public Response pageBos(@PathVariable String id) {
+    public Response pageBos(HttpServletRequest request, @PathVariable String id) {
 
         DataSet ds = null;
+        String tenantId = request.getParameter("tenantId");
         if(!StringUtils.isEmpty(id)) {
             Response<ResponseList<UltPageBoItem>> response = new Response<>();
-            ds = pageBoMapLocalStore.query().selectAll()
-                    .where("refPageId")
-                    .eq(id)
-                    .execute();
-            List<Row> trows = ds.toRows();
+            List<Row> trows = new ArrayList<>();
+            if (!StringUtils.isEmpty(tenantId)){
+                ds = pageBoMapLocalStore.query().selectAll()
+                        .where("refPageId")
+                        .eq(id)
+                        .and("tenantId")
+                        .eq(tenantId)
+                        .execute();
+                trows = ds.toRows();
+            }
             if (ds!=null && trows!=null && trows.size() > 0){
                 ResponseList<UltPageBoItem> items = trows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
                 response.setMessage("查询成功");
@@ -160,6 +164,10 @@ public class UltPageSettingController {
         ultPageBoItem.setId(Long.parseLong(RowUtils.getRowValue(row, "settingId").map(Object::toString).orElse("")));
         ultPageBoItem.setPageId(Long.parseLong(RowUtils.getRowValue(row, "id").map(Object::toString).orElse("")));
         ultPageBoItem.setBoCode(RowUtils.getRowValue(row, "boCode").map(Object::toString).orElse(""));
+        if (!"".equals(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse(""))){
+            ultPageBoItem.setTenantId(Long.parseLong(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse("")));
+        }
+        ultPageBoItem.setTenantName(RowUtils.getRowValue(row, "tenantName").map(Object::toString).orElse(""));
         ultPageBoItem.setBoName(RowUtils.getRowValue(row, "boName").map(Object::toString).orElse(""));
         return ultPageBoItem;
     }

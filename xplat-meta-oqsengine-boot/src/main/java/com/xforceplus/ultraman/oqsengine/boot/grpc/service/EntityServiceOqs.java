@@ -224,7 +224,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         OperationResult result = null;
 
         try {
-            transactionManagementService.commit(id);
+            transactionManagementService.commit();
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
                     .setMessage("事务提交成功")
@@ -246,7 +246,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         OperationResult result = null;
 
         try {
-            transactionManagementService.rollback(id);
+            transactionManagementService.rollback();
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
                     .setMessage("事务提交成功")
@@ -296,12 +296,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     private IEntityClass toRawEntityClass(EntityUp entityUp){
         return new EntityClass(
-                entityUp.getId()
-                , entityUp.getCode()
-                , entityUp.getRelation()
-                , Collections.emptyList()
-                , null
-                , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
+//                entityUp.getId()
+//                , entityUp.getCode()
+//                , entityUp.getRelation()
+//                , Collections.emptyList()
+//                , null
+//                , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
         );
     }
 
@@ -350,12 +350,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private IEntityClass toEntityClass(EntityUp entityUp){
         //Long id, String code, String relation, List<IEntityClass> entityClasss, IEntityClass extendEntityClass, List<Field> fields
         IEntityClass entityClass = new EntityClass(
-                entityUp.getId()
-                , entityUp.getCode()
-                , entityUp.getRelation()
-                , entityUp.getEntityClassesList().stream().map(this::toRawEntityClass).collect(Collectors.toList())
-                , toRawEntityClass(entityUp.getExtendEntityClass())
-                , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
+//                entityUp.getId()
+//                , entityUp.getCode()
+//                , entityUp.getRelation()
+//                , entityUp.getEntityClassesList().stream().map(this::toRawEntityClass).collect(Collectors.toList())
+//                , toRawEntityClass(entityUp.getExtendEntityClass())
+//                , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
         );
         return entityClass;
     }
