@@ -57,3 +57,57 @@ oqsengine 没有使用 spring 提供的数据源配置,而是自己进行了管�
    }
  }
 ```
+同样项目是一个spring boot 项目,需要配置以下几个在 application.yaml 中的配置.
+```yaml
+storage:
+  master:
+    name: "oqsengine" # 主库的名称,可以理解为逻辑表名.
+    query:
+      worker: 3 # 查询的时候多线程时的最大线程数量,默认为 CPU 核数.
+      timeout: 3000 # 查询超时时间,单位为毫秒.默认为3秒.
+    shard:
+      size: 1 # 逻辑表分片数量,默认为1.
+  index:
+    name: "oqsengine" # 索引库名称,和主库作用相同.
+```
+
+## master 结构
+```sql
+create table oqsbigentity
+(
+	id bigint not null comment '数据主键',
+	entity bigint default 0 not null comment 'entity 的类型 id.',
+	version int default 0 not null comment '当前数据版本.',
+	time bigint default 0 not null comment '数据操作最后时间.',
+	pref bigint default 0 not null comment '指向当前类型继承的父类型数据实例id.',
+	cref bigint default 0 not null comment '当前父类数据实例指向子类数据实例的 id.',
+	deleted boolean default false not null comment '是否被删除.',
+	attribute json not null comment '当前 entity 的属性集合.',
+	constraint oqsengine_pk primary key (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+```
+## mainticore (Sphinx) 结构
+索引的结构需要预先在配置文件中指定.如下.
+```text
+index oqsindex
+{
+        type = rt
+        path = /var/lib/manticore/data/oqsindex
+        rt_attr_bigint = entity
+        rt_attr_bigint = pref
+        rt_attr_bigint = cref
+        rt_attr_json = jsonfields
+        rt_field = fullfields
+
+        rt_mem_limit = 1024m
+        enable_star = 1
+        min_infix_len = 3
+        infix_fields = stringfield
+}
+```
+以上索引结构中,id 是默认的其和主库保持同步.即同一个 id 表示同一个实例数据.
+* entity      实例数据的类型 id.
+* pref        指向实例父类实例id.
+* cref        指向实例子类实例 id.
+* jsonfields  搜索的索引属性集合,是一个 JSON 格式.
+* fullfields  搜索的全文索引属性集合,是一个以 f + {fieldID}+{fieldValue | unicode} 组成并以空格分隔的字符串.

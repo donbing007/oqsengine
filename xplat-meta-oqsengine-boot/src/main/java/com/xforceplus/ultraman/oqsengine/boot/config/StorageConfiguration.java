@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,10 +16,18 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class StorageConfiguration {
 
+    @Value("${storage.master.query.worker:0}")
+    private int masterWorkerSize;
+
+    @Value("${storage.master.query.timeout:3000}")
+    private long masterQueryTimeout;
 
     @Bean
     public MasterStorage masterStorage() {
-        return new SQLMasterStorage();
+        SQLMasterStorage storage = new SQLMasterStorage();
+        storage.setWorkerSize(masterWorkerSize);
+        storage.setQueryTimeout(masterQueryTimeout);
+        return storage;
     }
 
     @Bean

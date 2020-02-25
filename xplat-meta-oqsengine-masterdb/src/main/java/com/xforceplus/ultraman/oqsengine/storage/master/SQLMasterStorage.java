@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
@@ -16,6 +17,8 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -58,9 +61,9 @@ public class SQLMasterStorage implements MasterStorage {
     @Resource(name = "storageTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
-    private long queryTimeout = 3000;
+    private long queryTimeout;
 
-    private int workerSize = 3;
+    private int workerSize;
 
     public void setQueryTimeout(long queryTimeout) {
         this.queryTimeout = queryTimeout;
@@ -74,6 +77,27 @@ public class SQLMasterStorage implements MasterStorage {
      * 工作者线程.
      */
     private ExecutorService worker;
+
+    @PostConstruct
+    public void init() {
+        if (workerSize <= 0) {
+            setWorkerSize(Runtime.getRuntime().availableProcessors());
+        }
+
+        if (queryTimeout <= 0) {
+            setQueryTimeout(3000L);
+        }
+
+        worker = new ThreadPoolExecutor(workerSize, workerSize,
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(500),
+            ExecutorHelper.buildNameThreadFactory("Master-worker", false));
+    }
+
+    @PreDestroy
+    public void destroy() {
+        ExecutorHelper.shutdownAndAwaitTermination(worker);
+    }
 
 
     @Override
