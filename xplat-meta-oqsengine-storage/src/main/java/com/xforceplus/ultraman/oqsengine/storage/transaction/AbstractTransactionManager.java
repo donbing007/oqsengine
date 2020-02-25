@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -27,8 +28,9 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     }
 
     @Override
-    public Transaction getCurrent() {
-        return CURRENT_TRANSACTION.get();
+    public Optional<Transaction> getCurrent() {
+        Transaction t = CURRENT_TRANSACTION.get();
+        return Optional.ofNullable(t);
     }
 
     @Override
@@ -56,9 +58,9 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
     @Override
     public void finish(Transaction tx) {
-        Transaction current = getCurrent();
-        if (current != null) {
-            if (current.id() == tx.id()) {
+        Optional<Transaction> current = getCurrent();
+        if (current.isPresent()) {
+            if (current.get().id() == tx.id()) {
                 unbind();
             }
         }

@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
+import java.util.Optional;
 
 /**
  * @author dongbin
@@ -30,19 +31,33 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
     @Override
     public void commit() throws SQLException {
 
-        Transaction tx = transactionManager.getCurrent();
-        tx.commit();
-
-        transactionManager.finish(tx);
+        doFinish(false);
     }
 
     @Override
     public void rollback() throws SQLException {
 
-        Transaction tx = transactionManager.getCurrent();
-        tx.rollback();
+        doFinish(true);
 
-        transactionManager.finish(tx);
+    }
 
+    private void doFinish(boolean rollback) throws SQLException {
+        Optional<Transaction> tx = transactionManager.getCurrent();
+        if (tx.isPresent()) {
+
+            if (!tx.get().isCompleted()) {
+                if (rollback) {
+                    tx.get().rollback();
+                } else {
+                    tx.get().commit();
+                }
+            } else {
+                throw new SQLException(String.format("Transaction %d has completed.", tx.get().id()));
+            }
+        } else {
+            throw new SQLException("There are no transactions currently.");
+        }
+
+        transactionManager.finish(tx.get());
     }
 }

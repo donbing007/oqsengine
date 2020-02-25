@@ -27,8 +27,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType.LONG;
-
 @Component
 public class EntityServiceOqs implements EntityServicePowerApi {
 
@@ -311,7 +309,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     return toTypedValue(y.getName(), y.getFieldId(), y.getFieldType(), y.getValue());
                 }).collect(Collectors.toList());
         EntityValue entityValue = new EntityValue(entityUp.getId());
-        entityValue.setValues(valueList);
+        entityValue.addValues(valueList);
         return entityValue;
     }
 

@@ -11,7 +11,15 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class IncreasingOrderLongIdGenerator implements LongIdGenerator {
 
-    private AtomicLong id = new AtomicLong(0);
+    private AtomicLong id;
+
+    public IncreasingOrderLongIdGenerator() {
+        this(0);
+    }
+
+    public IncreasingOrderLongIdGenerator(long initId) {
+        id = new AtomicLong(initId);
+    }
 
     @Override
     public Long next() {

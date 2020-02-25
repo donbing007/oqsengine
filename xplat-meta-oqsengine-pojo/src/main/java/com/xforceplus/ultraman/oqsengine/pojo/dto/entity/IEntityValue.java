@@ -37,5 +37,5 @@ public interface IEntityValue {
      * @param values
      * @return
      */
-    public IEntityValue setValues(List<IValue> values);
+    public IEntityValue addValues(Collection<IValue> values);
 }

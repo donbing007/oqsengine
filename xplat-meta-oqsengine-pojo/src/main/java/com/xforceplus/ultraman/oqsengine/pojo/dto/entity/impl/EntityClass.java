@@ -33,7 +33,12 @@ public class EntityClass implements IEntityClass {
     public EntityClass() {
     }
 
-    public EntityClass(Long id, String code, List<Relation> relations, List<IEntityClass> entityClasss, IEntityClass extendEntityClass, List<Field> fields) {
+    public EntityClass(Long id,
+                       String code,
+                       List<Relation> relations,
+                       List<IEntityClass> entityClasss,
+                       IEntityClass extendEntityClass,
+                       List<Field> fields) {
         this.id = id;
         this.code = code;
         this.relations = relations;
