@@ -424,13 +424,16 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         return relations.stream().filter(row -> {
             return RowUtils.getRowValue(row,"relType")
                     .map(String::valueOf)
-                    .filter(type -> type.equalsIgnoreCase("onetoone") || type.equalsIgnoreCase("manytoone"))
+                    .filter(type -> type.equalsIgnoreCase("onetoone")
+                            || type.equalsIgnoreCase("manytoone"))
                     .isPresent();
         }).map(mapper).filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
-    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationFieldForSub(String id, String subId, String code) {
+    //maybe useless
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationFieldForSub(String id
+            , String subId, String code) {
         //load onetoone and many to one
         DataSet relDs = dc.query().from("rels")
                 .selectAll()

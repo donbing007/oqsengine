@@ -22,7 +22,7 @@ public interface OperationResultOrBuilder extends
    *
    * <code>.OperationResult.Code code = 1;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Code getCode();
+  OperationResult.Code getCode();
 
   /**
    * <pre>
@@ -31,7 +31,7 @@ public interface OperationResultOrBuilder extends
    *
    * <code>string message = 2;</code>
    */
-  java.lang.String getMessage();
+  String getMessage();
   /**
    * <pre>
    *message
@@ -45,12 +45,12 @@ public interface OperationResultOrBuilder extends
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
-  java.util.List<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> 
+  java.util.List<EntityUp>
       getQueryResultList();
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.EntityUp getQueryResult(int index);
+  EntityUp getQueryResult(int index);
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
@@ -58,18 +58,18 @@ public interface OperationResultOrBuilder extends
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
-  java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder> 
+  java.util.List<? extends EntityUpOrBuilder>
       getQueryResultOrBuilderList();
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder getQueryResultOrBuilder(
-      int index);
+  EntityUpOrBuilder getQueryResultOrBuilder(
+          int index);
 
   /**
    * <code>string transactionResult = 4;</code>
    */
-  java.lang.String getTransactionResult();
+  String getTransactionResult();
   /**
    * <code>string transactionResult = 4;</code>
    */
@@ -84,7 +84,7 @@ public interface OperationResultOrBuilder extends
   /**
    * <code>repeated int64 ids = 6;</code>
    */
-  java.util.List<java.lang.Long> getIdsList();
+  java.util.List<Long> getIdsList();
   /**
    * <code>repeated int64 ids = 6;</code>
    */

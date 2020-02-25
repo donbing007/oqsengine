@@ -2,11 +2,15 @@ package com.xforceplus.ultraman.oqsengine.sdk.store;
 
 import com.xforceplus.ultraman.metadata.grpc.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
+import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.MetadataRepositoryInMemoryImpl;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.springframework.test.util.AssertionErrors.assertTrue;
@@ -361,4 +365,26 @@ public class StoreTest {
         System.out.println(boItem);
     }
 
+
+    @Test
+    public void testCreate(){
+        MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
+
+        ModuleUpResult result = ModuleUpResult.newBuilder()
+                .addBoUps(boupMultiExtendRelation())
+                .addBoUps(boupParent())
+                .build();
+
+        repository.save(result, "1", "1");
+        Optional<EntityClass> entityclassA = repository.load("1", "1", "11112");
+        Optional<EntityClass> entityclassB = repository.load("1", "1", "1111");
+        Optional<EntityClass> entityclassC = repository.load("1", "1", "111111");
+
+        EntityService entityService = new EntityService(repository, null, null);
+
+        Map<String, Object> data = new HashMap<>();
+        EntityUp entity = entityService.toEntityUp(entityclassA.get(), null, data);
+
+        System.out.println(entity);
+    }
 }

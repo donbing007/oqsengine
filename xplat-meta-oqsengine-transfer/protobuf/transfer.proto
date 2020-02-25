@@ -94,7 +94,7 @@ message EntityUp {
 
     int64 id = 1;
 
-    string relation = 2;
+    repeated RelationUp relation = 2;
 
     repeated EntityUp entityClasses = 3;
 
@@ -107,6 +107,14 @@ message EntityUp {
     int64 objId = 7;
 
     string code = 8;
+}
+
+message RelationUp {
+    string name = 1;
+    string relationType = 2;
+    bool identity = 3;
+    FieldUp entityField = 4;
+
 }
 
 message ValueUp {
