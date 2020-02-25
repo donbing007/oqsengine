@@ -1,8 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
-import org.junit.Test;
-import org.junit.Before;
 import org.junit.After;
+import org.junit.Before;
 
 /**
  * SQLMasterStorage Tester.

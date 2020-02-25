@@ -9,11 +9,14 @@ server:
 
 storage:
   master:
-    name: "oqsengine"
+    name: "oqsbigentity"
     query:
-      worker: 3 # default cpu core.
-      timeout: 3000 # default 3 second
+      # default cpu core.
+      worker: 3
+      # default 3 second
+      timeout: 3000
     shard:
       size: 1
   index:
-    name: "oqsengine"
+    # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
+    name: "oqsindex"

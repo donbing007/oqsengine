@@ -19,13 +19,13 @@ import org.springframework.context.annotation.Configuration;
 public class CommonConfiguration {
 
 
-    @Value("${storage.master.name}")
+    @Value("${storage.master.name:oqsengine-bigentity}")
     private String masterTableName;
 
-    @Value("${storage.master.shard.size}")
+    @Value("${storage.master.shard.size:1}")
     private int masterSize;
 
-    @Value("${instance.id}")
+    @Value("${instance.id:0}")
     private int instanceId;
 
     @Bean
