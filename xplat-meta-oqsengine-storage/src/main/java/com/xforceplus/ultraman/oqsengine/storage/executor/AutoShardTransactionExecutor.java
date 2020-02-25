@@ -42,21 +42,22 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
         DataSource targetDataSource = shardTask.getDataSourceSelector().select(shardTask.getShardKey());
 
         TransactionResource resource;
-        Transaction tx = transactionManager.getCurrent();
-        if (tx != null) {
-            Optional<TransactionResource> currentRes = tx.query(targetDataSource);
+        Optional<Transaction> tx = transactionManager.getCurrent();
+        if (tx.isPresent()) {
+            Optional<TransactionResource> currentRes = tx.get().query(targetDataSource);
             if (currentRes.isPresent()) {
                 /**
                  * 已经存在资源,重用.
                  */
                 resource = currentRes.get();
+
             } else {
                 /**
                  * 资源不存在,重新创建.
                  */
                 Connection conn = targetDataSource.getConnection();
                 resource = new ConnectionTransactionResource(targetDataSource, conn);
-                tx.join(resource);
+                tx.get().join(resource);
             }
         } else {
             // 无事务运行.

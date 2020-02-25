@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 
 import java.sql.SQLException;
+import java.util.Optional;
 
 /**
  * 自动创建事务的执行器.
@@ -25,11 +26,13 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
     @Override
     public Object execute(Task task) throws SQLException {
         boolean localTx;
-        Transaction tx = transactionManager.getCurrent();
-        if (tx == null) {
+        Optional<Transaction> txOptional = transactionManager.getCurrent();
+        Transaction tx;
+        if (!txOptional.isPresent()) {
             tx = transactionManager.create();
             localTx = true;
         } else {
+            tx = txOptional.get();
             localTx = false;
         }
 

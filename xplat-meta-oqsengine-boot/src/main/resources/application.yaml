@@ -10,6 +10,9 @@ server:
 storage:
   master:
     name: "oqsengine"
+    query:
+      worker: 3 # default cpu core.
+      timeout: 3000 # default 3 second
     shard:
       size: 1
   index:

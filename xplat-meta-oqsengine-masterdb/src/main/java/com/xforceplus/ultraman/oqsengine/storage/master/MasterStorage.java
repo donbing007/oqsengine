@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
 
 import java.sql.SQLException;
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +34,6 @@ public interface MasterStorage extends Storage {
      * @param ids 不同类型的不同实例的映射.
      * @return 多个实例列表.
      */
-    Collection<IEntity> selectMultiple(Map<IEntityClass, int[]> ids) throws SQLException;
+    Collection<IEntity> selectMultiple(Map<Long, IEntityClass> ids) throws SQLException;
 
 }

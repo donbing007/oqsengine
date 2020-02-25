@@ -22,9 +22,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -46,9 +45,9 @@ public class SQLMasterStorage implements MasterStorage {
     private static final String DELETE_SQL =
         "update %s set version = version + 1, deleted = ?, time = ? where id = ? and version = ?";
     private static final String SELECT_SQL =
-        "select entity, version, time, pref, cref, deleted, attribute from %s where id = ?";
+        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id = ?";
     private static final String SELECT_IN_SQL =
-        "select entity, version, time, pref, cref, deleted, attribute from %s where id in (%s)";
+        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id in (%s)";
 
     @Resource(name = "masterDataSourceSelector")
     private Selector<DataSource> dataSourceSelector;
@@ -58,6 +57,24 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Resource(name = "storageTransactionExecutor")
     private TransactionExecutor transactionExecutor;
+
+    private long queryTimeout = 3000;
+
+    private int workerSize = 3;
+
+    public void setQueryTimeout(long queryTimeout) {
+        this.queryTimeout = queryTimeout;
+    }
+
+    public void setWorkerSize(int workerSize) {
+        this.workerSize = workerSize;
+    }
+
+    /**
+     * 工作者线程.
+     */
+    private ExecutorService worker;
+
 
     @Override
     public Optional<IEntity> select(long id, IEntityClass entityClass) throws SQLException {
@@ -75,23 +92,9 @@ public class SQLMasterStorage implements MasterStorage {
                     ResultSet rs = st.executeQuery();
                     // entity, version, time, pref, cref, deleted, attribute, refs
                     if (rs.next()) {
-                        long dataEntityClassId = rs.getLong("entity");
-                        if (entityClass.id() != dataEntityClassId) {
-                            throw new SQLException(
-                                String.format(
-                                    "The incorrect Entity type is expected to be %d, but the actual data type is %d."
-                                    ,entityClass.id(), dataEntityClassId));
-                        }
 
-                        Entity entity = new Entity(
-                            id,
-                            entityClass,
-                            toEntityValue(id, entityClass, rs.getString("attribute"), null),
-                            new EntityFamily(rs.getLong("pref"), rs.getLong("cref")),
-                            rs.getInt("version")
-                        );
+                        return buildEntityFromResultSet(rs, entityClass);
 
-                        return Optional.of(entity);
                     } else {
                         return Optional.empty();
                     }
@@ -100,9 +103,34 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public Collection<IEntity> selectMultiple(Map<IEntityClass, int[]> ids) throws SQLException {
-        //TODO: 还未实现. by dongbin 2020/02/19
-        throw new UnsupportedOperationException();
+    public Collection<IEntity> selectMultiple(Map<Long, IEntityClass> ids) throws SQLException {
+        Map<DataSource, List<Long>> groupedMap = ids.keySet().stream().collect(
+            Collectors.groupingBy(id -> dataSourceSelector.select(Long.toString(id))));
+
+        CountDownLatch latch = new CountDownLatch(groupedMap.keySet().size());
+        List<Future> futures = new ArrayList(groupedMap.keySet().size());
+
+        for (List<Long> groupedIds : groupedMap.values()) {
+            futures.add(worker.submit(new MultipleSelectCallable(latch, groupedIds, ids)));
+        }
+
+        try {
+            if (!latch.await(queryTimeout, TimeUnit.MILLISECONDS)) {
+                throw new SQLException("Query failed, timeout.");
+            }
+        } catch (InterruptedException e) {
+        }
+
+        List<IEntity> results = new ArrayList<>(ids.size());
+        for (Future<Collection<IEntity>> f : futures) {
+            try {
+                results.addAll(f.get());
+            } catch (Exception e) {
+                throw new SQLException(e.getMessage(), e);
+            }
+        }
+
+        return results;
     }
 
 
@@ -289,5 +317,91 @@ public class SQLMasterStorage implements MasterStorage {
                 (v0, v1) -> v0)));
         return object.toJSONString();
 
+    }
+
+    /**
+     * 多重 id 查询任务,每一个任务表示一个分库的查询任务.
+     */
+    private class MultipleSelectCallable implements Callable<Collection<IEntity>> {
+
+        private CountDownLatch latch;
+        // 按照表名分区的 id.
+        private Map<String, List<Long>> ids;
+        // 目标 id总量.
+        private int size;
+        // id 对应 entityClass 速查表.
+        private Map<Long, IEntityClass> entityTable;
+
+        public MultipleSelectCallable(CountDownLatch latch, List<Long> ids, Map<Long, IEntityClass> entityTable) {
+            this.latch = latch;
+            this.entityTable = entityTable;
+            // 按表区分.
+            this.ids = ids.stream().collect(Collectors.groupingBy(id -> tableNameSelector.select(id.toString())));
+            size = ids.size();
+        }
+
+        @Override
+        public Collection<IEntity> call() throws Exception {
+            try {
+                return (Collection<IEntity>) transactionExecutor.execute(
+                    new DataSourceShardingTask(dataSourceSelector, ids.get(0).toString()) {
+
+                        @Override
+                        public Object run(TransactionResource resource) throws SQLException {
+                            List<IEntity> entities = new ArrayList(size);
+                            for (String table : ids.keySet()) {
+                                entities.addAll(select(table, ids.get(table), resource));
+                            }
+
+                            return entities;
+                        }
+
+                        private Collection<IEntity> select(
+                            String tableName, List<Long> partitionTableIds, TransactionResource res)
+                            throws SQLException {
+
+                            // 组织成 以逗号分隔的 id 字符串.
+                            String inSqlIds = partitionTableIds.stream().map(
+                                id -> id.toString()).collect(Collectors.joining(","));
+
+                            String sql = String.format(SELECT_IN_SQL, tableName, inSqlIds);
+                            PreparedStatement st = ((Connection) res.value()).prepareStatement(sql);
+                            ResultSet rs = st.executeQuery();
+
+                            List<IEntity> entities = new ArrayList<>(partitionTableIds.size());
+
+                            while (rs.next()) {
+                                long id = rs.getLong("id");
+                                entities.add(buildEntityFromResultSet(rs, entityTable.get(id)).get());
+                            }
+
+                            return entities;
+                        }
+                    });
+            } finally {
+                latch.countDown();
+            }
+        }
+    }
+
+    private Optional<IEntity> buildEntityFromResultSet(ResultSet rs,IEntityClass entityClass) throws SQLException {
+        long dataEntityClassId = rs.getLong("entity");
+        if (entityClass.id() != dataEntityClassId) {
+            throw new SQLException(
+                String.format(
+                    "The incorrect Entity type is expected to be %d, but the actual data type is %d."
+                    ,entityClass.id(), dataEntityClassId));
+        }
+
+        long id = rs.getLong("id");
+        Entity entity = new Entity(
+            id,
+            entityClass,
+            toEntityValue(id, entityClass, rs.getString("attribute"), null),
+            new EntityFamily(rs.getLong("pref"), rs.getLong("cref")),
+            rs.getInt("version")
+        );
+
+        return Optional.of(entity);
     }
 }

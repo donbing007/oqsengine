@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import org.springframework.beans.factory.annotation.Value;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -42,22 +43,18 @@ import java.util.stream.Collectors;
  */
 public class SphinxQLIndexStorage implements IndexStorage {
 
-    private static final String BUILD_SQL =
-        String.format("insert into %s (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)",
-            FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
-            FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
-    private static final String REPLACE_SQL =
-        String.format("replace into %s (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)",
-            FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
-            FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
+    private static final String WRITER_SQL = "%s into %s (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)";
     private static final String DELETE_SQL = "delete from %s where id = ?";
     private static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? and %s limit ? ?";
     private static final String SELECT_COUNT_SQL = "select count(id) as count from %s where entity = ? and %s";
 
+    private String buildSql;
+    private String replaceSql;
+
     @Resource(name = "indexQueryOptimizer")
     private QueryOptimizer<String> queryOptimizer;
 
-    @Resource(name ="indexWriteDataSourceSelector")
+    @Resource(name = "indexWriteDataSourceSelector")
     private Selector<DataSource> writerDataSourceSelector;
 
     @Resource(name = "indexSearchDataSourceSelector")
@@ -69,46 +66,60 @@ public class SphinxQLIndexStorage implements IndexStorage {
     @Value("${storage.index.name}")
     private String indexTableName;
 
+    @PostConstruct
+    public void init() {
+        buildSql =
+            String.format(WRITER_SQL,
+                "insert", indexTableName,
+                FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
+                FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
+        replaceSql =
+            String.format(WRITER_SQL,
+                "replace", indexTableName,
+                FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
+                FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
+    }
+
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page) throws SQLException {
 
         return (Collection<EntityRef>) transactionExecutor.execute(
             new DataSourceShardingTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
-            @Override
-            public Object run(TransactionResource resource) throws SQLException {
-                String whereCondition = queryOptimizer.optimizeConditions(conditions).build(conditions);
-                if (!page.isSinglePage()) {
-                    String countSql = String.format(SELECT_COUNT_SQL,indexTableName, whereCondition);
-                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(countSql);
-                    st.setLong(1, entityClass.id());
-                    ResultSet rs = st.executeQuery();
-                    long count = 0;
-                    while(rs.next()) {
-                        count = rs.getLong("count");
-                        break;
+                @Override
+                public Object run(TransactionResource resource) throws SQLException {
+                    String whereCondition = queryOptimizer.optimizeConditions(conditions).build(conditions);
+                    if (!page.isSinglePage()) {
+                        String countSql = String.format(SELECT_COUNT_SQL, indexTableName, whereCondition);
+                        PreparedStatement st = ((Connection) resource.value()).prepareStatement(countSql);
+                        st.setLong(1, entityClass.id());
+                        ResultSet rs = st.executeQuery();
+                        long count = 0;
+                        while (rs.next()) {
+                            count = rs.getLong("count");
+                            break;
+                        }
+                        page.setTotalCount(count);
                     }
-                    page.setTotalCount(count);
-                }
 
-                PageScope scope = page.getNextPage();
-                String sql = String.format(SELECT_SQL, indexTableName, whereCondition);
-                PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-                st.setLong(1, entityClass.id());
-                st.setLong(2, scope.startLine);
-                st.setLong(3, scope.endLine);
-                ResultSet rs = st.executeQuery();
-                List<EntityRef> refs = new ArrayList((int) page.getPageSize());
-                while(rs.next()) {
-                    refs.add(new EntityRef(
-                       rs.getLong(FieldDefine.ID),
-                       rs.getLong(FieldDefine.PREF),
-                       rs.getLong(FieldDefine.CREF)
-                    ));
-                }
+                    PageScope scope = page.getNextPage();
+                    String sql = String.format(SELECT_SQL, indexTableName, whereCondition);
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+                    st.setLong(1, entityClass.id());
+                    st.setLong(2, scope.startLine);
+                    st.setLong(3, scope.endLine);
+                    ResultSet rs = st.executeQuery();
+                    List<EntityRef> refs = new ArrayList((int) page.getPageSize());
+                    while (rs.next()) {
+                        refs.add(new EntityRef(
+                            rs.getLong(FieldDefine.ID),
+                            rs.getLong(FieldDefine.PREF),
+                            rs.getLong(FieldDefine.CREF)
+                        ));
+                    }
 
-                return refs;
-            }
-        });
+                    return refs;
+                }
+            });
     }
 
     @Override
@@ -148,7 +159,7 @@ public class SphinxQLIndexStorage implements IndexStorage {
 
     private void doBuildOrReplace(IEntity entity, boolean replacement) throws SQLException {
         checkId(entity);
-        final String sql = String.format(replacement ? REPLACE_SQL : BUILD_SQL, indexTableName);
+        final String sql = String.format(replacement ? replaceSql : buildSql, indexTableName);
 
         transactionExecutor.execute(
             new DataSourceShardingTask(writerDataSourceSelector, Long.toString(entity.id())) {

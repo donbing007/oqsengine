@@ -51,7 +51,7 @@ public class EntityValue implements IEntityValue {
     }
 
     @Override
-    public IEntityValue setValues(List<IValue> values) {
+    public IEntityValue addValues(Collection<IValue> values) {
         lazyInit();
         values.stream().forEach(v -> {
             this.values.put(v.getField(), v);

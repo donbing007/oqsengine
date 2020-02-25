@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 
+import java.util.Optional;
+
 /**
  * transaction manager.
  *
@@ -20,7 +22,7 @@ public interface TransactionManager {
      * 获取当前上下文绑定的事务.
      * @return 事务.
      */
-    Transaction getCurrent();
+    Optional<Transaction> getCurrent();
 
     /**
      * 重建事务.
