@@ -109,8 +109,12 @@ public class EntityService {
         OperationResult queryResult = queryResultBuilder.invoke(toEntityUpBuilder(entityClass, id).build())
                 .toCompletableFuture().join();
 
-        if(queryResult.getCode() == OperationResult.Code.OK){
-            return Either.right(toResultMap(queryResult.getQueryResultList().get(0)));
+        if( queryResult.getCode() == OperationResult.Code.OK ){
+            if(queryResult.getTotalRow() > 0) {
+                return Either.right(toResultMap(queryResult.getQueryResultList().get(0)));
+            } else {
+                return Either.left("未查询到记录");
+            }
         }else{
             return Either.left(queryResult.getMessage());
         }

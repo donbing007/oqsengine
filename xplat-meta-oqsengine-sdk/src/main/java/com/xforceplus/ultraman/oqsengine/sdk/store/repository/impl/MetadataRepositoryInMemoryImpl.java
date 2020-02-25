@@ -350,8 +350,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
             //deal Relation
 
-            List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> relFields = loadRelationField(relDs.toRows());
-
             List<IEntityClass> entityClassList = new LinkedList<>();
             List<Relation> relationList = new LinkedList<>();
 
@@ -359,8 +357,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 entityClassList.add(tuple._2());
                 relationList.add(tuple._1());
             });
-
-
 
             EntityClass entityClass = new EntityClass(Long.valueOf(boId), code, relationList, entityClassList, parentEntityClassOp.orElse(null), fields);
             return Optional.of(entityClass);
