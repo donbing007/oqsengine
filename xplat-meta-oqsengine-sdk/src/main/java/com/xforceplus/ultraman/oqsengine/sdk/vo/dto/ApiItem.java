@@ -27,4 +27,12 @@ public class ApiItem {
         this.url = url;
         this.method = method;
     }
+
+    @Override
+    public String toString() {
+        return "ApiItem{" +
+                "url='" + url + '\'' +
+                ", method='" + method + '\'' +
+                '}';
+    }
 }

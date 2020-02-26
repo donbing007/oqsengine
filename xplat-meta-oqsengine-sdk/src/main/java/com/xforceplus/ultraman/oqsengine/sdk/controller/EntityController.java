@@ -51,7 +51,7 @@ public class EntityController {
         return Response.Error("查询记录不存在");
     }
 
-    @DeleteMapping("/api/{tenantId}/{appCode}/bos/{boid}/entities/{id}")
+    @DeleteMapping("/api/{tenantId}/{appCode}/bos/{boId}/entities/{id}")
     public Response<String> singleDelete(
         @PathVariable String tenantId,
         @PathVariable String appCode,
@@ -91,11 +91,10 @@ public class EntityController {
      * }
      *
      */
-    @PostMapping("/api/{tenantId}/{appCode}/bos/{boid}/entities")
+    @PostMapping("/api/{tenantId}/{appCode}/bos/{boId}/entities")
     public Response<String> singleCreate( @PathVariable String tenantId,
                                           @PathVariable String appCode,
                                           @PathVariable String boId,
-                                          @PathVariable String id,
                                           @RequestBody Map<String, Object> body
     ){
         Optional<EntityClass> entityClassOp = entityService.load(tenantId, appCode, boId);

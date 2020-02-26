@@ -11,4 +11,11 @@ public class SoloItem {
     public void setId(Long id) {
         this.id = id;
     }
+
+    @Override
+    public String toString() {
+        return "SoloItem{" +
+                "id=" + id +
+                '}';
+    }
 }

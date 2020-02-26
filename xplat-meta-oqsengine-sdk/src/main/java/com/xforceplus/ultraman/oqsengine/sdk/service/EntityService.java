@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.*;
@@ -31,14 +32,17 @@ import java.util.stream.Stream;
 @Service
 public class EntityService {
 
-    @Autowired
-    private MetadataRepository metadataRepository;
+    private final MetadataRepository metadataRepository;
 
-    @Autowired
-    private EntityServiceClient entityServiceClient;
+    private final EntityServiceClient entityServiceClient;
 
-    @Autowired
-    private ContextService contextService;
+    private final ContextService contextService;
+
+    public EntityService(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
+        this.metadataRepository = metadataRepository;
+        this.entityServiceClient = entityServiceClient;
+        this.contextService = contextService;
+    }
 
 //    @Autowired(required = false)
 //    private TransactionTemplate template;
@@ -105,8 +109,12 @@ public class EntityService {
         OperationResult queryResult = queryResultBuilder.invoke(toEntityUpBuilder(entityClass, id).build())
                 .toCompletableFuture().join();
 
-        if(queryResult.getCode() == OperationResult.Code.OK){
-            return Either.right(toResultMap(queryResult.getQueryResultList().get(0)));
+        if( queryResult.getCode() == OperationResult.Code.OK ){
+            if(queryResult.getTotalRow() > 0) {
+                return Either.right(toResultMap(queryResult.getQueryResultList().get(0)));
+            } else {
+                return Either.left("未查询到记录");
+            }
         }else{
             return Either.left(queryResult.getMessage());
         }
@@ -128,23 +136,35 @@ public class EntityService {
 
         EntityUp.Builder builder = EntityUp.newBuilder();
 
+        //add parent
         if(entityClass.extendEntityClass() != null){
-            //this entityClass is a subEntity so we get the extend entity first
             IEntityClass parent = entityClass.extendEntityClass();
             EntityUp parentUp = toRawEntityUp(parent);
             builder.addEntityClasses(parentUp);
         }
 
-        if(id == null) {
+        //add obj id
+        if(id != null) {
             builder.setObjId(id);
         }
+
+        //add relation
+        builder.addAllRelation(entityClass.relations().stream().map(rel -> {
+            return RelationUp.newBuilder()
+                    .setEntityField(toFieldUp(rel.getEntityField()))
+                    .setName(rel.getName())
+                    .setRelationType(rel.getRelationType())
+                    .setIdentity(rel.isIdentity())
+                    .build();
+        }).collect(Collectors.toList()));
 
         builder.setId(entityClass.id())
                 .setCode(entityClass.code())
                 .addAllFields(entityClass.fields().stream().map(this::toFieldUp).collect(Collectors.toList()));
 
-        if(entityClass.entityClasss() != null && entityClass.entityClasss().isEmpty()){
-            builder.addAllEntityClasses(entityClass.entityClasss().stream().map(this::toRawEntityUp).collect(Collectors.toList()));
+        if(entityClass.entityClasss() != null && !entityClass.entityClasss().isEmpty()){
+            builder.addAllEntityClasses(entityClass.entityClasss().stream()
+                    .map(this::toRawEntityUp).collect(Collectors.toList()));
         }
 
         return builder;
@@ -164,13 +184,15 @@ public class EntityService {
      * @param body
      * @return
      */
-    private EntityUp toEntityUp(EntityClass entityClass, Long id,  Map<String, Object> body){
+    public EntityUp toEntityUp(EntityClass entityClass, Long id,  Map<String, Object> body){
+        //build entityUp
         EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
 
         List<ValueUp> values = body.entrySet().stream()
                 .map(entry -> {
                     String key = entry.getKey();
                     Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
+                    Optional<IEntityField> fieldOpRel = getKeyFromRelation(entityClass, key);
 
                     return fieldOp.map(field -> {
                         return ValueUp.newBuilder()
@@ -186,6 +208,10 @@ public class EntityService {
 
         builder.addAllValues(values);
         return builder.build();
+    }
+
+    private Optional<IEntityField> getKeyFromRelation(EntityClass entityClass, String key) {
+        return entityClass.relations().stream().filter(x ->  x.getName().equals(key)).map(Relation::getEntityField).findFirst();
     }
 
     //TODO sub search
@@ -257,6 +283,7 @@ public class EntityService {
     public Either<String, Long> create(EntityClass entityClass, Map<String, Object> body) {
 
         String transId = contextService.get(ContextService.StringKeys.TransactionKey);
+
         SingleResponseRequestBuilder<EntityUp, OperationResult> buildBuilder = entityServiceClient.build();
 
         if(transId != null){
