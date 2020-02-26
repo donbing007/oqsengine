@@ -121,4 +121,14 @@ public interface FieldUpOrBuilder extends
    */
   com.google.protobuf.ByteString
       getSearchableBytes();
+
+  /**
+   * <code>string minLength = 11;</code>
+   */
+  java.lang.String getMinLength();
+  /**
+   * <code>string minLength = 11;</code>
+   */
+  com.google.protobuf.ByteString
+      getMinLengthBytes();
 }

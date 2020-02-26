@@ -105,22 +105,23 @@ public final class EntityResourceProto {
       "tyField\030\004 \001(\0132\010.FieldUp\022\034\n\024relatedEntity" +
       "ClassId\030\005 \001(\003\"J\n\007ValueUp\022\r\n\005value\030\001 \001(\t\022" +
       "\014\n\004name\030\002 \001(\t\022\021\n\tfieldType\030\003 \001(\t\022\017\n\007fiel" +
-      "dId\030\004 \001(\003\"\266\001\n\007FieldUp\022\n\n\002id\030\001 \001(\003\022\014\n\004nam" +
+      "dId\030\004 \001(\003\"\311\001\n\007FieldUp\022\n\n\002id\030\001 \001(\003\022\014\n\004nam" +
       "e\030\002 \001(\t\022\021\n\tfieldType\030\003 \001(\t\022\014\n\004code\030\004 \001(\t" +
       "\022\023\n\013displayType\030\005 \001(\t\022\020\n\010editable\030\006 \001(\t\022" +
       "\020\n\010enumCode\030\007 \001(\t\022\021\n\tmaxLength\030\010 \001(\t\022\020\n\010" +
-      "required\030\t \001(\t\022\022\n\nsearchable\030\n \001(\t2\357\002\n\rE" +
-      "ntityService\022)\n\005begin\022\016.TransactionUp\032\020." +
-      "OperationResult\022$\n\005build\022\t.EntityUp\032\020.Op" +
-      "erationResult\022&\n\007replace\022\t.EntityUp\032\020.Op" +
-      "erationResult\022%\n\006remove\022\t.EntityUp\032\020.Ope" +
-      "rationResult\022(\n\tselectOne\022\t.EntityUp\032\020.O" +
-      "perationResult\022:\n\022selectByConditions\022\022.S" +
-      "electByCondition\032\020.OperationResult\022*\n\006co" +
-      "mmit\022\016.TransactionUp\032\020.OperationResult\022," +
-      "\n\010rollBack\022\016.TransactionUp\032\020.OperationRe" +
-      "sultB>\n%com.xforceplus.ultraman.oqsengin" +
-      "e.sdkB\023EntityResourceProtoP\001b\006proto3"
+      "required\030\t \001(\t\022\022\n\nsearchable\030\n \001(\t\022\021\n\tmi" +
+      "nLength\030\013 \001(\t2\357\002\n\rEntityService\022)\n\005begin" +
+      "\022\016.TransactionUp\032\020.OperationResult\022$\n\005bu" +
+      "ild\022\t.EntityUp\032\020.OperationResult\022&\n\007repl" +
+      "ace\022\t.EntityUp\032\020.OperationResult\022%\n\006remo" +
+      "ve\022\t.EntityUp\032\020.OperationResult\022(\n\tselec" +
+      "tOne\022\t.EntityUp\032\020.OperationResult\022:\n\022sel" +
+      "ectByConditions\022\022.SelectByCondition\032\020.Op" +
+      "erationResult\022*\n\006commit\022\016.TransactionUp\032" +
+      "\020.OperationResult\022,\n\010rollBack\022\016.Transact" +
+      "ionUp\032\020.OperationResultB>\n%com.xforceplu" +
+      "s.ultraman.oqsengine.sdkB\023EntityResource" +
+      "ProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -193,7 +194,7 @@ public final class EntityResourceProto {
     internal_static_FieldUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldUp_descriptor,
-        new java.lang.String[] { "Id", "Name", "FieldType", "Code", "DisplayType", "Editable", "EnumCode", "MaxLength", "Required", "Searchable", });
+        new java.lang.String[] { "Id", "Name", "FieldType", "Code", "DisplayType", "Editable", "EnumCode", "MaxLength", "Required", "Searchable", "MinLength", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

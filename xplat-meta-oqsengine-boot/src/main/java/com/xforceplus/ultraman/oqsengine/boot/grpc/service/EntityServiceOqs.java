@@ -4,6 +4,7 @@ import akka.grpc.javadsl.Metadata;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
@@ -183,7 +184,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
 
             if(sort != null && !sort.isEmpty()){
-                entities = entitySearchService.selectByConditions(null, toEntityClass(entityUp), page);
+                entities = entitySearchService.selectByConditions(toConditions(conditions), toEntityClass(entityUp), page);
             }else{
 
                 Sort sortParam;
@@ -295,6 +296,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     private Conditions toConditions(ConditionsUp conditionsUp){
+
+        conditionsUp.getFieldsList().stream().map(x -> {
+            Condition condition = new Condition(toEntityClass()x.getField());
+        });
+
+
        return null;
     }
 
@@ -305,7 +312,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 , null
                 , Collections.emptyList()
                 , null
-                , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
+                , entityUp.getFieldsList().stream().map(this::toEntityField).collect(Collectors.toList())
         );
     }
 
@@ -347,7 +354,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         }
     }
 
-    private Field toFieldEntity(FieldUp fieldUp){
+    //TODO
+    private Field toEntityField(FieldUp fieldUp){
         //g id, String name, FieldType fieldType
         //        this.searchType = searchType;
         //        this.maxSize = maxSize;
@@ -355,6 +363,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return new Field(fieldUp.getId()
                 , fieldUp.getName()
                 , FieldType.valueOf(fieldUp.getFieldType())
+                , fieldUp.getSearchable()
+                , Optional.ofNullable(fieldUp.getMaxLength())
+                          .map(String::valueOf)
+                          .map(Integer::parseInt).orElse(-1))
+                , Optional.ofNullable(fieldUp.getMinLength());
         );
     }
 

@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.boot.grpc;
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
 import com.xforceplus.ultraman.oqsengine.boot.grpc.service.EntityServiceOqs;
-import com.xforceplus.ultraman.oqsengine.sdk.EntityServicePowerApiHandlerFactory;
 import com.xforceplus.xplat.galaxy.grpc.GrpcServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

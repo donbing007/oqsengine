@@ -135,4 +135,5 @@ message FieldUp {
     string maxLength = 8;
     string required = 9;
     string searchable = 10;
+    string minLength = 11;
 }
