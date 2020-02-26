@@ -8,7 +8,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class EntityValue implements IEntityValue,Cloneable, Serializable {
+public class EntityValue implements IEntityValue, Cloneable, Serializable {
     /**
      * 元数据boId
      */
@@ -29,11 +29,19 @@ public class EntityValue implements IEntityValue,Cloneable, Serializable {
     }
 
     @Override
-    public IValue getValue(String fieldName) {
+    public Optional<IValue> getValue(String fieldName) {
         if (values == null) {
-            return null;
+            return Optional.empty();
+
         }
-        return values.get(fieldName);
+
+        for (IEntityField f : values.keySet()) {
+            if (f.name().equals(fieldName)) {
+                return Optional.of(values.get(f));
+            }
+        }
+
+        return Optional.empty();
     }
 
     @Override
