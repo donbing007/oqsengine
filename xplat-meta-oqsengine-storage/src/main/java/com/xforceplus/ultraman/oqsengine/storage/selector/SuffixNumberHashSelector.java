@@ -4,25 +4,29 @@ package com.xforceplus.ultraman.oqsengine.storage.selector;
 import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
 
 /**
- * 数字后辍的表名选择器.
+ * 数字后辍的字符串选择器.
+ *
+ * base = "table_"
+ * size = 3
+ * 那么结果将会是"table_0","table_1","table_2"范围之内.
  *
  * @author dongbin
  * @version 0.1 2020/2/16 19:18
  * @since 1.8
  */
-public class NumberIndexTableNameHashSelector implements Selector<String> {
+public class SuffixNumberHashSelector implements Selector<String> {
 
-    private String baseTableName;
+    private String base;
     private int size;
 
-    public NumberIndexTableNameHashSelector(String baseTableName, int size) {
-        this.baseTableName = baseTableName;
+    public SuffixNumberHashSelector(String base, int size) {
+        this.base = base;
         this.size = size;
     }
 
     @Override
     public String select(String key) {
         int code = Time33Hash.build().hash(key);
-        return baseTableName + (Math.abs(code % size));
+        return base + (Math.abs(code % size));
     }
 }

@@ -42,15 +42,15 @@ public class SQLMasterStorage implements MasterStorage {
 
 
     private static final String BUILD_SQL =
-        "insert into %s (id, entity, version, time, pref, cref, deleted, attribute) values(?,?,?,?,?,?,?,?,?)";
+        "insert into %s (id, entity, version, time, pref, cref, deleted, attribute) values(?,?,?,?,?,?,?,?)";
     private static final String REPLACE_SQL =
         "update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
     private static final String DELETE_SQL =
         "update %s set version = version + 1, deleted = ?, time = ? where id = ? and version = ?";
     private static final String SELECT_SQL =
-        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id = ?";
+        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id = ? and deleted = false";
     private static final String SELECT_IN_SQL =
-        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id in (%s)";
+        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id in (%s) and deleted = false";
 
     @Resource(name = "masterDataSourceSelector")
     private Selector<DataSource> dataSourceSelector;
@@ -113,14 +113,29 @@ public class SQLMasterStorage implements MasterStorage {
                     PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
                     st.setLong(1, id); // id
 
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(st.toString());
+                    }
+
                     ResultSet rs = st.executeQuery();
                     // entity, version, time, pref, cref, deleted, attribute, refs
-                    if (rs.next()) {
 
-                        return buildEntityFromResultSet(rs, entityClass);
+                    try {
+                        if (rs.next()) {
 
-                    } else {
-                        return Optional.empty();
+                            return buildEntityFromResultSet(rs, entityClass);
+
+                        } else {
+                            return Optional.empty();
+                        }
+                    } finally {
+                        if (rs != null) {
+                            rs.close();
+                        }
+
+                        if (st != null) {
+                            st.close();
+                        }
                     }
                 }
             });
@@ -181,6 +196,10 @@ public class SQLMasterStorage implements MasterStorage {
                     st.setBoolean(7, false); // deleted
                     st.setString(8,toJson(entity.entityValue())); // attribute
 
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(st.toString());
+                    }
+
                     int size = st.executeUpdate();
 
                     /**
@@ -192,7 +211,13 @@ public class SQLMasterStorage implements MasterStorage {
                             String.format("Entity{%s} could not be created successfully.", entity.toString()));
                     }
 
-                    return null;
+                    try {
+                        return null;
+                    } finally {
+                        if (st != null) {
+                            st.close();
+                        }
+                    }
                 }
             });
     }
@@ -209,19 +234,30 @@ public class SQLMasterStorage implements MasterStorage {
                 String sql = String.format(REPLACE_SQL, tableName);
                 PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
 
-                // time attribute id version";
+                // update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
                 st.setLong(1, System.currentTimeMillis()); // time
                 st.setString(2, toJson(entity.entityValue())); // attribute
                 st.setLong(3, entity.id()); // id
                 st.setInt(4, entity.version()); // version
 
+                if (logger.isDebugEnabled()) {
+                    logger.debug(st.toString());
+                }
+
                 int size = st.executeUpdate();
+
                 final int onlyOne = 1;
                 if (size != onlyOne) {
                     throw new SQLException(String.format("Entity{%s} could not be replace successfully.", entity.toString()));
                 }
 
-                return null;
+                try {
+                    return null;
+                } finally {
+                    if (st != null) {
+                        st.close();
+                    }
+                }
             }
         });
     }
@@ -244,13 +280,23 @@ public class SQLMasterStorage implements MasterStorage {
                 st.setLong(3, entity.id()); // id
                 st.setInt(4, entity.version()); // version
 
+                if (logger.isDebugEnabled()) {
+                    logger.debug(st.toString());
+                }
+
                 int size = st.executeUpdate();
                 final int onlyOne = 1;
                 if (size != onlyOne) {
                     throw new SQLException(String.format("Entity{%s} could not be delete successfully.", entity.toString()));
                 }
 
-                return null;
+                try {
+                    return null;
+                } finally {
+                    if (st != null) {
+                        st.close();
+                    }
+                }
             }
         });
     }
@@ -271,10 +317,10 @@ public class SQLMasterStorage implements MasterStorage {
     private IEntityValue toEntityValue(long id, IEntityClass entityClass, String json, FieldType rowFieldType) throws SQLException {
         JSONObject object = JSON.parseObject(json);
 
-        Map<Long, IEntityField> fieldMap = null;
+        Map<String, IEntityField> fieldMap = null;
         if (rowFieldType == null) {
             fieldMap = entityClass.fields()
-                .stream().collect(Collectors.toMap(IEntityField::id, f -> f, (f0, f1) -> f0));
+                .stream().collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0));
         }
 
         IEntityField field = null;
@@ -356,19 +402,23 @@ public class SQLMasterStorage implements MasterStorage {
         // id 对应 entityClass 速查表.
         private Map<Long, IEntityClass> entityTable;
 
+        private String dataSourceShardKey;
+
         public MultipleSelectCallable(CountDownLatch latch, List<Long> ids, Map<Long, IEntityClass> entityTable) {
             this.latch = latch;
             this.entityTable = entityTable;
             // 按表区分.
             this.ids = ids.stream().collect(Collectors.groupingBy(id -> tableNameSelector.select(id.toString())));
             size = ids.size();
+
+            dataSourceShardKey = Long.toString(ids.get(0));
         }
 
         @Override
         public Collection<IEntity> call() throws Exception {
             try {
                 return (Collection<IEntity>) transactionExecutor.execute(
-                    new DataSourceShardingTask(dataSourceSelector, ids.get(0).toString()) {
+                    new DataSourceShardingTask(dataSourceSelector, dataSourceShardKey) {
 
                         @Override
                         public Object run(TransactionResource resource) throws SQLException {
@@ -392,6 +442,10 @@ public class SQLMasterStorage implements MasterStorage {
                             PreparedStatement st = ((Connection) res.value()).prepareStatement(sql);
                             ResultSet rs = st.executeQuery();
 
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(st.toString());
+                            }
+
                             List<IEntity> entities = new ArrayList<>(partitionTableIds.size());
 
                             while (rs.next()) {
@@ -399,7 +453,17 @@ public class SQLMasterStorage implements MasterStorage {
                                 entities.add(buildEntityFromResultSet(rs, entityTable.get(id)).get());
                             }
 
-                            return entities;
+                            try {
+                                return entities;
+                            } finally {
+                                if (rs != null) {
+                                    rs.close();
+                                }
+
+                                if (st != null) {
+                                    st.close();
+                                }
+                            }
                         }
                     });
             } finally {
@@ -421,7 +485,7 @@ public class SQLMasterStorage implements MasterStorage {
         Entity entity = new Entity(
             id,
             entityClass,
-            toEntityValue(id, entityClass, rs.getString("attribute"), null),
+            toEntityValue(entityClass.id(), entityClass, rs.getString("attribute"), null),
             new EntityFamily(rs.getLong("pref"), rs.getLong("cref")),
             rs.getInt("version")
         );

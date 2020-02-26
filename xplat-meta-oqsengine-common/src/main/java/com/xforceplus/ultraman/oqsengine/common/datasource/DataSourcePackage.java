@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.common.datasource;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import javax.sql.DataSource;
 import java.util.List;
 
@@ -31,5 +33,25 @@ public class DataSourcePackage {
 
     public List<DataSource> getIndexSearch() {
         return indexSearch;
+    }
+
+    public void close() {
+        if (master != null) {
+            doClose(master);
+        }
+
+        if (indexWriter != null) {
+            doClose(indexWriter);
+        }
+
+        if (indexSearch != null) {
+            doClose(indexSearch);
+        }
+    }
+
+    private void doClose(List<DataSource> master) {
+        for (DataSource ds : master) {
+            ((HikariDataSource) ds).close();
+        }
     }
 }

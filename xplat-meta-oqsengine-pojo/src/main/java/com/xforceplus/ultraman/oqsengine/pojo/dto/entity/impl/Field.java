@@ -1,9 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -33,114 +33,37 @@ public class Field implements IEntityField, Serializable {
     private FieldType fieldType;
 
     /**
-     * 字段是否可搜索
+     * 字段配置.
      */
-    private boolean searchType;
+    private FieldConfig config;
 
     /**
-     * 字段数据最大长度
+     * 构造一个使用默认配置的字段.
+     * @param id 字段标识.
+     * @param name 字段名称.
+     * @param fieldType 字段类型.
      */
-    private int maxSize;
-
-    /**
-     * 字段数据最小长度
-     */
-    private int mixSize;
-
-    public Field() {
-    }
-
     public Field(long id, String name, FieldType fieldType) {
+        this(id, name, fieldType, null);
+    }
+
+    /**
+     * 构造一个独特配置的字段.
+     * @param id 字段标识.
+     * @param name 字段名称.
+     * @param fieldType 字段类型.
+     * @param config 字段配置.
+     */
+    public Field(long id, String name, FieldType fieldType, FieldConfig config) {
         this.id = id;
         this.name = name;
         this.fieldType = fieldType;
-    }
 
-    public Field(long id, String name, FieldType fieldType, boolean searchType, int maxSize, int mixSize) {
-        this.id = id;
-        this.name = name;
-        this.fieldType = fieldType;
-        this.searchType = searchType;
-        this.maxSize = maxSize;
-        this.mixSize = mixSize;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public FieldType getFieldType() {
-        return fieldType;
-    }
-
-    public void setFieldType(FieldType fieldType) {
-        this.fieldType = fieldType;
-    }
-
-    public boolean isSearchType() {
-        return searchType;
-    }
-
-    public void setSearchType(boolean searchType) {
-        this.searchType = searchType;
-    }
-
-    public int getMaxSize() {
-        return maxSize;
-    }
-
-    public void setMaxSize(int maxSize) {
-        this.maxSize = maxSize;
-    }
-
-    public int getMixSize() {
-        return mixSize;
-    }
-
-    public void setMixSize(int mixSize) {
-        this.mixSize = mixSize;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Field)) return false;
-        Field field = (Field) o;
-        return getId() == field.getId() &&
-                isSearchType() == field.isSearchType() &&
-                getMaxSize() == field.getMaxSize() &&
-                getMixSize() == field.getMixSize() &&
-                Objects.equals(getName(), field.getName()) &&
-                getFieldType() == field.getFieldType();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getId(), getName(), getFieldType(), isSearchType(), getMaxSize(), getMixSize());
-    }
-
-    @Override
-    public String toString() {
-        return "Field{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", fieldType=" + fieldType +
-                ", searchType=" + searchType +
-                ", maxSize=" + maxSize +
-                ", mixSize=" + mixSize +
-                '}';
+        if (config == null) {
+            this.config = FieldConfig.build();
+        } else {
+            this.config = config;
+        }
     }
 
     @Override
@@ -156,5 +79,40 @@ public class Field implements IEntityField, Serializable {
     @Override
     public FieldType type() {
         return this.fieldType;
+    }
+
+    @Override
+    public FieldConfig config() {
+        return this.config;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Field)) {
+            return false;
+        }
+        Field field = (Field) o;
+        return id == field.id &&
+            Objects.equals(name, field.name) &&
+            fieldType == field.fieldType &&
+            Objects.equals(config, field.config);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, fieldType, config);
+    }
+
+    @Override
+    public String toString() {
+        return "Field{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", fieldType=" + fieldType +
+            ", config=" + config +
+            '}';
     }
 }

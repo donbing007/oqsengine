@@ -2,12 +2,13 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * 表示实际 entity 实体.
  */
-public class Entity implements IEntity {
+public class Entity implements IEntity, Serializable {
 
     private static final IEntityFamily EMPTY_FAMILY = new EntityFamily(0, 0);
 
@@ -97,6 +98,11 @@ public class Entity implements IEntity {
     }
 
     @Override
+    public Object clone() throws CloneNotSupportedException {
+        return new Entity(id(),entityClass(), (IEntityValue) entityValue().clone(), family(), version());
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -108,12 +114,13 @@ public class Entity implements IEntity {
         return id == entity.id &&
             version == entity.version &&
             Objects.equals(entityClass, entity.entityClass) &&
-            Objects.equals(entityValue, entity.entityValue);
+            Objects.equals(entityValue, entity.entityValue) &&
+            Objects.equals(family, entity.family);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, entityClass, entityValue, version);
+        return Objects.hash(id, entityClass, entityValue, family, version);
     }
 
     @Override
@@ -122,6 +129,7 @@ public class Entity implements IEntity {
             "id=" + id +
             ", entityClass=" + entityClass +
             ", entityValue=" + entityValue +
+            ", family=" + family +
             ", version=" + version +
             '}';
     }

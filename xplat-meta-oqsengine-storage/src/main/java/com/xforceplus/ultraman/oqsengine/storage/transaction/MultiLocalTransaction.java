@@ -55,7 +55,11 @@ public class MultiLocalTransaction implements Transaction {
 
     @Override
     public boolean isCompleted() {
-        return (committed || rollback) ? true : false;
+        if (this.committed || this.rollback) {
+            return true;
+        }
+
+        return false;
     }
 
     @Override
@@ -100,7 +104,7 @@ public class MultiLocalTransaction implements Transaction {
 
         if (commit) {
 
-            commit = true;
+            committed = true;
 
         } else {
 

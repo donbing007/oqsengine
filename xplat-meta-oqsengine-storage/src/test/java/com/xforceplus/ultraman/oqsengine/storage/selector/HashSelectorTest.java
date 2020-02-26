@@ -6,18 +6,21 @@ import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
 
+import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static org.mockito.Mockito.mock;
+
 /**
- * NumberIndexTableNameHashSelector Tester.
+ * DataSourceHashSelector Tester.
  *
  * @author <Authors name>
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
-public class NumberIndexTableNameHashSelectorTest {
+public class HashSelectorTest {
 
     @Before
     public void before() throws Exception {
@@ -32,15 +35,20 @@ public class NumberIndexTableNameHashSelectorTest {
      */
     @Test
     public void testSelect() throws Exception {
-        List<String> keys = buildKeys(10);
 
-        String base = "test";
-        int len = 100; // 分布区域
-        NumberIndexTableNameHashSelector selector = new NumberIndexTableNameHashSelector(base, len);
-        for (String key : keys) {
-            int address = Math.abs(Time33Hash.build().hash(key) % len);
-            Assert.assertEquals(base + address, selector.select(key));
+        int dsSize = 10;
+        List<DataSource> dsPool = buildDataSource(dsSize);
+        int keySize = 200;
+        List<String> keyPool = buildKeys(keySize);
+
+        HashSelector selector = new HashSelector(dsPool);
+        Time33Hash h = Time33Hash.build();
+        for (String key : keyPool) {
+            int address = Math.abs(h.hash(key) % dsSize);
+
+            Assert.assertEquals(dsPool.get(address), selector.select(key));
         }
+
     }
 
     private List<String> buildKeys(int size) {
@@ -49,6 +57,14 @@ public class NumberIndexTableNameHashSelectorTest {
             keys.add(randomString(10));
         }
         return keys;
+    }
+
+    private List<DataSource> buildDataSource(int size) {
+        List<DataSource> ds = new ArrayList(size);
+        for (int i = 0; i < size; i++) {
+            ds.add(mock(DataSource.class));
+        }
+        return ds;
     }
 
     private String randomString(int len) {

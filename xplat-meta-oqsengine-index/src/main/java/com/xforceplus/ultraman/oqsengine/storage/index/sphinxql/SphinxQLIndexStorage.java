@@ -19,7 +19,8 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLH
 import com.xforceplus.ultraman.oqsengine.storage.query.QueryOptimizer;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -43,9 +44,11 @@ import java.util.stream.Collectors;
  */
 public class SphinxQLIndexStorage implements IndexStorage {
 
+    final Logger logger = LoggerFactory.getLogger(SphinxQLIndexStorage.class);
+
     private static final String WRITER_SQL = "%s into %s (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)";
     private static final String DELETE_SQL = "delete from %s where id = ?";
-    private static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? and %s limit ? ?";
+    private static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? and %s order by %s limit ?,?";
     private static final String SELECT_COUNT_SQL = "select count(id) as count from %s where entity = ? and %s";
 
     private String buildSql;
@@ -63,8 +66,11 @@ public class SphinxQLIndexStorage implements IndexStorage {
     @Resource(name = "storageTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
-    @Value("${storage.index.name}")
     private String indexTableName;
+
+    public void setIndexTableName(String indexTableName) {
+        this.indexTableName = indexTableName;
+    }
 
     @PostConstruct
     public void init() {
@@ -88,26 +94,56 @@ public class SphinxQLIndexStorage implements IndexStorage {
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
                     String whereCondition = queryOptimizer.optimizeConditions(conditions).build(conditions);
+                    PreparedStatement st = null;
+                    ResultSet rs = null;
                     if (!page.isSinglePage()) {
                         String countSql = String.format(SELECT_COUNT_SQL, indexTableName, whereCondition);
-                        PreparedStatement st = ((Connection) resource.value()).prepareStatement(countSql);
-                        st.setLong(1, entityClass.id());
-                        ResultSet rs = st.executeQuery();
                         long count = 0;
+
+                        st = ((Connection) resource.value()).prepareStatement(countSql);
+                        st.setLong(1, entityClass.id());
+                        rs = st.executeQuery();
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(st.toString());
+                        }
+
                         while (rs.next()) {
                             count = rs.getLong("count");
                             break;
                         }
+
+                        rs.close();
+                        st.close();
                         page.setTotalCount(count);
                     }
 
                     PageScope scope = page.getNextPage();
-                    String sql = String.format(SELECT_SQL, indexTableName, whereCondition);
-                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+
+                    String orderBy;
+                    if (sort != null) {
+                        orderBy = FieldDefine.JSON_FIELDS + "." + sort.getField().id();
+                        if (sort.isAsc()) {
+                            orderBy += " ASC";
+                        } else {
+                            orderBy += " DESC";
+                        }
+                    } else {
+                        orderBy = "id DESC";
+                    }
+
+                    String sql = String.format(SELECT_SQL, indexTableName, whereCondition, orderBy);
+                    st = ((Connection) resource.value()).prepareStatement(sql);
                     st.setLong(1, entityClass.id());
                     st.setLong(2, scope.startLine);
                     st.setLong(3, scope.endLine);
-                    ResultSet rs = st.executeQuery();
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(st.toString());
+                    }
+
+                    rs = st.executeQuery();
+
                     List<EntityRef> refs = new ArrayList((int) page.getPageSize());
                     while (rs.next()) {
                         refs.add(new EntityRef(
@@ -117,7 +153,17 @@ public class SphinxQLIndexStorage implements IndexStorage {
                         ));
                     }
 
-                    return refs;
+                    try {
+                        return refs;
+                    } finally {
+                        if (rs != null) {
+                            rs.close();
+                        }
+
+                        if (st != null) {
+                            st.close();
+                        }
+                    }
                 }
             });
     }
@@ -145,13 +191,24 @@ public class SphinxQLIndexStorage implements IndexStorage {
                 PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
                 st.setLong(1, entity.id()); // id
 
+                if (logger.isDebugEnabled()) {
+                    logger.debug(st.toString());
+                }
+
                 int size = st.executeUpdate();
+
                 final int onlyOne = 1;
                 if (size != onlyOne) {
                     throw new SQLException(String.format("Entity{%s} could not be delete successfully.", entity.toString()));
                 }
 
-                return null;
+                try {
+                    return null;
+                } finally {
+                    if (st != null) {
+                        st.close();
+                    }
+                }
             }
         });
 
@@ -177,19 +234,28 @@ public class SphinxQLIndexStorage implements IndexStorage {
                     st.setString(5, serializeJson(entity.entityValue()));
                     // full
                     st.setString(6, serializeFull(entity.entityValue()));
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(st.toString());
+                    }
+
                     int size = st.executeUpdate();
 
-                    // 成功只应该有一条语句影响
-                    final int onlyOne = 1;
-                    if (size == onlyOne) {
-                        return entity.id();
-                    } else {
-                        throw new SQLException(
-                            String.format(
-                                "Entity{%s} could not be %s successfully.",
-                                entity.toString(),
-                                replacement ? "replace" : "build"
-                            ));
+                    try {
+                        // 成功只应该有一条语句影响
+                        final int onlyOne = 1;
+                        if (size == onlyOne) {
+                            return entity.id();
+                        } else {
+                            throw new SQLException(
+                                String.format(
+                                    "Entity{%s} could not be %s successfully.",
+                                    entity.toString(),
+                                    replacement ? "replace" : "build"
+                                ));
+                        }
+                    } finally {
+                        st.close();
                     }
                 }
             });

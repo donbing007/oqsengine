@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -53,7 +54,11 @@ import java.util.List;
  */
 public class DataSourceFactory {
 
-    private static final String CONFIG_FILE = "ds";
+    public static final String CONFIG_FILE = "ds";
+
+    private static final String INDEX_WRITER_PATH = "dataSources.index.write";
+    private static final String INDEX_SEARCH_PATH = "dataSources.index.search";
+    private static final String MASTER_PATH = "dataSources.master";
 
     /**
      * 数据源构造,会试图读取构造三个数据源列表.
@@ -71,15 +76,31 @@ public class DataSourceFactory {
             config = ConfigFactory.parseFile(new File(dsConfigFile));
         }
 
-        List<DataSource> indexWrite = buildDataSources("indexWrite",
-            (List<Config>) config.getConfigList("dataSources.index.write"));
-        List<DataSource> indexSearch = buildDataSources("indexSearch",
-            (List<Config>) config.getConfigList("dataSources.index.search"));
-        List<DataSource> master = buildDataSources("master",
-            (List<Config>) config.getConfigList("dataSources.master"));
+        List<DataSource> indexWrite;
+        if (config.hasPath(INDEX_WRITER_PATH)) {
+            indexWrite = buildDataSources("indexWrite",
+                (List<Config>) config.getConfigList(INDEX_WRITER_PATH));
+        } else {
+            indexWrite = Collections.emptyList();
+        }
+
+        List<DataSource> indexSearch;
+        if (config.hasPath(INDEX_SEARCH_PATH)) {
+            indexSearch = buildDataSources("indexSearch",
+                (List<Config>) config.getConfigList(INDEX_SEARCH_PATH));
+        } else {
+            indexSearch = Collections.emptyList();
+        }
+
+        List<DataSource> master;
+        if (config.hasPath(MASTER_PATH)) {
+            master = buildDataSources("master",
+                (List<Config>) config.getConfigList(MASTER_PATH));
+        } else {
+            master = Collections.emptyList();
+        }
 
         return new DataSourcePackage(master, indexWrite, indexSearch);
-
     }
 
     private static List<DataSource> buildDataSources(String baseName, List<Config> configs) {

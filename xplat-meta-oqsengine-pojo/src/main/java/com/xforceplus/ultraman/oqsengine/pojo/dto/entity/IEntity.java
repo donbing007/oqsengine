@@ -1,11 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
-import java.io.Serializable;
-
 /**
  * entity 实体定义.
  */
-public interface IEntity extends Serializable {
+public interface IEntity extends Cloneable {
 
     /**
      * 获得本对象的id - 数据id
@@ -42,4 +40,13 @@ public interface IEntity extends Serializable {
      * @return 版本号.
      */
     public int version();
+
+    /**
+     * 克隆.
+     * @return
+     * @throws CloneNotSupportedException
+     */
+    public Object clone() throws CloneNotSupportedException;
+
+
 }

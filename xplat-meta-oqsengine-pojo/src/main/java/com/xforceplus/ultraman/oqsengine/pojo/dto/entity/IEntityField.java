@@ -25,4 +25,11 @@ public interface IEntityField {
      * @return 类型.
      */
     FieldType type();
+
+    /**
+     * 获取字段配置.
+     * @return 配置.
+     */
+    FieldConfig config();
+
 }

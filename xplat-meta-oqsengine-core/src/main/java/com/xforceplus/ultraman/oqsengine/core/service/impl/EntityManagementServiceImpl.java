@@ -1,23 +1,17 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.storage.executor.Task;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -46,32 +40,45 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Override
     public long build(IEntity entity) throws SQLException {
 
+        // 克隆一份,后续的修改不影响入参.
+        IEntity target;
+        try {
+             target = (IEntity) entity.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new SQLException(e.getMessage(),e);
+        }
+
         return (long) transactionExecutor.execute(r -> {
 
-            if (isSub(entity)) {
+            if (isSub(target)) {
                 // 处理父类
                 long fatherId = idGenerator.next();
                 long childId = idGenerator.next();
 
-                IEntity fathcerEntity = buildFatherEntity(entity, childId);
+                IEntity fathcerEntity = buildFatherEntity(target, childId);
                 fathcerEntity.resetId(fatherId);
 
-                IEntity childEntity = buildChildEntity(entity, fatherId);
+                IEntity childEntity = buildChildEntity(target, fatherId);
                 childEntity.resetId(childId);
 
                 // master
                 masterStorage.build(fathcerEntity); // father
                 masterStorage.build(childEntity); // child
 
-                // index
-                indexStorage.build(fathcerEntity); // fatcher
+
+                indexStorage.build(buildIndexEntity(fathcerEntity)); // fatcher
 
                 /**
                  * 索引中子类包含父类所有属性,保证可以使用父类属性查询子类.
-                 * 这里直接使用外界传入的 entity 实例,不这重置 id 为新的子类 id.
+                 * 这里直接使用外界传入的 entity 实例,重置 id 为新的子类 id.
                  */
                 entity.resetId(childId);
-                indexStorage.build(entity); // child
+                /**
+                 * 索引中只存放可搜索字段,子类包含父类和本身的所有可搜索字段.
+                 * 这里先将父的属性合并进来过滤再储存.
+                 */
+                indexStorage.build(buildIndexEntity(target)); // child
+
 
                 return childId;
 
@@ -79,8 +86,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 entity.resetId(idGenerator.next());
 
-                masterStorage.build(entity);
-                indexStorage.build(entity);
+                masterStorage.build(target);
+                indexStorage.build(buildIndexEntity(target));
 
                 return entity.id();
             }
@@ -91,27 +98,37 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Override
     public void replace(IEntity entity) throws SQLException {
 
+        // 克隆一份,后续的修改不影响入参.
+        IEntity target;
+        try {
+            target = (IEntity) entity.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new SQLException(e.getMessage(),e);
+        }
+
         transactionExecutor.execute(r -> {
-            masterStorage.replace(entity);
 
             if (isSub(entity)) {
 
                 /**
                  * 拆分为父与子.
                  */
-                IEntity fatherEntity = buildFatherEntity(entity, entity.id());
-                IEntity childEntity = buildChildEntity(entity,entity.family().parent());
+                IEntity fatherEntity = buildFatherEntity(target, target.id());
+                IEntity childEntity = buildChildEntity(target,target.family().parent());
 
                 masterStorage.replace(fatherEntity);
                 masterStorage.replace(childEntity);
 
-                indexStorage.replace(fatherEntity);
-                indexStorage.replace(entity);
+                indexStorage.replace(buildIndexEntity(fatherEntity));
+                // 子类的索引需要父和子所有属性.
+
+                indexStorage.replace(buildIndexEntity(target));
 
             } else {
 
-                masterStorage.replace(entity);
-                indexStorage.replace(entity);
+                masterStorage.replace(target);
+
+                indexStorage.replace(buildIndexEntity(target));
             }
 
             return null;
@@ -140,6 +157,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             }
             return null;
         });
+    }
+
+    // 构造一个适合索引的 IEntity 实例.
+    private IEntity buildIndexEntity(IEntity target) {
+        target.entityValue().filter(v -> v.getField().config().isSearchable());
+        return target;
     }
 
     private boolean isSub(IEntity entity) {

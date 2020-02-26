@@ -15,11 +15,11 @@ public class EntityClass implements IEntityClass {
     /**
      * 关系信息
      */
-    private List<Relation> relations;
+    private Collection<Relation> relations;
     /**
      * 子对象结构信息
      */
-    private List<IEntityClass> entityClasss = Collections.emptyList();
+    private Collection<IEntityClass> entityClasss;
 
     /**
      * 继承的对象类型.
@@ -28,23 +28,48 @@ public class EntityClass implements IEntityClass {
     /**
      * 对象属性信息
      */
-    private List<IEntityField> fields = Collections.emptyList();
+    private Collection<IEntityField> fields = Collections.emptyList();
 
     public EntityClass() {
     }
 
+    public EntityClass(long id, String code, Collection<IEntityField> fields) {
+        this(id,code,null, null, null,fields);
+    }
+
+    /**
+     * 构造一个新的entity 类型信息.
+     * @param id 类型 id.
+     * @param code 类型 code.
+     * @param relations 关联对象信息.
+     * @param entityClasss 类型关联对象类型信息.
+     * @param extendEntityClass 继承对象信息.
+     * @param fields 属性列表.
+     */
     public EntityClass(Long id,
                        String code,
-                       List<Relation> relations,
-                       List<IEntityClass> entityClasss,
+                       Collection<Relation> relations,
+                       Collection<IEntityClass> entityClasss,
                        IEntityClass extendEntityClass,
-                       List<Field> fields) {
+                       Collection<IEntityField> fields) {
         this.id = id;
         this.code = code;
-        this.relations = relations;
-        this.entityClasss = entityClasss;
+        if (relations == null) {
+            this.relations = Collections.emptyList();
+        } else {
+            this.relations = new ArrayList<>(relations);
+        }
+        if (entityClasss == null) {
+            this.entityClasss = Collections.emptyList();
+        } else {
+            this.entityClasss = new ArrayList<>(entityClasss);
+        }
+        if (fields == null) {
+            this.fields = Collections.emptyList();
+        } else {
+            this.fields = new ArrayList<>(fields);
+        }
         this.extendEntityClass = extendEntityClass;
-        this.fields = new ArrayList<>(fields);
     }
 
     @Override
@@ -58,7 +83,7 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
-    public List<Relation> relations() {
+    public Collection<Relation> relations() {
         return relations;
     }
 

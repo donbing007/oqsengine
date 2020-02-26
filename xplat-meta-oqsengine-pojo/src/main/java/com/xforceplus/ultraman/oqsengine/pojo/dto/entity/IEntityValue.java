@@ -4,8 +4,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
 
-public interface IEntityValue {
+public interface IEntityValue extends Cloneable{
     /**
      * 获得数据对象的id
      * @return 数据对象的id
@@ -38,4 +39,24 @@ public interface IEntityValue {
      * @return
      */
     public IEntityValue addValues(Collection<IValue> values);
+
+    /**
+     * 删除某个属性值.
+     * @param field 目标字段信息.
+     * @return 被删除的值.
+     */
+    public IValue remove(IEntityField field);
+
+    /**
+     * 根据条件过滤掉不需要的.
+     * @param predicate 条件.
+     */
+    public void filter(Predicate<? super IValue> predicate);
+
+    /**
+     * 克隆.
+     * @return
+     * @throws CloneNotSupportedException
+     */
+    public Object clone() throws CloneNotSupportedException;
 }

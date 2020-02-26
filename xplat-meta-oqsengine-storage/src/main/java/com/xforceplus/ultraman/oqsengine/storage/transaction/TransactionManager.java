@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 
+import java.sql.SQLException;
 import java.util.Optional;
 
 /**
@@ -45,6 +46,11 @@ public interface TransactionManager {
      * 结束某个事务.
      * @param tx 目标事务.
      */
-    void finish(Transaction tx);
+    void finish(Transaction tx) throws SQLException;
+
+    /**
+     * 结束当前的事务.
+     */
+    void finish() throws SQLException;
 
 }

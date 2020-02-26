@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 public interface IEntityClass {
@@ -19,13 +19,13 @@ public interface IEntityClass {
      * 关系信息的集合
      * @return 根对象默认为Null，OneToOne为OTO，OneToMany为OTM
      */
-    public List<Relation> relations();
+    public Collection<Relation> relations();
 
     /**
      * 获得本对象的下一级子对象
      * @return 子对象集合 - 子对象目前不继续往下钻
      */
-    public List<IEntityClass> entityClasss();
+    public Collection<IEntityClass> entityClasss();
 
     /**
      * 获取当前对象继承的对象类型.
@@ -37,7 +37,7 @@ public interface IEntityClass {
      * 本对象的属性信息
      * @return 属性集合
      */
-    public List<IEntityField> fields();
+    public Collection<IEntityField> fields();
 
     /**
      * 本地对象指定字段的信息.

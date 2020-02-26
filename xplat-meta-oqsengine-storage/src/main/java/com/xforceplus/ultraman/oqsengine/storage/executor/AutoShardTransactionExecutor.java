@@ -56,6 +56,9 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
                  * 资源不存在,重新创建.
                  */
                 Connection conn = targetDataSource.getConnection();
+                if (conn.getAutoCommit()) {
+                    conn.setAutoCommit(false);
+                }
                 resource = new ConnectionTransactionResource(targetDataSource, conn);
                 tx.get().join(resource);
             }
