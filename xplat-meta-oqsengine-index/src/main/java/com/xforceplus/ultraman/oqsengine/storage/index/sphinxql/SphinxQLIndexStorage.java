@@ -49,7 +49,7 @@ public class SphinxQLIndexStorage implements IndexStorage {
     private static final String WRITER_SQL = "%s into %s (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)";
     private static final String DELETE_SQL = "delete from %s where id = ?";
     private static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? and %s order by %s limit ?,?";
-    private static final String SELECT_COUNT_SQL = "select count(id) as count from %s where entity = ? and %s";
+    private static final String SELECT_COUNT_SQL = "select count(*) as count from %s where entity = ? and %s";
 
     private String buildSql;
     private String replaceSql;
@@ -102,11 +102,12 @@ public class SphinxQLIndexStorage implements IndexStorage {
 
                         st = ((Connection) resource.value()).prepareStatement(countSql);
                         st.setLong(1, entityClass.id());
-                        rs = st.executeQuery();
 
                         if (logger.isDebugEnabled()) {
                             logger.debug(st.toString());
                         }
+
+                        rs = st.executeQuery();
 
                         while (rs.next()) {
                             count = rs.getLong("count");
@@ -135,8 +136,8 @@ public class SphinxQLIndexStorage implements IndexStorage {
                     String sql = String.format(SELECT_SQL, indexTableName, whereCondition, orderBy);
                     st = ((Connection) resource.value()).prepareStatement(sql);
                     st.setLong(1, entityClass.id());
-                    st.setLong(2, scope.startLine);
-                    st.setLong(3, scope.endLine);
+                    st.setLong(2, scope.getStartLine());
+                    st.setLong(3, scope.getEndLine());
 
                     if (logger.isDebugEnabled()) {
                         logger.debug(st.toString());

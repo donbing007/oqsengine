@@ -63,14 +63,14 @@ public class SphinxQLHelper {
     }
 
     /**
-     * 数字,大小写字母除外都将使用 unicode 的十六进制码表示.
+     * 数字,大小写字母 *号除外都将使用 unicode 的十六进制码表示.
      * @param str 目标字符串.
      * @return 编码结果.
      */
     public static String unicode(String str) {
         StringBuilder buff = new StringBuilder();
         for (char c : str.toCharArray()) {
-            if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c >= 48 && c <= 57) {
+            if (c == 42 || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c >= 48 && c <= 57) {
 
                 buff.append(c);
 

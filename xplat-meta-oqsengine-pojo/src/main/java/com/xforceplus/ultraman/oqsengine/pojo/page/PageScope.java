@@ -11,16 +11,29 @@ import java.io.Serializable;
 public class PageScope implements Serializable {
     
     private static final long serialVersionUID = 6857657318970467129L;
-    public long startLine;
-    public long endLine;
+    protected long startLine;
+    protected long endLine;
+
+    public PageScope(long startLine, long endLine) {
+        this.startLine = startLine;
+        this.endLine = endLine;
+    }
+
+    public long getStartLine() {
+        return startLine == 0 ? 0 : startLine - 1;
+    }
+
+    public long getEndLine() {
+        return endLine;
+    }
     
     @Override
     public String toString() {
         StringBuffer buff = new StringBuffer();
         buff.append("Dividing page information is ");
-        buff.append(startLine);
+        buff.append(getStartLine());
         buff.append(" to ");
-        buff.append(endLine);
+        buff.append(getEndLine());
         return buff.toString();
     }
 }

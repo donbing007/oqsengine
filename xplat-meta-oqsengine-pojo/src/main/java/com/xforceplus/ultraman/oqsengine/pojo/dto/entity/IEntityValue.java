@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 public interface IEntityValue extends Cloneable{
@@ -18,7 +19,7 @@ public interface IEntityValue extends Cloneable{
      * @param fieldName
      * @return
      */
-    public IValue getValue(String fieldName);
+    public Optional<IValue> getValue(String fieldName);
 
     /**
      * 添加单个值对象

@@ -47,6 +47,10 @@ public class NoOrNorRanageConditionsBuilder implements ConditionsBuilder<String>
                     }
                     case NOT_EQUALS: {
                         buff.append("-");
+                        break;
+                    }
+                    case LIKE: {
+                        allNegative = false;
                     }
                 }
 
@@ -58,7 +62,6 @@ public class NoOrNorRanageConditionsBuilder implements ConditionsBuilder<String>
 
         //判断是否都是不等于条件,是的话需要补充一下 F*.
         // -F123 F* 表示从所有字段中排除掉 F123.
-        final int onlyOne = 1;
         if (allNegative) {
             buff.append(SphinxQLHelper.FULL_FIELD_PREFIX).append("*");
         } else {

@@ -64,6 +64,17 @@ public class NoOrNorRanageConditionsBuilderTest {
             new Case(
                 new Conditions(
                     new Condition(
+                        new Field(1, "c1", FieldType.STRING),
+                        ConditionOperator.LIKE,
+                        new StringValue(new Field(1, "c1", FieldType.STRING), "test*")
+                    )
+                ),
+                expectPrefix + "F1test*" + expectAfter
+            )
+            ,
+            new Case(
+                new Conditions(
+                    new Condition(
                         new Field(1, "c1", FieldType.LONG),
                         ConditionOperator.EQUALS,
                         new LongValue(new Field(1, "c1", FieldType.LONG), 100L)))
