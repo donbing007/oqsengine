@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,20 +30,36 @@ public class DictController {
     ){
 
         DataSet ds = null;
+        List<Row> rows = new ArrayList<Row>();
         if(StringUtils.isEmpty(enumCode)) {
             ds = store.query().selectAll()
-                    .where("dictId")
+                    .where("publishDictId")
                     .eq(enumId).execute();
+            rows = ds.toRows();
+
+            if (!(rows!=null && rows.size() > 0)){
+                ds = store.query().selectAll()
+                        .where("dictId")
+                        .eq(enumId).execute();
+                rows = ds.toRows();
+            }
         }else{
             ds = store.query().selectAll()
-                    .where("dictId")
+                    .where("publishDictId")
                     .eq(enumId)
                     .and("code").eq(enumCode)
                     .execute();
+            rows = ds.toRows();
+
+            if (!(rows!=null && rows.size() > 0)) {
+                ds = store.query().selectAll()
+                        .where("dictId")
+                        .eq(enumId)
+                        .and("code").eq(enumCode)
+                        .execute();
+                rows = ds.toRows();
+            }
         }
-
-        List<Row> rows = ds.toRows();
-
 
         ResponseList<DictItem> items = rows.stream().map(this::toDictItem).collect(Collectors.toCollection(ResponseList::new));
 

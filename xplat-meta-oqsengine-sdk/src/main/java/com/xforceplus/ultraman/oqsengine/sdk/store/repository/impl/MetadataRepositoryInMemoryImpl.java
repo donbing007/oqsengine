@@ -129,6 +129,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             //TODO not set
             boItem.setSubEntities(Collections.emptyList());
 
+
+
             return boItem;
         }
         return null;
