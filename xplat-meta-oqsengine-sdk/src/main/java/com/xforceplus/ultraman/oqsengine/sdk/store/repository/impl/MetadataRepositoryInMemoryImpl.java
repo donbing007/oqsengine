@@ -8,13 +8,17 @@ import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.util.ConvertHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ApiItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.FieldItem;
-import org.apache.metamodel.UpdateCallback;
-import org.apache.metamodel.UpdateScript;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.SoloItem;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import org.apache.metamodel.UpdateSummary;
 import org.apache.metamodel.UpdateableDataContext;
 import org.apache.metamodel.data.DataSet;
 import org.apache.metamodel.data.Row;
@@ -25,9 +29,9 @@ import org.apache.metamodel.pojo.TableDataProvider;
 import org.apache.metamodel.schema.Table;
 import org.apache.metamodel.util.SimpleTableDef;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils.getRowValue;
@@ -45,12 +49,15 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     private List<Map<String, ?>> fieldStore = new ArrayList<>();
 
+    private List<Map<String, ?>> RelationStore = new ArrayList<>();
+
     private UpdateableDataContext dc;
 
     public MetadataRepositoryInMemoryImpl() {
 
+        //TODO typed column name
 
-        SimpleTableDef boTableDef = new SimpleTableDef("bos", new String[]{"parentId", "id", "code"});
+        SimpleTableDef boTableDef = new SimpleTableDef("bos", new String[]{"id", "code", "parentId"});
         TableDataProvider boTableDataProvider = new MapTableDataProvider(boTableDef, boStore);
 
         SimpleTableDef ApiTableDef = new SimpleTableDef("apis", new String[]{"boId", "url", "method", "code"});
@@ -61,7 +68,25 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 , "code", "displayType", "editable", "enumCode", "maxLength", "name", "required", "type", "searchable"});
         TableDataProvider fieldTableDataProvider = new MapTableDataProvider(fieldTableDef, fieldStore);
 
-        dc = new PojoDataContext("metadata", boTableDataProvider, apiTableDataProvider, fieldTableDataProvider);
+        /**
+         * relation table
+         */
+        SimpleTableDef relationTableDef = new SimpleTableDef("rels"
+                , new String[]{
+                      "id"
+                    , "boId"
+                    //onetomany manytoone onetoone
+                    , "relType"
+                    , "identity"
+                    , "joinBoId"
+                });
+
+        TableDataProvider relationTableDataProvider = new MapTableDataProvider(relationTableDef, RelationStore);
+
+        dc = new PojoDataContext("metadata", boTableDataProvider
+                , apiTableDataProvider
+                , fieldTableDataProvider
+                , relationTableDataProvider);
 
     }
 
@@ -107,9 +132,13 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     @Override
     public BoItem getBoDetailById(String id) {
 
-        DataSet boDetails = dc.query().from("bos").selectAll().where("id").eq(id).execute();
+        DataSet boDetails = dc.query().from("bos")
+                .selectAll()
+                .where("id").eq(id)
+                .execute();
 
         if(boDetails.next()){
+            Row ds = boDetails.getRow();
             DataSet apis = dc.query()
                     .from("apis")
                     .selectAll().where("boId").eq(id).execute();
@@ -123,37 +152,167 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
             List<FieldItem> fieldItemList = toFieldItemList(fields);
 
+            //deal with rel
+            DataSet rels = dc.query()
+                    .from("rels")
+                    .selectAll()
+                    .where("boId").eq(id).execute();
+
+            List<Row> rows = rels.toRows();
+
+            List<String> relIds = rows
+                    .stream()
+                    .map(x -> RowUtils.getRowValue(x, "joinBoId")
+                            .map(String::valueOf).orElse(""))
+                    .collect(Collectors.toList());
+
+            List<FieldItem> relField = this.loadRelationField(rows, row -> {
+
+                String joinBoId = RowUtils.getRowValue(row, "joinBoId")
+                                          .map(String::valueOf)
+                                          .orElse("");
+
+                DataSet boDs = dc.query().from("bos")
+                        .selectAll()
+                        .where("id").eq(joinBoId)
+                        .execute();
+
+                if(boDs.next()){
+
+                    Row bo = boDs.getRow();
+                    String boCode = RowUtils.getRowValue(bo, "code")
+                            .map(String::valueOf)
+                            .orElse("");
+
+                    SoloItem soloItem = new SoloItem();
+                    soloItem.setId(Long.valueOf(joinBoId));
+
+                    return new FieldItem(
+                              boCode.concat(".id")
+                            , boCode.concat(".id")
+                            , FieldType.LONG.getType()
+                            , ""
+                            , "false"
+                            , "true"
+                            , "false"
+                            , null
+                            , null
+                            , soloItem);
+                }
+                return null;
+            });
+
+            List<FieldItem> fieldTotalItems = new LinkedList<>();
+            fieldTotalItems.addAll(fieldItemList);
+            fieldTotalItems.addAll(relField);
+
             BoItem boItem = new BoItem();
             boItem.setApi(apiItemMap);
-            boItem.setFields(fieldItemList);
-            //TODO not set
-            boItem.setSubEntities(Collections.emptyList());
+            boItem.setFields(fieldTotalItems);
+            boItem.setParentEntityId(
+                    RowUtils.getRowValue(ds, "parentId")
+                    .map(String::valueOf).orElse(""));
+            boItem.setSubEntities(relIds);
+
+
 
             return boItem;
         }
         return null;
     }
 
+    /**
+     *
+     * @param moduleUpResult
+     * @param tenantId
+     * @param appId
+     */
     @Override
     public void save(ModuleUpResult moduleUpResult, String tenantId, String appId) {
+
         moduleUpResult.getBoUpsList().forEach(boUp ->  {
 
+            //TODO
             clearAllBoIdRelated(boUp.getId());
-            //save bo
-            boUp.getApisList().stream().forEach(api -> {
-                insert("apis", api, boUp.getId());
 
-            });
-
-            boUp.getFieldsList().forEach(field -> {
-                insert("fields", field, boUp.getId());
-            });
-
-            insert("bos", boUp);
+            //insert bo
+            insertBo(boUp);
         });
     }
 
 
+    /**
+     * no more parent
+     * no relation
+     * no relation fields
+     * @return
+     */
+    private Optional<IEntityClass> loadParentEntityClass(String boId){
+
+        DataSet boDs = dc.query()
+                .from("bos")
+                .selectAll().where("id").eq(boId)
+                .execute();
+        if(boDs.next()){
+            Row row = boDs.getRow();
+
+            String code = RowUtils.getRowValue(row, "code").toString();
+            return Optional.of(new EntityClass(Long.valueOf(boId), code, Collections.emptyList()
+                    , Collections.emptyList(), null, loadFields(boId)));
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * load related entity class
+     * @param boId
+     * @return
+     */
+    private Optional<Tuple2<Relation, IEntityClass>> loadRelationEntityClass(String boId, Row relRow, String boCode){
+
+        String relationType = RowUtils.getRowValue(relRow, "relType")
+                            .map(String::valueOf)
+                            .orElse("");
+        Long joinBoId = RowUtils.getRowValue(relRow, "joinBoId")
+                            .map(String::valueOf)
+                            .map(Long::valueOf)
+                            .orElse(0L);
+
+        return findOneById("bos", boId).map(row -> {
+            Optional<IEntityClass> parentEntityClass = RowUtils
+                    .getRowValue(row, "parentId")
+                    .map(String::valueOf)
+                    .flatMap(this::loadParentEntityClass);
+
+            String subCode = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
+
+            //assemble entity class
+            IEntityClass entityClass = new EntityClass(Long.valueOf(boId)
+                    , subCode
+                    , Collections.emptyList()
+                    , Collections.emptyList()
+                    , parentEntityClass.orElse(null)
+                    , loadFields(boId));
+
+            //assemble relation Field
+            com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field field;
+            Relation relation;
+            if(relationType.equalsIgnoreCase("onetoone")
+                    || relationType.equalsIgnoreCase("manytoone")){
+                //Field is from main id
+                field = ConvertHelper.toEntityClassFieldFromRel(relRow, subCode);
+                relation = new Relation(subCode, joinBoId, relationType, true, field);
+
+            }else{
+                //relation is onetomany
+                field = ConvertHelper.toEntityClassFieldFromRel(relRow, boCode);
+                relation = new Relation(boCode, joinBoId, relationType, true, field);
+            }
+
+            return Tuple.of(relation, entityClass);
+        });
+    }
 
     /**
      * TODO nested object
@@ -167,49 +326,57 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         DataSet boDs = dc.query()
                 .from("bos")
-                .selectAll().where("id").eq(boId).execute();
+                .selectAll().where("id").eq(boId)
+                .execute();
 
         if(boDs.next()){
             Row row = boDs.getRow();
 
-            String code = RowUtils.getRowValue(row, "code").toString();
-
-            String parentId =  RowUtils.getRowValue(row, "parentId").toString();
+            String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
 
             List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> fields = loadFields(boId);
 
-            EntityClass parentEntityClass = null;
-            if(!StringUtils.isEmpty(parentId)){
-                //if has parents
-                DataSet parent = dc.query()
-                        .from("bos")
-                        .selectAll().where("id")
-                        .eq(parentId).execute();
-                if(parent.next()){
-                    Row parentRow = parent.getRow();
-                    String parentCode = RowUtils.getRowValue(parentRow, "code").toString();
-                    List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> parentFields = loadFields(parentId);
-                    parentEntityClass = new EntityClass(Long.valueOf(parentId), parentCode, null, Collections.emptyList(), null, parentFields);
-                }
-            }
+            //build up parentClass
 
-            List<IEntityClass> entityClasses = new ArrayList<>();
+            String parentId = RowUtils.getRowValue(row, "parentId").map(String::valueOf).orElse("");
 
-            //find sub TODO need this?
-            DataSet subEntities = dc.query()
-                    .from("bos")
-                    .selectAll().where("parentId")
-                    .eq(boId).execute();
+            Optional<IEntityClass> parentEntityClassOp = loadParentEntityClass(parentId);
 
-            while(subEntities.next()){
-                Row subRow = subEntities.getRow();
-                String subId = RowUtils.getRowValue(subRow, "id").toString();
-                String subCode = RowUtils.getRowValue(subRow, "code").toString();
-                EntityClass sub = new EntityClass(Long.valueOf(subId), subCode, null, Collections.emptyList(), null, loadFields(subId));
-                entityClasses.add(sub);
-            }
+            //deal relation Classes
+            DataSet relDs = dc.query()
+                    .from("rels")
+                    .selectAll().where("boId")
+                    .eq(boId)
+                    .execute();
 
-            EntityClass entityClass = new EntityClass(Long.valueOf(boId), code, null, entityClasses, parentEntityClass, fields);
+            List<Row> relsRows = relDs.toRows();
+
+            List<Tuple2<Relation, IEntityClass>> relatedEntityClassList = relsRows.stream().map(relRow -> {
+                Optional<String> relatedBoIdOp = RowUtils.getRowValue(relRow, "joinBoId").map(String::valueOf);
+                return relatedBoIdOp.flatMap(x -> {
+                    return loadRelationEntityClass(x, relRow, code);
+                });
+            }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+
+            //deal Relation
+
+            List<IEntityClass> entityClassList = new LinkedList<>();
+            List<Relation> relationList = new LinkedList<>();
+
+            List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> allFields = new LinkedList<>();
+            allFields.addAll(fields);
+
+            relatedEntityClassList.forEach(tuple -> {
+                entityClassList.add(tuple._2());
+                relationList.add(tuple._1());
+            });
+
+            List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> refFields = loadRelationField(relsRows);
+            allFields.addAll(refFields);
+
+            EntityClass entityClass = new EntityClass(Long.valueOf(boId)
+                    , code, relationList, entityClassList
+                    , parentEntityClassOp.orElse(null), allFields);
             return Optional.of(entityClass);
         }
 
@@ -220,45 +387,176 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         DataSet fieldDs = dc.query().from("fields")
                 .selectAll().where("boId").eq(id).execute();
         return fieldDs.toRows().stream()
-                .map(this::toField)
+                .map(ConvertHelper::toEntityClassField)
                 .collect(Collectors.toList());
     }
 
-    private com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field toField(Row row){
+    /**
+     * isSub => turn many to one to filed on sub
+     * @param id
+     * @return
+     */
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationField(String id){
+        //load onetoone and many to one
+        DataSet relDs = dc.query().from("rels")
+                        .selectAll().where("boId").eq(id)
+                        .execute();
+        return loadRelationField(relDs.toRows());
 
-        Long id = RowUtils.getRowValue(row, "id").map(String::valueOf).map(Long::valueOf).orElse(-1l);
-        String name = RowUtils.getRowValue(row, "name").map(String::valueOf).orElse("");
-        FieldType fieldType = RowUtils.getRowValue(row, "fieldType").map(String::valueOf).map(FieldType::valueOf).orElse(FieldType.STRING);
-        com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field field =
-                new com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field(id, name, fieldType);
-        return field;
     }
 
-    synchronized private void clearAllBoIdRelated(String boId){
-        dc.executeUpdate(new UpdateScript() {
-            public void run(UpdateCallback callback) {
-                callback.deleteFrom(getTable("bos")).where("id").eq(boId).execute();
-                callback.deleteFrom(getTable("apis")).where("boId").eq(boId).execute();
-                callback.deleteFrom(getTable("fields")).where("boId").eq(boId).execute();
-            };
-        });
+    /**
+     * TODO
+     * @param relations
+     * @return
+     */
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationField(List<Row> relations){
+        //relation to field
+        return relations.stream().filter(row -> {
+            return RowUtils.getRowValue(row,"relType")
+                    .map(String::valueOf)
+                    .filter(type -> type.equalsIgnoreCase("onetoone") || type.equalsIgnoreCase("manytoone"))
+                    .isPresent();
+        }).map(row -> {
+            //get joinBoId
+            Optional<Row> joinBoOp = findOneById("bos",
+                    RowUtils.getRowValue(row, "joinBoId").map(String::valueOf).orElse(""));
+            if(joinBoOp.isPresent()) {
+                String code =joinBoOp
+                        .flatMap(x -> RowUtils.getRowValue(x, "code")
+                                .map(String::valueOf)).orElse("");
+                return ConvertHelper.toEntityClassFieldFromRel(row, code);
+            } else {
+                return null;
+            }
+        }).filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
+
+    private <U> List<U> loadRelationField(List<Row> relations, Function<Row, U> mapper){
+        return relations.stream().filter(row -> {
+            return RowUtils.getRowValue(row,"relType")
+                    .map(String::valueOf)
+                    .filter(type -> type.equalsIgnoreCase("onetoone")
+                            || type.equalsIgnoreCase("manytoone"))
+                    .isPresent();
+        }).map(mapper).filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    //maybe useless
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationFieldForSub(String id
+            , String subId, String code) {
+        //load onetoone and many to one
+        DataSet relDs = dc.query().from("rels")
+                .selectAll()
+                .where("joinBoId").eq(id)
+                .and("boId").eq(subId)
+                .and("relType").eq("OneToMany")
+                .execute();
+
+        //to relDs
+        return relDs.toRows().stream()
+                .map(row -> {
+                    return ConvertHelper.toEntityClassFieldFromRel(row, code);
+        }).collect(Collectors.toList());
+    }
+
 
     private Table getTable(String tableName){
         return dc.getTableByQualifiedLabel("metadata." + tableName);
     }
 
-    //TODO nested not
-    synchronized private void insert(String tableName, BoUp boUp){
-        InsertInto insert = new InsertInto(getTable(tableName))
-                .value("id", boUp.getId())
-                .value("code", boUp.getCode());
+    private Optional<Row> findOneById(String tableName, String id){
+        DataSet ds = dc.query().from(tableName)
+                .selectAll()
+                .where("id").eq(id)
+                .execute();
+
+        if(ds.next()){
+            return Optional.ofNullable(ds.getRow());
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * nothing todo with the related entity
+     * @param boId
+     */
+    synchronized private void clearAllBoIdRelated(String boId){
+        UpdateSummary updateSummary = dc.executeUpdate(callback -> {
+            callback.deleteFrom(getTable("bos")).where("id").eq(boId).execute();
+            callback.deleteFrom(getTable("apis")).where("boId").eq(boId).execute();
+            callback.deleteFrom(getTable("fields")).where("boId").eq(boId).execute();
+            callback.deleteFrom(getTable("rels")).where("boId").eq(boId).execute();
+        });
+
+        System.out.println(updateSummary.getDeletedRows());
+    }
+
+    synchronized private void insertBoTable(String id, String code, String parentId) {
+        InsertInto insert = new InsertInto(getTable("bos"))
+                .value("id", id)
+                .value("code", code)
+                .value("parentId", parentId);
         dc.executeUpdate(insert);
     }
 
-    synchronized private void insert(String tableName, Field field, String boId){
-        InsertInto insert = new InsertInto(dc.getTableByQualifiedLabel("metadata." + tableName ))
+    /**
+     * bo maybe
+     * @param boUp
+     */
+    synchronized private void insertBo(BoUp boUp){
+
+        insertBoTable(boUp.getId(), boUp.getCode(), boUp.getParentBoId());
+
+        //save relations
+        boUp.getRelationsList().forEach(rel -> {
+            InsertInto insertRel = new InsertInto(getTable("rels"))
+                    .value("id", rel.getId())
+                    .value("boId", rel.getBoId())
+                    .value("joinBoId", rel.getJoinBoId())
+                    .value("identity", rel.getIdentity())
+                    .value("relType", rel.getRelationType());
+            dc.executeUpdate(insertRel);
+        });
+
+        //insert apis
+        boUp.getApisList().forEach(api -> {
+            insertApi( api, boUp.getId());
+        });
+
+        //insert fields
+        boUp.getFieldsList().forEach(field -> {
+            insertField(field, boUp.getId());
+        });
+
+        //maybe not need
+        //insert sub bo
+        //save if not exist
+        boUp.getBoUpsList().stream()
+                .filter(relatedBo ->  !findOneById("bos", relatedBo.getId()).isPresent())
+                .forEach(relatedBo -> {
+                    insertBoTable(relatedBo.getId(), relatedBo.getCode(), relatedBo.getParentBoId());
+
+                    //save fields
+                    //insert apis
+                    relatedBo.getApisList().forEach(api -> {
+                        insertApi(api, relatedBo.getId());
+                    });
+
+                    //insert fields
+                    relatedBo.getFieldsList().forEach(field -> {
+                        insertField(field, relatedBo.getId());
+                    });
+                });
+    }
+
+    synchronized private void insertField(Field field, String boId){
+        InsertInto insert = new InsertInto(getTable("fields"))
                 .value("boId", boId)
+                .value("id", field.getId())
                 .value("code", field.getCode())
                 .value("displayType", field.getDisplayType())
                 .value("editable", field.getDisplayType())
@@ -271,13 +569,12 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         dc.executeUpdate(insert);
     }
 
-    synchronized private void insert(String tableName, Api api, String boId){
-        InsertInto insert = new InsertInto(dc.getTableByQualifiedLabel("metadata." + tableName ))
+    synchronized private void insertApi(Api api, String boId){
+        InsertInto insert = new InsertInto(getTable("apis"))
                 .value("boId", boId)
                 .value("url", api.getUrl())
                 .value("code", api.getCode())
                 .value("method", api.getMethod());
-
         dc.executeUpdate(insert);
     }
 }

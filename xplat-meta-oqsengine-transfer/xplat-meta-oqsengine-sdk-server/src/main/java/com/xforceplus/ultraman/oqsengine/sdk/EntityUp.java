@@ -17,7 +17,7 @@ private static final long serialVersionUID = 0L;
   }
   private EntityUp() {
     id_ = 0L;
-    relation_ = "";
+    relation_ = java.util.Collections.emptyList();
     entityClasses_ = java.util.Collections.emptyList();
     fields_ = java.util.Collections.emptyList();
     values_ = java.util.Collections.emptyList();
@@ -62,9 +62,12 @@ private static final long serialVersionUID = 0L;
             break;
           }
           case 18: {
-            java.lang.String s = input.readStringRequireUtf8();
-
-            relation_ = s;
+            if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+              relation_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.sdk.RelationUp>();
+              mutable_bitField0_ |= 0x00000002;
+            }
+            relation_.add(
+                input.readMessage(com.xforceplus.ultraman.oqsengine.sdk.RelationUp.parser(), extensionRegistry));
             break;
           }
           case 26: {
@@ -126,6 +129,9 @@ private static final long serialVersionUID = 0L;
       throw new com.google.protobuf.InvalidProtocolBufferException(
           e).setUnfinishedMessage(this);
     } finally {
+      if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+        relation_ = java.util.Collections.unmodifiableList(relation_);
+      }
       if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
         entityClasses_ = java.util.Collections.unmodifiableList(entityClasses_);
       }
@@ -162,37 +168,38 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int RELATION_FIELD_NUMBER = 2;
-  private volatile java.lang.Object relation_;
+  private java.util.List<com.xforceplus.ultraman.oqsengine.sdk.RelationUp> relation_;
   /**
-   * <code>string relation = 2;</code>
+   * <code>repeated .RelationUp relation = 2;</code>
    */
-  public java.lang.String getRelation() {
-    java.lang.Object ref = relation_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      relation_ = s;
-      return s;
-    }
+  public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.RelationUp> getRelationList() {
+    return relation_;
   }
   /**
-   * <code>string relation = 2;</code>
+   * <code>repeated .RelationUp relation = 2;</code>
    */
-  public com.google.protobuf.ByteString
-      getRelationBytes() {
-    java.lang.Object ref = relation_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      relation_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
+  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.RelationUpOrBuilder> 
+      getRelationOrBuilderList() {
+    return relation_;
+  }
+  /**
+   * <code>repeated .RelationUp relation = 2;</code>
+   */
+  public int getRelationCount() {
+    return relation_.size();
+  }
+  /**
+   * <code>repeated .RelationUp relation = 2;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.sdk.RelationUp getRelation(int index) {
+    return relation_.get(index);
+  }
+  /**
+   * <code>repeated .RelationUp relation = 2;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.sdk.RelationUpOrBuilder getRelationOrBuilder(
+      int index) {
+    return relation_.get(index);
   }
 
   public static final int ENTITYCLASSES_FIELD_NUMBER = 3;
@@ -379,8 +386,8 @@ private static final long serialVersionUID = 0L;
     if (id_ != 0L) {
       output.writeInt64(1, id_);
     }
-    if (!getRelationBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, relation_);
+    for (int i = 0; i < relation_.size(); i++) {
+      output.writeMessage(2, relation_.get(i));
     }
     for (int i = 0; i < entityClasses_.size(); i++) {
       output.writeMessage(3, entityClasses_.get(i));
@@ -412,8 +419,9 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(1, id_);
     }
-    if (!getRelationBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, relation_);
+    for (int i = 0; i < relation_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(2, relation_.get(i));
     }
     for (int i = 0; i < entityClasses_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
@@ -456,8 +464,8 @@ private static final long serialVersionUID = 0L;
     boolean result = true;
     result = result && (getId()
         == other.getId());
-    result = result && getRelation()
-        .equals(other.getRelation());
+    result = result && getRelationList()
+        .equals(other.getRelationList());
     result = result && getEntityClassesList()
         .equals(other.getEntityClassesList());
     result = result && (hasExtendEntityClass() == other.hasExtendEntityClass());
@@ -487,8 +495,10 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + ID_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
         getId());
-    hash = (37 * hash) + RELATION_FIELD_NUMBER;
-    hash = (53 * hash) + getRelation().hashCode();
+    if (getRelationCount() > 0) {
+      hash = (37 * hash) + RELATION_FIELD_NUMBER;
+      hash = (53 * hash) + getRelationList().hashCode();
+    }
     if (getEntityClassesCount() > 0) {
       hash = (37 * hash) + ENTITYCLASSES_FIELD_NUMBER;
       hash = (53 * hash) + getEntityClassesList().hashCode();
@@ -635,6 +645,7 @@ private static final long serialVersionUID = 0L;
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
+        getRelationFieldBuilder();
         getEntityClassesFieldBuilder();
         getFieldsFieldBuilder();
         getValuesFieldBuilder();
@@ -644,8 +655,12 @@ private static final long serialVersionUID = 0L;
       super.clear();
       id_ = 0L;
 
-      relation_ = "";
-
+      if (relationBuilder_ == null) {
+        relation_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000002);
+      } else {
+        relationBuilder_.clear();
+      }
       if (entityClassesBuilder_ == null) {
         entityClasses_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -699,7 +714,15 @@ private static final long serialVersionUID = 0L;
       int from_bitField0_ = bitField0_;
       int to_bitField0_ = 0;
       result.id_ = id_;
-      result.relation_ = relation_;
+      if (relationBuilder_ == null) {
+        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          relation_ = java.util.Collections.unmodifiableList(relation_);
+          bitField0_ = (bitField0_ & ~0x00000002);
+        }
+        result.relation_ = relation_;
+      } else {
+        result.relation_ = relationBuilder_.build();
+      }
       if (entityClassesBuilder_ == null) {
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
           entityClasses_ = java.util.Collections.unmodifiableList(entityClasses_);
@@ -779,9 +802,31 @@ private static final long serialVersionUID = 0L;
       if (other.getId() != 0L) {
         setId(other.getId());
       }
-      if (!other.getRelation().isEmpty()) {
-        relation_ = other.relation_;
-        onChanged();
+      if (relationBuilder_ == null) {
+        if (!other.relation_.isEmpty()) {
+          if (relation_.isEmpty()) {
+            relation_ = other.relation_;
+            bitField0_ = (bitField0_ & ~0x00000002);
+          } else {
+            ensureRelationIsMutable();
+            relation_.addAll(other.relation_);
+          }
+          onChanged();
+        }
+      } else {
+        if (!other.relation_.isEmpty()) {
+          if (relationBuilder_.isEmpty()) {
+            relationBuilder_.dispose();
+            relationBuilder_ = null;
+            relation_ = other.relation_;
+            bitField0_ = (bitField0_ & ~0x00000002);
+            relationBuilder_ = 
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getRelationFieldBuilder() : null;
+          } else {
+            relationBuilder_.addAllMessages(other.relation_);
+          }
+        }
       }
       if (entityClassesBuilder_ == null) {
         if (!other.entityClasses_.isEmpty()) {
@@ -925,73 +970,244 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object relation_ = "";
+    private java.util.List<com.xforceplus.ultraman.oqsengine.sdk.RelationUp> relation_ =
+      java.util.Collections.emptyList();
+    private void ensureRelationIsMutable() {
+      if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+        relation_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.sdk.RelationUp>(relation_);
+        bitField0_ |= 0x00000002;
+       }
+    }
+
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.sdk.RelationUp, com.xforceplus.ultraman.oqsengine.sdk.RelationUp.Builder, com.xforceplus.ultraman.oqsengine.sdk.RelationUpOrBuilder> relationBuilder_;
+
     /**
-     * <code>string relation = 2;</code>
+     * <code>repeated .RelationUp relation = 2;</code>
      */
-    public java.lang.String getRelation() {
-      java.lang.Object ref = relation_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        relation_ = s;
-        return s;
+    public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.RelationUp> getRelationList() {
+      if (relationBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(relation_);
       } else {
-        return (java.lang.String) ref;
+        return relationBuilder_.getMessageList();
       }
     }
     /**
-     * <code>string relation = 2;</code>
+     * <code>repeated .RelationUp relation = 2;</code>
      */
-    public com.google.protobuf.ByteString
-        getRelationBytes() {
-      java.lang.Object ref = relation_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        relation_ = b;
-        return b;
+    public int getRelationCount() {
+      if (relationBuilder_ == null) {
+        return relation_.size();
       } else {
-        return (com.google.protobuf.ByteString) ref;
+        return relationBuilder_.getCount();
       }
     }
     /**
-     * <code>string relation = 2;</code>
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.sdk.RelationUp getRelation(int index) {
+      if (relationBuilder_ == null) {
+        return relation_.get(index);
+      } else {
+        return relationBuilder_.getMessage(index);
+      }
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
      */
     public Builder setRelation(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
-      relation_ = value;
-      onChanged();
+        int index, com.xforceplus.ultraman.oqsengine.sdk.RelationUp value) {
+      if (relationBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureRelationIsMutable();
+        relation_.set(index, value);
+        onChanged();
+      } else {
+        relationBuilder_.setMessage(index, value);
+      }
       return this;
     }
     /**
-     * <code>string relation = 2;</code>
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public Builder setRelation(
+        int index, com.xforceplus.ultraman.oqsengine.sdk.RelationUp.Builder builderForValue) {
+      if (relationBuilder_ == null) {
+        ensureRelationIsMutable();
+        relation_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        relationBuilder_.setMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public Builder addRelation(com.xforceplus.ultraman.oqsengine.sdk.RelationUp value) {
+      if (relationBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureRelationIsMutable();
+        relation_.add(value);
+        onChanged();
+      } else {
+        relationBuilder_.addMessage(value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public Builder addRelation(
+        int index, com.xforceplus.ultraman.oqsengine.sdk.RelationUp value) {
+      if (relationBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureRelationIsMutable();
+        relation_.add(index, value);
+        onChanged();
+      } else {
+        relationBuilder_.addMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public Builder addRelation(
+        com.xforceplus.ultraman.oqsengine.sdk.RelationUp.Builder builderForValue) {
+      if (relationBuilder_ == null) {
+        ensureRelationIsMutable();
+        relation_.add(builderForValue.build());
+        onChanged();
+      } else {
+        relationBuilder_.addMessage(builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public Builder addRelation(
+        int index, com.xforceplus.ultraman.oqsengine.sdk.RelationUp.Builder builderForValue) {
+      if (relationBuilder_ == null) {
+        ensureRelationIsMutable();
+        relation_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        relationBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public Builder addAllRelation(
+        java.lang.Iterable<? extends com.xforceplus.ultraman.oqsengine.sdk.RelationUp> values) {
+      if (relationBuilder_ == null) {
+        ensureRelationIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, relation_);
+        onChanged();
+      } else {
+        relationBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
      */
     public Builder clearRelation() {
-      
-      relation_ = getDefaultInstance().getRelation();
-      onChanged();
+      if (relationBuilder_ == null) {
+        relation_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+      } else {
+        relationBuilder_.clear();
+      }
       return this;
     }
     /**
-     * <code>string relation = 2;</code>
+     * <code>repeated .RelationUp relation = 2;</code>
      */
-    public Builder setRelationBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
-      relation_ = value;
-      onChanged();
+    public Builder removeRelation(int index) {
+      if (relationBuilder_ == null) {
+        ensureRelationIsMutable();
+        relation_.remove(index);
+        onChanged();
+      } else {
+        relationBuilder_.remove(index);
+      }
       return this;
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.sdk.RelationUp.Builder getRelationBuilder(
+        int index) {
+      return getRelationFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.sdk.RelationUpOrBuilder getRelationOrBuilder(
+        int index) {
+      if (relationBuilder_ == null) {
+        return relation_.get(index);  } else {
+        return relationBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.RelationUpOrBuilder> 
+         getRelationOrBuilderList() {
+      if (relationBuilder_ != null) {
+        return relationBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(relation_);
+      }
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.sdk.RelationUp.Builder addRelationBuilder() {
+      return getRelationFieldBuilder().addBuilder(
+          com.xforceplus.ultraman.oqsengine.sdk.RelationUp.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.sdk.RelationUp.Builder addRelationBuilder(
+        int index) {
+      return getRelationFieldBuilder().addBuilder(
+          index, com.xforceplus.ultraman.oqsengine.sdk.RelationUp.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .RelationUp relation = 2;</code>
+     */
+    public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.RelationUp.Builder> 
+         getRelationBuilderList() {
+      return getRelationFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.sdk.RelationUp, com.xforceplus.ultraman.oqsengine.sdk.RelationUp.Builder, com.xforceplus.ultraman.oqsengine.sdk.RelationUpOrBuilder> 
+        getRelationFieldBuilder() {
+      if (relationBuilder_ == null) {
+        relationBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            com.xforceplus.ultraman.oqsengine.sdk.RelationUp, com.xforceplus.ultraman.oqsengine.sdk.RelationUp.Builder, com.xforceplus.ultraman.oqsengine.sdk.RelationUpOrBuilder>(
+                relation_,
+                ((bitField0_ & 0x00000002) == 0x00000002),
+                getParentForChildren(),
+                isClean());
+        relation_ = null;
+      }
+      return relationBuilder_;
     }
 
     private java.util.List<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> entityClasses_ =

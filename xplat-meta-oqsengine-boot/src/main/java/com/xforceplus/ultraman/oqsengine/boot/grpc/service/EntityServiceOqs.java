@@ -6,10 +6,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -30,16 +27,16 @@ import java.util.stream.Collectors;
 @Component
 public class EntityServiceOqs implements EntityServicePowerApi {
 
-    @Autowired
+    @Autowired(required = false)
     private EntityManagementService entityManagementService;
 
-    @Autowired
+    @Autowired(required = false)
     private EntitySearchService entitySearchService;
 
-    @Autowired
+    @Autowired(required = false)
     private TransactionManagementService transactionManagementService;
 
-    @Autowired
+    @Autowired(required = false)
     private TransactionManager transactionManager;
 
 
@@ -222,6 +219,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         OperationResult result = null;
 
         try {
+
+            transactionManager.rebind(id);
             transactionManagementService.commit();
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
@@ -244,6 +243,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         OperationResult result = null;
 
         try {
+            transactionManager.rebind(id);
             transactionManagementService.rollback();
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
@@ -284,8 +284,14 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 .build();
     }
 
+    //TODO version
     private IEntity toEntity(EntityUp in){
         return new Entity(in.getId(), toEntityClass(in), toEntityValue(in));
+    }
+
+    //TODO
+    private IEntityFamily toEntityFamily(EntityUp in) {
+        return null;
     }
 
     private Conditions toConditions(ConditionsUp conditionsUp){
@@ -294,12 +300,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     private IEntityClass toRawEntityClass(EntityUp entityUp){
         return new EntityClass(
-//                entityUp.getId()
-//                , entityUp.getCode()
-//                , entityUp.getRelation()
-//                , Collections.emptyList()
-//                , null
-//                , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
+                entityUp.getId()
+                , entityUp.getCode()
+                , null
+                , Collections.emptyList()
+                , null
+                , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
         );
     }
 
@@ -317,6 +323,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         try {
             Objects.requireNonNull(value, "值不能为空");
             FieldType fieldTypeE = FieldType.valueOf(fieldType);
+            //TODO fix field
             IEntityField entityField = new Field(id, name, fieldTypeE);
             IValue retValue = null;
             switch(fieldTypeE){
@@ -340,20 +347,26 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         }
     }
 
-    private IEntityField toFieldEntity(FieldUp fieldUp){
+    private Field toFieldEntity(FieldUp fieldUp){
         //g id, String name, FieldType fieldType
-        return new Field(fieldUp.getId(), fieldUp.getName(), FieldType.valueOf(fieldUp.getFieldType()));
+        //        this.searchType = searchType;
+        //        this.maxSize = maxSize;
+        //        this.mixSize = mixSize;
+        return new Field(fieldUp.getId()
+                , fieldUp.getName()
+                , FieldType.valueOf(fieldUp.getFieldType())
+        );
     }
 
     private IEntityClass toEntityClass(EntityUp entityUp){
         //Long id, String code, String relation, List<IEntityClass> entityClasss, IEntityClass extendEntityClass, List<Field> fields
         IEntityClass entityClass = new EntityClass(
-//                entityUp.getId()
-//                , entityUp.getCode()
-//                , entityUp.getRelation()
-//                , entityUp.getEntityClassesList().stream().map(this::toRawEntityClass).collect(Collectors.toList())
-//                , toRawEntityClass(entityUp.getExtendEntityClass())
-//                , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
+                entityUp.getId()
+                , entityUp.getCode()
+                , null
+                , entityUp.getEntityClassesList().stream().map(this::toRawEntityClass).collect(Collectors.toList())
+                , toRawEntityClass(entityUp.getExtendEntityClass())
+                , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
         );
         return entityClass;
     }

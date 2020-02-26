@@ -50,6 +50,11 @@ public final class EntityResourceProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_EntityUp_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_RelationUp_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_RelationUp_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_ValueUp_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -89,30 +94,33 @@ public final class EntityResourceProto {
       "(\003\022\020\n\010totalRow\030\007 \001(\005\"E\n\004Code\022\006\n\002OK\020\000\022\n\n\006" +
       "FAILED\020\001\022\r\n\tEXCEPTION\020\002\022\017\n\013NETWORK_ERR\020\003" +
       "\022\t\n\005OTHER\020\004\">\n\rTransactionUp\022\n\n\002id\030\001 \001(\t" +
-      "\022\017\n\007service\030\002 \001(\t\022\020\n\010tansType\030\003 \001(\t\"\301\001\n\010" +
-      "EntityUp\022\n\n\002id\030\001 \001(\003\022\020\n\010relation\030\002 \001(\t\022 " +
-      "\n\rentityClasses\030\003 \003(\0132\t.EntityUp\022$\n\021exte" +
-      "ndEntityClass\030\004 \001(\0132\t.EntityUp\022\030\n\006fields" +
-      "\030\005 \003(\0132\010.FieldUp\022\030\n\006values\030\006 \003(\0132\010.Value" +
-      "Up\022\r\n\005objId\030\007 \001(\003\022\014\n\004code\030\010 \001(\t\"J\n\007Value" +
-      "Up\022\r\n\005value\030\001 \001(\t\022\014\n\004name\030\002 \001(\t\022\021\n\tfield" +
-      "Type\030\003 \001(\t\022\017\n\007fieldId\030\004 \001(\003\"\266\001\n\007FieldUp\022" +
-      "\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 \001(\t\022\021\n\tfieldType\030\003" +
-      " \001(\t\022\014\n\004code\030\004 \001(\t\022\023\n\013displayType\030\005 \001(\t\022" +
-      "\020\n\010editable\030\006 \001(\t\022\020\n\010enumCode\030\007 \001(\t\022\021\n\tm" +
-      "axLength\030\010 \001(\t\022\020\n\010required\030\t \001(\t\022\022\n\nsear" +
-      "chable\030\n \001(\t2\357\002\n\rEntityService\022)\n\005begin\022" +
-      "\016.TransactionUp\032\020.OperationResult\022$\n\005bui" +
-      "ld\022\t.EntityUp\032\020.OperationResult\022&\n\007repla" +
-      "ce\022\t.EntityUp\032\020.OperationResult\022%\n\006remov" +
-      "e\022\t.EntityUp\032\020.OperationResult\022(\n\tselect" +
-      "One\022\t.EntityUp\032\020.OperationResult\022:\n\022sele" +
-      "ctByConditions\022\022.SelectByCondition\032\020.Ope" +
-      "rationResult\022*\n\006commit\022\016.TransactionUp\032\020" +
-      ".OperationResult\022,\n\010rollBack\022\016.Transacti" +
-      "onUp\032\020.OperationResultB>\n%com.xforceplus" +
-      ".ultraman.oqsengine.sdkB\023EntityResourceP" +
-      "rotoP\001b\006proto3"
+      "\022\017\n\007service\030\002 \001(\t\022\020\n\010tansType\030\003 \001(\t\"\316\001\n\010" +
+      "EntityUp\022\n\n\002id\030\001 \001(\003\022\035\n\010relation\030\002 \003(\0132\013" +
+      ".RelationUp\022 \n\rentityClasses\030\003 \003(\0132\t.Ent" +
+      "ityUp\022$\n\021extendEntityClass\030\004 \001(\0132\t.Entit" +
+      "yUp\022\030\n\006fields\030\005 \003(\0132\010.FieldUp\022\030\n\006values\030" +
+      "\006 \003(\0132\010.ValueUp\022\r\n\005objId\030\007 \001(\003\022\014\n\004code\030\010" +
+      " \001(\t\"a\n\nRelationUp\022\014\n\004name\030\001 \001(\t\022\024\n\014rela" +
+      "tionType\030\002 \001(\t\022\020\n\010identity\030\003 \001(\010\022\035\n\013enti" +
+      "tyField\030\004 \001(\0132\010.FieldUp\"J\n\007ValueUp\022\r\n\005va" +
+      "lue\030\001 \001(\t\022\014\n\004name\030\002 \001(\t\022\021\n\tfieldType\030\003 \001" +
+      "(\t\022\017\n\007fieldId\030\004 \001(\003\"\266\001\n\007FieldUp\022\n\n\002id\030\001 " +
+      "\001(\003\022\014\n\004name\030\002 \001(\t\022\021\n\tfieldType\030\003 \001(\t\022\014\n\004" +
+      "code\030\004 \001(\t\022\023\n\013displayType\030\005 \001(\t\022\020\n\010edita" +
+      "ble\030\006 \001(\t\022\020\n\010enumCode\030\007 \001(\t\022\021\n\tmaxLength" +
+      "\030\010 \001(\t\022\020\n\010required\030\t \001(\t\022\022\n\nsearchable\030\n" +
+      " \001(\t2\357\002\n\rEntityService\022)\n\005begin\022\016.Transa" +
+      "ctionUp\032\020.OperationResult\022$\n\005build\022\t.Ent" +
+      "ityUp\032\020.OperationResult\022&\n\007replace\022\t.Ent" +
+      "ityUp\032\020.OperationResult\022%\n\006remove\022\t.Enti" +
+      "tyUp\032\020.OperationResult\022(\n\tselectOne\022\t.En" +
+      "tityUp\032\020.OperationResult\022:\n\022selectByCond" +
+      "itions\022\022.SelectByCondition\032\020.OperationRe" +
+      "sult\022*\n\006commit\022\016.TransactionUp\032\020.Operati" +
+      "onResult\022,\n\010rollBack\022\016.TransactionUp\032\020.O" +
+      "perationResultB>\n%com.xforceplus.ultrama" +
+      "n.oqsengine.sdkB\023EntityResourceProtoP\001b\006" +
+      "proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -168,14 +176,20 @@ public final class EntityResourceProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityUp_descriptor,
         new java.lang.String[] { "Id", "Relation", "EntityClasses", "ExtendEntityClass", "Fields", "Values", "ObjId", "Code", });
-    internal_static_ValueUp_descriptor =
+    internal_static_RelationUp_descriptor =
       getDescriptor().getMessageTypes().get(7);
+    internal_static_RelationUp_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_RelationUp_descriptor,
+        new java.lang.String[] { "Name", "RelationType", "Identity", "EntityField", });
+    internal_static_ValueUp_descriptor =
+      getDescriptor().getMessageTypes().get(8);
     internal_static_ValueUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ValueUp_descriptor,
         new java.lang.String[] { "Value", "Name", "FieldType", "FieldId", });
     internal_static_FieldUp_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_FieldUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldUp_descriptor,
