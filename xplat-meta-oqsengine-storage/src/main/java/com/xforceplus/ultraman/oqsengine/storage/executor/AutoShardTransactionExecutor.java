@@ -72,7 +72,7 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
         try {
             return task.run(resource);
         } finally {
-            if (tx == null) {
+            if (!tx.isPresent()) {
                 resource.destroy();
             }
         }

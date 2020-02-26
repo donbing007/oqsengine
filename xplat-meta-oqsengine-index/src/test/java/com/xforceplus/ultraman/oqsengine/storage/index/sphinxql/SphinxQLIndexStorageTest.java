@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -55,6 +56,7 @@ public class SphinxQLIndexStorageTest {
     private SphinxQLIndexStorage storage;
     private List<IEntity> expectedEntitys;
     private DataSourcePackage dataSourcePackage;
+    private IEntityField fixField = new Field(100000, "all", FieldType.BOOLEAN);
 
     @Before
     public void before() throws Exception {
@@ -118,7 +120,27 @@ public class SphinxQLIndexStorageTest {
     }
 
     @Test
-    public void testCase() throws Exception {
+    public void testDelete() throws Exception {
+        expectedEntitys.stream().forEach(e -> {
+            try {
+                storage.delete(e);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex.getMessage(), ex);
+            }
+        });
+
+        Collection<EntityRef> refs = storage.select(
+            new Conditions(new Condition(fixField, ConditionOperator.EQUALS, new BooleanValue(fixField,true))),
+            expectedEntitys.stream().findFirst().get().entityClass(),
+            null,
+            Page.newSinglePage(100)
+            );
+
+        Assert.assertEquals(0, refs.size());
+    }
+
+    @Test
+    public void testSelectCase() throws Exception {
         buildCase().stream().forEach(c -> {
 
             Collection<EntityRef> refs = null;
@@ -289,6 +311,9 @@ public class SphinxQLIndexStorageTest {
                 ("c" + fieldId).hashCode() % 2 == 1 ? FieldType.LONG : FieldType.STRING));
         }
 
+        // 一个固定的所有都有的字段.
+        fields.add(fixField);
+
         return fields;
     }
 
@@ -298,6 +323,9 @@ public class SphinxQLIndexStorageTest {
             switch (f.type()) {
                 case STRING:
                     return new StringValue(f, buildRandomString(30));
+                case BOOLEAN:
+                    // 固定字段.
+                    return new BooleanValue(f, true);
                 default:
                     return new LongValue(f, (long) buildRandomLong(10, 100000));
             }
