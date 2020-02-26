@@ -21,15 +21,13 @@ public class EntityController {
     @Autowired
     private EntityService entityService;
 
-    @GetMapping("/api/{tenantId}/{appCode}/bos/{boId}/entities/{id}")
+    @GetMapping("/bos/{boId}/entities/{id}")
     public Response<Map<String, String>> singleQuery(
-            @PathVariable String tenantId,
-            @PathVariable String appCode,
             @PathVariable String boId,
             @PathVariable String id){
 
         //find bo
-        Optional<EntityClass> entityClassOp = entityService.load(tenantId, appCode, boId);
+        Optional<EntityClass> entityClassOp = entityService.load(null, null, boId);
 
 
         if(entityClassOp.isPresent()) {
@@ -51,14 +49,12 @@ public class EntityController {
         return Response.Error("查询记录不存在");
     }
 
-    @DeleteMapping("/api/{tenantId}/{appCode}/bos/{boId}/entities/{id}")
+    @DeleteMapping("/bos/{boId}/entities/{id}")
     public Response<String> singleDelete(
-        @PathVariable String tenantId,
-        @PathVariable String appCode,
         @PathVariable String boId,
         @PathVariable String id
     ){
-        Optional<EntityClass> entityClassOp = entityService.load(tenantId, appCode, boId);
+        Optional<EntityClass> entityClassOp = entityService.load(null, null, boId);
 
         Response rep = new Response();
 
@@ -91,13 +87,11 @@ public class EntityController {
      * }
      *
      */
-    @PostMapping("/api/{tenantId}/{appCode}/bos/{boId}/entities")
-    public Response<String> singleCreate( @PathVariable String tenantId,
-                                          @PathVariable String appCode,
-                                          @PathVariable String boId,
+    @PostMapping("/bos/{boId}/entities")
+    public Response<String> singleCreate( @PathVariable String boId,
                                           @RequestBody Map<String, Object> body
     ){
-        Optional<EntityClass> entityClassOp = entityService.load(tenantId, appCode, boId);
+        Optional<EntityClass> entityClassOp = entityService.load(null, null, boId);
 
         Response rep = new Response();
 
@@ -189,16 +183,14 @@ public class EntityController {
      * }
      */
 
-    @PostMapping("/api/{tenantId}/{appCode}/bos/{boid}/entities/query")
-    public Response<RowItem<Map<String, String>>> conditionQuery(@PathVariable String tenantId,
-                                                                 @PathVariable String appCode,
-                                                                 @PathVariable String boId,
+    @PostMapping("/bos/{boid}/entities/query")
+    public Response<RowItem<Map<String, String>>> conditionQuery(@PathVariable String boId,
                                                                  @RequestBody ConditionQueryRequest condition){
 
-        Optional<EntityClass> entityClassOp = entityService.load(tenantId, appCode, boId);
+
+        Optional<EntityClass> entityClassOp = entityService.load(null, null, boId);
 
         if(entityClassOp.isPresent()) {
-
             Either<String, Tuple2<Integer, List<Map<String, String>>>> result = entityService.findByCondition(entityClassOp.get(), condition);
             return extractRepList(result);
         }
