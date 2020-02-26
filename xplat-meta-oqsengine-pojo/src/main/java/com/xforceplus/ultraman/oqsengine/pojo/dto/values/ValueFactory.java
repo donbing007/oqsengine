@@ -47,7 +47,7 @@ public final class ValueFactory {
      */
     public static IValue buildValue(IEntityField field, String value) {
         switch(field.type()) {
-            case LONG:
+            case STRING:
                 return new StringValue(field, value);
             case ENUM: {
                 return new EnumValue(field, value);

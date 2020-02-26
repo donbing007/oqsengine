@@ -22,6 +22,9 @@ public class StorageConfiguration {
     @Value("${storage.master.query.timeout:3000}")
     private long masterQueryTimeout;
 
+    @Value("${storage.index.name:oqsindex}")
+    private String indexTableName;
+
     @Bean
     public MasterStorage masterStorage() {
         SQLMasterStorage storage = new SQLMasterStorage();
@@ -32,6 +35,9 @@ public class StorageConfiguration {
 
     @Bean
     public IndexStorage indexStorage() {
-        return new SphinxQLIndexStorage();
+
+        SphinxQLIndexStorage storage = new SphinxQLIndexStorage();
+        storage.setIndexTableName(indexTableName);
+        return storage;
     }
 }

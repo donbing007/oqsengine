@@ -4,7 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.optimizer.DefaultSphinxQLQueryOptimizer;
 import com.xforceplus.ultraman.oqsengine.storage.query.QueryOptimizer;
-import com.xforceplus.ultraman.oqsengine.storage.selector.NumberIndexTableNameHashSelector;
+import com.xforceplus.ultraman.oqsengine.storage.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
 public class CommonConfiguration {
 
 
-    @Value("${storage.master.name:oqsengine-bigentity}")
+    @Value("${storage.master.name:oqsbigentity}")
     private String masterTableName;
 
     @Value("${storage.master.shard.size:1}")
@@ -35,7 +35,7 @@ public class CommonConfiguration {
 
     @Bean
     public Selector<String> tableNameSelector() {
-        return new NumberIndexTableNameHashSelector(masterTableName, masterSize);
+        return new SuffixNumberHashSelector(masterTableName, masterSize);
     }
 
     @Bean

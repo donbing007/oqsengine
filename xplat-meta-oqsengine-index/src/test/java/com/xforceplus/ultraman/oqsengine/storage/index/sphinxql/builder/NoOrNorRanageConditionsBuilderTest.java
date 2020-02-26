@@ -72,6 +72,18 @@ public class NoOrNorRanageConditionsBuilderTest {
                         ConditionOperator.EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
                 expectPrefix + "=F1100 =F2test" + expectAfter
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new Field(1, "c1", FieldType.LONG),
+                        ConditionOperator.NOT_EQUALS,
+                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L)))
+                    .addAnd(new Condition(
+                        new Field(2, "c2", FieldType.STRING),
+                        ConditionOperator.NOT_EQUALS,
+                        new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
+                expectPrefix + "-F1100 -F2test F*" + expectAfter
             )
         );
     }

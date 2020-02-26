@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityFamily;
 
+import java.util.Objects;
+
 /**
  * 继承家族信息实现.
  *
@@ -27,5 +29,27 @@ public class EntityFamily implements IEntityFamily {
     @Override
     public long child() {
         return 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EntityFamily)) return false;
+        EntityFamily that = (EntityFamily) o;
+        return parent == that.parent &&
+            child == that.child;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(parent, child);
+    }
+
+    @Override
+    public String toString() {
+        return "EntityFamily{" +
+            "parent=" + parent +
+            ", child=" + child +
+            '}';
     }
 }

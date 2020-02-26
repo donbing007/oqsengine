@@ -16,10 +16,6 @@ import static org.springframework.test.util.AssertionErrors.assertTrue;
 
 public class StoreTest {
 
-
-
-
-
     /**
      *
      * @return
@@ -29,7 +25,6 @@ public class StoreTest {
                 .addBoUps(boupA())
                 .build();
     }
-
 
     private BoUp boupA(){
         return BoUp.newBuilder()

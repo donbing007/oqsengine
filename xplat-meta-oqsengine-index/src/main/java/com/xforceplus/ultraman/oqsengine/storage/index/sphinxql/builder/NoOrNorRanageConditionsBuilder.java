@@ -29,6 +29,9 @@ public class NoOrNorRanageConditionsBuilder implements ConditionsBuilder<String>
 
         StringBuilder buff = new StringBuilder();
         buff.append("MATCH('@").append(FieldDefine.FULL_FIELDS).append(" ");
+
+        // 判断是否都是不等于条件. true 全否定,false 有等于条件.
+        boolean allNegative = true;
         while (nodes.hasNext()) {
             node = nodes.next();
 
@@ -39,6 +42,7 @@ public class NoOrNorRanageConditionsBuilder implements ConditionsBuilder<String>
                 switch (valueConditionNode.getCondition().getOperator()) {
                     case EQUALS: {
                         buff.append("=");
+                        allNegative = false;
                         break;
                     }
                     case NOT_EQUALS: {
@@ -52,10 +56,10 @@ public class NoOrNorRanageConditionsBuilder implements ConditionsBuilder<String>
             }
         }
 
-        //判断是否只有一个条件,并且是不等于时需要增加一个全局条件用以排除.类似如下.
+        //判断是否都是不等于条件,是的话需要补充一下 F*.
         // -F123 F* 表示从所有字段中排除掉 F123.
         final int onlyOne = 1;
-        if (conditions.size() == onlyOne && ConditionOperator.NOT_EQUALS == valueConditionNode.getCondition().getOperator()) {
+        if (allNegative) {
             buff.append(SphinxQLHelper.FULL_FIELD_PREFIX).append("*");
         } else {
             // 去除最后的空格.

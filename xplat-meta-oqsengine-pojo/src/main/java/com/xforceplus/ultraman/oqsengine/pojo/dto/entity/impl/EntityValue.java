@@ -4,9 +4,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 
+import java.io.Serializable;
 import java.util.*;
+import java.util.function.Predicate;
 
-public class EntityValue implements IEntityValue {
+public class EntityValue implements IEntityValue,Cloneable, Serializable {
     /**
      * 元数据boId
      */
@@ -59,6 +61,30 @@ public class EntityValue implements IEntityValue {
         return this;
     }
 
+    @Override
+    public IValue remove(IEntityField field) {
+        lazyInit();
+
+        return values.remove(field);
+    }
+
+    @Override
+    public void filter(Predicate<? super IValue> predicate) {
+        Collection<IValue> snapshot = values.values();
+        for (IValue v : snapshot) {
+            if (!predicate.test(v)) {
+                values.remove(v.getField());
+            }
+        }
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        EntityValue cloneValue = new EntityValue(id);
+        cloneValue.addValues(values());
+        return cloneValue;
+    }
+
     private void lazyInit() {
         if (this.values == null) {
             this.values = new HashMap<>();
@@ -87,7 +113,7 @@ public class EntityValue implements IEntityValue {
     public String toString() {
         return "EntityValue{" +
             "id=" + id +
-            ", values=" + values != null ? values.toString() : "NULL" +
+            ", values=" + (values != null ? values.toString() : "NULL") +
             '}';
     }
 }

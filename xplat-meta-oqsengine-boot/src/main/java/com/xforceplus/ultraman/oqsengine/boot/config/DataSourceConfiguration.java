@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
-import com.xforceplus.ultraman.oqsengine.storage.selector.DataSourceHashSelector;
+import com.xforceplus.ultraman.oqsengine.storage.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,16 +29,16 @@ public class DataSourceConfiguration {
 
     @Bean
     public Selector<DataSource> indexWriteDataSourceSelector() {
-        return new DataSourceHashSelector(dataSourcePackage.getIndexWriter());
+        return new HashSelector(dataSourcePackage.getIndexWriter());
     }
 
     @Bean
     public Selector<DataSource> indexSearchDataSourceSelector() {
-        return new DataSourceHashSelector(dataSourcePackage.getIndexSearch());
+        return new HashSelector(dataSourcePackage.getIndexSearch());
     }
 
     @Bean
     public Selector<DataSource> masterDataSourceSelector() {
-        return new DataSourceHashSelector(dataSourcePackage.getMaster());
+        return new HashSelector(dataSourcePackage.getMaster());
     }
 }

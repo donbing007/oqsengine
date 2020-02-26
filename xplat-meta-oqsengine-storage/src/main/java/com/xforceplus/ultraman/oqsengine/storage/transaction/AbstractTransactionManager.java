@@ -57,22 +57,29 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     }
 
     @Override
-    public void finish(Transaction tx) {
+    public void finish(Transaction tx) throws SQLException {
+
+        if (!tx.isCompleted()) {
+            tx.rollback();
+        }
+
+        holder.remove(tx.id());
+
+        // 如果完成的本线程事务,那么解除绑定.
         Optional<Transaction> current = getCurrent();
         if (current.isPresent()) {
             if (current.get().id() == tx.id()) {
                 unbind();
             }
         }
-
-        holder.remove(tx.id());
     }
 
-    public void destroy() throws SQLException {
-        for (Transaction tx : holder.values()) {
-            tx.rollback();
+    @Override
+    public void finish() throws SQLException {
+        Optional<Transaction> current = getCurrent();
+        if (current.isPresent()) {
+            finish(current.get());
         }
-
-        holder.clear();
     }
+
 }
