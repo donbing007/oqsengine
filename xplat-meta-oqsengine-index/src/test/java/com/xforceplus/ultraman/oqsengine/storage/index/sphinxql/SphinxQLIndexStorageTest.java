@@ -150,6 +150,7 @@ public class SphinxQLIndexStorageTest {
 
     private Collection<Case> buildCase() {
         return Arrays.asList(
+            // =
             new Case(
                 new Conditions(new Condition(
                     expectedEntitys.stream().skip(3)
@@ -167,6 +168,7 @@ public class SphinxQLIndexStorageTest {
                     return true;
                 }
             ),
+            // !=
             new Case(
                 new Conditions(new Condition(
                     expectedEntitys.stream().skip(1)
@@ -180,6 +182,37 @@ public class SphinxQLIndexStorageTest {
                 refs -> {
 
                     Assert.assertEquals(expectedEntitys.size() - 1, refs.size());
+                    List<IEntity> onlyOne = expectedEntitys.stream().filter(
+                        e -> e.id() == refs.stream().findFirst().get().getId()
+                    ).collect(Collectors.toList());
+
+                    Assert.assertEquals(1, onlyOne.size());
+
+                    return true;
+                }
+            ),
+            // = !=
+            new Case(
+                new Conditions(new Condition(
+                    expectedEntitys.stream().skip(1)
+                        .findFirst().get().entityValue().values().stream().findFirst().get().getField(),
+                    ConditionOperator.NOT_EQUALS,
+                    expectedEntitys.stream().skip(1)
+                        .findFirst().get().entityValue().values().stream().findFirst().get()
+                )).addAnd(
+                    new Condition(
+                        expectedEntitys.stream().skip(2)
+                            .findFirst().get().entityValue().values().stream().findFirst().get().getField(),
+                        ConditionOperator.EQUALS,
+                        expectedEntitys.stream().skip(2)
+                            .findFirst().get().entityValue().values().stream().findFirst().get()
+                    )
+                ),
+                expectedEntitys.stream().findFirst().get().entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(1, refs.size());
                     List<IEntity> onlyOne = expectedEntitys.stream().filter(
                         e -> e.id() == refs.stream().findFirst().get().getId()
                     ).collect(Collectors.toList());
