@@ -10,9 +10,10 @@ import java.io.ObjectOutput;
  * 第一页是1,第二页是2.
  * 如果设置值singlePage为true那么相当于提示此次的分页一定是从1到N个数据，只会获取一次不会
  * 获取第一页后的数据。
+ *
  * @author Mike
- * @since 1.0
  * @version 1.01, 2010.02.22
+ * @since 1.0
  */
 public class Page implements Externalizable, Cloneable {
 
@@ -67,8 +68,9 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 以指定的页数和页面大小构造对象。
+     *
      * @param pageIndex 当前页面序号,如果指定数小于1则使用默认设置1。
-     * @param pageSize 页面大小，如果指数数小于1，则使用默认设置1.
+     * @param pageSize  页面大小，如果指数数小于1，则使用默认设置1.
      */
     public Page(long pageIndex, long pageSize) {
         if (pageIndex > 0) {
@@ -88,6 +90,7 @@ public class Page implements Externalizable, Cloneable {
     /**
      * 返回一个表示第一页的分页对象，并给出建议不会获取第一页以后的页数了。
      * 返回的实例是一个已经准备好的实例.
+     *
      * @param pageSize 需要的记录数。
      * @return 构造好的分页对象。
      */
@@ -100,6 +103,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 返回一个表示最后一页的分页对象。此方法返回的是一个没有准备好的实例.
+     *
      * @param pageSize 需要的记录数。
      * @return 构造好的分页对象。
      */
@@ -111,6 +115,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 返回当前的页的序号。
+     *
      * @return 当前面的序号。
      */
     public long getIndex() {
@@ -120,6 +125,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 获取当前总页数．
+     *
      * @return 总页数．
      */
     public long getPageCount() {
@@ -132,6 +138,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 设定数据总量，这个值必须在使用前设置。
+     *
      * @param totalCount 数据总量
      */
     public void setTotalCount(long totalCount) {
@@ -151,6 +158,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 返回当前数据总量，初始为－１。
+     *
      * @return 当前数据总量，如果为-1代表没有设置真实数据总量。
      */
     public long getTotalCount() {
@@ -159,6 +167,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 返回下个页面,会将当前页面序号加1.
+     *
      * @return 返回的PageScope对象内部包含开始行和结束行，为null表示已经没有下一页了。
      * @throws IllegalStateException 没有设置数据总量。
      */
@@ -171,30 +180,31 @@ public class Page implements Externalizable, Cloneable {
             return null;
         }
 
-        PageScope scope = new PageScope();
-        scope.startLine = (getIndex() * getPageSize()) - (getPageSize() - 1);
+        long startLine = (getIndex() * getPageSize()) - (getPageSize() - 1);
+        long endLine;
         surplusCount = countSurplus(pageIndex, getPageSize(), totalCount);
         if (surplusCount <= getPageSize()) {
-            scope.endLine = scope.startLine + (surplusCount - 1);
+            endLine = startLine + (surplusCount - 1);
 
         } else {
-            scope.endLine = scope.startLine + (getPageSize() - 1);
+            endLine = startLine + (getPageSize() - 1);
         }
 
         pageIndex++;
 
-        if (scope.startLine < 0) {
-            scope.startLine = 0;
+        if (startLine < 0) {
+            startLine = 0;
         }
-        if (scope.endLine < 0) {
-            scope.endLine = 0;
+        if (endLine < 0) {
+            endLine = 0;
         }
 
-        return scope;
+        return new PageScope(startLine, endLine);
     }
 
     /**
-     *  返回指定页面的开始行和结束行,如果指定的页号超出了当前页数总量范围将返回null.
+     * 返回指定页面的开始行和结束行,如果指定的页号超出了当前页数总量范围将返回null.
+     *
      * @param appointPageIndex 指定页面序号，第行页为１，第二页为２
      * @return PageScope表示指定页面的开始行和结束行
      * @throws IllegalStateException 没有设置数据总量。
@@ -211,22 +221,23 @@ public class Page implements Externalizable, Cloneable {
             return null;
         }
 
-        PageScope scope = new PageScope();
-        scope.startLine = (nowPointIndex * getPageSize()) - (getPageSize() - 1);
+        long startLine = (nowPointIndex * getPageSize()) - (getPageSize() - 1);
+        long endLine;
         surplusCount = countSurplus(nowPointIndex, getPageSize(), totalCount);
         if (surplusCount <= getPageSize()) {
-            scope.endLine = scope.startLine + (surplusCount - 1);
+            endLine = startLine + (surplusCount - 1);
 
         } else {
-            scope.endLine = scope.startLine + (getPageSize() - 1);
+            endLine = startLine + (getPageSize() - 1);
         }
 
-        return scope;
+        return new PageScope(startLine, endLine);
     }
 
     /**
      * 判断是否已经没有下一页。
-     * @return 是否还有下一页,<tt>true</tt>还有可用页,<tt>false</tt>已经没有可用页了.
+     *
+     * @return 是否还有下一页, <tt>true</tt>还有可用页,<tt>false</tt>已经没有可用页了.
      */
     public boolean hasNextPage() {
         return pageIndex <= pageCount;
@@ -234,7 +245,8 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 判断当前分页对象是否准备工作完成,已经获得了数据总量可以工作了.
-     * @return true准备完成,false数据总量还没有获得.
+     *
+     * @return true准备完成, false数据总量还没有获得.
      */
     public boolean isReady() {
         return ready;
@@ -243,6 +255,7 @@ public class Page implements Externalizable, Cloneable {
     /**
      * 返回此分页信息的字符串表示。
      * 该字符串由分页信息的＂页面大小＂，＂当前页面序号＂，＂总记录数＂，＂是否准备好＂组成．
+     *
      * @return 此分页信息的字符串表示。
      */
     @Override
@@ -275,11 +288,11 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 克隆方法.
+     *
      * @return 新的Page对象.
-     * @throws CloneNotSupportedException
-     *      如果对象的类不支持 Cloneable 接口，
-     *      则重写 clone 方法的子类也会抛出此异常，
-     *      以指示无法复制某个实例。
+     * @throws CloneNotSupportedException 如果对象的类不支持 Cloneable 接口，
+     *                                    则重写 clone 方法的子类也会抛出此异常，
+     *                                    以指示无法复制某个实例。
      */
     @Override
     public Page clone() throws CloneNotSupportedException {
@@ -288,6 +301,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 生成Page对象的哈希码.
+     *
      * @return 哈希码.
      */
     @Override
@@ -309,7 +323,7 @@ public class Page implements Externalizable, Cloneable {
      * 比如总量为1000的分页大小为10,第1页,是否为单页(只查从开头为止的N个数据).
      * 这三个数据相等返回ture,否则返回false.
      *
-     * @param obj　目标对象.如果不是Page的一个实例将返回false.
+     * @param obj 　目标对象.如果不是Page的一个实例将返回false.
      * @return 是否相等．
      */
     @Override
@@ -347,7 +361,8 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 计算页面总数,总量除以单页量后根据是否整除来决定是否增加1.
-     * @param pageNumber 页面大小
+     *
+     * @param pageNumber  页面大小
      * @param totalNumber 数据总量
      * @return 页面总数
      */
@@ -357,18 +372,20 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 计算数据剩余量
+     *
      * @param indexNumber 当前页面序号.
-     * @param sizeNumber 每页最大数据量.
+     * @param sizeNumber  每页最大数据量.
      * @param totalNumber 数据总量.
      * @return 当前数据剩余量.
      */
     protected long countSurplus(long indexNumber, long sizeNumber,
-            long totalNumber) {
+                                long totalNumber) {
         return totalNumber - sizeNumber * (indexNumber - 1);
     }
 
     /**
      * 获取当前页面大小
+     *
      * @return 页面大小
      */
     public long getPageSize() {
@@ -377,6 +394,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 设置当前页面大小
+     *
      * @param pageSize 页面大小。
      */
     public void setPageSize(long pageSize) {
@@ -385,6 +403,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 返回当前分页建议。
+     *
      * @return <true>当前是单页，只是当前一页。<false>需要进行正常分页。
      */
     public boolean isSinglePage() {
@@ -393,6 +412,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 建议是否进行分页，此值只是建议。实现将由调用者决定。
+     *
      * @param singlePage <true>当前是单页，只是当前一页。<false>需要进行正常分页。
      */
     public void setSinglePage(boolean singlePage) {
@@ -401,6 +421,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 设置是否为最后一页.
+     *
      * @param lastPage 最后一页.
      */
     public void setLastPage(boolean lastPage) {
@@ -409,6 +430,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 序列化写入方法.
+     *
      * @param out 写入流.
      * @throws IOException I/O异常.
      */
@@ -426,13 +448,14 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 序列化读取方法,从流中读取字节转换成原始对象.
+     *
      * @param in 读取流.
-     * @throws IOException I/O异常.
+     * @throws IOException            I/O异常.
      * @throws ClassNotFoundException 没有找到类.
      */
     @Override
     public void readExternal(ObjectInput in)
-            throws IOException, ClassNotFoundException {
+        throws IOException, ClassNotFoundException {
         singlePage = in.readBoolean();
         pageSize = in.readLong();
         pageIndex = in.readLong();

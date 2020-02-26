@@ -8,10 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
@@ -38,11 +35,9 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -122,19 +117,79 @@ public class SphinxQLIndexStorageTest {
         dataSourcePackage.close();
     }
 
-
     @Test
-    public void testSelectByOneCondition() throws Exception {
-        IEntity entity = expectedEntitys.stream().findAny().get();
-        IValue searchValue = entity.entityValue().values().stream().findAny().get();
-        Conditions conditions = new Conditions(
-            new Condition(searchValue.getField(), ConditionOperator.EQUALS, searchValue));
+    public void testCase() throws Exception {
+        buildCase().stream().forEach(c -> {
 
-        Collection<EntityRef> refs = storage.select(conditions, entity.entityClass(), null, Page.newSinglePage(10));
+            Collection<EntityRef> refs = null;
+            try {
+                refs = storage.select(c.conditions, c.entityClass, null, c.page);
+            } catch (SQLException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
 
-        Assert.assertEquals(1, refs.size());
-        Assert.assertEquals(entity.id(), refs.stream().findFirst().get().getId());
+            c.check.test(refs);
+        });
 
+    }
+
+    private static class Case {
+        private Conditions conditions;
+        private IEntityClass entityClass;
+        private Page page;
+        private Predicate<? super Collection<EntityRef>> check;
+
+        public Case(Conditions conditions, IEntityClass entityClass, Page page,
+                    Predicate<? super Collection<EntityRef>> check) {
+            this.conditions = conditions;
+            this.entityClass = entityClass;
+            this.page = page;
+            this.check = check;
+        }
+    }
+
+    private Collection<Case> buildCase() {
+        return Arrays.asList(
+            new Case(
+                new Conditions(new Condition(
+                    expectedEntitys.stream().skip(3)
+                        .findFirst().get().entityValue().values().stream().findFirst().get().getField(),
+                    ConditionOperator.EQUALS,
+                    expectedEntitys.stream().skip(3)
+                        .findFirst().get().entityValue().values().stream().findFirst().get()
+                )),
+                expectedEntitys.stream().findFirst().get().entityClass(),
+                Page.newSinglePage(10),
+                refs -> {
+                    Assert.assertEquals(1, refs.size());
+                    Assert.assertEquals(expectedEntitys.stream().skip(3).findFirst().get().id(),
+                        refs.stream().findFirst().get().getId());
+                    return true;
+                }
+            ),
+            new Case(
+                new Conditions(new Condition(
+                    expectedEntitys.stream().skip(1)
+                        .findFirst().get().entityValue().values().stream().findFirst().get().getField(),
+                    ConditionOperator.NOT_EQUALS,
+                    expectedEntitys.stream().skip(1)
+                        .findFirst().get().entityValue().values().stream().findFirst().get()
+                )),
+                expectedEntitys.stream().findFirst().get().entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(expectedEntitys.size() - 1, refs.size());
+                    List<IEntity> onlyOne = expectedEntitys.stream().filter(
+                        e -> e.id() == refs.stream().findFirst().get().getId()
+                    ).collect(Collectors.toList());
+
+                    Assert.assertEquals(1, onlyOne.size());
+
+                    return true;
+                }
+            )
+        );
     }
 
 

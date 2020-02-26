@@ -135,8 +135,8 @@ public class SphinxQLIndexStorage implements IndexStorage {
                     String sql = String.format(SELECT_SQL, indexTableName, whereCondition, orderBy);
                     st = ((Connection) resource.value()).prepareStatement(sql);
                     st.setLong(1, entityClass.id());
-                    st.setLong(2, scope.startLine);
-                    st.setLong(3, scope.endLine);
+                    st.setLong(2, scope.getStartLine());
+                    st.setLong(3, scope.getEndLine());
 
                     if (logger.isDebugEnabled()) {
                         logger.debug(st.toString());
