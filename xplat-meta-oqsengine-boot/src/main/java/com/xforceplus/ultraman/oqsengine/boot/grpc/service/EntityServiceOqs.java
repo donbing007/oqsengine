@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
@@ -297,15 +298,22 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     //TODO
     private Conditions toConditions(ConditionsUp conditionsUp){
-
-        conditionsUp.getFieldsList().stream().map(x -> {
-            Condition condition = new Condition(toEntityField(x.getField()),null, null);
-            return condition;
-        });
+//
+//        conditionsUp.getFieldsList().stream().map(x -> {
+//
+//
+//
+//            Condition condition = new Condition(toEntityField(x.getField()),toConditionOp(x.getOperation()), x.getVA);
+//            return condition;
+//        });
 
 
        return null;
     }
+
+//    private ConditionOperator toConditionOp(FieldConditionUp.Op op) {
+//
+//    }
 
     private IEntityClass toRawEntityClass(EntityUp entityUp){
         return new EntityClass(
@@ -362,13 +370,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                   fieldUp.getId()
                 , fieldUp.getName()
                 , FieldType.valueOf(fieldUp.getFieldType())
-                , Optional.ofNullable(fieldUp.getSearchable())
-                          .map(Boolean::valueOf).orElse(false)
-                , Optional.ofNullable(fieldUp.getMaxLength())
-                          .map(String::valueOf)
-                          .map(Integer::parseInt).orElse(-1)
-                , Optional.ofNullable(fieldUp.getMinLength()).map(String::valueOf)
-                .map(Integer::parseInt).orElse(-1));
+                , FieldConfig.build()
+                    .searchable(Optional.ofNullable(fieldUp.getSearchable())
+                            .map(Boolean::valueOf).orElse(false))
+                    .max(Optional.ofNullable(fieldUp.getMaxLength())
+                            .map(String::valueOf)
+                            .map(Long::parseLong).orElse(-1L))
+                    .min(Optional.ofNullable(fieldUp.getMinLength()).map(String::valueOf)
+                            .map(Long::parseLong).orElse(-1L))
+               );
     }
     private IEntityClass toEntityClass(EntityUp entityUp){
         //Long id, String code, String relation, List<IEntityClass> entityClasss, IEntityClass extendEntityClass, List<Field> fields
