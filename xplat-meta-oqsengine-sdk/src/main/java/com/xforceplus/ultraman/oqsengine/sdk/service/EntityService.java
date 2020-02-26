@@ -155,6 +155,7 @@ public class EntityService {
                     .setName(rel.getName())
                     .setRelationType(rel.getRelationType())
                     .setIdentity(rel.isIdentity())
+                    .setRelatedEntityClassId(rel.getEntityClassId())
                     .build();
         }).collect(Collectors.toList()));
 

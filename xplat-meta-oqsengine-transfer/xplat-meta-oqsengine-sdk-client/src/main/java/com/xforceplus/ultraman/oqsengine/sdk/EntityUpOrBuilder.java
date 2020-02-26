@@ -15,12 +15,12 @@ public interface EntityUpOrBuilder extends
   /**
    * <code>repeated .RelationUp relation = 2;</code>
    */
-  java.util.List<RelationUp>
+  java.util.List<com.xforceplus.ultraman.oqsengine.sdk.RelationUp> 
       getRelationList();
   /**
    * <code>repeated .RelationUp relation = 2;</code>
    */
-  RelationUp getRelation(int index);
+  com.xforceplus.ultraman.oqsengine.sdk.RelationUp getRelation(int index);
   /**
    * <code>repeated .RelationUp relation = 2;</code>
    */
@@ -28,23 +28,23 @@ public interface EntityUpOrBuilder extends
   /**
    * <code>repeated .RelationUp relation = 2;</code>
    */
-  java.util.List<? extends RelationUpOrBuilder>
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.RelationUpOrBuilder> 
       getRelationOrBuilderList();
   /**
    * <code>repeated .RelationUp relation = 2;</code>
    */
-  RelationUpOrBuilder getRelationOrBuilder(
-          int index);
+  com.xforceplus.ultraman.oqsengine.sdk.RelationUpOrBuilder getRelationOrBuilder(
+      int index);
 
   /**
    * <code>repeated .EntityUp entityClasses = 3;</code>
    */
-  java.util.List<EntityUp>
+  java.util.List<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> 
       getEntityClassesList();
   /**
    * <code>repeated .EntityUp entityClasses = 3;</code>
    */
-  EntityUp getEntityClasses(int index);
+  com.xforceplus.ultraman.oqsengine.sdk.EntityUp getEntityClasses(int index);
   /**
    * <code>repeated .EntityUp entityClasses = 3;</code>
    */
@@ -52,13 +52,13 @@ public interface EntityUpOrBuilder extends
   /**
    * <code>repeated .EntityUp entityClasses = 3;</code>
    */
-  java.util.List<? extends EntityUpOrBuilder>
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder> 
       getEntityClassesOrBuilderList();
   /**
    * <code>repeated .EntityUp entityClasses = 3;</code>
    */
-  EntityUpOrBuilder getEntityClassesOrBuilder(
-          int index);
+  com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder getEntityClassesOrBuilder(
+      int index);
 
   /**
    * <code>.EntityUp extendEntityClass = 4;</code>
@@ -67,21 +67,21 @@ public interface EntityUpOrBuilder extends
   /**
    * <code>.EntityUp extendEntityClass = 4;</code>
    */
-  EntityUp getExtendEntityClass();
+  com.xforceplus.ultraman.oqsengine.sdk.EntityUp getExtendEntityClass();
   /**
    * <code>.EntityUp extendEntityClass = 4;</code>
    */
-  EntityUpOrBuilder getExtendEntityClassOrBuilder();
+  com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder getExtendEntityClassOrBuilder();
 
   /**
    * <code>repeated .FieldUp fields = 5;</code>
    */
-  java.util.List<FieldUp>
+  java.util.List<com.xforceplus.ultraman.oqsengine.sdk.FieldUp> 
       getFieldsList();
   /**
    * <code>repeated .FieldUp fields = 5;</code>
    */
-  FieldUp getFields(int index);
+  com.xforceplus.ultraman.oqsengine.sdk.FieldUp getFields(int index);
   /**
    * <code>repeated .FieldUp fields = 5;</code>
    */
@@ -89,23 +89,23 @@ public interface EntityUpOrBuilder extends
   /**
    * <code>repeated .FieldUp fields = 5;</code>
    */
-  java.util.List<? extends FieldUpOrBuilder>
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.FieldUpOrBuilder> 
       getFieldsOrBuilderList();
   /**
    * <code>repeated .FieldUp fields = 5;</code>
    */
-  FieldUpOrBuilder getFieldsOrBuilder(
-          int index);
+  com.xforceplus.ultraman.oqsengine.sdk.FieldUpOrBuilder getFieldsOrBuilder(
+      int index);
 
   /**
    * <code>repeated .ValueUp values = 6;</code>
    */
-  java.util.List<ValueUp>
+  java.util.List<com.xforceplus.ultraman.oqsengine.sdk.ValueUp> 
       getValuesList();
   /**
    * <code>repeated .ValueUp values = 6;</code>
    */
-  ValueUp getValues(int index);
+  com.xforceplus.ultraman.oqsengine.sdk.ValueUp getValues(int index);
   /**
    * <code>repeated .ValueUp values = 6;</code>
    */
@@ -113,13 +113,13 @@ public interface EntityUpOrBuilder extends
   /**
    * <code>repeated .ValueUp values = 6;</code>
    */
-  java.util.List<? extends ValueUpOrBuilder>
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.ValueUpOrBuilder> 
       getValuesOrBuilderList();
   /**
    * <code>repeated .ValueUp values = 6;</code>
    */
-  ValueUpOrBuilder getValuesOrBuilder(
-          int index);
+  com.xforceplus.ultraman.oqsengine.sdk.ValueUpOrBuilder getValuesOrBuilder(
+      int index);
 
   /**
    * <code>int64 objId = 7;</code>
@@ -129,7 +129,7 @@ public interface EntityUpOrBuilder extends
   /**
    * <code>string code = 8;</code>
    */
-  String getCode();
+  java.lang.String getCode();
   /**
    * <code>string code = 8;</code>
    */

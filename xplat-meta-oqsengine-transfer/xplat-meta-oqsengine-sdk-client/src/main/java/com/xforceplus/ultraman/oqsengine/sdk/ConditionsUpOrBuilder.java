@@ -10,12 +10,12 @@ public interface ConditionsUpOrBuilder extends
   /**
    * <code>repeated .FieldConditionUp fields = 1;</code>
    */
-  java.util.List<FieldConditionUp>
+  java.util.List<com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp> 
       getFieldsList();
   /**
    * <code>repeated .FieldConditionUp fields = 1;</code>
    */
-  FieldConditionUp getFields(int index);
+  com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp getFields(int index);
   /**
    * <code>repeated .FieldConditionUp fields = 1;</code>
    */
@@ -23,11 +23,11 @@ public interface ConditionsUpOrBuilder extends
   /**
    * <code>repeated .FieldConditionUp fields = 1;</code>
    */
-  java.util.List<? extends FieldConditionUpOrBuilder>
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUpOrBuilder> 
       getFieldsOrBuilderList();
   /**
    * <code>repeated .FieldConditionUp fields = 1;</code>
    */
-  FieldConditionUpOrBuilder getFieldsOrBuilder(
-          int index);
+  com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUpOrBuilder getFieldsOrBuilder(
+      int index);
 }

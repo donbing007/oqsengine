@@ -114,7 +114,7 @@ message RelationUp {
     string relationType = 2;
     bool identity = 3;
     FieldUp entityField = 4;
-
+    int64 relatedEntityClassId = 5;
 }
 
 message ValueUp {
