@@ -72,7 +72,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                  * 索引中子类包含父类所有属性,保证可以使用父类属性查询子类.
                  * 这里直接使用外界传入的 entity 实例,重置 id 为新的子类 id.
                  */
-                entity.resetId(childId);
+                target.resetId(childId);
                 /**
                  * 索引中只存放可搜索字段,子类包含父类和本身的所有可搜索字段.
                  * 这里先将父的属性合并进来过滤再储存.
@@ -84,12 +84,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
             } else {
 
-                entity.resetId(idGenerator.next());
+                target.resetId(idGenerator.next());
 
                 masterStorage.build(target);
                 indexStorage.build(buildIndexEntity(target));
 
-                return entity.id();
+                return target.id();
             }
 
         });

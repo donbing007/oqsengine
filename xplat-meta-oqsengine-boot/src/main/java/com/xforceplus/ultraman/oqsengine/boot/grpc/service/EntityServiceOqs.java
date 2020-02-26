@@ -26,6 +26,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
+import static com.xforceplus.ultraman.oqsengine.boot.utils.OptionalHelper.ofEmptyStr;
+
 @Component
 public class EntityServiceOqs implements EntityServicePowerApi {
 
@@ -288,7 +290,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     //TODO version
     private IEntity toEntity(EntityUp in){
-        return new Entity(in.getId(), toEntityClass(in), toEntityValue(in));
+        return new Entity(in.getObjId(), toEntityClass(in), toEntityValue(in));
     }
 
     //TODO
@@ -339,7 +341,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private IValue toTypedValue(String name, Long id, String fieldType, String value){
         try {
             Objects.requireNonNull(value, "值不能为空");
-            FieldType fieldTypeE = FieldType.valueOf(fieldType);
+            FieldType fieldTypeE = FieldType.valueOf(fieldType.toUpperCase());
             //TODO fix field
             IEntityField entityField = new Field(id, name, fieldTypeE);
             IValue retValue = null;
@@ -356,6 +358,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 case BOOLEAN:
                     retValue = new BooleanValue(entityField, Boolean.valueOf(value));
                     break;
+                default:
+                    retValue = new StringValue(entityField, value);
             }
             return retValue;
         }catch (Exception ex){
@@ -371,12 +375,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 , fieldUp.getName()
                 , FieldType.valueOf(fieldUp.getFieldType())
                 , FieldConfig.build()
-                    .searchable(Optional.ofNullable(fieldUp.getSearchable())
+                    .searchable(ofEmptyStr(fieldUp.getSearchable())
                             .map(Boolean::valueOf).orElse(false))
-                    .max(Optional.ofNullable(fieldUp.getMaxLength())
+                    .max(ofEmptyStr(fieldUp.getMaxLength())
                             .map(String::valueOf)
                             .map(Long::parseLong).orElse(-1L))
-                    .min(Optional.ofNullable(fieldUp.getMinLength()).map(String::valueOf)
+                    .min(ofEmptyStr(fieldUp.getMinLength()).map(String::valueOf)
                             .map(Long::parseLong).orElse(-1L))
                );
     }
