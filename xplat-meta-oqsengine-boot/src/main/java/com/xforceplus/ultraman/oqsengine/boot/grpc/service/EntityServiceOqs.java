@@ -71,8 +71,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         extractTransaction(metadata).ifPresent(id -> transactionManager.rebind(id));
 
         OperationResult result;
+
+        IEntityClass entityClass = toEntityClass(in);
+
         try {
-            long id = entityManagementService.build(toEntity(in));
+            long id = entityManagementService.build(toEntity(entityClass, in));
             result = OperationResult.newBuilder().addIds(id).setCode(OperationResult.Code.OK).buildPartial();
         } catch (SQLException e) {
             logger.error("{}", e);
@@ -92,11 +95,14 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         OperationResult result;
 
+        IEntityClass entityClass = toEntityClass(in);
+
         try {
-            Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), toEntityClass(in));
+            Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
             if(ds.isPresent()) {
+
                 //side effect
-                updateEntity(ds.get(), toEntity(in));
+                updateEntity(ds.get(), toEntity(entityClass, in));
                 entityManagementService.replace(ds.get());
                 result = OperationResult.newBuilder()
                         .setAffectedRow(1)
@@ -131,7 +137,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         OperationResult result;
 
         try{
-            entityManagementService.delete(toEntity(in));
+            IEntityClass entityClass = toEntityClass(in);
+            entityManagementService.delete(toEntity(entityClass, in));
             result = OperationResult.newBuilder()
                     .setAffectedRow(1)
                     .setCode(OperationResult.Code.OK)
@@ -304,8 +311,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     //TODO version
-    private IEntity toEntity(EntityUp in){
-        return new Entity(in.getObjId(), toEntityClass(in), toEntityValue(in));
+    private IEntity toEntity(IEntityClass entityClass, EntityUp in){
+        return new Entity(in.getObjId(), toEntityClass(in), toEntityValue(entityClass, in));
     }
 
     //TODO
@@ -343,40 +350,46 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         );
     }
 
-    private IEntityValue toEntityValue(EntityUp entityUp){
+    private IEntityValue toEntityValue(IEntityClass entityClass, EntityUp entityUp){
         List<IValue> valueList = entityUp.getValuesList().stream()
                 .map(y -> {
-                    return toTypedValue(y.getName(), y.getFieldId(), y.getFieldType(), y.getValue());
-                }).collect(Collectors.toList());
+                    return toTypedValue(entityClass, y.getFieldId(), y.getValue());
+                }).filter(Objects::nonNull).collect(Collectors.toList());
         EntityValue entityValue = new EntityValue(entityUp.getId());
         entityValue.addValues(valueList);
         return entityValue;
     }
 
-    private IValue toTypedValue(String name, Long id, String fieldType, String value){
+    private IValue toTypedValue(IEntityClass entityClass, Long id, String value){
         try {
             Objects.requireNonNull(value, "值不能为空");
-            FieldType fieldTypeE = FieldType.valueOf(fieldType.toUpperCase());
-            //TODO fix field
-            IEntityField entityField = new Field(id, name, fieldTypeE);
-            IValue retValue = null;
-            switch(fieldTypeE){
-                case LONG:
-                    retValue = new LongValue(entityField, Long.valueOf(value));
-                    break;
-                case DATATIME:
-                    retValue = new DateTimeValue(entityField, LocalDateTime.parse(value));
-                    break;
-                case ENUM:
-                    retValue = new EnumValue(entityField, value);
-                    break;
-                case BOOLEAN:
-                    retValue = new BooleanValue(entityField, Boolean.valueOf(value));
-                    break;
-                default:
-                    retValue = new StringValue(entityField, value);
+            Optional<IEntityField> fieldOp = entityClass.field(id);
+            if(fieldOp.isPresent()) {
+
+                //TODO fix field
+                IEntityField entityField = fieldOp.get();
+                IValue retValue = null;
+                switch (entityField.type()) {
+                    case LONG:
+                        retValue = new LongValue(entityField, Long.valueOf(value));
+                        break;
+                    case DATATIME:
+                        retValue = new DateTimeValue(entityField, LocalDateTime.parse(value));
+                        break;
+                    case ENUM:
+                        retValue = new EnumValue(entityField, value);
+                        break;
+                    case BOOLEAN:
+                        retValue = new BooleanValue(entityField, Boolean.valueOf(value));
+                        break;
+                    default:
+                        retValue = new StringValue(entityField, value);
+                }
+                return retValue;
+            } else {
+                logger.error("不存在对应的field id:{}", id);
+                return null;
             }
-            return retValue;
         }catch (Exception ex){
             logger.error("{}", ex);
             throw new RuntimeException("类型转换失败 " + ex.getMessage());
