@@ -190,9 +190,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Sort sortParam;
                 FieldSortUp sortUp = sort.get(0);
                 if(sortUp.getOrder() == FieldSortUp.Order.asc) {
-                    sortParam = Sort.buildAscSort(toFieldEntity(sortUp.getField()));
+                    sortParam = Sort.buildAscSort(toEntityField(sortUp.getField()));
                 }else{
-                    sortParam = Sort.buildDescSort(toFieldEntity(sortUp.getField()));
+                    sortParam = Sort.buildDescSort(toEntityField(sortUp.getField()));
                 }
 
                 entities = entitySearchService.selectByConditions(null, toEntityClass(entityUp), sortParam, page);
@@ -295,10 +295,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return null;
     }
 
+    //TODO
     private Conditions toConditions(ConditionsUp conditionsUp){
 
         conditionsUp.getFieldsList().stream().map(x -> {
-            Condition condition = new Condition(toEntityClass()x.getField());
+            Condition condition = new Condition(toEntityField(x.getField()),null, null);
+            return condition;
         });
 
 
@@ -356,21 +358,18 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     //TODO
     private Field toEntityField(FieldUp fieldUp){
-        //g id, String name, FieldType fieldType
-        //        this.searchType = searchType;
-        //        this.maxSize = maxSize;
-        //        this.mixSize = mixSize;
-        return new Field(fieldUp.getId()
+        return new Field(
+                  fieldUp.getId()
                 , fieldUp.getName()
                 , FieldType.valueOf(fieldUp.getFieldType())
-                , fieldUp.getSearchable()
+                , Optional.ofNullable(fieldUp.getSearchable())
+                          .map(Boolean::valueOf).orElse(false)
                 , Optional.ofNullable(fieldUp.getMaxLength())
                           .map(String::valueOf)
-                          .map(Integer::parseInt).orElse(-1))
-                , Optional.ofNullable(fieldUp.getMinLength());
-        );
+                          .map(Integer::parseInt).orElse(-1)
+                , Optional.ofNullable(fieldUp.getMinLength()).map(String::valueOf)
+                .map(Integer::parseInt).orElse(-1));
     }
-
     private IEntityClass toEntityClass(EntityUp entityUp){
         //Long id, String code, String relation, List<IEntityClass> entityClasss, IEntityClass extendEntityClass, List<Field> fields
         IEntityClass entityClass = new EntityClass(
@@ -379,7 +378,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 , null
                 , entityUp.getEntityClassesList().stream().map(this::toRawEntityClass).collect(Collectors.toList())
                 , toRawEntityClass(entityUp.getExtendEntityClass())
-                , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
+                , entityUp.getFieldsList().stream().map(this::toEntityField).collect(Collectors.toList())
         );
         return entityClass;
     }
