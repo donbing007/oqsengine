@@ -9,15 +9,18 @@ public class BoItem implements ResponseItem{
 
     private List<FieldItem> fields;
 
-    private List<Long> subEntities;
+    private String parentEntityId;
+
+    private List<String> subEntities;
 
     public BoItem() {
     }
 
-    public BoItem(Map<String, ApiItem> api, List<FieldItem> fields, List<Long> subEntities) {
+    public BoItem(Map<String, ApiItem> api, List<FieldItem> fields, String parentEntityId, List<String> subEntities) {
         this.api = api;
         this.fields = fields;
         this.subEntities = subEntities;
+        this.parentEntityId = parentEntityId;
     }
 
     public Map<String, ApiItem> getApi() {
@@ -36,11 +39,29 @@ public class BoItem implements ResponseItem{
         this.fields = fields;
     }
 
-    public List<Long> getSubEntities() {
+    public String getParentEntityId() {
+        return parentEntityId;
+    }
+
+    public void setParentEntityId(String parentEntityId) {
+        this.parentEntityId = parentEntityId;
+    }
+
+    public List<String> getSubEntities() {
         return subEntities;
     }
 
-    public void setSubEntities(List<Long> subEntities) {
+    public void setSubEntities(List<String> subEntities) {
         this.subEntities = subEntities;
+    }
+
+    @Override
+    public String toString() {
+        return "BoItem{" +
+                "api=" + api +
+                ", fields=" + fields +
+                ", parentEntityId='" + parentEntityId + '\'' +
+                ", subEntities=" + subEntities +
+                '}';
     }
 }

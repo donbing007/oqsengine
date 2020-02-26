@@ -5,7 +5,7 @@ grpc:
   server:
     port: 8082
 server:
-  port: 8085
+  port: 8086
 
 storage:
   master:
@@ -19,4 +19,4 @@ storage:
       size: 1
   index:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
-    name: "oqsindex"
+    name: "oqsengine"

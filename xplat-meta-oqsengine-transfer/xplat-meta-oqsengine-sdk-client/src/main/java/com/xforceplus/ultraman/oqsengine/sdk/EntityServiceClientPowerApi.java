@@ -13,87 +13,87 @@ public abstract class EntityServiceClientPowerApi {
      * prefer begin(com.xforceplus.ultraman.oqsengine.sdk.TransactionUp) if possible.
      */
     
-      public SingleResponseRequestBuilder<com.xforceplus.ultraman.oqsengine.sdk.TransactionUp, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> begin()
-    
+      public SingleResponseRequestBuilder<TransactionUp, OperationResult> begin()
+
     {
-        throw new java.lang.UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
-  
+
     /**
      * Lower level "lifted" version of the method, giving access to request metadata etc.
      * prefer build(com.xforceplus.ultraman.oqsengine.sdk.EntityUp) if possible.
      */
-    
-      public SingleResponseRequestBuilder<com.xforceplus.ultraman.oqsengine.sdk.EntityUp, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> build()
-    
+
+      public SingleResponseRequestBuilder<EntityUp, OperationResult> build()
+
     {
-        throw new java.lang.UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
-  
+
     /**
      * Lower level "lifted" version of the method, giving access to request metadata etc.
      * prefer replace(com.xforceplus.ultraman.oqsengine.sdk.EntityUp) if possible.
      */
-    
-      public SingleResponseRequestBuilder<com.xforceplus.ultraman.oqsengine.sdk.EntityUp, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replace()
-    
+
+      public SingleResponseRequestBuilder<EntityUp, OperationResult> replace()
+
     {
-        throw new java.lang.UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
-  
+
     /**
      * Lower level "lifted" version of the method, giving access to request metadata etc.
      * prefer remove(com.xforceplus.ultraman.oqsengine.sdk.EntityUp) if possible.
      */
-    
-      public SingleResponseRequestBuilder<com.xforceplus.ultraman.oqsengine.sdk.EntityUp, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> remove()
-    
+
+      public SingleResponseRequestBuilder<EntityUp, OperationResult> remove()
+
     {
-        throw new java.lang.UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
-  
+
     /**
      * Lower level "lifted" version of the method, giving access to request metadata etc.
      * prefer selectOne(com.xforceplus.ultraman.oqsengine.sdk.EntityUp) if possible.
      */
-    
-      public SingleResponseRequestBuilder<com.xforceplus.ultraman.oqsengine.sdk.EntityUp, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> selectOne()
-    
+
+      public SingleResponseRequestBuilder<EntityUp, OperationResult> selectOne()
+
     {
-        throw new java.lang.UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
-  
+
     /**
      * Lower level "lifted" version of the method, giving access to request metadata etc.
      * prefer selectByConditions(com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition) if possible.
      */
-    
-      public SingleResponseRequestBuilder<com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> selectByConditions()
-    
+
+      public SingleResponseRequestBuilder<SelectByCondition, OperationResult> selectByConditions()
+
     {
-        throw new java.lang.UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
-  
+
     /**
      * Lower level "lifted" version of the method, giving access to request metadata etc.
      * prefer commit(com.xforceplus.ultraman.oqsengine.sdk.TransactionUp) if possible.
      */
-    
-      public SingleResponseRequestBuilder<com.xforceplus.ultraman.oqsengine.sdk.TransactionUp, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> commit()
-    
+
+      public SingleResponseRequestBuilder<TransactionUp, OperationResult> commit()
+
     {
-        throw new java.lang.UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
-  
+
     /**
      * Lower level "lifted" version of the method, giving access to request metadata etc.
      * prefer rollBack(com.xforceplus.ultraman.oqsengine.sdk.TransactionUp) if possible.
      */
-    
-      public SingleResponseRequestBuilder<com.xforceplus.ultraman.oqsengine.sdk.TransactionUp, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> rollBack()
-    
+
+      public SingleResponseRequestBuilder<TransactionUp, OperationResult> rollBack()
+
     {
-        throw new java.lang.UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
   
 }

@@ -112,7 +112,7 @@ public class EntityClass implements IEntityClass {
     public String toString() {
         return "EntityClass{" +
             "id=" + id +
-            ", relations='" + relations + '\'' +
+            ", relations=" + relations +
             ", entityClasss=" + entityClasss +
             ", extendEntityClass=" + extendEntityClass +
             ", fields=" + fields +

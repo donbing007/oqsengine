@@ -13,14 +13,28 @@ public interface EntityUpOrBuilder extends
   long getId();
 
   /**
-   * <code>string relation = 2;</code>
+   * <code>repeated .RelationUp relation = 2;</code>
    */
-  java.lang.String getRelation();
+  java.util.List<com.xforceplus.ultraman.oqsengine.sdk.RelationUp> 
+      getRelationList();
   /**
-   * <code>string relation = 2;</code>
+   * <code>repeated .RelationUp relation = 2;</code>
    */
-  com.google.protobuf.ByteString
-      getRelationBytes();
+  com.xforceplus.ultraman.oqsengine.sdk.RelationUp getRelation(int index);
+  /**
+   * <code>repeated .RelationUp relation = 2;</code>
+   */
+  int getRelationCount();
+  /**
+   * <code>repeated .RelationUp relation = 2;</code>
+   */
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.RelationUpOrBuilder> 
+      getRelationOrBuilderList();
+  /**
+   * <code>repeated .RelationUp relation = 2;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.sdk.RelationUpOrBuilder getRelationOrBuilder(
+      int index);
 
   /**
    * <code>repeated .EntityUp entityClasses = 3;</code>
