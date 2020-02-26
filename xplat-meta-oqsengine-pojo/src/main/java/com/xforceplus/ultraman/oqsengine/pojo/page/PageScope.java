@@ -24,16 +24,16 @@ public class PageScope implements Serializable {
     }
 
     public long getEndLine() {
-        return endLine == 0 ? 0 : endLine - 1;
+        return endLine;
     }
     
     @Override
     public String toString() {
         StringBuffer buff = new StringBuffer();
         buff.append("Dividing page information is ");
-        buff.append(startLine);
+        buff.append(getStartLine());
         buff.append(" to ");
-        buff.append(endLine);
+        buff.append(getEndLine());
         return buff.toString();
     }
 }

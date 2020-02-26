@@ -102,7 +102,7 @@ public class SphinxQLIndexStorageTest {
 
                 conn.close();
 
-            } catch(SQLException ex) {
+            } catch (SQLException ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
 
@@ -219,6 +219,24 @@ public class SphinxQLIndexStorageTest {
 
                     Assert.assertEquals(1, onlyOne.size());
 
+                    return true;
+                }
+            ),
+            // = page
+            new Case(
+                new Conditions(new Condition(
+                    expectedEntitys.stream().skip(3)
+                        .findFirst().get().entityValue().values().stream().findFirst().get().getField(),
+                    ConditionOperator.EQUALS,
+                    expectedEntitys.stream().skip(3)
+                        .findFirst().get().entityValue().values().stream().findFirst().get()
+                )),
+                expectedEntitys.stream().findFirst().get().entityClass(),
+                new Page(1, 100),
+                refs -> {
+                    Assert.assertEquals(1, refs.size());
+                    Assert.assertEquals(expectedEntitys.stream().skip(3).findFirst().get().id(),
+                        refs.stream().findFirst().get().getId());
                     return true;
                 }
             )
