@@ -93,11 +93,21 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         OperationResult result;
 
         try {
-            entityManagementService.replace(toEntity(in));
-            result = OperationResult.newBuilder()
-                    .setAffectedRow(1)
-                    .setCode(OperationResult.Code.OK)
-                    .buildPartial();
+            Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), toEntityClass(in));
+            if(ds.isPresent()) {
+                //side effect
+                updateEntity(ds.get(), toEntity(in));
+                entityManagementService.replace(ds.get());
+                result = OperationResult.newBuilder()
+                        .setAffectedRow(1)
+                        .setCode(OperationResult.Code.OK)
+                        .buildPartial();
+            } else {
+                result = OperationResult.newBuilder()
+                        .setCode(OperationResult.Code.FAILED)
+                        .setMessage("没有找到该记录")
+                        .buildPartial();
+            }
         } catch (SQLException e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
@@ -107,6 +117,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         }
 
         return CompletableFuture.completedFuture(result);
+    }
+
+    //TODO test
+    private void updateEntity(IEntity src, IEntity update) {
+        src.entityValue().addValues(update.entityValue().values());
     }
 
     @Override

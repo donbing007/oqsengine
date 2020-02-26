@@ -28,6 +28,10 @@ public interface IEntityValue extends Cloneable{
     public IEntityValue addValue(IValue value);
 
     /**
+     * 替换某个field值为
+     */
+
+    /**
      * 数据对象的数据信息
      * @return IValue对象
      */
