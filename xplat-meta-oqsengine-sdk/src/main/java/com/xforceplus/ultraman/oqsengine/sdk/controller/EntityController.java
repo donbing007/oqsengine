@@ -33,7 +33,7 @@ public class EntityController {
 
 
         if(entityClassOp.isPresent()) {
-            Either<String, Map<String, String>>  tpul  =
+            Either<String, Map<String, String>> either  =
                     entityService.findOne(entityClassOp.get(), Long.valueOf(id));
             Response rep = new Response();
             rep.setCode("1");
