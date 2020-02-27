@@ -20,10 +20,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -387,7 +384,8 @@ public class EntityService {
     private ConditionsUp toConditionsUp(EntityClass entityClass, Conditions conditions) {
         ConditionsUp.Builder conditionsUpBuilder = ConditionsUp.newBuilder();
 
-        Stream<Optional<FieldConditionUp>> fieldInMainStream = conditions.getFields().stream().map(fieldCondition -> {
+        Stream<Optional<FieldConditionUp>> fieldInMainStream = Optional.ofNullable(conditions.getFields())
+                            .orElseGet(Collections::emptyList).stream().map(fieldCondition -> {
             return toFieldCondition(entityClass, fieldCondition);
         });
 
@@ -421,7 +419,7 @@ public class EntityService {
         return fieldOp.map(x -> FieldConditionUp.newBuilder()
                 .setCode(fieldCondition.getCode())
                 .setOperation(FieldConditionUp.Op.valueOf(fieldCondition.getOperation().name()))
-                .addAllValues(fieldCondition.getValues())
+                .addAllValues(Optional.ofNullable(fieldCondition.getValues()).orElseGet(Collections::emptyList))
                 .setField(toFieldUp(fieldOp.get()))
                 .build());
     }
