@@ -8,7 +8,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -163,20 +166,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         try {
             Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), toEntityClass(in));
-            if(ds.isPresent()) {
-                result = OperationResult
-                        .newBuilder()
-                        .setCode(OperationResult.Code.OK)
-                        .addQueryResult(toEntityUp(ds.get()))
-                        .setTotalRow(1)
-                        .buildPartial();
-            }else{
-                result = OperationResult
-                        .newBuilder()
-                        .setCode(OperationResult.Code.OK)
-                        .setTotalRow(0)
-                        .buildPartial();
-            }
+            result = ds.map(entity -> OperationResult
+                    .newBuilder()
+                    .setCode(OperationResult.Code.OK)
+                    .addQueryResult(toEntityUp(entity))
+                    .setTotalRow(1)
+                    .buildPartial()).orElseGet(() -> OperationResult
+                    .newBuilder()
+                    .setCode(OperationResult.Code.OK)
+                    .setTotalRow(0)
+                    .buildPartial());
         } catch (SQLException e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
@@ -207,11 +206,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             int pageSize = in.getPageSize();
             Page page = new Page(pageNo, pageSize);
 
+            IEntityClass entityClass = toEntityClass(entityUp);
 
-            if(sort != null && !sort.isEmpty()){
-                entities = entitySearchService.selectByConditions(toConditions(conditions), toEntityClass(entityUp), page);
-            }else{
-
+            if(sort == null || sort.isEmpty()){
+                Optional<Conditions> consOp = toConditions(entityClass, conditions);
+                if(consOp.isPresent()){
+                    entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
+                }else{
+                    logger.warn("no conditions todo");
+                }
+            }else {
                 Sort sortParam;
                 FieldSortUp sortUp = sort.get(0);
                 if(sortUp.getOrder() == FieldSortUp.Order.asc) {
@@ -220,13 +224,20 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     sortParam = Sort.buildDescSort(toEntityField(sortUp.getField()));
                 }
 
-                entities = entitySearchService.selectByConditions(null, toEntityClass(entityUp), sortParam, page);
+                Optional<Conditions> consOp = toConditions(entityClass, conditions);
+                if(consOp.isPresent()){
+                    entities = entitySearchService.selectByConditions(consOp.get(), toEntityClass(entityUp), sortParam, page);
+                }else{
+                    logger.warn("no conditions todo");
+                }
             }
 
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
-                    .addAllQueryResult(entities.stream().map(this::toEntityUp).collect(Collectors.toList()))
-                    .setTotalRow(entities.size()).buildPartial();
+                    .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
+                            .stream().map(this::toEntityUp).collect(Collectors.toList()))
+                    .setTotalRow(Optional.ofNullable(entities).orElseGet(Collections::emptyList).size())
+                    .buildPartial();
 
         } catch (SQLException e) {
             logger.error("{}", e);
@@ -235,7 +246,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setMessage(e.getMessage())
                     .buildPartial();
         }
-
         return CompletableFuture.completedFuture(result);
     }
 
@@ -293,6 +303,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private EntityUp toEntityUp(IEntity entity){
         EntityUp.Builder builder = EntityUp.newBuilder();
 
+        builder.setObjId(entity.id());
         builder.addAllValues(entity.entityValue().values().stream()
                 .map(this::toValueUp)
                 .collect(Collectors.toList()));
@@ -312,7 +323,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     //TODO version
     private IEntity toEntity(IEntityClass entityClass, EntityUp in){
-        return new Entity(in.getObjId(), toEntityClass(in), toEntityValue(entityClass, in));
+        return new Entity(in.getObjId(), entityClass, toEntityValue(entityClass, in));
     }
 
     //TODO
@@ -320,24 +331,150 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return null;
     }
 
-    //TODO
-    private Conditions toConditions(ConditionsUp conditionsUp){
-//
-//        conditionsUp.getFieldsList().stream().map(x -> {
-//
-//
-//
-//            Condition condition = new Condition(toEntityField(x.getField()),toConditionOp(x.getOperation()), x.getVA);
-//            return condition;
-//        });
+    //To condition
+    private  Optional<Conditions> toConditions(IEntityClass entityClass, ConditionsUp conditionsUp){
 
+        Optional<Conditions> conditions =conditionsUp.getFieldsList().stream().map(x -> {
+            return toOneConditions(entityClass, x);
+        }).reduce((a,b) -> a.addOr(b, true));
 
-       return null;
+       return conditions;
     }
 
-//    private ConditionOperator toConditionOp(FieldConditionUp.Op op) {
-//
-//    }
+    private Conditions toOneConditions(IEntityClass entityClass, FieldConditionUp fieldCondition){
+
+        Optional<IEntityField> fieldOp = getFieldFromEntityClass(entityClass, fieldCondition.getField().getId());
+        Conditions conditions = null;
+
+        if(fieldOp.isPresent()) {
+            FieldConditionUp.Op op = fieldCondition.getOperation();
+
+            switch (op) {
+                case eq:
+                    conditions = new Conditions(new Condition(fieldOp.get()
+                            , ConditionOperator.EQUALS
+                            , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(0))));
+                    break;
+                case ge:
+                    conditions = new Conditions(new Condition(fieldOp.get()
+                            , ConditionOperator.GREATER_THAN_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , fieldCondition.getValues(0))));
+                    break;
+                case gt:
+                    conditions = new Conditions(new Condition(fieldOp.get()
+                            , ConditionOperator.GREATER_THAN
+                            , toTypedValue(fieldOp.get()
+                            , fieldCondition.getValues(0))));
+                    break;
+                case ge_le:
+                    if (fieldCondition.getValuesCount() > 1) {
+                        Condition left = new Condition(fieldOp.get()
+                                , ConditionOperator.GREATER_THAN_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(0)));
+
+                        Condition right = new Condition(fieldOp.get()
+                                , ConditionOperator.MINOR_THAN_EQUALS
+                             , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(1)));
+
+                        conditions = new Conditions(left).addAnd(right);
+
+                    }else{
+                        logger.error("required value more then 2");
+                    }
+                    break;
+                case gt_le:
+                    if (fieldCondition.getValuesCount() > 1) {
+                        Condition left = new Condition(fieldOp.get()
+                                , ConditionOperator.GREATER_THAN
+                                , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(0)));
+
+                        Condition right = new Condition(fieldOp.get()
+                                , ConditionOperator.MINOR_THAN_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(1)));
+
+
+                        conditions = new Conditions(left).addAnd(right);
+
+                    }else{
+                        logger.error("required value more then 2");
+                    }
+                    break;
+                case ge_lt:
+                    if (fieldCondition.getValuesCount() > 1) {
+                        Condition left = new Condition(fieldOp.get()
+                                , ConditionOperator.GREATER_THAN_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(0)));
+
+                        Condition right = new Condition(fieldOp.get()
+                                , ConditionOperator.MINOR_THAN
+                                , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(1)));
+
+
+                        conditions = new Conditions(left).addAnd(right);
+
+                    }else{
+                        logger.error("required value more then 2");
+                    }
+                    break;
+                case le:
+                    conditions = new Conditions(new Condition(fieldOp.get()
+                            , ConditionOperator.MINOR_THAN_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , fieldCondition.getValues(0))));
+                    break;
+                case lt:
+                    conditions = new Conditions(new Condition(fieldOp.get()
+                            , ConditionOperator.MINOR_THAN
+                            , toTypedValue(fieldOp.get()
+                            , fieldCondition.getValues(0))));
+                    break;
+                case in:
+                    if(fieldCondition.getValuesCount() == 1 ){
+                        conditions = new Conditions(new Condition(fieldOp.get()
+                                , ConditionOperator.EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(0))));
+                    }else{
+                        conditions = new Conditions(new Condition(fieldOp.get()
+                                , ConditionOperator.EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(0))));
+
+                        Conditions finalConditions = conditions;
+                        fieldCondition.getValuesList().forEach(x -> {
+                            finalConditions.addOr(new Conditions(new Condition(fieldOp.get()
+                                    , ConditionOperator.EQUALS
+                                    , toTypedValue(fieldOp.get()
+                                    , fieldCondition.getValues(0)))), false);
+                        });
+
+                        conditions = finalConditions;
+                    }
+                    break;
+                case like:
+                    conditions = new Conditions(new Condition(fieldOp.get()
+                            , ConditionOperator.LIKE
+                            , toTypedValue(fieldOp.get()
+                            , fieldCondition.getValues(0))));
+                    break;
+            }
+        }
+
+        return conditions;
+    }
+
+    //TODO currently only id
+    private Optional<IEntityField> getFieldFromEntityClass(IEntityClass entityClass, Long id){
+        return entityClass.field(id);
+    }
 
     private IEntityClass toRawEntityClass(EntityUp entityUp){
         return new EntityClass(
@@ -360,32 +497,40 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return entityValue;
     }
 
+    private IValue toTypedValue(IEntityField entityField, String value){
+        try {
+            Objects.requireNonNull(value, "value值不能为空");
+            Objects.requireNonNull(entityField, "field值不能为空");
+            IValue retValue = null;
+            switch (entityField.type()) {
+                case LONG:
+                    retValue = new LongValue(entityField, Long.valueOf(value));
+                    break;
+                case DATATIME:
+                    retValue = new DateTimeValue(entityField, LocalDateTime.parse(value));
+                    break;
+                case ENUM:
+                    retValue = new EnumValue(entityField, value);
+                    break;
+                case BOOLEAN:
+                    retValue = new BooleanValue(entityField, Boolean.valueOf(value));
+                    break;
+                default:
+                    retValue = new StringValue(entityField, value);
+            }
+            return retValue;
+        }catch (Exception ex){
+            logger.error("{}", ex);
+            throw new RuntimeException("类型转换失败 " + ex.getMessage());
+        }
+    }
+
     private IValue toTypedValue(IEntityClass entityClass, Long id, String value){
         try {
             Objects.requireNonNull(value, "值不能为空");
             Optional<IEntityField> fieldOp = entityClass.field(id);
             if(fieldOp.isPresent()) {
-
-                //TODO fix field
-                IEntityField entityField = fieldOp.get();
-                IValue retValue = null;
-                switch (entityField.type()) {
-                    case LONG:
-                        retValue = new LongValue(entityField, Long.valueOf(value));
-                        break;
-                    case DATATIME:
-                        retValue = new DateTimeValue(entityField, LocalDateTime.parse(value));
-                        break;
-                    case ENUM:
-                        retValue = new EnumValue(entityField, value);
-                        break;
-                    case BOOLEAN:
-                        retValue = new BooleanValue(entityField, Boolean.valueOf(value));
-                        break;
-                    default:
-                        retValue = new StringValue(entityField, value);
-                }
-                return retValue;
+                return toTypedValue(fieldOp.get(), value);
             } else {
                 logger.error("不存在对应的field id:{}", id);
                 return null;
@@ -413,13 +558,18 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                );
     }
     private IEntityClass toEntityClass(EntityUp entityUp){
+
+        boolean hasExtendedClass = entityUp.hasField(EntityUp.getDescriptor().findFieldByNumber(EntityUp.EXTENDENTITYCLASS_FIELD_NUMBER));
+
         //Long id, String code, String relation, List<IEntityClass> entityClasss, IEntityClass extendEntityClass, List<Field> fields
         IEntityClass entityClass = new EntityClass(
                 entityUp.getId()
                 , entityUp.getCode()
-                , null
-                , entityUp.getEntityClassesList().stream().map(this::toRawEntityClass).collect(Collectors.toList())
-                , toRawEntityClass(entityUp.getExtendEntityClass())
+                , null //TODO
+                , entityUp.getEntityClassesList().stream()
+                    .map(this::toRawEntityClass)
+                    .collect(Collectors.toList())
+                , hasExtendedClass ? toRawEntityClass(entityUp.getExtendEntityClass()) : null
                 , entityUp.getFieldsList().stream().map(this::toEntityField).collect(Collectors.toList())
         );
         return entityClass;

@@ -18,6 +18,7 @@ import org.springframework.transaction.TransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -172,11 +173,17 @@ public class EntityService {
     }
 
     private FieldUp toFieldUp(IEntityField field){
-        return FieldUp.newBuilder()
+        FieldUp.Builder builder =
+                FieldUp.newBuilder()
                 .setCode(field.name())
                 .setFieldType(field.type().name())
-                .setId(field.id())
-                .build();
+                .setId(field.id());
+        if(field.config() != null){
+            builder.setSearchable(String.valueOf(field.config().isSearchable()));
+            builder.setMaxLength(String.valueOf(field.config().getMax()));
+            builder.setMinLength(String.valueOf(field.config().getMin()));
+        }
+        return builder.build();
     }
 
     /**
@@ -224,7 +231,9 @@ public class EntityService {
     private Map<String, String> toResultMap(EntityClass entityClass, EntityUp up) {
 
         Map<String, String> map = new HashMap<>();
-
+        if(!StringUtils.isEmpty(up.getObjId())){
+            map.put("id", String.valueOf(up.getObjId()));
+        }
 
         up.getValuesList().forEach(entry -> {
 
@@ -336,9 +345,11 @@ public class EntityService {
             select.setConditions(toConditionsUp(entityClass, condition.getConditions()));
         }
 
-//        if(condition.getSort() != null){
-//            select.addAllSort(toSortUp(condition.getSort()));
-//        }
+        if(condition.getSort() != null){
+            select.addAllSort(toSortUp(condition.getSort()));
+        }
+
+        select.setEntity(toEntityUp(entityClass));
 
         SelectByCondition selectByCondition = select.build();
 
@@ -376,19 +387,32 @@ public class EntityService {
     private ConditionsUp toConditionsUp(EntityClass entityClass, Conditions conditions) {
         ConditionsUp.Builder conditionsUpBuilder = ConditionsUp.newBuilder();
 
-        Stream<Optional<FieldConditionUp>> filedStream = conditions.getFields().stream().map(fieldCondition -> {
+        Stream<Optional<FieldConditionUp>> fieldInMainStream = conditions.getFields().stream().map(fieldCondition -> {
             return toFieldCondition(entityClass, fieldCondition);
         });
 
-        Stream<Optional<FieldConditionUp>> entityStream = conditions.getEntities().stream().flatMap(entityCondition -> {
-            return toFieldCondition(entityClass, entityCondition);
-        } );
-        conditionsUpBuilder.addAllFields(Stream.concat(filedStream, entityStream)
+        /**
+         * should find from relation currently not in sub entity
+         */
+//        Stream<Optional<FieldConditionUp>> fieldInSubStream = conditions.getEntities().stream().flatMap(entityCondition -> {
+//            return toFieldCondition(entityClass, entityCondition);
+//        } );
+
+
+        //from relation to condition
+        Stream<Optional<FieldConditionUp>> fieldInRelationStream = conditions
+                .getEntities()
+                .stream().flatMap(entityCondition -> {
+            return toFieldConditionFromRel(entityClass, entityCondition);
+        });
+
+        conditionsUpBuilder.addAllFields(Stream.concat(fieldInMainStream, fieldInRelationStream)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList()));
         return conditionsUpBuilder.build();
     }
+
 
     private Optional<FieldConditionUp> toFieldCondition(IEntityClass entityClass, FieldCondition fieldCondition){
 
@@ -402,6 +426,31 @@ public class EntityService {
                 .build());
     }
 
+    private Stream<? extends Optional<FieldConditionUp>> toFieldConditionFromRel(EntityClass entityClass, SubFieldCondition entityCondition) {
+        return entityClass.relations().stream()
+                .map(rel -> {
+                     Optional<FieldCondition> fieldConditionOp = entityCondition.getFields()
+                            .stream()
+                            .filter(enc -> {
+                                String code = entityCondition.getCode() + "." +enc.getCode();
+                                return rel.getEntityField().name().equalsIgnoreCase(code);
+                            }).findFirst();
+                    return fieldConditionOp.map(fieldCon -> Tuple.of(fieldCon, rel));
+                }).map(tuple -> tuple.map(this::toFieldCondition));
+    }
+
+    private FieldConditionUp toFieldCondition(Tuple2<FieldCondition, Relation> tuple) {
+        FieldCondition fieldCondition = tuple._1();
+        IEntityField entityField = tuple._2().getEntityField();
+
+        return FieldConditionUp.newBuilder()
+                .setCode(fieldCondition.getCode())
+                .setOperation(FieldConditionUp.Op.valueOf(fieldCondition.getOperation().name()))
+                .addAllValues(fieldCondition.getValues())
+                .setField(toFieldUp(entityField))
+                .build();
+    }
+
     private Stream<Optional<FieldConditionUp>> toFieldCondition(EntityClass entityClass, SubFieldCondition subFieldCondition){
         return entityClass.entityClasss().stream()
                 .filter(x -> x.code().equals( subFieldCondition.getCode()))
@@ -413,6 +462,9 @@ public class EntityService {
 
     private Map<String, String> filterItem(Map<String, String> values, String mainEntityCode, EntityItem entityItem){
 
+        if(entityItem == null){
+            return values;
+        }
 
         Map<String, String> newResult = new HashMap<>();
 
