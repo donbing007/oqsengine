@@ -9,6 +9,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
  * @since 1.8
  */
 public class EntityManagementServiceImpl implements EntityManagementService {
+
+    final Logger logger = LoggerFactory.getLogger(EntityManagementServiceImpl.class);
 
     @Resource
     private LongIdGenerator idGenerator;
@@ -41,24 +45,24 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public long build(IEntity entity) throws SQLException {
 
         // 克隆一份,后续的修改不影响入参.
-        IEntity target;
+        IEntity entityClone;
         try {
-             target = (IEntity) entity.clone();
+             entityClone = (IEntity) entity.clone();
         } catch (CloneNotSupportedException e) {
             throw new SQLException(e.getMessage(),e);
         }
 
         return (long) transactionExecutor.execute(r -> {
 
-            if (isSub(target)) {
+            if (isSub(entityClone)) {
                 // 处理父类
                 long fatherId = idGenerator.next();
                 long childId = idGenerator.next();
 
-                IEntity fathcerEntity = buildFatherEntity(target, childId);
+                IEntity fathcerEntity = buildFatherEntity(entityClone, childId);
                 fathcerEntity.resetId(fatherId);
 
-                IEntity childEntity = buildChildEntity(target, fatherId);
+                IEntity childEntity = buildChildEntity(entityClone, fatherId);
                 childEntity.resetId(childId);
 
                 // master
@@ -74,12 +78,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                  * entity 设置为了传入 entity 可以有新的 id.
                  */
                 entity.resetId(childId);
-                target.resetId(childId);
+                entityClone.resetId(childId);
                 /**
                  * 索引中只存放可搜索字段,子类包含父类和本身的所有可搜索字段.
                  * 这里先将父的属性合并进来过滤再储存.
                  */
-                indexStorage.build(buildIndexEntity(target)); // child
+                indexStorage.build(buildIndexEntity(entityClone)); // child
 
 
                 return childId;
@@ -87,10 +91,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             } else {
 
                 entity.resetId(idGenerator.next());
-                target.resetId(entity.id());
+                entityClone.resetId(entity.id());
 
-                masterStorage.build(target);
-                indexStorage.build(buildIndexEntity(target));
+                masterStorage.build(entityClone);
+                indexStorage.build(buildIndexEntity(entityClone));
 
                 return entity.id();
             }
@@ -117,6 +121,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                  * 拆分为父与子.
                  */
                 IEntity fatherEntity = buildFatherEntity(target, target.id());
+                fatherEntity.resetId(entity.family().parent());
+
                 IEntity childEntity = buildChildEntity(target,target.family().parent());
 
                 masterStorage.replace(fatherEntity);
@@ -146,6 +152,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             if (isSub(entity)) {
 
                 IEntity fatherEntity = buildFatherEntity(entity, entity.id());
+                fatherEntity.resetId(entity.family().parent());
+
                 IEntity childEntity = buildChildEntity(entity,entity.family().parent());
 
                 masterStorage.delete(fatherEntity);
