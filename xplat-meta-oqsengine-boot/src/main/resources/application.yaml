@@ -3,7 +3,7 @@ instance:
 
 grpc:
   server:
-    port: 8082
+    port: 8081
 server:
   port: 8086
 
@@ -20,3 +20,13 @@ storage:
   index:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
     name: "oqsengine"
+
+management:
+  endpoint:
+    health:
+      show-details: never
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+      base-path: "/"
