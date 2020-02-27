@@ -44,4 +44,9 @@ public interface RelationUpOrBuilder extends
    * <code>.FieldUp entityField = 4;</code>
    */
   com.xforceplus.ultraman.oqsengine.sdk.FieldUpOrBuilder getEntityFieldOrBuilder();
+
+  /**
+   * <code>int64 relatedEntityClassId = 5;</code>
+   */
+  long getRelatedEntityClassId();
 }

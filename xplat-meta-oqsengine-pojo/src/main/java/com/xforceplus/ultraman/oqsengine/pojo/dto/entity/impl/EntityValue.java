@@ -78,12 +78,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     @Override
     public void filter(Predicate<? super IValue> predicate) {
-        Collection<IValue> snapshot = new ArrayList(values.values());
-        for (IValue v : snapshot) {
-            if (!predicate.test(v)) {
-                values.remove(v.getField());
-            }
-        }
+        values.entrySet().removeIf(entry -> !predicate.test(entry.getValue()));
     }
 
     @Override

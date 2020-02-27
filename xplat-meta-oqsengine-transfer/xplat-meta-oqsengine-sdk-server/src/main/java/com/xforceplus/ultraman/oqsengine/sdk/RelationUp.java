@@ -19,6 +19,7 @@ private static final long serialVersionUID = 0L;
     name_ = "";
     relationType_ = "";
     identity_ = false;
+    relatedEntityClassId_ = 0L;
   }
 
   @java.lang.Override
@@ -80,6 +81,11 @@ private static final long serialVersionUID = 0L;
               entityField_ = subBuilder.buildPartial();
             }
 
+            break;
+          }
+          case 40: {
+
+            relatedEntityClassId_ = input.readInt64();
             break;
           }
         }
@@ -204,6 +210,15 @@ private static final long serialVersionUID = 0L;
     return getEntityField();
   }
 
+  public static final int RELATEDENTITYCLASSID_FIELD_NUMBER = 5;
+  private long relatedEntityClassId_;
+  /**
+   * <code>int64 relatedEntityClassId = 5;</code>
+   */
+  public long getRelatedEntityClassId() {
+    return relatedEntityClassId_;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -228,6 +243,9 @@ private static final long serialVersionUID = 0L;
     if (entityField_ != null) {
       output.writeMessage(4, getEntityField());
     }
+    if (relatedEntityClassId_ != 0L) {
+      output.writeInt64(5, relatedEntityClassId_);
+    }
     unknownFields.writeTo(output);
   }
 
@@ -249,6 +267,10 @@ private static final long serialVersionUID = 0L;
     if (entityField_ != null) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(4, getEntityField());
+    }
+    if (relatedEntityClassId_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt64Size(5, relatedEntityClassId_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -277,6 +299,8 @@ private static final long serialVersionUID = 0L;
       result = result && getEntityField()
           .equals(other.getEntityField());
     }
+    result = result && (getRelatedEntityClassId()
+        == other.getRelatedEntityClassId());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -299,6 +323,9 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + ENTITYFIELD_FIELD_NUMBER;
       hash = (53 * hash) + getEntityField().hashCode();
     }
+    hash = (37 * hash) + RELATEDENTITYCLASSID_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getRelatedEntityClassId());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -440,6 +467,8 @@ private static final long serialVersionUID = 0L;
         entityField_ = null;
         entityFieldBuilder_ = null;
       }
+      relatedEntityClassId_ = 0L;
+
       return this;
     }
 
@@ -470,6 +499,7 @@ private static final long serialVersionUID = 0L;
       } else {
         result.entityField_ = entityFieldBuilder_.build();
       }
+      result.relatedEntityClassId_ = relatedEntityClassId_;
       onBuilt();
       return result;
     }
@@ -524,6 +554,9 @@ private static final long serialVersionUID = 0L;
       }
       if (other.hasEntityField()) {
         mergeEntityField(other.getEntityField());
+      }
+      if (other.getRelatedEntityClassId() != 0L) {
+        setRelatedEntityClassId(other.getRelatedEntityClassId());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -831,6 +864,32 @@ private static final long serialVersionUID = 0L;
         entityField_ = null;
       }
       return entityFieldBuilder_;
+    }
+
+    private long relatedEntityClassId_ ;
+    /**
+     * <code>int64 relatedEntityClassId = 5;</code>
+     */
+    public long getRelatedEntityClassId() {
+      return relatedEntityClassId_;
+    }
+    /**
+     * <code>int64 relatedEntityClassId = 5;</code>
+     */
+    public Builder setRelatedEntityClassId(long value) {
+      
+      relatedEntityClassId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int64 relatedEntityClassId = 5;</code>
+     */
+    public Builder clearRelatedEntityClassId() {
+      
+      relatedEntityClassId_ = 0L;
+      onChanged();
+      return this;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

@@ -111,7 +111,7 @@ public class EntityService {
 
         if( queryResult.getCode() == OperationResult.Code.OK ){
             if(queryResult.getTotalRow() > 0) {
-                return Either.right(toResultMap(queryResult.getQueryResultList().get(0)));
+                return Either.right(toResultMap(entityClass, queryResult.getQueryResultList().get(0)));
             } else {
                 return Either.left("未查询到记录");
             }
@@ -155,6 +155,7 @@ public class EntityService {
                     .setName(rel.getName())
                     .setRelationType(rel.getRelationType())
                     .setIdentity(rel.isIdentity())
+                    .setRelatedEntityClassId(rel.getEntityClassId())
                     .build();
         }).collect(Collectors.toList()));
 
@@ -220,12 +221,16 @@ public class EntityService {
     }
 
     //TODO
-    private Map<String, String> toResultMap(EntityUp up) {
+    private Map<String, String> toResultMap(EntityClass entityClass, EntityUp up) {
 
         Map<String, String> map = new HashMap<>();
 
+
         up.getValuesList().forEach(entry -> {
-            map.put(entry.getName(), entry.getValue());
+
+            entityClass.field(entry.getFieldId()).ifPresent(field -> {
+                map.put(field.name(), entry.getValue());
+            });
         });
         return map;
     }
@@ -344,7 +349,7 @@ public class EntityService {
             List<Map<String, String>> repList = result.getQueryResultList()
                     .stream()
                     .map(x -> {
-                        Map<String, String> resultMap = toResultMap(x);
+                        Map<String, String> resultMap = toResultMap(entityClass, x);
                         return filterItem(resultMap, x.getCode(), condition.getEntity());
                     }).collect(Collectors.toList());
             Tuple2<Integer, List<Map<String, String>>> queryResult = Tuple.of(result.getTotalRow(), repList);

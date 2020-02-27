@@ -4,6 +4,8 @@ import akka.grpc.javadsl.Metadata;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
@@ -23,6 +25,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
+
+import static com.xforceplus.ultraman.oqsengine.boot.utils.OptionalHelper.ofEmptyStr;
 
 @Component
 public class EntityServiceOqs implements EntityServicePowerApi {
@@ -67,8 +71,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         extractTransaction(metadata).ifPresent(id -> transactionManager.rebind(id));
 
         OperationResult result;
+
+        IEntityClass entityClass = toEntityClass(in);
+
         try {
-            long id = entityManagementService.build(toEntity(in));
+            long id = entityManagementService.build(toEntity(entityClass, in));
             result = OperationResult.newBuilder().addIds(id).setCode(OperationResult.Code.OK).buildPartial();
         } catch (SQLException e) {
             logger.error("{}", e);
@@ -88,12 +95,25 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         OperationResult result;
 
+        IEntityClass entityClass = toEntityClass(in);
+
         try {
-            entityManagementService.replace(toEntity(in));
-            result = OperationResult.newBuilder()
-                    .setAffectedRow(1)
-                    .setCode(OperationResult.Code.OK)
-                    .buildPartial();
+            Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
+            if(ds.isPresent()) {
+
+                //side effect
+                updateEntity(ds.get(), toEntity(entityClass, in));
+                entityManagementService.replace(ds.get());
+                result = OperationResult.newBuilder()
+                        .setAffectedRow(1)
+                        .setCode(OperationResult.Code.OK)
+                        .buildPartial();
+            } else {
+                result = OperationResult.newBuilder()
+                        .setCode(OperationResult.Code.FAILED)
+                        .setMessage("没有找到该记录")
+                        .buildPartial();
+            }
         } catch (SQLException e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
@@ -105,6 +125,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return CompletableFuture.completedFuture(result);
     }
 
+    //TODO test
+    private void updateEntity(IEntity src, IEntity update) {
+        src.entityValue().addValues(update.entityValue().values());
+    }
+
     @Override
     public CompletionStage<OperationResult> remove(EntityUp in, Metadata metadata) {
         extractTransaction(metadata).ifPresent(id -> transactionManager.rebind(id));
@@ -112,7 +137,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         OperationResult result;
 
         try{
-            entityManagementService.delete(toEntity(in));
+            IEntityClass entityClass = toEntityClass(in);
+            entityManagementService.delete(toEntity(entityClass, in));
             result = OperationResult.newBuilder()
                     .setAffectedRow(1)
                     .setCode(OperationResult.Code.OK)
@@ -183,15 +209,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
 
             if(sort != null && !sort.isEmpty()){
-                entities = entitySearchService.selectByConditions(null, toEntityClass(entityUp), page);
+                entities = entitySearchService.selectByConditions(toConditions(conditions), toEntityClass(entityUp), page);
             }else{
 
                 Sort sortParam;
                 FieldSortUp sortUp = sort.get(0);
                 if(sortUp.getOrder() == FieldSortUp.Order.asc) {
-                    sortParam = Sort.buildAscSort(toFieldEntity(sortUp.getField()));
+                    sortParam = Sort.buildAscSort(toEntityField(sortUp.getField()));
                 }else{
-                    sortParam = Sort.buildDescSort(toFieldEntity(sortUp.getField()));
+                    sortParam = Sort.buildDescSort(toEntityField(sortUp.getField()));
                 }
 
                 entities = entitySearchService.selectByConditions(null, toEntityClass(entityUp), sortParam, page);
@@ -285,8 +311,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     //TODO version
-    private IEntity toEntity(EntityUp in){
-        return new Entity(in.getId(), toEntityClass(in), toEntityValue(in));
+    private IEntity toEntity(IEntityClass entityClass, EntityUp in){
+        return new Entity(in.getObjId(), toEntityClass(in), toEntityValue(entityClass, in));
     }
 
     //TODO
@@ -294,9 +320,24 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return null;
     }
 
+    //TODO
     private Conditions toConditions(ConditionsUp conditionsUp){
+//
+//        conditionsUp.getFieldsList().stream().map(x -> {
+//
+//
+//
+//            Condition condition = new Condition(toEntityField(x.getField()),toConditionOp(x.getOperation()), x.getVA);
+//            return condition;
+//        });
+
+
        return null;
     }
+
+//    private ConditionOperator toConditionOp(FieldConditionUp.Op op) {
+//
+//    }
 
     private IEntityClass toRawEntityClass(EntityUp entityUp){
         return new EntityClass(
@@ -305,59 +346,72 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 , null
                 , Collections.emptyList()
                 , null
-                , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
+                , entityUp.getFieldsList().stream().map(this::toEntityField).collect(Collectors.toList())
         );
     }
 
-    private IEntityValue toEntityValue(EntityUp entityUp){
+    private IEntityValue toEntityValue(IEntityClass entityClass, EntityUp entityUp){
         List<IValue> valueList = entityUp.getValuesList().stream()
                 .map(y -> {
-                    return toTypedValue(y.getName(), y.getFieldId(), y.getFieldType(), y.getValue());
-                }).collect(Collectors.toList());
+                    return toTypedValue(entityClass, y.getFieldId(), y.getValue());
+                }).filter(Objects::nonNull).collect(Collectors.toList());
         EntityValue entityValue = new EntityValue(entityUp.getId());
         entityValue.addValues(valueList);
         return entityValue;
     }
 
-    private IValue toTypedValue(String name, Long id, String fieldType, String value){
+    private IValue toTypedValue(IEntityClass entityClass, Long id, String value){
         try {
             Objects.requireNonNull(value, "值不能为空");
-            FieldType fieldTypeE = FieldType.valueOf(fieldType);
-            //TODO fix field
-            IEntityField entityField = new Field(id, name, fieldTypeE);
-            IValue retValue = null;
-            switch(fieldTypeE){
-                case LONG:
-                    retValue = new LongValue(entityField, Long.valueOf(value));
-                    break;
-                case DATATIME:
-                    retValue = new DateTimeValue(entityField, LocalDateTime.parse(value));
-                    break;
-                case ENUM:
-                    retValue = new EnumValue(entityField, value);
-                    break;
-                case BOOLEAN:
-                    retValue = new BooleanValue(entityField, Boolean.valueOf(value));
-                    break;
+            Optional<IEntityField> fieldOp = entityClass.field(id);
+            if(fieldOp.isPresent()) {
+
+                //TODO fix field
+                IEntityField entityField = fieldOp.get();
+                IValue retValue = null;
+                switch (entityField.type()) {
+                    case LONG:
+                        retValue = new LongValue(entityField, Long.valueOf(value));
+                        break;
+                    case DATATIME:
+                        retValue = new DateTimeValue(entityField, LocalDateTime.parse(value));
+                        break;
+                    case ENUM:
+                        retValue = new EnumValue(entityField, value);
+                        break;
+                    case BOOLEAN:
+                        retValue = new BooleanValue(entityField, Boolean.valueOf(value));
+                        break;
+                    default:
+                        retValue = new StringValue(entityField, value);
+                }
+                return retValue;
+            } else {
+                logger.error("不存在对应的field id:{}", id);
+                return null;
             }
-            return retValue;
         }catch (Exception ex){
             logger.error("{}", ex);
             throw new RuntimeException("类型转换失败 " + ex.getMessage());
         }
     }
 
-    private Field toFieldEntity(FieldUp fieldUp){
-        //g id, String name, FieldType fieldType
-        //        this.searchType = searchType;
-        //        this.maxSize = maxSize;
-        //        this.mixSize = mixSize;
-        return new Field(fieldUp.getId()
+    //TODO
+    private Field toEntityField(FieldUp fieldUp){
+        return new Field(
+                  fieldUp.getId()
                 , fieldUp.getName()
                 , FieldType.valueOf(fieldUp.getFieldType())
-        );
+                , FieldConfig.build()
+                    .searchable(ofEmptyStr(fieldUp.getSearchable())
+                            .map(Boolean::valueOf).orElse(false))
+                    .max(ofEmptyStr(fieldUp.getMaxLength())
+                            .map(String::valueOf)
+                            .map(Long::parseLong).orElse(-1L))
+                    .min(ofEmptyStr(fieldUp.getMinLength()).map(String::valueOf)
+                            .map(Long::parseLong).orElse(-1L))
+               );
     }
-
     private IEntityClass toEntityClass(EntityUp entityUp){
         //Long id, String code, String relation, List<IEntityClass> entityClasss, IEntityClass extendEntityClass, List<Field> fields
         IEntityClass entityClass = new EntityClass(
@@ -366,7 +420,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 , null
                 , entityUp.getEntityClassesList().stream().map(this::toRawEntityClass).collect(Collectors.toList())
                 , toRawEntityClass(entityUp.getExtendEntityClass())
-                , entityUp.getFieldsList().stream().map(this::toFieldEntity).collect(Collectors.toList())
+                , entityUp.getFieldsList().stream().map(this::toEntityField).collect(Collectors.toList())
         );
         return entityClass;
     }

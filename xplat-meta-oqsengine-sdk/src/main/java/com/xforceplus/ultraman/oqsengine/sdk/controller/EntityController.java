@@ -21,6 +21,8 @@ public class EntityController {
     @Autowired
     private EntityService entityService;
 
+
+
     @GetMapping("/bos/{boId}/entities/{id}")
     public Response<Map<String, String>> singleQuery(
             @PathVariable String boId,
@@ -97,6 +99,48 @@ public class EntityController {
 
         if(entityClassOp.isPresent()) {
              Either<String, Long> result = entityService.create(entityClassOp.get(), body);
+
+
+            if(result.isRight()){
+                rep.setCode("1");
+                rep.setResult(String.valueOf(result.get()));
+                rep.setMessage("操作成功");
+                return rep;
+            }else{
+                rep.setCode("-1");
+                rep.setResult(result.getLeft());
+                rep.setMessage("操作失败");
+                return rep;
+            }
+        }
+
+        //TODO
+        //entity missing
+        rep.setCode("-1");
+        rep.setMessage("操作失败");
+        return rep;
+    }
+
+//    request: {
+//        url: '/api/{tenantId}/{appCode}/bos/{boid}/entities/{id}',
+//                method: 'put'
+//        body: {
+//            key: value
+//        }
+//    }
+//    response: {code:string, message:string}
+
+    @PutMapping("/bos/{boId}/entities/{id}")
+    public Response<String> singleModify( @PathVariable String boId,
+                                          @PathVariable Long id,
+                                          @RequestBody Map<String, Object> body
+    ){
+        Optional<EntityClass> entityClassOp = entityService.load(null, null, boId);
+
+        Response rep = new Response();
+
+        if(entityClassOp.isPresent()) {
+            Either<String, Integer> result = entityService.updateById(entityClassOp.get(), id, body);
 
 
             if(result.isRight()){

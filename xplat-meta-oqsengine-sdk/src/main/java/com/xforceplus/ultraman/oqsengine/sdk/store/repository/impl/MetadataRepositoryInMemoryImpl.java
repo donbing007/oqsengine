@@ -334,7 +334,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
             String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
 
-            List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> fields = loadFields(boId);
+            List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField> fields = loadFields(boId);
 
             //build up parentClass
 
@@ -363,7 +363,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             List<IEntityClass> entityClassList = new LinkedList<>();
             List<Relation> relationList = new LinkedList<>();
 
-            List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> allFields = new LinkedList<>();
+            List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField> allFields = new LinkedList<>();
             allFields.addAll(fields);
 
             relatedEntityClassList.forEach(tuple -> {
@@ -383,7 +383,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         return Optional.empty();
     }
 
-    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadFields(String id){
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField> loadFields(String id){
         DataSet fieldDs = dc.query().from("fields")
                 .selectAll().where("boId").eq(id).execute();
         return fieldDs.toRows().stream()

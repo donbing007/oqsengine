@@ -114,7 +114,7 @@ message RelationUp {
     string relationType = 2;
     bool identity = 3;
     FieldUp entityField = 4;
-
+    int64 relatedEntityClassId = 5;
 }
 
 message ValueUp {
@@ -135,4 +135,5 @@ message FieldUp {
     string maxLength = 8;
     string required = 9;
     string searchable = 10;
+    string minLength = 11;
 }

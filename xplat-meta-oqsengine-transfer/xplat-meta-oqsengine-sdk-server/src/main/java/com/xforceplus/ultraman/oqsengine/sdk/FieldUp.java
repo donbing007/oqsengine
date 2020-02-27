@@ -26,6 +26,7 @@ private static final long serialVersionUID = 0L;
     maxLength_ = "";
     required_ = "";
     searchable_ = "";
+    minLength_ = "";
   }
 
   @java.lang.Override
@@ -116,6 +117,12 @@ private static final long serialVersionUID = 0L;
             java.lang.String s = input.readStringRequireUtf8();
 
             searchable_ = s;
+            break;
+          }
+          case 90: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            minLength_ = s;
             break;
           }
         }
@@ -477,6 +484,40 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int MINLENGTH_FIELD_NUMBER = 11;
+  private volatile java.lang.Object minLength_;
+  /**
+   * <code>string minLength = 11;</code>
+   */
+  public java.lang.String getMinLength() {
+    java.lang.Object ref = minLength_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      minLength_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string minLength = 11;</code>
+   */
+  public com.google.protobuf.ByteString
+      getMinLengthBytes() {
+    java.lang.Object ref = minLength_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      minLength_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -519,6 +560,9 @@ private static final long serialVersionUID = 0L;
     if (!getSearchableBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 10, searchable_);
     }
+    if (!getMinLengthBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 11, minLength_);
+    }
     unknownFields.writeTo(output);
   }
 
@@ -558,6 +602,9 @@ private static final long serialVersionUID = 0L;
     if (!getSearchableBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(10, searchable_);
     }
+    if (!getMinLengthBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(11, minLength_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -594,6 +641,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getRequired());
     result = result && getSearchable()
         .equals(other.getSearchable());
+    result = result && getMinLength()
+        .equals(other.getMinLength());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -626,6 +675,8 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getRequired().hashCode();
     hash = (37 * hash) + SEARCHABLE_FIELD_NUMBER;
     hash = (53 * hash) + getSearchable().hashCode();
+    hash = (37 * hash) + MINLENGTH_FIELD_NUMBER;
+    hash = (53 * hash) + getMinLength().hashCode();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -775,6 +826,8 @@ private static final long serialVersionUID = 0L;
 
       searchable_ = "";
 
+      minLength_ = "";
+
       return this;
     }
 
@@ -807,6 +860,7 @@ private static final long serialVersionUID = 0L;
       result.maxLength_ = maxLength_;
       result.required_ = required_;
       result.searchable_ = searchable_;
+      result.minLength_ = minLength_;
       onBuilt();
       return result;
     }
@@ -885,6 +939,10 @@ private static final long serialVersionUID = 0L;
       }
       if (!other.getSearchable().isEmpty()) {
         searchable_ = other.searchable_;
+        onChanged();
+      }
+      if (!other.getMinLength().isEmpty()) {
+        minLength_ = other.minLength_;
         onChanged();
       }
       this.mergeUnknownFields(other.unknownFields);
@@ -1609,6 +1667,75 @@ private static final long serialVersionUID = 0L;
   checkByteStringIsUtf8(value);
       
       searchable_ = value;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object minLength_ = "";
+    /**
+     * <code>string minLength = 11;</code>
+     */
+    public java.lang.String getMinLength() {
+      java.lang.Object ref = minLength_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        minLength_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string minLength = 11;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMinLengthBytes() {
+      java.lang.Object ref = minLength_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        minLength_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string minLength = 11;</code>
+     */
+    public Builder setMinLength(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      minLength_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string minLength = 11;</code>
+     */
+    public Builder clearMinLength() {
+      
+      minLength_ = getDefaultInstance().getMinLength();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string minLength = 11;</code>
+     */
+    public Builder setMinLengthBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      minLength_ = value;
       onChanged();
       return this;
     }

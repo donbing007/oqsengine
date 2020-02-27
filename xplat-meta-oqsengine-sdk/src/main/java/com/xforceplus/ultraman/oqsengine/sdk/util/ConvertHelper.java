@@ -23,7 +23,7 @@ public class ConvertHelper {
                 .map(String::valueOf)
                 .map(Long::valueOf)
                 .orElse(-1l);
-        String name = RowUtils.getRowValue(row, "name").map(String::valueOf).orElse("");
+        String name = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
         FieldType fieldType = RowUtils.getRowValue(row, "fieldType").map(String::valueOf).map(FieldType::valueOf).orElse(FieldType.STRING);
         Field field =
                 new Field(id, name, fieldType);
