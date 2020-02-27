@@ -1,0 +1,43 @@
+# Default values for manager-service.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: registry.cn-hangzhou.aliyuncs.com/xf-bm-xplat-msg/xplat-meta-oqsengine-boot
+  pullPolicy: IfNotPresent
+
+
+deployment:
+  managementPort: 8080
+  grpcPort: 8081
+
+env:
+  open:
+    JAVA_OPTS: -server -XX:+UseSerialGC -Djava.awt.headless=true
+
+metrics:
+  path: /prometheus
+  group: spring-boot
+
+logs:
+  parser: spring-boot
+
+
+service:
+  enable: false
+  type: ClusterIP
+  port: 18080
+
+ingress:
+  enable: false
+
+resources:
+  limits:
+    cpu: 4000m
+    memory: 4Gi
+  requests:
+    cpu: 1500m
+    memory: 2Gi
+
