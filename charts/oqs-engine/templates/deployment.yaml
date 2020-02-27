@@ -33,6 +33,9 @@ spec:
             - name: http-metrics
               containerPort: {{ .Values.deployment.managementPort }}
               protocol: TCP
+            - name: http-grpc
+              containerPort: {{ .Values.deployment.grpcPort }}
+              protocol: TCP  
           readinessProbe:
             httpGet:
               path: /health
