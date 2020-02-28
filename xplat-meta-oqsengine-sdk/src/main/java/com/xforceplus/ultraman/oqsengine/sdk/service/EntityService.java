@@ -402,7 +402,7 @@ public class EntityService {
                             }).findFirst();
 
                     return subEntityClassOp.map(iEntityClass -> subEntityItem.getFields().stream()
-                            .map(entityClass::field)
+                            .map(iEntityClass::field)
                             .filter(Optional::isPresent)
                             .map(Optional::get)
                             .map(x -> QueryFieldsUp

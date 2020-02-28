@@ -45,6 +45,12 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     }
 
     @Override
+    public Optional<IValue> getValue(long fieldId) {
+        return values.entrySet().stream().filter(x -> x.getKey().id() == fieldId)
+                .map(Map.Entry::getValue).findFirst();
+    }
+
+    @Override
     public IEntityValue addValue(IValue value) {
         lazyInit();
 
