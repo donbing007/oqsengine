@@ -123,6 +123,14 @@ public class SphinxQLIndexStorageTest {
     @After
     public void after() throws Exception {
 
+        Optional<Transaction> t = transactionManager.getCurrent();
+        if (t.isPresent()) {
+            Transaction tx = t.get();
+            if (!tx.isCompleted()) {
+                tx.rollback();
+            }
+        }
+
         transactionManager.finish();
 
         truncate();
@@ -131,35 +139,25 @@ public class SphinxQLIndexStorageTest {
     }
 
     @Test
-    public void testDelete() throws Exception {
+    public void testDeleteSuccess() throws Exception {
         // 确认没有事务.
         Assert.assertFalse(transactionManager.getCurrent().isPresent());
 
-        // 每一个删除都以独立事务运行.
+        transactionManager.create();
+
         expectedEntitys.stream().forEach(e -> {
             try {
-                transactionManager.create();
 
-                try {
+                storage.delete(e);
 
-                    storage.delete(e);
-
-                } catch (SQLException ex) {
-
-                    transactionManager.getCurrent().get().rollback();
-                    transactionManager.finish();
-
-                    throw new RuntimeException(ex.getMessage(), ex);
-
-                }
-
-                transactionManager.getCurrent().get().commit();
-                transactionManager.finish();
 
             } catch (Exception ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
         });
+
+        transactionManager.getCurrent().get().commit();
+        transactionManager.finish();
 
         Collection<EntityRef> refs = storage.select(
             new Conditions(new Condition(fixFieldAll, ConditionOperator.EQUALS, new BooleanValue(fixFieldAll, true))),
@@ -169,6 +167,38 @@ public class SphinxQLIndexStorageTest {
         );
 
         Assert.assertEquals(0, refs.size());
+    }
+
+    @Test
+    public void testDeleteFailure() throws Exception {
+        // 确认没有事务.
+        Assert.assertFalse(transactionManager.getCurrent().isPresent());
+
+        transactionManager.create();
+
+        expectedEntitys.stream().forEach(e -> {
+            try {
+
+                storage.delete(e);
+
+
+            } catch (Exception ex) {
+                throw new RuntimeException(ex.getMessage(), ex);
+            }
+        });
+
+        // 无条件 rollback.
+        transactionManager.getCurrent().get().rollback();
+        transactionManager.finish();
+
+        Collection<EntityRef> refs = storage.select(
+            new Conditions(new Condition(fixFieldAll, ConditionOperator.EQUALS, new BooleanValue(fixFieldAll, true))),
+            expectedEntitys.stream().findFirst().get().entityClass(),
+            null,
+            Page.newSinglePage(100)
+        );
+
+        Assert.assertEquals(expectedEntitys.size(), refs.size());
     }
 
     @Test

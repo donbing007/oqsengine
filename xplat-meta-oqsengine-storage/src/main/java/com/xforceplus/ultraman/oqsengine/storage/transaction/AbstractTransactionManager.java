@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,6 +22,8 @@ import java.util.concurrent.ConcurrentMap;
  */
 public abstract class AbstractTransactionManager implements TransactionManager {
 
+    final Logger logger = LoggerFactory.getLogger(AbstractTransactionManager.class);
+
     private static final ThreadLocal<Transaction> CURRENT_TRANSACTION = new ThreadLocal<>();
 
     private ConcurrentMap<Long, Transaction> holder;
@@ -26,6 +31,19 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     public AbstractTransactionManager() {
         holder = new ConcurrentHashMap<>();
     }
+
+    @Override
+    public Transaction create() {
+        Transaction newT = doCreate();
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Start new Transaction({}).", newT.id());
+        }
+
+        return newT;
+    }
+
+    protected abstract Transaction doCreate();
 
     @Override
     public Optional<Transaction> getCurrent() {
@@ -64,6 +82,11 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         }
 
         holder.remove(tx.id());
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("End of transaction({}).", tx.id());
+        }
+
 
         // 如果完成的本线程事务,那么解除绑定.
         Optional<Transaction> current = getCurrent();

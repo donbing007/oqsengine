@@ -21,6 +21,7 @@ public class SphinxQLTransactionResource implements TransactionResource<Connecti
     public SphinxQLTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
         this.conn = conn;
+        // SphinxQL 只有在 autocommit = true 情况下才工作.
         this.conn.setAutoCommit(true);
 
         if (!autocommit) {

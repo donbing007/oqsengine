@@ -33,16 +33,16 @@ public class AbstractTransactionManagerTest {
         Transaction tx = tm.create();
 
         tm.bind(tx);
-        Assert.assertEquals(tx, tm.getCurrent());
+        Assert.assertEquals(tx, tm.getCurrent().get());
 
         tm.unbind();
-        Assert.assertNull(tm.getCurrent());
+        Assert.assertFalse(tm.getCurrent().isPresent());
 
         tm.rebind(tx.id());
-        Assert.assertEquals(tx, tm.getCurrent());
+        Assert.assertEquals(tx, tm.getCurrent().get());
 
         tm.finish(tx);
-        Assert.assertNull(tm.getCurrent());
+        Assert.assertFalse(tm.getCurrent().isPresent());
 
     }
 
@@ -51,7 +51,7 @@ public class AbstractTransactionManagerTest {
         private LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
         @Override
-        public Transaction create() {
+        public Transaction doCreate() {
 
             Transaction newTx = mock(Transaction.class);
             long id = idGenerator.next();
