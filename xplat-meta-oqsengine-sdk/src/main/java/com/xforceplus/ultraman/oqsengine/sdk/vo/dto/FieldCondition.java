@@ -17,7 +17,7 @@ public class FieldCondition {
 
     ConditionOp operation;
 
-    List<String> values;
+    List<String> value;
 
     public String getCode() {
         return code;
@@ -35,11 +35,11 @@ public class FieldCondition {
         this.operation = operation;
     }
 
-    public List<String> getValues() {
-        return values;
+    public List<String> getValue() {
+        return value;
     }
 
-    public void setValues(List<String> values) {
-        this.values = values;
+    public void setValue(List<String> value) {
+        this.value = value;
     }
 }

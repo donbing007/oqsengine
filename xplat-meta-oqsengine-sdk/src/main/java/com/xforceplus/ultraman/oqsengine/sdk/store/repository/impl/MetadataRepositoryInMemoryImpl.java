@@ -65,7 +65,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         SimpleTableDef fieldTableDef = new SimpleTableDef("fields", new String[]{"boId"
                 , "id"
-                , "code", "displayType", "editable", "enumCode", "maxLength", "name", "required", "type", "searchable"});
+                , "code", "displayType", "editable", "enumCode", "maxLength", "name", "required", "fieldType", "searchable"});
         TableDataProvider fieldTableDataProvider = new MapTableDataProvider(fieldTableDef, fieldStore);
 
         /**
@@ -118,7 +118,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             fieldItem.setMaxLength(getRowValue(row, "maxLength").map(String::valueOf).orElse(""));
             fieldItem.setName(getRowValue(row, "name").map(String::valueOf).orElse(""));
             fieldItem.setRequired(getRowValue(row, "required").map(String::valueOf).orElse(""));
-            fieldItem.setType(getRowValue(row, "type").map(String::valueOf).orElse(""));
+            fieldItem.setType(getRowValue(row, "fieldType").map(String::valueOf).orElse(""));
             fieldItem.setSearchable(getRowValue(row, "searchable").map(String::valueOf).orElse(""));
 
             //TODO
@@ -578,7 +578,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .value("maxLength", field.getMaxLength())
                 .value("name", field.getName())
                 .value("required", field.getRequired())
-                .value("type", field.getFieldType())
+                .value("fieldType", field.getFieldType())
                 .value("searchable", searchable);
         dc.executeUpdate(insert);
     }

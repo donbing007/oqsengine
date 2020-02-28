@@ -419,7 +419,7 @@ public class EntityService {
         return fieldOp.map(x -> FieldConditionUp.newBuilder()
                 .setCode(fieldCondition.getCode())
                 .setOperation(FieldConditionUp.Op.valueOf(fieldCondition.getOperation().name()))
-                .addAllValues(Optional.ofNullable(fieldCondition.getValues()).orElseGet(Collections::emptyList))
+                .addAllValues(Optional.ofNullable(fieldCondition.getValue()).orElseGet(Collections::emptyList))
                 .setField(toFieldUp(fieldOp.get()))
                 .build());
     }
@@ -444,7 +444,7 @@ public class EntityService {
         return FieldConditionUp.newBuilder()
                 .setCode(fieldCondition.getCode())
                 .setOperation(FieldConditionUp.Op.valueOf(fieldCondition.getOperation().name()))
-                .addAllValues(fieldCondition.getValues())
+                .addAllValues(fieldCondition.getValue())
                 .setField(toFieldUp(entityField))
                 .build();
     }
