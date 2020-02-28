@@ -19,4 +19,4 @@ storage:
       size: 1
   index:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
-    name: "oqsengine"
+    name: "oqsindex"

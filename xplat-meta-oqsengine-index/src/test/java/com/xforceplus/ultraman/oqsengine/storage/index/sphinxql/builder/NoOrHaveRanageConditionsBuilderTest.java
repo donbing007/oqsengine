@@ -14,17 +14,16 @@ import org.junit.Before;
 import org.junit.After;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 /**
- * NoOrNorRanageConditionsBuilder Tester.
+ * NoOrHaveRanageConditionsBuilder Tester.
  *
  * @author <Authors name>
- * @version 1.0 02/22/2020
- * @since <pre>Feb 22, 2020</pre>
+ * @version 1.0 02/28/2020
+ * @since <pre>Feb 28, 2020</pre>
  */
-public class NoOrNorRanageConditionsBuilderTest {
+public class NoOrHaveRanageConditionsBuilderTest {
 
     @Before
     public void before() throws Exception {
@@ -39,67 +38,48 @@ public class NoOrNorRanageConditionsBuilderTest {
      */
     @Test
     public void testBuild() throws Exception {
-        NoOrNorRanageConditionsBuilder builder = new NoOrNorRanageConditionsBuilder();
+
+        NoOrHaveRanageConditionsBuilder builder = new NoOrHaveRanageConditionsBuilder();
         buildCase().stream().forEach(c -> {
             String where = builder.build(c.conditions);
             Assert.assertEquals(c.expected, where);
         });
+
     }
 
     private List<Case> buildCase() {
-        String expectPrefix = "MATCH('@" + FieldDefine.FULL_FIELDS + " ";
-        String expectAfter = "')";
         return Arrays.asList(
             new Case(
                 new Conditions(
                     new Condition(
                         new Field(1, "c1", FieldType.LONG),
-                        ConditionOperator.EQUALS,
+                        ConditionOperator.GREATER_THAN,
                         new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                expectPrefix + "=F1100" + expectAfter
+                "jsonfields.1 > 100"
             )
             ,
             new Case(
                 new Conditions(
                     new Condition(
-                        new Field(1, "c1", FieldType.STRING),
+                        new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.LIKE,
-                        new StringValue(new Field(1, "c1", FieldType.STRING), "test*")
+                        new StringValue(new Field(2, "c2", FieldType.STRING), "test*")
+                    )
+                ).addAnd(
+                    new Condition(
+                        new Field(1, "c1", FieldType.LONG),
+                        ConditionOperator.GREATER_THAN,
+                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                expectPrefix + "F1test*" + expectAfter
-            )
-            ,
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new Field(1, "c1", FieldType.LONG),
-                        ConditionOperator.EQUALS,
-                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L)))
-                    .addAnd(new Condition(
-                        new Field(2, "c2", FieldType.STRING),
-                        ConditionOperator.EQUALS,
-                        new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "=F1100 =F2test" + expectAfter
-            ),
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new Field(1, "c1", FieldType.LONG),
-                        ConditionOperator.NOT_EQUALS,
-                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L)))
-                    .addAnd(new Condition(
-                        new Field(2, "c2", FieldType.STRING),
-                        ConditionOperator.NOT_EQUALS,
-                        new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-F1100 -F2test F*" + expectAfter
+                "jsonfields.1 > 100 and MATCH('@fullfields F2test*')"
             )
         );
     }
 
-    class Case {
+    static class Case {
         private Conditions conditions;
         private String expected;
 

@@ -30,6 +30,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
@@ -50,13 +52,18 @@ import java.util.stream.Collectors;
  */
 public class SphinxQLIndexStorageTest {
 
+    final Logger logger = LoggerFactory.getLogger(SphinxQLIndexStorageTest.class);
+
     private TransactionManager transactionManager = new DefaultTransactionManager(
         new IncreasingOrderLongIdGenerator(0));
     private LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator(1);
     private SphinxQLIndexStorage storage;
     private List<IEntity> expectedEntitys;
     private DataSourcePackage dataSourcePackage;
-    private IEntityField fixField = new Field(100000, "all", FieldType.BOOLEAN);
+    // 所有数据都会有的字段,用以选择所有数据
+    private IEntityField fixFieldAll = new Field(100000, "all", FieldType.BOOLEAN);
+    // 所有数据都会有的字段,用以范围选择.值为随机数字.
+    private IEntityField fixFieldRange = new Field(100001, "range", FieldType.LONG);
 
     @Before
     public void before() throws Exception {
@@ -121,6 +128,10 @@ public class SphinxQLIndexStorageTest {
 
     @Test
     public void testDelete() throws Exception {
+        // 确认没有事务.
+        Assert.assertFalse(transactionManager.getCurrent().isPresent());
+
+        // 每一个删除都以独立事务运行.
         expectedEntitys.stream().forEach(e -> {
             try {
                 storage.delete(e);
@@ -130,17 +141,21 @@ public class SphinxQLIndexStorageTest {
         });
 
         Collection<EntityRef> refs = storage.select(
-            new Conditions(new Condition(fixField, ConditionOperator.EQUALS, new BooleanValue(fixField,true))),
+            new Conditions(new Condition(fixFieldAll, ConditionOperator.EQUALS, new BooleanValue(fixFieldAll, true))),
             expectedEntitys.stream().findFirst().get().entityClass(),
             null,
             Page.newSinglePage(100)
-            );
+        );
 
         Assert.assertEquals(0, refs.size());
     }
 
     @Test
     public void testSelectCase() throws Exception {
+        // 确认没有事务.
+        Assert.assertFalse(transactionManager.getCurrent().isPresent());
+
+        // 每一个都以独立事务运行.
         buildCase().stream().forEach(c -> {
 
             Collection<EntityRef> refs = null;
@@ -261,10 +276,63 @@ public class SphinxQLIndexStorageTest {
                         refs.stream().findFirst().get().getId());
                     return true;
                 }
+            ),
+            // > =
+            new Case(
+                new Conditions(new Condition(
+                    fixFieldRange,
+                    ConditionOperator.GREATER_THAN,
+                    expectedEntitys.stream().skip(1)
+                        .findFirst().get().entityValue().getValue(fixFieldRange.name()).get()
+                )).addAnd(
+                    new Condition(
+                        expectedEntitys.stream().skip(2)
+                            .findFirst().get().entityValue().values().stream().findFirst().get().getField(),
+                        ConditionOperator.EQUALS,
+                        expectedEntitys.stream().skip(2)
+                            .findFirst().get().entityValue().values().stream().findFirst().get()
+                    )
+                ),
+                expectedEntitys.stream().findFirst().get().entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+
+                    IValue<Long> oneCondition = expectedEntitys.stream().skip(1)
+                        .findFirst().get().entityValue().getValue(fixFieldRange.name()).get();
+                    IValue twoCondition = expectedEntitys.stream().skip(2)
+                        .findFirst().get().entityValue().values().stream().findFirst().get();
+
+                    int expectedSize = expectedEntitys.stream().filter(e -> {
+                        IValue<Long> oneTarget = e.entityValue().getValue(fixFieldRange.name()).get();
+                        IValue twoTarget = e.entityValue().values().stream().findFirst().get();
+
+
+                        return oneTarget.valueToLong() > oneCondition.valueToLong() && twoTarget.equals(twoCondition);
+
+                    }).collect(Collectors.toList()).size();
+                    Assert.assertEquals(expectedSize, refs.size());
+                    return true;
+                }
+            )
+            ,
+            // all
+            new Case(
+                Conditions.buildEmtpyConditions(),
+                expectedEntitys.stream().findFirst().get().entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+                    Assert.assertEquals(expectedEntitys.size(), refs.size());
+
+                    refs.stream().forEach(r -> {
+                        Assert.assertEquals(1,
+                            expectedEntitys.stream().filter(e -> e.id() == r.getId()).collect(Collectors.toList()).size());
+                    });
+
+                    return true;
+                }
             )
         );
     }
-
 
     // 初始化数据
     private List<IEntity> initData(SphinxQLIndexStorage storage, int size) throws Exception {
@@ -312,7 +380,8 @@ public class SphinxQLIndexStorageTest {
         }
 
         // 一个固定的所有都有的字段.
-        fields.add(fixField);
+        fields.add(fixFieldAll);
+        fields.add(fixFieldRange);
 
         return fields;
     }
@@ -320,12 +389,17 @@ public class SphinxQLIndexStorageTest {
     private IEntityValue buildRandomValue(long id, Collection<IEntityField> fields) {
         Collection<IValue> values = fields.stream().map(f -> {
 
+            if (f == fixFieldAll) {
+                return new BooleanValue(f, true);
+            }
+
+            if (f == fixFieldRange) {
+                return new LongValue(f, (long) buildRandomLong(10, 100000));
+            }
+
             switch (f.type()) {
                 case STRING:
                     return new StringValue(f, buildRandomString(30));
-                case BOOLEAN:
-                    // 固定字段.
-                    return new BooleanValue(f, true);
                 default:
                     return new LongValue(f, (long) buildRandomLong(10, 100000));
             }

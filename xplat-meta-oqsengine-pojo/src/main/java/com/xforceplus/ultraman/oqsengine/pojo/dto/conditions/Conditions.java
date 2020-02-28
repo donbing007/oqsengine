@@ -9,13 +9,13 @@ import java.util.LinkedList;
  * 表示一系列条件组合.只支持以 And 方式进行组合.
  * OR 只有在没有封闭且只有字符串字段类型的条件才允许.
  *
- *
  * @author dongbin
  * @version 0.1 2020/2/20 13:26
  * @since 1.8
  */
 public class Conditions implements Serializable {
 
+    private static final Conditions EMPTY_CONDITIONS = new Conditions();
     /**
      * 条件数量.
      */
@@ -35,6 +35,16 @@ public class Conditions implements Serializable {
      * 条件树根结点.
      */
     private ConditionNode head;
+
+    private Conditions() {
+        size = 0;
+        range = false;
+        or = false;
+    }
+
+    public static Conditions buildEmtpyConditions() {
+        return EMPTY_CONDITIONS;
+    }
 
     public Conditions(Condition condition) {
         head = new ValueConditionNode(condition);
@@ -64,6 +74,7 @@ public class Conditions implements Serializable {
     /**
      * 以 OR 连接一个新的条件.
      * 只有当所有条件都是 string 并且没有封闭时才可以.
+     *
      * @param condition 新条件.
      */
     public Conditions addOr(Condition condition) {
@@ -73,8 +84,9 @@ public class Conditions implements Serializable {
 
     /**
      * 以 OR 连接一组新的条件.
+     *
      * @param conditions 新条件.
-     * @param isolation true 封闭新条件,false 不封闭.
+     * @param isolation  true 封闭新条件,false 不封闭.
      */
     public Conditions addOr(Conditions conditions, boolean isolation) {
 
@@ -91,6 +103,7 @@ public class Conditions implements Serializable {
 
     /**
      * 条件迭代器.
+     *
      * @return 迭代器.
      */
     public Iterator<ConditionNode> iterator() {
@@ -113,6 +126,7 @@ public class Conditions implements Serializable {
 
     /**
      * 获取条件数量.
+     *
      * @return 数量.
      */
     public int size() {
@@ -121,6 +135,7 @@ public class Conditions implements Serializable {
 
     /**
      * 是否条件值结点.
+     *
      * @param node 目标结点.
      * @return true 是条件值结点,false 不是.
      */
@@ -130,6 +145,7 @@ public class Conditions implements Serializable {
 
     /**
      * 是否连接结点.
+     *
      * @param node 目标结点.
      * @return true 是连接结点,false 不是.
      */
@@ -195,6 +211,10 @@ public class Conditions implements Serializable {
         }
 
         private void init(ConditionNode point) {
+            if (point == null) {
+                return;
+            }
+
             if (Conditions.isValueNode(point)) {
                 stack.push(point);
             } else {

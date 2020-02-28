@@ -90,7 +90,8 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     private void lazyInit() {
         if (this.values == null) {
-            this.values = new HashMap<>();
+            // 这里为了保存顺序为加入顺序.
+            this.values = new LinkedHashMap<>();
         }
     }
 

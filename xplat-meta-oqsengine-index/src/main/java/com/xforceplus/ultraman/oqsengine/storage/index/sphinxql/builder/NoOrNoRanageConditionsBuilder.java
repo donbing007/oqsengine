@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
@@ -17,7 +16,7 @@ import java.util.Iterator;
  * @version 0.1 2020/2/22 17:27
  * @since 1.8
  */
-public class NoOrNorRanageConditionsBuilder implements ConditionsBuilder<String> {
+public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String> {
 
     // 没有 or 只有 and 不需要关注连接符.
     @Override
