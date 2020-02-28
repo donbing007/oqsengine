@@ -15,7 +15,6 @@ import java.util.LinkedList;
  */
 public class Conditions implements Serializable {
 
-    private static final Conditions EMPTY_CONDITIONS = new Conditions();
     /**
      * 条件数量.
      */
@@ -43,7 +42,7 @@ public class Conditions implements Serializable {
     }
 
     public static Conditions buildEmtpyConditions() {
-        return EMPTY_CONDITIONS;
+        return new Conditions();
     }
 
     public Conditions(Condition condition) {
