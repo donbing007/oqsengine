@@ -341,6 +341,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
        return conditions;
     }
 
+    //TODO error handler
     private Conditions toOneConditions(IEntityClass entityClass, FieldConditionUp fieldCondition){
 
         Optional<IEntityField> fieldOp = getFieldFromEntityClass(entityClass, fieldCondition.getField().getId());
@@ -351,6 +352,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             switch (op) {
                 case eq:
+
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.EQUALS
                             , toTypedValue(fieldOp.get()
