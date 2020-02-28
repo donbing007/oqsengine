@@ -215,7 +215,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 if(consOp.isPresent()){
                     entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
                 }else{
-                    logger.warn("no conditions todo");
+                    entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
                 }
             }else {
                 Sort sortParam;
