@@ -3,7 +3,7 @@ instance:
 
 grpc:
   server:
-    port: 8081
+    port: 8082
 server:
   port: 8086
 
