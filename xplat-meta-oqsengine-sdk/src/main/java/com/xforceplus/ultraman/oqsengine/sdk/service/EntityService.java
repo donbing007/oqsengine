@@ -348,8 +348,12 @@ public class EntityService {
 
         select.setEntity(toEntityUp(entityClass));
 
-        SelectByCondition selectByCondition = select.build();
+        EntityItem entityItem = condition.getEntity();
+        if( entityItem != null ){
+            select.addAllQueryFields(toQueryFields(entityClass, entityItem));
+        }
 
+        SelectByCondition selectByCondition = select.build();
 
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
 
@@ -372,6 +376,44 @@ public class EntityService {
         }else{
             return Either.left(result.getMessage());
         }
+    }
+
+    private List<QueryFieldsUp> toQueryFields(IEntityClass entityClass, EntityItem entityItem) {
+
+        Stream<QueryFieldsUp> fieldsUp = entityItem.getFields()
+                .stream()
+                .map(entityClass::field)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(x -> QueryFieldsUp
+                        .newBuilder()
+                            .setCode(x.name())
+                            .setEntityId(entityClass.id())
+                            .setId(x.id())
+                        .build());
+
+        Stream<QueryFieldsUp> fieldsUpFrom = entityItem.getEntities()
+                .stream()
+                .flatMap(subEntityItem -> {
+
+                    Optional<IEntityClass> subEntityClassOp = entityClass.entityClasss().stream()
+                            .filter(ec -> {
+                                return subEntityItem.getCode().equalsIgnoreCase(ec.code());
+                            }).findFirst();
+
+                    return subEntityClassOp.map(iEntityClass -> subEntityItem.getFields().stream()
+                            .map(entityClass::field)
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .map(x -> QueryFieldsUp
+                                    .newBuilder()
+                                    .setCode(x.name())
+                                    .setEntityId(iEntityClass.id())
+                                    .setId(x.id())
+                                    .build())).orElseGet(Stream::empty);
+                });
+
+        return Stream.concat(fieldsUp, fieldsUpFrom).collect(Collectors.toList());
     }
 
     private List<FieldSortUp> toSortUp(List<FieldSort> sort) {

@@ -559,6 +559,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             .map(Long::parseLong).orElse(-1L))
                );
     }
+
+
     private IEntityClass toEntityClass(EntityUp entityUp){
 
         boolean hasExtendedClass = entityUp.hasField(EntityUp.getDescriptor().findFieldByNumber(EntityUp.EXTENDENTITYCLASS_FIELD_NUMBER));

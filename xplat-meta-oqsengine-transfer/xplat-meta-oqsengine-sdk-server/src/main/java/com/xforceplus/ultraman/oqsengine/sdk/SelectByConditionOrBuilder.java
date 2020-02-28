@@ -66,4 +66,28 @@ public interface SelectByConditionOrBuilder extends
    */
   com.xforceplus.ultraman.oqsengine.sdk.FieldSortUpOrBuilder getSortOrBuilder(
       int index);
+
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+   */
+  java.util.List<com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp> 
+      getQueryFieldsList();
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp getQueryFields(int index);
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+   */
+  int getQueryFieldsCount();
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+   */
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder> 
+      getQueryFieldsOrBuilderList();
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder getQueryFieldsOrBuilder(
+      int index);
 }
