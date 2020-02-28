@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 public enum FieldType {
     BOOLEAN("Boolean"),
     ENUM("Enum"),
-    DATATIME("DataTime"),
+    DATETIME("DateTime"),
     LONG("Long"),
     STRING("String");
 

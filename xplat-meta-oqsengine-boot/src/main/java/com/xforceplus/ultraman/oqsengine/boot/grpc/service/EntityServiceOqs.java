@@ -23,7 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -251,7 +253,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Override
     public CompletionStage<OperationResult> commit(TransactionUp in, Metadata metadata) {
-        Long id = Long.valueOf(in.getId());
+        Long id = Long.parseLong(in.getId());
         OperationResult result = null;
 
         try {
@@ -275,7 +277,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> rollBack(TransactionUp in, Metadata metadata) {
 
-        Long id = Long.valueOf(in.getId());
+        Long id = Long.parseLong(in.getId());
         OperationResult result = null;
 
         try {
@@ -314,11 +316,29 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         //TODO format?
         IEntityField field = value.getField();
         return ValueUp.newBuilder()
-                .setValue(value.getValue().toString())
+                .setValue(toValueStr(value))
                 .setName(field.name())
                 .setFieldId(field.id())
                 .setFieldType(field.type().name())
                 .build();
+    }
+
+    private String toValueStr(IValue value){
+        String retVal;
+        switch(value.getField().type()){
+            case DATETIME:
+                retVal = String.valueOf(((LocalDateTime)value.getValue()).atZone(DateTimeValue.zoneId).toInstant().toEpochMilli());
+                break;
+            case LONG:
+            case ENUM:
+            case BOOLEAN:
+            case STRING:
+            default:
+                retVal = value.getValue().toString();
+                break;
+        }
+
+        return retVal;
     }
 
     //TODO version
@@ -504,16 +524,18 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             IValue retValue = null;
             switch (entityField.type()) {
                 case LONG:
-                    retValue = new LongValue(entityField, Long.valueOf(value));
+                    retValue = new LongValue(entityField, Long.parseLong(value));
                     break;
-                case DATATIME:
-                    retValue = new DateTimeValue(entityField, LocalDateTime.parse(value));
+                case DATETIME:
+                    //DATETIME is a timestamp
+                    Instant instant = Instant.ofEpochMilli(Long.parseLong(value));
+                    retValue = new DateTimeValue(entityField, LocalDateTime.ofInstant(instant, DateTimeValue.zoneId));
                     break;
                 case ENUM:
                     retValue = new EnumValue(entityField, value);
                     break;
                 case BOOLEAN:
-                    retValue = new BooleanValue(entityField, Boolean.valueOf(value));
+                    retValue = new BooleanValue(entityField, Boolean.parseBoolean(value));
                     break;
                 default:
                     retValue = new StringValue(entityField, value);
