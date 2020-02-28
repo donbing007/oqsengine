@@ -554,18 +554,32 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     synchronized private void insertField(Field field, String boId){
+
+        String editable = field.getEditable();
+        String searchable = field.getSearchable();
+
+        //todo formatter
+        if("1".equals(field.getEditable())){
+            editable = "true";
+        }
+
+        if("1".equals(field.getSearchable())){
+            searchable = "true";
+        }
+
+
         InsertInto insert = new InsertInto(getTable("fields"))
                 .value("boId", boId)
                 .value("id", field.getId())
                 .value("code", field.getCode())
                 .value("displayType", field.getDisplayType())
-                .value("editable", field.getDisplayType())
+                .value("editable", editable)
                 .value("enumCode", field.getEnumCode())
                 .value("maxLength", field.getMaxLength())
                 .value("name", field.getName())
                 .value("required", field.getRequired())
                 .value("type", field.getFieldType())
-                .value("searchable", field.getSearchable());
+                .value("searchable", searchable);
         dc.executeUpdate(insert);
     }
 

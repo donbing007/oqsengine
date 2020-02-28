@@ -227,7 +227,7 @@ public class EntityController {
      * }
      */
 
-    @PostMapping("/bos/{boid}/entities/query")
+    @PostMapping("/bos/{boId}/entities/query")
     public Response<RowItem<Map<String, String>>> conditionQuery(@PathVariable String boId,
                                                                  @RequestBody ConditionQueryRequest condition){
 
