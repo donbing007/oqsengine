@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.AutoShardTransactionEx
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -30,9 +32,15 @@ public class TransactionConfiguration {
         return new DefaultTransactionManager(longIdGenerator);
     }
 
+
     @Bean
-    public TransactionExecutor storageTransactionExecutor() {
-        return new AutoShardTransactionExecutor(tm);
+    public TransactionExecutor storageSphinxQLTransactionExecutor() {
+        return new AutoShardTransactionExecutor(tm, SphinxQLTransactionResource.class);
+    }
+
+    @Bean
+    public TransactionExecutor storageJDBCTransactionExecutor() {
+        return new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class);
     }
 
     @Bean

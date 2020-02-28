@@ -7,6 +7,10 @@ grpc:
 server:
   port: 8086
 
+logging:
+  level:
+    root: info
+
 storage:
   master:
     name: "oqsbigentity"
@@ -19,7 +23,7 @@ storage:
       size: 1
   index:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
-    name: "oqsengine"
+    name: "oqsindex"
 
 management:
   endpoint:

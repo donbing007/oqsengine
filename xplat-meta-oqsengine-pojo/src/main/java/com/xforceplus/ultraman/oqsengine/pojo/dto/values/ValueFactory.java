@@ -25,7 +25,7 @@ public final class ValueFactory {
         switch(field.type()) {
             case LONG:
                 return new LongValue(field, value);
-            case DATATIME: {
+            case DATETIME: {
                 Instant instant = Instant.ofEpochMilli(value);
                 return new DateTimeValue(field, LocalDateTime.ofInstant(instant, DateTimeValue.zoneId));
             }

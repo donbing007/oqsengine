@@ -9,7 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.HaveOrHaveRanageConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.HaveOrNoRanageConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.NoOrHaveRanageConditionsBuilder;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.NoOrNorRanageConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.NoOrNoRanageConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.optimizer.DefaultSphinxQLQueryOptimizer;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import org.junit.Assert;
@@ -49,7 +49,7 @@ public class DefaultSphinxQLQueryOptimizerTest {
                 new LongValue(new Field(1, "c1", FieldType.LONG), 100L)));
 
         ConditionsBuilder builder = optimizer.optimizeConditions(conditions);
-        Assert.assertEquals(NoOrNorRanageConditionsBuilder.class, builder.getClass());
+        Assert.assertEquals(NoOrNoRanageConditionsBuilder.class, builder.getClass());
 
         // no or have ranage
         conditions = new Conditions(

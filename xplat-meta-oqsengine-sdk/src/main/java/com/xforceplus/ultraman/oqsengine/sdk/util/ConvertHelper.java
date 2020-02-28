@@ -3,17 +3,28 @@ package com.xforceplus.ultraman.oqsengine.sdk.util;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import org.apache.metamodel.data.Row;
-
-import static com.xforceplus.ultraman.oqsengine.sdk.util.OptionalHelper.ofEmpty;
 
 /**
  * helper to handler several object
  */
 public class ConvertHelper {
 
+
+    private static FieldType toFieldType(String typeStr){
+        if("bigint".equalsIgnoreCase(typeStr)){
+            return FieldType.LONG;
+        } else if ( "enum".equalsIgnoreCase(typeStr)) {
+            return FieldType.ENUM;
+        } else if ( "boolean".equalsIgnoreCase(typeStr)) {
+            return FieldType.BOOLEAN;
+        } else if ( "timestamp".equalsIgnoreCase(typeStr)) {
+            return FieldType.DATETIME;
+        } else {
+            return FieldType.STRING;
+        }
+    }
 
     /**
      * Row => field
@@ -27,8 +38,10 @@ public class ConvertHelper {
                 .map(Long::valueOf)
                 .orElse(-1l);
         String name = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
-        FieldType fieldType = RowUtils.getRowValue(row, "fieldType").map(String::valueOf)
-                .map(FieldType::valueOf).orElse(FieldType.STRING);
+        FieldType fieldType = RowUtils.getRowValue(row, "fieldType")
+                .map(String::valueOf)
+                .map(ConvertHelper::toFieldType)
+                .orElse(FieldType.STRING);
 
         Boolean searchable = RowUtils.getRowValue(row, "searchable")
                 .map(String::valueOf)

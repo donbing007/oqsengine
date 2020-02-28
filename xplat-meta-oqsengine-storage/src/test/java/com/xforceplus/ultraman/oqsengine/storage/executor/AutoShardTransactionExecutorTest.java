@@ -65,7 +65,7 @@ public class AutoShardTransactionExecutorTest {
 
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
-        AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm);
+        AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class);
         // 分片键不关心
         te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override
@@ -91,7 +91,7 @@ public class AutoShardTransactionExecutorTest {
 
         tm.create();
 
-        AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm);
+        AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class);
         // 分片键不关心
         te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override
@@ -121,9 +121,9 @@ public class AutoShardTransactionExecutorTest {
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
         Transaction currentT = tm.create();
-        currentT.join(new ConnectionTransactionResource(mockDataSource, expectedConn));
+        currentT.join(new ConnectionTransactionResource(mockDataSource, expectedConn, false));
 
-        AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm);
+        AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class);
         // 分片键不关心
         te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override

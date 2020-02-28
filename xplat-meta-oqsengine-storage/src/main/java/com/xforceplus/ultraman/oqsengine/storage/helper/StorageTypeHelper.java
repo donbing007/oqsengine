@@ -19,7 +19,7 @@ public class StorageTypeHelper {
         FIELDTYPE_STORAGE_MAP = new HashMap<>();
         FIELDTYPE_STORAGE_MAP.put(FieldType.LONG, StorageType.LONG);
         FIELDTYPE_STORAGE_MAP.put(FieldType.BOOLEAN, StorageType.LONG);
-        FIELDTYPE_STORAGE_MAP.put(FieldType.DATATIME, StorageType.LONG);
+        FIELDTYPE_STORAGE_MAP.put(FieldType.DATETIME, StorageType.LONG);
         FIELDTYPE_STORAGE_MAP.put(FieldType.ENUM, StorageType.STRING);
         FIELDTYPE_STORAGE_MAP.put(FieldType.STRING, StorageType.STRING);
     }

@@ -1,10 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.optimizer;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.HaveOrHaveRanageConditionsBuilder;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.HaveOrNoRanageConditionsBuilder;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.NoOrHaveRanageConditionsBuilder;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.NoOrNorRanageConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.*;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 
 import java.util.HashMap;
@@ -23,16 +20,25 @@ public class DefaultSphinxQLQueryOptimizer implements SphinxQLQueryOptimizer {
 
     private Map<Integer, ConditionsBuilder> builderMap;
 
+    private ConditionsBuilder emptyConditionsBuilder;
+
     public DefaultSphinxQLQueryOptimizer() {
         builderMap = new HashMap<>();
-        builderMap.put(0, new NoOrNorRanageConditionsBuilder());
+        builderMap.put(0, new NoOrNoRanageConditionsBuilder());
         builderMap.put(1, new NoOrHaveRanageConditionsBuilder());
         builderMap.put(2, new HaveOrNoRanageConditionsBuilder());
         builderMap.put(3, new HaveOrHaveRanageConditionsBuilder());
+
+        emptyConditionsBuilder = new EmptyConditionsBuilder();
     }
 
     @Override
     public ConditionsBuilder<String> optimizeConditions(Conditions conditions) {
+
+        if (isEmpty(conditions)) {
+            return emptyConditionsBuilder;
+        }
+
         /**
          * or 字节低位开始第2位.
          * ranage 字节低位开始第1位.
@@ -40,5 +46,9 @@ public class DefaultSphinxQLQueryOptimizer implements SphinxQLQueryOptimizer {
         int or = conditions.haveOrLink() ? 2 : 0;
         int range = conditions.haveRangeCondition() ? 1 : 0;
         return builderMap.get(or | range);
+    }
+
+    private boolean isEmpty(Conditions conditions) {
+        return conditions.size() == 0;
     }
 }

@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.helper.StorageTypeHelper;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +59,7 @@ public class SQLMasterStorage implements MasterStorage {
     @Resource(name = "tableNameSelector")
     private Selector<String> tableNameSelector;
 
-    @Resource(name = "storageTransactionExecutor")
+    @Resource(name = "storageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
     private long queryTimeout;
@@ -178,7 +179,8 @@ public class SQLMasterStorage implements MasterStorage {
         checkId(entity);
 
         transactionExecutor.execute(
-            new DataSourceShardingTask(dataSourceSelector, Long.toString(entity.id())) {
+            new DataSourceShardingTask(
+                dataSourceSelector, Long.toString(entity.id())) {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
@@ -194,7 +196,7 @@ public class SQLMasterStorage implements MasterStorage {
                     st.setLong(5, entity.family().parent()); // pref
                     st.setLong(6, entity.family().child()); // cref
                     st.setBoolean(7, false); // deleted
-                    st.setString(8,toJson(entity.entityValue())); // attribute
+                    st.setString(8, toJson(entity.entityValue())); // attribute
 
                     if (logger.isDebugEnabled()) {
                         logger.debug(st.toString());
@@ -226,7 +228,9 @@ public class SQLMasterStorage implements MasterStorage {
     public void replace(IEntity entity) throws SQLException {
         checkId(entity);
 
-        transactionExecutor.execute(new DataSourceShardingTask(dataSourceSelector, Long.toString(entity.id())) {
+        transactionExecutor.execute(
+            new DataSourceShardingTask(
+                dataSourceSelector, Long.toString(entity.id())) {
 
             @Override
             public Object run(TransactionResource resource) throws SQLException {
@@ -266,7 +270,9 @@ public class SQLMasterStorage implements MasterStorage {
     public void delete(IEntity entity) throws SQLException {
         checkId(entity);
 
-        transactionExecutor.execute(new DataSourceShardingTask(dataSourceSelector, Long.toString(entity.id())) {
+        transactionExecutor.execute(
+            new DataSourceShardingTask(
+                dataSourceSelector, Long.toString(entity.id())) {
 
             @Override
             public Object run(TransactionResource resource) throws SQLException {
@@ -308,10 +314,9 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     /**
-     *
      * {
-     *     "numberAttribute": 1, # 普通数字属性
-     *     "stringAttribute": "value" # 普通字符串属性.
+     * "numberAttribute": 1, # 普通数字属性
+     * "stringAttribute": "value" # 普通字符串属性.
      * }
      */
     private IEntityValue toEntityValue(long id, IEntityClass entityClass, String json, FieldType rowFieldType) throws SQLException {
@@ -348,7 +353,7 @@ public class SQLMasterStorage implements MasterStorage {
             }
 
             storageType = StorageTypeHelper.findStorageType(fieldType);
-            switch(storageType) {
+            switch (storageType) {
                 case LONG: {
                     jsonlongValue = object.getLongValue(fieldId);
                     values.addValue(ValueFactory.buildValue(field, jsonlongValue));
@@ -418,7 +423,8 @@ public class SQLMasterStorage implements MasterStorage {
         public Collection<IEntity> call() throws Exception {
             try {
                 return (Collection<IEntity>) transactionExecutor.execute(
-                    new DataSourceShardingTask(dataSourceSelector, dataSourceShardKey) {
+                    new DataSourceShardingTask(
+                        dataSourceSelector, dataSourceShardKey) {
 
                         @Override
                         public Object run(TransactionResource resource) throws SQLException {
@@ -472,13 +478,13 @@ public class SQLMasterStorage implements MasterStorage {
         }
     }
 
-    private Optional<IEntity> buildEntityFromResultSet(ResultSet rs,IEntityClass entityClass) throws SQLException {
+    private Optional<IEntity> buildEntityFromResultSet(ResultSet rs, IEntityClass entityClass) throws SQLException {
         long dataEntityClassId = rs.getLong("entity");
         if (entityClass.id() != dataEntityClassId) {
             throw new SQLException(
                 String.format(
                     "The incorrect Entity type is expected to be %d, but the actual data type is %d."
-                    ,entityClass.id(), dataEntityClassId));
+                    , entityClass.id(), dataEntityClassId));
         }
 
         long id = rs.getLong("id");

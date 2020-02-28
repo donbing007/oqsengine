@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class OqsengineBootApplication {
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws Exception {
         SpringApplication.run(OqsengineBootApplication.class, args);
     }
 }

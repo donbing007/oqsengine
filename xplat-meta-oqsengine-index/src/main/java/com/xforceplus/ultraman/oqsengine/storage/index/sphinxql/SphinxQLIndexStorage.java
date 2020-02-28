@@ -63,7 +63,7 @@ public class SphinxQLIndexStorage implements IndexStorage {
     @Resource(name = "indexSearchDataSourceSelector")
     private Selector<DataSource> searchDataSourceSelector;
 
-    @Resource(name = "storageTransactionExecutor")
+    @Resource(name = "storageSphinxQLTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
     private String indexTableName;
@@ -196,12 +196,8 @@ public class SphinxQLIndexStorage implements IndexStorage {
                     logger.debug(st.toString());
                 }
 
-                int size = st.executeUpdate();
-
-                final int onlyOne = 1;
-                if (size != onlyOne) {
-                    throw new SQLException(String.format("Entity{%s} could not be delete successfully.", entity.toString()));
-                }
+                // 在事务状态,返回值恒等于0.
+                st.executeUpdate();
 
                 try {
                     return null;
