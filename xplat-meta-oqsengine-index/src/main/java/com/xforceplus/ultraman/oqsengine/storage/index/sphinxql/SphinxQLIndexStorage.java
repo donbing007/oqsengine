@@ -63,7 +63,7 @@ public class SphinxQLIndexStorage implements IndexStorage {
     @Resource(name = "indexSearchDataSourceSelector")
     private Selector<DataSource> searchDataSourceSelector;
 
-    @Resource(name = "storageTransactionExecutor")
+    @Resource(name = "storageSphinxQLTransactionExecutor")
     private TransactionExecutor transactionExecutor;
 
     private String indexTableName;

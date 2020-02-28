@@ -26,6 +26,7 @@ import com.xforceplus.ultraman.oqsengine.storage.selector.TakeTurnsSelector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -77,7 +78,8 @@ public class SphinxQLIndexStorageTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        TransactionExecutor executor = new AutoShardTransactionExecutor(transactionManager);
+        TransactionExecutor executor = new AutoShardTransactionExecutor(
+            transactionManager, SphinxQLTransactionResource.class);
 
         storage = new SphinxQLIndexStorage();
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", dataSourceSelector);
@@ -123,6 +125,8 @@ public class SphinxQLIndexStorageTest {
 
         transactionManager.finish();
 
+        truncate();
+
         dataSourcePackage.close();
     }
 
@@ -134,8 +138,25 @@ public class SphinxQLIndexStorageTest {
         // 每一个删除都以独立事务运行.
         expectedEntitys.stream().forEach(e -> {
             try {
-                storage.delete(e);
-            } catch (SQLException ex) {
+                transactionManager.create();
+
+                try {
+
+                    storage.delete(e);
+
+                } catch (SQLException ex) {
+
+                    transactionManager.getCurrent().get().rollback();
+                    transactionManager.finish();
+
+                    throw new RuntimeException(ex.getMessage(), ex);
+
+                }
+
+                transactionManager.getCurrent().get().commit();
+                transactionManager.finish();
+
+            } catch (Exception ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
         });

@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
 
 import javax.sql.DataSource;
+import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
@@ -21,13 +22,16 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
 
     private TransactionManager transactionManager;
 
+    private Class resourceClass;
+
     /**
      * 构造一个事务执行器,需要一个事务管理器.
      *
      * @param transactionManager 事务管理器.
      */
-    public AutoShardTransactionExecutor(TransactionManager transactionManager) {
+    public AutoShardTransactionExecutor(TransactionManager transactionManager, Class resourceClass) {
         this.transactionManager = transactionManager;
+        this.resourceClass = resourceClass;
     }
 
     @Override
@@ -59,14 +63,23 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
                 if (conn.getAutoCommit()) {
                     conn.setAutoCommit(false);
                 }
-                resource = new ConnectionTransactionResource(targetDataSource, conn);
+
+                try {
+                    resource = buildResource(targetDataSource, conn, false);
+                } catch (Exception ex) {
+                    throw new SQLException(ex.getMessage(), ex);
+                }
+
                 tx.get().join(resource);
             }
         } else {
             // 无事务运行.
             Connection conn = targetDataSource.getConnection();
-            conn.setAutoCommit(true);
-            resource = new ConnectionTransactionResource(targetDataSource, conn);
+            try {
+                resource = buildResource(targetDataSource, conn, true);
+            } catch (Exception ex) {
+                throw new SQLException(ex.getMessage(), ex);
+            }
         }
 
         try {
@@ -76,5 +89,13 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
                 resource.destroy();
             }
         }
+    }
+
+    private TransactionResource buildResource(DataSource key, Connection value, boolean autocommit)
+        throws Exception {
+
+        Constructor<TransactionResource> constructor =
+            resourceClass.getConstructor(DataSource.class, Connection.class, Boolean.TYPE);
+        return constructor.newInstance(key, value, autocommit);
     }
 }

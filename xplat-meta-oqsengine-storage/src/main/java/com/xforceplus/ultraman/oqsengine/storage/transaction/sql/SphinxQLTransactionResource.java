@@ -5,25 +5,26 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
- * 基于普通 JDBC connection 规范的资源实现.
+ * sphinxQL 相关的资源管理器.
  * @author dongbin
- * @version 0.1 2020/2/15 21:57
+ * @version 0.1 2020/2/28 17:25
  * @since 1.8
  */
-public class ConnectionTransactionResource implements TransactionResource<Connection> {
+public class SphinxQLTransactionResource implements TransactionResource<Connection> {
 
     private DataSource key;
     private Connection conn;
 
-    public ConnectionTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
+    public SphinxQLTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
         this.conn = conn;
-        if (autocommit) {
-            this.conn.setAutoCommit(true);
-        } else {
-            this.conn.setAutoCommit(false);
+        this.conn.setAutoCommit(true);
+
+        if (!autocommit) {
+            execute("begin");
         }
     }
 
@@ -39,16 +40,26 @@ public class ConnectionTransactionResource implements TransactionResource<Connec
 
     @Override
     public void commit() throws SQLException {
-        conn.commit();
+        execute("commit");
     }
 
     @Override
     public void rollback() throws SQLException {
-        conn.rollback();
+        execute("rollback");
     }
 
     @Override
     public void destroy() throws SQLException {
+
         conn.close();
+    }
+
+    private void execute(String command) throws SQLException {
+        Statement st = conn.createStatement();
+        try {
+            st.execute(command);
+        } finally {
+            st.close();
+        }
     }
 }

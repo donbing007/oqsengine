@@ -19,6 +19,7 @@ import com.xforceplus.ultraman.oqsengine.storage.selector.TakeTurnsSelector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -59,7 +60,8 @@ public class SQLMasterStorageTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        TransactionExecutor executor = new AutoShardTransactionExecutor(transactionManager);
+        TransactionExecutor executor = new AutoShardTransactionExecutor(
+            transactionManager, ConnectionTransactionResource.class);
 
         storage = new SQLMasterStorage();
         ReflectionTestUtils.setField(storage, "dataSourceSelector", dataSourceSelector);
