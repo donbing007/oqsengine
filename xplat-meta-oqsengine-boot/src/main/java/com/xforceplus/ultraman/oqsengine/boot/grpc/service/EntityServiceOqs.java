@@ -237,7 +237,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
                     .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
-                            .stream().map(this::toEntityUp).collect(Collectors.toList()))
+                            .stream().filter(Objects::nonNull).map(this::toEntityUp).collect(Collectors.toList()))
                     .setTotalRow(Optional.ofNullable(entities).orElseGet(Collections::emptyList).size())
                     .buildPartial();
 
