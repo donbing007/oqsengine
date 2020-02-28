@@ -135,4 +135,28 @@ public interface EntityUpOrBuilder extends
    */
   com.google.protobuf.ByteString
       getCodeBytes();
+
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 9;</code>
+   */
+  java.util.List<com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp> 
+      getQueryFieldsList();
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 9;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp getQueryFields(int index);
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 9;</code>
+   */
+  int getQueryFieldsCount();
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 9;</code>
+   */
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder> 
+      getQueryFieldsOrBuilderList();
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 9;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder getQueryFieldsOrBuilder(
+      int index);
 }

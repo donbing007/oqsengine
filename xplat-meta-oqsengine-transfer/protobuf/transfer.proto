@@ -108,10 +108,14 @@ message EntityUp {
 
     string code = 8;
 
-
+    repeated QueryFieldsUp queryFields = 9;
 }
 
-message
+message QueryFieldsUp {
+    string code = 1;
+    int64 id = 2;
+    int64 entityId = 3;
+}
 
 message RelationUp {
     string name = 1;
@@ -126,12 +130,6 @@ message ValueUp {
    string name = 2;
    string fieldType = 3;
    int64 fieldId = 4;
-}
-
-message ReturnField {
-    string boId = 1;
-    string boCode = 2;
-    string
 }
 
 message FieldUp {

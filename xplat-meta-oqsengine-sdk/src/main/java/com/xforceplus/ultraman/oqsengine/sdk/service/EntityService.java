@@ -350,7 +350,14 @@ public class EntityService {
 
         SelectByCondition selectByCondition = select.build();
 
-        OperationResult result = entityServiceClient.selectByConditions(selectByCondition)
+
+        SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
+
+        if(transId != null){
+            requestBuilder.addHeader("transaction-id", transId);
+        }
+
+        OperationResult result = requestBuilder.invoke(selectByCondition)
                 .toCompletableFuture().join();
 
         if(result.getCode() == OperationResult.Code.OK) {
