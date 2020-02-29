@@ -13,7 +13,14 @@ public class ConvertHelper {
 
 
     private static FieldType toFieldType(String typeStr){
-        if("bigint".equalsIgnoreCase(typeStr)){
+
+        try{
+            return FieldType.valueOf(typeStr.toUpperCase());
+        }catch(Exception ex) {
+            //to
+        }
+
+        if("bigint".equalsIgnoreCase(typeStr) || "long".equalsIgnoreCase(typeStr)){
             return FieldType.LONG;
         } else if ( "enum".equalsIgnoreCase(typeStr)) {
             return FieldType.ENUM;

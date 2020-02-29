@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service;
 
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
@@ -95,7 +96,7 @@ public class EntityService {
         }
     }
 
-    public Either<String, Map<String, String>> findOne(EntityClass entityClass, Long id) {
+    public Either<String, Map<String, Object>> findOne(EntityClass entityClass, Long id) {
         String transId = contextService.get(ContextService.StringKeys.TransactionKey);
 
         SingleResponseRequestBuilder<EntityUp, OperationResult> queryResultBuilder = entityServiceClient.selectOne();
@@ -225,9 +226,9 @@ public class EntityService {
     }
 
     //TODO
-    private Map<String, String> toResultMap(EntityClass entityClass, EntityUp up) {
+    private Map<String, Object> toResultMap(EntityClass entityClass, EntityUp up) {
 
-        Map<String, String> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
         if(!StringUtils.isEmpty(up.getObjId())){
             map.put("id", String.valueOf(up.getObjId()));
         }
@@ -235,7 +236,13 @@ public class EntityService {
         up.getValuesList().forEach(entry -> {
 
             entityClass.field(entry.getFieldId()).ifPresent(field -> {
-                map.put(field.name(), entry.getValue());
+                if(field.type() == FieldType.BOOLEAN) {
+                    map.put(field.name(), Boolean.valueOf(entry.getValue()));
+                } else {
+                    map.put(field.name(), entry.getValue());
+                }
+
+
             });
         });
         return map;
@@ -323,7 +330,7 @@ public class EntityService {
      * @param condition
      * @return
      */
-    public Either<String, Tuple2<Integer, List<Map<String, String>>>> findByCondition(EntityClass entityClass, ConditionQueryRequest condition) {
+    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByCondition(EntityClass entityClass, ConditionQueryRequest condition) {
 
         String transId = contextService.get(ContextService.StringKeys.TransactionKey);
 
@@ -365,13 +372,13 @@ public class EntityService {
                 .toCompletableFuture().join();
 
         if(result.getCode() == OperationResult.Code.OK) {
-            List<Map<String, String>> repList = result.getQueryResultList()
+            List<Map<String, Object>> repList = result.getQueryResultList()
                     .stream()
                     .map(x -> {
-                        Map<String, String> resultMap = toResultMap(entityClass, x);
+                        Map<String, Object> resultMap = toResultMap(entityClass, x);
                         return filterItem(resultMap, x.getCode(), condition.getEntity());
                     }).collect(Collectors.toList());
-            Tuple2<Integer, List<Map<String, String>>> queryResult = Tuple.of(result.getTotalRow(), repList);
+            Tuple2<Integer, List<Map<String, Object>>> queryResult = Tuple.of(result.getTotalRow(), repList);
             return Either.right(queryResult);
         }else{
             return Either.left(result.getMessage());
@@ -493,7 +500,7 @@ public class EntityService {
         return FieldConditionUp.newBuilder()
                 .setCode(fieldCondition.getCode())
                 .setOperation(FieldConditionUp.Op.valueOf(fieldCondition.getOperation().name()))
-                .addAllValues(fieldCondition.getValue())
+                .addAllValues(Optional.ofNullable(fieldCondition.getValue()).orElseGet(Collections::emptyList))
                 .setField(toFieldUp(entityField))
                 .build();
     }
@@ -507,22 +514,22 @@ public class EntityService {
                         .map(subField -> toFieldCondition(entity, subField)));
     }
 
-    private Map<String, String> filterItem(Map<String, String> values, String mainEntityCode, EntityItem entityItem){
+    private Map<String, Object> filterItem(Map<String, Object> values, String mainEntityCode, EntityItem entityItem){
 
-        if(entityItem == null){
+        if(entityItem == null ){
             return values;
         }
 
-        Map<String, String> newResult = new HashMap<>();
+        Map<String, Object> newResult = new HashMap<>();
 
         //setup main
         entityItem.getFields().forEach(x -> {
-            String value  = values.get(x);
+            Object value  = values.get(x);
             if(value != null){
                 newResult.put(x, value);
             }
 
-            String otherValue = values.get(mainEntityCode + "." + x);
+            Object otherValue = values.get(mainEntityCode + "." + x);
 
             if(otherValue != null){
                 newResult.put(x, value);
@@ -532,7 +539,7 @@ public class EntityService {
         entityItem.getEntities().forEach(subEntity -> {
             subEntity.getFields().forEach(field -> {
                 String subKey = subEntity.getCode() + "." + field;
-                String value = values.get(subKey);
+                Object value = values.get(subKey);
                 if(value != null){
                     newResult.put(subKey, value);
                 }

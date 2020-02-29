@@ -33,7 +33,7 @@ public class EntityController {
 
 
         if(entityClassOp.isPresent()) {
-            Either<String, Map<String, String>> either  =
+            Either<String, Map<String, Object>> either  =
                     entityService.findOne(entityClassOp.get(), Long.valueOf(id));
             Response rep = new Response();
             rep.setCode("1");
@@ -228,14 +228,14 @@ public class EntityController {
      */
 
     @PostMapping("/bos/{boId}/entities/query")
-    public Response<RowItem<Map<String, String>>> conditionQuery(@PathVariable String boId,
+    public Response<RowItem<Map<String, Object>>> conditionQuery(@PathVariable String boId,
                                                                  @RequestBody ConditionQueryRequest condition){
 
 
         Optional<EntityClass> entityClassOp = entityService.load(null, null, boId);
 
         if(entityClassOp.isPresent()) {
-            Either<String, Tuple2<Integer, List<Map<String, String>>>> result = entityService.findByCondition(entityClassOp.get(), condition);
+            Either<String, Tuple2<Integer, List<Map<String, Object>>>> result = entityService.findByCondition(entityClassOp.get(), condition);
             return extractRepList(result);
         }
 
