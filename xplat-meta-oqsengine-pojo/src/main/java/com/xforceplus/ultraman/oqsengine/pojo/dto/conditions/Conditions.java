@@ -1,9 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.ConditionValidation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.fieldtype.ConditionOperatorFieldValidationFactory;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+
 import java.io.Serializable;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 
 /**
  * 表示一系列条件组合.只支持以 And 方式进行组合.
@@ -46,6 +48,7 @@ public class Conditions implements Serializable {
     }
 
     public Conditions(Condition condition) {
+        validate(condition);
         head = new ValueConditionNode(condition);
         checkRange(condition);
         size = 1;
@@ -152,12 +155,17 @@ public class Conditions implements Serializable {
         return node instanceof LinkConditionNode;
     }
 
+    /**
+     * 实际增加条件处理.
+     */
     private Conditions doAdd(ConditionLink link, Condition condition) {
 
-        size++;
+        validate(condition);
+
         ConditionNode newValueNode = new ValueConditionNode(condition);
         ConditionNode newNode = new LinkConditionNode(head, newValueNode, link);
         head = newNode;
+        size++;
 
         if (link == ConditionLink.OR) {
             or = true;
@@ -166,6 +174,15 @@ public class Conditions implements Serializable {
         checkRange(condition);
 
         return this;
+    }
+
+    private void validate(Condition condition) {
+        ConditionValidation validation =
+            ConditionOperatorFieldValidationFactory.getValidation(condition.getField().type());
+
+        if (!validation.validate(condition)) {
+            throw new IllegalArgumentException(String.format("Wrong conditions.[%s]",condition.toString()));
+        }
     }
 
     // 判断是否含有范围查询符号.

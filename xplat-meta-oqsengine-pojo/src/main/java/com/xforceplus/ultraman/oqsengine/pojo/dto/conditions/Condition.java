@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * 表示一个查询条件.
@@ -42,7 +43,30 @@ public class Condition implements Serializable {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Condition)) {
+            return false;
+        }
+        Condition condition = (Condition) o;
+        return Objects.equals(getField(), condition.getField()) &&
+            Objects.equals(getValue(), condition.getValue()) &&
+            getOperator() == condition.getOperator();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getField(), getValue(), getOperator());
+    }
+
+    @Override
     public String toString() {
-        return field.name() + operator.getSymbol() + value.getValue().toString();
+        return "Condition{" +
+            "field=" + field +
+            ", value=" + value +
+            ", operator=" + operator +
+            '}';
     }
 }

@@ -177,7 +177,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private boolean isSub(IEntity entity) {
-        return entity.family().parent() > 0;
+        return entity.entityClass().extendEntityClass() != null;
     }
 
     private IEntity buildChildEntity(IEntity entity, long pref) {
