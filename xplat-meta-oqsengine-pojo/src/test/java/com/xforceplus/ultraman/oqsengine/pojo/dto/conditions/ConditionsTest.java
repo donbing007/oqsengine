@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
@@ -15,7 +16,7 @@ import java.util.Iterator;
 /**
  * Conditions Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 02/22/2020
  * @since <pre>Feb 22, 2020</pre>
  */
@@ -27,6 +28,34 @@ public class ConditionsTest {
 
     @After
     public void after() throws Exception {
+    }
+
+    @Test
+    public void testValidation() throws Exception {
+        Condition wrongCondition = new Condition(
+            new Field(1, "test", FieldType.STRING),
+            ConditionOperator.GREATER_THAN,
+            new StringValue(new Field(1, "test", FieldType.STRING), "test.value"));
+
+        try {
+            new Conditions(wrongCondition);
+            Assert.fail("Attempt to add error condition, but no error.");
+        } catch (IllegalArgumentException ex) {
+        }
+
+        Condition correctCondition = new Condition(
+            new Field(1, "test", FieldType.STRING),
+            ConditionOperator.LIKE,
+            new StringValue(new Field(1, "test", FieldType.STRING), "test.value")
+        );
+        Conditions conditions = new Conditions(correctCondition);
+        Assert.assertEquals(1, conditions.size());
+
+        try {
+            conditions.addAnd(wrongCondition);
+            Assert.fail("Attempt to add error condition, but no error.");
+        } catch (IllegalArgumentException ex) {
+        }
     }
 
     @Test
