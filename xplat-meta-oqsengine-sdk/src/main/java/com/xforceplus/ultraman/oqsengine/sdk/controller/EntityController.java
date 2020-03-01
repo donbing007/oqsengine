@@ -21,20 +21,17 @@ public class EntityController {
     @Autowired
     private EntityService entityService;
 
-
-
     @GetMapping("/bos/{boId}/entities/{id}")
     public Response<Map<String, String>> singleQuery(
             @PathVariable String boId,
             @PathVariable String id){
 
         //find bo
-        Optional<EntityClass> entityClassOp = entityService.load(null, null, boId);
-
+        Optional<EntityClass> entityClassOp = entityService.load(boId);
 
         if(entityClassOp.isPresent()) {
             Either<String, Map<String, Object>> either  =
-                    entityService.findOne(entityClassOp.get(), Long.valueOf(id));
+                    entityService.findOne(entityClassOp.get(), Long.parseLong(id));
             Response rep = new Response();
             rep.setCode("1");
             if(either.isRight()){
@@ -43,7 +40,6 @@ public class EntityController {
             }else{
                 rep.setCode("-1");
                 rep.setMessage(either.getLeft());
-
             }
             return rep;
         }
@@ -56,7 +52,7 @@ public class EntityController {
         @PathVariable String boId,
         @PathVariable String id
     ){
-        Optional<EntityClass> entityClassOp = entityService.load(null, null, boId);
+        Optional<EntityClass> entityClassOp = entityService.load(boId);
 
         Response rep = new Response();
 
@@ -93,13 +89,12 @@ public class EntityController {
     public Response<String> singleCreate( @PathVariable String boId,
                                           @RequestBody Map<String, Object> body
     ){
-        Optional<EntityClass> entityClassOp = entityService.load(null, null, boId);
+        Optional<EntityClass> entityClassOp = entityService.load(boId);
 
         Response rep = new Response();
 
         if(entityClassOp.isPresent()) {
              Either<String, Long> result = entityService.create(entityClassOp.get(), body);
-
 
             if(result.isRight()){
                 rep.setCode("1");
@@ -135,7 +130,7 @@ public class EntityController {
                                           @PathVariable Long id,
                                           @RequestBody Map<String, Object> body
     ){
-        Optional<EntityClass> entityClassOp = entityService.load(null, null, boId);
+        Optional<EntityClass> entityClassOp = entityService.load(boId);
 
         Response rep = new Response();
 
@@ -231,11 +226,11 @@ public class EntityController {
     public Response<RowItem<Map<String, Object>>> conditionQuery(@PathVariable String boId,
                                                                  @RequestBody ConditionQueryRequest condition){
 
-
-        Optional<EntityClass> entityClassOp = entityService.load(null, null, boId);
+        Optional<EntityClass> entityClassOp = entityService.load(boId);
 
         if(entityClassOp.isPresent()) {
-            Either<String, Tuple2<Integer, List<Map<String, Object>>>> result = entityService.findByCondition(entityClassOp.get(), condition);
+            Either<String, Tuple2<Integer, List<Map<String, Object>>>> result =
+                    entityService.findByCondition(entityClassOp.get(), condition);
             return extractRepList(result);
         }
 

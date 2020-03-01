@@ -9,7 +9,7 @@ import org.apache.metamodel.data.Row;
 /**
  * helper to handler several object
  */
-public class ConvertHelper {
+public class FieldHelper {
 
 
     private static FieldType toFieldType(String typeStr){
@@ -47,7 +47,7 @@ public class ConvertHelper {
         String name = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
         FieldType fieldType = RowUtils.getRowValue(row, "fieldType")
                 .map(String::valueOf)
-                .map(ConvertHelper::toFieldType)
+                .map(FieldHelper::toFieldType)
                 .orElse(FieldType.STRING);
 
         Boolean searchable = RowUtils.getRowValue(row, "searchable")

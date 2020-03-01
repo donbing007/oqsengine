@@ -13,7 +13,11 @@ public interface ContextService {
 
     enum StringKeys implements ContextKey<String> {
 
-        TransactionKey("transaction-id");
+        TransactionKey("transaction-id"),
+
+        TenantIdKey("tenant-id"),
+
+        AppCode("app-code");
 
         private String keyName;
 
