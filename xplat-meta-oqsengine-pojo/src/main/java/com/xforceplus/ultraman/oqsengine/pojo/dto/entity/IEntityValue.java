@@ -20,6 +20,8 @@ public interface IEntityValue extends Cloneable{
      */
     public Optional<IValue> getValue(String fieldName);
 
+    public Optional<IValue> getValue(long fieldId);
+
     /**
      * 添加单个值对象
      * @param value

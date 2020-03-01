@@ -19,6 +19,7 @@ private static final long serialVersionUID = 0L;
     pageNo_ = 0;
     pageSize_ = 0;
     sort_ = java.util.Collections.emptyList();
+    queryFields_ = java.util.Collections.emptyList();
   }
 
   @java.lang.Override
@@ -97,6 +98,15 @@ private static final long serialVersionUID = 0L;
                 input.readMessage(com.xforceplus.ultraman.oqsengine.sdk.FieldSortUp.parser(), extensionRegistry));
             break;
           }
+          case 50: {
+            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+              queryFields_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp>();
+              mutable_bitField0_ |= 0x00000020;
+            }
+            queryFields_.add(
+                input.readMessage(com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.parser(), extensionRegistry));
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -107,6 +117,9 @@ private static final long serialVersionUID = 0L;
     } finally {
       if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
         sort_ = java.util.Collections.unmodifiableList(sort_);
+      }
+      if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+        queryFields_ = java.util.Collections.unmodifiableList(queryFields_);
       }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
@@ -220,6 +233,41 @@ private static final long serialVersionUID = 0L;
     return sort_.get(index);
   }
 
+  public static final int QUERYFIELDS_FIELD_NUMBER = 6;
+  private java.util.List<com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp> queryFields_;
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+   */
+  public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp> getQueryFieldsList() {
+    return queryFields_;
+  }
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+   */
+  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder> 
+      getQueryFieldsOrBuilderList() {
+    return queryFields_;
+  }
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+   */
+  public int getQueryFieldsCount() {
+    return queryFields_.size();
+  }
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp getQueryFields(int index) {
+    return queryFields_.get(index);
+  }
+  /**
+   * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder getQueryFieldsOrBuilder(
+      int index) {
+    return queryFields_.get(index);
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -246,6 +294,9 @@ private static final long serialVersionUID = 0L;
     }
     for (int i = 0; i < sort_.size(); i++) {
       output.writeMessage(5, sort_.get(i));
+    }
+    for (int i = 0; i < queryFields_.size(); i++) {
+      output.writeMessage(6, queryFields_.get(i));
     }
     unknownFields.writeTo(output);
   }
@@ -274,6 +325,10 @@ private static final long serialVersionUID = 0L;
     for (int i = 0; i < sort_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(5, sort_.get(i));
+    }
+    for (int i = 0; i < queryFields_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(6, queryFields_.get(i));
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -307,6 +362,8 @@ private static final long serialVersionUID = 0L;
     }
     result = result && getSortList()
         .equals(other.getSortList());
+    result = result && getQueryFieldsList()
+        .equals(other.getQueryFieldsList());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -333,6 +390,10 @@ private static final long serialVersionUID = 0L;
     if (getSortCount() > 0) {
       hash = (37 * hash) + SORT_FIELD_NUMBER;
       hash = (53 * hash) + getSortList().hashCode();
+    }
+    if (getQueryFieldsCount() > 0) {
+      hash = (37 * hash) + QUERYFIELDS_FIELD_NUMBER;
+      hash = (53 * hash) + getQueryFieldsList().hashCode();
     }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
@@ -460,6 +521,7 @@ private static final long serialVersionUID = 0L;
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
         getSortFieldBuilder();
+        getQueryFieldsFieldBuilder();
       }
     }
     public Builder clear() {
@@ -485,6 +547,12 @@ private static final long serialVersionUID = 0L;
         bitField0_ = (bitField0_ & ~0x00000010);
       } else {
         sortBuilder_.clear();
+      }
+      if (queryFieldsBuilder_ == null) {
+        queryFields_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000020);
+      } else {
+        queryFieldsBuilder_.clear();
       }
       return this;
     }
@@ -530,6 +598,15 @@ private static final long serialVersionUID = 0L;
         result.sort_ = sort_;
       } else {
         result.sort_ = sortBuilder_.build();
+      }
+      if (queryFieldsBuilder_ == null) {
+        if (((bitField0_ & 0x00000020) == 0x00000020)) {
+          queryFields_ = java.util.Collections.unmodifiableList(queryFields_);
+          bitField0_ = (bitField0_ & ~0x00000020);
+        }
+        result.queryFields_ = queryFields_;
+      } else {
+        result.queryFields_ = queryFieldsBuilder_.build();
       }
       result.bitField0_ = to_bitField0_;
       onBuilt();
@@ -608,6 +685,32 @@ private static final long serialVersionUID = 0L;
                  getSortFieldBuilder() : null;
           } else {
             sortBuilder_.addAllMessages(other.sort_);
+          }
+        }
+      }
+      if (queryFieldsBuilder_ == null) {
+        if (!other.queryFields_.isEmpty()) {
+          if (queryFields_.isEmpty()) {
+            queryFields_ = other.queryFields_;
+            bitField0_ = (bitField0_ & ~0x00000020);
+          } else {
+            ensureQueryFieldsIsMutable();
+            queryFields_.addAll(other.queryFields_);
+          }
+          onChanged();
+        }
+      } else {
+        if (!other.queryFields_.isEmpty()) {
+          if (queryFieldsBuilder_.isEmpty()) {
+            queryFieldsBuilder_.dispose();
+            queryFieldsBuilder_ = null;
+            queryFields_ = other.queryFields_;
+            bitField0_ = (bitField0_ & ~0x00000020);
+            queryFieldsBuilder_ = 
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getQueryFieldsFieldBuilder() : null;
+          } else {
+            queryFieldsBuilder_.addAllMessages(other.queryFields_);
           }
         }
       }
@@ -1163,6 +1266,246 @@ private static final long serialVersionUID = 0L;
         sort_ = null;
       }
       return sortBuilder_;
+    }
+
+    private java.util.List<com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp> queryFields_ =
+      java.util.Collections.emptyList();
+    private void ensureQueryFieldsIsMutable() {
+      if (!((bitField0_ & 0x00000020) == 0x00000020)) {
+        queryFields_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp>(queryFields_);
+        bitField0_ |= 0x00000020;
+       }
+    }
+
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp, com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.Builder, com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder> queryFieldsBuilder_;
+
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp> getQueryFieldsList() {
+      if (queryFieldsBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(queryFields_);
+      } else {
+        return queryFieldsBuilder_.getMessageList();
+      }
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public int getQueryFieldsCount() {
+      if (queryFieldsBuilder_ == null) {
+        return queryFields_.size();
+      } else {
+        return queryFieldsBuilder_.getCount();
+      }
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp getQueryFields(int index) {
+      if (queryFieldsBuilder_ == null) {
+        return queryFields_.get(index);
+      } else {
+        return queryFieldsBuilder_.getMessage(index);
+      }
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public Builder setQueryFields(
+        int index, com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp value) {
+      if (queryFieldsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureQueryFieldsIsMutable();
+        queryFields_.set(index, value);
+        onChanged();
+      } else {
+        queryFieldsBuilder_.setMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public Builder setQueryFields(
+        int index, com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.Builder builderForValue) {
+      if (queryFieldsBuilder_ == null) {
+        ensureQueryFieldsIsMutable();
+        queryFields_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        queryFieldsBuilder_.setMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public Builder addQueryFields(com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp value) {
+      if (queryFieldsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureQueryFieldsIsMutable();
+        queryFields_.add(value);
+        onChanged();
+      } else {
+        queryFieldsBuilder_.addMessage(value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public Builder addQueryFields(
+        int index, com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp value) {
+      if (queryFieldsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureQueryFieldsIsMutable();
+        queryFields_.add(index, value);
+        onChanged();
+      } else {
+        queryFieldsBuilder_.addMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public Builder addQueryFields(
+        com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.Builder builderForValue) {
+      if (queryFieldsBuilder_ == null) {
+        ensureQueryFieldsIsMutable();
+        queryFields_.add(builderForValue.build());
+        onChanged();
+      } else {
+        queryFieldsBuilder_.addMessage(builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public Builder addQueryFields(
+        int index, com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.Builder builderForValue) {
+      if (queryFieldsBuilder_ == null) {
+        ensureQueryFieldsIsMutable();
+        queryFields_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        queryFieldsBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public Builder addAllQueryFields(
+        java.lang.Iterable<? extends com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp> values) {
+      if (queryFieldsBuilder_ == null) {
+        ensureQueryFieldsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, queryFields_);
+        onChanged();
+      } else {
+        queryFieldsBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public Builder clearQueryFields() {
+      if (queryFieldsBuilder_ == null) {
+        queryFields_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+      } else {
+        queryFieldsBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public Builder removeQueryFields(int index) {
+      if (queryFieldsBuilder_ == null) {
+        ensureQueryFieldsIsMutable();
+        queryFields_.remove(index);
+        onChanged();
+      } else {
+        queryFieldsBuilder_.remove(index);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.Builder getQueryFieldsBuilder(
+        int index) {
+      return getQueryFieldsFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder getQueryFieldsOrBuilder(
+        int index) {
+      if (queryFieldsBuilder_ == null) {
+        return queryFields_.get(index);  } else {
+        return queryFieldsBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder> 
+         getQueryFieldsOrBuilderList() {
+      if (queryFieldsBuilder_ != null) {
+        return queryFieldsBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(queryFields_);
+      }
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.Builder addQueryFieldsBuilder() {
+      return getQueryFieldsFieldBuilder().addBuilder(
+          com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.Builder addQueryFieldsBuilder(
+        int index) {
+      return getQueryFieldsFieldBuilder().addBuilder(
+          index, com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .QueryFieldsUp queryFields = 6;</code>
+     */
+    public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.Builder> 
+         getQueryFieldsBuilderList() {
+      return getQueryFieldsFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp, com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.Builder, com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder> 
+        getQueryFieldsFieldBuilder() {
+      if (queryFieldsBuilder_ == null) {
+        queryFieldsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp, com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp.Builder, com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder>(
+                queryFields_,
+                ((bitField0_ & 0x00000020) == 0x00000020),
+                getParentForChildren(),
+                isClean());
+        queryFields_ = null;
+      }
+      return queryFieldsBuilder_;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

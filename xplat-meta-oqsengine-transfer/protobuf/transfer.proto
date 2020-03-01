@@ -31,6 +31,7 @@ message SelectByCondition {
     int32 pageSize = 3;
     ConditionsUp conditions = 4;
     repeated FieldSortUp sort = 5;
+    repeated QueryFieldsUp queryFields = 6;
 }
 
 message ConditionsUp {
@@ -107,6 +108,12 @@ message EntityUp {
     int64 objId = 7;
 
     string code = 8;
+}
+
+message QueryFieldsUp {
+    string code = 1;
+    int64 id = 2;
+    int64 entityId = 3;
 }
 
 message RelationUp {

@@ -11,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
-import com.xforceplus.ultraman.oqsengine.sdk.util.ConvertHelper;
+import com.xforceplus.ultraman.oqsengine.sdk.util.FieldHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ApiItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.FieldItem;
@@ -35,6 +35,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils.getRowValue;
+import static com.xforceplus.ultraman.oqsengine.sdk.util.FieldHelper.toEntityClassFieldFromRel;
 
 
 @Service
@@ -256,7 +257,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         if(boDs.next()){
             Row row = boDs.getRow();
 
-            String code = RowUtils.getRowValue(row, "code").toString();
+            String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
             return Optional.of(new EntityClass(Long.valueOf(boId), code, Collections.emptyList()
                     , Collections.emptyList(), null, loadFields(boId)));
         }
@@ -301,12 +302,12 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             if(relationType.equalsIgnoreCase("onetoone")
                     || relationType.equalsIgnoreCase("manytoone")){
                 //Field is from main id
-                field = ConvertHelper.toEntityClassFieldFromRel(relRow, subCode);
+                field = toEntityClassFieldFromRel(relRow, subCode);
                 relation = new Relation(subCode, joinBoId, relationType, true, field);
 
             }else{
                 //relation is onetomany
-                field = ConvertHelper.toEntityClassFieldFromRel(relRow, boCode);
+                field = toEntityClassFieldFromRel(relRow, boCode);
                 relation = new Relation(boCode, joinBoId, relationType, true, field);
             }
 
@@ -387,7 +388,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         DataSet fieldDs = dc.query().from("fields")
                 .selectAll().where("boId").eq(id).execute();
         return fieldDs.toRows().stream()
-                .map(ConvertHelper::toEntityClassField)
+                .map(FieldHelper::toEntityClassField)
                 .collect(Collectors.toList());
     }
 
@@ -425,7 +426,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 String code =joinBoOp
                         .flatMap(x -> RowUtils.getRowValue(x, "code")
                                 .map(String::valueOf)).orElse("");
-                return ConvertHelper.toEntityClassFieldFromRel(row, code);
+                return toEntityClassFieldFromRel(row, code);
             } else {
                 return null;
             }
@@ -458,7 +459,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         //to relDs
         return relDs.toRows().stream()
                 .map(row -> {
-                    return ConvertHelper.toEntityClassFieldFromRel(row, code);
+                    return toEntityClassFieldFromRel(row, code);
         }).collect(Collectors.toList());
     }
 

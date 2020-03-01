@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 
 public class EntityValue implements IEntityValue, Cloneable, Serializable {
     /**
-     * 元数据boId
+     * 数据id
      */
     private long id;
 
@@ -43,6 +43,12 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<IValue> getValue(long fieldId) {
+        return values.entrySet().stream().filter(x -> x.getKey().id() == fieldId)
+                .map(Map.Entry::getValue).findFirst();
     }
 
     @Override

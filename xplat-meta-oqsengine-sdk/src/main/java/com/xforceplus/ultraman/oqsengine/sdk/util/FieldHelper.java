@@ -9,11 +9,18 @@ import org.apache.metamodel.data.Row;
 /**
  * helper to handler several object
  */
-public class ConvertHelper {
+public class FieldHelper {
 
 
     private static FieldType toFieldType(String typeStr){
-        if("bigint".equalsIgnoreCase(typeStr)){
+
+        try{
+            return FieldType.valueOf(typeStr.toUpperCase());
+        }catch(Exception ex) {
+            //to
+        }
+
+        if("bigint".equalsIgnoreCase(typeStr) || "long".equalsIgnoreCase(typeStr)){
             return FieldType.LONG;
         } else if ( "enum".equalsIgnoreCase(typeStr)) {
             return FieldType.ENUM;
@@ -40,7 +47,7 @@ public class ConvertHelper {
         String name = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
         FieldType fieldType = RowUtils.getRowValue(row, "fieldType")
                 .map(String::valueOf)
-                .map(ConvertHelper::toFieldType)
+                .map(FieldHelper::toFieldType)
                 .orElse(FieldType.STRING);
 
         Boolean searchable = RowUtils.getRowValue(row, "searchable")

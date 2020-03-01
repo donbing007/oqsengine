@@ -335,39 +335,43 @@ public class SQLMasterStorage implements MasterStorage {
         IEntityValue values = new EntityValue(id);
         FieldType fieldType;
         for (String fieldId : object.keySet()) {
+            try {
+                if (rowFieldType != null) {
 
-            if (rowFieldType != null) {
+                    fieldType = rowFieldType;
 
-                fieldType = rowFieldType;
+                } else {
 
-            } else {
+                    field = fieldMap.get(fieldId);
 
-                field = fieldMap.get(fieldId);
+                    if (field == null) {
+                        continue;
+                    }
 
-                if (field == null) {
-                    continue;
+                    fieldType = field.type();
+
                 }
 
-                fieldType = field.type();
-
-            }
-
-            storageType = StorageTypeHelper.findStorageType(fieldType);
-            switch (storageType) {
-                case LONG: {
-                    jsonlongValue = object.getLongValue(fieldId);
-                    values.addValue(ValueFactory.buildValue(field, jsonlongValue));
-                    break;
+                storageType = StorageTypeHelper.findStorageType(fieldType);
+                switch (storageType) {
+                    case LONG: {
+                        jsonlongValue = object.getLongValue(fieldId);
+                        values.addValue(ValueFactory.buildValue(field, jsonlongValue));
+                        break;
+                    }
+                    case STRING: {
+                        jsonStringValue = object.getString(fieldId);
+                        values.addValue(ValueFactory.buildValue(field, jsonStringValue));
+                        break;
+                    }
+                    default: {
+                        logger.warn("Unsupported storage properties.[entity:{}, class:{}, fieldId:{}]"
+                                , id, entityClass.id(), field.id());
+                    }
                 }
-                case STRING: {
-                    jsonStringValue = object.getString(fieldId);
-                    values.addValue(ValueFactory.buildValue(field, jsonStringValue));
-                    break;
-                }
-                default: {
-                    logger.warn("Unsupported storage properties.[entity:{}, class:{}, fieldId:{}]"
-                        , id, entityClass.id(), field.id());
-                }
+            } catch (Exception ex){
+                logger.warn("Something wrong has occured.[entity:{}, class:{}, fieldId:{}, msg:{}]"
+                        , id, entityClass.id(), field.id(), ex.getMessage());
             }
 
         }

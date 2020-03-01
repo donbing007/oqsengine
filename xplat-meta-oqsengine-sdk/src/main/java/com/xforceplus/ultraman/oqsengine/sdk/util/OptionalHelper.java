@@ -36,6 +36,17 @@ public class OptionalHelper {
         return Stream.of(seqValue).filter(v ->  v != null).findFirst();
     }
 
+    /**
+     * make sure this t is consist
+     * @param candidates
+     * @param <T>
+     * @return
+     */
+    @SafeVarargs
+    public static <T> Optional<T> combine(Optional<T> ...candidates){
+        return Stream.of(candidates).filter(Optional::isPresent).map(Optional::get).findFirst();
+    }
+
     static public <T,U> Optional<T> tryGet(U input, Function<U,T> mapper){
         try{
             return Optional.ofNullable(input).map(mapper);
@@ -44,4 +55,5 @@ public class OptionalHelper {
             return Optional.empty();
         }
     }
+
 }
