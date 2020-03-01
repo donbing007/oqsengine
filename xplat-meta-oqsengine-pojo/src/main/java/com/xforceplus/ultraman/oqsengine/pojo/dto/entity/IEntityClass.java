@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Optional;
 
 public interface IEntityClass {
+
     /**
      * 获得对象的id
      * @return id
@@ -52,5 +53,11 @@ public interface IEntityClass {
      * @return 属性名称.
      */
     public Optional<IEntityField> field(long id);
+
+    /**
+     * 判断是否表示一个通用类型,和 JAVA 中 Object.class 相似的概念.
+     * @return true 是通用类型,false 不是通用类型.
+     */
+    public boolean isAny();
 
 }

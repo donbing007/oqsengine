@@ -163,8 +163,15 @@ public class Conditions implements Serializable {
         validate(condition);
 
         ConditionNode newValueNode = new ValueConditionNode(condition);
-        ConditionNode newNode = new LinkConditionNode(head, newValueNode, link);
-        head = newNode;
+        if (size == 0) {
+            head = newValueNode;
+
+        } else {
+
+            ConditionNode newLinkNode = new LinkConditionNode(head, newValueNode, link);
+            head = newLinkNode;
+
+        }
         size++;
 
         if (link == ConditionLink.OR) {
@@ -198,12 +205,20 @@ public class Conditions implements Serializable {
 
     private Conditions doAdd(ConditionLink link, Conditions conditions, boolean isolation) {
 
-        size += conditions.size();
-        if (isolation) {
-            conditions.insulate();
+        if (size == 0) {
+
+            head = conditions.head;
+
+        } else {
+
+            if (isolation) {
+                conditions.insulate();
+            }
+
+            ConditionNode newNode = new LinkConditionNode(head, conditions.head, link);
+            head = newNode;
+
         }
-        ConditionNode newNode = new LinkConditionNode(head, conditions.head, link);
-        head = newNode;
 
         // 如果本条件没有 OR 连接,那么查看新条件中是否有条件连接.
         if (!or) {
@@ -214,6 +229,7 @@ public class Conditions implements Serializable {
             range = conditions.haveRangeCondition();
         }
 
+        size += conditions.size();
         return this;
     }
 

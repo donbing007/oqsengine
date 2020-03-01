@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.helper.StorageTypeHelper;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 
 import java.util.Iterator;
 
@@ -46,7 +47,7 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
                     if (buff.length() != 0) {
                         buff.append(" and ");
                     }
-                    buff.append("jsonfields.")
+                    buff.append(FieldDefine.JSON_FIELDS).append(".")
                         .append(condition.getField().id())
                         .append(" ")
                         .append(condition.getOperator().getSymbol())

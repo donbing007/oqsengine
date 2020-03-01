@@ -57,7 +57,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                "jsonfields.1 > 100"
+                FieldDefine.JSON_FIELDS + ".1 > 100"
             )
             ,
             new Case(
@@ -74,7 +74,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                "jsonfields.1 > 100 and MATCH('@fullfields F2test*')"
+                FieldDefine.JSON_FIELDS + ".1 > 100 and MATCH('@" + FieldDefine.FULL_FIELDS + " F2test*')"
             )
         );
     }

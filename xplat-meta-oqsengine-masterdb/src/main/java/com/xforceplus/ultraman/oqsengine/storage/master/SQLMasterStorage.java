@@ -12,9 +12,9 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.helper.StorageTypeHelper;
+import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -232,38 +232,38 @@ public class SQLMasterStorage implements MasterStorage {
             new DataSourceShardingTask(
                 dataSourceSelector, Long.toString(entity.id())) {
 
-            @Override
-            public Object run(TransactionResource resource) throws SQLException {
-                String tableName = tableNameSelector.select(Long.toString(entity.id()));
-                String sql = String.format(REPLACE_SQL, tableName);
-                PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+                @Override
+                public Object run(TransactionResource resource) throws SQLException {
+                    String tableName = tableNameSelector.select(Long.toString(entity.id()));
+                    String sql = String.format(REPLACE_SQL, tableName);
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
 
-                // update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
-                st.setLong(1, System.currentTimeMillis()); // time
-                st.setString(2, toJson(entity.entityValue())); // attribute
-                st.setLong(3, entity.id()); // id
-                st.setInt(4, entity.version()); // version
+                    // update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
+                    st.setLong(1, System.currentTimeMillis()); // time
+                    st.setString(2, toJson(entity.entityValue())); // attribute
+                    st.setLong(3, entity.id()); // id
+                    st.setInt(4, entity.version()); // version
 
-                if (logger.isDebugEnabled()) {
-                    logger.debug(st.toString());
-                }
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(st.toString());
+                    }
 
-                int size = st.executeUpdate();
+                    int size = st.executeUpdate();
 
-                final int onlyOne = 1;
-                if (size != onlyOne) {
-                    throw new SQLException(String.format("Entity{%s} could not be replace successfully.", entity.toString()));
-                }
+                    final int onlyOne = 1;
+                    if (size != onlyOne) {
+                        throw new SQLException(String.format("Entity{%s} could not be replace successfully.", entity.toString()));
+                    }
 
-                try {
-                    return null;
-                } finally {
-                    if (st != null) {
-                        st.close();
+                    try {
+                        return null;
+                    } finally {
+                        if (st != null) {
+                            st.close();
+                        }
                     }
                 }
-            }
-        });
+            });
     }
 
     @Override
@@ -274,37 +274,37 @@ public class SQLMasterStorage implements MasterStorage {
             new DataSourceShardingTask(
                 dataSourceSelector, Long.toString(entity.id())) {
 
-            @Override
-            public Object run(TransactionResource resource) throws SQLException {
-                String tableName = tableNameSelector.select(Long.toString(entity.id()));
-                String sql = String.format(DELETE_SQL, tableName);
-                PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+                @Override
+                public Object run(TransactionResource resource) throws SQLException {
+                    String tableName = tableNameSelector.select(Long.toString(entity.id()));
+                    String sql = String.format(DELETE_SQL, tableName);
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
 
-                // deleted time id version;
-                st.setBoolean(1, true); // deleted
-                st.setLong(2, System.currentTimeMillis()); // time
-                st.setLong(3, entity.id()); // id
-                st.setInt(4, entity.version()); // version
+                    // deleted time id version;
+                    st.setBoolean(1, true); // deleted
+                    st.setLong(2, System.currentTimeMillis()); // time
+                    st.setLong(3, entity.id()); // id
+                    st.setInt(4, entity.version()); // version
 
-                if (logger.isDebugEnabled()) {
-                    logger.debug(st.toString());
-                }
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(st.toString());
+                    }
 
-                int size = st.executeUpdate();
-                final int onlyOne = 1;
-                if (size != onlyOne) {
-                    throw new SQLException(String.format("Entity{%s} could not be delete successfully.", entity.toString()));
-                }
+                    int size = st.executeUpdate();
+                    final int onlyOne = 1;
+                    if (size != onlyOne) {
+                        throw new SQLException(String.format("Entity{%s} could not be delete successfully.", entity.toString()));
+                    }
 
-                try {
-                    return null;
-                } finally {
-                    if (st != null) {
-                        st.close();
+                    try {
+                        return null;
+                    } finally {
+                        if (st != null) {
+                            st.close();
+                        }
                     }
                 }
-            }
-        });
+            });
     }
 
     private void checkId(IEntity entity) throws SQLException {
@@ -459,7 +459,7 @@ public class SQLMasterStorage implements MasterStorage {
                             List<IEntity> entities = new ArrayList<>(partitionTableIds.size());
 
                             while (rs.next()) {
-                                long id = rs.getLong("id");
+                                long id = rs.getLong(FieldDefine.ID);
                                 entities.add(buildEntityFromResultSet(rs, entityTable.get(id)).get());
                             }
 
@@ -491,13 +491,13 @@ public class SQLMasterStorage implements MasterStorage {
                     , entityClass.id(), dataEntityClassId));
         }
 
-        long id = rs.getLong("id");
+        long id = rs.getLong(FieldDefine.ID);
         Entity entity = new Entity(
             id,
             entityClass,
-            toEntityValue(entityClass.id(), entityClass, rs.getString("attribute"), null),
-            new EntityFamily(rs.getLong("pref"), rs.getLong("cref")),
-            rs.getInt("version")
+            toEntityValue(rs.getLong(FieldDefine.ID), entityClass, rs.getString(FieldDefine.ATTRIBUTE), null),
+            new EntityFamily(rs.getLong(FieldDefine.PREF), rs.getLong(FieldDefine.CREF)),
+            rs.getInt(FieldDefine.VERSION)
         );
 
         return Optional.of(entity);

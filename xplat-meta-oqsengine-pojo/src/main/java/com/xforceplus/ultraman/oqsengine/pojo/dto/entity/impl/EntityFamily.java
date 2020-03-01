@@ -33,8 +33,12 @@ public class EntityFamily implements IEntityFamily {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof EntityFamily)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof EntityFamily)) {
+            return false;
+        }
         EntityFamily that = (EntityFamily) o;
         return parent == that.parent &&
             child == that.child;

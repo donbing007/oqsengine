@@ -6,15 +6,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -26,6 +27,9 @@ import java.util.stream.Collectors;
  */
 public class EntitySearchServiceImpl implements EntitySearchService {
 
+
+    final Logger logger = LoggerFactory.getLogger(EntitySearchServiceImpl.class);
+
     @Resource
     private MasterStorage masterStorage;
 
@@ -34,7 +38,41 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
-        return masterStorage.select(id, entityClass);
+        Optional<IEntity> entityOptional = masterStorage.select(id, entityClass);
+
+        if (entityOptional.isPresent()) {
+
+            if (entityClass.extendEntityClass() != null) {
+
+                /**
+                 * 查询出子类,需要加载父类信息.
+                 */
+                IEntity child = entityOptional.get();
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "The query object is a subclass, loading the parent class data information.[id={},parent=[]]",
+                        id, child.family().parent());
+                }
+
+                Optional<IEntity> parentOptional =
+                    masterStorage.select(child.family().parent(), entityClass.extendEntityClass());
+
+                if (parentOptional.isPresent()) {
+
+                    merageChildAndParent(child, parentOptional.get());
+
+                } else {
+
+                    throw new SQLException(
+                        String.format("Corrupted data.[id=%d, class=%d]", id, entityClass.id()));
+                }
+
+            }
+
+        }
+
+        return entityOptional;
     }
 
     @Override
@@ -68,13 +106,19 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         Map<Long, IEntity> entityTable =
             entities.stream().collect(Collectors.toMap(IEntity::id, e -> e, (e0, e1) -> e0));
 
+        List<IEntity> entitys = new ArrayList<>(refs.size());
+        for (EntityRef ref : refs) {
+            entities.add(buildEntity(ref, entityClass, entityTable));
+        }
+
         // 需要保证顺序
-        return refs.stream().map(r -> buildEntity(r, entityClass, entityTable)).collect(Collectors.toList());
+        return entities;
 
     }
 
     // 根据 id 转换实际 entity.
-    private IEntity buildEntity(EntityRef ref, IEntityClass entityClass, Map<Long, IEntity> entityTable) {
+    private IEntity buildEntity(EntityRef ref, IEntityClass entityClass, Map<Long, IEntity> entityTable)
+        throws SQLException{
         if (entityClass.extendEntityClass() == null) {
 
             return entityTable.get(ref.getId());
@@ -82,13 +126,38 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         } else {
 
             IEntity child = entityTable.get(ref.getId());
+
+            if (ref.getPref() == 0) {
+                throw new SQLException(
+                    String.format("A fatal error, unable to find parent data (%d) for data (%d).",
+                        ref.getId(), ref.getPref()));
+            }
+
             IEntity parent = entityTable.get(ref.getPref());
 
-            // 合并父类属性
-            child.entityValue().addValues(parent.entityValue().values());
+            // 子类数据和父类数据有一个不存在即判定无法构造.
+            if (child == null) {
+                throw new SQLException(String.format("A fatal error, unable to find data (%d).", ref.getId()));
+            }
+
+            if (parent == null) {
+                throw new SQLException(
+                    String.format("A fatal error, unable to find parent data (%d) for data (%d).",
+                        ref.getId(), ref.getPref()));
+            }
+
+            merageChildAndParent(child, parent);
 
             return child;
 
         }
+    }
+
+    // 合并子类和父类属性,同样字段子类会覆盖父类.
+    private void merageChildAndParent(IEntity child, IEntity parent) {
+        Collection<IValue> childValues = child.entityValue().values();
+        child.entityValue().clear()
+            .addValues(parent.entityValue().values())
+            .addValues(childValues);
     }
 }
