@@ -5,28 +5,24 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.util.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.*;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.TransactionManager;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.xforceplus.ultraman.oqsengine.sdk.util.OptionalHelper.combine;
 
 @Service
 public class EntityService {
@@ -139,7 +135,7 @@ public class EntityService {
         if(entityClass.extendEntityClass() != null){
             IEntityClass parent = entityClass.extendEntityClass();
             EntityUp parentUp = toRawEntityUp(parent);
-            builder.addEntityClasses(parentUp);
+            builder.setExtendEntityClass(parentUp);
         }
 
         //add obj id
@@ -199,8 +195,11 @@ public class EntityService {
                     String key = entry.getKey();
                     Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
                     Optional<IEntityField> fieldOpRel = getKeyFromRelation(entityClass, key);
+                    Optional<IEntityField> fieldOpParent = getKeyFromParent(entityClass, key);
 
-                    return fieldOp.map(field -> {
+                    Optional<IEntityField> fieldFinal = combine(fieldOp, fieldOpParent, fieldOpRel);
+
+                    return fieldFinal.map(field -> {
                         return ValueUp.newBuilder()
                                 .setFieldId(field.id())
                                 .setFieldType(field.type().getType())
@@ -225,6 +224,10 @@ public class EntityService {
         return entityClass.field(key);
     }
 
+    private Optional<IEntityField> getKeyFromParent(EntityClass entityClass, String key ){
+        return Optional.ofNullable(entityClass.extendEntityClass()).flatMap(x -> x.field(key));
+    }
+
     //TODO
     private Map<String, Object> toResultMap(EntityClass entityClass, EntityUp up) {
 
@@ -234,8 +237,7 @@ public class EntityService {
         }
 
         up.getValuesList().forEach(entry -> {
-
-            entityClass.field(entry.getFieldId()).ifPresent(field -> {
+            IEntityClassHelper.findFieldById(entityClass, entry.getFieldId()).ifPresent(field -> {
                 if(field.type() == FieldType.BOOLEAN) {
                     map.put(field.name(), Boolean.valueOf(entry.getValue()));
                 } else {

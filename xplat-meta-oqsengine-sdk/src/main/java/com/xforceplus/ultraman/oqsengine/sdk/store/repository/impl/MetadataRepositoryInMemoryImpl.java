@@ -256,7 +256,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         if(boDs.next()){
             Row row = boDs.getRow();
 
-            String code = RowUtils.getRowValue(row, "code").toString();
+            String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
             return Optional.of(new EntityClass(Long.valueOf(boId), code, Collections.emptyList()
                     , Collections.emptyList(), null, loadFields(boId)));
         }

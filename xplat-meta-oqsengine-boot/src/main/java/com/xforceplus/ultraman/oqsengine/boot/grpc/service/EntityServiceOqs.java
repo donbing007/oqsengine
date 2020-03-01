@@ -164,7 +164,20 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         OperationResult result;
 
         try {
-            Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), toEntityClass(in));
+
+            IEntityClass entityClass = toEntityClass(in);
+
+            Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
+
+            if(ds.isPresent()){
+                if(ds.get().family() != null && ds.get().family().parent() > 0 && entityClass.extendEntityClass() != null){
+                    Optional<IEntity> parentDS = entitySearchService.selectOne(ds.get().family().parent(), entityClass.extendEntityClass());
+
+                    parentDS.ifPresent(x ->
+                            ds.ifPresent(y -> leftAppend(y, x)));
+                }
+            }
+
             result = ds.map(entity -> OperationResult
                     .newBuilder()
                     .setCode(OperationResult.Code.OK)
@@ -627,6 +640,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         try {
             Objects.requireNonNull(value, "值不能为空");
             Optional<IEntityField> fieldOp = entityClass.field(id);
+            if(entityClass.extendEntityClass() != null && !fieldOp.isPresent()){
+                fieldOp = entityClass.extendEntityClass().field(id);
+            }
             if(fieldOp.isPresent()) {
                 return toTypedValue(fieldOp.get(), value);
             } else {

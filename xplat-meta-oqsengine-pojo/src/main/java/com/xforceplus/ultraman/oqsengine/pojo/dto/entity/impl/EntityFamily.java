@@ -23,12 +23,12 @@ public class EntityFamily implements IEntityFamily {
 
     @Override
     public long parent() {
-        return 0;
+        return parent;
     }
 
     @Override
     public long child() {
-        return 0;
+        return child;
     }
 
     @Override
