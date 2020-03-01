@@ -106,6 +106,39 @@ public class ConditionsTest {
                     ConditionOperator.EQUALS,
                     new LongValue(new Field(1, "c2", FieldType.LONG), 100L))),
                 "c1=100 AND c2=100"
+            ),
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    Conditions.buildEmtpyConditions().addAnd(
+                        new Condition(
+                            new Field(1, "c1", FieldType.LONG),
+                            ConditionOperator.EQUALS,
+                            new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
+                        )
+                    )
+                    ,false
+                ),
+                "c1=100"
+            ),
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            new Field(1, "c2", FieldType.LONG),
+                            ConditionOperator.EQUALS,
+                            new LongValue(new Field(1, "c2", FieldType.LONG), 100L))
+                    )
+                    .addAnd(
+                        Conditions.buildEmtpyConditions().addAnd(
+                            new Condition(
+                                new Field(1, "c1", FieldType.LONG),
+                                ConditionOperator.EQUALS,
+                                new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
+                            )
+                        )
+                        ,false
+                    ),
+                "c2=100 AND c1=100"
             )
         );
     }

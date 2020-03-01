@@ -23,18 +23,22 @@ public class EntityFamily implements IEntityFamily {
 
     @Override
     public long parent() {
-        return 0;
+        return parent;
     }
 
     @Override
     public long child() {
-        return 0;
+        return child;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof EntityFamily)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof EntityFamily)) {
+            return false;
+        }
         EntityFamily that = (EntityFamily) o;
         return parent == that.parent &&
             child == that.child;

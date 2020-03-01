@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.util.*;
 
 public class EntityClass implements IEntityClass {
+
     /**
      * 元数据boId
      */
@@ -33,18 +34,23 @@ public class EntityClass implements IEntityClass {
     public EntityClass() {
     }
 
+    public EntityClass(long id) {
+        this.id = id;
+    }
+
     public EntityClass(long id, String code, Collection<IEntityField> fields) {
-        this(id,code,null, null, null,fields);
+        this(id, code, null, null, null, fields);
     }
 
     /**
      * 构造一个新的entity 类型信息.
-     * @param id 类型 id.
-     * @param code 类型 code.
-     * @param relations 关联对象信息.
-     * @param entityClasss 类型关联对象类型信息.
+     *
+     * @param id                类型 id.
+     * @param code              类型 code.
+     * @param relations         关联对象信息.
+     * @param entityClasss      类型关联对象类型信息.
      * @param extendEntityClass 继承对象信息.
-     * @param fields 属性列表.
+     * @param fields            属性列表.
      */
     public EntityClass(Long id,
                        String code,
@@ -110,6 +116,11 @@ public class EntityClass implements IEntityClass {
     @Override
     public Optional<IEntityField> field(long id) {
         return fields.stream().filter(f -> id == f.id()).findFirst();
+    }
+
+    @Override
+    public boolean isAny() {
+        return false;
     }
 
     @Override

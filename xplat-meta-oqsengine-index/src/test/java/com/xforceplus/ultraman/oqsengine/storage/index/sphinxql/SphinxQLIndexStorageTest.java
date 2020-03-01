@@ -31,8 +31,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
@@ -53,7 +51,6 @@ import java.util.stream.Collectors;
  */
 public class SphinxQLIndexStorageTest {
 
-    final Logger logger = LoggerFactory.getLogger(SphinxQLIndexStorageTest.class);
 
     private TransactionManager transactionManager = new DefaultTransactionManager(
         new IncreasingOrderLongIdGenerator(0));
@@ -93,6 +90,9 @@ public class SphinxQLIndexStorageTest {
         transactionManager.create();
 
         expectedEntitys = initData(storage, 10);
+
+        // 确认没有事务.
+        Assert.assertFalse(transactionManager.getCurrent().isPresent());
 
     }
 
@@ -139,9 +139,52 @@ public class SphinxQLIndexStorageTest {
     }
 
     @Test
+    public void testReplaceAttribute() throws Exception {
+        transactionManager.create();
+
+        IEntity expectedEntity = expectedEntitys.stream().findAny().get();
+        IValue value = expectedEntity.entityValue().values().stream().findAny().get();
+
+        IEntityField field = value.getField();
+        IValue newValue;
+        switch(field.type()) {
+            case LONG:
+                newValue = new LongValue(field, (long) buildRandomLong(0,2000));
+                break;
+            case STRING:
+                newValue = new StringValue(field, buildRandomString(10));
+                break;
+            default:
+                throw new IllegalStateException("Unexpected value: " + field.type());
+        }
+
+        expectedEntity.entityValue().addValue(newValue);
+
+        storage.replaceAttribute(expectedEntity.entityValue());
+
+        transactionManager.getCurrent().get().commit();
+        transactionManager.finish();
+
+        Conditions conditions = Conditions.buildEmtpyConditions();
+        expectedEntity.entityValue().values().stream().forEach(v -> {
+            conditions.addAnd(
+                new Condition(
+                    v.getField(),
+                    ConditionOperator.EQUALS,
+                    v));
+        });
+        Collection<EntityRef> refs = storage.select(
+            conditions, expectedEntity.entityClass(), null, Page.newSinglePage(100));
+
+        Assert.assertEquals(1, refs.size());
+        Assert.assertEquals(expectedEntity.id(), refs.stream().findFirst().get().getId());
+        Assert.assertEquals(expectedEntity.family().parent(), refs.stream().findFirst().get().getPref());
+        Assert.assertEquals(expectedEntity.family().child(), refs.stream().findFirst().get().getCref());
+
+    }
+
+    @Test
     public void testDeleteSuccess() throws Exception {
-        // 确认没有事务.
-        Assert.assertFalse(transactionManager.getCurrent().isPresent());
 
         transactionManager.create();
 
@@ -171,8 +214,6 @@ public class SphinxQLIndexStorageTest {
 
     @Test
     public void testDeleteFailure() throws Exception {
-        // 确认没有事务.
-        Assert.assertFalse(transactionManager.getCurrent().isPresent());
 
         transactionManager.create();
 
@@ -207,7 +248,7 @@ public class SphinxQLIndexStorageTest {
         Assert.assertFalse(transactionManager.getCurrent().isPresent());
 
         // 每一个都以独立事务运行.
-        buildCase().stream().forEach(c -> {
+        buildSelectCase().stream().forEach(c -> {
 
             Collection<EntityRef> refs = null;
             try {
@@ -236,7 +277,7 @@ public class SphinxQLIndexStorageTest {
         }
     }
 
-    private Collection<Case> buildCase() {
+    private Collection<Case> buildSelectCase() {
         return Arrays.asList(
             // =
             new Case(
@@ -415,10 +456,11 @@ public class SphinxQLIndexStorageTest {
 
     private IEntity buildEntity() {
         Collection<IEntityField> fields = buildRandomFields(3);
+        long id = idGenerator.next();
         return new Entity(
-            idGenerator.next(),
+            id,
             new EntityClass(1, "test", fields),
-            buildRandomValue(1, fields)
+            buildRandomValue(id, fields)
         );
     }
 

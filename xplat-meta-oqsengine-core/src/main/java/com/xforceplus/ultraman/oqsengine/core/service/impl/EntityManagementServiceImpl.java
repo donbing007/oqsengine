@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
@@ -128,8 +129,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 masterStorage.replace(fatherEntity);
                 masterStorage.replace(childEntity);
 
-                indexStorage.replace(buildIndexEntity(fatherEntity));
                 // 子类的索引需要父和子所有属性.
+                indexStorage.replace(buildIndexEntity(fatherEntity));
 
                 indexStorage.replace(buildIndexEntity(target));
 
@@ -137,7 +138,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 masterStorage.replace(target);
 
-                indexStorage.replace(buildIndexEntity(target));
+                IEntity indexEntity = buildIndexEntity(target);
+                indexStorage.replace(indexEntity);
+
+                // 有子类,需要处理索引中子类的从父类复制过来的属性.
+                if (entity.family().child() > 0) {
+                    indexStorage.replaceAttribute(indexEntity.entityValue());
+                }
             }
 
             return null;
@@ -163,8 +170,20 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 indexStorage.delete(entity);
 
             } else {
+
                 masterStorage.delete(entity);
                 indexStorage.delete(entity);
+
+                // 有子类需要删除.
+                if (entity.family().child() > 0) {
+                    indexStorage.delete(
+                        new Entity(
+                            entity.family().child(),
+                            AnyEntityClass.getInstance(),
+                            new EntityValue(entity.family().child())
+                        )
+                    );
+                }
             }
             return null;
         });

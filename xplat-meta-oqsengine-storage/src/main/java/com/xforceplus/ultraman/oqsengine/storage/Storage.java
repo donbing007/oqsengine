@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 
 import java.sql.SQLException;
 

@@ -3,7 +3,9 @@ package com.xforceplus.ultraman.oqsengine.storage.index;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
 
@@ -27,5 +29,11 @@ public interface IndexStorage extends Storage {
      */
      Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
          throws SQLException ;
+
+    /**
+     * 替换索引中某些属性的值.
+     * @param attribute 需要更新的属性值.
+     */
+     void replaceAttribute(IEntityValue attribute) throws SQLException;
 
 }

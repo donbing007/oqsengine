@@ -17,7 +17,8 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     /**
      * Entity的值集合
      */
-    private Map<IEntityField, IValue> values;
+    private Map<Long, IValue> values;
+
 
     public EntityValue(long id) {
         this.id = id;
@@ -35,9 +36,9 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
         }
 
-        for (IEntityField f : values.keySet()) {
-            if (f.name().equals(fieldName)) {
-                return Optional.of(values.get(f));
+        for (IValue v : values.values()) {
+            if (v.getField().name().equals(fieldName)) {
+                return Optional.of(v);
             }
         }
 
@@ -48,7 +49,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     public IEntityValue addValue(IValue value) {
         lazyInit();
 
-        values.put(value.getField(), value);
+        values.put(value.getField().id(), value);
         return this;
     }
 
@@ -64,7 +65,8 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     public IEntityValue addValues(Collection<IValue> values) {
         lazyInit();
         values.stream().forEach(v -> {
-            this.values.put(v.getField(), v);
+            this.values.put(v.getField().id(), v);
+
         });
         return this;
     }
@@ -79,6 +81,12 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     @Override
     public void filter(Predicate<? super IValue> predicate) {
         values.entrySet().removeIf(entry -> !predicate.test(entry.getValue()));
+    }
+
+    @Override
+    public IEntityValue clear() {
+        values.clear();
+        return this;
     }
 
     @Override
