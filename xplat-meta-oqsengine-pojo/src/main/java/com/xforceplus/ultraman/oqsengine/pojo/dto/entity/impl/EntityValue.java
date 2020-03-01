@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 
 public class EntityValue implements IEntityValue, Cloneable, Serializable {
     /**
-     * 元数据boId
+     * 数据id
      */
     private long id;
 
