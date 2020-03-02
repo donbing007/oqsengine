@@ -172,7 +172,7 @@ public class SphinxQLIndexStorage implements IndexStorage {
         if (sort != null) {
             StorageType sortFieldStorageType = StorageTypeHelper.findStorageType(sort.getField().type());
             if (sortFieldStorageType == StorageType.LONG) {
-                buff.append("integer(")
+                buff.append("bigint(")
                     .append(FieldDefine.JSON_FIELDS)
                     .append(".")
                     .append(sort.getField().id())
