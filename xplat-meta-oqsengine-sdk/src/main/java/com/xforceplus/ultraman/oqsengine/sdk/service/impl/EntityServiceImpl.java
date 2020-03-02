@@ -53,6 +53,11 @@ public class EntityServiceImpl implements EntityService {
     }
 
     @Override
+    public Optional<EntityClass> loadByCode(String bocode) {
+        return Optional.empty();
+    }
+
+    @Override
     public <T> Either<String, T> transactionalExecute(Callable<T> supplier){
         OperationResult result = entityServiceClient
                 .commit(TransactionUp.newBuilder().build()).toCompletableFuture().join();

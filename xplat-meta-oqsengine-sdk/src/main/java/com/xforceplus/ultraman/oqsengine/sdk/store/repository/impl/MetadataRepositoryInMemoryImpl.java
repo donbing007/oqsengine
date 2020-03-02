@@ -315,6 +315,19 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         });
     }
 
+
+    @Override
+    public Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode) {
+
+        DataSet boDs = dc.query()
+                .from("bos")
+                .selectAll()
+                .where("code").eq(boCode)
+                .execute();
+
+        return toEntityClass(boDs);
+    }
+
     /**
      * TODO nested object
      * @param tenantId
@@ -329,11 +342,16 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .from("bos")
                 .selectAll().where("id").eq(boId)
                 .execute();
+        return toEntityClass(boDs);
 
+    }
+
+    private Optional<EntityClass> toEntityClass(DataSet boDs){
         if(boDs.next()){
             Row row = boDs.getRow();
 
             String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
+            String boId = RowUtils.getRowValue(row, "id").map(String::valueOf).orElse("0");
 
             List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField> fields = loadFields(boId);
 

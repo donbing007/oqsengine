@@ -14,4 +14,6 @@ public interface MetadataRepository {
     void save(ModuleUpResult moduleUpResult, String tenantId, String appId);
 
     Optional<EntityClass> load(String tenantId, String appCode, String boId);
+
+    Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode);
 }
