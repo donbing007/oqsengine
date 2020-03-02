@@ -1,6 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.sdk.controller;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.sdk.command.ConditionSearchCmd;
+import com.xforceplus.ultraman.oqsengine.sdk.command.SingleCreateCmd;
+import com.xforceplus.ultraman.oqsengine.sdk.command.SingleDeleteCmd;
+import com.xforceplus.ultraman.oqsengine.sdk.command.SingleQueryCmd;
+import com.xforceplus.ultraman.oqsengine.sdk.dispatcher.ServiceDispatcher;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
@@ -21,30 +26,47 @@ public class EntityController {
     @Autowired
     private EntityService entityService;
 
+    @Autowired
+    private ServiceDispatcher dispatcher;
+
     @GetMapping("/bos/{boId}/entities/{id}")
-    public Response<Map<String, String>> singleQuery(
+    public Response<Map<String, Object>> singleQuery(
             @PathVariable String boId,
             @PathVariable String id){
 
+        Either<String, Map<String, Object>> result = dispatcher.querySync(new SingleQueryCmd(boId, id), Either.class);
         //find bo
-        Optional<EntityClass> entityClassOp = entityService.load(boId);
+//        Optional<EntityClass> entityClassOp = entityService.load(boId);
+//
+//        if(entityClassOp.isPresent()) {
+//            Either<String, Map<String, Object>> either  =
+//                    entityService.findOne(entityClassOp.get(), Long.parseLong(id));
+//            Response rep = new Response();
+//            rep.setCode("1");
+//            if(either.isRight()){
+//                rep.setMessage("获取成功");
+//                rep.setResult(either.get());
+//            }else{
+//                rep.setCode("-1");
+//                rep.setMessage(either.getLeft());
+//            }
+//            return rep;
+//        }
 
-        if(entityClassOp.isPresent()) {
-            Either<String, Map<String, Object>> either  =
-                    entityService.findOne(entityClassOp.get(), Long.parseLong(id));
-            Response rep = new Response();
+        //return Response.Error("查询记录不存在");
+
+        return result.map(x -> {
+            Response<Map<String, Object>> rep = new Response<>();
             rep.setCode("1");
-            if(either.isRight()){
-                rep.setMessage("获取成功");
-                rep.setResult(either.get());
-            }else{
-                rep.setCode("-1");
-                rep.setMessage(either.getLeft());
-            }
+            rep.setMessage("获取成功");
+            rep.setResult(x);
             return rep;
-        }
-
-        return Response.Error("查询记录不存在");
+        }).getOrElseGet(str -> {
+            Response<Map<String, Object>> rep = new Response<>();
+            rep.setCode("-1");
+            rep.setMessage(str);
+            return rep;
+        });
     }
 
     @DeleteMapping("/bos/{boId}/entities/{id}")
@@ -52,25 +74,21 @@ public class EntityController {
         @PathVariable String boId,
         @PathVariable String id
     ){
-        Optional<EntityClass> entityClassOp = entityService.load(boId);
 
-        Response rep = new Response();
+        Either<String, Integer> result = dispatcher.querySync(new SingleDeleteCmd(boId, id), Either.class);
 
-        if(entityClassOp.isPresent()) {
-            Either<String, Integer> result = entityService.deleteOne(entityClassOp.get(), Long.valueOf(id));
-            if(result.isRight()){
-                rep.setCode("1");
-                rep.setResult(String.valueOf(result.get()));
-                rep.setMessage("操作成功");
-                return rep;
-            }
-        }
-
-        //TODO
-        //entity missing
-        rep.setCode("-1");
-        rep.setMessage("操作失败");
-        return rep;
+        return result.map(x -> {
+            Response<String> rep = new Response<>();
+            rep.setCode("1");
+            rep.setResult(String.valueOf(x));
+            rep.setMessage("操作成功");
+            return rep;
+        }).getOrElseGet(str -> {
+            Response<String> rep = new Response<>();
+            rep.setCode("-1");
+            rep.setMessage("操作失败");
+            return rep;
+        });
     }
 
     /**
@@ -89,31 +107,22 @@ public class EntityController {
     public Response<String> singleCreate( @PathVariable String boId,
                                           @RequestBody Map<String, Object> body
     ){
-        Optional<EntityClass> entityClassOp = entityService.load(boId);
 
-        Response rep = new Response();
+        Either<String, Long> result = dispatcher.querySync(new SingleCreateCmd(boId, body), Either.class);
 
-        if(entityClassOp.isPresent()) {
-             Either<String, Long> result = entityService.create(entityClassOp.get(), body);
 
-            if(result.isRight()){
-                rep.setCode("1");
-                rep.setResult(String.valueOf(result.get()));
-                rep.setMessage("操作成功");
-                return rep;
-            }else{
-                rep.setCode("-1");
-                rep.setResult(result.getLeft());
-                rep.setMessage("操作失败");
-                return rep;
-            }
-        }
-
-        //TODO
-        //entity missing
-        rep.setCode("-1");
-        rep.setMessage("操作失败");
-        return rep;
+        return result.map(x -> {
+            Response<String> rep = new Response<>();
+            rep.setCode("1");
+            rep.setResult(String.valueOf(x));
+            rep.setMessage("操作成功");
+            return rep;
+        }).getOrElseGet(str -> {
+            Response<String> rep = new Response<>();
+            rep.setCode("-1");
+            rep.setMessage("操作失败");
+            return rep;
+        });
     }
 
 //    request: {
@@ -130,32 +139,21 @@ public class EntityController {
                                           @PathVariable Long id,
                                           @RequestBody Map<String, Object> body
     ){
-        Optional<EntityClass> entityClassOp = entityService.load(boId);
 
-        Response rep = new Response();
+        Either<String, Integer> result = dispatcher.querySync(new SingleCreateCmd(boId, body), Either.class);
 
-        if(entityClassOp.isPresent()) {
-            Either<String, Integer> result = entityService.updateById(entityClassOp.get(), id, body);
-
-
-            if(result.isRight()){
-                rep.setCode("1");
-                rep.setResult(String.valueOf(result.get()));
-                rep.setMessage("操作成功");
-                return rep;
-            }else{
-                rep.setCode("-1");
-                rep.setResult(result.getLeft());
-                rep.setMessage("操作失败");
-                return rep;
-            }
-        }
-
-        //TODO
-        //entity missing
-        rep.setCode("-1");
-        rep.setMessage("操作失败");
-        return rep;
+        return result.map(x -> {
+            Response<String> rep = new Response<>();
+            rep.setCode("1");
+            rep.setResult(String.valueOf(x));
+            rep.setMessage("操作成功");
+            return rep;
+        }).getOrElseGet(str -> {
+            Response<String> rep = new Response<>();
+            rep.setCode("-1");
+            rep.setMessage("操作失败");
+            return rep;
+        });
     }
 
     /**
@@ -226,15 +224,10 @@ public class EntityController {
     public Response<RowItem<Map<String, Object>>> conditionQuery(@PathVariable String boId,
                                                                  @RequestBody ConditionQueryRequest condition){
 
-        Optional<EntityClass> entityClassOp = entityService.load(boId);
+        Either<String, Tuple2<Integer, List<Map<String, Object>>>> result =
+                dispatcher.querySync(new ConditionSearchCmd(boId, condition), Either.class);
 
-        if(entityClassOp.isPresent()) {
-            Either<String, Tuple2<Integer, List<Map<String, Object>>>> result =
-                    entityService.findByCondition(entityClassOp.get(), condition);
-            return extractRepList(result);
-        }
-
-        return Response.Error("对象不存在");
+        return  extractRepList(result);
     }
 
     private <T> Response<RowItem<T>> extractRepList(Either<String, Tuple2<Integer, List<T>>> result){
