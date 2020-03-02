@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.dispatcher;
 import com.xforceplus.ultraman.oqsengine.sdk.dispatcher.messaging.GeneralResponse;
 import com.xforceplus.ultraman.oqsengine.sdk.dispatcher.messaging.Message;
 import com.xforceplus.ultraman.oqsengine.sdk.dispatcher.messaging.QueryExpressionEvaluator;
+import com.xforceplus.ultraman.oqsengine.sdk.service.ContextService;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
@@ -36,10 +37,16 @@ public class QueryHandlerAdapter {
 
     private final List<ResolvableType> declaredEventTypes;
 
+    private final ResolvableType declaredReturenType;
+
     @Nullable
     private final String condition;
 
     private final int order;
+
+    private final boolean isDefault;
+
+    private final ContextService contextService;
 
     @Nullable
     private ApplicationContext applicationContext;
@@ -49,19 +56,23 @@ public class QueryHandlerAdapter {
 
 
     public QueryHandlerAdapter(String beanName, Class<?> targetClass, Method method
-            , ApplicationContext applicationContext, QueryExpressionEvaluator evaluator) {
+            , ApplicationContext applicationContext, QueryExpressionEvaluator evaluator
+            , ContextService contextService) {
         this.beanName = beanName;
         this.method = BridgeMethodResolver.findBridgedMethod(method);
         this.targetMethod = (!Proxy.isProxyClass(targetClass) ?
                 AopUtils.getMostSpecificMethod(method, targetClass) : this.method);
         this.methodKey = new AnnotatedElementKey(this.targetMethod, targetClass);
 
-        EventListener ann = AnnotatedElementUtils.findMergedAnnotation(this.targetMethod, EventListener.class);
+        QueryHandler ann = AnnotatedElementUtils.findMergedAnnotation(this.targetMethod, QueryHandler.class);
         this.declaredEventTypes = resolveDeclaredCmdTypes(method, ann);
+        this.declaredReturenType = resolveDeclaredReturnType(method, ann);
         this.condition = (ann != null ? ann.condition() : null);
         this.order = resolveOrder(this.targetMethod);
         this.applicationContext = applicationContext;
         this.evaluator = evaluator;
+        this.isDefault = (ann != null && ann.isDefault());
+        this.contextService = contextService;
     }
 
     private static int resolveOrder(Method method) {
@@ -70,38 +81,49 @@ public class QueryHandlerAdapter {
     }
 
     //TODO
+    //check if this can cover all the situation
     public boolean supportsQueryType(ResolvableType cmdType, ResolvableType retType) {
+
+        boolean isSupport = false;
         for (ResolvableType declaredEventType : this.declaredEventTypes) {
             if (declaredEventType.isAssignableFrom(cmdType)) {
-                return true;
+                isSupport = true;
+                break;
             }
         }
-        return cmdType.hasUnresolvableGenerics();
+
+        if(!this.declaredReturenType.isAssignableFrom(retType)) {
+            return cmdType.hasUnresolvableGenerics();
+        }
+
+        return isSupport;
     }
 
-    private static List<ResolvableType> resolveDeclaredCmdTypes(Method method, @Nullable EventListener ann) {
+    //TODO
+    private static List<ResolvableType> resolveDeclaredCmdTypes(Method method, @Nullable QueryHandler ann) {
+
         int count = method.getParameterCount();
         if (count > 1) {
             throw new IllegalStateException(
                     "Maximum one parameter is allowed for query listener method: " + method);
         }
 
-        if (ann != null) {
-            Class<?>[] classes = ann.classes();
-            if (classes.length > 0) {
-                List<ResolvableType> types = new ArrayList<>(classes.length);
-                for (Class<?> eventType : classes) {
-                    types.add(ResolvableType.forClass(eventType));
-                }
-                return types;
-            }
-        }
-
         if (count == 0) {
             throw new IllegalStateException(
-                    "Event parameter is mandatory for query listener method: " + method);
+                    "Query parameter is mandatory for query listener method: " + method);
         }
         return Collections.singletonList(ResolvableType.forMethodParameter(method, 0));
+    }
+
+    //TODO
+    private static ResolvableType resolveDeclaredReturnType(Method method, @Nullable QueryHandler ann) {
+
+        if(method.getReturnType().equals(Void.TYPE)){
+            throw new IllegalStateException(
+                    "return type is mandatory for query listener method: " + method);
+        }
+
+        return ResolvableType.forMethodReturnType(method);
     }
 
     public GeneralResponse processMsg(Message msg){
@@ -121,6 +143,14 @@ public class QueryHandlerAdapter {
     //TODO
     private GeneralResponse handleResult(Object result){
         return new GeneralResponse(result);
+    }
+
+    public boolean isDefault() {
+        return this.isDefault;
+    }
+
+    public int getOrder() {
+        return this.order;
     }
 
     protected Object getTargetBean() {
@@ -239,7 +269,7 @@ public class QueryHandlerAdapter {
         if (StringUtils.hasText(condition)) {
             Assert.notNull(this.evaluator, "EventExpressionEvaluator must not be null");
             return this.evaluator.condition(
-                    condition, msg, this.targetMethod, this.methodKey, args, this.applicationContext);
+                    condition, msg, this.targetMethod, this.methodKey, args, this.applicationContext, this.contextService);
         }
         return true;
     }

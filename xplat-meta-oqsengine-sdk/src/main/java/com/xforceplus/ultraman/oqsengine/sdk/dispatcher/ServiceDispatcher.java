@@ -8,10 +8,13 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.ResolvableType;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static io.vavr.control.Either.left;
 
 /**
  * service dispatcher
@@ -34,29 +37,62 @@ public class ServiceDispatcher implements ApplicationContextAware {
                 .collect(Collectors.toList());
     }
 
-    public <R> R querySync(Object command, Class<R> responseType){
+    private Optional<GeneralResponse> invokeInner(List<QueryHandlerAdapter> queryHandlerAdapters, Object command){
+        return queryHandlerAdapters.stream()
+                .sorted(Comparator.comparingInt(QueryHandlerAdapter::getOrder))
+                .map(x ->
+                {
+                    try {
+                        return x.processMsg(new GenericQueryMessage(command, ResolvableType.forClass(command.getClass())));
+                    } catch (Exception ex){
+                        return null;
+                    }
+                }).filter(Objects::nonNull)
+                .findFirst();
+    }
+
+    public <R> R querySync(Object command, Class cls, String queryName){
+         Optional<ResolvableType> typeOp = Stream.of(cls.getMethods())
+                .filter(method ->  isMatch(method, queryName, command.getClass()))
+                .findFirst()
+                .map(ResolvableType::forMethodReturnType);
+        return typeOp.<R>map(resolvableType -> querySync(command, resolvableType))
+                .orElse(null);
+    }
+
+
+    private boolean isMatch(Method method, String queryName, Class cmdCls ){
+        return queryName.equalsIgnoreCase(method.getName())
+                && method.getParameterCount() == 1
+                && ResolvableType.forMethodParameter(method, 0).isAssignableFrom(ResolvableType.forClass(cmdCls));
+    }
+
+
+    public <R> R querySync(Object command, ResolvableType responseType){
 
         List<QueryHandlerAdapter> adapters = retrieveAdapter(ResolvableType.forClass(command.getClass())
-                        , ResolvableType.forClass(responseType));
-        GeneralResponse gr = null;
-        for(QueryHandlerAdapter adapter : adapters){
-            try{
-                gr = adapter.processMsg(new GenericQueryMessage(command, ResolvableType.forClass(command.getClass())));
-                if(gr == null){
-                    continue;
-                }else{
-                    break;
-                }
-            }catch(Exception ex){
-                continue;
-            }
+                , responseType);
+
+        Map<Boolean, List<QueryHandlerAdapter>> listMap =
+                adapters.stream().collect(Collectors.groupingBy(QueryHandlerAdapter::isDefault));
+
+        /**
+         * invoke
+         */
+        Optional<GeneralResponse> grOp = invokeInner(Optional.ofNullable(listMap.get(false))
+                .orElseGet(Collections::emptyList), command);
+
+        if(!grOp.isPresent()){
+            grOp = invokeInner(Optional.ofNullable(listMap.get(true))
+                    .orElseGet(Collections::emptyList), command);
         }
 
-        if(gr != null){
-            return (R)gr.getT();
-        }
 
-        return null;
+        return grOp.map(x -> (R)x.getT()).orElse(null);
+    }
+
+    public <R> R querySync(Object command, Class<R> responseType){
+        return querySync(command, ResolvableType.forClass(responseType));
     }
 
     //fire

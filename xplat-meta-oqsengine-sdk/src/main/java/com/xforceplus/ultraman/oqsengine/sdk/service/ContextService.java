@@ -17,6 +17,8 @@ public interface ContextService {
 
         TenantIdKey("tenant-id"),
 
+        TenantCodeKey("tenant-code"),
+
         AppCode("app-code");
 
         private String keyName;

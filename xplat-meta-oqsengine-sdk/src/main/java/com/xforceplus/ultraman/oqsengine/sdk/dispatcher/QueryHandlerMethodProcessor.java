@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.dispatcher;
 
 import com.xforceplus.ultraman.oqsengine.sdk.dispatcher.messaging.QueryExpressionEvaluator;
+import com.xforceplus.ultraman.oqsengine.sdk.service.ContextService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.aop.framework.autoproxy.AutoProxyUtils;
@@ -9,6 +10,7 @@ import org.springframework.aop.scope.ScopedProxyUtils;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -46,6 +48,8 @@ public class QueryHandlerMethodProcessor
 
     private final Set<Class<?>> nonAnnotatedClasses = Collections.newSetFromMap(new ConcurrentHashMap<>(64));
 
+    @Autowired(required = false)
+    private ContextService contextService;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) {
@@ -64,6 +68,13 @@ public class QueryHandlerMethodProcessor
         if(dispatchers.size() > 0) {
             this.serviceDispatcher = dispatchers.get(0);
         }
+
+//        Map<String, ContextService> contextBeans = beanFactory.getBeansOfType(ContextService.class, false, false);
+//        List<ContextService> contextServices = new ArrayList<>(contextBeans.values());
+////        AnnotationAwareOrderComparator.sort(factories);
+//        if(contextServices.size() > 0) {
+//            this.contextService = contextServices.get(0);
+//        }
     }
 
 
@@ -133,7 +144,7 @@ public class QueryHandlerMethodProcessor
             if (CollectionUtils.isEmpty(annotatedMethods)) {
                 this.nonAnnotatedClasses.add(targetType);
                 if (logger.isTraceEnabled()) {
-                    logger.trace("No @EventListener annotations found on bean class: " + targetType.getName());
+                    logger.trace("No @Query annotations found on bean class: " + targetType.getName());
                 }
             }
             else {
@@ -147,7 +158,7 @@ public class QueryHandlerMethodProcessor
 //                        if (factory.supportsMethod(method)) {
                             Method methodToUse = AopUtils.selectInvocableMethod(method, context.getType(beanName));
                             QueryHandlerAdapter handler =
-                                   new QueryHandlerAdapter(beanName, targetType, methodToUse, context,  this.evaluator);
+                                   new QueryHandlerAdapter(beanName, targetType, methodToUse, context,  this.evaluator, this.contextService);
                             serviceDispatcher.addQueryAdapter(handler);
 //                        }
 //                    }

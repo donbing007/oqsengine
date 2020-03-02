@@ -47,7 +47,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     @Override
     public Optional<IValue> getValue(long fieldId) {
-        return values.entrySet().stream().filter(x -> x.getKey().id() == fieldId)
+        return values.entrySet().stream().filter(x -> x.getKey() == fieldId)
                 .map(Map.Entry::getValue).findFirst();
     }
 

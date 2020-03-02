@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.command.SingleDeleteCmd;
 import com.xforceplus.ultraman.oqsengine.sdk.command.SingleQueryCmd;
 import com.xforceplus.ultraman.oqsengine.sdk.dispatcher.ServiceDispatcher;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
+import com.xforceplus.ultraman.oqsengine.sdk.ui.DefaultUiService;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.RowItem;
@@ -14,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.SummaryItem;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ResolvableType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,9 +26,6 @@ import java.util.Optional;
 public class EntityController {
 
     @Autowired
-    private EntityService entityService;
-
-    @Autowired
     private ServiceDispatcher dispatcher;
 
     @GetMapping("/bos/{boId}/entities/{id}")
@@ -34,28 +33,10 @@ public class EntityController {
             @PathVariable String boId,
             @PathVariable String id){
 
-        Either<String, Map<String, Object>> result = dispatcher.querySync(new SingleQueryCmd(boId, id), Either.class);
-        //find bo
-//        Optional<EntityClass> entityClassOp = entityService.load(boId);
-//
-//        if(entityClassOp.isPresent()) {
-//            Either<String, Map<String, Object>> either  =
-//                    entityService.findOne(entityClassOp.get(), Long.parseLong(id));
-//            Response rep = new Response();
-//            rep.setCode("1");
-//            if(either.isRight()){
-//                rep.setMessage("获取成功");
-//                rep.setResult(either.get());
-//            }else{
-//                rep.setCode("-1");
-//                rep.setMessage(either.getLeft());
-//            }
-//            return rep;
-//        }
+        Either<String, Map<String, Object>> result = dispatcher.querySync(new SingleQueryCmd(boId, id)
+                , DefaultUiService.class,"singleQuery");
 
-        //return Response.Error("查询记录不存在");
-
-        return result.map(x -> {
+        return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
             Response<Map<String, Object>> rep = new Response<>();
             rep.setCode("1");
             rep.setMessage("获取成功");
@@ -75,9 +56,10 @@ public class EntityController {
         @PathVariable String id
     ){
 
-        Either<String, Integer> result = dispatcher.querySync(new SingleDeleteCmd(boId, id), Either.class);
+        Either<String, Integer> result = dispatcher.querySync(new SingleDeleteCmd(boId, id)
+                , ResolvableType.forClassWithGenerics(Either.class, String.class, Integer.class));
 
-        return result.map(x -> {
+        return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
             Response<String> rep = new Response<>();
             rep.setCode("1");
             rep.setResult(String.valueOf(x));
@@ -108,10 +90,12 @@ public class EntityController {
                                           @RequestBody Map<String, Object> body
     ){
 
-        Either<String, Long> result = dispatcher.querySync(new SingleCreateCmd(boId, body), Either.class);
+        Either<String, Long> result = dispatcher
+                .querySync(new SingleCreateCmd(boId, body)
+                , DefaultUiService.class, "singleQuery");
 
 
-        return result.map(x -> {
+        return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
             Response<String> rep = new Response<>();
             rep.setCode("1");
             rep.setResult(String.valueOf(x));
@@ -140,9 +124,10 @@ public class EntityController {
                                           @RequestBody Map<String, Object> body
     ){
 
-        Either<String, Integer> result = dispatcher.querySync(new SingleCreateCmd(boId, body), Either.class);
+        Either<String, Integer> result = dispatcher.querySync(new SingleCreateCmd(boId, body)
+                , ResolvableType.forClassWithGenerics(Either.class, String.class, Integer.class));
 
-        return result.map(x -> {
+        return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
             Response<String> rep = new Response<>();
             rep.setCode("1");
             rep.setResult(String.valueOf(x));
@@ -225,9 +210,9 @@ public class EntityController {
                                                                  @RequestBody ConditionQueryRequest condition){
 
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> result =
-                dispatcher.querySync(new ConditionSearchCmd(boId, condition), Either.class);
-
-        return  extractRepList(result);
+                dispatcher.querySync(new ConditionSearchCmd(boId, condition)
+                        , DefaultUiService.class, "conditionSearch");
+        return  extractRepList(Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")));
     }
 
     private <T> Response<RowItem<T>> extractRepList(Either<String, Tuple2<Integer, List<T>>> result){
