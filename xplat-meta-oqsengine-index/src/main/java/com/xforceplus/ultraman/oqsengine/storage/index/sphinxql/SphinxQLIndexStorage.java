@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
 /**
  * 基于 SphinxQL 的索引储存实现.
  *
- *
  * @author dongbin
  * @version 0.1 2020/2/17 17:16
  * @since 1.8
@@ -129,17 +128,7 @@ public class SphinxQLIndexStorage implements IndexStorage {
 
                     PageScope scope = page.getNextPage();
 
-                    String orderBy;
-                    if (sort != null) {
-                        orderBy = FieldDefine.JSON_FIELDS + "." + sort.getField().id();
-                        if (sort.isAsc()) {
-                            orderBy += " ASC";
-                        } else {
-                            orderBy += " DESC";
-                        }
-                    } else {
-                        orderBy = "id DESC";
-                    }
+                    String orderBy = buildOrderBy(sort);
 
                     String sql = String.format(SELECT_SQL, indexTableName, whereCondition, orderBy);
                     st = ((Connection) resource.value()).prepareStatement(sql);
@@ -177,6 +166,34 @@ public class SphinxQLIndexStorage implements IndexStorage {
             });
     }
 
+    // 构造排序.
+    private String buildOrderBy(Sort sort) {
+        StringBuilder buff = new StringBuilder();
+        if (sort != null) {
+            StorageType sortFieldStorageType = StorageTypeHelper.findStorageType(sort.getField().type());
+            if (sortFieldStorageType == StorageType.LONG) {
+                buff.append("integer(")
+                    .append(FieldDefine.JSON_FIELDS)
+                    .append(".")
+                    .append(sort.getField().id())
+                    .append(")");
+            } else {
+                buff.append(FieldDefine.JSON_FIELDS)
+                    .append(".")
+                    .append(sort.getField().id());
+            }
+
+            if (sort.isAsc()) {
+                buff.append(" ASC");
+            } else {
+                buff.append(" DESC");
+            }
+        } else {
+            buff.append("id ASC");
+        }
+        return buff.toString();
+    }
+
     @Override
     public void replaceAttribute(IEntityValue attribute) throws SQLException {
         transactionExecutor.execute(
@@ -188,7 +205,8 @@ public class SphinxQLIndexStorage implements IndexStorage {
 
                     entity.entityValue().addValues(attribute.values());
 
-                    doBuildOrReplace(entity, true);;
+                    doBuildOrReplace(entity, true);
+                    ;
 
                     return null;
                 }
@@ -353,7 +371,7 @@ public class SphinxQLIndexStorage implements IndexStorage {
             } else {
 
                 throw new IllegalStateException(
-                    String.format("Types that cannot be handled.[%s]",value.getClass().toString()));
+                    String.format("Types that cannot be handled.[%s]", value.getClass().toString()));
 
             }
 
