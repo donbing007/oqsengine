@@ -55,7 +55,7 @@ public class FieldHelper {
                 .map(Boolean::valueOf).orElse(false);
 
         Long max = RowUtils.getRowValue(row, "maxLength")
-                .map(String::valueOf)
+                .flatMap(OptionalHelper::ofEmptyStr)
                 .map(Long::valueOf).orElse(-1L);
 
         FieldConfig fieldConfig = FieldConfig

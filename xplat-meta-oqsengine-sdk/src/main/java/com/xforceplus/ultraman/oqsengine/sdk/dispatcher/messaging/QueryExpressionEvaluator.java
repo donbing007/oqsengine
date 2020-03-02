@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.dispatcher.messaging;
 
+import com.xforceplus.ultraman.oqsengine.sdk.service.ContextService;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.expression.AnnotatedElementKey;
 import org.springframework.context.expression.BeanFactoryResolver;
@@ -23,13 +24,20 @@ public class QueryExpressionEvaluator extends CachedExpressionEvaluator {
      * to {@code true}.
      */
     public boolean condition(String conditionExpression, Message msg, Method targetMethod,
-                             AnnotatedElementKey methodKey, Object[] args, @Nullable BeanFactory beanFactory) {
+                             AnnotatedElementKey methodKey, Object[] args
+            , @Nullable BeanFactory beanFactory
+            , @Nullable ContextService contextService) {
 
         QueryExpressionRootObject root = new QueryExpressionRootObject(msg, args);
         MethodBasedEvaluationContext evaluationContext = new MethodBasedEvaluationContext(
                 root, targetMethod, args, getParameterNameDiscoverer());
         if (beanFactory != null) {
             evaluationContext.setBeanResolver(new BeanFactoryResolver(beanFactory));
+        }
+
+        if( contextService != null ) {
+            evaluationContext.setVariable("tenantID", contextService.get(ContextService.StringKeys.TenantIdKey));
+            evaluationContext.setVariable("tenantCode", contextService.get(ContextService.StringKeys.TenantCodeKey));
         }
 
         return (Boolean.TRUE.equals(getExpression(this.conditionCache, methodKey, conditionExpression).getValue(

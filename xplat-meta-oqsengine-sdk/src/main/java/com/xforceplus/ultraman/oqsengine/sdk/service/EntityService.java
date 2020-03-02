@@ -17,6 +17,8 @@ public interface EntityService  {
 
     Optional<EntityClass> load(String boId);
 
+    Optional<EntityClass> loadByCode(String bocode);
+
     <T> Either<String, T> transactionalExecute(Callable<T> supplier);
 
     Either<String, Map<String, Object>> findOne(EntityClass entityClass, long id);
