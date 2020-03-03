@@ -55,6 +55,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                         id, child.family().parent());
                 }
 
+                if (child.family().parent() == 0) {
+                    throw new SQLException(
+                        String.format("A fatal error, unable to find parent data (%d) for data (%d).",
+                            child.family().parent(), id));
+                }
+
                 Optional<IEntity> parentOptional =
                     masterStorage.select(child.family().parent(), entityClass.extendEntityClass());
 
@@ -65,7 +71,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 } else {
 
                     throw new SQLException(
-                        String.format("Corrupted data.[id=%d, class=%d]", id, entityClass.id()));
+                        String.format("A fatal error, unable to find parent data (%d) for data (%d)",
+                            child.family().parent(), id));
                 }
 
             }
