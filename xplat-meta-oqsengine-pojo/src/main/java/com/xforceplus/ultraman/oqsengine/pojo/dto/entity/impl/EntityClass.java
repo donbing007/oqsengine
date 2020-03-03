@@ -5,6 +5,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 import java.util.*;
 
+/**
+ * 关联对象的定义是由 relations 和 entityClass 共同承担的.
+ * 两者使用 entityClassId 标识进行联系.
+ * relations 表示关联对象的本地字段信息,关联类型.
+ * entityClasss 表示联系对象的类型.
+ */
 public class EntityClass implements IEntityClass {
 
     /**
