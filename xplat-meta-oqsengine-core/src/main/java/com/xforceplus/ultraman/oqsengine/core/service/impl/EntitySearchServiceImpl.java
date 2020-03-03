@@ -113,13 +113,17 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         Map<Long, IEntity> entityTable =
             entities.stream().collect(Collectors.toMap(IEntity::id, e -> e, (e0, e1) -> e0));
 
-        List<IEntity> entitys = new ArrayList<>(refs.size());
+        List<IEntity> resultEntities = new ArrayList<>(refs.size());
+        IEntity resultEntity = null;
         for (EntityRef ref : refs) {
-            entities.add(buildEntity(ref, entityClass, entityTable));
+            resultEntity = buildEntity(ref, entityClass, entityTable);
+            if (resultEntity != null) {
+                resultEntities.add(resultEntity);
+            }
         }
 
         // 需要保证顺序
-        return entities;
+        return resultEntities;
 
     }
 
@@ -128,7 +132,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         throws SQLException{
         if (entityClass.extendEntityClass() == null) {
 
-            return entityTable.get(ref.getId());
+            IEntity entity = entityTable.get(ref.getId());
+
+            if (entity == null) {
+                throw new SQLException(String.format("A fatal error, unable to find data (%d).", ref.getId()));
+            }
+
+            return entity;
 
         } else {
 
