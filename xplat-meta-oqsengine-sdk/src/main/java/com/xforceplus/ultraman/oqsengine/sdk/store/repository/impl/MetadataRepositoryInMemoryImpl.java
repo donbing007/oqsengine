@@ -325,7 +325,47 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .where("code").eq(boCode)
                 .execute();
 
-        return toEntityClass(boDs);
+        if(boDs.next()) {
+            return toEntityClass(boDs.getRow());
+        }else{
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId) {
+
+        DataSet boDs = dc.query()
+                .from("bos")
+                .selectAll()
+                .where("parentId")
+                    .eq(parentId)
+                .execute();
+
+        List<Row> rows = boDs.toRows();
+
+        return rows.stream().map(this::toEntityClass)
+                .filter(Optional::isPresent)
+                .map(Optional::get).collect(Collectors.toList());
+    }
+
+
+    @Override
+    public List<EntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode) {
+
+        DataSet boDs = dc.query()
+                .from("bos")
+                .selectAll()
+                .where("code")
+                .eq(parentCode)
+                .execute();
+
+        if(boDs.next()){
+            String id = RowUtils.getRowValue(boDs.getRow(), "id").map(String::valueOf).orElse("");
+            return findSubEntitiesById(tenantId, appId, id);
+        }
+
+        return Collections.emptyList();
     }
 
     /**
@@ -342,14 +382,14 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .from("bos")
                 .selectAll().where("id").eq(boId)
                 .execute();
-        return toEntityClass(boDs);
-
+        if(boDs.next()) {
+            return toEntityClass(boDs.getRow());
+        }else{
+            return Optional.empty();
+        }
     }
 
-    private Optional<EntityClass> toEntityClass(DataSet boDs){
-        if(boDs.next()){
-            Row row = boDs.getRow();
-
+    private Optional<EntityClass> toEntityClass(Row row){
             String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
             String boId = RowUtils.getRowValue(row, "id").map(String::valueOf).orElse("0");
 
@@ -397,9 +437,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                     , code, relationList, entityClassList
                     , parentEntityClassOp.orElse(null), allFields);
             return Optional.of(entityClass);
-        }
-
-        return Optional.empty();
     }
 
     private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField> loadFields(String id){

@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,6 +33,7 @@ public class StoreTest {
     private BoUp boupA(){
         return BoUp.newBuilder()
                 .setId("111111")
+                .setCode("boupA")
                 .addApis(Api.newBuilder().setCode("a").setMethod("b").build())
                 .addFields(Field.newBuilder()
                         .setId("12322")
@@ -45,6 +47,7 @@ public class StoreTest {
     private BoUp boupANew(){
         return BoUp.newBuilder()
                 .setId("111111")
+                .setCode("boupANew")
                 .addApis(Api.newBuilder().setCode("a").setMethod("b").build())
                 .addFields(Field.newBuilder()
                         .setId("12322")
@@ -278,7 +281,19 @@ public class StoreTest {
         repository.save(result, "1", "1");
         Optional<EntityClass> entityclass = repository.load("1", "1", "111111");
 
+        assertTrue("exists", entityclass.isPresent());
+
         System.out.println(entityclass.get());
+
+        repository.save(result, "1", "1");
+        Optional<EntityClass> entityclassParent = repository.loadByCode("1", "1", "parent");
+
+        assertTrue("exists parent", entityclassParent.isPresent());
+
+        repository.save(result, "1", "1");
+        List<EntityClass> subEntityclassParent = repository.findSubEntitiesByCode("1", "1", "parent");
+
+        assertTrue("exists child", !subEntityclassParent.isEmpty());
 
         /**
          * update
