@@ -231,6 +231,27 @@ public class EntityServiceImpl implements EntityService {
         }
     }
 
+    @Override
+    public Integer count(EntityClass entityClass, ConditionQueryRequest condition) {
+        String transId = contextService.get(ContextService.StringKeys.TransactionKey);
+
+
+        SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
+
+        if(transId != null){
+            requestBuilder.addHeader("transaction-id", transId);
+        }
+
+        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, condition))
+                .toCompletableFuture().join();
+
+        if(result.getCode() == OperationResult.Code.OK) {
+            return result.getTotalRow();
+        }else{
+            return 0;
+        }
+    }
+
 
     //TODO
     private Map<String, Object> toResultMap(EntityClass entityClass, EntityUp up) {
