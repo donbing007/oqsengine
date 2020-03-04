@@ -172,7 +172,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     // 合并子类和父类属性,同样字段子类会覆盖父类.
     private void merageChildAndParent(IEntity child, IEntity parent) {
-        Collection<IValue> childValues = child.entityValue().values();
+        Collection<IValue> childValues = new ArrayList(child.entityValue().values());
         child.entityValue().clear()
             .addValues(parent.entityValue().values())
             .addValues(childValues);
