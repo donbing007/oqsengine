@@ -30,4 +30,6 @@ public interface EntityService  {
     Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByCondition(EntityClass entityClass, ConditionQueryRequest condition);
 
     Either<String, Long> create(EntityClass entityClass, Map<String, Object> body);
+
+    Integer count(EntityClass entityClass, ConditionQueryRequest condition);
 }

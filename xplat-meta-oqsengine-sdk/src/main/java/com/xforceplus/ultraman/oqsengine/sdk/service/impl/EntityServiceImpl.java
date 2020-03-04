@@ -54,7 +54,10 @@ public class EntityServiceImpl implements EntityService {
 
     @Override
     public Optional<EntityClass> loadByCode(String bocode) {
-        return Optional.empty();
+        String tenantId = contextService.get(ContextService.StringKeys.TenantIdKey);
+        String appCode  = contextService.get(ContextService.StringKeys.AppCode);
+
+        return metadataRepository.loadByCode(tenantId, appCode, bocode);
     }
 
     @Override
@@ -225,6 +228,27 @@ public class EntityServiceImpl implements EntityService {
         }else{
             //indicates
             return Either.left(createResult.getMessage());
+        }
+    }
+
+    @Override
+    public Integer count(EntityClass entityClass, ConditionQueryRequest condition) {
+        String transId = contextService.get(ContextService.StringKeys.TransactionKey);
+
+
+        SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
+
+        if(transId != null){
+            requestBuilder.addHeader("transaction-id", transId);
+        }
+
+        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, condition))
+                .toCompletableFuture().join();
+
+        if(result.getCode() == OperationResult.Code.OK) {
+            return result.getTotalRow();
+        }else{
+            return 0;
         }
     }
 

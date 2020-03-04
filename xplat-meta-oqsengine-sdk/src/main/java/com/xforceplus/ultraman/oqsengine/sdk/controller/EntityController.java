@@ -92,7 +92,7 @@ public class EntityController {
 
         Either<String, Long> result = dispatcher
                 .querySync(new SingleCreateCmd(boId, body)
-                , DefaultUiService.class, "singleQuery");
+                , DefaultUiService.class, "singleCreate");
 
 
         return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
