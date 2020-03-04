@@ -162,6 +162,14 @@ private static final long serialVersionUID = 0L;
      * <code>le = 10;</code>
      */
     le(10),
+    /**
+     * <code>ne = 11;</code>
+     */
+    ne(11),
+    /**
+     * <code>ni = 12;</code>
+     */
+    ni(12),
     UNRECOGNIZED(-1),
     ;
 
@@ -209,6 +217,14 @@ private static final long serialVersionUID = 0L;
      * <code>le = 10;</code>
      */
     public static final int le_VALUE = 10;
+    /**
+     * <code>ne = 11;</code>
+     */
+    public static final int ne_VALUE = 11;
+    /**
+     * <code>ni = 12;</code>
+     */
+    public static final int ni_VALUE = 12;
 
 
     public final int getNumber() {
@@ -240,6 +256,8 @@ private static final long serialVersionUID = 0L;
         case 8: return ge;
         case 9: return lt;
         case 10: return le;
+        case 11: return ne;
+        case 12: return ni;
         default: return null;
       }
     }

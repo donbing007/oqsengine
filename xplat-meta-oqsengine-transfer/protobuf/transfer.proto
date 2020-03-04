@@ -62,6 +62,8 @@ message FieldConditionUp {
         ge = 8;
         lt = 9;
         le = 10;
+        ne = 11;
+        ni = 12;
     }
     Op operation = 2;
     repeated string values = 3;

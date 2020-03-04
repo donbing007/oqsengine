@@ -467,6 +467,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             , toTypedValue(fieldOp.get()
                                 , fieldCondition.getValues(0))));
                     break;
+                case ne:
+                    conditions = new Conditions(new Condition(fieldOp.get()
+                            , ConditionOperator.NOT_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , fieldCondition.getValues(0))));
+                    break;
                 case ge:
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.GREATER_THAN_EQUALS
@@ -560,11 +566,34 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 , fieldCondition.getValues(0))));
 
                         Conditions finalConditions = conditions;
-                        fieldCondition.getValuesList().forEach(x -> {
+                        fieldCondition.getValuesList().stream().skip(1).forEach(x -> {
                             finalConditions.addOr(new Conditions(new Condition(fieldOp.get()
                                     , ConditionOperator.EQUALS
                                     , toTypedValue(fieldOp.get()
-                                    , fieldCondition.getValues(0)))), false);
+                                    , x))), false);
+                        });
+
+                        conditions = finalConditions;
+                    }
+                    break;
+                case ni:
+                    if(fieldCondition.getValuesCount() == 1 ){
+                        conditions = new Conditions(new Condition(fieldOp.get()
+                                , ConditionOperator.NOT_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(0))));
+                    }else{
+                        conditions = new Conditions(new Condition(fieldOp.get()
+                                , ConditionOperator.NOT_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(0))));
+
+                        Conditions finalConditions = conditions;
+                        fieldCondition.getValuesList().stream().skip(1).forEach(x -> {
+                            finalConditions.addAnd(new Conditions(new Condition(fieldOp.get()
+                                    , ConditionOperator.NOT_EQUALS
+                                    , toTypedValue(fieldOp.get()
+                                    , x))), false);
                         });
 
                         conditions = finalConditions;
