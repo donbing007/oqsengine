@@ -84,7 +84,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                  * 索引中只存放可搜索字段,子类包含父类和本身的所有可搜索字段.
                  * 这里先将父的属性合并进来过滤再储存.
                  */
-                indexStorage.build(buildIndexEntity(entityClone)); // child
+                IEntity indexEntity = buildIndexEntity(entityClone);
+                // 来源于外部 entity,所以这里需要调整继承家族信息.
+                indexEntity.resetFamily(new EntityFamily(fatherId, 0));
+                indexStorage.build(indexEntity); // child
 
 
                 return childId;

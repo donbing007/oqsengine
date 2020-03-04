@@ -98,6 +98,11 @@ public class Entity implements IEntity, Serializable {
     }
 
     @Override
+    public void resetFamily(IEntityFamily family) {
+        this.family = family;
+    }
+
+    @Override
     public Object clone() throws CloneNotSupportedException {
         return new Entity(id(),entityClass(), (IEntityValue) entityValue().clone(), family(), version());
     }

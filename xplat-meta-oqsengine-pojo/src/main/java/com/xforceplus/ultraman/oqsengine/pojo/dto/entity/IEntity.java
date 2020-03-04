@@ -36,6 +36,12 @@ public interface IEntity extends Cloneable {
     public void resetId(long id);
 
     /**
+     * 重置继承家族信息.
+     * @param family 新家族.
+     */
+    public void resetFamily(IEntityFamily family);
+
+    /**
      * 当前数据版本号.
      * @return 版本号.
      */
