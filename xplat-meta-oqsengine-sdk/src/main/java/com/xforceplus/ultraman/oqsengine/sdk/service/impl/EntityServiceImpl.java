@@ -54,7 +54,10 @@ public class EntityServiceImpl implements EntityService {
 
     @Override
     public Optional<EntityClass> loadByCode(String bocode) {
-        return Optional.empty();
+        String tenantId = contextService.get(ContextService.StringKeys.TenantIdKey);
+        String appCode  = contextService.get(ContextService.StringKeys.AppCode);
+
+        return metadataRepository.loadByCode(tenantId, appCode, bocode);
     }
 
     @Override

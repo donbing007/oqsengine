@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.metadata.grpc.Field;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
@@ -270,7 +271,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * @param boId
      * @return
      */
-    private Optional<Tuple2<Relation, IEntityClass>> loadRelationEntityClass(String boId, Row relRow, String boCode){
+    private Optional<Tuple2<Relation, IEntityClass>> loadRelationEntityClass(String boId, Row relRow, String mainBoCode){
 
         String relationType = RowUtils.getRowValue(relRow, "relType")
                             .map(String::valueOf)
@@ -288,13 +289,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
             String subCode = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
 
-            //assemble entity class
-            IEntityClass entityClass = new EntityClass(Long.valueOf(boId)
-                    , subCode
-                    , Collections.emptyList()
-                    , Collections.emptyList()
-                    , parentEntityClass.orElse(null)
-                    , loadFields(boId));
+
+
+            List<IEntityField> listFields = new LinkedList<>();
 
             //assemble relation Field
             com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field field;
@@ -307,9 +304,19 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
             }else{
                 //relation is onetomany
-                field = toEntityClassFieldFromRel(relRow, boCode);
-                relation = new Relation(boCode, joinBoId, relationType, true, field);
+                field = toEntityClassFieldFromRel(relRow, mainBoCode);
+                relation = new Relation(mainBoCode, joinBoId, relationType, true, field);
+                listFields.add(field);
             }
+
+            listFields.addAll(loadFields(boId));
+            //assemble entity class
+            IEntityClass entityClass = new EntityClass(Long.valueOf(boId)
+                    , subCode
+                    , Collections.emptyList()
+                    , Collections.emptyList()
+                    , parentEntityClass.orElse(null)
+                    , listFields);
 
             return Tuple.of(relation, entityClass);
         });
