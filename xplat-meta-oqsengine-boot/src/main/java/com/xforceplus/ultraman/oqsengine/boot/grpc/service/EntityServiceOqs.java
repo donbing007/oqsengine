@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.service;
 
 import akka.grpc.javadsl.Metadata;
+import com.xforceplus.ultraman.oqsengine.boot.utils.EntityHelper;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
@@ -12,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.slf4j.Logger;
@@ -582,7 +584,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     //TODO currently only id
     private Optional<IEntityField> getFieldFromEntityClass(IEntityClass entityClass, Long id){
-        return entityClass.field(id);
+        return IEntityClassHelper.findFieldById(entityClass, id);
     }
 
     private IEntityClass toRawEntityClass(EntityUp entityUp){

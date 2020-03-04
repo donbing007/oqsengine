@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.*;
 import io.vavr.Tuple;
@@ -16,7 +17,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.xforceplus.ultraman.oqsengine.sdk.util.OptionalHelper.combine;
+import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.combine;
+
 
 public class EntityClassToGrpcConverter {
 
@@ -150,7 +152,9 @@ public class EntityClassToGrpcConverter {
 
     private static List<QueryFieldsUp> toQueryFields(IEntityClass entityClass, EntityItem entityItem) {
 
-        Stream<QueryFieldsUp> fieldsUp = entityItem.getFields()
+        Stream<QueryFieldsUp> fieldsUp = Optional.ofNullable(entityItem)
+                .map(EntityItem::getFields)
+                .orElseGet(Collections::emptyList)
                 .stream()
                 .map(entityClass::field)
                 .filter(Optional::isPresent)
@@ -162,7 +166,8 @@ public class EntityClassToGrpcConverter {
                         .setId(x.id())
                         .build());
 
-        Stream<QueryFieldsUp> fieldsUpFrom = entityItem.getEntities()
+        Stream<QueryFieldsUp> fieldsUpFrom = Optional.ofNullable(entityItem)
+                .map(EntityItem::getEntities).orElseGet(Collections::emptyList)
                 .stream()
                 .flatMap(subEntityItem -> {
 
@@ -239,7 +244,7 @@ public class EntityClassToGrpcConverter {
 
     private static Optional<FieldConditionUp> toFieldCondition(IEntityClass entityClass, FieldCondition fieldCondition){
 
-        Optional<IEntityField> fieldOp = entityClass.field(fieldCondition.getCode());
+        Optional<IEntityField> fieldOp = IEntityClassHelper.findFieldByCode(entityClass, fieldCondition.getCode());
 
         return fieldOp.map(x -> FieldConditionUp.newBuilder()
                 .setCode(fieldCondition.getCode())

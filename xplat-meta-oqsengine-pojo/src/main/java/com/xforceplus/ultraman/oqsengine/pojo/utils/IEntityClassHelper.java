@@ -1,12 +1,11 @@
-package com.xforceplus.ultraman.oqsengine.sdk.util;
+package com.xforceplus.ultraman.oqsengine.pojo.utils;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 
 import java.util.Optional;
 
-import static com.xforceplus.ultraman.oqsengine.sdk.util.OptionalHelper.*;
+import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.combine;
 
 /**
  * a helper for entityClass
@@ -24,6 +23,15 @@ public class IEntityClassHelper {
         Optional<IEntityField> entityFieldOp = entityClass.field(fieldId);
         Optional<IEntityField> entityClassFromParent = Optional.ofNullable(entityClass.extendEntityClass())
                 .flatMap(parent -> parent.field(fieldId));
+
+        return combine(entityFieldOp, entityClassFromParent);
+    }
+
+    public static Optional<IEntityField> findFieldByCode(IEntityClass entityClass, String code) {
+
+        Optional<IEntityField> entityFieldOp = entityClass.field(code);
+        Optional<IEntityField> entityClassFromParent = Optional.ofNullable(entityClass.extendEntityClass())
+                .flatMap(parent -> parent.field(code));
 
         return combine(entityFieldOp, entityClassFromParent);
     }

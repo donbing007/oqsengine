@@ -94,7 +94,6 @@ public class EntityController {
                 .querySync(new SingleCreateCmd(boId, body)
                 , DefaultUiService.class, "singleCreate");
 
-
         return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
             Response<String> rep = new Response<>();
             rep.setCode("1");
