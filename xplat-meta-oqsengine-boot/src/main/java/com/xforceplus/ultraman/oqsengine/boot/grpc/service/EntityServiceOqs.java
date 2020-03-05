@@ -206,7 +206,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(e.getMessage())
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                     .buildPartial();
         }
 

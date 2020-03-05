@@ -17,7 +17,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     /**
      * Entity的值集合
      */
-    private Map<Long, IValue> values;
+    private Map<Long, IValue> values ;
 
 
     public EntityValue(long id) {
@@ -91,7 +91,9 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     @Override
     public IEntityValue clear() {
-        values.clear();
+        if(values != null){
+            values.clear();
+        }
         return this;
     }
 
