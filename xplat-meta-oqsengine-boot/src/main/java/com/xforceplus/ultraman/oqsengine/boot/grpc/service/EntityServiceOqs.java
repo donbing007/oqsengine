@@ -58,7 +58,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             return CompletableFuture.completedFuture(OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
                     .setTransactionResult(String.valueOf(transId)).buildPartial());
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             logger.error("{}", e);
 
@@ -81,7 +81,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         try {
             long id = entityManagementService.build(toEntity(entityClass, in));
             result = OperationResult.newBuilder().addIds(id).setCode(OperationResult.Code.OK).buildPartial();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -118,7 +118,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .setMessage("没有找到该记录")
                         .buildPartial();
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -159,7 +159,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .setCode(OperationResult.Code.OK)
                         .buildPartial();
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -202,7 +202,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setCode(OperationResult.Code.OK)
                     .setTotalRow(0)
                     .buildPartial());
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -322,7 +322,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setTotalRow(Optional.ofNullable(entities).orElseGet(Collections::emptyList).size())
                     .buildPartial();
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -375,7 +375,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setCode(OperationResult.Code.OK)
                     .setMessage("事务提交成功")
                     .buildPartial();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -398,7 +398,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setCode(OperationResult.Code.OK)
                     .setMessage("事务提交成功")
                     .buildPartial();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
