@@ -143,28 +143,22 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         try{
             IEntityClass entityClass = toEntityClass(in);
 
-            if(entityClass.extendEntityClass() != null){
-                Optional<IEntity> childOp = entitySearchService.selectOne(in.getObjId(), entityClass);
-                if(childOp.isPresent()){
-                    entityManagementService.delete(childOp.get());
-                    result = OperationResult.newBuilder()
-                            .setAffectedRow(1)
-                            .setCode(OperationResult.Code.OK)
-                            .buildPartial();
-                }else{
-                    result = OperationResult.newBuilder()
-                            .setAffectedRow(0)
-                            .setCode(OperationResult.Code.OK)
-                            .buildPartial();
-                }
-            }else {
-                entityManagementService.delete(toEntity(entityClass, in));
+            //find one
+            Optional<IEntity> op = entitySearchService.selectOne(in.getObjId(), entityClass);
+
+            if(op.isPresent()){
+                IEntity entity = op.get();
+                entityManagementService.delete(entity);
                 result = OperationResult.newBuilder()
                         .setAffectedRow(1)
                         .setCode(OperationResult.Code.OK)
                         .buildPartial();
+            }else{
+                result = OperationResult.newBuilder()
+                        .setAffectedRow(0)
+                        .setCode(OperationResult.Code.OK)
+                        .buildPartial();
             }
-
         } catch (SQLException e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
