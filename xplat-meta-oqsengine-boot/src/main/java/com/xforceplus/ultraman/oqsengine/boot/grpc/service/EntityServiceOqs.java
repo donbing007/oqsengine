@@ -237,7 +237,17 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             //check if has sub query for more details
             List<QueryFieldsUp> queryField = in.getQueryFieldsList();
 
-            if(sort == null || sort.isEmpty()){
+            Optional<IEntityField> sortField;
+
+            if(sort == null || sort.isEmpty()) {
+                sortField = Optional.empty();
+            }else{
+                FieldSortUp sortUp = sort.get(0);
+                //get related field
+                sortField = IEntityClassHelper.findFieldByCode(entityClass, sortUp.getCode());
+            }
+
+            if(!sortField.isPresent()){
                 Optional<Conditions> consOp = toConditions(entityClass, conditions);
                 if(consOp.isPresent()){
                     entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
@@ -245,17 +255,17 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
                 }
             }else {
-                Sort sortParam;
                 FieldSortUp sortUp = sort.get(0);
+                Sort sortParam;
                 if(sortUp.getOrder() == FieldSortUp.Order.asc) {
-                    sortParam = Sort.buildAscSort(toEntityField(sortUp.getField()));
+                    sortParam = Sort.buildAscSort(sortField.get());
                 }else{
-                    sortParam = Sort.buildDescSort(toEntityField(sortUp.getField()));
+                    sortParam = Sort.buildDescSort(sortField.get());
                 }
 
                 Optional<Conditions> consOp = toConditions(entityClass, conditions);
                 if(consOp.isPresent()){
-                    entities = entitySearchService.selectByConditions(consOp.get(), toEntityClass(entityUp), sortParam, page);
+                    entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
 
                 }else{
                     entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
@@ -702,7 +712,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private Field toEntityField(FieldUp fieldUp){
         return new Field(
                   fieldUp.getId()
-                , fieldUp.getName()
+                , fieldUp.getCode()
                 , FieldType.valueOf(fieldUp.getFieldType())
                 , FieldConfig.build()
                     .searchable(ofEmptyStr(fieldUp.getSearchable())
