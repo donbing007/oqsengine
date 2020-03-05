@@ -2,7 +2,10 @@ package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.service.ContextService;
@@ -262,11 +265,21 @@ public class EntityServiceImpl implements EntityService {
         }
 
         up.getValuesList().forEach(entry -> {
-            IEntityClassHelper.findFieldById(entityClass, entry.getFieldId()).ifPresent(field -> {
+            IEntityClassHelper.findFieldByIdInAll(entityClass, entry.getFieldId()).ifPresent(tuple2 -> {
+                IEntityField field = tuple2._2();
+                IEntityClass entity = tuple2._1();
+                String fieldName = null;
+                if(entityClass.id() != entity.id()){
+                    fieldName = entity.code() + "." + field.name();
+                }else{
+                    fieldName = field.name();
+                }
+
                 if(field.type() == FieldType.BOOLEAN) {
-                    map.put(field.name(), Boolean.valueOf(entry.getValue()));
+
+                    map.put(fieldName, Boolean.valueOf(entry.getValue()));
                 } else {
-                    map.put(field.name(), entry.getValue());
+                    map.put(fieldName, entry.getValue());
                 }
             });
         });
