@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.springframework.test.util.AssertionErrors.assertTrue;
 
@@ -266,6 +269,34 @@ public class StoreTest {
         System.out.println(entityclassNew.get());
     }
 
+
+    @Test
+    public void loadLoadTest() throws InterruptedException {
+
+        MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
+        ModuleUpResult result = ModuleUpResult.newBuilder()
+                .addBoUps(boupParent())
+                .addBoUps(boupSub())
+                .build();
+        repository.save(result, "1", "1");
+        //repository.save(result, "1", "1");
+
+        //repository.clearAllBoIdRelated("1111");
+
+        Optional<EntityClass> parent2 = repository.loadByCode("1", "1", "child");
+        System.out.println(parent2);
+
+        CountDownLatch latch = new CountDownLatch(1000);
+        IntStream.range(0, 1000)
+                .mapToObj(x -> new Thread(() -> {
+                    System.out.println(x);
+                    Optional<EntityClass> parent = repository.loadByCode("1", "1", "parent");
+                    System.out.println(parent);
+                    latch.countDown();
+                })).collect(Collectors.toList()).forEach(Thread::start);
+
+        latch.await();
+    }
 
     @Test
     public void saveSingleExtendedLoad(){

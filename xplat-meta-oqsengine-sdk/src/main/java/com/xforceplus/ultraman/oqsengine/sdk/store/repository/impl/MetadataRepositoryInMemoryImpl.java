@@ -547,15 +547,14 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * nothing todo with the related entity
      * @param boId
      */
-    synchronized private void clearAllBoIdRelated(String boId){
+    @Override
+    synchronized public void clearAllBoIdRelated(String boId){
         UpdateSummary updateSummary = dc.executeUpdate(callback -> {
             callback.deleteFrom(getTable("bos")).where("id").eq(boId).execute();
             callback.deleteFrom(getTable("apis")).where("boId").eq(boId).execute();
             callback.deleteFrom(getTable("fields")).where("boId").eq(boId).execute();
             callback.deleteFrom(getTable("rels")).where("boId").eq(boId).execute();
         });
-
-        System.out.println(updateSummary.getDeletedRows());
     }
 
     synchronized private void insertBoTable(String id, String code, String parentId) {
