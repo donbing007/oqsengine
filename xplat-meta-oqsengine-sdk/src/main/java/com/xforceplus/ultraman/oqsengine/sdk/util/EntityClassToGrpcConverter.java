@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.util;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
@@ -9,11 +10,9 @@ import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.*;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.springframework.util.StringUtils;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,7 +29,7 @@ public class EntityClassToGrpcConverter {
         return toEntityUpBuilder(entityClass, id).build();
     }
 
-    private static EntityUp toRawEntityUp(IEntityClass entity){
+    public static EntityUp toRawEntityUp(IEntityClass entity){
         return EntityUp.newBuilder()
                 .setId(entity.id())
                 .setCode(entity.code())
@@ -111,7 +110,7 @@ public class EntityClassToGrpcConverter {
      * @param id
      * @return
      */
-    private static EntityUp.Builder toEntityUpBuilder(IEntityClass entityClass, Long id){
+    public static EntityUp.Builder toEntityUpBuilder(IEntityClass entityClass, Long id){
 
         EntityUp.Builder builder = EntityUp.newBuilder();
 
@@ -304,6 +303,70 @@ public class EntityClassToGrpcConverter {
         return builder.build();
     }
 
+
+    //TODO
+    public static Map<String, Object> toResultMap(EntityClass entityClass, EntityUp up) {
+
+        Map<String, Object> map = new HashMap<>();
+        if(!StringUtils.isEmpty(up.getObjId())){
+            map.put("id", String.valueOf(up.getObjId()));
+        }
+
+        up.getValuesList().forEach(entry -> {
+            IEntityClassHelper.findFieldByIdInAll(entityClass, entry.getFieldId()).ifPresent(tuple2 -> {
+                IEntityField field = tuple2._2();
+                IEntityClass entity = tuple2._1();
+                String fieldName = null;
+                if(entityClass.id() != entity.id()){
+                    fieldName = entity.code() + "." + field.name();
+                }else{
+                    fieldName = field.name();
+                }
+
+                if(field.type() == FieldType.BOOLEAN) {
+
+                    map.put(fieldName, Boolean.valueOf(entry.getValue()));
+                } else {
+                    map.put(fieldName, entry.getValue());
+                }
+            });
+        });
+        return map;
+    }
+
+    public static Map<String, Object> filterItem(Map<String, Object> values, String mainEntityCode, EntityItem entityItem){
+
+        if(entityItem == null || entityItem.getEntities().isEmpty()){
+            return values;
+        }
+
+        Map<String, Object> newResult = new HashMap<>();
+
+        //setup main
+        entityItem.getFields().forEach(x -> {
+            Object value  = values.get(x);
+            if(value != null){
+                newResult.put(x, value);
+            }
+
+            Object otherValue = values.get(mainEntityCode + "." + x);
+
+            if(otherValue != null){
+                newResult.put(x, value);
+            }
+        });
+
+        entityItem.getEntities().forEach(subEntity -> {
+            subEntity.getFields().forEach(field -> {
+                String subKey = subEntity.getCode() + "." + field;
+                Object value = values.get(subKey);
+                if(value != null){
+                    newResult.put(subKey, value);
+                }
+            });
+        });
+        return newResult;
+    }
 
 
 }

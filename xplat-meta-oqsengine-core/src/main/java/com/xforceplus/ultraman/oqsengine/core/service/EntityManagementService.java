@@ -17,7 +17,7 @@ public interface EntityManagementService {
      * @param entity 目标 entity 数据.
      * @return 新对象的标识.
      */
-    long build(IEntity entity) throws SQLException;
+    IEntity build(IEntity entity) throws SQLException;
 
     /**
      * 替换一个已经存在的 entity 的信息.

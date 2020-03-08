@@ -43,7 +43,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
 
     @Override
-    public long build(IEntity entity) throws SQLException {
+    public IEntity build(IEntity entity) throws SQLException {
 
         // 克隆一份,后续的修改不影响入参.
         IEntity entityClone;
@@ -53,7 +53,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             throw new SQLException(e.getMessage(),e);
         }
 
-        return (long) transactionExecutor.execute(r -> {
+        return (IEntity) transactionExecutor.execute(r -> {
 
             if (isSub(entityClone)) {
                 // 处理父类
@@ -90,17 +90,19 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 indexStorage.build(indexEntity); // child
 
 
-                return childId;
+                return indexEntity;
 
             } else {
 
                 entity.resetId(idGenerator.next());
                 entityClone.resetId(entity.id());
 
-                masterStorage.build(entityClone);
-                indexStorage.build(buildIndexEntity(entityClone));
+                IEntity indexEntity = buildIndexEntity(entityClone);
 
-                return entity.id();
+                masterStorage.build(entityClone);
+                indexStorage.build(indexEntity);
+
+                return indexEntity;
             }
 
         });

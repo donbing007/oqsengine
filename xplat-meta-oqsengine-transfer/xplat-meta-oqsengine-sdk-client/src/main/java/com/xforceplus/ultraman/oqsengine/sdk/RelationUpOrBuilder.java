@@ -10,7 +10,7 @@ public interface RelationUpOrBuilder extends
   /**
    * <code>string name = 1;</code>
    */
-  java.lang.String getName();
+  String getName();
   /**
    * <code>string name = 1;</code>
    */
@@ -20,7 +20,7 @@ public interface RelationUpOrBuilder extends
   /**
    * <code>string relationType = 2;</code>
    */
-  java.lang.String getRelationType();
+  String getRelationType();
   /**
    * <code>string relationType = 2;</code>
    */
@@ -39,11 +39,11 @@ public interface RelationUpOrBuilder extends
   /**
    * <code>.FieldUp entityField = 4;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.FieldUp getEntityField();
+  FieldUp getEntityField();
   /**
    * <code>.FieldUp entityField = 4;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.FieldUpOrBuilder getEntityFieldOrBuilder();
+  FieldUpOrBuilder getEntityFieldOrBuilder();
 
   /**
    * <code>int64 relatedEntityClassId = 5;</code>

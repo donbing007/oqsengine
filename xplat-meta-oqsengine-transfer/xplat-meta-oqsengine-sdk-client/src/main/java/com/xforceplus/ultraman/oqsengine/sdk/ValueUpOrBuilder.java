@@ -10,7 +10,7 @@ public interface ValueUpOrBuilder extends
   /**
    * <code>string value = 1;</code>
    */
-  java.lang.String getValue();
+  String getValue();
   /**
    * <code>string value = 1;</code>
    */
@@ -20,7 +20,7 @@ public interface ValueUpOrBuilder extends
   /**
    * <code>string name = 2;</code>
    */
-  java.lang.String getName();
+  String getName();
   /**
    * <code>string name = 2;</code>
    */
@@ -30,7 +30,7 @@ public interface ValueUpOrBuilder extends
   /**
    * <code>string fieldType = 3;</code>
    */
-  java.lang.String getFieldType();
+  String getFieldType();
   /**
    * <code>string fieldType = 3;</code>
    */

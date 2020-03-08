@@ -110,6 +110,8 @@ message EntityUp {
     int64 objId = 7;
 
     string code = 8;
+
+    EntityUp subEntityClass = 9;
 }
 
 message QueryFieldsUp {
