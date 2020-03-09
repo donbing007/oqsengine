@@ -24,6 +24,7 @@ public final class ConditionOperatorFieldValidationFactory {
         VALIDATION_MAP.put(FieldType.ENUM, new EnumConditionValidation());
         VALIDATION_MAP.put(FieldType.LONG, new LongConditionValidation());
         VALIDATION_MAP.put(FieldType.STRING, new StringConditionValidation());
+        VALIDATION_MAP.put(FieldType.DECIMAL, new DecimalConditionValidation());
     }
 
     // 不允许实例化.

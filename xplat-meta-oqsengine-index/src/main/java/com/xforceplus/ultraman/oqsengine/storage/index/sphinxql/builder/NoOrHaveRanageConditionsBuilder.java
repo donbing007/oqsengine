@@ -6,14 +6,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.storage.StorageType;
-import com.xforceplus.ultraman.oqsengine.storage.helper.StorageTypeHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.compare.SphinxQLConditionCompareStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.compare.ConditionCompareStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 
 import java.util.Iterator;
 
 /**
  * 所有连接符都是 and,但是比较符号出现了大于小于等.
+ *
  * @author dongbin
  * @version 0.1 2020/2/22 17:28
  * @since 1.8
@@ -30,8 +32,8 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
 
         Condition condition;
         IEntityField field;
-        IValue value;
-        Conditions preciseConditions = null;
+        IValue logicValue;
+        Conditions eqConditions = null;
         while (nodes.hasNext()) {
             node = nodes.next();
 
@@ -40,36 +42,24 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
                 valueConditionNode = (ValueConditionNode) node;
 
                 condition = valueConditionNode.getCondition();
-                value = condition.getValue();
+                logicValue = condition.getValue();
+                field = condition.getValue().getField();
 
                 if (isRange(condition)) {
 
                     if (buff.length() != 0) {
                         buff.append(" and ");
                     }
-                    buff.append(FieldDefine.JSON_FIELDS).append(".")
-                        .append(condition.getField().id())
-                        .append(" ")
-                        .append(condition.getOperator().getSymbol())
-                        .append(" ");
-                    field = condition.getValue().getField();
-                    StorageType storageType = StorageTypeHelper.findStorageType(field.type());
-                    switch(storageType) {
-                        case STRING: {
-                            buff.append("\'").append(value.valueToString()).append("\'");
-                            break;
-                        }
-                        case LONG: {
-                            buff.append(value.valueToLong());
-                        }
-                    }
+                    SphinxQLConditionCompareStrategy compareStrategy = ConditionCompareStrategyFactory.getStrategy(field.type());
+                    StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(field.type());
+                    buff.append(compareStrategy.build(FieldDefine.JSON_FIELDS, condition, storageStrategy));
 
                 } else {
 
-                    if (preciseConditions == null) {
-                        preciseConditions = new Conditions(condition);
+                    if (eqConditions == null) {
+                        eqConditions = new Conditions(condition);
                     } else {
-                        preciseConditions.addAnd(condition);
+                        eqConditions.addAnd(condition);
                     }
 
                 }
@@ -77,14 +67,14 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
             }
         }
 
-        if (preciseConditions != null) {
-            buff.append(" and ").append(super.build(preciseConditions));
+        if (eqConditions != null) {
+            buff.append(" and ").append(super.build(eqConditions));
         }
         return buff.toString();
     }
 
     private boolean isRange(Condition condition) {
-        switch(condition.getOperator()) {
+        switch (condition.getOperator()) {
             case LIKE:
             case EQUALS:
             case NOT_EQUALS:
@@ -93,4 +83,5 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
                 return true;
         }
     }
+
 }

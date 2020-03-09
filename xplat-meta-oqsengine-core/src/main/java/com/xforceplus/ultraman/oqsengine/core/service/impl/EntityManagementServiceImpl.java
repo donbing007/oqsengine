@@ -44,6 +44,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Override
     public long build(IEntity entity) throws SQLException {
+        check(entity, true);
 
         // 克隆一份,后续的修改不影响入参.
         IEntity entityClone;
@@ -108,6 +109,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Override
     public void replace(IEntity entity) throws SQLException {
+        check(entity, false);
 
         // 克隆一份,后续的修改不影响入参.
         IEntity target;
@@ -156,6 +158,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Override
     public void delete(IEntity entity) throws SQLException {
+        check(entity, false);
 
         transactionExecutor.execute(r -> {
 
@@ -223,6 +226,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             });
 
         return new Entity(entity.id(), entityClass, newValues, family, entity.version());
+    }
+
+    private void check(IEntity entity, boolean build) throws SQLException {
+        if (!build) {
+            if (entity.id() == 0) {
+                throw new SQLException("Invalid entity`s id.");
+            }
+        }
     }
 
 }

@@ -13,20 +13,22 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoShardTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.optimizer.DefaultSphinxQLQueryOptimizer;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.selector.TakeTurnsSelector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.BoolStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.LongStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.StringStorageStrategy;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,6 +36,7 @@ import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -78,11 +81,19 @@ public class SphinxQLIndexStorageTest {
         TransactionExecutor executor = new AutoShardTransactionExecutor(
             transactionManager, SphinxQLTransactionResource.class);
 
+        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
+
+        DefaultSphinxQLQueryOptimizer optimizer = new DefaultSphinxQLQueryOptimizer();
+        optimizer.setStorageStrategy(storageStrategyFactory);
+        optimizer.init();
+
         storage = new SphinxQLIndexStorage();
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", dataSourceSelector);
         ReflectionTestUtils.setField(storage, "searchDataSourceSelector", dataSourceSelector);
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
-        ReflectionTestUtils.setField(storage, "queryOptimizer", new DefaultSphinxQLQueryOptimizer());
+        ReflectionTestUtils.setField(storage, "queryOptimizer", optimizer);
+        ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         storage.setIndexTableName("oqsindex");
         storage.init();
 
@@ -153,6 +164,11 @@ public class SphinxQLIndexStorageTest {
                 break;
             case STRING:
                 newValue = new StringValue(field, buildRandomString(10));
+                break;
+            case DECIMAL:
+                newValue = new DecimalValue(field, new BigDecimal(
+                    Long.toString(buildRandomLong(0,10000)) + "." + Long.toString(buildRandomLong(0,10000))
+                ));
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + field.type());
@@ -468,8 +484,12 @@ public class SphinxQLIndexStorageTest {
         List<IEntityField> fields = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             long fieldId = idGenerator.next();
-            fields.add(new Field(idGenerator.next(), "c" + fieldId,
-                ("c" + fieldId).hashCode() % 2 == 1 ? FieldType.LONG : FieldType.STRING));
+            fields.add(
+                new Field(idGenerator.next(),
+                    "c" + fieldId,
+                    randomFieldType()
+                )
+            );
         }
 
         // 一个固定的所有都有的字段.
@@ -477,6 +497,17 @@ public class SphinxQLIndexStorageTest {
         fields.add(fixFieldRange);
 
         return fields;
+    }
+
+    private FieldType randomFieldType() {
+        long n = buildRandomLong(0, 100);
+        if (n > 30) {
+            return FieldType.STRING;
+        } else if (n > 60) {
+            return FieldType.LONG;
+        } else {
+            return FieldType.DECIMAL;
+        }
     }
 
     private IEntityValue buildRandomValue(long id, Collection<IEntityField> fields) {
@@ -493,6 +524,13 @@ public class SphinxQLIndexStorageTest {
             switch (f.type()) {
                 case STRING:
                     return new StringValue(f, buildRandomString(30));
+                case DECIMAL:
+                    return new DecimalValue(
+                        f,
+                        new BigDecimal(
+                            Long.toString(buildRandomLong(0,10000)) + "." + Long.toString(buildRandomLong(0,10000))
+                        )
+                    );
                 default:
                     return new LongValue(f, (long) buildRandomLong(10, 100000));
             }

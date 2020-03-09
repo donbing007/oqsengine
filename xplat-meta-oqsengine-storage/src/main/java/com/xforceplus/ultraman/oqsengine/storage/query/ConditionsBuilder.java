@@ -16,4 +16,5 @@ public interface ConditionsBuilder<V> {
      * @return 构造结果.
      */
     V build(Conditions conditions);
+
 }

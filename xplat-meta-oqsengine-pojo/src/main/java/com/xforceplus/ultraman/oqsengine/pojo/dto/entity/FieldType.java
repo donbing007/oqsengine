@@ -1,11 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 public enum FieldType {
+    UNKNOWN("Unknown"),
     BOOLEAN("Boolean"),
     ENUM("Enum"),
     DATETIME("DateTime"),
     LONG("Long"),
-    STRING("String");
+    STRING("String"),
+    DECIMAL("Decimal");
 
     private String type;
 
