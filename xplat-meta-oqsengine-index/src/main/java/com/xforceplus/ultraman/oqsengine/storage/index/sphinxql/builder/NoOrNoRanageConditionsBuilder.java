@@ -54,12 +54,11 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
                 storageStrategy = this.storageStrategyFactory.getStrategy(logicValue.getField().type());
                 storageValue = storageStrategy.toStorageValue(logicValue);
 
-                while(storageValue != null) {
+                while (storageValue != null) {
 
                     if (buff.length() > emtpyLen) {
                         buff.append(" ");
                     }
-
 
 
                     switch (valueConditionNode.getCondition().getOperator()) {

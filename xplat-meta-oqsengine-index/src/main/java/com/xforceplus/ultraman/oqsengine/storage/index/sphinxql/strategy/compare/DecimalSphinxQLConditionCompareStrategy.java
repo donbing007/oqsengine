@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 
 /**
  * 浮点数的条件比较构造实现.
+ *
  * @author dongbin
  * @version 0.1 2020/3/6 14:02
  * @since 1.8
@@ -22,7 +23,7 @@ public class DecimalSphinxQLConditionCompareStrategy implements SphinxQLConditio
 
         StorageValue storageValue = storageStrategy.toStorageValue(condition.getValue());
 
-        switch(condition.getOperator()) {
+        switch (condition.getOperator()) {
             case EQUALS:
             case NOT_EQUALS:
                 return doBuild(fieldPrefix, storageValue, condition.getOperator().getSymbol()) + " and " +
@@ -42,7 +43,7 @@ public class DecimalSphinxQLConditionCompareStrategy implements SphinxQLConditio
             default:
                 throw new IllegalStateException(
                     String.format("%s does not support conditional comparison notation (%s), which should be a BUG.",
-                        condition.getField().type().getType(),condition.getOperator().getSymbol()));
+                        condition.getField().type().getType(), condition.getOperator().getSymbol()));
 
         }
     }

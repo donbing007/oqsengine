@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 
 /**
  * 条件构造器.
+ *
+ * @param <V> 条件构造结果类型.
  * @author dongbin
  * @version 0.1 2020/2/22 16:55
  * @since 1.8

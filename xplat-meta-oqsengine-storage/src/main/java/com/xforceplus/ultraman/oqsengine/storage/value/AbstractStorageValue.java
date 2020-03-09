@@ -6,6 +6,7 @@ import java.util.Objects;
  * 储存类型的抽像.
  * 实现了基本的多值处理.
  *
+ * @param <V> 实际值类型.
  * @author dongbin
  * @version 0.1 2020/3/4 13:45
  * @since 1.8

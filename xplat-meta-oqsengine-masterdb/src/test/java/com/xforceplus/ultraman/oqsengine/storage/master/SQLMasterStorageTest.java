@@ -95,6 +95,7 @@ public class SQLMasterStorageTest {
 
     /**
      * 测试写入并查询.
+     *
      * @throws Exception
      */
     @Test
@@ -213,12 +214,12 @@ public class SQLMasterStorageTest {
     }
 
     private IEntity buildEntity(long baseId) {
-        Collection<IEntityField> fields = buildRandomFields(baseId,3);
+        Collection<IEntityField> fields = buildRandomFields(baseId, 3);
         return new Entity(
             baseId,
             new EntityClass(baseId, "test", fields),
             buildRandomValue(baseId, fields)
-            );
+        );
     }
 
     private Collection<IEntityField> buildRandomFields(long baseId, int size) {

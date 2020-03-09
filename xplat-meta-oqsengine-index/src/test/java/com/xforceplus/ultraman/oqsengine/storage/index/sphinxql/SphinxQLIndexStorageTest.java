@@ -158,16 +158,16 @@ public class SphinxQLIndexStorageTest {
 
         IEntityField field = value.getField();
         IValue newValue;
-        switch(field.type()) {
+        switch (field.type()) {
             case LONG:
-                newValue = new LongValue(field, (long) buildRandomLong(0,2000));
+                newValue = new LongValue(field, (long) buildRandomLong(0, 2000));
                 break;
             case STRING:
                 newValue = new StringValue(field, buildRandomString(10));
                 break;
             case DECIMAL:
                 newValue = new DecimalValue(field, new BigDecimal(
-                    Long.toString(buildRandomLong(0,10000)) + "." + Long.toString(buildRandomLong(0,10000))
+                    Long.toString(buildRandomLong(0, 10000)) + "." + Long.toString(buildRandomLong(0, 10000))
                 ));
                 break;
             default:
@@ -528,7 +528,7 @@ public class SphinxQLIndexStorageTest {
                     return new DecimalValue(
                         f,
                         new BigDecimal(
-                            Long.toString(buildRandomLong(0,10000)) + "." + Long.toString(buildRandomLong(0,10000))
+                            Long.toString(buildRandomLong(0, 10000)) + "." + Long.toString(buildRandomLong(0, 10000))
                         )
                     );
                 default:

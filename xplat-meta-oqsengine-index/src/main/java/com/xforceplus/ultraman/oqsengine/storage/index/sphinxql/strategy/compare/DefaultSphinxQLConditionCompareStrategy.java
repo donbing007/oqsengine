@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 
 /**
  * 默认的条件生成策略.
+ *
  * @author dongbin
  * @version 0.1 2020/3/6 14:14
  * @since 1.8
@@ -18,7 +19,7 @@ public class DefaultSphinxQLConditionCompareStrategy implements SphinxQLConditio
         StorageValue storageValue = storageStrategy.toStorageValue(condition.getValue());
 
         StringBuilder buff = new StringBuilder();
-        while(storageValue != null) {
+        while (storageValue != null) {
 
             String value;
             if (storageStrategy.storageType() == StorageType.STRING) {

@@ -211,7 +211,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
                     long dataId = attribute.id();
-                    Optional<StorageEntity> oldStorageEntityOptional= doSelectStorageEntity(dataId);
+                    Optional<StorageEntity> oldStorageEntityOptional = doSelectStorageEntity(dataId);
                     if (oldStorageEntityOptional.isPresent()) {
 
                         StorageEntity storageEntity = oldStorageEntityOptional.get();
@@ -235,7 +235,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                     } else {
 
                         throw new SQLException(
-                          String.format("Attempt to update a property on a data that does not exist.[%d]", dataId)
+                            String.format("Attempt to update a property on a data that does not exist.[%d]", dataId)
                         );
 
                     }
@@ -382,7 +382,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
             if (Integer.class.isInstance(value)) {
 
-                storageValue = new LongStorageValue(key, ((Integer)value).longValue(), false);
+                storageValue = new LongStorageValue(key, ((Integer) value).longValue(), false);
 
 
             } else if (Long.class.isInstance(value)) {

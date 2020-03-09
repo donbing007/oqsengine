@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
  *
  * v2 = v1.stick(v2); //返回v2的实例.
  *
+ * @param <V> 实际值类型.
  * @author dongbin
  * @version 0.1 2020/3/4 12:21
  * @since 1.8

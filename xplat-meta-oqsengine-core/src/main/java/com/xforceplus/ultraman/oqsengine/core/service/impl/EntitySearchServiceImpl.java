@@ -129,7 +129,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     // 根据 id 转换实际 entity.
     private IEntity buildEntity(EntityRef ref, IEntityClass entityClass, Map<Long, IEntity> entityTable)
-        throws SQLException{
+        throws SQLException {
         if (entityClass.extendEntityClass() == null) {
 
             IEntity entity = entityTable.get(ref.getId());

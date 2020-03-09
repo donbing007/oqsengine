@@ -27,13 +27,14 @@ public interface IndexStorage extends Storage {
      * @param conditions 搜索条件.
      * @return
      */
-     Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
-         throws SQLException ;
+    Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
+        throws SQLException;
 
     /**
      * 替换索引中某些属性的值.
+     *
      * @param attribute 需要更新的属性值.
      */
-     void replaceAttribute(IEntityValue attribute) throws SQLException;
+    void replaceAttribute(IEntityValue attribute) throws SQLException;
 
 }

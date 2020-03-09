@@ -5,6 +5,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 
 /**
  * 条件的 SQL 生成策略.
+ *
+ * @param <T> 条件表示类型.
  * @author dongbin
  * @version 0.1 2020/3/6 13:58
  * @since 1.8

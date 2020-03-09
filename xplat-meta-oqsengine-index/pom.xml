@@ -67,7 +67,7 @@
 
 
     <properties>
-        <checkstyle.skip>true</checkstyle.skip>
+        <checkstyle.skip>false</checkstyle.skip>
     </properties>
 
     <profiles>

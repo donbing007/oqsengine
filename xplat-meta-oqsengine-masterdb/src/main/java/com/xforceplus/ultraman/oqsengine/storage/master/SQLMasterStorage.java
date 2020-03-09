@@ -409,7 +409,7 @@ public class SQLMasterStorage implements MasterStorage {
         for (IValue logicValue : value.values()) {
             storageStrategy = storageStrategyFactory.getStrategy(logicValue.getField().type());
             storageValue = storageStrategy.toStorageValue(logicValue);
-            while(storageValue != null) {
+            while (storageValue != null) {
                 object.put(storageValue.storageName(), storageValue.value());
                 storageValue = storageValue.next();
             }
