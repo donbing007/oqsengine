@@ -21,4 +21,6 @@ public interface MetadataRepository {
     List<EntityClass> findSubEntitiesById(String tenantId, String appCode, String boId);
 
     List<EntityClass> findSubEntitiesByCode(String tenantId, String appCode, String boCode);
+
+    void clearAllBoIdRelated(String boId);
 }

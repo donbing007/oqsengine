@@ -14,11 +14,11 @@ public interface SelectByConditionOrBuilder extends
   /**
    * <code>.EntityUp entity = 1;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.EntityUp getEntity();
+  EntityUp getEntity();
   /**
    * <code>.EntityUp entity = 1;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder getEntityOrBuilder();
+  EntityUpOrBuilder getEntityOrBuilder();
 
   /**
    * <code>int32 pageNo = 2;</code>
@@ -37,21 +37,21 @@ public interface SelectByConditionOrBuilder extends
   /**
    * <code>.ConditionsUp conditions = 4;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp getConditions();
+  ConditionsUp getConditions();
   /**
    * <code>.ConditionsUp conditions = 4;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.ConditionsUpOrBuilder getConditionsOrBuilder();
+  ConditionsUpOrBuilder getConditionsOrBuilder();
 
   /**
    * <code>repeated .FieldSortUp sort = 5;</code>
    */
-  java.util.List<com.xforceplus.ultraman.oqsengine.sdk.FieldSortUp> 
+  java.util.List<FieldSortUp>
       getSortList();
   /**
    * <code>repeated .FieldSortUp sort = 5;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.FieldSortUp getSort(int index);
+  FieldSortUp getSort(int index);
   /**
    * <code>repeated .FieldSortUp sort = 5;</code>
    */
@@ -59,23 +59,23 @@ public interface SelectByConditionOrBuilder extends
   /**
    * <code>repeated .FieldSortUp sort = 5;</code>
    */
-  java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.FieldSortUpOrBuilder> 
+  java.util.List<? extends FieldSortUpOrBuilder>
       getSortOrBuilderList();
   /**
    * <code>repeated .FieldSortUp sort = 5;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.FieldSortUpOrBuilder getSortOrBuilder(
-      int index);
+  FieldSortUpOrBuilder getSortOrBuilder(
+          int index);
 
   /**
    * <code>repeated .QueryFieldsUp queryFields = 6;</code>
    */
-  java.util.List<com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp> 
+  java.util.List<QueryFieldsUp>
       getQueryFieldsList();
   /**
    * <code>repeated .QueryFieldsUp queryFields = 6;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUp getQueryFields(int index);
+  QueryFieldsUp getQueryFields(int index);
   /**
    * <code>repeated .QueryFieldsUp queryFields = 6;</code>
    */
@@ -83,11 +83,11 @@ public interface SelectByConditionOrBuilder extends
   /**
    * <code>repeated .QueryFieldsUp queryFields = 6;</code>
    */
-  java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder> 
+  java.util.List<? extends QueryFieldsUpOrBuilder>
       getQueryFieldsOrBuilderList();
   /**
    * <code>repeated .QueryFieldsUp queryFields = 6;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.QueryFieldsUpOrBuilder getQueryFieldsOrBuilder(
-      int index);
+  QueryFieldsUpOrBuilder getQueryFieldsOrBuilder(
+          int index);
 }

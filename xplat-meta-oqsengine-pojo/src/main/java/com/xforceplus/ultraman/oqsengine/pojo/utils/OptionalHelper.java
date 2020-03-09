@@ -1,8 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.sdk.util;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
+package com.xforceplus.ultraman.oqsengine.pojo.utils;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -14,8 +10,6 @@ import java.util.stream.Stream;
  */
 public class OptionalHelper {
 
-    static Logger logger = LoggerFactory.getLogger(OptionalHelper.class);
-
     public static <T, R> R keepNull(T r, Function<T, R> func ){
         return tryGet(r, func).orElse(null);
     }
@@ -24,8 +18,12 @@ public class OptionalHelper {
         return emptyPredicate.negate().test(r) ? Optional.ofNullable(r) : Optional.empty();
     }
 
+    private static boolean isEmpty(String str){
+        return str == null || str.equals("");
+    }
+
     public static Optional<String> ofEmptyStr(Object r){
-        return ofEmpty((String)r, StringUtils::isEmpty);
+        return ofEmpty((String)r, OptionalHelper::isEmpty);
     }
 
     public static <T> Boolean orFalse(T r, Function<T, Boolean> func){
@@ -51,7 +49,6 @@ public class OptionalHelper {
         try{
             return Optional.ofNullable(input).map(mapper);
         }catch(Exception ex){
-            logger.error("{}", ex);
             return Optional.empty();
         }
     }

@@ -25,6 +25,10 @@ public enum ConditionOp {
 
     lt,
 
-    le
+    le,
+
+    ne,
+
+    ni;
 
 }

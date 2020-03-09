@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.service;
 
 import akka.grpc.javadsl.Metadata;
+import com.xforceplus.ultraman.oqsengine.boot.utils.EntityHelper;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
@@ -12,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.slf4j.Logger;
@@ -56,7 +58,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             return CompletableFuture.completedFuture(OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
                     .setTransactionResult(String.valueOf(transId)).buildPartial());
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             logger.error("{}", e);
 
@@ -77,9 +79,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         IEntityClass entityClass = toEntityClass(in);
 
         try {
-            long id = entityManagementService.build(toEntity(entityClass, in));
-            result = OperationResult.newBuilder().addIds(id).setCode(OperationResult.Code.OK).buildPartial();
-        } catch (SQLException e) {
+            IEntity entity = entityManagementService.build(toEntity(entityClass, in));
+            OperationResult.Builder builder= OperationResult.newBuilder()
+                    .addIds(entity.id());
+
+            if(entity.family() != null && entity.family().parent() > 0){
+                builder.addIds(entity.family().parent());
+            }
+
+            result = builder.setCode(OperationResult.Code.OK).buildPartial();
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -116,7 +125,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .setMessage("没有找到该记录")
                         .buildPartial();
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -140,12 +149,24 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         try{
             IEntityClass entityClass = toEntityClass(in);
-            entityManagementService.delete(toEntity(entityClass, in));
-            result = OperationResult.newBuilder()
-                    .setAffectedRow(1)
-                    .setCode(OperationResult.Code.OK)
-                    .buildPartial();
-        } catch (SQLException e) {
+
+            //find one
+            Optional<IEntity> op = entitySearchService.selectOne(in.getObjId(), entityClass);
+
+            if(op.isPresent()){
+                IEntity entity = op.get();
+                entityManagementService.delete(entity);
+                result = OperationResult.newBuilder()
+                        .setAffectedRow(1)
+                        .setCode(OperationResult.Code.OK)
+                        .buildPartial();
+            }else{
+                result = OperationResult.newBuilder()
+                        .setAffectedRow(0)
+                        .setCode(OperationResult.Code.OK)
+                        .buildPartial();
+            }
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -167,6 +188,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             IEntityClass entityClass = toEntityClass(in);
 
+            IEntityClass subEntityClass = getSubEntityClass(in);
+
             Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
 
             if(ds.isPresent()){
@@ -174,6 +197,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     Optional<IEntity> parentDS = entitySearchService.selectOne(ds.get().family().parent(), entityClass.extendEntityClass());
 
                     parentDS.ifPresent(x ->
+                            ds.ifPresent(y -> leftAppend(y, x)));
+                } else if(ds.get().family() != null && ds.get().family().child() > 0 &&  subEntityClass != null) {
+                    Optional<IEntity> childDs = entitySearchService.selectOne(ds.get().family().child(), subEntityClass);
+
+                    childDs.ifPresent(x ->
                             ds.ifPresent(y -> leftAppend(y, x)));
                 }
             }
@@ -188,11 +216,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setCode(OperationResult.Code.OK)
                     .setTotalRow(0)
                     .buildPartial());
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(e.getMessage())
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                     .buildPartial();
         }
 
@@ -223,7 +251,17 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             //check if has sub query for more details
             List<QueryFieldsUp> queryField = in.getQueryFieldsList();
 
-            if(sort == null || sort.isEmpty()){
+            Optional<IEntityField> sortField;
+
+            if(sort == null || sort.isEmpty()) {
+                sortField = Optional.empty();
+            }else{
+                FieldSortUp sortUp = sort.get(0);
+                //get related field
+                sortField = IEntityClassHelper.findFieldByCode(entityClass, sortUp.getCode());
+            }
+
+            if(!sortField.isPresent()){
                 Optional<Conditions> consOp = toConditions(entityClass, conditions);
                 if(consOp.isPresent()){
                     entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
@@ -231,17 +269,17 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
                 }
             }else {
-                Sort sortParam;
                 FieldSortUp sortUp = sort.get(0);
+                Sort sortParam;
                 if(sortUp.getOrder() == FieldSortUp.Order.asc) {
-                    sortParam = Sort.buildAscSort(toEntityField(sortUp.getField()));
+                    sortParam = Sort.buildAscSort(sortField.get());
                 }else{
-                    sortParam = Sort.buildDescSort(toEntityField(sortUp.getField()));
+                    sortParam = Sort.buildDescSort(sortField.get());
                 }
 
                 Optional<Conditions> consOp = toConditions(entityClass, conditions);
                 if(consOp.isPresent()){
-                    entities = entitySearchService.selectByConditions(consOp.get(), toEntityClass(entityUp), sortParam, page);
+                    entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
 
                 }else{
                     entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
@@ -298,7 +336,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setTotalRow(Optional.ofNullable(entities).orElseGet(Collections::emptyList).size())
                     .buildPartial();
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -351,7 +389,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setCode(OperationResult.Code.OK)
                     .setMessage("事务提交成功")
                     .buildPartial();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -374,7 +412,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setCode(OperationResult.Code.OK)
                     .setMessage("事务提交成功")
                     .buildPartial();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -448,6 +486,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
        return conditions;
     }
 
+
     //TODO error handler
     private Conditions toOneConditions(IEntityClass entityClass, FieldConditionUp fieldCondition){
 
@@ -464,6 +503,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             , ConditionOperator.EQUALS
                             , toTypedValue(fieldOp.get()
                                 , fieldCondition.getValues(0))));
+                    break;
+                case ne:
+                    conditions = new Conditions(new Condition(fieldOp.get()
+                            , ConditionOperator.NOT_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , fieldCondition.getValues(0))));
                     break;
                 case ge:
                     conditions = new Conditions(new Condition(fieldOp.get()
@@ -558,11 +603,34 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 , fieldCondition.getValues(0))));
 
                         Conditions finalConditions = conditions;
-                        fieldCondition.getValuesList().forEach(x -> {
+                        fieldCondition.getValuesList().stream().skip(1).forEach(x -> {
                             finalConditions.addOr(new Conditions(new Condition(fieldOp.get()
                                     , ConditionOperator.EQUALS
                                     , toTypedValue(fieldOp.get()
-                                    , fieldCondition.getValues(0)))), false);
+                                    , x))), false);
+                        });
+
+                        conditions = finalConditions;
+                    }
+                    break;
+                case ni:
+                    if(fieldCondition.getValuesCount() == 1 ){
+                        conditions = new Conditions(new Condition(fieldOp.get()
+                                , ConditionOperator.NOT_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(0))));
+                    }else{
+                        conditions = new Conditions(new Condition(fieldOp.get()
+                                , ConditionOperator.NOT_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , fieldCondition.getValues(0))));
+
+                        Conditions finalConditions = conditions;
+                        fieldCondition.getValuesList().stream().skip(1).forEach(x -> {
+                            finalConditions.addAnd(new Conditions(new Condition(fieldOp.get()
+                                    , ConditionOperator.NOT_EQUALS
+                                    , toTypedValue(fieldOp.get()
+                                    , x))), false);
                         });
 
                         conditions = finalConditions;
@@ -582,7 +650,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     //TODO currently only id
     private Optional<IEntityField> getFieldFromEntityClass(IEntityClass entityClass, Long id){
-        return entityClass.field(id);
+        return IEntityClassHelper.findFieldById(entityClass, id);
     }
 
     private IEntityClass toRawEntityClass(EntityUp entityUp){
@@ -659,7 +727,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private Field toEntityField(FieldUp fieldUp){
         return new Field(
                   fieldUp.getId()
-                , fieldUp.getName()
+                , fieldUp.getCode()
                 , FieldType.valueOf(fieldUp.getFieldType())
                 , FieldConfig.build()
                     .searchable(ofEmptyStr(fieldUp.getSearchable())
@@ -679,6 +747,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                          , relationUp.getRelationType()
                          , relationUp.getIdentity()
                          , toEntityField(relationUp.getEntityField()));
+    }
+
+    private IEntityClass getSubEntityClass(EntityUp entityUp){
+        boolean hasSubClass = entityUp.hasField(EntityUp.getDescriptor().findFieldByNumber(EntityUp.SUBENTITYCLASS_FIELD_NUMBER));
+
+        if(hasSubClass){
+            return toEntityClass(entityUp.getSubEntityClass());
+        }
+
+        return null;
     }
 
     private IEntityClass toEntityClass(EntityUp entityUp){

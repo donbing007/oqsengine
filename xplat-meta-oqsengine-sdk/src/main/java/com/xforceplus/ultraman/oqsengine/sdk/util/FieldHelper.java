@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.util;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import org.apache.metamodel.data.Row;
 

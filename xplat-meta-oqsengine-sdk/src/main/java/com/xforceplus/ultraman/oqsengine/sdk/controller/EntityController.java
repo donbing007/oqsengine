@@ -1,10 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.controller;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.sdk.command.ConditionSearchCmd;
-import com.xforceplus.ultraman.oqsengine.sdk.command.SingleCreateCmd;
-import com.xforceplus.ultraman.oqsengine.sdk.command.SingleDeleteCmd;
-import com.xforceplus.ultraman.oqsengine.sdk.command.SingleQueryCmd;
+import com.xforceplus.ultraman.oqsengine.sdk.command.*;
 import com.xforceplus.ultraman.oqsengine.sdk.dispatcher.ServiceDispatcher;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.ui.DefaultUiService;
@@ -94,7 +91,6 @@ public class EntityController {
                 .querySync(new SingleCreateCmd(boId, body)
                 , DefaultUiService.class, "singleCreate");
 
-
         return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
             Response<String> rep = new Response<>();
             rep.setCode("1");
@@ -124,7 +120,7 @@ public class EntityController {
                                           @RequestBody Map<String, Object> body
     ){
 
-        Either<String, Integer> result = dispatcher.querySync(new SingleCreateCmd(boId, body)
+        Either<String, Integer> result = dispatcher.querySync(new SingleUpdateCmd(boId, id, body)
                 , ResolvableType.forClassWithGenerics(Either.class, String.class, Integer.class));
 
         return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {

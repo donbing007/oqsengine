@@ -9,41 +9,41 @@ import akka.grpc.javadsl.GoogleProtobufSerializer;
 public interface EntityService {
   
   
-  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> begin(com.xforceplus.ultraman.oqsengine.sdk.TransactionUp in);
-  
-  
-  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> build(com.xforceplus.ultraman.oqsengine.sdk.EntityUp in);
-  
-  
-  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replace(com.xforceplus.ultraman.oqsengine.sdk.EntityUp in);
-  
-  
-  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> remove(com.xforceplus.ultraman.oqsengine.sdk.EntityUp in);
-  
-  
-  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> selectOne(com.xforceplus.ultraman.oqsengine.sdk.EntityUp in);
-  
-  
-  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> selectByConditions(com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition in);
-  
-  
-  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> commit(com.xforceplus.ultraman.oqsengine.sdk.TransactionUp in);
-  
-  
-  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> rollBack(com.xforceplus.ultraman.oqsengine.sdk.TransactionUp in);
-  
+  java.util.concurrent.CompletionStage<OperationResult> begin(TransactionUp in);
+
+
+  java.util.concurrent.CompletionStage<OperationResult> build(EntityUp in);
+
+
+  java.util.concurrent.CompletionStage<OperationResult> replace(EntityUp in);
+
+
+  java.util.concurrent.CompletionStage<OperationResult> remove(EntityUp in);
+
+
+  java.util.concurrent.CompletionStage<OperationResult> selectOne(EntityUp in);
+
+
+  java.util.concurrent.CompletionStage<OperationResult> selectByConditions(SelectByCondition in);
+
+
+  java.util.concurrent.CompletionStage<OperationResult> commit(TransactionUp in);
+
+
+  java.util.concurrent.CompletionStage<OperationResult> rollBack(TransactionUp in);
+
 
   static String name = "EntityService";
 
   public static class Serializers {
-    
-      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.TransactionUp> TransactionUpSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.TransactionUp.class);
-    
-      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> EntityUpSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.EntityUp.class);
-    
-      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition> SelectByConditionSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition.class);
-    
-      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> OperationResultSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.OperationResult.class);
+
+      public static ProtobufSerializer<TransactionUp> TransactionUpSerializer = new GoogleProtobufSerializer<>(TransactionUp.class);
+
+      public static ProtobufSerializer<EntityUp> EntityUpSerializer = new GoogleProtobufSerializer<>(EntityUp.class);
+
+      public static ProtobufSerializer<SelectByCondition> SelectByConditionSerializer = new GoogleProtobufSerializer<>(SelectByCondition.class);
+
+      public static ProtobufSerializer<OperationResult> OperationResultSerializer = new GoogleProtobufSerializer<>(OperationResult.class);
     
   }
 }
