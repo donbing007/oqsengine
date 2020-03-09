@@ -97,9 +97,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 entity.resetId(idGenerator.next());
                 entityClone.resetId(entity.id());
 
-                IEntity indexEntity = buildIndexEntity(entityClone);
-
                 masterStorage.build(entityClone);
+                IEntity indexEntity = buildIndexEntity(entityClone);
                 indexStorage.build(indexEntity);
 
                 return indexEntity;
