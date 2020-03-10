@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
@@ -8,14 +11,17 @@ import java.util.Optional;
 /**
  * Simple multi-local transaction implementation ensures atomicity before the commit,
  * but there is no guarantee of atomicity in the event that a commit produces an error.
- *
+ * Thread safety.
  * @author dongbin
  * @version 0.1 2020/2/13 20:47
  * @since 1.8
  */
 public class MultiLocalTransaction implements Transaction {
 
+    final Logger logger = LoggerFactory.getLogger(MultiLocalTransaction.class);
+
     private long id;
+    private long attachment;
     private List<TransactionResource> transactionResourceHolder;
     private boolean committed;
     private boolean rollback;
@@ -33,28 +39,37 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
-    public void commit() throws SQLException {
+    public synchronized void commit() throws SQLException {
+        check();
         doEnd(true);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Transaction ({}), commit.", id);
+        }
     }
 
     @Override
-    public void rollback() throws SQLException {
-
+    public synchronized void rollback() throws SQLException {
+        check();
         doEnd(false);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Transaction ({}), rollback.", id);
+        }
     }
 
     @Override
-    public boolean isCommitted() {
+    public synchronized boolean isCommitted() {
         return committed;
     }
 
     @Override
-    public boolean isRollback() {
+    public synchronized boolean isRollback() {
         return rollback;
     }
 
     @Override
-    public boolean isCompleted() {
+    public synchronized boolean isCompleted() {
         if (this.committed || this.rollback) {
             return true;
         }
@@ -63,14 +78,19 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
-    public void join(TransactionResource transactionResource) {
-
+    public synchronized void join(TransactionResource transactionResource) throws SQLException {
+        check();
 
         transactionResourceHolder.add(0, transactionResource);
     }
 
     @Override
     public Optional<TransactionResource> query(Object key) {
+
+        if (isCompleted()) {
+            return Optional.empty();
+        }
+
         for (TransactionResource res : transactionResourceHolder) {
             if (res.key().equals(key)) {
                 return Optional.of(res);
@@ -78,6 +98,16 @@ public class MultiLocalTransaction implements Transaction {
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    public long attachment() {
+        return attachment;
+    }
+
+    @Override
+    public void attach(long id) {
+        this.attachment = id;
     }
 
     private void doEnd(boolean commit) throws SQLException {
@@ -128,6 +158,13 @@ public class MultiLocalTransaction implements Transaction {
             rollback = true;
 
             throw new SQLException(message.toString(), sqlStatue.toString());
+        }
+    }
+
+    private void check() throws SQLException {
+        if (isCompleted()) {
+            throw new SQLException(
+                String.format("The transaction has completed.[commit=%b, rollback=%b]", isCommitted(), isRollback()));
         }
     }
 }
