@@ -38,8 +38,6 @@ import java.util.stream.Collectors;
 import static com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils.getRowValue;
 import static com.xforceplus.ultraman.oqsengine.sdk.util.FieldHelper.toEntityClassFieldFromRel;
 
-
-@Service
 /**
  * TODO abstract this class with pojo
  */

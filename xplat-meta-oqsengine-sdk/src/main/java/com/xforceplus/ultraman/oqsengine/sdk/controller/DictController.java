@@ -9,26 +9,23 @@ import org.apache.metamodel.data.DataSet;
 import org.apache.metamodel.data.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController
+@RequestMapping
 public class DictController {
 
     @Autowired
     private DictMapLocalStore store;
 
     @GetMapping("/enum/{id}/options")
+    @ResponseBody
     public Response<ResponseList<DictItem>> getDict(@PathVariable("id") String enumId
             , @RequestParam(required = false) String enumCode
     ){
-
         DataSet ds = null;
         List<Row> rows = new ArrayList<Row>();
         if(StringUtils.isEmpty(enumCode)) {

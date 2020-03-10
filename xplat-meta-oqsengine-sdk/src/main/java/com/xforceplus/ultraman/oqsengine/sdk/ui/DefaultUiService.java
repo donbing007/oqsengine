@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.ui;
 
 import com.xforceplus.ultraman.oqsengine.sdk.command.*;
-import com.xforceplus.ultraman.oqsengine.sdk.dispatcher.QueryHandler;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 

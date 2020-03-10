@@ -8,11 +8,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
-import com.xforceplus.ultraman.oqsengine.sdk.service.ContextService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.EntityItem;
+import com.xforceplus.xplat.galaxy.framework.context.ContextKeys;
+import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
@@ -28,8 +29,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.*;
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
 
-@Service
 public class EntityServiceImpl implements EntityService {
 
     private final MetadataRepository metadataRepository;
@@ -48,16 +49,16 @@ public class EntityServiceImpl implements EntityService {
     @Override
     public Optional<EntityClass> load(String boId){
 
-        String tenantId = contextService.get(ContextService.StringKeys.TenantIdKey);
-        String appCode  = contextService.get(ContextService.StringKeys.AppCode);
+        String tenantId = contextService.get(TENANTID_KEY);
+        String appCode  = contextService.get(APPCODE);
 
         return metadataRepository.load(tenantId, appCode, boId);
     }
 
     @Override
     public Optional<EntityClass> loadByCode(String bocode) {
-        String tenantId = contextService.get(ContextService.StringKeys.TenantIdKey);
-        String appCode  = contextService.get(ContextService.StringKeys.AppCode);
+        String tenantId = contextService.get(TENANTID_KEY);
+        String appCode  = contextService.get(APPCODE);
 
         return metadataRepository.loadByCode(tenantId, appCode, bocode);
     }
@@ -68,7 +69,7 @@ public class EntityServiceImpl implements EntityService {
                 .commit(TransactionUp.newBuilder().build()).toCompletableFuture().join();
 
         if(result.getCode() == OperationResult.Code.OK){
-            contextService.set(ContextService.StringKeys.TransactionKey, result.getTransactionResult());
+            contextService.set(TRANSACTION_KEY, result.getTransactionResult());
             try {
                 T t = supplier.call();
                 CompletableFuture<T> commitedT = entityServiceClient.commit(TransactionUp.newBuilder()
@@ -98,7 +99,7 @@ public class EntityServiceImpl implements EntityService {
 
     @Override
     public Either<String, Map<String, Object>> findOne(EntityClass entityClass, long id) {
-        String transId = contextService.get(ContextService.StringKeys.TransactionKey);
+        String transId = contextService.get(TRANSACTION_KEY);
 
         SingleResponseRequestBuilder<EntityUp, OperationResult> queryResultBuilder = entityServiceClient.selectOne();
 
@@ -130,7 +131,7 @@ public class EntityServiceImpl implements EntityService {
     @Override
     public Either<String, Integer> deleteOne(EntityClass entityClass, Long id) {
 
-        String transId = contextService.get(ContextService.StringKeys.TransactionKey);
+        String transId = contextService.get(TRANSACTION_KEY);
         SingleResponseRequestBuilder<EntityUp, OperationResult> removeBuilder = entityServiceClient.remove();
         if(transId != null){
             removeBuilder.addHeader("transaction-id", transId);
@@ -152,7 +153,7 @@ public class EntityServiceImpl implements EntityService {
     @Override
     public Either<String, Integer> updateById(EntityClass entityClass, Long id, Map<String, Object> body){
 
-        String transId = contextService.get(ContextService.StringKeys.TransactionKey);
+        String transId = contextService.get(TRANSACTION_KEY);
         SingleResponseRequestBuilder<EntityUp, OperationResult> replaceBuilder = entityServiceClient.replace();
         if(transId != null){
             replaceBuilder.addHeader("transaction-id", transId);
@@ -180,7 +181,7 @@ public class EntityServiceImpl implements EntityService {
     @Override
     public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByCondition(EntityClass entityClass, ConditionQueryRequest condition) {
 
-        String transId = contextService.get(ContextService.StringKeys.TransactionKey);
+        String transId = contextService.get(TRANSACTION_KEY);
 
 
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
@@ -209,7 +210,7 @@ public class EntityServiceImpl implements EntityService {
     @Override
     public Either<String, Long> create(EntityClass entityClass, Map<String, Object> body) {
 
-        String transId = contextService.get(ContextService.StringKeys.TransactionKey);
+        String transId = contextService.get(TRANSACTION_KEY);
 
         SingleResponseRequestBuilder<EntityUp, OperationResult> buildBuilder = entityServiceClient.build();
 
@@ -235,7 +236,7 @@ public class EntityServiceImpl implements EntityService {
 
     @Override
     public Integer count(EntityClass entityClass, ConditionQueryRequest condition) {
-        String transId = contextService.get(ContextService.StringKeys.TransactionKey);
+        String transId = contextService.get(TRANSACTION_KEY);
 
 
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();

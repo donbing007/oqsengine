@@ -14,6 +14,7 @@
 
     <properties>
         <checkstyle.skip>true</checkstyle.skip>
+        <dependencies.version>6.0.1-SNAPSHOT</dependencies.version>
     </properties>
 
     <dependencies>
@@ -23,9 +24,14 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.xforceplus.xplat-galaxy</groupId>
+            <artifactId>xplat-core-spi</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -105,6 +111,18 @@
             </plugin>
         </plugins>
     </build>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.xforceplus.xplat-galaxy</groupId>
+                <artifactId>xplat-dependencies</artifactId>
+                <version>${dependencies.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <repositories>
     <repository>
