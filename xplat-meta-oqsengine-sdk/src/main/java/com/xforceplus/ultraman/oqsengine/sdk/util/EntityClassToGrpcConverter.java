@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.util;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
@@ -301,6 +302,41 @@ public class EntityClassToGrpcConverter {
             builder.setMinLength(String.valueOf(field.config().getMin()));
         }
         return builder.build();
+    }
+
+    public static Map<String, Object> toResultMap(EntityClass entityClass
+                                    , EntityClass subEntityClass, EntityUp up) {
+
+        Map<String, Object> map = new HashMap<>();
+        if(!StringUtils.isEmpty(up.getObjId())){
+            map.put("id", String.valueOf(up.getObjId()));
+        }
+
+
+        up.getValuesList().forEach(entry -> {
+            Optional<Tuple2<IEntityClass, IEntityField>> fieldByIdInAll = IEntityClassHelper
+                                            .findFieldByIdInAll(entityClass, entry.getFieldId());
+            Optional<Tuple2<IEntityClass, IEntityField>> subField = IEntityClassHelper.findFieldById(subEntityClass, entry.getFieldId())
+                                                                    .map(x -> Tuple.of(subEntityClass, x));
+           combine(fieldByIdInAll, subField).ifPresent(tuple2 -> {
+                IEntityField field = tuple2._2();
+                IEntityClass entity = tuple2._1();
+                String fieldName = null;
+                if(entityClass.id() != entity.id()){
+                    fieldName = entity.code() + "." + field.name();
+                }else{
+                    fieldName = field.name();
+                }
+
+                if(field.type() == FieldType.BOOLEAN) {
+
+                    map.put(fieldName, Boolean.valueOf(entry.getValue()));
+                } else {
+                    map.put(fieldName, entry.getValue());
+                }
+            });
+        });
+        return map;
     }
 
 
