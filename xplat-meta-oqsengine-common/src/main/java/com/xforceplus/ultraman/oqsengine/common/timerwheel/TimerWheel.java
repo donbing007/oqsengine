@@ -16,25 +16,35 @@ import java.util.concurrent.locks.ReentrantLock;
  * 所有的时间单位都以毫秒为单位.
  * 默认分隔为512个槽位,每一个槽位时间区间为100毫秒.
  *
+ * @param <T> 管理的元素类型.
  * @author dongbin
  * @version 1.0 2020-03-10 11:53:19
  * @since 1.5
  */
 public class TimerWheel<T> {
 
-    private final static int DEFAULT_SLOT_NUMBER = 512;
-    private final static int DEFAULT_DURATION = 100;
+    private static final int DEFAULT_SLOT_NUMBER = 512;
+    private static final int DEFAULT_DURATION = 100;
 
     private final Lock lock = new ReentrantLock();
 
-    private final TimeUnit timeUnit = TimeUnit.MILLISECONDS;//时间单位
-    private final long duration;//每个slot间隔时间
+    /**
+     * 时间单位
+     */
+    private final TimeUnit timeUnit = TimeUnit.MILLISECONDS;
+    /**
+     * 每个slot间隔时间
+     */
+    private final long duration;
     private final TimeoutNotification<T> notification;
     private final int slotNumber;
     private final List<Slot> wheel;
     private final ExecutorService worker;
     private int currentSlot;
-    private final Map<T, Integer> removeHelp;//删除助手.
+    /**
+     * 删除助手.
+     */
+    private final Map<T, Integer> removeHelp;
 
     /**
      * 以默认的512个槽位,和100毫秒为间隔,并失效不通知构造一个新的时间轮.
