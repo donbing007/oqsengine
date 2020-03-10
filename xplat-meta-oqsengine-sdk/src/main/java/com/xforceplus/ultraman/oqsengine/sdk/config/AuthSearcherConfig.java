@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -11,8 +13,9 @@ import java.util.Objects;
  * @auth dongbin - wangzheng
  * @since 1.8
  */
+@EnableConfigurationProperties
 @ConfigurationProperties(prefix = "xplat.meta.oqsengine.permissions")
-@Component
+@Configuration
 public class AuthSearcherConfig {
 
     private String tenant;
