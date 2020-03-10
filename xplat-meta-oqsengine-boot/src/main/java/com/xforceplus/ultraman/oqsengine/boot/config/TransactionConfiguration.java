@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -27,9 +28,12 @@ public class TransactionConfiguration {
     @Resource
     private TransactionManager tm;
 
+    @Value("${transaction.timeoutMs:3000}")
+    private int transactionTimeoutMs;
+
     @Bean
     public TransactionManager transactionManager() {
-        return new DefaultTransactionManager(longIdGenerator);
+        return new DefaultTransactionManager(transactionTimeoutMs, longIdGenerator);
     }
 
 

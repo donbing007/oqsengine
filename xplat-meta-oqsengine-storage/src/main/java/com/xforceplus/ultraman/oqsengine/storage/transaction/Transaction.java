@@ -13,6 +13,11 @@ import java.util.Optional;
 public interface Transaction {
 
     /**
+     * Not attached to anything.
+     */
+    long NOT_ATTACHMENT = -1;
+
+    /**
      * The unique ID number of the transaction.
      * @return transaction`s id.
      */
@@ -50,7 +55,7 @@ public interface Transaction {
      * A new connection joins the transaction.
      * @param transactionResource target resource.
      */
-    void join(TransactionResource transactionResource);
+    void join(TransactionResource transactionResource) throws SQLException;
 
     /**
      * Determine if resource have joined.
@@ -58,5 +63,17 @@ public interface Transaction {
      * @return true Has joined. false not.
      */
     Optional<TransactionResource> query(Object key);
+
+    /**
+     * Attachment id. Usually a thread id.
+     * @return attachment id.
+     */
+    long attachment();
+
+    /**
+     * Set attachment.Usually a thread id.
+     * @param id attachment id.
+     */
+    void attach(long id);
 
 }

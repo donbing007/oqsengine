@@ -11,6 +11,9 @@ logging:
   level:
     root: debug
 
+transaction:
+  timeoutMs: 3000
+
 storage:
   master:
     name: "oqsbigentity"
