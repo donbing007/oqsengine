@@ -64,12 +64,12 @@
 
     <distributionManagement>
         <repository>
-            <id>com</id>
+            <id>releases</id>
             <name>Nexus Release Repository</name>
             <url>${repository.host}/content/repositories/releases/</url>
         </repository>
         <snapshotRepository>
-            <id>com</id>
+            <id>snapshots</id>
             <name>Nexus Snapshot Repository</name>
             <url>${repository.host}/content/repositories/snapshots/</url>
         </snapshotRepository>

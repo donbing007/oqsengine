@@ -505,7 +505,7 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     private Optional<IEntity> buildEntityFromResultSet(ResultSet rs, IEntityClass entityClass) throws SQLException {
-        long dataEntityClassId = rs.getLong("entity");
+        long dataEntityClassId = rs.getLong(FieldDefine.ENTITY);
         if (entityClass.id() != dataEntityClassId) {
             throw new SQLException(
                 String.format(

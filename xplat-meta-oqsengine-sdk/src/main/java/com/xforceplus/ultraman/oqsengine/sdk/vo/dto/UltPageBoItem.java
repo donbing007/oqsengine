@@ -12,6 +12,11 @@ public class UltPageBoItem {
     private Long pageId;
 
     /**
+     * 页面CODE
+     */
+    private String code;
+
+    /**
      * 业务对象名称
      */
     private String boName;
@@ -20,6 +25,11 @@ public class UltPageBoItem {
      * 业务对象CODE
      */
     private String boCode;
+
+    /**
+     * 说明信息
+     */
+    private String remark;
 
     /**
      * 租户id
@@ -90,5 +100,21 @@ public class UltPageBoItem {
 
     public void setTenantName(String tenantName) {
         this.tenantName = tenantName;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 }
