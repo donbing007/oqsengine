@@ -31,6 +31,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.boot.utils.OptionalHelper.ofEmptyStr;
+import static io.vavr.API.*;
+import static io.vavr.Predicates.instanceOf;
 
 @Component
 public class EntityServiceOqs implements EntityServicePowerApi {
@@ -65,7 +67,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             return CompletableFuture.completedFuture(
                     OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(e.getMessage())
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                     .buildPartial());
         }
     }
@@ -92,7 +94,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(e.getMessage())
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                     .buildPartial();
         }
 
@@ -129,7 +131,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(e.getMessage())
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                     .buildPartial();
         }
 
@@ -170,7 +172,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(e.getMessage())
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                     .buildPartial();
         }
 
@@ -340,7 +342,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(e.getMessage())
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                     .buildPartial();
         }
         return CompletableFuture.completedFuture(result);
@@ -393,7 +395,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(e.getMessage())
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                     .buildPartial();
         }
         return CompletableFuture.completedFuture(result);
@@ -416,7 +418,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(e.getMessage())
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                     .buildPartial();
         }
         return CompletableFuture.completedFuture(result);
@@ -449,20 +451,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     private String toValueStr(IValue value){
-        String retVal;
-        switch(value.getField().type()){
-            case DATETIME:
-                retVal = String.valueOf(((LocalDateTime)value.getValue()).atZone(DateTimeValue.zoneId).toInstant().toEpochMilli());
-                break;
-            case LONG:
-            case ENUM:
-            case BOOLEAN:
-            case STRING:
-            default:
-                retVal = value.getValue().toString();
-                break;
-        }
-
+        String retVal
+         = Match(value)
+                .of( Case($(instanceOf(DateTimeValue.class)), x -> String.valueOf(x.valueToLong())),
+                        Case($(), IValue::valueToString));
         return retVal;
     }
 
