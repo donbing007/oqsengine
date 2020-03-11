@@ -22,6 +22,11 @@ public class UltPageBoItem {
     private String boCode;
 
     /**
+     * 说明信息
+     */
+    private String remark;
+
+    /**
      * 租户id
      */
     private Long tenantId;
@@ -90,5 +95,13 @@ public class UltPageBoItem {
 
     public void setTenantName(String tenantName) {
         this.tenantName = tenantName;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 }
