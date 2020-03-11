@@ -21,6 +21,8 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.springframework.test.util.AssertionErrors.assertTrue;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ContextConfiguration(classes = {TestConfiguration.class
@@ -53,6 +55,24 @@ public class EntityServiceTest {
 
             either.forEach(System.out::println);
         }
+    }
+
+    @Test
+    public void testSelectByCode() throws InterruptedException{
+        Thread.sleep(10000);
+        Optional<EntityClass> baseBill = entityService.loadByCode("baseBill");
+        assertTrue("baseBill here", baseBill.isPresent());
+    }
+
+    @Test
+    public void testImageFindOne() throws InterruptedException{
+        Thread.sleep(10000);
+        Optional<EntityClass> baseBill = entityService.loadByCode("image");
+        assertTrue("image is present", baseBill.isPresent());
+
+        Either<String, Map<String, Object>> one = entityService.findOne(baseBill.get(), 6643426793552347137L);
+
+        assertTrue("has record", one.isRight());
     }
 
 }
