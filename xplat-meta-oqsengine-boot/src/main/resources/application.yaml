@@ -12,7 +12,7 @@ logging:
     root: debug
 
 transaction:
-  timeoutMs: 3000
+  timeoutms: 3000
 
 storage:
   master:

@@ -85,7 +85,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
 
             if( queryResult.getCode() == OperationResult.Code.OK ){
                 if(queryResult.getTotalRow() > 0) {
-                    return Either.right(toResultMap(entityClass, queryResult.getQueryResultList().get(0)));
+                    return Either.right(toResultMap(entityClass, subEntityClass, queryResult.getQueryResultList().get(0)));
                 } else {
                     return Either.left("未查询到记录");
                 }

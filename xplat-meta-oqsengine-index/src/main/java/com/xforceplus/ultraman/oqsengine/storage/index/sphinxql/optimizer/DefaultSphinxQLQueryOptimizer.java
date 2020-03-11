@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +26,7 @@ public class DefaultSphinxQLQueryOptimizer implements SphinxQLQueryOptimizer, St
 
     private ConditionsBuilder emptyConditionsBuilder;
 
+    @Resource(name = "indexStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
 
 
