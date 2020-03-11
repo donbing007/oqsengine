@@ -150,4 +150,52 @@ public class EntityServiceTest {
         System.out.println("del result:" + delResult.get());
     }
 
+    @Test
+    public void selectOneTest() throws InterruptedException {
+        Thread.sleep(10000);
+
+        Optional<EntityClass> testBillSub = entityService.loadByCode("testbillsub");
+
+        Either<String, Map<String, Object>> one = entityService.findOne(testBillSub.get(), 6643531897886474242L);
+
+        System.out.println(one);
+    }
+
+    @Test
+    public void testDecimal() throws InterruptedException {
+        Thread.sleep(10000);
+
+        Optional<EntityClass> testBillSub = entityService.loadByCode("testbillsub");
+
+        Map<String, Object> mapObject = new HashMap<>();
+        mapObject.put("bill_code", "test1");
+        mapObject.put("bill_name", "billTest");
+        mapObject.put("sub", "hhhh");
+        mapObject.put("deci", "12.56");
+
+        Either<String, IEntity> entity = entityServiceEx.create(testBillSub.get(), mapObject);
+
+        Long childId = entity.get().id();
+        Long parentId = entity.get().family().parent();
+
+        System.out.println("child:" + childId);
+        System.out.println("parentId:" + parentId);
+
+        Either<String, Map<String, Object>> one = entityService.findOne(testBillSub.get(), childId);
+
+        System.out.println(one);
+
+        //select by condition
+
+        entityService.findByCondition(testBillSub.get(), new RequestBuilder()
+                .field("deci", ConditionOp.eq, 12.56).build()).forEach(System.out::println);
+
+        entityService.findByCondition(testBillSub.get(), new RequestBuilder()
+                .field("deci", ConditionOp.ge, 12.55).build()).forEach(System.out::println);
+
+        entityService.findByCondition(testBillSub.get(), new RequestBuilder()
+                .field("deci", ConditionOp.le, 12.57).build()).forEach(System.out::println);
+
+    }
+
 }
