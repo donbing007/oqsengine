@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
@@ -48,9 +49,9 @@ public class EntityServiceExImpl implements EntityServiceEx {
 //                return Either.right(createResult.getIdsList().get(0));
                 IEntity entity = null;
                 if(createResult.getIdsCount() == 1){
-                    entity = new Entity(createResult.getIdsList().get(0), entityClass, null);
+                    entity = new Entity(createResult.getIdsList().get(0), entityClass, new EntityValue(0L));
                 }else if(createResult.getIdsCount() > 1){
-                    entity = new Entity(createResult.getIdsList().get(0), entityClass, null
+                    entity = new Entity(createResult.getIdsList().get(0), entityClass, new EntityValue(0L)
                             , new EntityFamily(createResult.getIdsList().get(1), 0), 0);
                 }else{
                     return Either.left(createResult.getMessage());
