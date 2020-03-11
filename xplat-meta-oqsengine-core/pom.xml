@@ -64,7 +64,7 @@
     </dependencies>
 
     <properties>
-        <checkstyle.skip>true</checkstyle.skip>
+        <checkstyle.skip>false</checkstyle.skip>
     </properties>
 
 

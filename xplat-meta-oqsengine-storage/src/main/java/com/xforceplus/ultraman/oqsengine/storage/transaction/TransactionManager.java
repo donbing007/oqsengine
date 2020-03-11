@@ -20,6 +20,13 @@ public interface TransactionManager {
     Transaction create();
 
     /**
+     * 创建一个事务,在指定时间后超时.
+     * @param timeoutMs 超时时间.(毫秒)
+     * @return 新事务.
+     */
+    Transaction create(long timeoutMs);
+
+    /**
      * 获取当前上下文绑定的事务.
      * @return 事务.
      */

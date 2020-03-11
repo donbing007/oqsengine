@@ -6,6 +6,9 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.IntStream;
 
+/**
+ * snowflake 测试.
+ */
 public class TestFlake {
 
     @Test

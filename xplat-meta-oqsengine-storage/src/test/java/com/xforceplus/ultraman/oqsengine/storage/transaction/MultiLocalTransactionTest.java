@@ -77,7 +77,7 @@ public class MultiLocalTransactionTest {
         try {
             tx.commit();
             Assert.fail("No expected exception was thrown.");
-        } catch(SQLException ex) {
+        } catch (SQLException ex) {
 
         }
 
@@ -109,7 +109,7 @@ public class MultiLocalTransactionTest {
         try {
             tx.rollback();
             Assert.fail("No expected exception was thrown.");
-        } catch(SQLException ex) {
+        } catch (SQLException ex) {
 
         }
 
@@ -150,7 +150,6 @@ public class MultiLocalTransactionTest {
             this.value = value;
             this.exception = ex;
         }
-
 
 
         @Override

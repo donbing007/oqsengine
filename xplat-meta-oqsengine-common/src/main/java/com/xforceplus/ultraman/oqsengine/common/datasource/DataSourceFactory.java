@@ -14,36 +14,35 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *
  * {
- * 	"dataSources": {
- * 		"index": {
- * 			"write": [
- *                {
- * 					"driverClassName": "com.mysql.jdbc.Driver",
- * 					"url": "jdbc:mysql://localhost:3306/oqsengine",
- * 					"username": "root",
- * 					"password": "root"
- *                }
- * 			],
- * 			"search": [
- *                {
- * 					"driverClassName": "com.mysql.jdbc.Driver",
- * 					"url": "jdbc:mysql://localhost:3306/oqsengine",
- * 					"username": "root",
- * 					"password": "root"
- *                }
- * 			]
- * 		},
- * 		"master": [
- * 	        {
- * 				"driverClassName": "com.mysql.jdbc.Driver",
- * 				"url": "jdbc:mysql://localhost:3306/oqsengine",
- * 				"password": "root",
- * 				"username": "root"
- * 			}
- *     	]
- * 	}
+ * "dataSources": {
+ * "index": {
+ * "write": [
+ * {
+ * "driverClassName": "com.mysql.jdbc.Driver",
+ * "url": "jdbc:mysql://localhost:3306/oqsengine",
+ * "username": "root",
+ * "password": "root"
+ * }
+ * ],
+ * "search": [
+ * {
+ * "driverClassName": "com.mysql.jdbc.Driver",
+ * "url": "jdbc:mysql://localhost:3306/oqsengine",
+ * "username": "root",
+ * "password": "root"
+ * }
+ * ]
+ * },
+ * "master": [
+ * {
+ * "driverClassName": "com.mysql.jdbc.Driver",
+ * "url": "jdbc:mysql://localhost:3306/oqsengine",
+ * "password": "root",
+ * "username": "root"
+ * }
+ * ]
+ * }
  * }
  * 目标是读取上述目标配置文件.
  * 优先使用 -Dds 参数指定的路径文件,否则查找当前类路径下的 "oqsengine-ds.conf" 文件.
@@ -130,7 +129,7 @@ public class DataSourceFactory {
 
     private static void invokeMethod(HikariConfig hikariConfig, String attrName, ConfigValue value) throws Exception {
         Class clazz = hikariConfig.getClass();
-        String methodName = "set" + attrName.toUpperCase().substring(0,1) + attrName.substring(1, attrName.length());
+        String methodName = "set" + attrName.toUpperCase().substring(0, 1) + attrName.substring(1, attrName.length());
         Method method = null;
         switch (value.valueType()) {
             case NUMBER: {

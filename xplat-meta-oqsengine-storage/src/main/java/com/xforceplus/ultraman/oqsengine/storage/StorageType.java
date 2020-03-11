@@ -7,6 +7,32 @@ package com.xforceplus.ultraman.oqsengine.storage;
  * @since 1.8
  */
 public enum StorageType {
-    STRING,
-    LONG,
+    UNKNOWN('U'),
+    STRING('S'),
+    LONG('L');
+
+    private char type;
+
+    StorageType(char type) {
+        this.type = type;
+    }
+
+    public char getType() {
+        return type;
+    }
+
+    public void setType(char type) {
+        this.type = type;
+    }
+
+    public static StorageType valueOf(char type) {
+        switch(type) {
+            case 'S':
+                return StorageType.STRING;
+            case 'L':
+                return StorageType.LONG;
+            default:
+                return null;
+        }
+    }
 }

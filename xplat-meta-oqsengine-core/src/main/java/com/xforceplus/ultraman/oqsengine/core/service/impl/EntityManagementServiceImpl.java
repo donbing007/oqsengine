@@ -48,9 +48,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         // 克隆一份,后续的修改不影响入参.
         IEntity entityClone;
         try {
-             entityClone = (IEntity) entity.clone();
+            entityClone = (IEntity) entity.clone();
         } catch (CloneNotSupportedException e) {
-            throw new SQLException(e.getMessage(),e);
+            throw new SQLException(e.getMessage(), e);
         }
 
         return (IEntity) transactionExecutor.execute(r -> {
@@ -90,7 +90,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 indexStorage.build(indexEntity); // child
 
 
-                return indexEntity;
+                entity.resetFamily(childEntity.family());
+                return entity;
 
             } else {
 
@@ -98,10 +99,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 entityClone.resetId(entity.id());
 
                 masterStorage.build(entityClone);
-                IEntity indexEntity = buildIndexEntity(entityClone);
-                indexStorage.build(indexEntity);
+                indexStorage.build(buildIndexEntity(entityClone));
 
-                return indexEntity;
+                return entityClone;
             }
 
         });
@@ -115,7 +115,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         try {
             target = (IEntity) entity.clone();
         } catch (CloneNotSupportedException e) {
-            throw new SQLException(e.getMessage(),e);
+            throw new SQLException(e.getMessage(), e);
         }
 
         transactionExecutor.execute(r -> {
@@ -128,7 +128,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 IEntity fatherEntity = buildFatherEntity(target, target.id());
                 fatherEntity.resetId(entity.family().parent());
 
-                IEntity childEntity = buildChildEntity(target,target.family().parent());
+                IEntity childEntity = buildChildEntity(target, target.family().parent());
 
                 masterStorage.replace(fatherEntity);
                 masterStorage.replace(childEntity);
@@ -165,7 +165,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 IEntity fatherEntity = buildFatherEntity(entity, entity.id());
                 fatherEntity.resetId(entity.family().parent());
 
-                IEntity childEntity = buildChildEntity(entity,entity.family().parent());
+                IEntity childEntity = buildChildEntity(entity, entity.family().parent());
 
                 masterStorage.delete(fatherEntity);
                 masterStorage.delete(childEntity);

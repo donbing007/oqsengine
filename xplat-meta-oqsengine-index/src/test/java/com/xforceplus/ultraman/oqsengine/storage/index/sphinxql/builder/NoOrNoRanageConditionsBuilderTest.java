@@ -5,14 +5,18 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,6 +43,11 @@ public class NoOrNoRanageConditionsBuilderTest {
     @Test
     public void testBuild() throws Exception {
         NoOrNoRanageConditionsBuilder builder = new NoOrNoRanageConditionsBuilder();
+
+        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
+        builder.setStorageStrategy(storageStrategyFactory);
+
         buildCase().stream().forEach(c -> {
             String where = builder.build(c.conditions);
             Assert.assertEquals(c.expected, where);
@@ -57,7 +66,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                expectPrefix + "=F1100" + expectAfter
+                expectPrefix + "=F1L100" + expectAfter
             )
             ,
             new Case(
@@ -68,7 +77,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new StringValue(new Field(1, "c1", FieldType.STRING), "test*")
                     )
                 ),
-                expectPrefix + "F1test*" + expectAfter
+                expectPrefix + "F1Stest*" + expectAfter
             )
             ,
             new Case(
@@ -81,7 +90,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "=F1100 =F2test" + expectAfter
+                expectPrefix + "=F1L100 =F2Stest" + expectAfter
             ),
             new Case(
                 new Conditions(
@@ -93,7 +102,19 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-F1100 -F2test F*" + expectAfter
+                expectPrefix + "-F1L100 -F2Stest F*" + expectAfter
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new Field(1, "c1", FieldType.DECIMAL),
+                        ConditionOperator.EQUALS,
+                        new DecimalValue(new Field(1, "c1", FieldType.DECIMAL),
+                            new BigDecimal("123456.123456")
+                        )
+                    )
+                ),
+                expectPrefix + "=F1L0123456 =F1L1123456" + expectAfter
             )
         );
     }

@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.*;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
@@ -40,98 +41,54 @@ public class DefaultSphinxQLQueryOptimizerTest {
     @Test
     public void testOptimizeConditions() throws Exception {
         DefaultSphinxQLQueryOptimizer optimizer = new DefaultSphinxQLQueryOptimizer();
-        buildCases().stream().forEach(c -> {
-            ConditionsBuilder builder = optimizer.optimizeConditions(c.conditions);
-            Assert.assertEquals(c.expectedClass, builder.getClass());
-        });
+        optimizer.setStorageStrategy(StorageStrategyFactory.getDefaultFactory());
 
-    }
+        // no or no ranage
+        Conditions conditions = new Conditions(
+            new Condition(
+                new Field(1, "c1", FieldType.LONG),
+                ConditionOperator.EQUALS,
+                new LongValue(new Field(1, "c1", FieldType.LONG), 100L)));
 
-    private Collection<Case> buildCases() {
-        return Arrays.asList(
-            new Case(
-                Conditions.buildEmtpyConditions(),
-                EmptyConditionsBuilder.class
-            ),
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new Field(1, "test", FieldType.BOOLEAN),
-                        ConditionOperator.EQUALS,
-                        new BooleanValue(new Field(1, "test", FieldType.BOOLEAN), true)
-                    )
-                ),
-                NoOrNoRanageConditionsBuilder.class
-            ),
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new Field(1, "test", FieldType.BOOLEAN),
-                        ConditionOperator.MINOR_THAN,
-                        new BooleanValue(new Field(1, "test", FieldType.BOOLEAN), true)
-                    )
-                ),
-                NoOrHaveRanageConditionsBuilder.class
-            ),
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new Field(1, "test", FieldType.BOOLEAN),
-                        ConditionOperator.EQUALS,
-                        new BooleanValue(new Field(1, "test", FieldType.BOOLEAN), true)
-                    )
-                ).addAnd(
-                    new Condition(
-                        new Field(2, "test2", FieldType.LONG),
-                        ConditionOperator.EQUALS,
-                        new LongValue(new Field(2, "test", FieldType.LONG), 100L)
-                    )
-                ),
-                NoOrNoRanageConditionsBuilder.class
-            ),
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new Field(1, "test", FieldType.BOOLEAN),
-                        ConditionOperator.EQUALS,
-                        new BooleanValue(new Field(1, "test", FieldType.BOOLEAN), true)
-                    )
-                ).addOr(
-                    new Condition(
-                        new Field(2, "test2", FieldType.LONG),
-                        ConditionOperator.EQUALS,
-                        new LongValue(new Field(2, "test", FieldType.LONG), 100L)
-                    )
-                ),
-                HaveOrNoRanageConditionsBuilder.class
-            ),
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new Field(1, "test", FieldType.BOOLEAN),
-                        ConditionOperator.GREATER_THAN,
-                        new BooleanValue(new Field(1, "test", FieldType.BOOLEAN), true)
-                    )
-                ).addOr(
-                    new Condition(
-                        new Field(2, "test2", FieldType.LONG),
-                        ConditionOperator.EQUALS,
-                        new LongValue(new Field(2, "test", FieldType.LONG), 100L)
-                    )
-                ),
-                HaveOrHaveRanageConditionsBuilder.class
-            )
-        );
-    }
+        optimizer.init();
 
-    private static class Case {
-        private Conditions conditions;
-        private Class expectedClass;
+        ConditionsBuilder builder = optimizer.optimizeConditions(conditions);
+        Assert.assertEquals(NoOrNoRanageConditionsBuilder.class, builder.getClass());
 
-        public Case(Conditions conditions, Class expectedClass) {
-            this.conditions = conditions;
-            this.expectedClass = expectedClass;
-        }
+        // no or have ranage
+        conditions = new Conditions(
+            new Condition(
+                new Field(1, "c1", FieldType.LONG),
+                ConditionOperator.GREATER_THAN,
+                new LongValue(new Field(1, "c1", FieldType.LONG), 100L)));
+        builder = optimizer.optimizeConditions(conditions);
+        Assert.assertEquals(NoOrHaveRanageConditionsBuilder.class, builder.getClass());
+
+        // have or no range
+        conditions = new Conditions(
+            new Condition(
+                new Field(1, "c1", FieldType.LONG),
+                ConditionOperator.EQUALS,
+                new LongValue(new Field(1, "c1", FieldType.LONG), 100L)));
+        conditions.addOr(new Condition(
+            new Field(1, "c1", FieldType.LONG),
+            ConditionOperator.EQUALS,
+            new LongValue(new Field(1, "c2", FieldType.LONG), 100L)));
+        builder = optimizer.optimizeConditions(conditions);
+        Assert.assertEquals(HaveOrNoRanageConditionsBuilder.class, builder.getClass());
+
+        // have or have range
+        conditions = new Conditions(
+            new Condition(
+                new Field(1, "c1", FieldType.LONG),
+                ConditionOperator.GREATER_THAN,
+                new LongValue(new Field(1, "c1", FieldType.LONG), 100L)));
+        conditions.addOr(new Condition(
+            new Field(1, "c1", FieldType.LONG),
+            ConditionOperator.MINOR_THAN,
+            new LongValue(new Field(1, "c2", FieldType.LONG), 100L)));
+        builder = optimizer.optimizeConditions(conditions);
+        Assert.assertEquals(HaveOrHaveRanageConditionsBuilder.class, builder.getClass());
 
     }
 

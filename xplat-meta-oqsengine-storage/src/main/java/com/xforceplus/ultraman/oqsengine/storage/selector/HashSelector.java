@@ -9,6 +9,7 @@ import java.util.List;
 /**
  * 基于 Hash 方法的 datasoruce 选择器.
  *
+ * @param <V> 选择元素类型.
  * @author dongbin
  * @version 0.1 2020/2/16 19:12
  * @since 1.8

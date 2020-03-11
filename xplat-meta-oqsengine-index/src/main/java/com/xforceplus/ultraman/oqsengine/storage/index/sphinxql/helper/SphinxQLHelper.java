@@ -2,7 +2,9 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
-import com.xforceplus.ultraman.oqsengine.storage.helper.StorageTypeHelper;
+import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 
 /**
  * @author dongbin
@@ -11,6 +13,9 @@ import com.xforceplus.ultraman.oqsengine.storage.helper.StorageTypeHelper;
  */
 public class SphinxQLHelper {
 
+    /**
+     * 全文搜索字段前辍.
+     */
     public static final String FULL_FIELD_PREFIX = "F";
 
     /**
@@ -20,17 +25,39 @@ public class SphinxQLHelper {
      * @param value 属性值.
      * @return 序列化结果.
      */
-    public static String serializeFull(IValue value) {
-        StringBuilder buff = new StringBuilder();
-        buff.append(FULL_FIELD_PREFIX);
-        buff.append(value.getField().id());
-        StorageType current = StorageTypeHelper.findStorageType(value.getField().type());
-        if (current == StorageType.STRING) {
-            buff.append(SphinxQLHelper.unicode(value.valueToString()));
-        } else {
-            buff.append(value.valueToLong());
-        }
-        return buff.toString();
+//    public static String serializeFull(IValue value, StorageStrategy storageStrategy) {
+//        StringBuilder buff = new StringBuilder();
+//
+//        StorageValue point = storageStrategy.toStorageValue(value);
+//
+//        while(point != null) {
+//            if (buff.length() > 0) {
+//                buff.append(" ");
+//            }
+//            buff.append(FULL_FIELD_PREFIX)
+//                .append(point.storageName());
+//            if (storageStrategy.storageType() == StorageType.STRING) {
+//                buff.append(SphinxQLHelper.unicode((String) point.value()));
+//            } else {
+//                buff.append(point.value());
+//            }
+//
+//            point = point.next();
+//        }
+//
+//        return buff.toString();
+//    }
+
+    /**
+     * 序列化SphinxQL的全文搜索字段.
+     * 不会处理多值.
+     * @param value 目标值.
+     * @return 序例化结果.
+     */
+    public static String encodeFullText(StorageValue value) {
+        return FULL_FIELD_PREFIX
+            + value.storageName()
+            + (value.type() == StorageType.STRING ? SphinxQLHelper.unicode((String) value.value()) : value.value());
     }
 
     /**

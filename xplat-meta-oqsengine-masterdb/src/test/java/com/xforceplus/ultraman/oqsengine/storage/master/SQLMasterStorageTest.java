@@ -20,6 +20,11 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.BoolStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.LongStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.StringStorageStrategy;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -63,10 +68,14 @@ public class SQLMasterStorageTest {
         TransactionExecutor executor = new AutoShardTransactionExecutor(
             transactionManager, ConnectionTransactionResource.class);
 
+
+        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+
         storage = new SQLMasterStorage();
         ReflectionTestUtils.setField(storage, "dataSourceSelector", dataSourceSelector);
         ReflectionTestUtils.setField(storage, "tableNameSelector", tableNameSelector);
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
+        ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         storage.init();
 
         transactionManager.create();
@@ -86,6 +95,7 @@ public class SQLMasterStorageTest {
 
     /**
      * 测试写入并查询.
+     *
      * @throws Exception
      */
     @Test
@@ -204,12 +214,12 @@ public class SQLMasterStorageTest {
     }
 
     private IEntity buildEntity(long baseId) {
-        Collection<IEntityField> fields = buildRandomFields(baseId,3);
+        Collection<IEntityField> fields = buildRandomFields(baseId, 3);
         return new Entity(
             baseId,
             new EntityClass(baseId, "test", fields),
             buildRandomValue(baseId, fields)
-            );
+        );
     }
 
     private Collection<IEntityField> buildRandomFields(long baseId, int size) {

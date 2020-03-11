@@ -4,6 +4,8 @@ import java.sql.SQLException;
 
 /**
  * 表示一个任务.
+ *
+ * @param <V> 任务处理数据类型.
  * @author dongbin
  * @version 0.1 2020/2/17 15:22
  * @since 1.8

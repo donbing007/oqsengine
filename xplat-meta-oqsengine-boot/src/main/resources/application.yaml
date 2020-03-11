@@ -9,7 +9,10 @@ server:
 
 logging:
   level:
-    root: info
+    root: debug
+
+transaction:
+  timeoutms: 3000
 
 storage:
   master:

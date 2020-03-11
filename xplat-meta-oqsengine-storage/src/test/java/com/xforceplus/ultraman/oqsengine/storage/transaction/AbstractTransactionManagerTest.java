@@ -7,6 +7,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -32,7 +34,6 @@ public class AbstractTransactionManagerTest {
         MockTransactionManager tm = new MockTransactionManager();
         Transaction tx = tm.create();
 
-        tm.bind(tx);
         Assert.assertEquals(tx, tm.getCurrent().get());
 
         tm.unbind();
@@ -43,22 +44,59 @@ public class AbstractTransactionManagerTest {
 
         tm.finish(tx);
         Assert.assertFalse(tm.getCurrent().isPresent());
+        Assert.assertTrue(tx.isCompleted());
+        Assert.assertTrue(tx.isRollback());
+        Assert.assertFalse(tx.isCommitted());
+    }
 
+    @Test
+    public void testTimeout() throws Exception {
+        MockTransactionManager tm = new MockTransactionManager(200);
+        Transaction tx = tm.create();
+
+        TimeUnit.MILLISECONDS.sleep(320);
+
+        Assert.assertFalse(tm.getCurrent().isPresent());
+        Assert.assertTrue(tx.isCompleted());
+        Assert.assertTrue(tx.isRollback());
+        Assert.assertFalse(tx.isCommitted());
+    }
+
+    @Test
+    public void testCommitAfterFinish() throws Exception {
+        MockTransactionManager tm = new MockTransactionManager();
+        Transaction tx = tm.create();
+        tx.commit();
+
+        tm.finish();
+
+        Assert.assertFalse(tm.getCurrent().isPresent());
+        Assert.assertTrue(tx.isCompleted());
+        Assert.assertFalse(tx.isRollback());
+        Assert.assertTrue(tx.isCommitted());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testTimeoutTooSmall() throws Exception {
+        MockTransactionManager tm = new MockTransactionManager(100);
     }
 
     static class MockTransactionManager extends AbstractTransactionManager {
 
         private LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
+        public MockTransactionManager() {
+        }
+
+        public MockTransactionManager(int survivalTimeMs) {
+            super(survivalTimeMs);
+        }
+
         @Override
         public Transaction doCreate() {
 
-            Transaction newTx = mock(Transaction.class);
             long id = idGenerator.next();
-            when(newTx.id()).thenReturn(id);
-            this.bind(newTx);
-
-            return newTx;
+            return new MultiLocalTransaction(id);
 
         }
     }
