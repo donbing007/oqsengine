@@ -12,6 +12,11 @@ public class UltPageBoItem {
     private Long pageId;
 
     /**
+     * 页面CODE
+     */
+    private String code;
+
+    /**
      * 业务对象名称
      */
     private String boName;
@@ -103,5 +108,13 @@ public class UltPageBoItem {
 
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 }
