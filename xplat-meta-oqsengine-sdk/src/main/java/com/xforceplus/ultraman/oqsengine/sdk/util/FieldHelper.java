@@ -29,6 +29,8 @@ public class FieldHelper {
             return FieldType.BOOLEAN;
         } else if ( "timestamp".equalsIgnoreCase(typeStr)) {
             return FieldType.DATETIME;
+        } else if ( "double".equalsIgnoreCase(typeStr)) {
+            return FieldType.DECIMAL;
         } else {
             return FieldType.STRING;
         }
