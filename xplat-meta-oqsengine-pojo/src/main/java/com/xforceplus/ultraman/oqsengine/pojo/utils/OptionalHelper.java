@@ -19,7 +19,7 @@ public class OptionalHelper {
     }
 
     private static boolean isEmpty(String str){
-        return str == null || str.equals("");
+        return str == null || str.equals("") || str.equals("null");
     }
 
     public static Optional<String> ofEmptyStr(Object r){
