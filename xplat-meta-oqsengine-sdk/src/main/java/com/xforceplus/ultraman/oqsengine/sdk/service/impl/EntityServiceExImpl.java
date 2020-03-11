@@ -12,11 +12,13 @@ import com.xforceplus.ultraman.oqsengine.sdk.service.ContextService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import io.vavr.control.Either;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.*;
 
+@Service
 public class EntityServiceExImpl implements EntityServiceEx {
 
     @Autowired
@@ -83,7 +85,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
 
             if( queryResult.getCode() == OperationResult.Code.OK ){
                 if(queryResult.getTotalRow() > 0) {
-                    return Either.right(toResultMap(entityClass, queryResult.getQueryResultList().get(0)));
+                    return Either.right(toResultMap(entityClass, subEntityClass, queryResult.getQueryResultList().get(0)));
                 } else {
                     return Either.left("未查询到记录");
                 }

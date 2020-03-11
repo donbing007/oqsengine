@@ -22,7 +22,7 @@ public class GrpcServerConfiguration {
     private GrpcServerProperties properties;
 
     @Bean(destroyMethod = "terminate")
-    public GrpcServer gprcServer(EntityServiceOqs oqs){
+    public GrpcServer grpcServer(EntityServiceOqs oqs){
 
         ActorSystem actorSystem = ActorSystem.create();
         ActorMaterializer actorMaterializer = ActorMaterializer.create(actorSystem);
