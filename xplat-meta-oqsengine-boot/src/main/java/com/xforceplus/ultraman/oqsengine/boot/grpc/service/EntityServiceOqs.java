@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -685,6 +686,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     break;
                 case BOOLEAN:
                     retValue = new BooleanValue(entityField, Boolean.parseBoolean(value));
+                    break;
+                case DECIMAL:
+                    retValue = new DecimalValue(entityField, new BigDecimal(value));
                     break;
                 default:
                     retValue = new StringValue(entityField, value);

@@ -360,15 +360,17 @@ public class SQLMasterStorage implements MasterStorage {
 
                 // 如果是多值.使用 stick 追加.
                 if (storageStrategy.isMultipleStorageValue()) {
-                    oldStorageValue = storageValueCache.get(field).storageValue;
-                    if (oldStorageValue != null) {
-                        oldStorageValue.stick(newStorageValue);
+                    Optional<StorageValue> oldStorageValueOp = Optional.ofNullable(storageValueCache.get(String.valueOf(field.id()))).map(x -> x.storageValue);
+
+                    if (oldStorageValueOp.isPresent()) {
+                        oldStorageValue = oldStorageValueOp.get();
+                        storageValueCache.put(String.valueOf(field.id()), new EntityValuePack(field,  oldStorageValue.stick(newStorageValue), storageStrategy));
                     } else {
-                        storageValueCache.put(storageName, new EntityValuePack(field, newStorageValue, storageStrategy));
+                        storageValueCache.put(String.valueOf(field.id()), new EntityValuePack(field, newStorageValue, storageStrategy));
                     }
                 } else {
                     // 单值
-                    storageValueCache.put(storageName, new EntityValuePack(field, newStorageValue, storageStrategy));
+                    storageValueCache.put(String.valueOf(field.id()), new EntityValuePack(field, newStorageValue, storageStrategy));
                 }
 
             } catch (Exception ex) {
