@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.command;
 
 import java.util.Map;
 
-public class SingleCreateCmd {
+public class SingleCreateCmd implements MetaDataLikeCmd{
 
     private String boId;
     private Map<String, Object> body;

@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.config.init.DictInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.ModuleInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.controller.*;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler;
+import com.xforceplus.ultraman.oqsengine.sdk.interceptor.CodeExtendedInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.EntityServiceExImpl;
@@ -19,6 +20,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.MetadataRepositoryInMemoryImpl;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
+import com.xforceplus.xplat.galaxy.framework.dispatcher.interceptor.MessageDispatcherInterceptor;
+import com.xforceplus.xplat.galaxy.framework.dispatcher.messaging.QueryMessage;
 import com.xforceplus.xplat.galaxy.grpc.spring.EnableGrpcServiceClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
@@ -150,5 +153,10 @@ public class InitServiceAutoConfiguration {
         factory.setReadTimeout(5000);//单位为ms
         factory.setConnectTimeout(5000);//单位为ms
         return factory;
+    }
+
+    @Bean
+    public MessageDispatcherInterceptor<?> codeExtendInterceptor(MetadataRepository metadataRepository, ContextService contextService){
+        return new CodeExtendedInterceptor(metadataRepository, contextService);
     }
 }

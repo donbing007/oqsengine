@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.SimpleBoItem;
 import com.xforceplus.ultraman.oqsengine.sdk.util.FieldHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ApiItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
@@ -463,7 +464,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                         .selectAll().where("boId").eq(id)
                         .execute();
         return loadRelationField(relDs.toRows());
-
     }
 
     /**
@@ -553,6 +553,25 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             callback.deleteFrom(getTable("fields")).where("boId").eq(boId).execute();
             callback.deleteFrom(getTable("rels")).where("boId").eq(boId).execute();
         });
+    }
+
+    //TODO typed converter
+    @Override
+    public SimpleBoItem findOneById(String boId) {
+        DataSet boDs = dc.query()
+                .from("bos")
+                .selectAll().where("id").eq(boId)
+                .execute();
+        if(boDs.next()) {
+            SimpleBoItem simpleBoItem = new SimpleBoItem();
+            Row row = boDs.getRow();
+            simpleBoItem.setCode(RowUtils.getRowValue(row, "code").map(String::valueOf).orElse(""));
+            simpleBoItem.setParentId(RowUtils.getRowValue(row, "parentId").map(String::valueOf).orElse(""));
+            simpleBoItem.setId(boId);
+            return simpleBoItem;
+        }else{
+            return null;
+        }
     }
 
     synchronized private void insertBoTable(String id, String code, String parentId) {
