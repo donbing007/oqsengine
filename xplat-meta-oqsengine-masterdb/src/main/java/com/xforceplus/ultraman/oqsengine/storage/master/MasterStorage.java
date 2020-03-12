@@ -36,4 +36,10 @@ public interface MasterStorage extends Storage {
      */
     Collection<IEntity> selectMultiple(Map<Long, IEntityClass> ids) throws SQLException;
 
+    /**
+     * 同步两个 id 表示的信息.实际需要同步的信息由实现定义.
+     * @param id 源数据标识.
+     * @param child 目标数据标识.
+     */
+    void synchronize(long id, long child) throws SQLException;
 }
