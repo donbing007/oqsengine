@@ -22,11 +22,11 @@ public class EntityMetaHandler {
      * 由于系统字段未打上标记，这里做简化处理，预先在代码中设定系统字段。
      * 创建的时候需要操作的字段集合
      */
-    final String[] insertFields = {"tenant_id","create_time","create_user","create_user_name","delete_flag","update_time","update_user","update_user_name"};
+    private static final String[] insertFields = {"tenant_id","create_time","create_user","create_user_name","delete_flag","update_time","update_user","update_user_name"};
     /**
      * 更新的时候需要操作的字段集合
      */
-    final String[] updateFields = {"update_time","update_user","update_user_name"};
+    private static final String[] updateFields = {"update_time","update_user","update_user_name"};
 
     /**
      * 保存对象字段填充

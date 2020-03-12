@@ -147,4 +147,6 @@ message FieldUp {
     string required = 9;
     string searchable = 10;
     string minLength = 11;
+    string dictId = 12;
+    string defaultValue = 13;
 }

@@ -117,4 +117,19 @@ public class UltPageBoItem {
     public void setCode(String code) {
         this.code = code;
     }
+
+    @Override
+    public String toString() {
+        return "UltPageBoItem{" +
+                "id=" + id +
+                ", pageId=" + pageId +
+                ", code='" + code + '\'' +
+                ", boName='" + boName + '\'' +
+                ", boCode='" + boCode + '\'' +
+                ", remark='" + remark + '\'' +
+                ", tenantId=" + tenantId +
+                ", tenantName='" + tenantName + '\'' +
+                ", setting='" + setting + '\'' +
+                '}';
+    }
 }

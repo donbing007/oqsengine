@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.sdk.handler;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Entity默认字段数据填充处理类
@@ -53,7 +55,12 @@ public class EntityMetaFieldDefaultHandler {
      * @return
      */
     public boolean isFill(EntityClass entityClass,String fieldName,Object fieldVal){
-
+        Optional<IEntityField> entityField = entityClass.fields().stream()
+                .filter(f -> f.name().equals(fieldName))
+                .findFirst();
+        if (entityField.isPresent()){
+            return true;
+        }
         return false;
     }
 
@@ -88,14 +95,10 @@ public class EntityMetaFieldDefaultHandler {
      * @return
      */
     public Map<String, Object> setFieldValByName(EntityClass entityClass, Map<String, Object> body,String fieldName, Object fieldVal) {
-        body.entrySet().stream().map(entry -> {
-            if (entry.getKey().equals(fieldName)){
-                if (isFill(entityClass,fieldName,entry.getValue())){
-                    return entry.getValue();
-                }
-            }
-            return null;
-        });
+
+        if (isFill(entityClass,fieldName,fieldVal)){
+            body.put(fieldName,fieldVal);
+        }
         return body;
     }
 
