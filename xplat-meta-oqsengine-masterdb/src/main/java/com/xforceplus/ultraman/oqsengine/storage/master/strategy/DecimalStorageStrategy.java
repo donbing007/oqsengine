@@ -1,7 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.strategy;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.StringStorageStrategy;
+
+import java.math.BigDecimal;
 
 /**
  * master 中关于分数的储存策略.
@@ -13,5 +21,15 @@ public class DecimalStorageStrategy extends StringStorageStrategy {
     @Override
     public FieldType fieldType() {
         return FieldType.DECIMAL;
+    }
+
+    @Override
+    public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
+        return new DecimalValue(field, new BigDecimal((String) storageValue.value()));
+    }
+
+    @Override
+    public StorageValue toStorageValue(IValue value) {
+        return new StringStorageValue(Long.toString(value.getField().id()), value.getValue().toString(), true);
     }
 }
