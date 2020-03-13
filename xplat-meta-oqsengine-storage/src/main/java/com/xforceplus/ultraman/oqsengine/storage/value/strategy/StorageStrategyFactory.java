@@ -34,11 +34,11 @@ public class StorageStrategyFactory {
         return new StorageStrategyFactory(COMMON_STRATEGY);
     }
 
-    public StorageStrategyFactory() {
+    private StorageStrategyFactory() {
     }
 
-    public StorageStrategyFactory(Map<FieldType, StorageStrategy> strategies) {
-        this.strategies = strategies;
+    private StorageStrategyFactory(Map<FieldType, StorageStrategy> strategies) {
+        this.strategies = new HashMap(strategies);
     }
 
     /**

@@ -49,12 +49,16 @@ public class SQLMasterStorage implements MasterStorage {
         "insert into %s (id, entity, version, time, pref, cref, deleted, attribute) values(?,?,?,?,?,?,?,?)";
     private static final String REPLACE_SQL =
         "update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
+    private static final String REPLACE_VERSION_TIME_SQL =
+        "update %s set version = ?, time = ? where id = ?";
     private static final String DELETE_SQL =
         "update %s set version = version + 1, deleted = ?, time = ? where id = ? and version = ?";
     private static final String SELECT_SQL =
         "select id, entity, version, time, pref, cref, deleted, attribute from %s where id = ? and deleted = false";
     private static final String SELECT_IN_SQL =
         "select id, entity, version, time, pref, cref, deleted, attribute from %s where id in (%s) and deleted = false";
+    private static final String SELECT_VERSION_TIME_SQL =
+        "select version, time from %s where id = ?";
 
     @Resource(name = "masterDataSourceSelector")
     private Selector<DataSource> dataSourceSelector;
@@ -177,6 +181,86 @@ public class SQLMasterStorage implements MasterStorage {
         }
 
         return results;
+    }
+
+    @Override
+    public void synchronize(long sourceId, long targetId) throws SQLException {
+        // 需要在内部类中修改,所以使用了引用类型.
+        final int[] newVersion = new int[1];
+        final long[] newTime = new long[1];
+        transactionExecutor.execute(
+            new DataSourceShardingTask(dataSourceSelector, Long.toString(sourceId)) {
+                @Override
+                public Object run(TransactionResource resource) throws SQLException {
+                    String tableName = tableNameSelector.select(Long.toString(sourceId));
+                    String sql = String.format(SELECT_VERSION_TIME_SQL, tableName);
+
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+                    st.setLong(1, sourceId);
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(st.toString());
+                    }
+
+                    ResultSet rs = st.executeQuery();
+                    if (rs.next()) {
+                        newVersion[0] = rs.getInt(FieldDefine.VERSION);
+                        newTime[0] = rs.getLong(FieldDefine.TIME);
+                    } else {
+                        throw new SQLException(
+                            String.format("Can not found data %d.", sourceId, targetId));
+                    }
+
+                    try {
+                        return null;
+                    } finally {
+                        if (rs != null) {
+                            rs.close();
+                        }
+
+                        if (st != null) {
+                            st.close();
+                        }
+                    }
+                }
+            }
+        );
+
+        transactionExecutor.execute(
+            new DataSourceShardingTask(dataSourceSelector, Long.toString(targetId)) {
+                @Override
+                public Object run(TransactionResource resource) throws SQLException {
+                    String tableName = tableNameSelector.select(Long.toString(targetId));
+                    String sql = String.format(REPLACE_VERSION_TIME_SQL, tableName);
+
+
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+                    st.setInt(1, newVersion[0]);
+                    st.setLong(2, newTime[0]);
+                    st.setLong(3, targetId);
+
+                    int size = st.executeUpdate();
+
+                    final int onlyOne = 1;
+                    if (size != onlyOne) {
+                        throw new SQLException(
+                            String.format("Unable to synchronize information from %d to %d.", sourceId, targetId));
+                    }
+
+                    try {
+                        return null;
+                    } finally {
+                        if (st != null) {
+                            st.close();
+                        }
+                    }
+
+                }
+            }
+
+        );
+
+
     }
 
 
@@ -368,7 +452,7 @@ public class SQLMasterStorage implements MasterStorage {
                         oldStorageValue = oldStorageValueOp.get();
                         storageValueCache.put(
                             String.valueOf(field.id()),
-                            new EntityValuePack(field,  oldStorageValue.stick(newStorageValue), storageStrategy));
+                            new EntityValuePack(field, oldStorageValue.stick(newStorageValue), storageStrategy));
                     } else {
                         storageValueCache.put(
                             String.valueOf(field.id()),
@@ -512,7 +596,7 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     private Optional<IEntity> buildEntityFromResultSet(ResultSet rs, IEntityClass entityClass) throws SQLException {
-        long dataEntityClassId = rs.getLong("entity");
+        long dataEntityClassId = rs.getLong(FieldDefine.ENTITY);
         if (entityClass.id() != dataEntityClassId) {
             throw new SQLException(
                 String.format(

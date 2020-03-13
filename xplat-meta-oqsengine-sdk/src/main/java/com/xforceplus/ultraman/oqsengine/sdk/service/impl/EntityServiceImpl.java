@@ -8,6 +8,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
+import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
+import com.xforceplus.ultraman.oqsengine.sdk.service.ContextService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
@@ -17,6 +19,7 @@ import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -38,6 +41,9 @@ public class EntityServiceImpl implements EntityService {
     private final EntityServiceClient entityServiceClient;
 
     private final ContextService contextService;
+
+    @Autowired
+    private EntityMetaHandler entityMetaHandler;
 
     public EntityServiceImpl(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
         this.metadataRepository = metadataRepository;
@@ -158,6 +164,8 @@ public class EntityServiceImpl implements EntityService {
         if(transId != null){
             replaceBuilder.addHeader("transaction-id", transId);
         }
+        //处理系统字段的逻辑-add by wz
+        body = entityMetaHandler.updateFill(entityClass,body);
 
         OperationResult updateResult = entityServiceClient.replace()
                 .invoke(toEntityUp(entityClass, id, body))
@@ -217,6 +225,8 @@ public class EntityServiceImpl implements EntityService {
         if(transId != null){
             buildBuilder.addHeader("transaction-id", transId);
         }
+        //处理系统字段的逻辑-add by wz
+        body = entityMetaHandler.insertFill(entityClass,body);
 
         OperationResult createResult = buildBuilder
                 .invoke(toEntityUp(entityClass, null, body))

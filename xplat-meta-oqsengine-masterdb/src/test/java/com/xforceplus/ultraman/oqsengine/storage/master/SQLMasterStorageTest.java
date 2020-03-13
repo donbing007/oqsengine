@@ -173,6 +173,30 @@ public class SQLMasterStorageTest {
     }
 
     @Test
+    public void testSync() throws Exception {
+        IEntity expectedEntity = expectedEntitys.stream().findFirst().get();
+        IEntity source = storage.select(expectedEntity.id(), expectedEntity.entityClass()).get();
+        Assert.assertEquals(0, source.version());
+
+        storage.replace(source);
+        source = storage.select(expectedEntity.id(), expectedEntity.entityClass()).get();
+
+        Assert.assertEquals(1, source.version());
+
+
+        IEntity target = expectedEntitys.stream().skip(1).findFirst().get();
+        target = storage.select(target.id(), target.entityClass()).get();
+
+        Assert.assertEquals(0, target.version());
+
+        storage.synchronize(source.id(), target.id());
+        target = storage.select(target.id(), target.entityClass()).get();
+
+        Assert.assertEquals(source.version(), target.version());
+
+    }
+
+    @Test
     public void testDelete() throws Exception {
 
         storage.delete(expectedEntitys.stream().findAny().get());

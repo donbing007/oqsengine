@@ -24,6 +24,11 @@ public class UltPageBo {
      */
     private String setting;
 
+    /**
+     * 说明信息
+     */
+    private String remark;
+
     public UltPageBo() {
     }
 
@@ -64,6 +69,14 @@ public class UltPageBo {
 
     public void setSetting(String setting) {
         this.setting = setting;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     @Override

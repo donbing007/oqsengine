@@ -11,9 +11,22 @@ import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
+import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ResponseList;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.UltPageBoItem;
 import io.vavr.control.Either;
+import org.apache.metamodel.data.DataSet;
+import org.apache.metamodel.data.Row;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.*;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.TRANSACTION_KEY;
@@ -28,6 +41,9 @@ public class EntityServiceExImpl implements EntityServiceEx {
         this.contextService = contextService;
         this.entityServiceClient = entityServiceClient;
     }
+
+    @Autowired
+    private PageBoMapLocalStore pageBoMapLocalStore;
 
     @Override
     public Either<String, IEntity> create(EntityClass entityClass, Map<String, Object> body) {
@@ -97,5 +113,52 @@ public class EntityServiceExImpl implements EntityServiceEx {
         }
 
         return Either.left("error parameters");
+    }
+
+    @Override
+    public List<UltPageBoItem> findPageBos(String pageCode, String tenantId) {
+        DataSet ds = null;
+        if(!StringUtils.isEmpty(pageCode)) {
+
+            List<Row> trows = new ArrayList<>();
+            if (!StringUtils.isEmpty(tenantId)){
+                ds = pageBoMapLocalStore.query().selectAll()
+                        .where("code")
+                        .eq(pageCode)
+                        .and("tenantId")
+                        .eq(tenantId)
+                        .execute();
+                trows = ds.toRows();
+            }
+            if (ds!=null && trows!=null && trows.size() > 0){
+                ResponseList<UltPageBoItem> items = trows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
+                return items;
+            }else {
+                ds = pageBoMapLocalStore.query().selectAll()
+                        .where("code")
+                        .eq(pageCode)
+                        .execute();
+                List<Row> rows = ds.toRows();
+                ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
+                return items;
+            }
+        }else {
+            return null;
+        }
+    }
+
+    private UltPageBoItem toUltPageBos(Row row){
+        UltPageBoItem ultPageBoItem = new UltPageBoItem();
+        ultPageBoItem.setId(Long.parseLong(RowUtils.getRowValue(row, "settingId").map(Object::toString).orElse("")));
+        ultPageBoItem.setPageId(Long.parseLong(RowUtils.getRowValue(row, "id").map(Object::toString).orElse("")));
+        ultPageBoItem.setBoCode(RowUtils.getRowValue(row, "boCode").map(Object::toString).orElse(""));
+        if (!"".equals(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse(""))){
+            ultPageBoItem.setTenantId(Long.parseLong(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse("")));
+        }
+        ultPageBoItem.setTenantName(RowUtils.getRowValue(row, "tenantName").map(Object::toString).orElse(""));
+        ultPageBoItem.setBoName(RowUtils.getRowValue(row, "boName").map(Object::toString).orElse(""));
+        ultPageBoItem.setRemark(RowUtils.getRowValue(row, "remark").map(Object::toString).orElse(""));
+        ultPageBoItem.setCode(RowUtils.getRowValue(row, "code").map(Object::toString).orElse(""));
+        return ultPageBoItem;
     }
 }
