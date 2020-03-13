@@ -232,5 +232,4 @@ public class EntityServiceTest {
                 .field("deci", ConditionOp.le, 12.57).build()).forEach(System.out::println);
 
     }
-
 }
