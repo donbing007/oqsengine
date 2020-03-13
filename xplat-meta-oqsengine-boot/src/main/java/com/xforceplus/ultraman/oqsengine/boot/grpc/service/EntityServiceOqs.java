@@ -199,13 +199,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 if(ds.get().family() != null && ds.get().family().parent() > 0 && entityClass.extendEntityClass() != null){
                     Optional<IEntity> parentDS = entitySearchService.selectOne(ds.get().family().parent(), entityClass.extendEntityClass());
 
+                    Optional<IEntity> finalDs = ds;
                     parentDS.ifPresent(x ->
-                            ds.ifPresent(y -> leftAppend(y, x)));
+                            finalDs.ifPresent(y -> leftAppend(y, x)));
                 } else if(ds.get().family() != null && ds.get().family().child() > 0 &&  subEntityClass != null) {
                     Optional<IEntity> childDs = entitySearchService.selectOne(ds.get().family().child(), subEntityClass);
 
+                    Optional<IEntity> finalDs = ds;
                     childDs.ifPresent(x ->
-                            ds.ifPresent(y -> leftAppend(y, x)));
+                            finalDs.ifPresent(y -> leftAppend(x, y)));
+                    ds = childDs;
                 }
             }
 

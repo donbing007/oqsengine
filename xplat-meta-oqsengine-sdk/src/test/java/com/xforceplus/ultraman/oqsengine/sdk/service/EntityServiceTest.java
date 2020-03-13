@@ -161,6 +161,41 @@ public class EntityServiceTest {
 //        System.out.println(one);
 //    }
 
+
+    @Test
+    public void exshouldReturnChildId() throws InterruptedException {
+
+        Thread.sleep(10000);
+
+        Optional<EntityClass> testBillSub = entityService.loadByCode("testbillsub");
+
+        Optional<EntityClass> testBill = entityService.loadByCode("testbill");
+
+        Map<String, Object> mapObject = new HashMap<>();
+        mapObject.put("bill_code", "test1");
+        mapObject.put("bill_name", "billTest");
+        mapObject.put("sub", "hhhh");
+        mapObject.put("deci", "12.56");
+
+        Either<String, IEntity> entity = entityServiceEx.create(testBillSub.get(), mapObject);
+
+        Long childId = entity.get().id();
+        Long parentId = entity.get().family().parent();
+
+        System.out.println(parentId);
+
+        Long id = (Long) entityServiceEx.findOneByParentId(testBill.get()
+                , testBillSub.get(), parentId).map(x -> x.get("id"))
+                .map(String::valueOf)
+                .map(Long::valueOf).get();
+
+        System.out.println(childId);
+
+        System.out.println(id);
+
+        System.out.println(entityService.findOne(testBillSub.get(), id));
+    }
+
     @Test
     public void testDecimal() throws InterruptedException {
         Thread.sleep(10000);
