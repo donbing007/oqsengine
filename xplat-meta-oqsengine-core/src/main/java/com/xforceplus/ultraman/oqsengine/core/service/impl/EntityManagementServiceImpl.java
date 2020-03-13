@@ -101,7 +101,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 masterStorage.build(entityClone);
                 indexStorage.build(buildIndexEntity(entityClone));
 
-                return entityClone;
+                return entity;
             }
 
         });
@@ -109,6 +109,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Override
     public void replace(IEntity entity) throws SQLException {
+
+        if (!masterStorage.select(entity.id(), entity.entityClass()).isPresent()) {
+            throw new SQLException(String.format("An Entity that does not exist cannot be updated (%d).", entity.id()));
+        }
 
         // 克隆一份,后续的修改不影响入参.
         IEntity target;

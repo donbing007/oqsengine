@@ -16,10 +16,15 @@ public interface IEntityValue extends Cloneable{
     /**
      * 获得该对象指定属性的数据
      * @param fieldName
-     * @return
+     * @return 值.
      */
     public Optional<IValue> getValue(String fieldName);
 
+    /**
+     * 根据字段 id 查询当前值.
+     * @param fieldId 字段 id.
+     * @return 值.
+     */
     public Optional<IValue> getValue(long fieldId);
 
     /**

@@ -182,6 +182,30 @@ public class EntityManagementServiceImplTest {
         });
     }
 
+    @Test
+    public void testNotExtendReplace() throws Exception {
+        IEntity expectedEntity = buildEntity(fatherEntityClass, false);
+        expectedEntity = service.build(expectedEntity);
+
+        IEntityField removeField = fatherEntityClass.fields().stream().findFirst().get();
+        expectedEntity.entityValue().remove(removeField);
+
+        service.replace(expectedEntity);
+
+        IEntity masterEntity = masterStorage.select(expectedEntity.id(), fatherEntityClass).get();
+        Assert.assertEquals(
+            fatherEntityClass.fields().stream().filter(f -> f.id() != removeField.id()).count(),
+            masterEntity.entityValue().values().stream().filter(v -> v.getField().id() != removeField.id()).count()
+        );
+
+        IEntity indexEntity = indexStorage.select(expectedEntity.id()).get();
+        Assert.assertEquals(
+            fatherEntityClass.fields().stream().filter(f ->
+                f.config().isSearchable() && f.id() != removeField.id()).count(),
+            indexEntity.entityValue().values().stream().filter(v -> v.getField().id() != removeField.id()).count()
+        );
+    }
+
     private static IEntity copyEntity(IEntity source) {
         IEntityValue newValue = new EntityValue(source.id());
         newValue.addValues(source.entityValue().values());

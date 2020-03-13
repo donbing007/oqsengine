@@ -81,7 +81,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     public IValue remove(IEntityField field) {
         lazyInit();
 
-        return values.remove(field);
+        return values.remove(field.id());
     }
 
     @Override
