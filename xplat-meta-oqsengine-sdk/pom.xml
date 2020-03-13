@@ -92,6 +92,8 @@
         </plugins>
     </build>
 
+
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -104,4 +106,26 @@
         </dependencies>
     </dependencyManagement>
 
+
+    <repositories>
+        <repository>
+            <id>snapshots-4.0</id>
+            <url>http://120.27.140.65:8081/nexus/content/repositories/snapshots/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>releases-4.0</id>
+            <url>http://120.27.140.65:8081/nexus/content/repositories/releases/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>thirdparty-4.0</id>
+            <url>http://120.27.140.65:8081/nexus/content/repositories/thirdparty/</url>
+        </repository>
+    </repositories>
 </project>
