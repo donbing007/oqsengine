@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController
+@RequestMapping
 public class UltPageSettingController {
 
     @Autowired
@@ -43,6 +43,7 @@ public class UltPageSettingController {
      * @return
      */
     @PostMapping("/pages/{id}/deployments" )
+    @ResponseBody
     public Response deploymentsPage(@PathVariable String id) {
 
         Response<List<UltPage>> result = initSeetings(id);

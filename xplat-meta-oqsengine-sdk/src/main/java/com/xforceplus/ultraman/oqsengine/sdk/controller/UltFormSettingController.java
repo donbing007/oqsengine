@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController
+@RequestMapping
 public class UltFormSettingController {
 
     @Autowired
@@ -44,6 +44,7 @@ public class UltFormSettingController {
      * @return
      */
     @PostMapping("/form-settings/{id}/deployments" )
+    @ResponseBody
     public Response deploymentsForm(@PathVariable String id) {
         Response<List<UltForm>> result = initSeetings(id);
         return result;
@@ -79,6 +80,7 @@ public class UltFormSettingController {
      * @return
      */
     @GetMapping("/form-settings/{id}" )
+    @ResponseBody
     public Response pageBoSeetings(HttpServletRequest request,@PathVariable String id) {
         DataSet ds = null;
         String tenantId = request.getParameter("tenantId");

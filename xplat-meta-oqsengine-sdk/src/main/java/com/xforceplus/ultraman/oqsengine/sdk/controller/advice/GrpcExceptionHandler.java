@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.concurrent.CompletionException;
 
+//TODO check if canbe
 @RestControllerAdvice
 public class GrpcExceptionHandler {
     @ExceptionHandler(CompletionException.class)

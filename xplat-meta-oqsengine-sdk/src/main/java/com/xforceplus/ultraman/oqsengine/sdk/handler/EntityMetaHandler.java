@@ -15,7 +15,6 @@ import java.util.Optional;
  * @author wangzheng
  * @since 2020-03-05
  */
-@Component
 public class EntityMetaHandler {
 
     /**

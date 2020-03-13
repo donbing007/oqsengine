@@ -1,31 +1,33 @@
 package com.xforceplus.ultraman.oqsengine.sdk.controller;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.command.*;
-import com.xforceplus.ultraman.oqsengine.sdk.dispatcher.ServiceDispatcher;
-import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.ui.DefaultUiService;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.RowItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.SummaryItem;
+import com.xforceplus.xplat.galaxy.framework.dispatcher.ServiceDispatcher;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ResolvableType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.AbstractController;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@RestController
+
+@RequestMapping
 public class EntityController {
 
+    //TODO
     @Autowired
     private ServiceDispatcher dispatcher;
 
     @GetMapping("/bos/{boId}/entities/{id}")
+    @ResponseBody
     public Response<Map<String, Object>> singleQuery(
             @PathVariable String boId,
             @PathVariable String id){
@@ -48,6 +50,7 @@ public class EntityController {
     }
 
     @DeleteMapping("/bos/{boId}/entities/{id}")
+    @ResponseBody
     public Response<String> singleDelete(
         @PathVariable String boId,
         @PathVariable String id
@@ -83,6 +86,7 @@ public class EntityController {
      *
      */
     @PostMapping("/bos/{boId}/entities")
+    @ResponseBody
     public Response<String> singleCreate( @PathVariable String boId,
                                           @RequestBody Map<String, Object> body
     ){
@@ -115,6 +119,7 @@ public class EntityController {
 //    response: {code:string, message:string}
 
     @PutMapping("/bos/{boId}/entities/{id}")
+    @ResponseBody
     public Response<String> singleModify( @PathVariable String boId,
                                           @PathVariable Long id,
                                           @RequestBody Map<String, Object> body
@@ -202,6 +207,7 @@ public class EntityController {
      */
 
     @PostMapping("/bos/{boId}/entities/query")
+    @ResponseBody
     public Response<RowItem<Map<String, Object>>> conditionQuery(@PathVariable String boId,
                                                                  @RequestBody ConditionQueryRequest condition){
 

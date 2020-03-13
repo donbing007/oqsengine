@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.service;
 
 import akka.grpc.javadsl.Metadata;
-import com.xforceplus.ultraman.oqsengine.boot.utils.EntityHelper;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
@@ -22,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -31,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.boot.utils.OptionalHelper.ofEmptyStr;
+import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.ofEmptyStr;
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
 
@@ -199,13 +199,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 if(ds.get().family() != null && ds.get().family().parent() > 0 && entityClass.extendEntityClass() != null){
                     Optional<IEntity> parentDS = entitySearchService.selectOne(ds.get().family().parent(), entityClass.extendEntityClass());
 
+                    Optional<IEntity> finalDs = ds;
                     parentDS.ifPresent(x ->
-                            ds.ifPresent(y -> leftAppend(y, x)));
+                            finalDs.ifPresent(y -> leftAppend(y, x)));
                 } else if(ds.get().family() != null && ds.get().family().child() > 0 &&  subEntityClass != null) {
                     Optional<IEntity> childDs = entitySearchService.selectOne(ds.get().family().child(), subEntityClass);
 
+                    Optional<IEntity> finalDs = ds;
                     childDs.ifPresent(x ->
-                            ds.ifPresent(y -> leftAppend(y, x)));
+                            finalDs.ifPresent(y -> leftAppend(x, y)));
+                    ds = childDs;
                 }
             }
 

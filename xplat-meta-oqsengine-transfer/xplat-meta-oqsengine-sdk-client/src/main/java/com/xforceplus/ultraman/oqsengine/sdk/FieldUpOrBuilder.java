@@ -131,4 +131,24 @@ public interface FieldUpOrBuilder extends
    */
   com.google.protobuf.ByteString
       getMinLengthBytes();
+
+  /**
+   * <code>string dictId = 12;</code>
+   */
+  String getDictId();
+  /**
+   * <code>string dictId = 12;</code>
+   */
+  com.google.protobuf.ByteString
+      getDictIdBytes();
+
+  /**
+   * <code>string defaultValue = 13;</code>
+   */
+  String getDefaultValue();
+  /**
+   * <code>string defaultValue = 13;</code>
+   */
+  com.google.protobuf.ByteString
+      getDefaultValueBytes();
 }
