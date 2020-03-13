@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.service;
 
 import akka.grpc.javadsl.Metadata;
-import com.xforceplus.ultraman.oqsengine.boot.utils.EntityHelper;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
@@ -32,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.boot.utils.OptionalHelper.ofEmptyStr;
+import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.ofEmptyStr;
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
 

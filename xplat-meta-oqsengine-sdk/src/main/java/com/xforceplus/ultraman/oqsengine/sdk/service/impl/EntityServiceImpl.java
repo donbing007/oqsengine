@@ -1,29 +1,18 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
-import com.xforceplus.ultraman.oqsengine.sdk.service.ContextService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
-import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.EntityItem;
-import com.xforceplus.xplat.galaxy.framework.context.ContextKeys;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
