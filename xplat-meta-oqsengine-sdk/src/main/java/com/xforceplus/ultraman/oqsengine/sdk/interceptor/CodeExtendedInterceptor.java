@@ -8,6 +8,7 @@ import com.xforceplus.xplat.galaxy.framework.context.ContextKeys;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.interceptor.MessageDispatcherInterceptor;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.messaging.QueryMessage;
+import org.springframework.core.Ordered;
 
 import java.util.List;
 import java.util.function.BiFunction;
@@ -37,5 +38,10 @@ public class CodeExtendedInterceptor<T,R> implements MessageDispatcherIntercepto
             }
             return queryMessage;
         };
+    }
+
+    @Override
+    public int getOrder(){
+        return Ordered.HIGHEST_PRECEDENCE;
     }
 }

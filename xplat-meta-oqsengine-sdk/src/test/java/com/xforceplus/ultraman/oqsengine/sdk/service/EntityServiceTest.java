@@ -197,6 +197,16 @@ public class EntityServiceTest {
     }
 
     @Test
+    public void getWiredTicket() throws InterruptedException {
+        Thread.sleep(10000);
+
+        Optional<EntityClass> ticket = entityService.loadByCode("ticket");
+
+        System.out.println(entityService.findByCondition(ticket.get(), new RequestBuilder()
+                        .field("image_id", ConditionOp.eq, 6643745129398009857L).build()));
+    }
+
+    @Test
     public void testDecimal() throws InterruptedException {
         Thread.sleep(10000);
 

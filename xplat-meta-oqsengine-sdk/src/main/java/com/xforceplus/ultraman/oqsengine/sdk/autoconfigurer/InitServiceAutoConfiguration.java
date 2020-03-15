@@ -11,6 +11,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.controller.*;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.CodeExtendedInterceptor;
+import com.xforceplus.ultraman.oqsengine.sdk.interceptor.DefaultSearchInterceptor;
+import com.xforceplus.ultraman.oqsengine.sdk.interceptor.MatchRouter;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.EntityServiceExImpl;
@@ -20,12 +22,14 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStor
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.MetadataRepositoryInMemoryImpl;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.interceptor.MessageDispatcherInterceptor;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.messaging.QueryMessage;
 import com.xforceplus.xplat.galaxy.grpc.spring.EnableGrpcServiceClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -161,8 +165,16 @@ public class InitServiceAutoConfiguration {
         return new CodeExtendedInterceptor(metadataRepository, contextService);
     }
 
+    @ConditionalOnBean(name = "searchCondition", value = { MatchRouter.class} )
+    @Bean
+    public MessageDispatcherInterceptor<?> DefaultSearchInterceptor(MatchRouter<String, ConditionQueryRequest> matchRouter){
+        return new DefaultSearchInterceptor<>(matchRouter);
+    }
+
     @Bean
     public EntityMetaHandler entityMetaHandler(){
         return new EntityMetaHandler();
     }
+
+
 }
