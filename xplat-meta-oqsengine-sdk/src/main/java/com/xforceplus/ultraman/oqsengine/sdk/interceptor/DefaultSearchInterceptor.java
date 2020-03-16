@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.interceptor;
 
 import com.xforceplus.ultraman.oqsengine.sdk.command.ConditionSearchCmd;
-import com.xforceplus.ultraman.oqsengine.sdk.command.SingleQueryCmd;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.interceptor.MessageDispatcherInterceptor;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.messaging.GenericQueryMessage;
