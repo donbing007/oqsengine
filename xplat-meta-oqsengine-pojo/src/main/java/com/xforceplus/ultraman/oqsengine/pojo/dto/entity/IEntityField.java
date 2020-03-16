@@ -32,4 +32,16 @@ public interface IEntityField {
      */
     FieldConfig config();
 
+    /**
+     * 获取枚举类型的字典id
+     * @return 配置
+     */
+    String dictId();
+
+    /**
+     * 获取默认值信息
+     * @return 配置
+     */
+    String defaultValue();
+
 }

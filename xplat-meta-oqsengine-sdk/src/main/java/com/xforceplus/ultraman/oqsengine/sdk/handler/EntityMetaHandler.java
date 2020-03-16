@@ -2,12 +2,14 @@ package com.xforceplus.ultraman.oqsengine.sdk.handler;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import org.springframework.stereotype.Component;
-
+import com.xforceplus.xplat.galaxy.framework.context.ContextService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Optional;
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
 
 /**
  * Entity公共字段数据填充处理类
@@ -16,6 +18,9 @@ import java.util.Optional;
  * @since 2020-03-05
  */
 public class EntityMetaHandler {
+
+    @Autowired
+    private ContextService contextService;
 
     /**
      * 由于系统字段未打上标记，这里做简化处理，预先在代码中设定系统字段。
@@ -37,22 +42,38 @@ public class EntityMetaHandler {
         for (String insertField : insertFields) {
             Object o = this.getFieldValByName(entityClass,body,insertField);
             if (null == o){
+
                 if (insertField.equals("tenant_id")){
-//                    setFieldValByName(entityClass,body,insertField,1);
+                    String tenantId = contextService.get(TENANTID_KEY);
+                    if (!StringUtils.isEmpty(tenantId)) {
+                        setFieldValByName(entityClass,body,insertField,tenantId);
+                    }
                 }else if (insertField.equals("create_time")){
                     setFieldValByName(entityClass,body,insertField,LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli());
                 }else if (insertField.equals("create_user")){
-//                    setFieldValByName(entityClass,body,insertField,1);
+                    String userName = contextService.get(USERNAME);
+                    if (!StringUtils.isEmpty(userName)) {
+                        setFieldValByName(entityClass,body,insertField,userName);
+                    }
                 }else if (insertField.equals("create_user_name")){
-//                    setFieldValByName(entityClass,body,insertField,1);
+                    String userDisplayName = contextService.get(USER_DISPLAYNAME);
+                    if (!StringUtils.isEmpty(userDisplayName)) {
+                        setFieldValByName(entityClass,body,insertField,userDisplayName);
+                    }
                 }else if (insertField.equals("delete_flag")){
                     setFieldValByName(entityClass,body,insertField,"1");
                 }else if (insertField.equals("update_time")){
                     setFieldValByName(entityClass,body,insertField,LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli());
                 }else if (insertField.equals("update_user")){
-//                    setFieldValByName(entityClass,body,insertField,1);
+                    String userName = contextService.get(USERNAME);
+                    if (!StringUtils.isEmpty(userName)) {
+                        setFieldValByName(entityClass,body,insertField,userName);
+                    }
                 }else if (insertField.equals("update_user_name")){
-//                    setFieldValByName(entityClass,body,insertField,1);
+                    String userDisplayName = contextService.get(USER_DISPLAYNAME);
+                    if (!StringUtils.isEmpty(userDisplayName)) {
+                        setFieldValByName(entityClass,body,insertField,userDisplayName);
+                    }
                 }
             }
         }
@@ -72,9 +93,15 @@ public class EntityMetaHandler {
                 if (updateField.equals("update_time")){
                     setFieldValByName(entityClass,body,updateField,LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli());
                 }else if (updateField.equals("update_user")){
-//                    setFieldValByName(entityClass,body,updateField,1);
+                    String userName = contextService.get(USERNAME);
+                    if (!StringUtils.isEmpty(userName)) {
+                        setFieldValByName(entityClass,body,updateField,userName);
+                    }
                 }else if (updateField.equals("update_user_name")){
-//                    setFieldValByName(entityClass,body,updateField,1);
+                    String userDisplayName = contextService.get(USER_DISPLAYNAME);
+                    if (!StringUtils.isEmpty(userDisplayName)) {
+                        setFieldValByName(entityClass,body,updateField,userDisplayName);
+                    }
                 }
             }
         }

@@ -1,8 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.sdk.handler;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.DictMapLocalStore;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -14,6 +21,9 @@ import java.util.Optional;
  */
 public class EntityMetaFieldDefaultHandler {
 
+    @Autowired
+    private DictMapLocalStore store;
+
     /**
      * 保存对象字段填充
      * @param entityClass 对象
@@ -21,7 +31,13 @@ public class EntityMetaFieldDefaultHandler {
      * @return body
      */
     public Map<String, Object> insertFill(EntityClass entityClass, Map<String, Object> body){
-
+        List<IEntityField> fields = getDefaultFields(entityClass);
+        for (IEntityField field : fields) {
+            Object o = this.getFieldValByName(entityClass,body,field.name());
+            if (null == o){
+                setFieldValByName(entityClass, body, field.name(), field.defaultValue());
+            }
+        }
         return body;
     };
 
@@ -34,6 +50,37 @@ public class EntityMetaFieldDefaultHandler {
     public Map<String, Object> updateFill(EntityClass entityClass, Map<String, Object> body){
 
         return body;
+    };
+
+    /**
+     * 返回对象需要设置默认值的字段
+     * @param entityClass
+     * @return List<IEntityField>
+     */
+    public List<IEntityField> getDefaultFields(EntityClass entityClass){
+        List<IEntityField> fields = new ArrayList<IEntityField>();
+        entityClass.fields().forEach(f -> {
+            String dictId = f.dictId();
+            String defaultValue = f.defaultValue();
+            switch (f.type()){
+                case ENUM:
+                    if (StringUtils.isEmpty(dictId) || StringUtils.isEmpty(defaultValue)){
+                        break;
+                    }
+                    fields.add(f);
+                    break;
+                case LONG:
+                case BOOLEAN:
+                    if (StringUtils.isEmpty(defaultValue)){
+                        break;
+                    }
+                    fields.add(f);
+                    break;
+                default:
+                    break;
+            }
+        });
+        return fields;
     };
 
     /**
