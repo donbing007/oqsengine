@@ -17,6 +17,7 @@ import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 /**
  * entity 搜索服务.
@@ -80,6 +81,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
 
         return entityOptional;
+    }
+
+    @Override
+    public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
+        Map<Long, IEntityClass> request = Arrays.stream(ids).boxed().collect(
+            Collectors.toMap(i -> i, i -> entityClass, (i0, i1) -> i0));
+
+        return masterStorage.selectMultiple(request);
     }
 
     @Override
