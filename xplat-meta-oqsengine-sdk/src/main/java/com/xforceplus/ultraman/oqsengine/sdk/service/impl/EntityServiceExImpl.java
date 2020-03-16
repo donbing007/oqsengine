@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
+import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.service.ContextService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
@@ -42,6 +43,9 @@ public class EntityServiceExImpl implements EntityServiceEx {
     @Autowired
     private PageBoMapLocalStore pageBoMapLocalStore;
 
+    @Autowired
+    private EntityMetaHandler entityMetaHandler;
+
     @Override
     public Either<String, IEntity> create(EntityClass entityClass, Map<String, Object> body) {
         String transId = contextService.get(ContextService.StringKeys.TransactionKey);
@@ -51,6 +55,9 @@ public class EntityServiceExImpl implements EntityServiceEx {
         if(transId != null){
             buildBuilder.addHeader("transaction-id", transId);
         }
+
+        //处理系统字段的逻辑-add by wz
+        body = entityMetaHandler.insertFill(entityClass,body);
 
         OperationResult createResult = buildBuilder
                 .invoke(toEntityUp(entityClass, null, body))
