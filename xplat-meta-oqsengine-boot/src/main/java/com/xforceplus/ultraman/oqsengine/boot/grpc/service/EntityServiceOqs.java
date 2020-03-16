@@ -482,7 +482,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
        return conditions;
     }
 
-
     //TODO error handler
     private Conditions toOneConditions(IEntityClass entityClass, FieldConditionUp fieldCondition){
 

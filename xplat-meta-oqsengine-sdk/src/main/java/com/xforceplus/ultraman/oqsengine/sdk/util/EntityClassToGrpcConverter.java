@@ -1,14 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.sdk.util;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.*;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Conditions;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.springframework.util.StringUtils;
@@ -16,8 +21,10 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.combine;
+import static com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Op.*;
 
 
 public class EntityClassToGrpcConverter {
@@ -59,6 +66,11 @@ public class EntityClassToGrpcConverter {
 
                     Optional<IEntityField> fieldFinal = combine(fieldOp, fieldOpParent, fieldOpRel);
 
+                    //filter null obj
+                    if(entry.getValue() == null){
+                        return Optional.<ValueUp>empty();
+                    }
+
                     return fieldFinal.map(field -> {
                         return ValueUp.newBuilder()
                                 .setFieldId(field.id())
@@ -73,6 +85,35 @@ public class EntityClassToGrpcConverter {
 
         builder.addAllValues(values);
         return builder.build();
+    }
+
+    public static SelectByCondition toSelectByCondition(EntityClass entityClass
+                                                , EntityItem entityItem
+                                                , com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions conditions
+                                                , Sort sort, Page page){
+        SelectByCondition.Builder select = SelectByCondition
+                .newBuilder();
+
+        if(page != null){
+            select.setPageNo(Long.valueOf(page.getIndex()).intValue());
+            select.setPageSize(Long.valueOf(page.getPageSize()).intValue());
+        }
+
+        if(sort != null){
+            select.addSort(toSortUp(sort.getField(), sort.isAsc()));
+        }
+
+        select.setEntity(toEntityUp(entityClass));
+
+        if(conditions != null){
+            select.setConditions(toConditionsUp(conditions));
+        }
+
+        if( entityItem != null ){
+            select.addAllQueryFields(toQueryFields(entityClass, entityItem));
+        }
+
+        return select.build();
     }
 
     public static SelectByCondition toSelectByCondition(EntityClass entityClass, ConditionQueryRequest condition){
@@ -205,6 +246,13 @@ public class EntityClassToGrpcConverter {
         return Optional.ofNullable(entityClass.extendEntityClass()).flatMap(x -> x.field(key));
     }
 
+    private static FieldSortUp toSortUp(IEntityField field, boolean isAsc){
+        return FieldSortUp.newBuilder()
+                .setCode(field.name())
+                .setOrder(isAsc ? FieldSortUp.Order.asc : FieldSortUp.Order.desc)
+                .build();
+    }
+
     private static List<FieldSortUp> toSortUp(List<FieldSort> sort) {
         return sort.stream().map(x -> {
             return FieldSortUp.newBuilder()
@@ -241,6 +289,68 @@ public class EntityClassToGrpcConverter {
         return conditionsUpBuilder.build();
     }
 
+    private static ConditionsUp toConditionsUp(com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions conditions){
+
+        ConditionsUp.Builder conditionsUpBuilder = ConditionsUp.newBuilder();
+        conditionsUpBuilder.addAllFields(StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(conditions.iterator(), Spliterator.ORDERED),
+                false).filter(com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions::isValueNode)
+                .map(x -> ((ValueConditionNode)x).getCondition())
+                .map(EntityClassToGrpcConverter::toFieldCondition)
+                .filter(Optional::isPresent)
+                .map(Optional::get).collect(Collectors.toList()));
+        return conditionsUpBuilder.build();
+    }
+
+    private static FieldConditionUp.Op toConditionOp(ConditionOperator conditionOperator){
+        FieldConditionUp.Op op;
+        switch (conditionOperator){
+            case GREATER_THAN:
+                op = gt;
+                break;
+            case GREATER_THAN_EQUALS:
+                op = ge;
+                break;
+            case LIKE:
+                op =  like;
+                break;
+            case EQUALS:
+                op = eq;
+                break;
+            case NOT_EQUALS:
+                op = ne;
+                break;
+            case MINOR_THAN_EQUALS:
+                op = le;
+                break;
+            case MINOR_THAN:
+                op = lt;
+                break;
+            default:
+                op = eq;
+        }
+        return op;
+    }
+
+    private static Optional<FieldConditionUp> toFieldCondition(Condition condition){
+
+        IEntityField field = condition.getField();
+        IValue value = condition.getValue();
+        ConditionOperator operator = condition.getOperator();
+        //check
+        if(value == null || field == null || operator == null){
+            return Optional.empty();
+        }
+
+        FieldConditionUp fieldCondition = FieldConditionUp.newBuilder()
+                .setCode(field.name())
+                .setOperation(toConditionOp(operator))
+                .addValues(value.valueToString())
+                .setField(toFieldUp(field))
+                .build();
+
+        return Optional.of(fieldCondition);
+    }
 
     private static Optional<FieldConditionUp> toFieldCondition(IEntityClass entityClass, FieldCondition fieldCondition){
 
