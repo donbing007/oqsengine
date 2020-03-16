@@ -77,61 +77,61 @@ public final class EntityResourceProto {
   private static  com.google.protobuf.Descriptors.FileDescriptor
       descriptor;
   static {
-    String[] descriptorData = {
-      "\n\016transfer.proto\"\264\001\n\021SelectByCondition\022\031" +
+    java.lang.String[] descriptorData = {
+      "\n\016transfer.proto\"\301\001\n\021SelectByCondition\022\031" +
       "\n\006entity\030\001 \001(\0132\t.EntityUp\022\016\n\006pageNo\030\002 \001(" +
       "\005\022\020\n\010pageSize\030\003 \001(\005\022!\n\nconditions\030\004 \001(\0132" +
       "\r.ConditionsUp\022\032\n\004sort\030\005 \003(\0132\014.FieldSort" +
-      "Up\022#\n\013queryFields\030\006 \003(\0132\016.QueryFieldsUp\"" +
-      "1\n\014ConditionsUp\022!\n\006fields\030\001 \003(\0132\021.FieldC" +
-      "onditionUp\"s\n\013FieldSortUp\022\014\n\004code\030\001 \001(\t\022" +
-      "!\n\005order\030\002 \001(\0162\022.FieldSortUp.Order\022\027\n\005fi" +
-      "eld\030\003 \001(\0132\010.FieldUp\"\032\n\005Order\022\007\n\003asc\020\000\022\010\n" +
-      "\004desc\020\001\"\356\001\n\020FieldConditionUp\022\014\n\004code\030\001 \001" +
-      "(\t\022\'\n\toperation\030\002 \001(\0162\024.FieldConditionUp" +
-      ".Op\022\016\n\006values\030\003 \003(\t\022\027\n\005field\030\004 \001(\0132\010.Fie" +
-      "ldUp\"z\n\002Op\022\006\n\002eq\020\000\022\010\n\004like\020\001\022\006\n\002in\020\002\022\t\n\005" +
-      "ge_le\020\003\022\t\n\005ge_lt\020\004\022\t\n\005gt_le\020\005\022\t\n\005gt_lt\020\006" +
-      "\022\006\n\002gt\020\007\022\006\n\002ge\020\010\022\006\n\002lt\020\t\022\006\n\002le\020\n\022\006\n\002ne\020\013" +
-      "\022\006\n\002ni\020\014\"\375\001\n\017OperationResult\022#\n\004code\030\001 \001" +
-      "(\0162\025.OperationResult.Code\022\017\n\007message\030\002 \001" +
-      "(\t\022\036\n\013queryResult\030\003 \003(\0132\t.EntityUp\022\031\n\021tr" +
-      "ansactionResult\030\004 \001(\t\022\023\n\013affectedRow\030\005 \001" +
-      "(\005\022\013\n\003ids\030\006 \003(\003\022\020\n\010totalRow\030\007 \001(\005\"E\n\004Cod" +
-      "e\022\006\n\002OK\020\000\022\n\n\006FAILED\020\001\022\r\n\tEXCEPTION\020\002\022\017\n\013" +
-      "NETWORK_ERR\020\003\022\t\n\005OTHER\020\004\">\n\rTransactionU" +
-      "p\022\n\n\002id\030\001 \001(\t\022\017\n\007service\030\002 \001(\t\022\020\n\010tansTy" +
-      "pe\030\003 \001(\t\"\361\001\n\010EntityUp\022\n\n\002id\030\001 \001(\003\022\035\n\010rel" +
-      "ation\030\002 \003(\0132\013.RelationUp\022 \n\rentityClasse" +
-      "s\030\003 \003(\0132\t.EntityUp\022$\n\021extendEntityClass\030" +
-      "\004 \001(\0132\t.EntityUp\022\030\n\006fields\030\005 \003(\0132\010.Field" +
-      "Up\022\030\n\006values\030\006 \003(\0132\010.ValueUp\022\r\n\005objId\030\007 " +
-      "\001(\003\022\014\n\004code\030\010 \001(\t\022!\n\016subEntityClass\030\t \001(" +
-      "\0132\t.EntityUp\";\n\rQueryFieldsUp\022\014\n\004code\030\001 " +
-      "\001(\t\022\n\n\002id\030\002 \001(\003\022\020\n\010entityId\030\003 \001(\003\"\177\n\nRel" +
-      "ationUp\022\014\n\004name\030\001 \001(\t\022\024\n\014relationType\030\002 " +
-      "\001(\t\022\020\n\010identity\030\003 \001(\010\022\035\n\013entityField\030\004 \001" +
-      "(\0132\010.FieldUp\022\034\n\024relatedEntityClassId\030\005 \001" +
-      "(\003\"J\n\007ValueUp\022\r\n\005value\030\001 \001(\t\022\014\n\004name\030\002 \001" +
-      "(\t\022\021\n\tfieldType\030\003 \001(\t\022\017\n\007fieldId\030\004 \001(\003\"\357" +
-      "\001\n\007FieldUp\022\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 \001(\t\022\021\n\t" +
-      "fieldType\030\003 \001(\t\022\014\n\004code\030\004 \001(\t\022\023\n\013display" +
-      "Type\030\005 \001(\t\022\020\n\010editable\030\006 \001(\t\022\020\n\010enumCode" +
-      "\030\007 \001(\t\022\021\n\tmaxLength\030\010 \001(\t\022\020\n\010required\030\t " +
-      "\001(\t\022\022\n\nsearchable\030\n \001(\t\022\021\n\tminLength\030\013 \001" +
-      "(\t\022\016\n\006dictId\030\014 \001(\t\022\024\n\014defaultValue\030\r \001(\t" +
-      "2\357\002\n\rEntityService\022)\n\005begin\022\016.Transactio" +
-      "nUp\032\020.OperationResult\022$\n\005build\022\t.EntityU" +
-      "p\032\020.OperationResult\022&\n\007replace\022\t.EntityU" +
-      "p\032\020.OperationResult\022%\n\006remove\022\t.EntityUp" +
-      "\032\020.OperationResult\022(\n\tselectOne\022\t.Entity" +
-      "Up\032\020.OperationResult\022:\n\022selectByConditio" +
-      "ns\022\022.SelectByCondition\032\020.OperationResult" +
-      "\022*\n\006commit\022\016.TransactionUp\032\020.OperationRe" +
-      "sult\022,\n\010rollBack\022\016.TransactionUp\032\020.Opera" +
-      "tionResultB>\n%com.xforceplus.ultraman.oq" +
-      "sengine.sdkB\023EntityResourceProtoP\001b\006prot" +
-      "o3"
+      "Up\022#\n\013queryFields\030\006 \003(\0132\016.QueryFieldsUp\022" +
+      "\013\n\003ids\030\007 \003(\003\"1\n\014ConditionsUp\022!\n\006fields\030\001" +
+      " \003(\0132\021.FieldConditionUp\"s\n\013FieldSortUp\022\014" +
+      "\n\004code\030\001 \001(\t\022!\n\005order\030\002 \001(\0162\022.FieldSortU" +
+      "p.Order\022\027\n\005field\030\003 \001(\0132\010.FieldUp\"\032\n\005Orde" +
+      "r\022\007\n\003asc\020\000\022\010\n\004desc\020\001\"\356\001\n\020FieldConditionU" +
+      "p\022\014\n\004code\030\001 \001(\t\022\'\n\toperation\030\002 \001(\0162\024.Fie" +
+      "ldConditionUp.Op\022\016\n\006values\030\003 \003(\t\022\027\n\005fiel" +
+      "d\030\004 \001(\0132\010.FieldUp\"z\n\002Op\022\006\n\002eq\020\000\022\010\n\004like\020" +
+      "\001\022\006\n\002in\020\002\022\t\n\005ge_le\020\003\022\t\n\005ge_lt\020\004\022\t\n\005gt_le" +
+      "\020\005\022\t\n\005gt_lt\020\006\022\006\n\002gt\020\007\022\006\n\002ge\020\010\022\006\n\002lt\020\t\022\006\n" +
+      "\002le\020\n\022\006\n\002ne\020\013\022\006\n\002ni\020\014\"\375\001\n\017OperationResul" +
+      "t\022#\n\004code\030\001 \001(\0162\025.OperationResult.Code\022\017" +
+      "\n\007message\030\002 \001(\t\022\036\n\013queryResult\030\003 \003(\0132\t.E" +
+      "ntityUp\022\031\n\021transactionResult\030\004 \001(\t\022\023\n\013af" +
+      "fectedRow\030\005 \001(\005\022\013\n\003ids\030\006 \003(\003\022\020\n\010totalRow" +
+      "\030\007 \001(\005\"E\n\004Code\022\006\n\002OK\020\000\022\n\n\006FAILED\020\001\022\r\n\tEX" +
+      "CEPTION\020\002\022\017\n\013NETWORK_ERR\020\003\022\t\n\005OTHER\020\004\">\n" +
+      "\rTransactionUp\022\n\n\002id\030\001 \001(\t\022\017\n\007service\030\002 " +
+      "\001(\t\022\020\n\010tansType\030\003 \001(\t\"\361\001\n\010EntityUp\022\n\n\002id" +
+      "\030\001 \001(\003\022\035\n\010relation\030\002 \003(\0132\013.RelationUp\022 \n" +
+      "\rentityClasses\030\003 \003(\0132\t.EntityUp\022$\n\021exten" +
+      "dEntityClass\030\004 \001(\0132\t.EntityUp\022\030\n\006fields\030" +
+      "\005 \003(\0132\010.FieldUp\022\030\n\006values\030\006 \003(\0132\010.ValueU" +
+      "p\022\r\n\005objId\030\007 \001(\003\022\014\n\004code\030\010 \001(\t\022!\n\016subEnt" +
+      "ityClass\030\t \001(\0132\t.EntityUp\";\n\rQueryFields" +
+      "Up\022\014\n\004code\030\001 \001(\t\022\n\n\002id\030\002 \001(\003\022\020\n\010entityId" +
+      "\030\003 \001(\003\"\177\n\nRelationUp\022\014\n\004name\030\001 \001(\t\022\024\n\014re" +
+      "lationType\030\002 \001(\t\022\020\n\010identity\030\003 \001(\010\022\035\n\013en" +
+      "tityField\030\004 \001(\0132\010.FieldUp\022\034\n\024relatedEnti" +
+      "tyClassId\030\005 \001(\003\"J\n\007ValueUp\022\r\n\005value\030\001 \001(" +
+      "\t\022\014\n\004name\030\002 \001(\t\022\021\n\tfieldType\030\003 \001(\t\022\017\n\007fi" +
+      "eldId\030\004 \001(\003\"\357\001\n\007FieldUp\022\n\n\002id\030\001 \001(\003\022\014\n\004n" +
+      "ame\030\002 \001(\t\022\021\n\tfieldType\030\003 \001(\t\022\014\n\004code\030\004 \001" +
+      "(\t\022\023\n\013displayType\030\005 \001(\t\022\020\n\010editable\030\006 \001(" +
+      "\t\022\020\n\010enumCode\030\007 \001(\t\022\021\n\tmaxLength\030\010 \001(\t\022\020" +
+      "\n\010required\030\t \001(\t\022\022\n\nsearchable\030\n \001(\t\022\021\n\t" +
+      "minLength\030\013 \001(\t\022\016\n\006dictId\030\014 \001(\t\022\024\n\014defau" +
+      "ltValue\030\r \001(\t2\357\002\n\rEntityService\022)\n\005begin" +
+      "\022\016.TransactionUp\032\020.OperationResult\022$\n\005bu" +
+      "ild\022\t.EntityUp\032\020.OperationResult\022&\n\007repl" +
+      "ace\022\t.EntityUp\032\020.OperationResult\022%\n\006remo" +
+      "ve\022\t.EntityUp\032\020.OperationResult\022(\n\tselec" +
+      "tOne\022\t.EntityUp\032\020.OperationResult\022:\n\022sel" +
+      "ectByConditions\022\022.SelectByCondition\032\020.Op" +
+      "erationResult\022*\n\006commit\022\016.TransactionUp\032" +
+      "\020.OperationResult\022,\n\010rollBack\022\016.Transact" +
+      "ionUp\032\020.OperationResultB>\n%com.xforceplu" +
+      "s.ultraman.oqsengine.sdkB\023EntityResource" +
+      "ProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -150,67 +150,67 @@ public final class EntityResourceProto {
     internal_static_SelectByCondition_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_SelectByCondition_descriptor,
-        new String[] { "Entity", "PageNo", "PageSize", "Conditions", "Sort", "QueryFields", });
+        new java.lang.String[] { "Entity", "PageNo", "PageSize", "Conditions", "Sort", "QueryFields", "Ids", });
     internal_static_ConditionsUp_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_ConditionsUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ConditionsUp_descriptor,
-        new String[] { "Fields", });
+        new java.lang.String[] { "Fields", });
     internal_static_FieldSortUp_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_FieldSortUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldSortUp_descriptor,
-        new String[] { "Code", "Order", "Field", });
+        new java.lang.String[] { "Code", "Order", "Field", });
     internal_static_FieldConditionUp_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_FieldConditionUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldConditionUp_descriptor,
-        new String[] { "Code", "Operation", "Values", "Field", });
+        new java.lang.String[] { "Code", "Operation", "Values", "Field", });
     internal_static_OperationResult_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_OperationResult_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_OperationResult_descriptor,
-        new String[] { "Code", "Message", "QueryResult", "TransactionResult", "AffectedRow", "Ids", "TotalRow", });
+        new java.lang.String[] { "Code", "Message", "QueryResult", "TransactionResult", "AffectedRow", "Ids", "TotalRow", });
     internal_static_TransactionUp_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_TransactionUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_TransactionUp_descriptor,
-        new String[] { "Id", "Service", "TansType", });
+        new java.lang.String[] { "Id", "Service", "TansType", });
     internal_static_EntityUp_descriptor =
       getDescriptor().getMessageTypes().get(6);
     internal_static_EntityUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityUp_descriptor,
-        new String[] { "Id", "Relation", "EntityClasses", "ExtendEntityClass", "Fields", "Values", "ObjId", "Code", "SubEntityClass", });
+        new java.lang.String[] { "Id", "Relation", "EntityClasses", "ExtendEntityClass", "Fields", "Values", "ObjId", "Code", "SubEntityClass", });
     internal_static_QueryFieldsUp_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_QueryFieldsUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_QueryFieldsUp_descriptor,
-        new String[] { "Code", "Id", "EntityId", });
+        new java.lang.String[] { "Code", "Id", "EntityId", });
     internal_static_RelationUp_descriptor =
       getDescriptor().getMessageTypes().get(8);
     internal_static_RelationUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_RelationUp_descriptor,
-        new String[] { "Name", "RelationType", "Identity", "EntityField", "RelatedEntityClassId", });
+        new java.lang.String[] { "Name", "RelationType", "Identity", "EntityField", "RelatedEntityClassId", });
     internal_static_ValueUp_descriptor =
       getDescriptor().getMessageTypes().get(9);
     internal_static_ValueUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ValueUp_descriptor,
-        new String[] { "Value", "Name", "FieldType", "FieldId", });
+        new java.lang.String[] { "Value", "Name", "FieldType", "FieldId", });
     internal_static_FieldUp_descriptor =
       getDescriptor().getMessageTypes().get(10);
     internal_static_FieldUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldUp_descriptor,
-        new String[] { "Id", "Name", "FieldType", "Code", "DisplayType", "Editable", "EnumCode", "MaxLength", "Required", "Searchable", "MinLength", "DictId", "DefaultValue", });
+        new java.lang.String[] { "Id", "Name", "FieldType", "Code", "DisplayType", "Editable", "EnumCode", "MaxLength", "Required", "Searchable", "MinLength", "DictId", "DefaultValue", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

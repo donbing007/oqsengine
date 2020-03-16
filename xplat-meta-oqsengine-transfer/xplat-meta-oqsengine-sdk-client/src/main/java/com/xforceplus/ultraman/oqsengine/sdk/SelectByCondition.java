@@ -20,6 +20,7 @@ private static final long serialVersionUID = 0L;
     pageSize_ = 0;
     sort_ = java.util.Collections.emptyList();
     queryFields_ = java.util.Collections.emptyList();
+    ids_ = java.util.Collections.emptyList();
   }
 
   @Override
@@ -107,6 +108,27 @@ private static final long serialVersionUID = 0L;
                 input.readMessage(QueryFieldsUp.parser(), extensionRegistry));
             break;
           }
+          case 56: {
+            if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+              ids_ = new java.util.ArrayList<Long>();
+              mutable_bitField0_ |= 0x00000040;
+            }
+            ids_.add(input.readInt64());
+            break;
+          }
+          case 58: {
+            int length = input.readRawVarint32();
+            int limit = input.pushLimit(length);
+            if (!((mutable_bitField0_ & 0x00000040) == 0x00000040) && input.getBytesUntilLimit() > 0) {
+              ids_ = new java.util.ArrayList<Long>();
+              mutable_bitField0_ |= 0x00000040;
+            }
+            while (input.getBytesUntilLimit() > 0) {
+              ids_.add(input.readInt64());
+            }
+            input.popLimit(limit);
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -120,6 +142,9 @@ private static final long serialVersionUID = 0L;
       }
       if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
         queryFields_ = java.util.Collections.unmodifiableList(queryFields_);
+      }
+      if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+        ids_ = java.util.Collections.unmodifiableList(ids_);
       }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
@@ -268,6 +293,29 @@ private static final long serialVersionUID = 0L;
     return queryFields_.get(index);
   }
 
+  public static final int IDS_FIELD_NUMBER = 7;
+  private java.util.List<Long> ids_;
+  /**
+   * <code>repeated int64 ids = 7;</code>
+   */
+  public java.util.List<Long>
+      getIdsList() {
+    return ids_;
+  }
+  /**
+   * <code>repeated int64 ids = 7;</code>
+   */
+  public int getIdsCount() {
+    return ids_.size();
+  }
+  /**
+   * <code>repeated int64 ids = 7;</code>
+   */
+  public long getIds(int index) {
+    return ids_.get(index);
+  }
+  private int idsMemoizedSerializedSize = -1;
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -280,6 +328,7 @@ private static final long serialVersionUID = 0L;
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
+    getSerializedSize();
     if (entity_ != null) {
       output.writeMessage(1, getEntity());
     }
@@ -297,6 +346,13 @@ private static final long serialVersionUID = 0L;
     }
     for (int i = 0; i < queryFields_.size(); i++) {
       output.writeMessage(6, queryFields_.get(i));
+    }
+    if (getIdsList().size() > 0) {
+      output.writeUInt32NoTag(58);
+      output.writeUInt32NoTag(idsMemoizedSerializedSize);
+    }
+    for (int i = 0; i < ids_.size(); i++) {
+      output.writeInt64NoTag(ids_.get(i));
     }
     unknownFields.writeTo(output);
   }
@@ -329,6 +385,20 @@ private static final long serialVersionUID = 0L;
     for (int i = 0; i < queryFields_.size(); i++) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(6, queryFields_.get(i));
+    }
+    {
+      int dataSize = 0;
+      for (int i = 0; i < ids_.size(); i++) {
+        dataSize += com.google.protobuf.CodedOutputStream
+          .computeInt64SizeNoTag(ids_.get(i));
+      }
+      size += dataSize;
+      if (!getIdsList().isEmpty()) {
+        size += 1;
+        size += com.google.protobuf.CodedOutputStream
+            .computeInt32SizeNoTag(dataSize);
+      }
+      idsMemoizedSerializedSize = dataSize;
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -364,6 +434,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getSortList());
     result = result && getQueryFieldsList()
         .equals(other.getQueryFieldsList());
+    result = result && getIdsList()
+        .equals(other.getIdsList());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -394,6 +466,10 @@ private static final long serialVersionUID = 0L;
     if (getQueryFieldsCount() > 0) {
       hash = (37 * hash) + QUERYFIELDS_FIELD_NUMBER;
       hash = (53 * hash) + getQueryFieldsList().hashCode();
+    }
+    if (getIdsCount() > 0) {
+      hash = (37 * hash) + IDS_FIELD_NUMBER;
+      hash = (53 * hash) + getIdsList().hashCode();
     }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
@@ -554,6 +630,8 @@ private static final long serialVersionUID = 0L;
       } else {
         queryFieldsBuilder_.clear();
       }
+      ids_ = java.util.Collections.emptyList();
+      bitField0_ = (bitField0_ & ~0x00000040);
       return this;
     }
 
@@ -608,6 +686,11 @@ private static final long serialVersionUID = 0L;
       } else {
         result.queryFields_ = queryFieldsBuilder_.build();
       }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        ids_ = java.util.Collections.unmodifiableList(ids_);
+        bitField0_ = (bitField0_ & ~0x00000040);
+      }
+      result.ids_ = ids_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -713,6 +796,16 @@ private static final long serialVersionUID = 0L;
             queryFieldsBuilder_.addAllMessages(other.queryFields_);
           }
         }
+      }
+      if (!other.ids_.isEmpty()) {
+        if (ids_.isEmpty()) {
+          ids_ = other.ids_;
+          bitField0_ = (bitField0_ & ~0x00000040);
+        } else {
+          ensureIdsIsMutable();
+          ids_.addAll(other.ids_);
+        }
+        onChanged();
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1506,6 +1599,72 @@ private static final long serialVersionUID = 0L;
         queryFields_ = null;
       }
       return queryFieldsBuilder_;
+    }
+
+    private java.util.List<Long> ids_ = java.util.Collections.emptyList();
+    private void ensureIdsIsMutable() {
+      if (!((bitField0_ & 0x00000040) == 0x00000040)) {
+        ids_ = new java.util.ArrayList<Long>(ids_);
+        bitField0_ |= 0x00000040;
+       }
+    }
+    /**
+     * <code>repeated int64 ids = 7;</code>
+     */
+    public java.util.List<Long>
+        getIdsList() {
+      return java.util.Collections.unmodifiableList(ids_);
+    }
+    /**
+     * <code>repeated int64 ids = 7;</code>
+     */
+    public int getIdsCount() {
+      return ids_.size();
+    }
+    /**
+     * <code>repeated int64 ids = 7;</code>
+     */
+    public long getIds(int index) {
+      return ids_.get(index);
+    }
+    /**
+     * <code>repeated int64 ids = 7;</code>
+     */
+    public Builder setIds(
+        int index, long value) {
+      ensureIdsIsMutable();
+      ids_.set(index, value);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated int64 ids = 7;</code>
+     */
+    public Builder addIds(long value) {
+      ensureIdsIsMutable();
+      ids_.add(value);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated int64 ids = 7;</code>
+     */
+    public Builder addAllIds(
+        Iterable<? extends Long> values) {
+      ensureIdsIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, ids_);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated int64 ids = 7;</code>
+     */
+    public Builder clearIds() {
+      ids_ = java.util.Collections.emptyList();
+      bitField0_ = (bitField0_ & ~0x00000040);
+      onChanged();
+      return this;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

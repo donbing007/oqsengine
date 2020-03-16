@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.LongStream;
 
 /**
  * entity 搜索服务.
@@ -27,6 +28,15 @@ public interface EntitySearchService {
      * @return 目标 entity 实体.
      */
     Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException;
+
+    /**
+     * 根据多个 id 搜索 entity 实例.
+     * @param ids 目标 id 列表.
+     * @param entityClass 目标 entity 类型.
+     * @return 实体列表.
+     * @throws SQLException
+     */
+    Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException;
 
     /**
      * 条件分页搜索 entity 列表.使用默认排序.
