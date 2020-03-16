@@ -23,7 +23,7 @@ public interface FieldUpOrBuilder extends
    *
    * <code>string name = 2;</code>
    */
-  String getName();
+  java.lang.String getName();
   /**
    * <pre>
    * 字段名称
@@ -41,7 +41,7 @@ public interface FieldUpOrBuilder extends
    *
    * <code>string fieldType = 3;</code>
    */
-  String getFieldType();
+  java.lang.String getFieldType();
   /**
    * <pre>
    * 字段类型
@@ -55,7 +55,7 @@ public interface FieldUpOrBuilder extends
   /**
    * <code>string code = 4;</code>
    */
-  String getCode();
+  java.lang.String getCode();
   /**
    * <code>string code = 4;</code>
    */
@@ -65,7 +65,7 @@ public interface FieldUpOrBuilder extends
   /**
    * <code>string displayType = 5;</code>
    */
-  String getDisplayType();
+  java.lang.String getDisplayType();
   /**
    * <code>string displayType = 5;</code>
    */
@@ -75,7 +75,7 @@ public interface FieldUpOrBuilder extends
   /**
    * <code>string editable = 6;</code>
    */
-  String getEditable();
+  java.lang.String getEditable();
   /**
    * <code>string editable = 6;</code>
    */
@@ -85,7 +85,7 @@ public interface FieldUpOrBuilder extends
   /**
    * <code>string enumCode = 7;</code>
    */
-  String getEnumCode();
+  java.lang.String getEnumCode();
   /**
    * <code>string enumCode = 7;</code>
    */
@@ -95,7 +95,7 @@ public interface FieldUpOrBuilder extends
   /**
    * <code>string maxLength = 8;</code>
    */
-  String getMaxLength();
+  java.lang.String getMaxLength();
   /**
    * <code>string maxLength = 8;</code>
    */
@@ -105,7 +105,7 @@ public interface FieldUpOrBuilder extends
   /**
    * <code>string required = 9;</code>
    */
-  String getRequired();
+  java.lang.String getRequired();
   /**
    * <code>string required = 9;</code>
    */
@@ -115,7 +115,7 @@ public interface FieldUpOrBuilder extends
   /**
    * <code>string searchable = 10;</code>
    */
-  String getSearchable();
+  java.lang.String getSearchable();
   /**
    * <code>string searchable = 10;</code>
    */
@@ -125,7 +125,7 @@ public interface FieldUpOrBuilder extends
   /**
    * <code>string minLength = 11;</code>
    */
-  String getMinLength();
+  java.lang.String getMinLength();
   /**
    * <code>string minLength = 11;</code>
    */
@@ -135,7 +135,7 @@ public interface FieldUpOrBuilder extends
   /**
    * <code>string dictId = 12;</code>
    */
-  String getDictId();
+  java.lang.String getDictId();
   /**
    * <code>string dictId = 12;</code>
    */
@@ -145,7 +145,7 @@ public interface FieldUpOrBuilder extends
   /**
    * <code>string defaultValue = 13;</code>
    */
-  String getDefaultValue();
+  java.lang.String getDefaultValue();
   /**
    * <code>string defaultValue = 13;</code>
    */

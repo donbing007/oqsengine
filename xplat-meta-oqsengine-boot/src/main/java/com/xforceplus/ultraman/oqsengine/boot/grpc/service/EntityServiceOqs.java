@@ -108,16 +108,23 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         extractTransaction(metadata).ifPresent(id -> transactionManager.rebind(id));
 
         OperationResult result;
-
         IEntityClass entityClass = toEntityClass(in);
 
         try {
-            Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
-            if(ds.isPresent()) {
 
+            Optional<String> mode = metadata.getText("mode");
+            Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
+            if (ds.isPresent()) {
+                IEntity entity = null;
+                if(mode.filter("replace"::equals).isPresent()){
+                    entity = toEntity(entityClass, in);
+                }else{
+                    entity = ds.get();
+                    updateEntity(entity, toEntity(entityClass, in));
+                }
                 //side effect
-                updateEntity(ds.get(), toEntity(entityClass, in));
-                entityManagementService.replace(ds.get());
+
+                entityManagementService.replace(entity);
                 result = OperationResult.newBuilder()
                         .setAffectedRow(1)
                         .setCode(OperationResult.Code.OK)

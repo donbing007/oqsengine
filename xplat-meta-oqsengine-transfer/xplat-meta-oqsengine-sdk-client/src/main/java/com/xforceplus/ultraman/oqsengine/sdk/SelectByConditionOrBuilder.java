@@ -90,4 +90,17 @@ public interface SelectByConditionOrBuilder extends
    */
   QueryFieldsUpOrBuilder getQueryFieldsOrBuilder(
           int index);
+
+  /**
+   * <code>repeated int64 ids = 7;</code>
+   */
+  java.util.List<Long> getIdsList();
+  /**
+   * <code>repeated int64 ids = 7;</code>
+   */
+  int getIdsCount();
+  /**
+   * <code>repeated int64 ids = 7;</code>
+   */
+  long getIds(int index);
 }

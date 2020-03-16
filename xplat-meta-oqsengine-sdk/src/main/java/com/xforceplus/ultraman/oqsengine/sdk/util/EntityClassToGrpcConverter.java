@@ -116,7 +116,7 @@ public class EntityClassToGrpcConverter {
         return select.build();
     }
 
-    public static SelectByCondition toSelectByCondition(EntityClass entityClass, ConditionQueryRequest condition){
+    public static SelectByCondition toSelectByCondition(EntityClass entityClass, List<Long> ids, ConditionQueryRequest condition){
         SelectByCondition.Builder select = SelectByCondition
                 .newBuilder();
 
@@ -141,6 +141,10 @@ public class EntityClassToGrpcConverter {
         EntityItem entityItem = condition.getEntity();
         if( entityItem != null ){
             select.addAllQueryFields(toQueryFields(entityClass, entityItem));
+        }
+
+        if(ids != null){
+            select.addAllIds(ids);
         }
 
         return select.build();

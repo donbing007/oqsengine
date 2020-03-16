@@ -27,7 +27,11 @@ public interface EntityService  {
 
     Either<String, Integer> updateById(EntityClass entityClass, Long id, Map<String, Object> body);
 
+    Either<String, Integer> replaceById(EntityClass entityClass, Long id, Map<String, Object> body);
+
     Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByCondition(EntityClass entityClass, ConditionQueryRequest condition);
+
+    Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByConditionWithIds(EntityClass entityClass, List<Long> ids, ConditionQueryRequest condition);
 
     Either<String, Long> create(EntityClass entityClass, Map<String, Object> body);
 
