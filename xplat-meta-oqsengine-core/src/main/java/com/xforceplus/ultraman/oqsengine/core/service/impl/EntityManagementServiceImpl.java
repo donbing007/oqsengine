@@ -101,7 +101,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 masterStorage.build(entityClone);
                 indexStorage.build(buildIndexEntity(entityClone));
 
-                return entityClone;
+                return entity;
             }
 
         });
@@ -109,6 +109,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Override
     public void replace(IEntity entity) throws SQLException {
+
+        if (!masterStorage.select(entity.id(), entity.entityClass()).isPresent()) {
+            throw new SQLException(String.format("An Entity that does not exist cannot be updated (%d).", entity.id()));
+        }
 
         // 克隆一份,后续的修改不影响入参.
         IEntity target;
@@ -145,8 +149,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 IEntity indexEntity = buildIndexEntity(target);
                 indexStorage.replace(indexEntity);
 
-                // 有子类,需要处理索引中子类的从父类复制过来的属性.
-                if (entity.family().child() > 0) {
+                // 有子类
+                if (target.family().child() > 0) {
+                    // 父子同步
+                    masterStorage.synchronize(target.id(), target.family().child());
+
+                    // 同步子类索引信息.
                     indexStorage.replaceAttribute(indexEntity.entityValue());
                 }
             }
@@ -180,13 +188,16 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 // 有子类需要删除.
                 if (entity.family().child() > 0) {
-                    indexStorage.delete(
-                        new Entity(
-                            entity.family().child(),
-                            AnyEntityClass.getInstance(),
-                            new EntityValue(entity.family().child())
-                        )
+
+                    IEntity chlidEntity = new Entity(
+                        entity.family().child(),
+                        AnyEntityClass.getInstance(),
+                        new EntityValue(entity.family().child()),
+                        entity.version()
                     );
+
+                    masterStorage.delete(chlidEntity);
+                    indexStorage.delete(chlidEntity);
                 }
             }
             return null;

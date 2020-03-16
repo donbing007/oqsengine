@@ -30,15 +30,18 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.*;
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.TRANSACTION_KEY;
 
-@Service
 public class EntityServiceExImpl implements EntityServiceEx {
 
-    @Autowired
-    private ContextService contextService;
+    private final ContextService contextService;
 
-    @Autowired
-    private EntityServiceClient entityServiceClient;
+    private final EntityServiceClient entityServiceClient;
+
+    public EntityServiceExImpl(ContextService contextService, EntityServiceClient entityServiceClient) {
+        this.contextService = contextService;
+        this.entityServiceClient = entityServiceClient;
+    }
 
     @Autowired
     private PageBoMapLocalStore pageBoMapLocalStore;
@@ -48,7 +51,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
 
     @Override
     public Either<String, IEntity> create(EntityClass entityClass, Map<String, Object> body) {
-        String transId = contextService.get(ContextService.StringKeys.TransactionKey);
+        String transId = contextService.get(TRANSACTION_KEY);
 
         SingleResponseRequestBuilder<EntityUp, OperationResult> buildBuilder = entityServiceClient.build();
 
@@ -90,7 +93,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
         if(subEntityClass != null && subEntityClass.extendEntityClass() != null
                 && entityClass != null && entityClass.id() == subEntityClass.extendEntityClass().id()){
 
-            String transId = contextService.get(ContextService.StringKeys.TransactionKey);
+            String transId = contextService.get(TRANSACTION_KEY);
 
             SingleResponseRequestBuilder<EntityUp, OperationResult> queryResultBuilder = entityServiceClient.selectOne();
 
@@ -114,7 +117,6 @@ public class EntityServiceExImpl implements EntityServiceEx {
             }else{
                 return Either.left(queryResult.getMessage());
             }
-
         }
 
         return Either.left("error parameters");

@@ -27,6 +27,8 @@ private static final long serialVersionUID = 0L;
     required_ = "";
     searchable_ = "";
     minLength_ = "";
+    dictId_ = "";
+    defaultValue_ = "";
   }
 
   @Override
@@ -123,6 +125,18 @@ private static final long serialVersionUID = 0L;
             String s = input.readStringRequireUtf8();
 
             minLength_ = s;
+            break;
+          }
+          case 98: {
+            String s = input.readStringRequireUtf8();
+
+            dictId_ = s;
+            break;
+          }
+          case 106: {
+            String s = input.readStringRequireUtf8();
+
+            defaultValue_ = s;
             break;
           }
         }
@@ -518,6 +532,74 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int DICTID_FIELD_NUMBER = 12;
+  private volatile Object dictId_;
+  /**
+   * <code>string dictId = 12;</code>
+   */
+  public String getDictId() {
+    Object ref = dictId_;
+    if (ref instanceof String) {
+      return (String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      String s = bs.toStringUtf8();
+      dictId_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string dictId = 12;</code>
+   */
+  public com.google.protobuf.ByteString
+      getDictIdBytes() {
+    Object ref = dictId_;
+    if (ref instanceof String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (String) ref);
+      dictId_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int DEFAULTVALUE_FIELD_NUMBER = 13;
+  private volatile Object defaultValue_;
+  /**
+   * <code>string defaultValue = 13;</code>
+   */
+  public String getDefaultValue() {
+    Object ref = defaultValue_;
+    if (ref instanceof String) {
+      return (String) ref;
+    } else {
+      com.google.protobuf.ByteString bs =
+          (com.google.protobuf.ByteString) ref;
+      String s = bs.toStringUtf8();
+      defaultValue_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string defaultValue = 13;</code>
+   */
+  public com.google.protobuf.ByteString
+      getDefaultValueBytes() {
+    Object ref = defaultValue_;
+    if (ref instanceof String) {
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (String) ref);
+      defaultValue_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -563,6 +645,12 @@ private static final long serialVersionUID = 0L;
     if (!getMinLengthBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 11, minLength_);
     }
+    if (!getDictIdBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 12, dictId_);
+    }
+    if (!getDefaultValueBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 13, defaultValue_);
+    }
     unknownFields.writeTo(output);
   }
 
@@ -605,6 +693,12 @@ private static final long serialVersionUID = 0L;
     if (!getMinLengthBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(11, minLength_);
     }
+    if (!getDictIdBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(12, dictId_);
+    }
+    if (!getDefaultValueBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(13, defaultValue_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -643,6 +737,10 @@ private static final long serialVersionUID = 0L;
         .equals(other.getSearchable());
     result = result && getMinLength()
         .equals(other.getMinLength());
+    result = result && getDictId()
+        .equals(other.getDictId());
+    result = result && getDefaultValue()
+        .equals(other.getDefaultValue());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -677,6 +775,10 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getSearchable().hashCode();
     hash = (37 * hash) + MINLENGTH_FIELD_NUMBER;
     hash = (53 * hash) + getMinLength().hashCode();
+    hash = (37 * hash) + DICTID_FIELD_NUMBER;
+    hash = (53 * hash) + getDictId().hashCode();
+    hash = (37 * hash) + DEFAULTVALUE_FIELD_NUMBER;
+    hash = (53 * hash) + getDefaultValue().hashCode();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -828,6 +930,10 @@ private static final long serialVersionUID = 0L;
 
       minLength_ = "";
 
+      dictId_ = "";
+
+      defaultValue_ = "";
+
       return this;
     }
 
@@ -861,6 +967,8 @@ private static final long serialVersionUID = 0L;
       result.required_ = required_;
       result.searchable_ = searchable_;
       result.minLength_ = minLength_;
+      result.dictId_ = dictId_;
+      result.defaultValue_ = defaultValue_;
       onBuilt();
       return result;
     }
@@ -943,6 +1051,14 @@ private static final long serialVersionUID = 0L;
       }
       if (!other.getMinLength().isEmpty()) {
         minLength_ = other.minLength_;
+        onChanged();
+      }
+      if (!other.getDictId().isEmpty()) {
+        dictId_ = other.dictId_;
+        onChanged();
+      }
+      if (!other.getDefaultValue().isEmpty()) {
+        defaultValue_ = other.defaultValue_;
         onChanged();
       }
       this.mergeUnknownFields(other.unknownFields);
@@ -1736,6 +1852,144 @@ private static final long serialVersionUID = 0L;
   checkByteStringIsUtf8(value);
 
       minLength_ = value;
+      onChanged();
+      return this;
+    }
+
+    private Object dictId_ = "";
+    /**
+     * <code>string dictId = 12;</code>
+     */
+    public String getDictId() {
+      Object ref = dictId_;
+      if (!(ref instanceof String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        dictId_ = s;
+        return s;
+      } else {
+        return (String) ref;
+      }
+    }
+    /**
+     * <code>string dictId = 12;</code>
+     */
+    public com.google.protobuf.ByteString
+        getDictIdBytes() {
+      Object ref = dictId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (String) ref);
+        dictId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string dictId = 12;</code>
+     */
+    public Builder setDictId(
+        String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+
+      dictId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string dictId = 12;</code>
+     */
+    public Builder clearDictId() {
+
+      dictId_ = getDefaultInstance().getDictId();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string dictId = 12;</code>
+     */
+    public Builder setDictIdBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+      dictId_ = value;
+      onChanged();
+      return this;
+    }
+
+    private Object defaultValue_ = "";
+    /**
+     * <code>string defaultValue = 13;</code>
+     */
+    public String getDefaultValue() {
+      Object ref = defaultValue_;
+      if (!(ref instanceof String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        defaultValue_ = s;
+        return s;
+      } else {
+        return (String) ref;
+      }
+    }
+    /**
+     * <code>string defaultValue = 13;</code>
+     */
+    public com.google.protobuf.ByteString
+        getDefaultValueBytes() {
+      Object ref = defaultValue_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (String) ref);
+        defaultValue_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string defaultValue = 13;</code>
+     */
+    public Builder setDefaultValue(
+        String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+
+      defaultValue_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string defaultValue = 13;</code>
+     */
+    public Builder clearDefaultValue() {
+
+      defaultValue_ = getDefaultInstance().getDefaultValue();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string defaultValue = 13;</code>
+     */
+    public Builder setDefaultValueBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+      defaultValue_ = value;
       onChanged();
       return this;
     }

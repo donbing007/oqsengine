@@ -2,9 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.handler;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.command.*;
-import com.xforceplus.ultraman.oqsengine.sdk.dispatcher.QueryHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.ui.DefaultUiService;
+import com.xforceplus.xplat.galaxy.framework.dispatcher.anno.QueryHandler;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Component
 public class DefaultEntityServiceHandler implements DefaultUiService {
 
     @Autowired

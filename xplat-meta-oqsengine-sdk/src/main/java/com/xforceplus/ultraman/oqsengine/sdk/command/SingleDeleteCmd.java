@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.command;
 
-public class SingleDeleteCmd {
+public class SingleDeleteCmd implements MetaDataLikeCmd{
 
     private String boId;
     private  String id;
