@@ -339,9 +339,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         });
             });
 
-
-
-
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
                     .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
