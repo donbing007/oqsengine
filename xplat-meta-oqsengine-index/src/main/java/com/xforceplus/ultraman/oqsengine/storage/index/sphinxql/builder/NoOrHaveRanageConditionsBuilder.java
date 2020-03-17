@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.JointMask;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.compare.SphinxQLConditionCompareStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.compare.ConditionCompareStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
@@ -24,64 +25,32 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
 
     @Override
     public String build(Conditions conditions) {
-        Iterator<ConditionNode> nodes = conditions.iterator();
-        ConditionNode node = null;
-        ValueConditionNode valueConditionNode = null;
 
         StringBuilder buff = new StringBuilder();
 
-        Condition condition;
-        IEntityField field;
-        IValue logicValue;
-        Conditions eqConditions = null;
-        while (nodes.hasNext()) {
-            node = nodes.next();
+        // 非范围的,将交由父类处理.
+        Conditions eqConditions = Conditions.buildEmtpyConditions();
+        conditions.collection().stream().forEach(cn -> {
 
-            if (Conditions.isValueNode(node)) {
+            if (Conditions.isValueNode(cn)) {
+                Condition condition = ((ValueConditionNode) cn).getCondition();
 
-                valueConditionNode = (ValueConditionNode) node;
-
-                condition = valueConditionNode.getCondition();
-                logicValue = condition.getValue();
-                field = condition.getValue().getField();
-
-                if (isRange(condition)) {
-
+                if (condition.isRange()) {
                     if (buff.length() != 0) {
-                        buff.append(" and ");
+                        buff.append(" ").append(JointMask.AND).append(" ");
                     }
-                    SphinxQLConditionCompareStrategy compareStrategy = ConditionCompareStrategyFactory.getStrategy(field.type());
-                    StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(field.type());
-                    buff.append(compareStrategy.build(FieldDefine.JSON_FIELDS, condition, storageStrategy));
-
+                    SphinxQLConditionCompareStrategy compareStrategy =
+                        ConditionCompareStrategyFactory.getStrategy(condition.getField().type());
+                    buff.append(compareStrategy.build(FieldDefine.JSON_FIELDS, condition, getStorageStrategyFactory()));
                 } else {
-
-                    if (eqConditions == null) {
-                        eqConditions = new Conditions(condition);
-                    } else {
-                        eqConditions.addAnd(condition);
-                    }
-
+                    eqConditions.addAnd(condition);
                 }
-
             }
-        }
+        });
 
-        if (eqConditions != null) {
-            buff.append(" and ").append(super.build(eqConditions));
+        if (!eqConditions.isEmtpy()) {
+            buff.append(" ").append(JointMask.AND).append(" ").append(super.build(eqConditions));
         }
         return buff.toString();
     }
-
-    private boolean isRange(Condition condition) {
-        switch (condition.getOperator()) {
-            case LIKE:
-            case EQUALS:
-            case NOT_EQUALS:
-                return false;
-            default:
-                return true;
-        }
-    }
-
 }

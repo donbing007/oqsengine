@@ -14,6 +14,11 @@ public interface IEntityValue extends Cloneable{
     public long id();
 
     /**
+     * 重置 id.
+     */
+    public void restId(long id);
+
+    /**
      * 获得该对象指定属性的数据
      * @param fieldName
      * @return 值.

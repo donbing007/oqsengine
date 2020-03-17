@@ -21,6 +21,7 @@ public class LongConditionValidation implements ConditionValidation {
             case MINOR_THAN:
             case MINOR_THAN_EQUALS:
             case GREATER_THAN_EQUALS:
+            case MULTIPLE_EQUALS:
                 return true;
             default:
                 return false;

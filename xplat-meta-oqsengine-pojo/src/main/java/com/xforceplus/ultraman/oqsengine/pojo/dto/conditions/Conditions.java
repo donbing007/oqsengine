@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * 表示一系列条件组合.只支持以 And 方式进行组合.
@@ -50,7 +51,7 @@ public class Conditions implements Serializable {
     public Conditions(Condition condition) {
         validate(condition);
         head = new ValueConditionNode(condition);
-        checkRange(condition);
+        range = condition.isRange();
         size = 1;
     }
 
@@ -95,21 +96,46 @@ public class Conditions implements Serializable {
         return doAdd(ConditionLink.OR, conditions, isolation);
     }
 
+    /**
+     * 是否有 or 连接符.
+     * @return true 有,false 没有.
+     */
     public boolean haveOrLink() {
         return or;
     }
 
+    /**
+     * 是否有范围条件.
+     * @return true 有范围条件.,false 没有.
+     */
     public boolean haveRangeCondition() {
         return range;
     }
 
     /**
-     * 条件迭代器.
+     * 返回顺序的集合.
+     * c1 = 1 and c2 =2 or c3 = 3
+     * 将会如下顺序
+     * c1=1 -> and -> c2=2 -> or -> c3=3.
      *
-     * @return 迭代器.
+     * @return 集合.
      */
-    public Iterator<ConditionNode> iterator() {
-        return new ConditionIterator(head);
+    public Collection<ConditionNode> collection() {
+        List<ConditionNode> nodes = new ArrayList(size);
+        load(head, nodes);
+        return nodes;
+    }
+
+    private void load(ConditionNode point, List<ConditionNode> nodes) {
+        if (Conditions.isValueNode(point)) {
+            nodes.add(point);
+        } else {
+
+            LinkConditionNode link = (LinkConditionNode) point;
+            load(link.getLeft(), nodes);
+            nodes.add(point);
+            load(link.getRight(), nodes);
+        }
     }
 
     /**
@@ -133,6 +159,14 @@ public class Conditions implements Serializable {
      */
     public int size() {
         return size;
+    }
+
+    /**
+     * 判断是否为空,没有任何条件.
+     * @return true 为空,false 非空.
+     */
+    public boolean isEmtpy() {
+        return size == 0;
     }
 
     /**
@@ -178,7 +212,9 @@ public class Conditions implements Serializable {
             or = true;
         }
 
-        checkRange(condition);
+        if (!range) {
+            range = condition.isRange();
+        }
 
         return this;
     }
@@ -188,18 +224,7 @@ public class Conditions implements Serializable {
             ConditionOperatorFieldValidationFactory.getValidation(condition.getField().type());
 
         if (!validation.validate(condition)) {
-            throw new IllegalArgumentException(String.format("Wrong conditions.[%s]",condition.toString()));
-        }
-    }
-
-    // 判断是否含有范围查询符号.
-    private void checkRange(Condition condition) {
-        switch (condition.getOperator()) {
-            case MINOR_THAN:
-            case GREATER_THAN:
-            case MINOR_THAN_EQUALS:
-            case GREATER_THAN_EQUALS:
-                range = true;
+            throw new IllegalArgumentException(String.format("Wrong conditions.[%s]", condition.toString()));
         }
     }
 
@@ -231,52 +256,5 @@ public class Conditions implements Serializable {
 
         size += conditions.size();
         return this;
-    }
-
-    // 条件迭代器.
-    private static class ConditionIterator implements Iterator<ConditionNode> {
-
-        private Deque<ConditionNode> stack = new LinkedList<>();
-
-        public ConditionIterator(ConditionNode head) {
-            init(head);
-        }
-
-        private void init(ConditionNode point) {
-            if (point == null) {
-                return;
-            }
-
-            if (Conditions.isValueNode(point)) {
-                stack.push(point);
-            } else {
-
-                while (true) {
-
-                    if (Conditions.isValueNode(point)) {
-                        break;
-                    } else {
-                        stack.push(point);
-                        point = point.getLeft();
-                        stack.push(point);
-                    }
-                }
-            }
-        }
-
-        @Override
-        public boolean hasNext() {
-            return !stack.isEmpty();
-        }
-
-        @Override
-        public ConditionNode next() {
-            ConditionNode node = stack.pop();
-            if (Conditions.isLinkNode(node)) {
-                stack.push(node.getRight());
-            }
-
-            return node;
-        }
     }
 }

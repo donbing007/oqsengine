@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.JointMask;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -47,7 +48,7 @@ public class DecimalSphinxQLConditionCompareStrategyTest {
 
         DecimalSphinxQLConditionCompareStrategy strategy = new DecimalSphinxQLConditionCompareStrategy();
         buildCase().stream().forEach(c -> {
-            String where = strategy.build(c.prefix, c.condition, c.storageStrategy);
+            String where = strategy.build(c.prefix, c.condition, storageStrategyFactory);
             Assert.assertEquals(c.expected, where);
         });
 
@@ -62,8 +63,7 @@ public class DecimalSphinxQLConditionCompareStrategyTest {
                     new DecimalValue(new Field(1L, "c1", FieldType.DECIMAL), new BigDecimal("123.456"))
                 ),
                 "jsonfields",
-                storageStrategyFactory.getStrategy(FieldType.DECIMAL),
-                "jsonfields.1L0 = 123 and jsonfields.1L1 = 456"
+                "jsonfields.1L0 = 123 " + JointMask.AND + " jsonfields.1L1 = 456"
             )
             ,
             new Case(
@@ -73,8 +73,7 @@ public class DecimalSphinxQLConditionCompareStrategyTest {
                     new DecimalValue(new Field(1L, "c1", FieldType.DECIMAL), new BigDecimal("123.456"))
                 ),
                 "jsonfields",
-                storageStrategyFactory.getStrategy(FieldType.DECIMAL),
-                "jsonfields.1L0 >= 123 and jsonfields.1L1 > 456"
+                "jsonfields.1L0 >= 123 " + JointMask.AND + " jsonfields.1L1 > 456"
             )
             ,
             new Case(
@@ -84,8 +83,7 @@ public class DecimalSphinxQLConditionCompareStrategyTest {
                     new DecimalValue(new Field(1L, "c1", FieldType.DECIMAL), new BigDecimal("123.456"))
                 ),
                 "jsonfields",
-                storageStrategyFactory.getStrategy(FieldType.DECIMAL),
-                "jsonfields.1L0 >= 123 and jsonfields.1L1 >= 456"
+                "jsonfields.1L0 >= 123 " + JointMask.AND + " jsonfields.1L1 >= 456"
             )
             ,
             new Case(
@@ -95,8 +93,7 @@ public class DecimalSphinxQLConditionCompareStrategyTest {
                     new DecimalValue(new Field(1L, "c1", FieldType.DECIMAL), new BigDecimal("123.456"))
                 ),
                 "jsonfields",
-                storageStrategyFactory.getStrategy(FieldType.DECIMAL),
-                "jsonfields.1L0 <= 123 and jsonfields.1L1 < 456"
+                "jsonfields.1L0 <= 123 " + JointMask.AND + " jsonfields.1L1 < 456"
             )
             ,
             new Case(
@@ -106,8 +103,7 @@ public class DecimalSphinxQLConditionCompareStrategyTest {
                     new DecimalValue(new Field(1L, "c1", FieldType.DECIMAL), new BigDecimal("123.456"))
                 ),
                 "jsonfields",
-                storageStrategyFactory.getStrategy(FieldType.DECIMAL),
-                "jsonfields.1L0 <= 123 and jsonfields.1L1 <= 456"
+                "jsonfields.1L0 <= 123 " + JointMask.AND + " jsonfields.1L1 <= 456"
             )
         );
     }
@@ -115,13 +111,11 @@ public class DecimalSphinxQLConditionCompareStrategyTest {
     static class Case {
         private Condition condition;
         private String prefix;
-        private StorageStrategy storageStrategy;
         private String expected;
 
-        public Case(Condition condition, String prefix, StorageStrategy storageStrategy, String expected) {
+        public Case(Condition condition, String prefix, String expected) {
             this.condition = condition;
             this.prefix = prefix;
-            this.storageStrategy = storageStrategy;
             this.expected = expected;
         }
     }

@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 
 /**
@@ -12,8 +14,10 @@ import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
  */
 public class EmptyConditionsBuilder implements ConditionsBuilder<String> {
 
+    private String SELECT_ALL = "MATCH('@" + FieldDefine.FULL_FIELDS + " =" + SphinxQLHelper.ALL_DATA_FULL_TEXT + "')";
+
     @Override
     public String build(Conditions conditions) {
-        return "MATCH('@fullfields F*')";
+        return SELECT_ALL;
     }
 }

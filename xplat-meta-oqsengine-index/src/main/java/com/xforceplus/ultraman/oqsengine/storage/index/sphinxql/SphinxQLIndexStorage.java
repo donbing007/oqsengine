@@ -296,6 +296,18 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         this.storageStrategyFactory = storageStrategyFactory;
     }
 
+    private Set<String> setGlobalFlag(Set<String> fullfields) {
+        if (fullfields == null) {
+            return fullfields;
+        }
+        /**
+         * 增加一个系统字段,当在查询所有数据的时候利用全文搜索引擎可以使用.
+         */
+        return new HashSet<String>(fullfields) {{
+            add(SphinxQLHelper.ALL_DATA_FULL_TEXT);
+        }};
+    }
+
 
     private boolean doBuildOrReplace(IEntity entity, boolean replacement) throws SQLException {
         checkId(entity.id());
@@ -361,15 +373,6 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     // 格式化 JSON 属性为字符串.
     private String toJsonString(JSONObject jsonObject) {
         return jsonObject.toJSONString();
-    }
-
-    //
-    private Set<String> parseFullFieldsString(String fullFields) {
-        return Arrays.stream(fullFields.split(" ")).collect(Collectors.toSet());
-    }
-
-    private JSONObject parseJsonFieldsString(String jsonFields) {
-        return JSON.parseObject(jsonFields);
     }
 
     // 转换 json 字段为全文搜索字段.
@@ -492,7 +495,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     }
 
     // 原始储存格式.
-    private static class StorageEntity {
+    private class StorageEntity {
         private long id;
         private long entity;
         private long pref;
@@ -506,7 +509,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             this.pref = pref;
             this.cref = cref;
             this.jsonFields = jsonFields;
-            this.fullFields = fullFields;
+            this.fullFields = setGlobalFlag(fullFields);
         }
 
         public long getId() {
@@ -554,7 +557,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         }
 
         public void setFullFields(Set<String> fullFields) {
-            this.fullFields = fullFields;
+            this.fullFields = setGlobalFlag(fullFields);
         }
     }
 }

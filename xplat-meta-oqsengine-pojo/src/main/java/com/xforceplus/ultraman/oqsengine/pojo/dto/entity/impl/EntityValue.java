@@ -30,6 +30,11 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     }
 
     @Override
+    public void restId(long id) {
+        this.id = id;
+    }
+
+    @Override
     public Optional<IValue> getValue(String fieldName) {
         if (values == null) {
             return Optional.empty();

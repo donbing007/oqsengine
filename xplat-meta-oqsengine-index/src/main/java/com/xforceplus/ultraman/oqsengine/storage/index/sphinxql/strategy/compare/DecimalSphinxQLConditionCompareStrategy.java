@@ -3,8 +3,10 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.compar
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.JointMask;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 /**
  * 浮点数的条件比较构造实现.
@@ -16,30 +18,36 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 public class DecimalSphinxQLConditionCompareStrategy implements SphinxQLConditionCompareStrategy {
 
     @Override
-    public String build(String fieldPrefix, Condition condition, StorageStrategy storageStrategy) {
+    public String build(String fieldPrefix, Condition condition, StorageStrategyFactory storageStrategyFactory) {
         if (condition.getField().type() != FieldType.DECIMAL) {
             throw new IllegalStateException("Field types other than Decimal are not supported.");
         }
 
+        StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(condition.getField().type());
         StorageValue storageValue = storageStrategy.toStorageValue(condition.getValue());
 
         switch (condition.getOperator()) {
             case EQUALS:
             case NOT_EQUALS:
-                return doBuild(fieldPrefix, storageValue, condition.getOperator().getSymbol()) + " and " +
-                    doBuild(fieldPrefix, storageValue.next(), condition.getOperator().getSymbol());
+                return doBuild(
+                    doBuildFiledCondition(fieldPrefix, storageValue, condition.getOperator().getSymbol()),
+                    doBuildFiledCondition(fieldPrefix, storageValue.next(), condition.getOperator().getSymbol()));
             case GREATER_THAN:
-                return doBuild(fieldPrefix, storageValue, ConditionOperator.GREATER_THAN_EQUALS.getSymbol()) + " and " +
-                    doBuild(fieldPrefix, storageValue.next(), ConditionOperator.GREATER_THAN.getSymbol());
+                return doBuild(
+                    doBuildFiledCondition(fieldPrefix, storageValue, ConditionOperator.GREATER_THAN_EQUALS.getSymbol()),
+                    doBuildFiledCondition(fieldPrefix, storageValue.next(), ConditionOperator.GREATER_THAN.getSymbol()));
             case GREATER_THAN_EQUALS:
-                return doBuild(fieldPrefix, storageValue, ConditionOperator.GREATER_THAN_EQUALS.getSymbol()) + " and " +
-                    doBuild(fieldPrefix, storageValue.next(), ConditionOperator.GREATER_THAN_EQUALS.getSymbol());
+                return doBuild(
+                    doBuildFiledCondition(fieldPrefix, storageValue, ConditionOperator.GREATER_THAN_EQUALS.getSymbol()),
+                    doBuildFiledCondition(fieldPrefix, storageValue.next(), ConditionOperator.GREATER_THAN_EQUALS.getSymbol()));
             case MINOR_THAN:
-                return doBuild(fieldPrefix, storageValue, ConditionOperator.MINOR_THAN_EQUALS.getSymbol()) + " and " +
-                    doBuild(fieldPrefix, storageValue.next(), ConditionOperator.MINOR_THAN.getSymbol());
+                return doBuild(
+                    doBuildFiledCondition(fieldPrefix, storageValue, ConditionOperator.MINOR_THAN_EQUALS.getSymbol()),
+                    doBuildFiledCondition(fieldPrefix, storageValue.next(), ConditionOperator.MINOR_THAN.getSymbol()));
             case MINOR_THAN_EQUALS:
-                return doBuild(fieldPrefix, storageValue, ConditionOperator.MINOR_THAN_EQUALS.getSymbol()) + " and " +
-                    doBuild(fieldPrefix, storageValue.next(), ConditionOperator.MINOR_THAN_EQUALS.getSymbol());
+                return doBuild(
+                    doBuildFiledCondition(fieldPrefix, storageValue, ConditionOperator.MINOR_THAN_EQUALS.getSymbol()),
+                    doBuildFiledCondition(fieldPrefix, storageValue.next(), ConditionOperator.MINOR_THAN_EQUALS.getSymbol()));
             default:
                 throw new IllegalStateException(
                     String.format("%s does not support conditional comparison notation (%s), which should be a BUG.",
@@ -48,7 +56,11 @@ public class DecimalSphinxQLConditionCompareStrategy implements SphinxQLConditio
         }
     }
 
-    private String doBuild(String fieldPrefix, StorageValue value, String operator) {
+    private String doBuildFiledCondition(String fieldPrefix, StorageValue value, String operator) {
         return fieldPrefix + "." + value.storageName() + " " + operator + " " + value.value().toString();
+    }
+
+    private String doBuild(String integer, String decimal) {
+        return String.format("%s %s %s", integer, JointMask.AND, decimal);
     }
 }

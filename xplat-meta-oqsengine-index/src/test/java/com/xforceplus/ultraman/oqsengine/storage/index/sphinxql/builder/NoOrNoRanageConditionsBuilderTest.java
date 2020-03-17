@@ -102,7 +102,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-F1L100 -F2Stest F*" + expectAfter
+                expectPrefix + "-F1L100 -F2Stest =Sg" + expectAfter
             ),
             new Case(
                 new Conditions(
