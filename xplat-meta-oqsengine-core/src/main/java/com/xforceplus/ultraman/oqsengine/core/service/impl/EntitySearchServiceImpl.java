@@ -84,8 +84,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     @Override
-    public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
-        Map<Long, IEntityClass> request = Arrays.stream(ids).boxed().collect(
+    public Collection<IEntity> selectMultiple(Long[] ids, IEntityClass entityClass) throws SQLException {
+        Map<Long, IEntityClass> request = Arrays.stream(ids).collect(
             Collectors.toMap(i -> i, i -> entityClass, (i0, i1) -> i0));
 
         return masterStorage.selectMultiple(request);
