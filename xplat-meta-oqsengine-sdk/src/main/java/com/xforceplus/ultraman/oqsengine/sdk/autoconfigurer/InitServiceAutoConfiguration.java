@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.config.init.DictInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.ModuleInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.controller.*;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler;
+import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaFieldDefaultHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.CodeExtendedInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.DefaultSearchInterceptor;
@@ -175,6 +176,9 @@ public class InitServiceAutoConfiguration {
     public EntityMetaHandler entityMetaHandler(){
         return new EntityMetaHandler();
     }
+
+    @Bean
+    public EntityMetaFieldDefaultHandler entityMetaFieldDefaultHandler() { return new EntityMetaFieldDefaultHandler(); }
 
 
 }

@@ -260,7 +260,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             Page page = null;
 
             //add find in list
-            if(in.hasField(SelectByCondition.getDescriptor().findFieldByNumber(SelectByCondition.IDS_FIELD_NUMBER))){
+            if(!in.getIdsList().isEmpty()){
 
                 List<Long> ids = in.getIdsList();
                 entities = entitySearchService.selectMultiple(ids.toArray(new Long[]{}), entityClass);
