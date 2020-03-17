@@ -255,4 +255,18 @@ public class EntityServiceTest {
                 , new ConditionQueryRequest())
         .forEach(System.out::println);
     }
+
+    @Test
+    public void testCondition() throws InterruptedException {
+
+
+        Thread.sleep(10000);
+
+        Optional<EntityClass> ticket = entityService.loadByCode("ticket");
+
+        entityService.findByCondition(ticket.get()
+//                , Arrays.asList(6645501102127054849L, 6645501103938994177L, 6643337484505710593L)
+                , new RequestBuilder().field("image_id", ConditionOp.in, Arrays.asList(6645501028428939265L, 6645501028668014593L)).build())
+                .forEach(System.out::println);
+    }
 }
