@@ -154,6 +154,9 @@ public class EntityServiceExImpl implements EntityServiceEx {
                         .execute();
                 List<Row> rows = ds.toRows();
                 ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
+
+                ds = pageBoMapLocalStore.query().selectAll().execute();
+                rows = ds.toRows();
                 return items;
             }
         }else {

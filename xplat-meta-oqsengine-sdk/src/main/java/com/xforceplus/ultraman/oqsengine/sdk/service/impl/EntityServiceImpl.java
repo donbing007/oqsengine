@@ -8,11 +8,13 @@ import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Conditions;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -287,5 +289,16 @@ public class EntityServiceImpl implements EntityService {
         }else{
             return 0;
         }
+    }
+
+    @Override
+    public List<EntityClass> loadSonByCode(String bocode, String tenantId) {
+
+        if (StringUtils.isEmpty(tenantId)){
+            tenantId = contextService.get(TENANTID_KEY);
+        }
+        String appCode  = contextService.get(APPCODE);
+
+        return metadataRepository.findSubEntitiesByCode(tenantId, appCode, bocode);
     }
 }

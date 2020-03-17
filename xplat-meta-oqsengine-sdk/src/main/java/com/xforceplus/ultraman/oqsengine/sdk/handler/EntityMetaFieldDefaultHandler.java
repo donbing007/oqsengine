@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.DictMapLocalStore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -20,9 +21,6 @@ import java.util.Optional;
  * @since 2020-03-10
  */
 public class EntityMetaFieldDefaultHandler {
-
-    @Autowired
-    private DictMapLocalStore store;
 
     /**
      * 保存对象字段填充
