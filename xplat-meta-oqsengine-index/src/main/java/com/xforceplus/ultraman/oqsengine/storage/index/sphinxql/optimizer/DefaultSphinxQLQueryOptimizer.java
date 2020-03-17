@@ -50,7 +50,7 @@ public class DefaultSphinxQLQueryOptimizer implements SphinxQLQueryOptimizer, St
     @Override
     public ConditionsBuilder<String> optimizeConditions(Conditions conditions) {
 
-        if (isEmptyConditions(conditions)) {
+        if (conditions.isEmtpy()) {
             return emptyConditionsBuilder;
         }
 
@@ -63,9 +63,6 @@ public class DefaultSphinxQLQueryOptimizer implements SphinxQLQueryOptimizer, St
         return builderMap.get(or | range);
     }
 
-    private boolean isEmptyConditions(Conditions conditions) {
-        return conditions.size() == 0;
-    }
 
     @Override
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {

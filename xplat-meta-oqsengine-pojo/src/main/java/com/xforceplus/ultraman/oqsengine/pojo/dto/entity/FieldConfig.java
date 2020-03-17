@@ -31,6 +31,11 @@ public class FieldConfig implements Serializable {
     private long min = Long.MIN_VALUE;
 
     /**
+     * 是否为数据标识.
+     */
+    private boolean identifie = false;
+
+    /**
      * 创建一个新的 FieldConfig.
      * @return 实例.
      */
@@ -74,6 +79,19 @@ public class FieldConfig implements Serializable {
         return this;
     }
 
+    public FieldConfig identifie(boolean identifie) {
+        this.identifie = identifie;
+        return this;
+    }
+
+    /**
+     * 是否表示一个数据标识.
+     * @return true 数据标识,false 非数据标识.
+     */
+    public boolean isIdentifie() {
+        return identifie;
+    }
+
     /**
      * 是否可搜索.true 可搜索,false 不可搜索.
      * @return 结果.
@@ -98,6 +116,7 @@ public class FieldConfig implements Serializable {
         return min;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -109,12 +128,13 @@ public class FieldConfig implements Serializable {
         FieldConfig that = (FieldConfig) o;
         return isSearchable() == that.isSearchable() &&
             getMax() == that.getMax() &&
-            getMin() == that.getMin();
+            getMin() == that.getMin() &&
+            isIdentifie() == that.isIdentifie();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(isSearchable(), getMax(), getMin());
+        return Objects.hash(isSearchable(), getMax(), getMin(), isIdentifie());
     }
 
     @Override
@@ -123,6 +143,7 @@ public class FieldConfig implements Serializable {
             "searchable=" + searchable +
             ", max=" + max +
             ", min=" + min +
+            ", identifie=" + identifie +
             '}';
     }
 }

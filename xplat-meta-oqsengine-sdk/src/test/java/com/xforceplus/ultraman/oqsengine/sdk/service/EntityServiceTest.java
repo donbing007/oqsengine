@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfi
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.configuration.AsyncTaskExecutorAutoConfiguration;
 import com.xforceplus.xplat.galaxy.framework.configuration.ServiceDispatcherAutoConfiguration;
 import com.xforceplus.xplat.galaxy.framework.configuration.ServiceInvokerAutoConfiguration;
@@ -23,10 +24,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static org.springframework.test.util.AssertionErrors.assertTrue;
 
@@ -241,5 +239,34 @@ public class EntityServiceTest {
         entityService.findByCondition(testBillSub.get(), new RequestBuilder()
                 .field("deci", ConditionOp.le, 12.57).build()).forEach(System.out::println);
 
+    }
+
+    @Test
+    public void testFindInIds() throws InterruptedException {
+
+        Thread.sleep(10000);
+
+        Optional<EntityClass> ticket = entityService.loadByCode("ticket");
+
+        System.out.println(entityService.findOne(ticket.get(), 6645501102127054849L));
+
+        entityService.findByConditionWithIds(ticket.get()
+                , Arrays.asList(6645501102127054849L, 6645501103938994177L, 6643337484505710593L)
+                , new ConditionQueryRequest())
+        .forEach(System.out::println);
+    }
+
+    @Test
+    public void testCondition() throws InterruptedException {
+
+
+        Thread.sleep(10000);
+
+        Optional<EntityClass> ticket = entityService.loadByCode("ticket");
+
+        entityService.findByCondition(ticket.get()
+//                , Arrays.asList(6645501102127054849L, 6645501103938994177L, 6643337484505710593L)
+                , new RequestBuilder().field("image_id", ConditionOp.in, Arrays.asList(6645501028428939265L, 6645501028668014593L)).build())
+                .forEach(System.out::println);
     }
 }

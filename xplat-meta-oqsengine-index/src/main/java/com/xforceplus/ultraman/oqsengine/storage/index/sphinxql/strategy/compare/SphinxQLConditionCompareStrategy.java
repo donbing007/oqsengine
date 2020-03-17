@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.compar
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.condition.ConditionCompareStrategy;
 
 /**
@@ -16,11 +17,11 @@ public interface SphinxQLConditionCompareStrategy extends ConditionCompareStrate
     /**
      * 生成条件 SQL.
      *
-     * @param fieldPrefix     最终每个字段的前辍.
-     * @param condition       目标条伯.
-     * @param storageStrategy storage转换策略.
+     * @param fieldPrefix            最终每个字段的前辍.
+     * @param condition              目标条伯.
+     * @param storageStrategyFactory storage转换策略工厂.
      * @return 生成结果.
      */
     @Override
-    String build(String fieldPrefix, Condition condition, StorageStrategy storageStrategy);
+    String build(String fieldPrefix, Condition condition, StorageStrategyFactory storageStrategyFactory);
 }

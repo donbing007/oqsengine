@@ -26,9 +26,6 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.BoolStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.LongStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.StringStorageStrategy;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -385,7 +382,7 @@ public class SphinxQLIndexStorageTest {
                     return true;
                 }
             ),
-            // > =
+            // >=
             new Case(
                 new Conditions(new Condition(
                     fixFieldRange,
@@ -419,6 +416,36 @@ public class SphinxQLIndexStorageTest {
 
                     }).collect(Collectors.toList()).size();
                     Assert.assertEquals(expectedSize, refs.size());
+                    return true;
+                }
+            )
+            ,
+            // id in()
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            new Field(Long.MAX_VALUE, "id", FieldType.LONG, FieldConfig.build().identifie(true)),
+                            ConditionOperator.MULTIPLE_EQUALS,
+                            new LongValue(
+                                new Field(
+                                    Long.MAX_VALUE, "id", FieldType.LONG, FieldConfig.build().identifie(true)),
+                                expectedEntitys.get(0).id()),
+                            new LongValue(
+                                new Field(
+                                    Long.MAX_VALUE, "id", FieldType.LONG, FieldConfig.build().identifie(true)),
+                                expectedEntitys.get(1).id())
+                        )
+                    ).addAnd(
+                    new Condition(fixFieldAll, ConditionOperator.EQUALS, new BooleanValue(fixFieldAll, true))
+                ),
+                expectedEntitys.stream().findFirst().get().entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(2, refs.size());
+                    Assert.assertEquals(expectedEntitys.get(0).id(), refs.stream().findFirst().get().getId());
+                    Assert.assertEquals(expectedEntitys.get(1).id(), refs.stream().skip(1).findFirst().get().getId());
                     return true;
                 }
             )

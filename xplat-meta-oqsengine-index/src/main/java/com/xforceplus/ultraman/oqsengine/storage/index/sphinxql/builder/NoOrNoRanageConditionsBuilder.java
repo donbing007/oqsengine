@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
@@ -13,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 没有范围查询,没有or 条件.主要利用全文搜索字段进行搜索.
@@ -29,39 +31,26 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
     @Override
     public String build(Conditions conditions) {
 
-        Iterator<ConditionNode> nodes = conditions.iterator();
-        ConditionNode node = null;
-        ValueConditionNode valueConditionNode = null;
-
         StringBuilder buff = new StringBuilder();
         buff.append("MATCH('@").append(FieldDefine.FULL_FIELDS).append(" ");
         // 用以判断是否还没有条件,方便条件之间的空格.
         int emtpyLen = buff.length();
-
-        // 判断是否都是不等于条件. true 全否定,false 有等于条件.
         boolean allNegative = true;
-        IValue logicValue;
-        StorageStrategy storageStrategy;
-        StorageValue storageValue;
-        while (nodes.hasNext()) {
-            node = nodes.next();
 
+        for (ConditionNode node : conditions.collection()) {
             if (Conditions.isValueNode(node)) {
+                Condition condition = ((ValueConditionNode) node).getCondition();
 
-                valueConditionNode = (ValueConditionNode) node;
-
-                logicValue = valueConditionNode.getCondition().getValue();
-                storageStrategy = this.storageStrategyFactory.getStrategy(logicValue.getField().type());
-                storageValue = storageStrategy.toStorageValue(logicValue);
+                IValue logicValue = condition.getValue();
+                StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(logicValue.getField().type());
+                StorageValue storageValue = storageStrategy.toStorageValue(logicValue);
 
                 while (storageValue != null) {
-
                     if (buff.length() > emtpyLen) {
                         buff.append(" ");
                     }
 
-
-                    switch (valueConditionNode.getCondition().getOperator()) {
+                    switch (condition.getOperator()) {
                         case EQUALS: {
                             buff.append("=");
                             allNegative = false;
@@ -85,10 +74,10 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
             }
         }
 
-        //判断是否都是不等于条件,是的话需要补充一下 F*.
-        // -F123 F* 表示从所有字段中排除掉 F123.
+        //判断是否都是不等于条件,是的话需要补充所有字段才能成立排除.
+        // -F123 =Sg 表示从所有字段中排除掉 F123.
         if (allNegative) {
-            buff.append(" ").append(SphinxQLHelper.FULL_FIELD_PREFIX).append("*");
+            buff.append(" =").append(SphinxQLHelper.ALL_DATA_FULL_TEXT);
         }
         buff.append("')");
 

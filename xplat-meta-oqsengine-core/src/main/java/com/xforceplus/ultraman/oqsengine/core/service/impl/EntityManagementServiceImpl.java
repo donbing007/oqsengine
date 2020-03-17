@@ -89,7 +89,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 indexEntity.resetFamily(new EntityFamily(fatherId, 0));
                 indexStorage.build(indexEntity); // child
 
-
+                
                 entity.resetFamily(childEntity.family());
                 return entity;
 

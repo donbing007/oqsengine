@@ -7,13 +7,46 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
  * @since 1.8
  */
 public enum ConditionOperator {
+
+    /**
+     * 模糊匹配.
+     */
     LIKE("LIKE"),
+
+    /**
+     * 等于.
+     */
     EQUALS("="),
+
+    /**
+     * 不等于.
+     */
     NOT_EQUALS("!="),
+
+    /**
+     * 大于
+     */
     GREATER_THAN(">"),
+
+    /**
+     * 大于等于.
+     */
     GREATER_THAN_EQUALS(">="),
+
+    /**
+     * 大于.
+     */
     MINOR_THAN("<"),
-    MINOR_THAN_EQUALS("<=");
+
+    /**
+     * 小于等于.
+     */
+    MINOR_THAN_EQUALS("<="),
+
+    /**
+     * 等于多个值.
+     */
+    MULTIPLE_EQUALS("IN");
 
     private String symbol;
 

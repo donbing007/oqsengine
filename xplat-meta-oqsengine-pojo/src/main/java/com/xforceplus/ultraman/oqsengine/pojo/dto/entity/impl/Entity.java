@@ -95,6 +95,7 @@ public class Entity implements IEntity, Serializable {
     @Override
     public void resetId(long id) {
         this.id = id;
+        this.entityValue.restId(id);
     }
 
     @Override

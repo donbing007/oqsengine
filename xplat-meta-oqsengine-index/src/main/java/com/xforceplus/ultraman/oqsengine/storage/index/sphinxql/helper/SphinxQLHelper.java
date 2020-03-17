@@ -1,10 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
-import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 
 /**
  * @author dongbin
@@ -16,37 +13,17 @@ public class SphinxQLHelper {
     /**
      * 全文搜索字段前辍.
      */
-    public static final String FULL_FIELD_PREFIX = "F";
+    public static final String ATTRIBUTE_FULL_FIELD_PREFIX = "F";
 
     /**
-     * 序列化entity 属性至全文搜索形式.
-     * f{field.id}{value | unicode}
-     * 如果是字符串,将进行 unicode 编码.
-     * @param value 属性值.
-     * @return 序列化结果.
+     * 表示系统字段的全文字段前辍.
      */
-//    public static String serializeFull(IValue value, StorageStrategy storageStrategy) {
-//        StringBuilder buff = new StringBuilder();
-//
-//        StorageValue point = storageStrategy.toStorageValue(value);
-//
-//        while(point != null) {
-//            if (buff.length() > 0) {
-//                buff.append(" ");
-//            }
-//            buff.append(FULL_FIELD_PREFIX)
-//                .append(point.storageName());
-//            if (storageStrategy.storageType() == StorageType.STRING) {
-//                buff.append(SphinxQLHelper.unicode((String) point.value()));
-//            } else {
-//                buff.append(point.value());
-//            }
-//
-//            point = point.next();
-//        }
-//
-//        return buff.toString();
-//    }
+    public static final String SYSTEM_FULL_FIELD_PREFIX = "S";
+
+    /**
+     * 表示所有字段的全文查询字串.
+     */
+    public static final String ALL_DATA_FULL_TEXT = SYSTEM_FULL_FIELD_PREFIX + "g";
 
     /**
      * 序列化SphinxQL的全文搜索字段.
@@ -55,7 +32,7 @@ public class SphinxQLHelper {
      * @return 序例化结果.
      */
     public static String encodeFullText(StorageValue value) {
-        return FULL_FIELD_PREFIX
+        return ATTRIBUTE_FULL_FIELD_PREFIX
             + value.storageName()
             + (value.type() == StorageType.STRING ? SphinxQLHelper.unicode((String) value.value()) : value.value());
     }

@@ -245,57 +245,69 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         OperationResult result;
         try {
+
             Collection<IEntity> entities = null;
 
-            List<FieldSortUp> sort = in.getSortList();
-
-            ConditionsUp conditions = in.getConditions();
+            //check if has sub query for more details
+            List<QueryFieldsUp> queryField = in.getQueryFieldsList();
 
             EntityUp entityUp = in.getEntity();
-
-            int pageNo = in.getPageNo();
-            int pageSize = in.getPageSize();
-            Page page = new Page(pageNo, pageSize);
 
             IEntityClass entityClass = toEntityClass(entityUp);
 
             Long mainEntityId = entityClass.id();
 
-            //check if has sub query for more details
-            List<QueryFieldsUp> queryField = in.getQueryFieldsList();
+            Page page = null;
 
-            Optional<IEntityField> sortField;
+            //add find in list
+            if(!in.getIdsList().isEmpty()){
 
-            if(sort == null || sort.isEmpty()) {
-                sortField = Optional.empty();
-            }else{
-                FieldSortUp sortUp = sort.get(0);
-                //get related field
-                sortField = IEntityClassHelper.findFieldByCode(entityClass, sortUp.getCode());
-            }
+                List<Long> ids = in.getIdsList();
+                entities = entitySearchService.selectMultiple(ids.toArray(new Long[]{}), entityClass);
 
-            if(!sortField.isPresent()){
-                Optional<Conditions> consOp = toConditions(entityClass, conditions);
-                if(consOp.isPresent()){
-                    entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
-                }else{
-                    entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+            } else {
+
+                List<FieldSortUp> sort = in.getSortList();
+
+                ConditionsUp conditions = in.getConditions();
+
+                int pageNo = in.getPageNo();
+                int pageSize = in.getPageSize();
+                page = new Page(pageNo, pageSize);
+
+                Optional<IEntityField> sortField;
+
+                if (sort == null || sort.isEmpty()) {
+                    sortField = Optional.empty();
+                } else {
+                    FieldSortUp sortUp = sort.get(0);
+                    //get related field
+                    sortField = IEntityClassHelper.findFieldByCode(entityClass, sortUp.getCode());
                 }
-            }else {
-                FieldSortUp sortUp = sort.get(0);
-                Sort sortParam;
-                if(sortUp.getOrder() == FieldSortUp.Order.asc) {
-                    sortParam = Sort.buildAscSort(sortField.get());
-                }else{
-                    sortParam = Sort.buildDescSort(sortField.get());
-                }
 
-                Optional<Conditions> consOp = toConditions(entityClass, conditions);
-                if(consOp.isPresent()){
-                    entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
+                if (!sortField.isPresent()) {
+                    Optional<Conditions> consOp = toConditions(entityClass, conditions);
+                    if (consOp.isPresent()) {
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
+                    } else {
+                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                    }
+                } else {
+                    FieldSortUp sortUp = sort.get(0);
+                    Sort sortParam;
+                    if (sortUp.getOrder() == FieldSortUp.Order.asc) {
+                        sortParam = Sort.buildAscSort(sortField.get());
+                    } else {
+                        sortParam = Sort.buildDescSort(sortField.get());
+                    }
 
-                }else{
-                    entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                    Optional<Conditions> consOp = toConditions(entityClass, conditions);
+                    if (consOp.isPresent()) {
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
+
+                    } else {
+                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                    }
                 }
             }
 
@@ -339,14 +351,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         });
             });
 
-
-
-
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
                     .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
                             .stream().filter(Objects::nonNull).map(this::toEntityUp).collect(Collectors.toList()))
-                    .setTotalRow(Long.valueOf(page.getTotalCount()).intValue())
+                    .setTotalRow(page == null ?
+                            Optional.ofNullable(entities).orElseGet(Collections::emptyList).size() :
+                            Long.valueOf(page.getTotalCount()).intValue())
                     .buildPartial();
 
         } catch (Exception e) {
@@ -593,27 +604,34 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             , fieldCondition.getValues(0))));
                     break;
                 case in:
-                    if(fieldCondition.getValuesCount() == 1 ){
-                        conditions = new Conditions(new Condition(fieldOp.get()
-                                , ConditionOperator.EQUALS
-                                , toTypedValue(fieldOp.get()
-                                , fieldCondition.getValues(0))));
-                    }else{
-                        conditions = new Conditions(new Condition(fieldOp.get()
-                                , ConditionOperator.EQUALS
-                                , toTypedValue(fieldOp.get()
-                                , fieldCondition.getValues(0))));
-
-                        Conditions finalConditions = conditions;
-                        fieldCondition.getValuesList().stream().skip(1).forEach(x -> {
-                            finalConditions.addOr(new Conditions(new Condition(fieldOp.get()
-                                    , ConditionOperator.EQUALS
-                                    , toTypedValue(fieldOp.get()
-                                    , x))), false);
-                        });
-
-                        conditions = finalConditions;
-                    }
+                    conditions = new Conditions(
+                            new Condition(fieldOp.get()
+                                    , ConditionOperator.MULTIPLE_EQUALS
+                                    , fieldCondition.getValuesList().stream().map(x -> toTypedValue(fieldOp.get(), x))
+                                    .toArray(IValue[]::new)
+                            )
+                    );
+//                    if(fieldCondition.getValuesCount() == 1 ){
+//                        conditions = new Conditions(new Condition(fieldOp.get()
+//                                , ConditionOperator.EQUALS
+//                                , toTypedValue(fieldOp.get()
+//                                , fieldCondition.getValues(0))));
+//                    }else{
+//                        conditions = new Conditions(new Condition(fieldOp.get()
+//                                , ConditionOperator.EQUALS
+//                                , toTypedValue(fieldOp.get()
+//                                , fieldCondition.getValues(0))));
+//
+//                        Conditions finalConditions = conditions;
+//                        fieldCondition.getValuesList().stream().skip(1).forEach(x -> {
+//                            finalConditions.addOr(new Conditions(new Condition(fieldOp.get()
+//                                    , ConditionOperator.EQUALS
+//                                    , toTypedValue(fieldOp.get()
+//                                    , x))), false);
+//                        });
+//
+//                        conditions = finalConditions;
+//                    }
                     break;
                 case ni:
                     if(fieldCondition.getValuesCount() == 1 ){

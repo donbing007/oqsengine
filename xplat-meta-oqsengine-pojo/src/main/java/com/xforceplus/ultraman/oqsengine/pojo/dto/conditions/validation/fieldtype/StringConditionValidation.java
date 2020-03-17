@@ -16,6 +16,7 @@ public class StringConditionValidation implements ConditionValidation {
         switch(condition.getOperator()) {
             case EQUALS:
             case NOT_EQUALS:
+            case MULTIPLE_EQUALS:
             case LIKE: {
                 return true;
             }

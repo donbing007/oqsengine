@@ -3,12 +3,14 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.JointMask;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.Assert;
@@ -83,7 +85,8 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                FieldDefine.JSON_FIELDS + ".1L > 100 and MATCH('@" + FieldDefine.FULL_FIELDS + " F2Stest*')"
+                FieldDefine.JSON_FIELDS + ".1L > 100 "
+                    + JointMask.AND + " MATCH('@" + FieldDefine.FULL_FIELDS + " F2Stest*')"
             ),
 
             new Case(
@@ -94,7 +97,8 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new DecimalValue(new Field(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
                     )
                 ),
-                FieldDefine.JSON_FIELDS + ".3L0 >= 123 and " + FieldDefine.JSON_FIELDS + ".3L1 > 56789"
+                FieldDefine.JSON_FIELDS + ".3L0 >= 123 "
+                    + JointMask.AND + " " + FieldDefine.JSON_FIELDS + ".3L1 > 56789"
             )
             ,
             new Case(
@@ -111,8 +115,36 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test*")
                     )
                 ),
-                FieldDefine.JSON_FIELDS + ".3L0 >= 123 and " +
-                    FieldDefine.JSON_FIELDS + ".3L1 > 56789 and " +
+                FieldDefine.JSON_FIELDS + ".3L0 >= 123 " + JointMask.AND + " " +
+                    FieldDefine.JSON_FIELDS + ".3L1 > 56789 " + JointMask.AND + " " +
+                    "MATCH('@" + FieldDefine.FULL_FIELDS + " F2Stest*')"
+            )
+            ,
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new Field(3, "c3", FieldType.DECIMAL),
+                        ConditionOperator.GREATER_THAN,
+                        new DecimalValue(new Field(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
+                    )
+                ).addAnd(
+                    new Condition(
+                        new Field(2, "c2", FieldType.STRING),
+                        ConditionOperator.LIKE,
+                        new StringValue(new Field(2, "c2", FieldType.STRING), "test*")
+                    )
+                ).addAnd(
+                    new Condition(
+                        new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        ConditionOperator.MULTIPLE_EQUALS,
+                        new LongValue(new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 1L),
+                        new LongValue(new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 2L),
+                        new LongValue(new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 3L)
+                    )
+                ),
+                FieldDefine.JSON_FIELDS + ".3L0 >= 123 " + JointMask.AND + " " +
+                    FieldDefine.JSON_FIELDS + ".3L1 > 56789 " + JointMask.AND + " " +
+                    "id IN (1,2,3) " + JointMask.AND + " " +
                     "MATCH('@" + FieldDefine.FULL_FIELDS + " F2Stest*')"
             )
         );
@@ -127,5 +159,4 @@ public class NoOrHaveRanageConditionsBuilderTest {
             this.expected = expected;
         }
     }
-
-} 
+}

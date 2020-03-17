@@ -12,6 +12,7 @@ import org.junit.After;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 /**
  * Conditions Tester.
@@ -60,31 +61,29 @@ public class ConditionsTest {
 
     @Test
     public void testIterator() throws Exception {
-        buildCase().stream().forEach(c -> {
 
-            Iterator<ConditionNode> iter = c.conditions.iterator();
-            StringBuilder buff = new StringBuilder();
+        StringBuilder buff = new StringBuilder();
+        buildIteratorCase().stream().forEach(c -> {
 
-            while(iter.hasNext()) {
-                ConditionNode node = iter.next();
-                if (node instanceof ValueConditionNode) {
-                    ValueConditionNode current = (ValueConditionNode) node;
+            c.conditions.collection().stream().forEach(cn -> {
+                if (Conditions.isValueNode(cn)) {
+                    ValueConditionNode current = (ValueConditionNode) cn;
                     buff.append(current.getCondition().getField().name())
                         .append(current.getCondition().getOperator().getSymbol())
                         .append(current.getCondition().getValue().getValue());
                 } else {
-
-                    LinkConditionNode current = (LinkConditionNode) node;
+                    LinkConditionNode current = (LinkConditionNode) cn;
                     buff.append(" ").append(current.getLink().toString()).append(" ");
                 }
-            }
+            });
 
             Assert.assertEquals(c.expected, buff.toString());
+            buff.delete(0, buff.length());
 
         });
     }
 
-    private Collection<Case> buildCase() {
+    private Collection<Case> buildIteratorCase() {
         return Arrays.asList(
             new Case(
                 new Conditions(
@@ -97,16 +96,17 @@ public class ConditionsTest {
             ,
             new Case(
                 new Conditions(
-                new Condition(
-                    new Field(1, "c1", FieldType.LONG),
-                    ConditionOperator.EQUALS,
-                    new LongValue(new Field(1, "c1", FieldType.LONG), 100L)))
-                .addAnd(new Condition(
-                    new Field(1, "c2", FieldType.LONG),
-                    ConditionOperator.EQUALS,
-                    new LongValue(new Field(1, "c2", FieldType.LONG), 100L))),
+                    new Condition(
+                        new Field(1, "c1", FieldType.LONG),
+                        ConditionOperator.EQUALS,
+                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L)))
+                    .addAnd(new Condition(
+                        new Field(1, "c2", FieldType.LONG),
+                        ConditionOperator.EQUALS,
+                        new LongValue(new Field(1, "c2", FieldType.LONG), 100L))),
                 "c1=100 AND c2=100"
-            ),
+            )
+            ,
             new Case(
                 Conditions.buildEmtpyConditions().addAnd(
                     Conditions.buildEmtpyConditions().addAnd(
@@ -116,7 +116,7 @@ public class ConditionsTest {
                             new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
                         )
                     )
-                    ,false
+                    , false
                 ),
                 "c1=100"
             ),
@@ -136,9 +136,39 @@ public class ConditionsTest {
                                 new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
                             )
                         )
-                        ,false
+                        , false
                     ),
                 "c2=100 AND c1=100"
+            )
+            ,
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            new Field(2, "c2", FieldType.LONG),
+                            ConditionOperator.EQUALS,
+                            new LongValue(new Field(2, "c2", FieldType.LONG), 100L))
+                    )
+                    .addAnd(
+                        Conditions.buildEmtpyConditions().addAnd(
+                            new Condition(
+                                new Field(1, "c1", FieldType.LONG),
+                                ConditionOperator.EQUALS,
+                                new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
+                            )
+                        )
+                        , false
+                    ).addAnd(
+                    Conditions.buildEmtpyConditions().addAnd(
+                        new Condition(
+                            new Field(3, "c3", FieldType.LONG),
+                            ConditionOperator.EQUALS,
+                            new LongValue(new Field(3, "c3", FieldType.LONG), 100L)
+                        )
+                    )
+                    , false
+                ),
+                "c2=100 AND c1=100 AND c3=100"
             )
         );
     }
