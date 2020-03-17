@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
+import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaFieldDefaultHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
@@ -33,6 +34,8 @@ public class EntityServiceImpl implements EntityService {
 
     @Autowired
     private EntityMetaHandler entityMetaHandler;
+    @Autowired
+    private EntityMetaFieldDefaultHandler entityMetaFieldDefaultHandler;
 
     public EntityServiceImpl(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
         this.metadataRepository = metadataRepository;
@@ -169,6 +172,31 @@ public class EntityServiceImpl implements EntityService {
         }
     }
 
+    @Override
+    public Either<String, Integer> replaceById(EntityClass entityClass, Long id, Map<String, Object> body) {
+        String transId = contextService.get(TRANSACTION_KEY);
+        SingleResponseRequestBuilder<EntityUp, OperationResult> replaceBuilder = entityServiceClient.replace();
+        if(transId != null){
+            replaceBuilder.addHeader("transaction-id", transId);
+        }
+        //处理系统字段的逻辑-add by wz
+        body = entityMetaHandler.updateFill(entityClass,body);
+
+        replaceBuilder.addHeader("mode", "replace");
+
+        OperationResult updateResult = entityServiceClient.replace()
+                .invoke(toEntityUp(entityClass, id, body))
+                .toCompletableFuture().join();
+
+        if(updateResult.getCode() == OperationResult.Code.OK){
+            int rows = updateResult.getAffectedRow();
+            return Either.right(rows);
+        }else{
+            //indicates
+            return Either.left(updateResult.getMessage());
+        }
+    }
+
     /**
      * query
      * @param entityClass
@@ -178,6 +206,11 @@ public class EntityServiceImpl implements EntityService {
     @Override
     public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByCondition(EntityClass entityClass, ConditionQueryRequest condition) {
 
+      return findByConditionWithIds(entityClass, null, condition);
+    }
+
+    @Override
+    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByConditionWithIds(EntityClass entityClass, List<Long> ids, ConditionQueryRequest condition) {
         String transId = contextService.get(TRANSACTION_KEY);
 
 
@@ -187,7 +220,7 @@ public class EntityServiceImpl implements EntityService {
             requestBuilder.addHeader("transaction-id", transId);
         }
 
-        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, condition))
+        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, ids, condition))
                 .toCompletableFuture().join();
 
         if(result.getCode() == OperationResult.Code.OK) {
@@ -216,6 +249,8 @@ public class EntityServiceImpl implements EntityService {
         }
         //处理系统字段的逻辑-add by wz
         body = entityMetaHandler.insertFill(entityClass,body);
+        //添加字段默认值
+        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
 
         OperationResult createResult = buildBuilder
                 .invoke(toEntityUp(entityClass, null, body))
@@ -244,7 +279,7 @@ public class EntityServiceImpl implements EntityService {
             requestBuilder.addHeader("transaction-id", transId);
         }
 
-        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, condition))
+        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, null, condition))
                 .toCompletableFuture().join();
 
         if(result.getCode() == OperationResult.Code.OK) {

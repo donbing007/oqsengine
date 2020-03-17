@@ -10,7 +10,7 @@ public interface FieldConditionUpOrBuilder extends
   /**
    * <code>string code = 1;</code>
    */
-  String getCode();
+  java.lang.String getCode();
   /**
    * <code>string code = 1;</code>
    */
@@ -24,12 +24,12 @@ public interface FieldConditionUpOrBuilder extends
   /**
    * <code>.FieldConditionUp.Op operation = 2;</code>
    */
-  FieldConditionUp.Op getOperation();
+  com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Op getOperation();
 
   /**
    * <code>repeated string values = 3;</code>
    */
-  java.util.List<String>
+  java.util.List<java.lang.String>
       getValuesList();
   /**
    * <code>repeated string values = 3;</code>
@@ -38,7 +38,7 @@ public interface FieldConditionUpOrBuilder extends
   /**
    * <code>repeated string values = 3;</code>
    */
-  String getValues(int index);
+  java.lang.String getValues(int index);
   /**
    * <code>repeated string values = 3;</code>
    */
@@ -52,9 +52,9 @@ public interface FieldConditionUpOrBuilder extends
   /**
    * <code>.FieldUp field = 4;</code>
    */
-  FieldUp getField();
+  com.xforceplus.ultraman.oqsengine.sdk.FieldUp getField();
   /**
    * <code>.FieldUp field = 4;</code>
    */
-  FieldUpOrBuilder getFieldOrBuilder();
+  com.xforceplus.ultraman.oqsengine.sdk.FieldUpOrBuilder getFieldOrBuilder();
 }

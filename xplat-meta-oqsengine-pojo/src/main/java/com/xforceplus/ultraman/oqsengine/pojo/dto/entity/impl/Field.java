@@ -33,6 +33,16 @@ public class Field implements IEntityField, Serializable {
     private FieldType fieldType;
 
     /**
+     * 默认字典项
+     */
+    private String dictId;
+
+    /**
+     * 默认值 - 如果是字典，默认值位字典项的id信息
+     */
+    private String defaultValue;
+
+    /**
      * 字段配置.
      */
     private FieldConfig config;
@@ -45,6 +55,18 @@ public class Field implements IEntityField, Serializable {
      */
     public Field(long id, String name, FieldType fieldType) {
         this(id, name, fieldType, null);
+    }
+
+    /**
+     * 构造一个使用默认配置的字段.
+     * @param id 字段标识.
+     * @param name 字段名称.
+     * @param fieldType 字段类型.
+     */
+    public Field(long id, String name, FieldType fieldType, String dictId, String defaultValue) {
+        this(id, name, fieldType, null);
+        this.dictId = dictId;
+        this.defaultValue = defaultValue;
     }
 
     /**
@@ -87,32 +109,58 @@ public class Field implements IEntityField, Serializable {
     }
 
     @Override
+    public String dictId() {
+        return this.dictId;
+    }
+
+    @Override
+    public String defaultValue() {
+        return this.defaultValue;
+    }
+
+    public String getDictId() {
+        return dictId;
+    }
+
+    public void setDictId(String dictId) {
+        this.dictId = dictId;
+    }
+
+    public String getDefaultValue() {
+        return defaultValue;
+    }
+
+    public void setDefaultValue(String defaultValue) {
+        this.defaultValue = defaultValue;
+    }
+
+    @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof Field)) {
-            return false;
-        }
+        if (this == o) return true;
+        if (!(o instanceof Field)) return false;
         Field field = (Field) o;
         return id == field.id &&
-            Objects.equals(name, field.name) &&
-            fieldType == field.fieldType &&
-            Objects.equals(config, field.config);
+                Objects.equals(name, field.name) &&
+                fieldType == field.fieldType &&
+                Objects.equals(dictId, field.dictId) &&
+                Objects.equals(defaultValue, field.defaultValue) &&
+                Objects.equals(config, field.config);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, fieldType, config);
+        return Objects.hash(id, name, fieldType, dictId, defaultValue, config);
     }
 
     @Override
     public String toString() {
         return "Field{" +
-            "id=" + id +
-            ", name='" + name + '\'' +
-            ", fieldType=" + fieldType +
-            ", config=" + config +
-            '}';
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", fieldType=" + fieldType +
+                ", dictId='" + dictId + '\'' +
+                ", defaultValue='" + defaultValue + '\'' +
+                ", config=" + config +
+                '}';
     }
 }

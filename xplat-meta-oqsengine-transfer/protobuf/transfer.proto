@@ -32,6 +32,7 @@ message SelectByCondition {
     ConditionsUp conditions = 4;
     repeated FieldSortUp sort = 5;
     repeated QueryFieldsUp queryFields = 6;
+    repeated int64 ids = 7;
 }
 
 message ConditionsUp {
