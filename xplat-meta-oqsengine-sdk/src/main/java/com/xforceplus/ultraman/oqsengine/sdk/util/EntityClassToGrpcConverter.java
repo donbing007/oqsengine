@@ -412,6 +412,7 @@ public class EntityClassToGrpcConverter {
             builder.setSearchable(String.valueOf(field.config().isSearchable()));
             builder.setMaxLength(String.valueOf(field.config().getMax()));
             builder.setMinLength(String.valueOf(field.config().getMin()));
+            builder.setPrecision(field.config().getPrecision());
         }
         return builder.build();
     }
@@ -456,9 +457,7 @@ public class EntityClassToGrpcConverter {
     public static Map<String, Object> toResultMap(EntityClass entityClass, EntityUp up) {
 
         Map<String, Object> map = new HashMap<>();
-        if(!StringUtils.isEmpty(up.getObjId())){
-            map.put("id", String.valueOf(up.getObjId()));
-        }
+
 
         up.getValuesList().forEach(entry -> {
             IEntityClassHelper.findFieldByIdInAll(entityClass, entry.getFieldId()).ifPresent(tuple2 -> {
@@ -479,6 +478,11 @@ public class EntityClassToGrpcConverter {
                 }
             });
         });
+
+        if(!StringUtils.isEmpty(up.getObjId())){
+            map.put("id", String.valueOf(up.getObjId()));
+        }
+
         return map;
     }
 

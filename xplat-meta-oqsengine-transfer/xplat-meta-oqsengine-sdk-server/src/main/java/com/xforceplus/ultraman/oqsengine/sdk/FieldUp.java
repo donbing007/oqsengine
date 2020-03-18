@@ -29,6 +29,7 @@ private static final long serialVersionUID = 0L;
     minLength_ = "";
     dictId_ = "";
     defaultValue_ = "";
+    precision_ = 0;
   }
 
   @java.lang.Override
@@ -137,6 +138,11 @@ private static final long serialVersionUID = 0L;
             java.lang.String s = input.readStringRequireUtf8();
 
             defaultValue_ = s;
+            break;
+          }
+          case 112: {
+
+            precision_ = input.readInt32();
             break;
           }
         }
@@ -600,6 +606,15 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int PRECISION_FIELD_NUMBER = 14;
+  private int precision_;
+  /**
+   * <code>int32 precision = 14;</code>
+   */
+  public int getPrecision() {
+    return precision_;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -651,6 +666,9 @@ private static final long serialVersionUID = 0L;
     if (!getDefaultValueBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 13, defaultValue_);
     }
+    if (precision_ != 0) {
+      output.writeInt32(14, precision_);
+    }
     unknownFields.writeTo(output);
   }
 
@@ -699,6 +717,10 @@ private static final long serialVersionUID = 0L;
     if (!getDefaultValueBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(13, defaultValue_);
     }
+    if (precision_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(14, precision_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -741,6 +763,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getDictId());
     result = result && getDefaultValue()
         .equals(other.getDefaultValue());
+    result = result && (getPrecision()
+        == other.getPrecision());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -779,6 +803,8 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getDictId().hashCode();
     hash = (37 * hash) + DEFAULTVALUE_FIELD_NUMBER;
     hash = (53 * hash) + getDefaultValue().hashCode();
+    hash = (37 * hash) + PRECISION_FIELD_NUMBER;
+    hash = (53 * hash) + getPrecision();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -934,6 +960,8 @@ private static final long serialVersionUID = 0L;
 
       defaultValue_ = "";
 
+      precision_ = 0;
+
       return this;
     }
 
@@ -969,6 +997,7 @@ private static final long serialVersionUID = 0L;
       result.minLength_ = minLength_;
       result.dictId_ = dictId_;
       result.defaultValue_ = defaultValue_;
+      result.precision_ = precision_;
       onBuilt();
       return result;
     }
@@ -1060,6 +1089,9 @@ private static final long serialVersionUID = 0L;
       if (!other.getDefaultValue().isEmpty()) {
         defaultValue_ = other.defaultValue_;
         onChanged();
+      }
+      if (other.getPrecision() != 0) {
+        setPrecision(other.getPrecision());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1990,6 +2022,32 @@ private static final long serialVersionUID = 0L;
   checkByteStringIsUtf8(value);
       
       defaultValue_ = value;
+      onChanged();
+      return this;
+    }
+
+    private int precision_ ;
+    /**
+     * <code>int32 precision = 14;</code>
+     */
+    public int getPrecision() {
+      return precision_;
+    }
+    /**
+     * <code>int32 precision = 14;</code>
+     */
+    public Builder setPrecision(int value) {
+      
+      precision_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 precision = 14;</code>
+     */
+    public Builder clearPrecision() {
+      
+      precision_ = 0;
       onChanged();
       return this;
     }

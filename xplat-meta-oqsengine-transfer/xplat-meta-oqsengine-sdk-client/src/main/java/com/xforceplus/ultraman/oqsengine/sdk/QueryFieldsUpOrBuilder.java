@@ -10,7 +10,7 @@ public interface QueryFieldsUpOrBuilder extends
   /**
    * <code>string code = 1;</code>
    */
-  String getCode();
+  java.lang.String getCode();
   /**
    * <code>string code = 1;</code>
    */

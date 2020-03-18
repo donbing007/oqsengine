@@ -20,13 +20,15 @@ public class FieldItem {
 
     String displayType;
 
+    String precision;
+
     SoloItem relationshipEntity;
 
     public FieldItem(){
     }
 
     public FieldItem(String code, String name, String type, String maxLength, String editable
-            , String searchable, String required, String enumCode, String displayType, SoloItem relationshipEntity) {
+            , String searchable, String required, String enumCode, String displayType, String precision ,SoloItem relationshipEntity) {
         this.code = code;
         this.name = name;
         this.type = type;
@@ -36,6 +38,7 @@ public class FieldItem {
         this.required = required;
         this.enumCode = enumCode;
         this.displayType = displayType;
+        this.precision = precision;
         this.relationshipEntity = relationshipEntity;
     }
 
@@ -115,6 +118,14 @@ public class FieldItem {
         return relationshipEntity;
     }
 
+    public String getPrecision() {
+        return precision;
+    }
+
+    public void setPrecision(String precision) {
+        this.precision = precision;
+    }
+
     public void setRelationshipEntity(SoloItem relationshipEntity) {
         this.relationshipEntity = relationshipEntity;
     }
@@ -131,6 +142,7 @@ public class FieldItem {
                 ", required='" + required + '\'' +
                 ", enumCode='" + enumCode + '\'' +
                 ", displayType='" + displayType + '\'' +
+                ", precision='" + precision + '\'' +
                 ", relationshipEntity=" + relationshipEntity +
                 '}';
     }

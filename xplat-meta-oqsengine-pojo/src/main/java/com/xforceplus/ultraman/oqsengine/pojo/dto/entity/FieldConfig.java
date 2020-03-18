@@ -31,6 +31,11 @@ public class FieldConfig implements Serializable {
     private long min = Long.MIN_VALUE;
 
     /**
+     * 字段精度
+     */
+    private int precision = 0;
+
+    /**
      * 是否为数据标识.
      */
     private boolean identifie = false;
@@ -41,6 +46,11 @@ public class FieldConfig implements Serializable {
      */
     public static FieldConfig build() {
         return new FieldConfig();
+    }
+
+    public FieldConfig precision(int precision) {
+        this.precision = precision;
+        return this;
     }
 
     /**
@@ -116,34 +126,56 @@ public class FieldConfig implements Serializable {
         return min;
     }
 
+    public int getPrecision() {
+        return precision;
+    }
+
+//    @Override
+//    public boolean equals(Object o) {
+//        if (this == o) {
+//            return true;
+//        }
+//        if (!(o instanceof FieldConfig)) {
+//            return false;
+//        }
+//        FieldConfig that = (FieldConfig) o;
+//        return isSearchable() == that.isSearchable() &&
+//            getMax() == that.getMax() &&
+//            getMin() == that.getMin() &&
+//            isIdentifie() == that.isIdentifie();
+//    }
+
+//    @Override
+//    public int hashCode() {
+//        return Objects.hash(isSearchable(), getMax(), getMin(), isIdentifie());
+//    }
+
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof FieldConfig)) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         FieldConfig that = (FieldConfig) o;
-        return isSearchable() == that.isSearchable() &&
-            getMax() == that.getMax() &&
-            getMin() == that.getMin() &&
-            isIdentifie() == that.isIdentifie();
+        return searchable == that.searchable &&
+                max == that.max &&
+                min == that.min &&
+                precision == that.precision &&
+                identifie == that.identifie;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(isSearchable(), getMax(), getMin(), isIdentifie());
+        return Objects.hash(searchable, max, min, precision, identifie);
     }
 
     @Override
     public String toString() {
         return "FieldConfig{" +
-            "searchable=" + searchable +
-            ", max=" + max +
-            ", min=" + min +
-            ", identifie=" + identifie +
-            '}';
+                "searchable=" + searchable +
+                ", max=" + max +
+                ", min=" + min +
+                ", precision=" + precision +
+                ", identifie=" + identifie +
+                '}';
     }
 }

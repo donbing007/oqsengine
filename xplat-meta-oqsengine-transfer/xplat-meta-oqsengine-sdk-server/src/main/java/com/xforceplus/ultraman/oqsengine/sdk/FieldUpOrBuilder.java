@@ -151,4 +151,9 @@ public interface FieldUpOrBuilder extends
    */
   com.google.protobuf.ByteString
       getDefaultValueBytes();
+
+  /**
+   * <code>int32 precision = 14;</code>
+   */
+  int getPrecision();
 }

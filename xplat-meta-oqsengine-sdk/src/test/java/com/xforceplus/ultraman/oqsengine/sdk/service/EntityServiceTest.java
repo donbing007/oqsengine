@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
@@ -270,5 +271,31 @@ public class EntityServiceTest {
 //                , Arrays.asList(6645501102127054849L, 6645501103938994177L, 6643337484505710593L)
                 , new RequestBuilder().field("image_id", ConditionOp.in, Arrays.asList(6645501028428939265L, 6645501028668014593L)).build())
                 .forEach(System.out::println);
+    }
+
+
+    @Test
+    public void testError() throws InterruptedException {
+
+        Thread.sleep(10000);
+
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("ticketInvoice");
+        String qstr = "{'tax_amount':'0.0','tenant_id':'1203260024735584256','paper_drew_date':'20200318','exception_status':'0','amount_without_tax':'0.0','batch_no':'1','create_time':'1584522310130','create_user_name':'荣颖','ticket_code':'ticketInvoice','invoice_no':'07612455','warning_status':'0','purchaser_tax_no':'91370000661397973Y','amount_with_tax':'0.0','invoice_code':'3500171130','exception_info':'','seller_name':'乐普艺术陶瓷有限公司','seller_tax_no':'91350583741673616C','purchaser_name':'山东小珠山建设发展有限公司','is_public':'0',";
+        String hstr =  "'create_user':'1214481717915123712','image_id':'6645968161583661057','warning_info':'','invoice_sheet':'1','invoice_type':'s','x_point':0,'y_point':0,'width':0,'height':0,'angle':0}";
+        JSONObject json1 = JSONObject.parseObject(qstr+hstr);
+        Either<String, IEntity> iEntityEither = entityServiceEx.create(entityOpt.get(), json1);
+        Long sId = iEntityEither.get().id();
+        Long fId = iEntityEither.get().family().parent();
+
+        Either<String, Map<String, Object>> mapEither1 = entityService.findOne(entityOpt.get(), sId);
+        String id = "'id':" + sId +",";
+        JSONObject json2 = JSONObject.parseObject(qstr+id+hstr);
+
+        Either<String, Integer> integerEither = entityService.updateById(entityOpt.get(), sId, json2);
+
+        Either<String, Map<String, Object>> mapEither2 = entityService.findOne(entityOpt.get(), sId);
+        Optional<EntityClass> entityOpt1 = entityService.loadByCode("ticket");
+        Either<String, Map<String, Object>> mapEither = entityService.findOne(entityOpt1.get(), fId);
     }
 }
