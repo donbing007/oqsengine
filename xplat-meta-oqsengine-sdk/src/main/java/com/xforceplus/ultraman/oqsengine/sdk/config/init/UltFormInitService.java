@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -45,8 +48,13 @@ public class UltFormInitService implements CommandLineRunner {
         auth.setEnv(config.getEnv());
         Response<List<UltForm>> result = new Response<List<UltForm>>();
         try {
+            HttpHeaders headers = new HttpHeaders();
+            MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
+            headers.setContentType(type);
+            headers.add("Accept", MediaType.APPLICATION_JSON.toString());
+            HttpEntity authorizeEntity = new HttpEntity(auth,headers);
 //            result = restTemplate.getForObject(url,Response.class);
-            result = restTemplate.postForObject(url, auth,Response.class);
+            result = restTemplate.postForObject(url, authorizeEntity,Response.class);
             if (result.getResult()!=null){
                 List<UltForm> ultForms = result.getResult();
                 for (int i = 0;i<ultForms.size();i++) {

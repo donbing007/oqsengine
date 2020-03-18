@@ -56,29 +56,23 @@ public class EntityMetaFieldDefaultHandler {
      * @return List<IEntityField>
      */
     public List<IEntityField> getDefaultFields(EntityClass entityClass){
-        List<IEntityField> fields = new ArrayList<IEntityField>();
-        entityClass.fields().forEach(f -> {
+        List<IEntityField> fields = entityClass.fields();
+        List<IEntityField> defaultFields = new ArrayList<>();
+        fields.forEach(f -> {
             String dictId = f.dictId();
             String defaultValue = f.defaultValue();
-            switch (f.type()){
-                case ENUM:
-                    if (StringUtils.isEmpty(dictId) || StringUtils.isEmpty(defaultValue)){
-                        break;
-                    }
-                    fields.add(f);
-                    break;
-                case LONG:
-                case BOOLEAN:
-                    if (StringUtils.isEmpty(defaultValue)){
-                        break;
-                    }
-                    fields.add(f);
-                    break;
-                default:
-                    break;
+            String type = f.type().name();
+            if("ENUM".equals(type)){
+                if (!StringUtils.isEmpty(dictId) && !StringUtils.isEmpty(defaultValue)){
+                    defaultFields.add(f);
+                }
+            } else if ("LONG".equals(type)){
+                if (!StringUtils.isEmpty(defaultValue)){
+                    defaultFields.add(f);
+                }
             }
         });
-        return fields;
+        return defaultFields;
     };
 
     /**
