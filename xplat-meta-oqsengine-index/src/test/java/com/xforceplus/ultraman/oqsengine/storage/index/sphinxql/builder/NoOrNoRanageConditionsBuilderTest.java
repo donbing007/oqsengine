@@ -121,6 +121,14 @@ public class NoOrNoRanageConditionsBuilderTest {
             new Case(
                 new Conditions(
                     new Condition(
+                        new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        ConditionOperator.EQUALS,
+                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L))),
+                "MATCH('@fullfields  =Sg') AND id = 100"
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
                         new Field(1, "c1", FieldType.DECIMAL),
                         ConditionOperator.EQUALS,
                         new DecimalValue(new Field(1, "c1", FieldType.DECIMAL),
