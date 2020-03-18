@@ -30,7 +30,7 @@ public class ConditionTest {
         EntityClass entityClass = new EntityClass(1L, "test", Collections.singleton(field));
 
 
-        EntityClassToGrpcConverter.toSelectByCondition(entityClass, abc);
+        EntityClassToGrpcConverter.toSelectByCondition(entityClass, null, abc);
     }
 
 

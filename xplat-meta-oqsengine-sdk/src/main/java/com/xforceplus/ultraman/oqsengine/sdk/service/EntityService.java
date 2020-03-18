@@ -36,4 +36,6 @@ public interface EntityService  {
     Either<String, Long> create(EntityClass entityClass, Map<String, Object> body);
 
     Integer count(EntityClass entityClass, ConditionQueryRequest condition);
+
+    List<EntityClass> loadSonByCode(String bocode,String tenantId);
 }

@@ -69,6 +69,7 @@ public class EntityController {
             Response<String> rep = new Response<>();
             rep.setCode("-1");
             rep.setMessage("操作失败");
+            rep.setResult(str);
             return rep;
         });
     }
@@ -105,6 +106,7 @@ public class EntityController {
             Response<String> rep = new Response<>();
             rep.setCode("-1");
             rep.setMessage("操作失败");
+            rep.setResult(str);
             return rep;
         });
     }
@@ -138,6 +140,7 @@ public class EntityController {
             Response<String> rep = new Response<>();
             rep.setCode("-1");
             rep.setMessage("操作失败");
+            rep.setResult(str);
             return rep;
         });
     }

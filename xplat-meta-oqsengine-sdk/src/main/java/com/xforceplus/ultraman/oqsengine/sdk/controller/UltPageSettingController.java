@@ -85,6 +85,7 @@ public class UltPageSettingController {
      * @return
      */
     @GetMapping("/pages/{id}/bo-settings" )
+    @ResponseBody
     public Response pageBos(HttpServletRequest request, @PathVariable String id) {
 
         DataSet ds = null;
@@ -156,6 +157,7 @@ public class UltPageSettingController {
      * @return
      */
     @GetMapping("/bo-settings/{id}" )
+    @ResponseBody
     public Response pageBoSeetings(@PathVariable String id) {
 
         DataSet ds = null;
