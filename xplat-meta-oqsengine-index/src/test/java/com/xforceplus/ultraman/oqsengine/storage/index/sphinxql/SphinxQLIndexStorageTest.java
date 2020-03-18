@@ -62,6 +62,8 @@ public class SphinxQLIndexStorageTest {
     private IEntityField fixFieldAll = new Field(100000, "all", FieldType.BOOLEAN);
     // 所有数据都会有的字段,用以范围选择.值为随机数字.
     private IEntityField fixFieldRange = new Field(100001, "range", FieldType.LONG);
+    // 所有数据都会有的负数字符串.
+    private IEntityField fixStringNumber = new Field(100002, "Negative string", FieldType.STRING);
 
     @Before
     public void before() throws Exception {
@@ -151,25 +153,11 @@ public class SphinxQLIndexStorageTest {
         transactionManager.create();
 
         IEntity expectedEntity = expectedEntitys.stream().findAny().get();
-        IValue value = expectedEntity.entityValue().values().stream().findAny().get();
+        IValue value = expectedEntity.entityValue().values().stream().filter(
+            v -> v.getField().id() == fixStringNumber.id()).findFirst().get();
 
         IEntityField field = value.getField();
-        IValue newValue;
-        switch (field.type()) {
-            case LONG:
-                newValue = new LongValue(field, (long) buildRandomLong(0, 2000));
-                break;
-            case STRING:
-                newValue = new StringValue(field, buildRandomString(10));
-                break;
-            case DECIMAL:
-                newValue = new DecimalValue(field, new BigDecimal(
-                    Long.toString(buildRandomLong(0, 10000)) + "." + Long.toString(buildRandomLong(0, 10000))
-                ));
-                break;
-            default:
-                throw new IllegalStateException("Unexpected value: " + field.type());
-        }
+        IValue newValue = new StringValue(field, "-100");
 
         expectedEntity.entityValue().addValue(newValue);
 
@@ -179,13 +167,8 @@ public class SphinxQLIndexStorageTest {
         transactionManager.finish();
 
         Conditions conditions = Conditions.buildEmtpyConditions();
-        expectedEntity.entityValue().values().stream().forEach(v -> {
-            conditions.addAnd(
-                new Condition(
-                    v.getField(),
-                    ConditionOperator.EQUALS,
-                    v));
-        });
+        conditions.addAnd(new Condition(field, ConditionOperator.EQUALS, newValue));
+
         Collection<EntityRef> refs = storage.select(
             conditions, expectedEntity.entityClass(), null, Page.newSinglePage(100));
 
@@ -292,6 +275,25 @@ public class SphinxQLIndexStorageTest {
 
     private Collection<Case> buildSelectCase() {
         return Arrays.asList(
+            // Negative string, example -1.
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        fixStringNumber,
+                        ConditionOperator.EQUALS,
+                        new StringValue(fixStringNumber, "-1")
+                    )
+                ),
+                expectedEntitys.stream().findFirst().get().entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(expectedEntitys.size(), refs.size());
+
+                    return true;
+                }
+            )
+            ,
             // =
             new Case(
                 new Conditions(new Condition(
@@ -522,6 +524,7 @@ public class SphinxQLIndexStorageTest {
         // 一个固定的所有都有的字段.
         fields.add(fixFieldAll);
         fields.add(fixFieldRange);
+        fields.add(fixStringNumber);
 
         return fields;
     }
@@ -546,6 +549,10 @@ public class SphinxQLIndexStorageTest {
 
             if (f == fixFieldRange) {
                 return new LongValue(f, (long) buildRandomLong(10, 100000));
+            }
+
+            if (f == fixStringNumber) {
+                return new StringValue(f, "-1");
             }
 
             switch (f.type()) {
@@ -574,6 +581,8 @@ public class SphinxQLIndexStorageTest {
         for (int i = 0; i < size; i++) {
             buff.append(rand.nextInt(26) + 'a');
         }
+        // 加上特殊的字符.
+        buff.append('\\').append('@').append('\'').append('-').append('\"').append('(').append(')');
         return buff.toString();
     }
 

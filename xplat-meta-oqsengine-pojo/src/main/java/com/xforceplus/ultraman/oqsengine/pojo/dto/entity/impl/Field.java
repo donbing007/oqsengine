@@ -136,8 +136,12 @@ public class Field implements IEntityField, Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Field)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Field)) {
+            return false;
+        }
         Field field = (Field) o;
         return id == field.id &&
                 Objects.equals(name, field.name) &&

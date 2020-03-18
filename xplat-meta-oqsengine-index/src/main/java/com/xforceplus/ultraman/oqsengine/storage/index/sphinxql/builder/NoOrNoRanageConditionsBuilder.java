@@ -10,11 +10,8 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLH
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 
 /**
  * 没有范围查询,没有or 条件.主要利用全文搜索字段进行搜索.
@@ -27,7 +24,9 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
 
     private StorageStrategyFactory storageStrategyFactory;
 
-    // 没有 or 只有 and 不需要关注连接符.
+    /**
+     * 没有 or 只有 and 不需要关注连接符.
+     */
     @Override
     public String build(Conditions conditions) {
 
