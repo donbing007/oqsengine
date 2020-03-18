@@ -18,6 +18,7 @@ import io.vavr.control.Either;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.client.RestTemplateAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.ContextConfiguration;
@@ -37,6 +38,7 @@ import static org.springframework.test.util.AssertionErrors.assertTrue;
         , AsyncTaskExecutorAutoConfiguration.class
         , ServiceDispatcherAutoConfiguration.class
         , com.xforceplus.xplat.galaxy.framework.configuration.ContextConfiguration.class
+        , RestTemplateAutoConfiguration.class
 })
 
 public class EntityServiceTest {
