@@ -6,15 +6,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.JointMask;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 
 /**
  * 没有范围查询,没有or 条件.主要利用全文搜索字段进行搜索.
@@ -27,14 +25,17 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
 
     private StorageStrategyFactory storageStrategyFactory;
 
-    // 没有 or 只有 and 不需要关注连接符.
+    /**
+     * 没有 or 只有 and 不需要关注连接符.
+     */
     @Override
     public String build(Conditions conditions) {
 
-        StringBuilder buff = new StringBuilder();
-        buff.append("MATCH('@").append(FieldDefine.FULL_FIELDS).append(" ");
+        StringBuilder idBuff = new StringBuilder();
+        StringBuilder attribute = new StringBuilder();
+        attribute.append("MATCH('@").append(FieldDefine.FULL_FIELDS).append(" ");
         // 用以判断是否还没有条件,方便条件之间的空格.
-        int emtpyLen = buff.length();
+        int emtpyLen = attribute.length();
         boolean allNegative = true;
 
         for (ConditionNode node : conditions.collection()) {
@@ -45,31 +46,50 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
                 StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(logicValue.getField().type());
                 StorageValue storageValue = storageStrategy.toStorageValue(logicValue);
 
-                while (storageValue != null) {
-                    if (buff.length() > emtpyLen) {
-                        buff.append(" ");
-                    }
+                if (condition.getField().config().isIdentifie()) {
 
-                    switch (condition.getOperator()) {
-                        case EQUALS: {
-                            buff.append("=");
-                            allNegative = false;
-                            break;
-                        }
+                    // 主键查询.
+                    idBuff.append("id ");
+                    switch(condition.getOperator()) {
+                        case EQUALS:
                         case NOT_EQUALS: {
-                            buff.append("-");
+                            idBuff.append(condition.getOperator().getSymbol());
                             break;
                         }
-                        case LIKE: {
-                            allNegative = false;
-                        }
+                        default:
+                            throw new IllegalStateException("Id search can only use eq or not_eq.");
                     }
+                        idBuff.append(" ").append(storageValue.value());
 
-                    buff.append(SphinxQLHelper.encodeFullText(storageValue));
+                } else {
 
-                    // 多值可能
-                    storageValue = storageValue.next();
+                    while (storageValue != null) {
+                        if (attribute.length() > emtpyLen) {
+                            attribute.append(" ");
+                        }
 
+                        switch (condition.getOperator()) {
+                            case EQUALS: {
+                                attribute.append("=");
+                                allNegative = false;
+                                break;
+                            }
+                            case NOT_EQUALS: {
+                                attribute.append("-");
+                                break;
+                            }
+                            case LIKE: {
+                                allNegative = false;
+                            }
+                        }
+
+                        attribute.append(SphinxQLHelper.encodeFullText(storageValue));
+
+
+                        // 多值可能
+                        storageValue = storageValue.next();
+
+                    }
                 }
             }
         }
@@ -77,11 +97,15 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
         //判断是否都是不等于条件,是的话需要补充所有字段才能成立排除.
         // -F123 =Sg 表示从所有字段中排除掉 F123.
         if (allNegative) {
-            buff.append(" =").append(SphinxQLHelper.ALL_DATA_FULL_TEXT);
+            attribute.append(" =").append(SphinxQLHelper.ALL_DATA_FULL_TEXT);
         }
-        buff.append("')");
+        attribute.append("')");
 
-        return buff.toString();
+        if (idBuff.length() > 0) {
+            attribute.append(" ").append(JointMask.AND).append(" ").append(idBuff.toString());
+        }
+
+        return attribute.toString();
     }
 
     @Override

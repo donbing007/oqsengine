@@ -3,12 +3,14 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.JointMask;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.Assert;
@@ -103,6 +105,26 @@ public class NoOrNoRanageConditionsBuilderTest {
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
                 expectPrefix + "-F1L100 -F2Stest =Sg" + expectAfter
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        ConditionOperator.EQUALS,
+                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L)))
+                    .addAnd(new Condition(
+                        new Field(2, "c2", FieldType.STRING),
+                        ConditionOperator.NOT_EQUALS,
+                        new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
+                expectPrefix + "-F2Stest =Sg" + expectAfter + " " +JointMask.AND + " id = 100"
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        ConditionOperator.EQUALS,
+                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L))),
+                "MATCH('@fullfields  =Sg') AND id = 100"
             ),
             new Case(
                 new Conditions(

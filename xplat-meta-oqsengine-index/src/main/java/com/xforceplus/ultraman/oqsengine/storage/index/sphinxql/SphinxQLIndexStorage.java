@@ -40,6 +40,12 @@ import java.util.stream.Collectors;
 
 /**
  * 基于 SphinxQL 的索引储存实现.
+ * 注意: 这里交所有的 单引号 双引号和斜杠都进行了替换.
+ * 此实现并不会进行属性的返回,只会进行查询.
+ * <p>
+ * 同时使用了一个 json 的字段格式和全文搜索格式储存属性.
+ * id, entity, pref, cref, jsonfields, fullfields.
+ * 基中 jsonfields 储存的如果是字符串,那会对其中的字符串进行转义.
  *
  * @author dongbin
  * @version 0.1 2020/2/17 17:16
@@ -220,7 +226,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                          * 把新的属性插入旧属性集中替换已有,或新增.
                          */
                         JSONObject completeJson = storageEntity.getJsonFields();
-                        JSONObject modifiedJson = serializeToJson(attribute);
+                        JSONObject modifiedJson = serializeToJson(attribute, true);
                         for (String key : modifiedJson.keySet()) {
                             completeJson.put(key, modifiedJson.get(key));
                         }
@@ -318,7 +324,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                 entity.entityClass().id(),
                 entity.family().parent(),
                 entity.family().child(),
-                serializeToJson(entity.entityValue()),
+                serializeToJson(entity.entityValue(), true),
                 serializeSetFull(entity.entityValue())
             ),
             replacement
@@ -347,14 +353,15 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
      * "{fieldId}" : fieldValue
      * }
      */
-    private JSONObject serializeToJson(IEntityValue values) {
-        Map<String, Object> data = new HashMap<>();
+    private JSONObject serializeToJson(IEntityValue values, boolean encodeString) {
+        Map<String, Object> data = new HashMap<>(values.values().size());
         values.values().stream().forEach(v -> {
             StorageValue storageValue = storageStrategyFactory.getStrategy(v.getField().type()).toStorageValue(v);
 
             while (storageValue != null) {
                 if (storageValue.type() == StorageType.STRING) {
-                    data.put(storageValue.storageName(), SphinxQLHelper.escapeString((String) storageValue.value()));
+                    data.put(storageValue.storageName(),
+                        encodeString ? SphinxQLHelper.encodeString((String) storageValue.value()) : storageValue.value());
                 } else {
                     data.put(storageValue.storageName(), storageValue.value());
                 }
@@ -372,7 +379,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     // 格式化 JSON 属性为字符串.
     private String toJsonString(JSONObject jsonObject) {
-        return jsonObject.toJSONString();
+        return JSON.toJSONString(jsonObject);
     }
 
     // 转换 json 字段为全文搜索字段.

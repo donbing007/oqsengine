@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.Assert;
@@ -63,21 +64,21 @@ public class DefaultSphinxQLConditionCompareStrategyTest {
                     )
                 ),
                 "jsonfields.1L = 100"
-            ),
-
+            )
+            ,
             new Case(
                 "jsonfields",
                 new Condition(
                     new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
-                    ConditionOperator.EQUALS,
+                    ConditionOperator.GREATER_THAN_EQUALS,
                     new LongValue(
                         new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
                         100L
                     )
                 ),
-                "id = 100"
-            ),
-
+                "id >= 100"
+            )
+            ,
             new Case(
                 "jsonfields",
                 new Condition(
@@ -97,6 +98,27 @@ public class DefaultSphinxQLConditionCompareStrategyTest {
                     )
                 ),
                 "id IN (1,2,3)"
+            )
+            ,
+            new Case(
+                "jsonfields",
+                new Condition(
+                    new Field(1, "c1", FieldType.STRING),
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new StringValue(
+                        new Field(1, "c1", FieldType.STRING),
+                        "v1"
+                    ),
+                    new StringValue(
+                        new Field(1, "c1", FieldType.STRING),
+                        "v2"
+                    ),
+                    new StringValue(
+                        new Field(1, "c1", FieldType.STRING),
+                        "v3"
+                    )
+                ),
+                "jsonfields.1S IN ('v1','v2','v3')"
             )
         );
     }
