@@ -6,7 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.JointMask;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
@@ -102,7 +102,7 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
         attribute.append("')");
 
         if (idBuff.length() > 0) {
-            attribute.append(" ").append(JointMask.AND).append(" ").append(idBuff.toString());
+            attribute.append(" ").append(SqlKeywordDefine.AND).append(" ").append(idBuff.toString());
         }
 
         return attribute.toString();

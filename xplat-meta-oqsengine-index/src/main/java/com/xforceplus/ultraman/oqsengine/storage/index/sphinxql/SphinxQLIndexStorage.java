@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.query.QueryOptimizer;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
@@ -57,8 +58,11 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     private static final String WRITER_SQL = "%s into %s (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)";
     private static final String DELETE_SQL = "delete from %s where id = ?";
-    private static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? and %s order by %s limit ?,?";
-    private static final String SELECT_COUNT_SQL = "select count(*) as count from %s where entity = ? and %s";
+    /**
+     * %s 顺序为 where 条件, 排序.
+     */
+    private static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? %s %s limit ?,?";
+    private static final String SELECT_COUNT_SQL = "select count(*) as count from %s where entity = ? %s";
     private static final String SELECT_FROM_ID_SQL = "select id, pref, cref, entity, jsonfields from %s where id = ?";
 
     private String buildSql;
@@ -108,6 +112,10 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
                     String whereCondition = queryOptimizer.optimizeConditions(conditions).build(conditions);
+                    if (!whereCondition.isEmpty()) {
+                        whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
+                    }
+
                     PreparedStatement st = null;
                     ResultSet rs = null;
                     if (!page.isSinglePage()) {
@@ -175,7 +183,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     // 构造排序.
     private String buildOrderBy(Sort sort) {
-        StringBuilder buff = new StringBuilder();
+        StringBuilder buff = new StringBuilder(SqlKeywordDefine.ORDER).append(" ");
         if (sort != null) {
             StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
             Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField());
@@ -194,15 +202,15 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                 }
 
                 if (sort.isAsc()) {
-                    buff.append(" ASC");
+                    buff.append(" ").append(SqlKeywordDefine.ORDER_TYPE_ASC);
                 } else {
-                    buff.append(" DESC");
+                    buff.append(" ").append(SqlKeywordDefine.ORDER_TYPE_DESC);
                 }
             }
 
 
         } else {
-            buff.append("id ASC");
+            buff.append("id ").append(SqlKeywordDefine.ORDER_TYPE_ASC);
         }
         return buff.toString();
     }

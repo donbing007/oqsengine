@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.compar
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.JointMask;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -61,6 +61,6 @@ public class DecimalSphinxQLConditionCompareStrategy implements SphinxQLConditio
     }
 
     private String doBuild(String integer, String decimal) {
-        return String.format("%s %s %s", integer, JointMask.AND, decimal);
+        return String.format("%s %s %s", integer, SqlKeywordDefine.AND, decimal);
     }
 }
