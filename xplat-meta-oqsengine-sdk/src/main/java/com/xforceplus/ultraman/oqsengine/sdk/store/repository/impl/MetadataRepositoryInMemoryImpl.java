@@ -66,7 +66,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         SimpleTableDef fieldTableDef = new SimpleTableDef("fields", new String[]{"boId"
                 , "id"
-                , "code", "displayType", "editable", "enumCode", "maxLength", "name", "required", "fieldType", "searchable", "precision"});
+                , "code", "displayType", "editable", "enumCode", "maxLength", "name", "required", "fieldType", "searchable", "dictId", "defaultValue", "precision"});
         TableDataProvider fieldTableDataProvider = new MapTableDataProvider(fieldTableDef, fieldStore);
 
         /**
@@ -121,6 +121,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             fieldItem.setRequired(getRowValue(row, "required").map(String::valueOf).orElse(""));
             fieldItem.setType(getRowValue(row, "fieldType").map(String::valueOf).orElse(""));
             fieldItem.setSearchable(getRowValue(row, "searchable").map(String::valueOf).orElse(""));
+            fieldItem.setDictId(getRowValue(row, "dictId").map(String::valueOf).orElse(""));
+            fieldItem.setDefaultValue(getRowValue(row, "defaultValue").map(String::valueOf).orElse(""));
             fieldItem.setPrecision(getRowValue(row, "precision").map(String::valueOf).orElse(""));
             //TODO
             fieldItem.setRelationshipEntity(null);
@@ -199,6 +201,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                             , null
                             , null
                             , "0"
+                            , ""
+                            , ""
                             , soloItem);
                 }
                 return null;
@@ -658,6 +662,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .value("required", field.getRequired())
                 .value("fieldType", field.getFieldType())
                 .value("searchable", searchable)
+                .value("dictId", field.getDictId())
+                .value("defaultValue", field.getDefaultValue())
                 .value("precision", String.valueOf(field.getPrecision()));
         dc.executeUpdate(insert);
     }
