@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -715,7 +716,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     retValue = new BooleanValue(entityField, Boolean.parseBoolean(value));
                     break;
                 case DECIMAL:
-                    retValue = new DecimalValue(entityField, new BigDecimal(value));
+                    //min is 1
+                    int precision = Optional.ofNullable(entityField.config()).map(FieldConfig::getPrecision).filter(x -> x > 0).orElse(1);
+                    retValue = new DecimalValue(entityField, new BigDecimal(value).setScale(precision, RoundingMode.HALF_UP));
                     break;
                 default:
                     retValue = new StringValue(entityField, value);
@@ -760,6 +763,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             .map(Long::parseLong).orElse(-1L))
                     .min(ofEmptyStr(fieldUp.getMinLength()).map(String::valueOf)
                             .map(Long::parseLong).orElse(-1L))
+                    .precision(fieldUp.getPrecision())
                );
     }
 

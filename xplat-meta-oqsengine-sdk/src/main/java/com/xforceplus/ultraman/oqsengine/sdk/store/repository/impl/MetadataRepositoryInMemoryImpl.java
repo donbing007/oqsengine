@@ -66,7 +66,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         SimpleTableDef fieldTableDef = new SimpleTableDef("fields", new String[]{"boId"
                 , "id"
-                , "code", "displayType", "editable", "enumCode", "maxLength", "name", "required", "fieldType", "searchable"});
+                , "code", "displayType", "editable", "enumCode", "maxLength", "name", "required", "fieldType", "searchable", "precision"});
         TableDataProvider fieldTableDataProvider = new MapTableDataProvider(fieldTableDef, fieldStore);
 
         /**
@@ -121,7 +121,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             fieldItem.setRequired(getRowValue(row, "required").map(String::valueOf).orElse(""));
             fieldItem.setType(getRowValue(row, "fieldType").map(String::valueOf).orElse(""));
             fieldItem.setSearchable(getRowValue(row, "searchable").map(String::valueOf).orElse(""));
-
+            fieldItem.setPrecision(getRowValue(row, "precision").map(String::valueOf).orElse(""));
             //TODO
             fieldItem.setRelationshipEntity(null);
             items.add(fieldItem);
@@ -198,6 +198,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                             , "false"
                             , null
                             , null
+                            , "0"
                             , soloItem);
                 }
                 return null;
@@ -287,8 +288,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                     .flatMap(this::loadParentEntityClass);
 
             String subCode = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
-
-
 
             List<IEntityField> listFields = new LinkedList<>();
 
@@ -658,7 +657,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .value("name", field.getName())
                 .value("required", field.getRequired())
                 .value("fieldType", field.getFieldType())
-                .value("searchable", searchable);
+                .value("searchable", searchable)
+                .value("precision", field.getPrecision());
         dc.executeUpdate(insert);
     }
 

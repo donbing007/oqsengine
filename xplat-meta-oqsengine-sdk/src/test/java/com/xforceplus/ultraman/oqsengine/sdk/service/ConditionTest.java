@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,5 +51,11 @@ public class ConditionTest {
 
 
         EntityClassToGrpcConverter.toEntityUp(entityClass, null, create);
+    }
+
+
+    @Test
+    public void testBigDecimal(){
+        System.out.println(new BigDecimal("0").setScale(1).toString());
     }
 }

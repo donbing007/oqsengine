@@ -150,4 +150,5 @@ message FieldUp {
     string minLength = 11;
     string dictId = 12;
     string defaultValue = 13;
+    int32 precision = 14;
 }

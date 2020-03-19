@@ -61,10 +61,15 @@ public class FieldHelper {
                 .flatMap(OptionalHelper::ofEmptyStr)
                 .map(Long::valueOf).orElse(-1L);
 
+        Integer precision = RowUtils.getRowValue(row, "precision")
+                .flatMap(OptionalHelper::ofEmptyStr)
+                .map(Integer::valueOf).orElse(0);
+
         FieldConfig fieldConfig = FieldConfig
                 .build()
                 .searchable(searchable)
-                .max(max);
+                .max(max)
+                .precision(precision);
 
         Field field =
                 new Field(id, name, fieldType, fieldConfig);
