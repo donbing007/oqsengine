@@ -355,14 +355,21 @@ public class EntityClassToGrpcConverter {
         return Optional.of(fieldCondition);
     }
 
+    /**
+     * robust if op is not present return with eq
+     * filter any null value in value list
+     * @param entityClass
+     * @param fieldCondition
+     * @return
+     */
     private static Optional<FieldConditionUp> toFieldCondition(IEntityClass entityClass, FieldCondition fieldCondition){
 
         Optional<IEntityField> fieldOp = IEntityClassHelper.findFieldByCode(entityClass, fieldCondition.getCode());
 
         return fieldOp.map(x -> FieldConditionUp.newBuilder()
                 .setCode(fieldCondition.getCode())
-                .setOperation(FieldConditionUp.Op.valueOf(fieldCondition.getOperation().name()))
-                .addAllValues(Optional.ofNullable(fieldCondition.getValue()).orElseGet(Collections::emptyList))
+                .setOperation(Optional.ofNullable(fieldCondition.getOperation()).map(Enum::name).map(FieldConditionUp.Op::valueOf).orElse(eq))
+                .addAllValues(Optional.ofNullable(fieldCondition.getValue()).orElseGet(Collections::emptyList).stream().filter(Objects::nonNull).collect(Collectors.toList()))
                 .setField(toFieldUp(fieldOp.get()))
                 .build());
     }
