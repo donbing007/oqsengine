@@ -237,7 +237,7 @@ public class EntityServiceTest {
                 .field("deci", ConditionOp.eq, 12.56).build()).forEach(System.out::println);
 
         entityService.findByCondition(testBillSub.get(), new RequestBuilder()
-                .field("deci", ConditionOp.ge, 12.55).build()).forEach(System.out::println);
+                .field("deci", ConditionOp.ge, 0).build()).forEach(System.out::println);
 
         entityService.findByCondition(testBillSub.get(), new RequestBuilder()
                 .field("deci", ConditionOp.le, 12.57).build()).forEach(System.out::println);

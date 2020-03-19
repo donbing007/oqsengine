@@ -658,7 +658,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .value("required", field.getRequired())
                 .value("fieldType", field.getFieldType())
                 .value("searchable", searchable)
-                .value("precision", field.getPrecision());
+                .value("precision", String.valueOf(field.getPrecision()));
         dc.executeUpdate(insert);
     }
 
