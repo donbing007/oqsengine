@@ -490,7 +490,7 @@ public class EntityClassToGrpcConverter {
 
     public static Map<String, Object> filterItem(Map<String, Object> values, String mainEntityCode, EntityItem entityItem){
 
-        if(entityItem == null || entityItem.getEntities().isEmpty()){
+        if(entityItem == null || entityItem.getEntities() == null || entityItem.getEntities().isEmpty()){
             return values;
         }
 
