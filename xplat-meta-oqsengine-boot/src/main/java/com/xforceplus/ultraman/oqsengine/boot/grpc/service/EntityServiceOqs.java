@@ -510,105 +510,129 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         if(fieldOp.isPresent()) {
             FieldConditionUp.Op op = fieldCondition.getOperation();
 
+            //in order
+            List<String> nonNullValueList = fieldCondition
+                    .getValuesList()
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            //return if field with invalid
+            if(nonNullValueList.isEmpty()){
+                conditions = Conditions.buildEmtpyConditions();
+                return conditions;
+            }
+
             switch (op) {
                 case eq:
-
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.EQUALS
                             , toTypedValue(fieldOp.get()
-                                , fieldCondition.getValues(0))));
+                                , nonNullValueList.get(0))));
                     break;
                 case ne:
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.NOT_EQUALS
                             , toTypedValue(fieldOp.get()
-                            , fieldCondition.getValues(0))));
+                            , nonNullValueList.get(0))));
                     break;
                 case ge:
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.GREATER_THAN_EQUALS
                             , toTypedValue(fieldOp.get()
-                            , fieldCondition.getValues(0))));
+                            , nonNullValueList.get(0))));
                     break;
                 case gt:
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.GREATER_THAN
                             , toTypedValue(fieldOp.get()
-                            , fieldCondition.getValues(0))));
+                            , nonNullValueList.get(0))));
                     break;
                 case ge_le:
-                    if (fieldCondition.getValuesCount() > 1) {
+                    if (nonNullValueList.size() > 1) {
                         Condition left = new Condition(fieldOp.get()
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , fieldCondition.getValues(0)));
+                                , nonNullValueList.get(0)));
 
                         Condition right = new Condition(fieldOp.get()
                                 , ConditionOperator.MINOR_THAN_EQUALS
                              , toTypedValue(fieldOp.get()
-                                , fieldCondition.getValues(1)));
+                                , nonNullValueList.get(1)));
 
                         conditions = new Conditions(left).addAnd(right);
 
                     }else{
-                        logger.error("required value more then 2");
+                        logger.warn("required value more then 2, fallback to ge");
+                        conditions = new Conditions(new Condition(fieldOp.get()
+                                , ConditionOperator.GREATER_THAN_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , nonNullValueList.get(0))));
                     }
                     break;
                 case gt_le:
-                    if (fieldCondition.getValuesCount() > 1) {
+                    if (nonNullValueList.size() > 1) {
                         Condition left = new Condition(fieldOp.get()
                                 , ConditionOperator.GREATER_THAN
                                 , toTypedValue(fieldOp.get()
-                                , fieldCondition.getValues(0)));
+                                , nonNullValueList.get(0)));
 
                         Condition right = new Condition(fieldOp.get()
                                 , ConditionOperator.MINOR_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , fieldCondition.getValues(1)));
+                                , nonNullValueList.get(1)));
 
 
                         conditions = new Conditions(left).addAnd(right);
 
                     }else{
-                        logger.error("required value more then 2");
+                        logger.warn("required value more then 2, fallback to gt");
+                        conditions = new Conditions(new Condition(fieldOp.get()
+                                , ConditionOperator.GREATER_THAN
+                                , toTypedValue(fieldOp.get()
+                                , nonNullValueList.get(0))));
                     }
                     break;
                 case ge_lt:
-                    if (fieldCondition.getValuesCount() > 1) {
+                    if (nonNullValueList.size() > 1) {
                         Condition left = new Condition(fieldOp.get()
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , fieldCondition.getValues(0)));
+                                , nonNullValueList.get(0)));
 
                         Condition right = new Condition(fieldOp.get()
                                 , ConditionOperator.MINOR_THAN
                                 , toTypedValue(fieldOp.get()
-                                , fieldCondition.getValues(1)));
+                                , nonNullValueList.get(1)));
 
 
                         conditions = new Conditions(left).addAnd(right);
 
                     }else{
-                        logger.error("required value more then 2");
+                        logger.warn("required value more then 2, fallback to ge");
+                        conditions = new Conditions(new Condition(fieldOp.get()
+                                , ConditionOperator.GREATER_THAN_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , nonNullValueList.get(0))));
                     }
                     break;
                 case le:
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.MINOR_THAN_EQUALS
                             , toTypedValue(fieldOp.get()
-                            , fieldCondition.getValues(0))));
+                            , nonNullValueList.get(0))));
                     break;
                 case lt:
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.MINOR_THAN
                             , toTypedValue(fieldOp.get()
-                            , fieldCondition.getValues(0))));
+                            , nonNullValueList.get(0))));
                     break;
                 case in:
                     conditions = new Conditions(
                             new Condition(fieldOp.get()
                                     , ConditionOperator.MULTIPLE_EQUALS
-                                    , fieldCondition.getValuesList().stream().map(x -> toTypedValue(fieldOp.get(), x))
+                                    , nonNullValueList.stream().map(x -> toTypedValue(fieldOp.get(), x))
                                     .toArray(IValue[]::new)
                             )
                     );
@@ -635,19 +659,19 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 //                    }
                     break;
                 case ni:
-                    if(fieldCondition.getValuesCount() == 1 ){
+                    if(nonNullValueList.size() == 1 ){
                         conditions = new Conditions(new Condition(fieldOp.get()
                                 , ConditionOperator.NOT_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , fieldCondition.getValues(0))));
+                                , nonNullValueList.get(0))));
                     }else{
                         conditions = new Conditions(new Condition(fieldOp.get()
                                 , ConditionOperator.NOT_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , fieldCondition.getValues(0))));
+                                , nonNullValueList.get(0))));
 
                         Conditions finalConditions = conditions;
-                        fieldCondition.getValuesList().stream().skip(1).forEach(x -> {
+                        nonNullValueList.stream().skip(1).forEach(x -> {
                             finalConditions.addAnd(new Conditions(new Condition(fieldOp.get()
                                     , ConditionOperator.NOT_EQUALS
                                     , toTypedValue(fieldOp.get()
@@ -661,7 +685,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.LIKE
                             , toTypedValue(fieldOp.get()
-                            , fieldCondition.getValues(0))));
+                            , nonNullValueList.get(0))));
                     break;
             }
         }

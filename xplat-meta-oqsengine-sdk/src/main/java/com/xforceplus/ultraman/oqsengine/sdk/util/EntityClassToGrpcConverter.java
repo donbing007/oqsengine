@@ -300,7 +300,8 @@ public class EntityClassToGrpcConverter {
                 .map(x -> ((ValueConditionNode)x).getCondition())
                 .map(EntityClassToGrpcConverter::toFieldCondition)
                 .filter(Optional::isPresent)
-                .map(Optional::get).collect(Collectors.toList()));
+                .map(Optional::get)
+                .collect(Collectors.toList()));
         return conditionsUpBuilder.build();
     }
 
