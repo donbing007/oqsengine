@@ -421,10 +421,6 @@ public class EntityClassToGrpcConverter {
                                     , EntityClass subEntityClass, EntityUp up) {
 
         Map<String, Object> map = new HashMap<>();
-        if(!StringUtils.isEmpty(up.getObjId())){
-            map.put("id", String.valueOf(up.getObjId()));
-        }
-
 
         up.getValuesList().forEach(entry -> {
             Optional<Tuple2<IEntityClass, IEntityField>> fieldByIdInAll = IEntityClassHelper
@@ -449,6 +445,12 @@ public class EntityClassToGrpcConverter {
                 }
             });
         });
+
+
+        if(!StringUtils.isEmpty(up.getObjId())){
+            map.put("id", String.valueOf(up.getObjId()));
+        }
+
         return map;
     }
 
