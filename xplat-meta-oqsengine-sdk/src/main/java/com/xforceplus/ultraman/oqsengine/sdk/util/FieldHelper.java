@@ -65,6 +65,12 @@ public class FieldHelper {
                 .flatMap(OptionalHelper::ofEmptyStr)
                 .map(Integer::valueOf).orElse(0);
 
+        String defaultValue = RowUtils.getRowValue(row, "defaultValue")
+               .map(String::valueOf).orElse("");
+
+        String dictId = RowUtils.getRowValue(row, "dictId")
+                .map(String::valueOf).orElse("");
+
         FieldConfig fieldConfig = FieldConfig
                 .build()
                 .searchable(searchable)
@@ -72,7 +78,7 @@ public class FieldHelper {
                 .precision(precision);
 
         Field field =
-                new Field(id, name, fieldType, fieldConfig);
+                new Field(id, name, fieldType, fieldConfig, dictId, defaultValue);
         return field;
     }
 

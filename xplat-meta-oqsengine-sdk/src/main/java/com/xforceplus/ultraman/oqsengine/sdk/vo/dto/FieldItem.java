@@ -22,13 +22,18 @@ public class FieldItem {
 
     String precision;
 
+    String dictId;
+
+    String defaultValue;
+
     SoloItem relationshipEntity;
 
     public FieldItem(){
     }
 
     public FieldItem(String code, String name, String type, String maxLength, String editable
-            , String searchable, String required, String enumCode, String displayType, String precision ,SoloItem relationshipEntity) {
+            , String searchable, String required, String enumCode, String displayType, String precision , String dictId
+            , String defaultValue, SoloItem relationshipEntity) {
         this.code = code;
         this.name = name;
         this.type = type;
@@ -40,6 +45,8 @@ public class FieldItem {
         this.displayType = displayType;
         this.precision = precision;
         this.relationshipEntity = relationshipEntity;
+        this.dictId = dictId;
+        this.defaultValue = defaultValue;
     }
 
     public String getCode() {
@@ -130,6 +137,22 @@ public class FieldItem {
         this.relationshipEntity = relationshipEntity;
     }
 
+    public String getDictId() {
+        return dictId;
+    }
+
+    public void setDictId(String dictId) {
+        this.dictId = dictId;
+    }
+
+    public String getDefaultValue() {
+        return defaultValue;
+    }
+
+    public void setDefaultValue(String defaultValue) {
+        this.defaultValue = defaultValue;
+    }
+
     @Override
     public String toString() {
         return "FieldItem{" +
@@ -143,6 +166,8 @@ public class FieldItem {
                 ", enumCode='" + enumCode + '\'' +
                 ", displayType='" + displayType + '\'' +
                 ", precision='" + precision + '\'' +
+                ", dictId='" + dictId + '\'' +
+                ", defaultValue='" + defaultValue + '\'' +
                 ", relationshipEntity=" + relationshipEntity +
                 '}';
     }

@@ -63,8 +63,8 @@ public class Field implements IEntityField, Serializable {
      * @param name 字段名称.
      * @param fieldType 字段类型.
      */
-    public Field(long id, String name, FieldType fieldType, String dictId, String defaultValue) {
-        this(id, name, fieldType, null);
+    public Field(long id, String name, FieldType fieldType, FieldConfig config, String dictId, String defaultValue) {
+        this(id, name, fieldType, config);
         this.dictId = dictId;
         this.defaultValue = defaultValue;
     }
