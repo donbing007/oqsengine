@@ -7,10 +7,12 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.optimizer.Defaul
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.DecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.query.QueryOptimizer;
-import com.xforceplus.ultraman.oqsengine.storage.selector.SuffixNumberHashSelector;
+import com.xforceplus.ultraman.oqsengine.storage.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.storage.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,7 +28,7 @@ public class CommonConfiguration {
     @Value("${storage.master.name:oqsbigentity}")
     private String masterTableName;
 
-    @Value("${storage.master.shard.size:1}")
+    @Value("${storage.master.shard.table.size:1}")
     private int masterSize;
 
     @Value("${instance.id:0}")
@@ -37,9 +39,16 @@ public class CommonConfiguration {
         return new SnowflakeLongIdGenerator(instanceId);
     }
 
-    @Bean
-    public Selector<String> tableNameSelector() {
+    @ConditionalOnExpression("${storage.master.shard.table.enabled} == true")
+    @Bean("tableNameSelector")
+    public Selector<String> shardTableNameSelector() {
         return new SuffixNumberHashSelector(masterTableName, masterSize);
+    }
+
+    @ConditionalOnExpression("${storage.master.shard.table.enabled} == false")
+    @Bean("tableNameSelector")
+    public Selector<String> noShardTableNameSelector() {
+        return new NoSelector<>();
     }
 
     @Bean

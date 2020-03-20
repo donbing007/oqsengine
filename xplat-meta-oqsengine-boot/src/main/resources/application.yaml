@@ -23,7 +23,9 @@ storage:
       # default 3 second
       timeout: 3000
     shard:
-      size: 1
+      table:
+        enabled: true
+        size: 1
   index:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
     name: "oqsindex"
