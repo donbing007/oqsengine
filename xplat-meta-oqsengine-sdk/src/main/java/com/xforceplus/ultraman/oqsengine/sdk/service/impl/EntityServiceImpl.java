@@ -3,19 +3,23 @@ package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
+import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
+import com.xforceplus.ultraman.oqsengine.sdk.event.EntityDeleted;
+import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaFieldDefaultHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
-import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Conditions;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,6 +42,9 @@ public class EntityServiceImpl implements EntityService {
     private EntityMetaHandler entityMetaHandler;
     @Autowired
     private EntityMetaFieldDefaultHandler entityMetaFieldDefaultHandler;
+
+    @Autowired
+    private ApplicationEventPublisher publisher;
 
     public EntityServiceImpl(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
         this.metadataRepository = metadataRepository;
@@ -143,11 +150,43 @@ public class EntityServiceImpl implements EntityService {
 
         if(updateResult.getCode() == OperationResult.Code.OK){
             int rows = updateResult.getAffectedRow();
+
+            if(rows > 0) {
+                publisher.publishEvent(buildDeleteEvent(entityClass, id));
+            }
+
             return Either.right(rows);
         }else{
             //indicates
             return Either.left(updateResult.getMessage());
         }
+    }
+
+    private Map<String, String> getContext(){
+        Map<String, String> map = new HashMap<>();
+        map.put(TENANTID_KEY.name(), contextService.get(TENANTID_KEY));
+        map.put(TENANTCODE_KEY.name(), contextService.get(TENANTCODE_KEY));
+        map.put(USERNAME.name(), contextService.get(USERNAME));
+        map.put(USER_DISPLAYNAME.name(), contextService.get(USER_DISPLAYNAME));
+        return map;
+    }
+
+    private EntityDeleted buildDeleteEvent(EntityClass entityClass, Long id){
+        String code = entityClass.code();
+        Map<String, String> context = getContext();
+        return new EntityDeleted(code, id, context);
+    }
+
+    private EntityCreated buildCreatedEvent(EntityClass entityClass, Long id, Map<String, Object> data){
+        String code = entityClass.code();
+        Map<String, String> context = getContext();
+        return new EntityCreated(code, id, data, context);
+    }
+
+    private EntityUpdated buildUpdatedEvent(EntityClass entityClass, Long id, Map<String, Object> data){
+        String code = entityClass.code();
+        Map<String, String> context = getContext();
+        return new EntityUpdated(code, id, data, context);
     }
 
     @Override
@@ -167,6 +206,11 @@ public class EntityServiceImpl implements EntityService {
 
         if(updateResult.getCode() == OperationResult.Code.OK){
             int rows = updateResult.getAffectedRow();
+
+            if(rows > 0){
+                publisher.publishEvent(buildUpdatedEvent(entityClass, id, body));
+            }
+
             return Either.right(rows);
         }else{
             //indicates
@@ -192,6 +236,11 @@ public class EntityServiceImpl implements EntityService {
 
         if(updateResult.getCode() == OperationResult.Code.OK){
             int rows = updateResult.getAffectedRow();
+
+            if(rows > 0){
+                publisher.publishEvent(buildUpdatedEvent(entityClass, id, body));
+            }
+
             return Either.right(rows);
         }else{
             //indicates
@@ -262,7 +311,11 @@ public class EntityServiceImpl implements EntityService {
             if(createResult.getIdsList().size() < 1 ) {
                 return Either.left("未获得结果");
             }else{
-                return Either.right(createResult.getIdsList().get(0));
+                Long id = createResult.getIdsList().get(0);
+
+                publisher.publishEvent(buildCreatedEvent(entityClass, id, body));
+
+                return Either.right(id);
             }
         }else{
             //indicates
