@@ -13,8 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.annotation.Resource;
-
 /**
  * @author dongbin
  * @version 0.1 2020/2/24 17:08
@@ -31,8 +29,7 @@ public class CustomTransactionConfiguration {
 
 
     @Bean
-    public TransactionManager transactionManager(@Value("${transaction.timeoutms:3000}")
-                                                         int transactionTimeoutMs) {
+    public TransactionManager transactionManager(@Value("${transaction.timeoutms:3000}") int transactionTimeoutMs) {
         return new DefaultTransactionManager(transactionTimeoutMs, longIdGenerator);
     }
 
