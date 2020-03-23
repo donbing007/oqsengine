@@ -273,6 +273,35 @@ public class EntityServiceTest {
                 .forEach(System.out::println);
     }
 
+    @Test
+    public void testSystemProperties() throws InterruptedException {
+        Thread.sleep(10000);
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("baseBill");
+
+        Optional<EntityClass> subEntityOpt = entityService.loadByCode("salesBill");
+
+        Map<String, Object> o = new HashMap<>();
+        o.put("image_id", "1231231");
+        o.put("seller_name", "hello");
+
+        Either<String, IEntity> iEntities = entityServiceEx.create(subEntityOpt.get(), o);
+
+        Long parent = iEntities.get().family().parent();
+        Long child = iEntities.get().id();
+
+        System.out.println(entityOpt.get());
+
+        System.out.println(subEntityOpt.get());
+
+        System.out.println(entityService.findOne(subEntityOpt.get(), child));
+
+        System.out.println(entityService.findOne(entityOpt.get(), parent));
+
+        System.out.println(entityServiceEx.findOneByParentId(entityOpt.get(), subEntityOpt.get(),parent));
+
+    }
+
 
     @Test
     public void testError() throws InterruptedException {

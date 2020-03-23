@@ -72,7 +72,12 @@ public class EntityServiceExImpl implements EntityServiceEx {
         }
 
         //处理系统字段的逻辑-add by wz
-        body = entityMetaHandler.insertFill(entityClass,body);
+
+        if(entityClass.extendEntityClass() != null) {
+            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
+        }else{
+            body = entityMetaHandler.insertFill(entityClass,body);
+        }
         //添加字段默认值
         body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
 
