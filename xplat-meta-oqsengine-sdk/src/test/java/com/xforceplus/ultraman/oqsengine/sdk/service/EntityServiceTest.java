@@ -294,12 +294,21 @@ public class EntityServiceTest {
 
         System.out.println(subEntityOpt.get());
 
+        Either<String, Map<String, Object>> either = entityService.findOne(subEntityOpt.get(), child);
+
         System.out.println(entityService.findOne(subEntityOpt.get(), child));
 
         System.out.println(entityService.findOne(entityOpt.get(), parent));
 
         System.out.println(entityServiceEx.findOneByParentId(entityOpt.get(), subEntityOpt.get(),parent));
 
+        //search by create_time
+
+        Object create_time = either.get().get("create_time");
+
+        entityService.findByCondition(entityOpt.get(), new RequestBuilder()
+                .field("create_time", ConditionOp.eq, create_time)
+                .build()).forEach(System.out::println);
     }
 
 
