@@ -149,7 +149,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                     st = ((Connection) resource.value()).prepareStatement(sql);
                     st.setLong(1, entityClass.id());
                     st.setLong(2, scope.getStartLine());
-                    st.setLong(3, scope.getEndLine());
+                    st.setLong(3, page.getPageSize());
 
                     if (logger.isDebugEnabled()) {
                         logger.debug(st.toString());
