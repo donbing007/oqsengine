@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
+import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaFieldDefaultHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 
@@ -23,16 +24,19 @@ import io.vavr.control.Either;
 import org.apache.metamodel.data.DataSet;
 import org.apache.metamodel.data.Row;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.*;
-import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.TRANSACTION_KEY;
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.USER_DISPLAYNAME;
 
 public class EntityServiceExImpl implements EntityServiceEx {
 
@@ -54,6 +58,9 @@ public class EntityServiceExImpl implements EntityServiceEx {
     @Autowired
     private EntityMetaFieldDefaultHandler entityMetaFieldDefaultHandler;
 
+    @Autowired
+    private ApplicationEventPublisher publisher;
+
     @Override
     public Either<String, IEntity> create(EntityClass entityClass, Map<String, Object> body) {
         String transId = contextService.get(TRANSACTION_KEY);
@@ -65,7 +72,12 @@ public class EntityServiceExImpl implements EntityServiceEx {
         }
 
         //处理系统字段的逻辑-add by wz
-        body = entityMetaHandler.insertFill(entityClass,body);
+
+        if(entityClass.extendEntityClass() != null) {
+            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
+        }else{
+            body = entityMetaHandler.insertFill(entityClass,body);
+        }
         //添加字段默认值
         body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
 
@@ -80,10 +92,20 @@ public class EntityServiceExImpl implements EntityServiceEx {
 //                return Either.right(createResult.getIdsList().get(0));
                 IEntity entity = null;
                 if(createResult.getIdsCount() == 1){
-                    entity = new Entity(createResult.getIdsList().get(0), entityClass, new EntityValue(0L));
+                    Long id = createResult.getIdsList().get(0);
+                    entity = new Entity(id, entityClass, new EntityValue(0L));
+
+                    publisher.publishEvent(buildCreatedEvent(entityClass, id, null, body));
                 }else if(createResult.getIdsCount() > 1){
+
+                    Long id = createResult.getIdsList().get(0);
+
+                    Long parentId = createResult.getIdsList().get(1);
+
                     entity = new Entity(createResult.getIdsList().get(0), entityClass, new EntityValue(0L)
                             , new EntityFamily(createResult.getIdsList().get(1), 0), 0);
+
+                    publisher.publishEvent(buildCreatedEvent(entityClass, parentId, id, body));
                 }else{
                     return Either.left(createResult.getMessage());
                 }
@@ -93,6 +115,26 @@ public class EntityServiceExImpl implements EntityServiceEx {
             //indicates
             return Either.left(createResult.getMessage());
         }
+    }
+
+    private Map<String, String> getContext(){
+        Map<String, String> map = new HashMap<>();
+        map.put(TENANTID_KEY.name(), contextService.get(TENANTID_KEY));
+        map.put(TENANTCODE_KEY.name(), contextService.get(TENANTCODE_KEY));
+        map.put(USERNAME.name(), contextService.get(USERNAME));
+        map.put(USER_DISPLAYNAME.name(), contextService.get(USER_DISPLAYNAME));
+        return map;
+    }
+
+    private EntityCreated buildCreatedEvent(EntityClass entityClass, Long id, Long childId, Map<String, Object> data){
+        String code = entityClass.code();
+        String parentCode = null;
+        Map<String, String> context = getContext();
+        if(entityClass.extendEntityClass() != null) {
+            parentCode = entityClass.extendEntityClass().code();
+        }
+
+        return new EntityCreated(parentCode, code, id, childId, data, context);
     }
 
     @Override

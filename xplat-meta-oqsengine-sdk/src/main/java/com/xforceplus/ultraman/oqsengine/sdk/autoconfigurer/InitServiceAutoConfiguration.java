@@ -128,32 +128,6 @@ public class InitServiceAutoConfiguration {
         return new DefaultEntityServiceHandler();
     }
 
-    //controller
-    @Bean
-    public ModuleController moduleController(){
-        return new ModuleController();
-    }
-
-    @Bean
-    public EntityController entityController(){
-        return new EntityController();
-    }
-
-    @Bean
-    public DictController dictController(){
-        return new DictController();
-    }
-
-    @Bean
-    public UltFormSettingController ultFormSettingController(){
-        return new UltFormSettingController();
-    }
-
-    @Bean
-    public UltPageSettingController ultPageSettingController(){
-        return new UltPageSettingController();
-    }
-
     //REST client
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder){

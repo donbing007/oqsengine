@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.handler;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
@@ -39,7 +40,7 @@ public class EntityMetaHandler {
      * @param body 数据对象
      * @return body
      */
-    public Map<String, Object> insertFill(EntityClass entityClass, Map<String, Object> body){
+    public Map<String, Object> insertFill(IEntityClass entityClass, Map<String, Object> body){
         for (String insertField : insertFields) {
             Object o = this.getFieldValByName(entityClass,body,insertField);
             if (null == o){
@@ -127,7 +128,7 @@ public class EntityMetaHandler {
      * @param fieldVal
      * @return
      */
-    public boolean isFill(EntityClass entityClass,String fieldName,Object fieldVal){
+    public boolean isFill(IEntityClass entityClass,String fieldName,Object fieldVal){
         Optional<IEntityField> entityField = entityClass.fields().stream()
                 .filter(f -> f.name().equals(fieldName))
                 .findFirst();
@@ -144,7 +145,7 @@ public class EntityMetaHandler {
      * @param fieldName
      * @return
      */
-    public Object getFieldValByName(EntityClass entityClass, Map<String, Object> body,String fieldName) {
+    public Object getFieldValByName(IEntityClass entityClass, Map<String, Object> body,String fieldName) {
         if (body.size() == 0 ) {
             return null;
         }
@@ -167,7 +168,7 @@ public class EntityMetaHandler {
      * @param fieldVal
      * @return
      */
-    public Map<String, Object> setFieldValByName(EntityClass entityClass, Map<String, Object> body,String fieldName, Object fieldVal) {
+    public Map<String, Object> setFieldValByName(IEntityClass entityClass, Map<String, Object> body,String fieldName, Object fieldVal) {
 
         if (isFill(entityClass,fieldName,fieldVal)){
             body.put(fieldName,fieldVal);
