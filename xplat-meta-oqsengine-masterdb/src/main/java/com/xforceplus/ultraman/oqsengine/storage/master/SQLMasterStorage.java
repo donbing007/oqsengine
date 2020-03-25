@@ -467,7 +467,7 @@ public class SQLMasterStorage implements MasterStorage {
             } catch (Exception ex) {
                 throw new SQLException(
                     String.format("Something wrong has occured.[entity:%d, class: %d, fieldId: %d, msg:%s]",
-                        id, entityClass.id(), field.id(), ex.getMessage()));
+                        id, entityClass.id(), field.id(), ex.getClass().getName() + ":" + ex.getMessage()));
             }
         }
 

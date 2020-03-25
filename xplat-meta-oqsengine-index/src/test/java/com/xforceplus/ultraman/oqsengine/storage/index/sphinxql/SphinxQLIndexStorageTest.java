@@ -452,6 +452,23 @@ public class SphinxQLIndexStorageTest {
                 }
             )
             ,
+            // attribute in()
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        fixFieldAll,
+                        ConditionOperator.MULTIPLE_EQUALS,
+                        new BooleanValue(fixFieldAll, true),
+                        new BooleanValue(fixFieldAll, false)
+                    )),
+                expectedEntitys.get(0).entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+                    Assert.assertEquals(expectedEntitys.size(), refs.size());
+                    return true;
+                }
+            )
+            ,
             // all
             new Case(
                 Conditions.buildEmtpyConditions(),
