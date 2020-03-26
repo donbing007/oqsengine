@@ -46,6 +46,11 @@ public class UltPageBoItem {
      */
     private String setting;
 
+    /**
+     * 部署状态
+     */
+    private String envStatus;
+
     public Long getId() {
         return id;
     }
@@ -118,6 +123,14 @@ public class UltPageBoItem {
         this.code = code;
     }
 
+    public String getEnvStatus() {
+        return envStatus;
+    }
+
+    public void setEnvStatus(String envStatus) {
+        this.envStatus = envStatus;
+    }
+
     @Override
     public String toString() {
         return "UltPageBoItem{" +
@@ -130,6 +143,7 @@ public class UltPageBoItem {
                 ", tenantId=" + tenantId +
                 ", tenantName='" + tenantName + '\'' +
                 ", setting='" + setting + '\'' +
+                ", envStatus='" + envStatus + '\'' +
                 '}';
     }
 }

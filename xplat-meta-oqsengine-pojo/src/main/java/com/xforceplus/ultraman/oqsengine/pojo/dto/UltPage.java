@@ -44,6 +44,11 @@ public class UltPage {
     private String version;
 
     /**
+     * 部署状态
+     */
+    private String envStatus;
+
+    /**
      * 页面Bo配置信息集合
      */
     private List<UltPageBo> pageBoVos;
@@ -133,6 +138,14 @@ public class UltPage {
 
     public void setRefPageId(Long refPageId) {
         this.refPageId = refPageId;
+    }
+
+    public String getEnvStatus() {
+        return envStatus;
+    }
+
+    public void setEnvStatus(String envStatus) {
+        this.envStatus = envStatus;
     }
 
     @Override
