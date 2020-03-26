@@ -336,4 +336,19 @@ public class EntityServiceTest {
         Optional<EntityClass> entityOpt1 = entityService.loadByCode("ticket");
         Either<String, Map<String, Object>> mapEither = entityService.findOne(entityOpt1.get(), fId);
     }
+
+
+    @Test
+    public void testLikeOnConfigMapping() throws InterruptedException {
+
+        Thread.sleep(10000);
+
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("configDataMapping");
+
+        System.out.println(entityService.findByCondition(entityOpt.get(), new RequestBuilder().field("document_type", ConditionOp.like, "*30001001*").build()));
+
+
+    }
+
 }
