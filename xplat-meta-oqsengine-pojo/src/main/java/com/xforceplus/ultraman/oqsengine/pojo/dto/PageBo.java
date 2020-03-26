@@ -37,9 +37,20 @@ public class PageBo implements Serializable {
      */
     private String version;
 
+    /**
+     * 构造方法
+     */
     public PageBo() {
     }
 
+    /**
+     * 构造方法
+     * @param id
+     * @param pageId
+     * @param boName
+     * @param setting
+     * @param version
+     */
     public PageBo(Long id, Long pageId, String boName, String setting, String version) {
         this.id = id;
         this.pageId = pageId;

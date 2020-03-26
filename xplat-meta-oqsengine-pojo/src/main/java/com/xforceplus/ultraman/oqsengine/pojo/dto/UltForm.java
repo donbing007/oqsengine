@@ -2,6 +2,12 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto;
 
 import java.util.Objects;
 
+/**
+ * 表单配置对象.
+ * @version 0.1 2020/2/13 15:30
+ * @author wangzheng
+ * @since 1.8
+ */
 public class UltForm {
     private Long id;
 
@@ -45,9 +51,24 @@ public class UltForm {
      */
     private String version;
 
+    /**
+     * 构造方法
+     */
     public UltForm() {
     }
 
+    /**
+     * 构造方法
+     * @param id
+     * @param appId
+     * @param name
+     * @param code
+     * @param refFormId
+     * @param tenantId
+     * @param tenantName
+     * @param setting
+     * @param version
+     */
     public UltForm(Long id, Long appId, String name, String code, Long refFormId, Long tenantId, String tenantName, String setting, String version) {
         this.id = id;
         this.appId = appId;

@@ -10,20 +10,48 @@ import java.util.Objects;
  * @since 1.8
  */
 public class Authorization implements Serializable {
+    /**
+     * 应用id
+     */
     private Long appId;
+    /**
+     * 用户角色id
+     */
     private String role;
+    /**
+     * 租户id
+     */
     private Long tenantId;
+    /**
+     * 环境id
+     */
     private String env;
 
+    /**
+     * 默认构造方法
+     */
     public Authorization() {
     }
 
+    /**
+     * 传入app,role,tenantid信息的构造方法
+     * @param appId
+     * @param role
+     * @param tenantId
+     */
     public Authorization(Long appId, String role, Long tenantId) {
         this.appId = appId;
         this.role = role;
         this.tenantId = tenantId;
     }
 
+    /**
+     * 传入app,role,tenantid,env信息的构造方法
+     * @param appId
+     * @param role
+     * @param tenantId
+     * @param env
+     */
     public Authorization(Long appId, String role, Long tenantId, String env) {
         this.appId = appId;
         this.role = role;
@@ -31,6 +59,11 @@ public class Authorization implements Serializable {
         this.env = env;
     }
 
+    /**
+     * 传入role,tenantid
+     * @param role
+     * @param tenantId
+     */
     public Authorization(String role, Long tenantId) {
         this(null, role, tenantId);
     }
@@ -67,6 +100,11 @@ public class Authorization implements Serializable {
         this.env = env;
     }
 
+    /**
+     * equals方法
+     * @param o
+     * @return
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -78,11 +116,19 @@ public class Authorization implements Serializable {
                 Objects.equals(getEnv(), that.getEnv());
     }
 
+    /**
+     * hashCode方法
+     * @return
+     */
     @Override
     public int hashCode() {
         return Objects.hash(getAppId(), getRole(), getTenantId(), getEnv());
     }
 
+    /**
+     * toString方法
+     * @return
+     */
     @Override
     public String toString() {
         return "Authorization{" +

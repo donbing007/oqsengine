@@ -8,6 +8,11 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.Predicate;
 
+/**
+ * Entity实体值对象.
+ * @author wangzheng
+ * @version 1.0 2020/3/26 15:10
+ */
 public class EntityValue implements IEntityValue, Cloneable, Serializable {
     /**
      * 数据id
@@ -17,7 +22,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     /**
      * Entity的值集合
      */
-    private Map<Long, IValue> values ;
+    private Map<Long, IValue> values;
 
 
     public EntityValue(long id) {
@@ -96,7 +101,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     @Override
     public IEntityValue clear() {
-        if(values != null){
+        if (values != null) {
             values.clear();
         }
         return this;

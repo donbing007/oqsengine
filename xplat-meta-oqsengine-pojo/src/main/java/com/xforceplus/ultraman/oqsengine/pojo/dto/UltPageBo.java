@@ -2,6 +2,12 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto;
 
 import java.util.Objects;
 
+/**
+ * 页面对象配置对象.
+ * @version 0.1 2020/2/13 15:30
+ * @author wangzheng
+ * @since 1.8
+ */
 public class UltPageBo {
 
     /**
@@ -29,9 +35,19 @@ public class UltPageBo {
      */
     private String remark;
 
+    /**
+     * 构造方法
+     */
     public UltPageBo() {
     }
 
+    /**
+     * 构造方法
+     * @param settingId
+     * @param boName
+     * @param boCode
+     * @param setting
+     */
     public UltPageBo(Long settingId, String boName, String boCode, String setting) {
         this.settingId = settingId;
         this.boName = boName;

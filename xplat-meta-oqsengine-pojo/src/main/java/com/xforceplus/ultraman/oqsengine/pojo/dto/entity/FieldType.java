@@ -1,5 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+/**
+ * 字段类型枚举信息
+ * @author wangzheng
+ * @version 1.0 2020/3/26 15:10
+ */
 public enum FieldType {
     UNKNOWN("Unknown"),
     BOOLEAN("Boolean"),

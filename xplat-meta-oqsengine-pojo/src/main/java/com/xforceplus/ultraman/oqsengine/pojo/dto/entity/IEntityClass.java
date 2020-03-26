@@ -5,6 +5,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import java.util.Collection;
 import java.util.Optional;
 
+/**
+ * Entity结构对象
+ * @author wangzheng
+ * @version 1.0 2020/3/26 15:10
+ */
 public interface IEntityClass {
 
     /**
@@ -13,7 +18,10 @@ public interface IEntityClass {
      */
     public long id();
 
-
+    /**
+     * 对象code
+     * @return
+     */
     public String code();
 
     /**

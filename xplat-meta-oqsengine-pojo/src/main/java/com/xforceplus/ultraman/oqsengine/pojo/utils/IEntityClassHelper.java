@@ -40,10 +40,10 @@ public class IEntityClassHelper {
         return combine(entityFieldOp, entityClassFromParent);
     }
 
-    public static Optional<Tuple2<IEntityClass,IEntityField>> findFieldByIdInAll(IEntityClass entityClass, long fieldId){
-        Stream<Optional<Tuple2<IEntityClass,IEntityField>>> field  =
+    public static Optional<Tuple2<IEntityClass, IEntityField>> findFieldByIdInAll(IEntityClass entityClass, long fieldId){
+        Stream<Optional<Tuple2<IEntityClass, IEntityField>>> field  =
                 Stream.of(findFieldById(entityClass, fieldId).map(x -> Tuple.of(entityClass, x)));
-        Stream<Optional<Tuple2<IEntityClass,IEntityField>>> subStream = Optional.ofNullable(entityClass.entityClasss())
+        Stream<Optional<Tuple2<IEntityClass, IEntityField>>> subStream = Optional.ofNullable(entityClass.entityClasss())
                 .orElseGet(Collections::emptyList).stream()
                 .map(x -> findFieldById(x, fieldId).map(y -> Tuple.of(x, y)));
         return Stream.concat(field, subStream).filter(Optional::isPresent).map(Optional::get).findFirst();
