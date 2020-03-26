@@ -48,11 +48,13 @@ public class EntityClassToGrpcConverter {
 
 
     /**
+     *
      * TODO check
      * @param entityClass
      * @param body
      * @return
      */
+    @Deprecated
     public static EntityUp toEntityUp(EntityClass entityClass, Long id, Map<String, Object> body){
         //build entityUp
         EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
@@ -86,6 +88,14 @@ public class EntityClassToGrpcConverter {
         builder.addAllValues(values);
         return builder.build();
     }
+
+    public static EntityUp toEntityUp(EntityClass entityClass, Long id, List<ValueUp> valueList){
+        //build entityUp
+        EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
+        builder.addAllValues(valueList);
+        return builder.build();
+    }
+
 
     public static SelectByCondition toSelectByCondition(EntityClass entityClass
                                                 , EntityItem entityItem
@@ -237,16 +247,16 @@ public class EntityClassToGrpcConverter {
     }
 
 
-    private static Optional<IEntityField> getKeyFromRelation(EntityClass entityClass, String key) {
+    public static Optional<IEntityField> getKeyFromRelation(EntityClass entityClass, String key) {
         return entityClass.relations().stream().filter(x ->  x.getName().equals(key)).map(Relation::getEntityField).findFirst();
     }
 
     //TODO sub search
-    private static Optional<IEntityField> getKeyFromEntityClass(EntityClass entityClass, String key ){
+    public static Optional<IEntityField> getKeyFromEntityClass(EntityClass entityClass, String key ){
         return entityClass.field(key);
     }
 
-    private static Optional<IEntityField> getKeyFromParent(EntityClass entityClass, String key ){
+    public static Optional<IEntityField> getKeyFromParent(EntityClass entityClass, String key ){
         return Optional.ofNullable(entityClass.extendEntityClass()).flatMap(x -> x.field(key));
     }
 
@@ -453,7 +463,6 @@ public class EntityClassToGrpcConverter {
                 }
             });
         });
-
 
         if(!StringUtils.isEmpty(up.getObjId())){
             map.put("id", String.valueOf(up.getObjId()));

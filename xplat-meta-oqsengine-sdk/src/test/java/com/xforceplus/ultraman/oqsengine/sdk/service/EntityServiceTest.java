@@ -273,6 +273,17 @@ public class EntityServiceTest {
                 .forEach(System.out::println);
     }
 
+
+    @Test
+    public void testPagenation() throws InterruptedException{
+        Thread.sleep(10000);
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("image");
+
+        System.out.println(entityService.findByCondition(entityOpt.get(), new RequestBuilder().pageNo(7)
+                .pageSize(10).build()).get()._2().size());
+    }
+
     @Test
     public void testSystemProperties() throws InterruptedException {
         Thread.sleep(10000);
@@ -335,5 +346,12 @@ public class EntityServiceTest {
         Either<String, Map<String, Object>> mapEither2 = entityService.findOne(entityOpt.get(), sId);
         Optional<EntityClass> entityOpt1 = entityService.loadByCode("ticket");
         Either<String, Map<String, Object>> mapEither = entityService.findOne(entityOpt1.get(), fId);
+    }
+
+    @Test
+    public void testBillIdSearch() throws InterruptedException {
+        Thread.sleep(10000);
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("image");
     }
 }

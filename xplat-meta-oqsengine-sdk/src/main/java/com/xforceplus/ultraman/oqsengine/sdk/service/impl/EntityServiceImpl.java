@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
@@ -19,14 +20,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.combine;
 import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.*;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
 
@@ -51,7 +50,6 @@ public class EntityServiceImpl implements EntityService {
         this.entityServiceClient = entityServiceClient;
         this.contextService = contextService;
     }
-
 
     @Override
     public Optional<EntityClass> load(String boId){
@@ -304,8 +302,12 @@ public class EntityServiceImpl implements EntityService {
         }else{
             body = entityMetaHandler.insertFill(entityClass, body);
         }
+
         //添加字段默认值
         body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
+
+
+
 
         OperationResult createResult = buildBuilder
                 .invoke(toEntityUp(entityClass, null, body))
@@ -358,4 +360,53 @@ public class EntityServiceImpl implements EntityService {
 
         return metadataRepository.findSubEntitiesByCode(tenantId, appCode, bocode);
     }
+
+    /**
+     * TODO field and body
+     * handle value framework
+     * @param entityClass
+     * @param body
+     */
+    private void handlerValue(EntityClass entityClass, Map<String, Object> body, String phase){
+        List<ValueUp> values = body.entrySet().stream()
+            .map(entry -> {
+                String key = entry.getKey();
+                Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
+                Optional<IEntityField> fieldOpRel = getKeyFromRelation(entityClass, key);
+                Optional<IEntityField> fieldOpParent = getKeyFromParent(entityClass, key);
+
+                Optional<IEntityField> fieldFinal = combine(fieldOp, fieldOpParent, fieldOpRel);
+
+                //filter null obj
+                if(entry.getValue() == null){
+                    return Optional.<ValueUp>empty();
+                }
+
+                //Field Object
+                // This is a shape
+                //TODO object toString is ok?
+                return fieldFinal.map(field -> {
+                    Object value = pipeline(entry.getValue().toString(), field, phase);
+                    validate();
+                    if(value != null){
+                        return ValueUp.newBuilder()
+                                .setFieldId(field.id())
+                                .setFieldType(field.type().getType())
+                                .setValue(value.toString())
+                                .build();
+                    }else{
+                        return null;
+                    }
+                }).filter(Objects::nonNull);
+            })
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
+    }
+
+    private Object pipeline(Object value, IEntityField field, String phase){
+        return null;
+    }
+
+    private Validat
 }
