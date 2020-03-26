@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -190,6 +192,16 @@ public class MultiLocalTransactionTest {
 
         public boolean isRollback() {
             return rollback;
+        }
+
+        @Override
+        public void setUndoExecutor(UndoExecutor undoExecutor) {
+
+        }
+
+        @Override
+        public void undo(OpTypeEnum opType) throws SQLException {
+
         }
     }
 

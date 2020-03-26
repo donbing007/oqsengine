@@ -37,7 +37,7 @@ public class StorageConfiguration {
     public IndexStorage indexStorage() {
 
         SphinxQLIndexStorage storage = new SphinxQLIndexStorage();
-        storage.setIndexTableName(indexTableName);
+//        storage.setIndexTableName(indexTableName);
         return storage;
     }
 }

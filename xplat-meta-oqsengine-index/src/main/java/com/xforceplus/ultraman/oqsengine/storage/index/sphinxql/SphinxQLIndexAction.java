@@ -1,0 +1,500 @@
+package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
+import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
+import com.xforceplus.ultraman.oqsengine.storage.query.QueryOptimizer;
+import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * 版权：    上海云砺信息科技有限公司
+ * 创建者:   youyifan
+ * 创建时间: 3/25/2020 5:01 PM
+ * 功能描述:
+ * 修改历史:
+ */
+public class SphinxQLIndexAction implements StorageStrategyFactoryAble {
+    final Logger logger = LoggerFactory.getLogger(SphinxQLIndexAction.class);
+
+    @Resource(name = "indexQueryOptimizer")
+    private QueryOptimizer<String> queryOptimizer;
+
+    @Resource(name = "indexStorageStrategy")
+    private StorageStrategyFactory storageStrategyFactory;
+
+    private String buildSql;
+    private String replaceSql;
+    private String indexTableName;
+
+    @PostConstruct
+    public void init() {
+        buildSql =
+                String.format(SQLConstant.WRITER_SQL,
+                        "insert", indexTableName,
+                        FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
+                        FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
+        replaceSql =
+                String.format(SQLConstant.WRITER_SQL,
+                        "replace", indexTableName,
+                        FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
+                        FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
+    }
+
+    public Collection<EntityRef> select(Connection connection, Conditions conditions, IEntityClass entityClass, Sort sort, Page page) throws SQLException {
+        String whereCondition = queryOptimizer.optimizeConditions(conditions).build(conditions);
+        if (!whereCondition.isEmpty()) {
+            whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
+        }
+
+        PreparedStatement st = null;
+        ResultSet rs = null;
+        if (!page.isSinglePage()) {
+            String countSql = String.format(SQLConstant.SELECT_COUNT_SQL, indexTableName, whereCondition);
+            long count = 0;
+
+            st = connection.prepareStatement(countSql);
+            st.setLong(1, entityClass.id());
+
+            if (logger.isDebugEnabled()) {
+                logger.debug(st.toString());
+            }
+
+            rs = st.executeQuery();
+
+            while (rs.next()) {
+                count = rs.getLong("count");
+                break;
+            }
+
+            rs.close();
+            st.close();
+            page.setTotalCount(count);
+        }
+
+        PageScope scope = page.getNextPage();
+
+        String orderBy = buildOrderBy(sort);
+
+        String sql = String.format(SQLConstant.SELECT_SQL, indexTableName, whereCondition, orderBy);
+        st = connection.prepareStatement(sql);
+        st.setLong(1, entityClass.id());
+        st.setLong(2, scope.getStartLine());
+        st.setLong(3, scope.getEndLine());
+
+        if (logger.isDebugEnabled()) {
+            logger.debug(st.toString());
+        }
+
+        rs = st.executeQuery();
+
+        List<EntityRef> refs = new ArrayList((int) page.getPageSize());
+        while (rs.next()) {
+            refs.add(new EntityRef(
+                    rs.getLong(FieldDefine.ID),
+                    rs.getLong(FieldDefine.PREF),
+                    rs.getLong(FieldDefine.CREF)
+            ));
+        }
+
+        try {
+            return refs;
+        } finally {
+            if (rs != null) {
+                rs.close();
+            }
+
+            if (st != null) {
+                st.close();
+            }
+        }
+    }
+
+    public Object build(Connection connection, IEntity entity) throws SQLException {
+        boolean status = doBuildOrReplace(connection, entity, false);
+
+        if (!status) {
+            throw new SQLException(String.format("Entity{%s} could not be created successfully.", entity.toString()));
+        }
+
+        return true;
+    }
+
+    public Object replace(Connection connection, IEntity entity) throws SQLException {
+        // 在事务状态,返回值恒为false
+        return doBuildOrReplace(connection, entity, true);
+    }
+
+    public Object delete(Connection connection, IEntity entity) throws SQLException {
+        checkId(entity.id());
+
+        String sql = String.format(SQLConstant.DELETE_SQL, indexTableName);
+        PreparedStatement st = connection.prepareStatement(sql);
+        st.setLong(1, entity.id()); // id
+
+        if (logger.isDebugEnabled()) {
+            logger.debug(st.toString());
+        }
+
+        // 在事务状态,返回值恒等于0.
+        st.executeUpdate();
+
+        try {
+            return null;
+        } finally {
+            if (st != null) {
+                st.close();
+            }
+        }
+    }
+
+    public void replaceAttribute(Connection connection, IEntityValue attribute) throws SQLException {
+        long dataId = attribute.id();
+        Optional<StorageEntity> oldStorageEntityOptional = doSelectStorageEntity(connection, dataId);
+        if (oldStorageEntityOptional.isPresent()) {
+
+            StorageEntity storageEntity = oldStorageEntityOptional.get();
+
+            /**
+             * 把新的属性插入旧属性集中替换已有,或新增.
+             */
+            JSONObject completeJson = storageEntity.getJsonFields();
+            JSONObject modifiedJson = serializeToJson(attribute, true);
+            for (String key : modifiedJson.keySet()) {
+                completeJson.put(key, modifiedJson.get(key));
+            }
+
+            //处理 fulltext
+            Set<String> completeFull = convertJsonToFull(completeJson);
+            storageEntity.setJsonFields(completeJson);
+            storageEntity.setFullFields(completeFull);
+
+            doBuildReplaceStorageEntity(connection, storageEntity, true);
+
+        } else {
+
+            throw new SQLException(
+                    String.format("Attempt to update a property on a data that does not exist.[%d]", dataId)
+            );
+
+        }
+    }
+
+    public void setIndexTableName(String indexTableName) {
+        this.indexTableName = indexTableName;
+    }
+
+    private void checkId(long id) throws SQLException {
+        if (id == 0) {
+            throw new SQLException("Invalid entity`s id.");
+        }
+    }
+
+    private boolean doBuildOrReplace(Connection connection, IEntity entity, boolean replacement) throws SQLException {
+        checkId(entity.id());
+
+        return doBuildReplaceStorageEntity(
+                connection,
+                new StorageEntity(
+                        entity.id(),
+                        entity.entityClass().id(),
+                        entity.family().parent(),
+                        entity.family().child(),
+                        serializeToJson(entity.entityValue(), true),
+                        serializeSetFull(entity.entityValue())
+                ),
+                replacement
+        );
+    }
+
+    // 更新原始数据.
+    private boolean doBuildReplaceStorageEntity(Connection connection, StorageEntity storageEntity, boolean replacement) throws SQLException {
+
+        final String sql = String.format(replacement ? replaceSql : buildSql, indexTableName);
+
+        PreparedStatement st = connection.prepareStatement(sql);
+
+        // id, entity, pref, cref, jsonfileds, fullfileds
+        st.setLong(1, storageEntity.getId()); // id
+        st.setLong(2, storageEntity.getEntity()); // entity
+        st.setLong(3, storageEntity.getPref()); // pref
+        st.setLong(4, storageEntity.getCref()); // cref
+        // attribute
+        st.setString(5, toJsonString(storageEntity.getJsonFields()));
+        // full
+        st.setString(6, toFullString(storageEntity.getFullFields()));
+
+        if (logger.isDebugEnabled()) {
+            logger.debug(st.toString());
+        }
+
+        int size = st.executeUpdate();
+
+        try {
+            // 成功只应该有一条语句影响
+            final int onlyOne = 1;
+            return size == onlyOne;
+
+        } finally {
+            st.close();
+        }
+    }
+
+    // 构造排序.
+    private String buildOrderBy(Sort sort) {
+        StringBuilder buff = new StringBuilder(SqlKeywordDefine.ORDER).append(" ");
+        if (sort != null) {
+            StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
+            Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField());
+
+            for (String storageName : storageNames) {
+                if (storageStrategy.storageType() == StorageType.LONG) {
+                    buff.append("bigint(")
+                            .append(FieldDefine.JSON_FIELDS)
+                            .append(".")
+                            .append(storageName)
+                            .append(")");
+                } else {
+                    buff.append(FieldDefine.JSON_FIELDS)
+                            .append(".")
+                            .append(storageName);
+                }
+
+                if (sort.isAsc()) {
+                    buff.append(" ").append(SqlKeywordDefine.ORDER_TYPE_ASC);
+                } else {
+                    buff.append(" ").append(SqlKeywordDefine.ORDER_TYPE_DESC);
+                }
+            }
+
+
+        } else {
+            buff.append("id ").append(SqlKeywordDefine.ORDER_TYPE_ASC);
+        }
+        return buff.toString();
+    }
+
+    private Set<String> setGlobalFlag(Set<String> fullfields) {
+        if (fullfields == null) {
+            return fullfields;
+        }
+        /**
+         * 增加一个系统字段,当在查询所有数据的时候利用全文搜索引擎可以使用.
+         */
+        return new HashSet<String>(fullfields) {{
+            add(SphinxQLHelper.ALL_DATA_FULL_TEXT);
+        }};
+    }
+
+    // 格式化全文属性为字符串.
+    private String toFullString(Set<String> fullFields) {
+        return fullFields.stream().collect(Collectors.joining(" "));
+    }
+
+    // 格式化 JSON 属性为字符串.
+    private String toJsonString(JSONObject jsonObject) {
+        return JSON.toJSONString(jsonObject);
+    }
+
+    // 转换 json 字段为全文搜索字段.
+    private Set<String> convertJsonToFull(JSONObject jsonObject) {
+        Set<String> fullfileds = new HashSet<>();
+        Object value;
+        StorageValue storageValue = null;
+        for (String key : jsonObject.keySet()) {
+            value = jsonObject.get(key);
+
+            if (Integer.class.isInstance(value)) {
+
+                storageValue = new LongStorageValue(key, ((Integer) value).longValue(), false);
+
+
+            } else if (Long.class.isInstance(value)) {
+
+                storageValue = new LongStorageValue(key, (Long) value, false);
+
+            } else {
+
+                storageValue = new StringStorageValue(key, (String) value, false);
+            }
+
+            fullfileds.add(SphinxQLHelper.encodeFullText(storageValue));
+        }
+
+        return fullfileds;
+    }
+
+    /**
+     * fieldId + fieldvalue(unicode) + space + fieldId + fieldvalue(unicode)....n
+     */
+    private Set<String> serializeSetFull(IEntityValue entityValue) {
+        Set<String> fullSet = new HashSet<>();
+        entityValue.values().stream().forEach(v -> {
+
+            StorageValue storageValue = storageStrategyFactory.getStrategy(v.getField().type()).toStorageValue(v);
+            while (storageValue != null) {
+                fullSet.add(SphinxQLHelper.encodeFullText(storageValue));
+                storageValue = storageValue.next();
+            }
+        });
+
+        return fullSet;
+    }
+
+    /**
+     * {
+     * "{fieldId}" : fieldValue
+     * }
+     */
+    private JSONObject serializeToJson(IEntityValue values, boolean encodeString) {
+        Map<String, Object> data = new HashMap<>(values.values().size());
+        values.values().stream().forEach(v -> {
+            StorageValue storageValue = storageStrategyFactory.getStrategy(v.getField().type()).toStorageValue(v);
+
+            while (storageValue != null) {
+                if (storageValue.type() == StorageType.STRING) {
+                    data.put(storageValue.storageName(),
+                            encodeString ? SphinxQLHelper.encodeString((String) storageValue.value()) : storageValue.value());
+                } else {
+                    data.put(storageValue.storageName(), storageValue.value());
+                }
+                storageValue = storageValue.next();
+            }
+        });
+
+        return new JSONObject(data);
+    }
+
+    // 查询原始数据.
+    private Optional<StorageEntity> doSelectStorageEntity(Connection connection, long id) throws SQLException {
+        PreparedStatement st = null;
+        ResultSet rs = null;
+        try {
+            String sql = String.format(SQLConstant.SELECT_FROM_ID_SQL, indexTableName);
+            st = connection.prepareStatement(sql);
+            st.setLong(1, id);
+
+            rs = st.executeQuery();
+            StorageEntity storageEntity = null;
+            if (rs.next()) {
+                storageEntity = new StorageEntity(
+                        id,
+                        rs.getLong(FieldDefine.ENTITY),
+                        rs.getLong(FieldDefine.PREF),
+                        rs.getLong(FieldDefine.CREF),
+                        JSON.parseObject(rs.getString(FieldDefine.JSON_FIELDS)),
+                        null
+                );
+            }
+            return Optional.ofNullable(storageEntity);
+        } finally {
+            if (rs != null) {
+                rs.close();
+            }
+
+            if (st != null) {
+                st.close();
+            }
+        }
+    }
+
+    @Override
+    public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
+        this.storageStrategyFactory = storageStrategyFactory;
+    }
+
+    // 原始储存格式.
+    private class StorageEntity {
+        private long id;
+        private long entity;
+        private long pref;
+        private long cref;
+        private JSONObject jsonFields;
+        private Set<String> fullFields;
+
+        public StorageEntity(long id, long entity, long pref, long cref, JSONObject jsonFields, Set<String> fullFields) {
+            this.id = id;
+            this.entity = entity;
+            this.pref = pref;
+            this.cref = cref;
+            this.jsonFields = jsonFields;
+            this.fullFields = setGlobalFlag(fullFields);
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public long getEntity() {
+            return entity;
+        }
+
+        public long getPref() {
+            return pref;
+        }
+
+        public long getCref() {
+            return cref;
+        }
+
+        public JSONObject getJsonFields() {
+            return jsonFields;
+        }
+
+        public Set<String> getFullFields() {
+            return fullFields;
+        }
+
+        public void setId(long id) {
+            this.id = id;
+        }
+
+        public void setEntity(long entity) {
+            this.entity = entity;
+        }
+
+        public void setPref(long pref) {
+            this.pref = pref;
+        }
+
+        public void setCref(long cref) {
+            this.cref = cref;
+        }
+
+        public void setJsonFields(JSONObject jsonFields) {
+            this.jsonFields = jsonFields;
+        }
+
+        public void setFullFields(Set<String> fullFields) {
+            this.fullFields = setGlobalFlag(fullFields);
+        }
+
+    }
+}

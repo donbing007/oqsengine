@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.sql;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -16,6 +18,7 @@ public class ConnectionTransactionResource implements TransactionResource<Connec
 
     private DataSource key;
     private Connection conn;
+    private UndoExecutor undoExecutor;
 
     public ConnectionTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
@@ -50,5 +53,15 @@ public class ConnectionTransactionResource implements TransactionResource<Connec
     @Override
     public void destroy() throws SQLException {
         conn.close();
+    }
+
+    @Override
+    public void setUndoExecutor(UndoExecutor undoExecutor) {
+        this.undoExecutor = undoExecutor;
+    }
+
+    @Override
+    public void undo(OpTypeEnum opType) throws SQLException {
+        this.undoExecutor.run(opType);
     }
 }

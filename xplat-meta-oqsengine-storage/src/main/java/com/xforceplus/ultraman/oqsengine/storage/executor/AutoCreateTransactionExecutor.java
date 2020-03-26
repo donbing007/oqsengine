@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.executor;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
 
 import java.sql.SQLException;
 import java.util.Optional;
@@ -19,8 +20,15 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
 
     private TransactionManager transactionManager;
 
+    private UndoExecutor undoExecutor;
+
     public AutoCreateTransactionExecutor(TransactionManager transactionManager) {
         this.transactionManager = transactionManager;
+    }
+
+    public AutoCreateTransactionExecutor(TransactionManager transactionManager, UndoExecutor undoExecutor) {
+        this.transactionManager = transactionManager;
+        this.undoExecutor = undoExecutor;
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -11,7 +12,7 @@ import java.util.*;
  * relations 表示关联对象的本地字段信息,关联类型.
  * entityClasss 表示联系对象的类型.
  */
-public class EntityClass implements IEntityClass {
+public class EntityClass implements IEntityClass, Serializable {
 
     /**
      * 元数据boId

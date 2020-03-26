@@ -93,8 +93,8 @@ public class SphinxQLIndexStorageTest {
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "queryOptimizer", optimizer);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
-        storage.setIndexTableName("oqsindex");
-        storage.init();
+//        storage.setIndexTableName("oqsindex");
+//        storage.init();
 
 
         transactionManager.create();
@@ -600,4 +600,4 @@ public class SphinxQLIndexStorageTest {
         return new TakeTurnsSelector<>(dataSourcePackage.getIndexWriter());
 
     }
-} 
+}
