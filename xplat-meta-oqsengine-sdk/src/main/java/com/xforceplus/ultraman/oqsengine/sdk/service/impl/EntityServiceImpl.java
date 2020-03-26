@@ -10,12 +10,14 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaFieldDefaultHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.FieldValidator;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
+import io.vavr.control.Validation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.StringUtils;
@@ -23,7 +25,9 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.combine;
 import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.*;
@@ -41,6 +45,10 @@ public class EntityServiceImpl implements EntityService {
     private EntityMetaHandler entityMetaHandler;
     @Autowired
     private EntityMetaFieldDefaultHandler entityMetaFieldDefaultHandler;
+
+
+    @Autowired
+    private List<FieldValidator<Object>> fieldValidators;
 
     @Autowired
     private ApplicationEventPublisher publisher;
@@ -368,6 +376,10 @@ public class EntityServiceImpl implements EntityService {
      * @param body
      */
     private void handlerValue(EntityClass entityClass, Map<String, Object> body, String phase){
+
+        //pick field in entityClass And entityClass.extendedClass
+        Stream<IEntityField> idea = entityClass.fields().stream();
+
         List<ValueUp> values = body.entrySet().stream()
             .map(entry -> {
                 String key = entry.getKey();
@@ -387,7 +399,15 @@ public class EntityServiceImpl implements EntityService {
                 //TODO object toString is ok?
                 return fieldFinal.map(field -> {
                     Object value = pipeline(entry.getValue().toString(), field, phase);
-                    validate();
+
+                    List<Validation<String, Object>> validations = validate(field, value);
+
+                    if(!validations.isEmpty()){
+                        throw new RuntimeException(validations.stream()
+                                .map(Validation::getError)
+                                .collect(Collectors.joining(",")));
+                    }
+                    
                     if(value != null){
                         return ValueUp.newBuilder()
                                 .setFieldId(field.id())
@@ -408,5 +428,10 @@ public class EntityServiceImpl implements EntityService {
         return null;
     }
 
-    private Validat
+    private List<Validation<String, Object>>  validate(IEntityField field, Object obj){
+
+       return fieldValidators.stream().map(x -> x.validate(field, obj))
+                .filter(Validation::isInvalid)
+                .collect(Collectors.toList());
+    }
 }

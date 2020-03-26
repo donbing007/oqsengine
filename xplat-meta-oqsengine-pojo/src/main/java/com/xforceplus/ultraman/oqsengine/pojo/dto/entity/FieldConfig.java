@@ -183,6 +183,14 @@ public class FieldConfig implements Serializable {
         isSplittable = splittable;
     }
 
+    public String getDelimiter() {
+        return delimiter;
+    }
+
+    public void setDelimiter(String delimiter) {
+        this.delimiter = delimiter;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
