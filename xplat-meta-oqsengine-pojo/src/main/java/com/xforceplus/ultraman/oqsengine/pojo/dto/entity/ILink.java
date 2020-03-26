@@ -7,6 +7,8 @@ import java.util.List;
 
 /**
  * 关联对象连接查询器.
+ * @author wangzheng
+ * @version 1.0 2020/3/26 15:10
  */
 public interface ILink {
 

@@ -4,6 +4,12 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * 页面对象.
+ * @version 0.1 2020/2/13 15:30
+ * @author wangzheng
+ * @since 1.8
+ */
 public class UltPage {
 
     private Long id;
@@ -44,14 +50,35 @@ public class UltPage {
     private String version;
 
     /**
+     * 部署状态
+     */
+    private String envStatus;
+
+    /**
      * 页面Bo配置信息集合
      */
     private List<UltPageBo> pageBoVos;
 
+    /**
+     * 构造方法
+     */
     public UltPage() {
     }
 
-    public UltPage(Long id, Long appId, String name, String code, Long refPageId, Long tenantId, String tenantName, String version, List<UltPageBo> pageBoVos) {
+    /**
+     * 构造方法
+     * @param id
+     * @param appId
+     * @param name
+     * @param code
+     * @param refPageId
+     * @param tenantId
+     * @param tenantName
+     * @param version
+     * @param pageBoVos
+     */
+    public UltPage(Long id, Long appId, String name, String code, Long refPageId,
+                   Long tenantId, String tenantName, String version, List<UltPageBo> pageBoVos) {
         this.id = id;
         this.appId = appId;
         this.name = name;
@@ -133,6 +160,14 @@ public class UltPage {
 
     public void setRefPageId(Long refPageId) {
         this.refPageId = refPageId;
+    }
+
+    public String getEnvStatus() {
+        return envStatus;
+    }
+
+    public void setEnvStatus(String envStatus) {
+        this.envStatus = envStatus;
     }
 
     @Override

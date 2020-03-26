@@ -8,16 +8,30 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * 表示一个查询条件.
+ * 查询条件配置对象
+ * @author wangzheng
+ * @version 1.0 2020/3/26 15:10
  */
 public class Condition implements Serializable {
 
+    /**
+     * 字段信息
+     */
     private IEntityField field;
 
+    /**
+     * 条件值集合
+     */
     private IValue[] values;
 
+    /**
+     * 操作符
+     */
     private ConditionOperator operator;
 
+    /**
+     * 是否范围查询
+     */
     private boolean range;
 
     /**
