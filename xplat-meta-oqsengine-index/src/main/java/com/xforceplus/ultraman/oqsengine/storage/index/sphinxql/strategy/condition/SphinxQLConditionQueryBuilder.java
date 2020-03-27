@@ -17,24 +17,48 @@ import java.util.Objects;
  */
 public abstract class SphinxQLConditionQueryBuilder implements ConditionQueryBuilder<String> {
 
+    /**
+     * 生成条件时是否使用物理值组名称.
+     */
+    private boolean useStorageGroupName;
+    /**
+     * 目标字段类型.
+     */
     private FieldType fieldType;
+    /**
+     * 目标的条件操作符.
+     */
     private ConditionOperator operator;
+    /**
+     * 是否使用全文索引匹配.
+     */
     private boolean match;
+    /**
+     * 物理逻辑转换策略工厂.
+     */
     private StorageStrategyFactory storageStrategyFactory;
 
     public SphinxQLConditionQueryBuilder(
         StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator) {
-        this.storageStrategyFactory = storageStrategyFactory;
-        this.fieldType = fieldType;
-        this.operator = operator;
+        this(storageStrategyFactory, fieldType, operator, false, false);
     }
 
     public SphinxQLConditionQueryBuilder(
         StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator, boolean match) {
+        this(storageStrategyFactory, fieldType, operator, match, false);
+    }
+
+    public SphinxQLConditionQueryBuilder(
+        StorageStrategyFactory storageStrategyFactory,
+        FieldType fieldType,
+        ConditionOperator operator,
+        boolean match,
+        boolean useStorageGroupName) {
         this.fieldType = fieldType;
         this.operator = operator;
         this.match = match;
         this.storageStrategyFactory = storageStrategyFactory;
+        this.useStorageGroupName = useStorageGroupName;
     }
 
     public StorageStrategyFactory getStorageStrategyFactory() {
@@ -75,25 +99,41 @@ public abstract class SphinxQLConditionQueryBuilder implements ConditionQueryBui
         return match;
     }
 
+    /**
+     * 是否使用物理值组名称匹配.
+     *
+     * @return true 使用组名称,false 不使用.
+     */
+    public boolean isUseStorageGroupName() {
+        return useStorageGroupName;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof SphinxQLConditionQueryBuilder)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SphinxQLConditionQueryBuilder)) {
+            return false;
+        }
         SphinxQLConditionQueryBuilder that = (SphinxQLConditionQueryBuilder) o;
-        return isMatch() == that.isMatch() &&
+        return isUseStorageGroupName() == that.isUseStorageGroupName() &&
+            isMatch() == that.isMatch() &&
             fieldType == that.fieldType &&
-            operator == that.operator;
+            operator == that.operator &&
+            Objects.equals(getStorageStrategyFactory(), that.getStorageStrategyFactory());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fieldType, operator, isMatch());
+        return Objects.hash(isUseStorageGroupName(), fieldType, operator, isMatch(), getStorageStrategyFactory());
     }
 
     @Override
     public String toString() {
         return "SphinxQLConditionQueryBuilder{" +
-            "fieldType=" + fieldType +
+            "useStorageGroupName=" + useStorageGroupName +
+            ", fieldType=" + fieldType +
             ", operator=" + operator +
             ", match=" + match +
             ", storageStrategyFactory=" + storageStrategyFactory +

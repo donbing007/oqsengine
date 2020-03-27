@@ -65,6 +65,9 @@ public class SphinxQLIndexStorageTest {
     // 所有数据都会有的负数字符串.
     private IEntityField fixStringNumber = new Field(100002, "Negative string", FieldType.STRING);
 
+    private IEntityField fixEnumField = new Field(100003, "enum", FieldType.ENUM);
+
+
     @Before
     public void before() throws Exception {
 
@@ -485,6 +488,55 @@ public class SphinxQLIndexStorageTest {
                     return true;
                 }
             )
+            ,
+            // enum eq
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(fixEnumField, ConditionOperator.EQUALS, new EnumValue(fixEnumField, "500002"))
+                    ),
+                expectedEntitys.get(0).entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+                    Assert.assertEquals(expectedEntitys.size(), refs.size());
+
+                    return true;
+                }
+            )
+            ,
+            // enum not eq
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(fixEnumField, ConditionOperator.NOT_EQUALS, new EnumValue(fixEnumField, "500002"))
+                    ),
+                expectedEntitys.get(0).entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+                    Assert.assertEquals(0, refs.size());
+
+                    return true;
+                }
+            )
+            ,
+            // enum meq
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            fixEnumField,
+                            ConditionOperator.MULTIPLE_EQUALS,
+                            new EnumValue(fixEnumField, "500002"),
+                            new EnumValue(fixEnumField, "1"))
+                    ),
+                expectedEntitys.get(0).entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+                    Assert.assertEquals(expectedEntitys.size(), refs.size());
+
+                    return true;
+                }
+            )
         );
     }
 
@@ -542,6 +594,7 @@ public class SphinxQLIndexStorageTest {
         fields.add(fixFieldAll);
         fields.add(fixFieldRange);
         fields.add(fixStringNumber);
+        fields.add(fixEnumField);
 
         return fields;
     }
@@ -570,6 +623,10 @@ public class SphinxQLIndexStorageTest {
 
             if (f == fixStringNumber) {
                 return new StringValue(f, "-1");
+            }
+
+            if (f == fixEnumField) {
+                return new EnumValue(fixEnumField, "1,2,3,500002,测试");
             }
 
             switch (f.type()) {

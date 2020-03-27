@@ -119,6 +119,11 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
     }
 
     @Override
+    public String groupStorageName() {
+        return String.join("", logicName, Character.toString(this.type().getType()));
+    }
+
+    @Override
     public V value() {
         return value;
     }

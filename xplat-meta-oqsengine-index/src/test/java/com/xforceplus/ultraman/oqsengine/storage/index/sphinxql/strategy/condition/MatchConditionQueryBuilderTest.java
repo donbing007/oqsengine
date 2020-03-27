@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
@@ -48,7 +49,7 @@ public class MatchConditionQueryBuilderTest {
 
         buildCases().stream().forEach(c -> {
             MatchConditionQueryBuilder builder = new MatchConditionQueryBuilder(
-                storageStrategyFactory, c.condition.getField().type(), c.condition.getOperator());
+                storageStrategyFactory, c.condition.getField().type(), c.condition.getOperator(), c.useGroupName);
 
             Assert.assertEquals(c.expected, builder.build(c.condition));
         });
@@ -95,6 +96,24 @@ public class MatchConditionQueryBuilderTest {
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test*")
                 ),
                 "F11111S" + SphinxQLHelper.unicode("test*")
+            ),
+            new Case(
+                new Condition(
+                    new Field(11111, "test", FieldType.ENUM),
+                    ConditionOperator.EQUALS,
+                    new EnumValue(new Field(11111, "test", FieldType.ENUM), "test")
+                ),
+                "=F11111S*" + SphinxQLHelper.unicode("test"),
+                true
+            ),
+            new Case(
+                new Condition(
+                    new Field(11111, "test", FieldType.ENUM),
+                    ConditionOperator.NOT_EQUALS,
+                    new EnumValue(new Field(11111, "test", FieldType.ENUM), "test")
+                ),
+                "-F11111S*" + SphinxQLHelper.unicode("test"),
+                true
             )
         );
     }
@@ -102,10 +121,16 @@ public class MatchConditionQueryBuilderTest {
     private static class Case {
         private Condition condition;
         private String expected;
+        private boolean useGroupName;
 
         public Case(Condition condition, String expected) {
+            this(condition, expected, false);
+        }
+
+        public Case(Condition condition, String expected, boolean useGroupName) {
             this.condition = condition;
             this.expected = expected;
+            this.useGroupName = useGroupName;
         }
     }
 

@@ -60,20 +60,35 @@ public class SphinxQLConditionQueryBuilderFactory {
         // meq
         builders.put(
             buildKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.LONG)
+            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.LONG, false)
         );
         builders.put(
             buildKey(FieldType.STRING, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.STRING)
+            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.STRING, false)
         );
         builders.put(
             buildKey(FieldType.BOOLEAN, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.BOOLEAN)
+            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.BOOLEAN, false)
         );
 
+        // long
         builders.put(
             buildKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, false, true),
             new MeqNotMatchConditionQueryBuilder(storageStrategyFactory, FieldType.LONG)
+        );
+
+        // enum
+        builders.put(
+            buildKey(FieldType.ENUM, ConditionOperator.EQUALS, true, false),
+            new MatchConditionQueryBuilder(storageStrategyFactory, FieldType.ENUM, ConditionOperator.EQUALS, true)
+        );
+        builders.put(
+            buildKey(FieldType.ENUM, ConditionOperator.NOT_EQUALS, true, false),
+            new MatchConditionQueryBuilder(storageStrategyFactory, FieldType.ENUM, ConditionOperator.NOT_EQUALS, true)
+        );
+        builders.put(
+            buildKey(FieldType.ENUM, ConditionOperator.MULTIPLE_EQUALS, true, false),
+            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.ENUM, true)
         );
     }
 
@@ -92,7 +107,7 @@ public class SphinxQLConditionQueryBuilderFactory {
 
                     if (match) {
                         builder = new MatchConditionQueryBuilder(
-                            storageStrategyFactory, condition.getField().type(), condition.getOperator());
+                            storageStrategyFactory, condition.getField().type(), condition.getOperator(), false);
                     } else {
 
                         builder = new NotMatchConditionQueryBuilder(

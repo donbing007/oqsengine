@@ -16,8 +16,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  */
 public class MeqMatchConditionQueryBuilder extends SphinxQLConditionQueryBuilder {
 
-    public MeqMatchConditionQueryBuilder(StorageStrategyFactory storageStrategyFactory, FieldType fieldType) {
-        super(storageStrategyFactory, fieldType, ConditionOperator.MULTIPLE_EQUALS, true);
+    public MeqMatchConditionQueryBuilder(StorageStrategyFactory storageStrategyFactory, FieldType fieldType, boolean useGroupName) {
+        super(storageStrategyFactory, fieldType, ConditionOperator.MULTIPLE_EQUALS, true, useGroupName);
     }
 
     @Override
@@ -30,7 +30,7 @@ public class MeqMatchConditionQueryBuilder extends SphinxQLConditionQueryBuilder
             StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(v.getField().type());
             StorageValue storageValue = storageStrategy.toStorageValue(v);
 
-            String fValue = SphinxQLHelper.encodeFullText(storageValue);
+            String fValue = SphinxQLHelper.encodeFullText(storageValue, isUseStorageGroupName());
 
             if (buff.length() > emptyLen) {
                 buff.append(" | ");

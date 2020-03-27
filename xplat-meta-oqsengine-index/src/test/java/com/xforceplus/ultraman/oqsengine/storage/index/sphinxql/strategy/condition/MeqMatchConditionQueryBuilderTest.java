@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
@@ -46,7 +47,7 @@ public class MeqMatchConditionQueryBuilderTest {
 
         buildCases().stream().forEach(c -> {
             MeqMatchConditionQueryBuilder builder = new MeqMatchConditionQueryBuilder(
-                storageStrategyFactory, c.condition.getField().type());
+                storageStrategyFactory, c.condition.getField().type(), c.useGroupName);
 
             Assert.assertEquals(c.expected, builder.build(c.condition));
         });
@@ -77,16 +78,34 @@ public class MeqMatchConditionQueryBuilderTest {
                 ),
                 "(=F11111L1 | =F11111L2 | =F11111L3)"
             )
+            ,
+            new Case(
+                new Condition(
+                    new Field(11111, "test", FieldType.ENUM),
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new EnumValue(new Field(11111, "test", FieldType.ENUM), "one"),
+                    new EnumValue(new Field(11111, "test", FieldType.ENUM), "two"),
+                    new EnumValue(new Field(11111, "test", FieldType.ENUM), "three")
+                ),
+                "(=F11111S*one | =F11111S*two | =F11111S*three)",
+                true
+            )
         );
     }
 
     private static class Case {
         private Condition condition;
         private String expected;
+        private boolean useGroupName;
 
         public Case(Condition condition, String expected) {
+            this(condition, expected, false);
+        }
+
+        public Case(Condition condition, String expected, boolean useGroupName) {
             this.condition = condition;
             this.expected = expected;
+            this.useGroupName = useGroupName;
         }
     }
 

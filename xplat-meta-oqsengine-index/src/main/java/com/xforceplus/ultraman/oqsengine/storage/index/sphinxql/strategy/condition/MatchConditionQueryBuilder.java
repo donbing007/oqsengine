@@ -18,10 +18,9 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  */
 public class MatchConditionQueryBuilder extends SphinxQLConditionQueryBuilder {
 
-
     public MatchConditionQueryBuilder(
-        StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator) {
-        super(storageStrategyFactory, fieldType, operator, true);
+        StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator, boolean useGroupName) {
+        super(storageStrategyFactory, fieldType, operator, true, useGroupName);
     }
 
     @Override
@@ -51,7 +50,7 @@ public class MatchConditionQueryBuilder extends SphinxQLConditionQueryBuilder {
             if (buff.length() > 0) {
                 buff.append(" ");
             }
-            buff.append(symbol).append(SphinxQLHelper.encodeFullText(storageValue));
+            buff.append(symbol).append(SphinxQLHelper.encodeFullText(storageValue, isUseStorageGroupName()));
 
             storageValue = storageValue.next();
         }

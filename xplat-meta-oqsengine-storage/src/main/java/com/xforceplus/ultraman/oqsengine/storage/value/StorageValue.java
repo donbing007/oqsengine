@@ -63,6 +63,14 @@ public interface StorageValue<V> {
     String storageName();
 
     /**
+     * 组名称,此名称表示单个逻辑名称对应的所有物理名称的前辍.
+     * 比如逻辑名称为 c1, 物理为 c1L0 c1L1 那么组名称即是 c1L
+     *
+     * @return 组名称.
+     */
+    String groupStorageName();
+
+    /**
      * 值所处于的位置.这个位置意为多个 StorageValue 才能组成一个 IValue 时的顺序定位.
      * @return 从0开始的位置.
      */
