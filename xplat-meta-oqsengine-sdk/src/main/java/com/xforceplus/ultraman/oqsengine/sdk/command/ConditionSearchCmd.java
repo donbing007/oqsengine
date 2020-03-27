@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.command;
 
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 
+/**
+ * ConditionSearchCmd
+ */
 public class ConditionSearchCmd implements MetaDataLikeCmd{
 
     private String boId;

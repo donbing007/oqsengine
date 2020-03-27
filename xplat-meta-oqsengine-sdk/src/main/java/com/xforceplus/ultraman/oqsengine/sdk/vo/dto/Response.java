@@ -1,9 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
-//TODO build
+/**
+ * response container for type T
+ *
+ * @param <T>
+ */
 public class Response<T> {
 
-    public static <T> Response<T> Error(String message){
+    public static <T> Response<T> Error(String message) {
         Response rep = new Response<>();
         rep.setMessage(message);
         rep.setCode("-1");

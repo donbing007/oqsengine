@@ -30,7 +30,6 @@ import org.apache.metamodel.pojo.PojoDataContext;
 import org.apache.metamodel.pojo.TableDataProvider;
 import org.apache.metamodel.schema.Table;
 import org.apache.metamodel.util.SimpleTableDef;
-import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.function.Function;
@@ -74,13 +73,13 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
          */
         SimpleTableDef relationTableDef = new SimpleTableDef("rels"
                 , new String[]{
-                      "id"
-                    , "boId"
-                    //onetomany manytoone onetoone
-                    , "relType"
-                    , "identity"
-                    , "joinBoId"
-                });
+                "id"
+                , "boId"
+                //onetomany manytoone onetoone
+                , "relType"
+                , "identity"
+                , "joinBoId"
+        });
 
         TableDataProvider relationTableDataProvider = new MapTableDataProvider(relationTableDef, RelationStore);
 
@@ -91,9 +90,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     }
 
-    private Map<String, ApiItem> toApiItemMap(DataSet apis){
+    private Map<String, ApiItem> toApiItemMap(DataSet apis) {
         Map<String, ApiItem> map = new HashMap<>();
-        while(apis.next()){
+        while (apis.next()) {
             Row row = apis.getRow();
             String code = getRowValue(row, "code").map(String::valueOf).orElse("");
             String url = getRowValue(row, "url").map(String::valueOf).orElse("");
@@ -106,10 +105,10 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
 
-    private List<FieldItem> toFieldItemList(DataSet fields){
+    private List<FieldItem> toFieldItemList(DataSet fields) {
         List<FieldItem> items = new ArrayList<>();
 
-        while(fields.next()){
+        while (fields.next()) {
             Row row = fields.getRow();
             FieldItem fieldItem = new FieldItem();
             fieldItem.setCode(getRowValue(row, "code").map(String::valueOf).orElse(""));
@@ -140,7 +139,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .where("id").eq(id)
                 .execute();
 
-        if(boDetails.next()){
+        if (boDetails.next()) {
             Row ds = boDetails.getRow();
             DataSet apis = dc.query()
                     .from("apis")
@@ -172,15 +171,15 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             List<FieldItem> relField = this.loadRelationField(rows, row -> {
 
                 String joinBoId = RowUtils.getRowValue(row, "joinBoId")
-                                          .map(String::valueOf)
-                                          .orElse("");
+                        .map(String::valueOf)
+                        .orElse("");
 
                 DataSet boDs = dc.query().from("bos")
                         .selectAll()
                         .where("id").eq(joinBoId)
                         .execute();
 
-                if(boDs.next()){
+                if (boDs.next()) {
 
                     Row bo = boDs.getRow();
                     String boCode = RowUtils.getRowValue(bo, "code")
@@ -191,7 +190,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                     soloItem.setId(Long.valueOf(joinBoId));
 
                     return new FieldItem(
-                              boCode.concat(".id")
+                            boCode.concat(".id")
                             , boCode.concat(".id")
                             , FieldType.LONG.getType()
                             , ""
@@ -217,9 +216,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             boItem.setFields(fieldTotalItems);
             boItem.setParentEntityId(
                     RowUtils.getRowValue(ds, "parentId")
-                    .map(String::valueOf).orElse(""));
+                            .map(String::valueOf).orElse(""));
             boItem.setSubEntities(relIds);
-
 
 
             return boItem;
@@ -228,7 +226,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     /**
-     *
      * @param moduleUpResult
      * @param tenantId
      * @param appId
@@ -236,7 +233,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     @Override
     public void save(ModuleUpResult moduleUpResult, String tenantId, String appId) {
 
-        moduleUpResult.getBoUpsList().forEach(boUp ->  {
+        moduleUpResult.getBoUpsList().forEach(boUp -> {
 
             //TODO
             clearAllBoIdRelated(boUp.getId());
@@ -251,15 +248,16 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * no more parent
      * no relation
      * no relation fields
+     *
      * @return
      */
-    private Optional<IEntityClass> loadParentEntityClass(String boId){
+    private Optional<IEntityClass> loadParentEntityClass(String boId) {
 
         DataSet boDs = dc.query()
                 .from("bos")
                 .selectAll().where("id").eq(boId)
                 .execute();
-        if(boDs.next()){
+        if (boDs.next()) {
             Row row = boDs.getRow();
 
             String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
@@ -272,18 +270,19 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     /**
      * load related entity class
+     *
      * @param boId
      * @return
      */
-    private Optional<Tuple2<Relation, IEntityClass>> loadRelationEntityClass(String boId, Row relRow, String mainBoCode){
+    private Optional<Tuple2<Relation, IEntityClass>> loadRelationEntityClass(String boId, Row relRow, String mainBoCode) {
 
         String relationType = RowUtils.getRowValue(relRow, "relType")
-                            .map(String::valueOf)
-                            .orElse("");
+                .map(String::valueOf)
+                .orElse("");
         Long joinBoId = RowUtils.getRowValue(relRow, "joinBoId")
-                            .map(String::valueOf)
-                            .map(Long::valueOf)
-                            .orElse(0L);
+                .map(String::valueOf)
+                .map(Long::valueOf)
+                .orElse(0L);
 
         return findOneById("bos", boId).map(row -> {
             Optional<IEntityClass> parentEntityClass = RowUtils
@@ -298,13 +297,13 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             //assemble relation Field
             com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field field;
             Relation relation;
-            if(relationType.equalsIgnoreCase("onetoone")
-                    || relationType.equalsIgnoreCase("manytoone")){
+            if (relationType.equalsIgnoreCase("onetoone")
+                    || relationType.equalsIgnoreCase("manytoone")) {
                 //Field is from main id
                 field = toEntityClassFieldFromRel(relRow, subCode);
                 relation = new Relation(subCode, joinBoId, relationType, true, field);
 
-            }else{
+            } else {
                 //relation is onetomany
                 field = toEntityClassFieldFromRel(relRow, mainBoCode);
                 relation = new Relation(mainBoCode, joinBoId, relationType, true, field);
@@ -334,9 +333,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .where("code").eq(boCode)
                 .execute();
 
-        if(boDs.next()) {
+        if (boDs.next()) {
             return toEntityClass(boDs.getRow());
-        }else{
+        } else {
             return Optional.empty();
         }
     }
@@ -348,7 +347,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .from("bos")
                 .selectAll()
                 .where("parentId")
-                    .eq(parentId)
+                .eq(parentId)
                 .execute();
 
         List<Row> rows = boDs.toRows();
@@ -369,7 +368,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .eq(parentCode)
                 .execute();
 
-        if(boDs.next()){
+        if (boDs.next()) {
             String id = RowUtils.getRowValue(boDs.getRow(), "id").map(String::valueOf).orElse("");
             return findSubEntitiesById(tenantId, appId, id);
         }
@@ -379,6 +378,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     /**
      * load an entity class
+     *
      * @param tenantId
      * @param appCode
      * @param boId
@@ -391,25 +391,25 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .from("bos")
                 .selectAll().where("id").eq(boId)
                 .execute();
-        if(boDs.next()) {
+        if (boDs.next()) {
             return toEntityClass(boDs.getRow());
-        }else{
+        } else {
             return Optional.empty();
         }
     }
 
     /**
      * how to build a entity class
-     *    check if has parent --> load parent info
-     *                        |-> deal parent fields
-     *    find relation --> build relation entity
-     *                  |-> build relation fields
-     *    deal with self fields
+     * check if has parent --> load parent info
+     * |-> deal parent fields
+     * find relation --> build relation entity
+     * |-> build relation fields
+     * deal with self fields
      *
      * @param row
      * @return
      */
-    private Optional<EntityClass> toEntityClass(Row row){
+    private Optional<EntityClass> toEntityClass(Row row) {
         String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
         String boId = RowUtils.getRowValue(row, "id").map(String::valueOf).orElse("0");
 
@@ -459,22 +459,22 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     /**
      * isSub => turn many to one to filed on sub
+     *
      * @param id
      * @return
      */
-    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationField(String id){
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationField(String id) {
         //load onetoone and many to one
         DataSet relDs = dc.query().from("rels")
-                        .selectAll().where("boId").eq(id)
-                        .execute();
+                .selectAll().where("boId").eq(id)
+                .execute();
         return loadRelationField(relDs.toRows());
     }
 
 
-
-    private <U> List<U> loadRelationField(List<Row> relations, Function<Row, U> mapper){
+    private <U> List<U> loadRelationField(List<Row> relations, Function<Row, U> mapper) {
         return relations.stream().filter(row -> {
-            return RowUtils.getRowValue(row,"relType")
+            return RowUtils.getRowValue(row, "relType")
                     .map(String::valueOf)
                     .filter(type -> type.equalsIgnoreCase("onetoone")
                             || type.equalsIgnoreCase("manytoone"))
@@ -498,21 +498,21 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         return relDs.toRows().stream()
                 .map(row -> {
                     return toEntityClassFieldFromRel(row, code);
-        }).collect(Collectors.toList());
+                }).collect(Collectors.toList());
     }
 
 
-    private Table getTable(String tableName){
+    private Table getTable(String tableName) {
         return dc.getTableByQualifiedLabel("metadata." + tableName);
     }
 
-    private Optional<Row> findOneById(String tableName, String id){
+    private Optional<Row> findOneById(String tableName, String id) {
         DataSet ds = dc.query().from(tableName)
                 .selectAll()
                 .where("id").eq(id)
                 .execute();
 
-        if(ds.next()){
+        if (ds.next()) {
             return Optional.ofNullable(ds.getRow());
         }
 
@@ -521,10 +521,11 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     /**
      * nothing todo with the related entity
+     *
      * @param boId
      */
     @Override
-    synchronized public void clearAllBoIdRelated(String boId){
+    public synchronized void clearAllBoIdRelated(String boId) {
         UpdateSummary updateSummary = dc.executeUpdate(callback -> {
             callback.deleteFrom(getTable("bos")).where("id").eq(boId).execute();
             callback.deleteFrom(getTable("apis")).where("boId").eq(boId).execute();
@@ -540,19 +541,19 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .from("bos")
                 .selectAll().where("id").eq(boId)
                 .execute();
-        if(boDs.next()) {
+        if (boDs.next()) {
             SimpleBoItem simpleBoItem = new SimpleBoItem();
             Row row = boDs.getRow();
             simpleBoItem.setCode(RowUtils.getRowValue(row, "code").map(String::valueOf).orElse(""));
             simpleBoItem.setParentId(RowUtils.getRowValue(row, "parentId").map(String::valueOf).orElse(""));
             simpleBoItem.setId(boId);
             return simpleBoItem;
-        }else{
+        } else {
             return null;
         }
     }
 
-    synchronized private void insertBoTable(String id, String code, String parentId) {
+     private synchronized void insertBoTable(String id, String code, String parentId) {
         InsertInto insert = new InsertInto(getTable("bos"))
                 .value("id", id)
                 .value("code", code)
@@ -562,9 +563,10 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     /**
      * bo maybe
+     *
      * @param boUp
      */
-    synchronized private void insertBo(BoUp boUp){
+     private synchronized void insertBo(BoUp boUp) {
 
         insertBoTable(boUp.getId(), boUp.getCode(), boUp.getParentBoId());
 
@@ -581,7 +583,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         //insert apis
         boUp.getApisList().forEach(api -> {
-            insertApi( api, boUp.getId());
+            insertApi(api, boUp.getId());
         });
 
         //insert fields
@@ -593,7 +595,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         //insert sub bo
         //save if not exist
         boUp.getBoUpsList().stream()
-                .filter(relatedBo ->  !findOneById("bos", relatedBo.getId()).isPresent())
+                .filter(relatedBo -> !findOneById("bos", relatedBo.getId()).isPresent())
                 .forEach(relatedBo -> {
                     insertBoTable(relatedBo.getId(), relatedBo.getCode(), relatedBo.getParentBoId());
 
@@ -610,17 +612,17 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 });
     }
 
-    synchronized private void insertField(Field field, String boId){
+     private synchronized void insertField(Field field, String boId) {
 
         String editable = field.getEditable();
         String searchable = field.getSearchable();
 
         //todo formatter
-        if("1".equals(field.getEditable())){
+        if ("1".equals(field.getEditable())) {
             editable = "true";
         }
 
-        if("1".equals(field.getSearchable())){
+        if ("1".equals(field.getSearchable())) {
             searchable = "true";
         }
 
@@ -643,7 +645,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         dc.executeUpdate(insert);
     }
 
-    synchronized private void insertApi(Api api, String boId){
+     private synchronized void insertApi(Api api, String boId) {
         InsertInto insert = new InsertInto(getTable("apis"))
                 .value("boId", boId)
                 .value("url", api.getUrl())
@@ -657,18 +659,18 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     /**
      * TODO
      * new version flow like
-     *
+     * <p>
      * how to build a entity class
-     *    check if has parent --> load parent info
-     *                        |-> deal parent fields
-     *    find relation --> build relation entity
-     *                  |-> build relation fields
-     *    deal with self fields
+     * check if has parent --> load parent info
+     * |-> deal parent fields
+     * find relation --> build relation entity
+     * |-> build relation fields
+     * deal with self fields
      *
      * @param row
      * @return
      */
-    private Optional<IEntityClass> toEntityClassFlow(Row row){
+    private Optional<IEntityClass> toEntityClassFlow(Row row) {
 
         String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
         String boId = RowUtils.getRowValue(row, "id").map(String::valueOf).orElse("0");
@@ -690,8 +692,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         List<Row> relsRows = relDs.toRows();
         List<Tuple2<Relation, IEntityClass>> relatedEntityClassList = relsRows.stream().map(relRow -> {
             Optional<String> relatedBoIdOp = RowUtils
-                                            .getRowValue(relRow, "joinBoId")
-                                            .map(String::valueOf);
+                    .getRowValue(relRow, "joinBoId")
+                    .map(String::valueOf);
             return relatedBoIdOp.flatMap(x -> loadRelationEntityClass(x, relRow, code));
         }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
@@ -714,7 +716,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         return Optional.of(entityClass);
     }
 
-    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField> loadFields(String id){
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField> loadFields(String id) {
         DataSet fieldDs = dc.query().from("fields")
                 .selectAll().where("boId").eq(id).execute();
         return fieldDs.toRows().stream()
@@ -724,13 +726,14 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     /**
      * TODO
+     *
      * @param relations
      * @return
      */
-    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationField(List<Row> relations){
+    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationField(List<Row> relations) {
         //relation to field
         return relations.stream().filter(row -> {
-            return RowUtils.getRowValue(row,"relType")
+            return RowUtils.getRowValue(row, "relType")
                     .map(String::valueOf)
                     .filter(type -> type.equalsIgnoreCase("onetoone") || type.equalsIgnoreCase("manytoone"))
                     .isPresent();
@@ -738,8 +741,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             //get joinBoId
             Optional<Row> joinBoOp = findOneById("bos",
                     RowUtils.getRowValue(row, "joinBoId").map(String::valueOf).orElse(""));
-            if(joinBoOp.isPresent()) {
-                String code =joinBoOp
+            if (joinBoOp.isPresent()) {
+                String code = joinBoOp
                         .flatMap(x -> RowUtils.getRowValue(x, "code")
                                 .map(String::valueOf)).orElse("");
                 return toEntityClassFieldFromRel(row, code);

@@ -13,23 +13,23 @@ import org.apache.metamodel.data.Row;
 public class FieldHelper {
 
 
-    private static FieldType toFieldType(String typeStr){
+    private static FieldType toFieldType(String typeStr) {
 
-        try{
+        try {
             return FieldType.valueOf(typeStr.toUpperCase());
-        }catch(Exception ex) {
+        } catch (Exception ex) {
             //to
         }
 
-        if("bigint".equalsIgnoreCase(typeStr) || "long".equalsIgnoreCase(typeStr)){
+        if ("bigint".equalsIgnoreCase(typeStr) || "long".equalsIgnoreCase(typeStr)) {
             return FieldType.LONG;
-        } else if ( "enum".equalsIgnoreCase(typeStr)) {
+        } else if ("enum".equalsIgnoreCase(typeStr)) {
             return FieldType.ENUM;
-        } else if ( "boolean".equalsIgnoreCase(typeStr)) {
+        } else if ("boolean".equalsIgnoreCase(typeStr)) {
             return FieldType.BOOLEAN;
-        } else if ( "timestamp".equalsIgnoreCase(typeStr)) {
+        } else if ("timestamp".equalsIgnoreCase(typeStr)) {
             return FieldType.DATETIME;
-        } else if ( "double".equalsIgnoreCase(typeStr)) {
+        } else if ("double".equalsIgnoreCase(typeStr)) {
             return FieldType.DECIMAL;
         } else {
             return FieldType.STRING;
@@ -39,15 +39,16 @@ public class FieldHelper {
     /**
      * TODO splitter
      * Row => field
+     *
      * @param row
      * @return
      */
-    public static Field toEntityClassField(Row row){
+    public static Field toEntityClassField(Row row) {
 
         Long id = RowUtils.getRowValue(row, "id")
                 .map(String::valueOf)
                 .map(Long::valueOf)
-                .orElse(-1l);
+                .orElse(-1L);
         String name = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
         FieldType fieldType = RowUtils.getRowValue(row, "fieldType")
                 .map(String::valueOf)
@@ -73,7 +74,7 @@ public class FieldHelper {
                 .map(Integer::valueOf).orElse(0);
 
         String defaultValue = RowUtils.getRowValue(row, "defaultValue")
-               .map(String::valueOf).orElse("");
+                .map(String::valueOf).orElse("");
 
         String dictId = RowUtils.getRowValue(row, "dictId")
                 .map(String::valueOf).orElse("");

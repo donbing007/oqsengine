@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo;
 
+/**
+ * summary
+ */
 public class Summary {
 
     /**

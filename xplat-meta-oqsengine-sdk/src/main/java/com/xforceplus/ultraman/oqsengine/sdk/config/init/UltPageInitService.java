@@ -51,12 +51,12 @@ public class UltPageInitService implements CommandLineRunner {
             MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
             headers.setContentType(type);
             headers.add("Accept", MediaType.APPLICATION_JSON.toString());
-            HttpEntity authorizeEntity = new HttpEntity(auth,headers);
-            result = restTemplate.postForObject(url, authorizeEntity,Response.class);
-            if (result.getResult()!=null){
+            HttpEntity authorizeEntity = new HttpEntity(auth, headers);
+            result = restTemplate.postForObject(url, authorizeEntity, Response.class);
+            if (result.getResult() != null) {
                 List<UltPage> ultPages = result.getResult();
-                for (int i = 0;i<ultPages.size();i++) {
-                    UltPage saveUltPage = JSON.parseObject(JSON.toJSONString(ultPages.get(i)),UltPage.class);
+                for (int i = 0; i < ultPages.size(); i++) {
+                    UltPage saveUltPage = JSON.parseObject(JSON.toJSONString(ultPages.get(i)), UltPage.class);
                     pageBoMapLocalStore.save(saveUltPage);
                 }
                 logger.info("init pages config success --" + LocalDateTime.now());
@@ -65,7 +65,7 @@ public class UltPageInitService implements CommandLineRunner {
                 //将数据保存到内存中
 //                pageBoMapLocalStore.save(ultPage);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.info("init pages config faild --" + LocalDateTime.now());
         }
     }

@@ -18,6 +18,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * handle value to valueUp converter
+ */
 public class DefaultHandleValueService implements HandleValueService {
 
     @Autowired
@@ -29,19 +32,14 @@ public class DefaultHandleValueService implements HandleValueService {
     /**
      * TODO how to apply to any transformation
      * handle value framework
+     *
      * @param entityClass
      * @param body
      */
     @Override
-    public List<ValueUp> handlerValue(EntityClass entityClass, Map<String, Object> body, String phase){
-
-        //pick field in entityClass And entityClass.extendedClass
-        Stream<IEntityField> idea = entityClass.fields().stream();
+    public List<ValueUp> handlerValue(EntityClass entityClass, Map<String, Object> body, String phase) {
 
         //get field from entityClass
-
-
-
         List<ValueUp> values = zipValue(entityClass, body)
                 .map(tuple -> {
 
@@ -55,19 +53,19 @@ public class DefaultHandleValueService implements HandleValueService {
                     Object value = pipeline(obj, field, phase);
                     List<Validation<String, Object>> validations = validate(field, value);
 
-                    if(!validations.isEmpty()){
+                    if (!validations.isEmpty()) {
                         throw new RuntimeException(validations.stream()
                                 .map(Validation::getError)
                                 .collect(Collectors.joining(",")));
                     }
 
-                    if(value != null){
+                    if (value != null) {
                         return ValueUp.newBuilder()
                                 .setFieldId(field.id())
                                 .setFieldType(field.type().getType())
                                 .setValue(value.toString())
                                 .build();
-                    }else{
+                    } else {
                         return null;
                     }
 
@@ -80,33 +78,34 @@ public class DefaultHandleValueService implements HandleValueService {
 
     /**
      * zip two
+     *
      * @param entityClass
      * @param body
      * @return
      */
-    private Stream<Tuple2<IEntityField, Object>> zipValue(IEntityClass entityClass, Map<String, Object> body){
+    private Stream<Tuple2<IEntityField, Object>> zipValue(IEntityClass entityClass, Map<String, Object> body) {
         Stream<IEntityField> fields = entityClass.fields().stream();
         Stream<IEntityField> relationFields = entityClass.relations().stream().map(Relation::getEntityField);
         Stream<IEntityField> parentFields = Optional.ofNullable(entityClass.extendEntityClass())
-                                                    .map(IEntityClass::fields)
-                                                    .orElseGet(Collections::emptyList)
-                                                    .stream();
+                .map(IEntityClass::fields)
+                .orElseGet(Collections::emptyList)
+                .stream();
 
         return Stream.concat(parentFields, Stream.concat(fields, relationFields))
                 .map(x -> Tuple.of(x, body.get(x.name())));
     }
 
-    private Object pipeline(Object value, IEntityField field, String phase){
+    private Object pipeline(Object value, IEntityField field, String phase) {
 
         return fieldOperationHandlers.stream()
                 .sorted()
-                .map(x -> (TriFunction)x)
+                .map(x -> (TriFunction) x)
                 .reduce(TriFunction::andThen)
                 .get()
                 .apply(field, value, phase);
     }
 
-    private List<Validation<String, Object>>  validate(IEntityField field, Object obj){
+    private List<Validation<String, Object>> validate(IEntityField field, Object obj) {
 
         return fieldValidators.stream()
                 .map(x -> x.validate(field, obj))

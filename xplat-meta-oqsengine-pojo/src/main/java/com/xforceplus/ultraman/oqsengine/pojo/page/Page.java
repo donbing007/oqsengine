@@ -465,4 +465,5 @@ public class Page implements Externalizable, Cloneable {
         ready = in.readBoolean();
         lastPage = in.readBoolean();
     }
+
 }

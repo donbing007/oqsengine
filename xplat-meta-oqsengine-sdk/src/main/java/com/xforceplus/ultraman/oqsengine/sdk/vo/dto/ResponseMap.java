@@ -2,5 +2,11 @@ package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
 import java.util.HashMap;
 
-public class ResponseMap<K,V> extends HashMap<K,V> implements ResponseItem {
+/**
+ * response map
+ *
+ * @param <K>
+ * @param <V>
+ */
+public class ResponseMap<K, V> extends HashMap<K, V> implements ResponseItem {
 }

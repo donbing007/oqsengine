@@ -20,7 +20,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-//no typed
+/**
+ * map local
+ */
 public class MapLocalStore {
 
     private Logger logger = LoggerFactory.getLogger(MapLocalStore.class);
@@ -48,7 +50,7 @@ public class MapLocalStore {
     private Comparator<Object> versionComparator;
 
     //union pk
-    private String[] pks ;
+    private String[] pks;
 
     private boolean hasVersion;
 
@@ -73,10 +75,10 @@ public class MapLocalStore {
         Integer length = (pks == null ? 0 : pks.length) + columns.length;
         this.allColumns = new String[length];
 
-        for(int i = 0 ; i < allColumns.length ; i ++){
-            if(pks != null && pks.length > 0 && i < pks.length){
+        for (int i = 0; i < allColumns.length; i++) {
+            if (pks != null && pks.length > 0 && i < pks.length) {
                 allColumns[i] = pks[i];
-            }else {
+            } else {
                 allColumns[i] = columns[i - (pks == null ? 0 : pks.length)];
             }
         }
@@ -87,11 +89,11 @@ public class MapLocalStore {
         dc = new PojoDataContext(schema, tableDataProvider);
 
 
-        if(hasVersion){
+        if (hasVersion) {
             versionedColumn = table.getColumnByName(versioned);
         }
 
-        if(pks != null) {
+        if (pks != null) {
             //build up filter
             List<FilterItem> filterItems = Stream.of(pks).map(pk -> new SelectItem(dc
                     .getColumnByQualifiedLabel(schema + "." + tableName + "." + pk)))
@@ -107,28 +109,28 @@ public class MapLocalStore {
     }
 
     //synchronized maybe is enough
-    public void save(Map<String , Object> record){
+    public void save(Map<String, Object> record) {
 
-        if(hasPk(record)){
-            if(pks != null){
+        if (hasPk(record)) {
+            if (pks != null) {
                 //has pks
                 List<Row> pkRow = getSamePkRecord(record);
-                if(!pkRow.isEmpty()){
+                if (!pkRow.isEmpty()) {
                     //cannot insert directly
-                    if(hasVersion && hasVersion(record)){
+                    if (hasVersion && hasVersion(record)) {
 
                         //check if version is same
 
-                        if(pkRow.stream().map(x -> x.getValue(versionedColumn)).anyMatch(x -> x.equals(record.get(versioned)))){
+                        if (pkRow.stream().map(x -> x.getValue(versionedColumn)).anyMatch(x -> x.equals(record.get(versioned)))) {
                             //Same version found
                             logger.debug("Same version found {}");
-                            return ;
+                            return;
                         }
 
                         //insert by version
-                        if(pkRow.size() < maxVersion){
+                        if (pkRow.size() < maxVersion) {
                             insert(record);
-                        }else{
+                        } else {
                             Row toBeDeleted = pkRow.stream().max((x, y) -> {
                                 Object xVersion = x.getValue(versionedColumn);
                                 Object yVersion = y.getValue(versionedColumn);
@@ -143,14 +145,14 @@ public class MapLocalStore {
 
                             insert(record);
                         }
-                    }else{
+                    } else {
                         //no version
                         update(record);
                     }
-                }else{
+                } else {
                     insert(record);
                 }
-            }else{
+            } else {
                 insert(record);
             }
         } else {
@@ -165,13 +167,13 @@ public class MapLocalStore {
 
     //insert directly
     //TODO
-    synchronized private void insert(Map<String , Object> record){
+     private synchronized void insert(Map<String, Object> record) {
 
         InsertInto insert = new InsertInto(table);
 
         //selective update
-        for(int i = 0 ; i < allColumns.length ; i ++){
-            if(record.get(allColumns[i]) != null) {
+        for (int i = 0; i < allColumns.length; i++) {
+            if (record.get(allColumns[i]) != null) {
                 insert.value(allColumns[i], record.get(allColumns[i]));
             }
         }
@@ -179,20 +181,20 @@ public class MapLocalStore {
         dc.executeUpdate(insert);
     }
 
-    public void update(Map<String, Object> record, Map<String, Object> condition){
+    public void update(Map<String, Object> record, Map<String, Object> condition) {
 
         List<FilterItem> filterItems = condition.entrySet().stream().map(entry ->
-                        {
-                            SelectItem selectItem = new SelectItem(table.getColumnByName(entry.getKey()));
-                            return new FilterItem(selectItem, OperatorType.EQUALS_TO, entry.getValue());
-                        }).collect(Collectors.toList());
+        {
+            SelectItem selectItem = new SelectItem(table.getColumnByName(entry.getKey()));
+            return new FilterItem(selectItem, OperatorType.EQUALS_TO, entry.getValue());
+        }).collect(Collectors.toList());
 
         Update update = new Update(table)
                 .where(filterItems);
 
         //selective update
-        for(int i = 0 ; i < columns.length ; i ++){
-            if(record.get(columns[i]) != null) {
+        for (int i = 0; i < columns.length; i++) {
+            if (record.get(columns[i]) != null) {
                 update.value(columns[i], record.get(columns[i]));
             }
         }
@@ -200,7 +202,7 @@ public class MapLocalStore {
         dc.executeUpdate(update);
     }
 
-    private void update(Map<String, Object> record){
+    private void update(Map<String, Object> record) {
 
         List<FilterItem> filterItems = Stream.of(pks).map(pk -> new SelectItem(table.getColumnByName(pk)))
                 .map(pk -> new FilterItem(pk, OperatorType.EQUALS_TO, record.get(pk.getColumn().getName())))
@@ -210,10 +212,9 @@ public class MapLocalStore {
                 .where(filterItems);
 
 
-
         //selective update
-        for(int i = 0 ; i < columns.length ; i ++){
-            if(record.get(columns[i]) != null) {
+        for (int i = 0; i < columns.length; i++) {
+            if (record.get(columns[i]) != null) {
                 update.value(columns[i], record.get(columns[i]));
             }
         }
@@ -221,44 +222,44 @@ public class MapLocalStore {
         dc.executeUpdate(update);
     }
 
-    private Boolean hasVersion(Map<String , Object> record){
+    private Boolean hasVersion(Map<String, Object> record) {
         return record.containsKey(versioned);
     }
 
-    private Boolean hasPk(Map<String , Object> record){
-        if(pks != null){
+    private Boolean hasPk(Map<String, Object> record) {
+        if (pks != null) {
             return Stream.of(pks).allMatch(record::containsKey);
         }
 
         return true;
     }
 
-    public TableFromBuilder query(){
+    public TableFromBuilder query() {
         return dc.query().from(tableName);
     }
 
     //pks is not null
-    private List<Row> getSamePkRecord(Map<String , Object> record){
-        DataSet result = dc.executeQuery(pkQuery,  getPk(record));
+    private List<Row> getSamePkRecord(Map<String, Object> record) {
+        DataSet result = dc.executeQuery(pkQuery, getPk(record));
         return result.toRows();
     }
 
-    private List<FilterItem> rowToFilterItem(Row row){
+    private List<FilterItem> rowToFilterItem(Row row) {
 
         return row.getSelectItems().stream().map(x -> new FilterItem(new SelectItem(table.getColumnByName(x.getColumn().getName()))
                 , OperatorType.EQUALS_TO, row.getValue(x.getColumn()))).collect(Collectors.toList());
     }
 
 
-    private List<FilterItem> mapToFilterItem(Map<String, Object> row){
+    private List<FilterItem> mapToFilterItem(Map<String, Object> row) {
 
         List<FilterItem> list = new ArrayList<>();
 
-        for(int i = 0 ; i < allColumns.length ; i ++){
+        for (int i = 0; i < allColumns.length; i++) {
 
             Column column = table.getColumnByName(allColumns[i]);
 
-            if(row.get(allColumns[i]) != null ){
+            if (row.get(allColumns[i]) != null) {
                 list.add(new FilterItem(new SelectItem(column), OperatorType.EQUALS_TO, row.get(allColumns[i])));
             }
         }
@@ -266,16 +267,16 @@ public class MapLocalStore {
         return list;
     }
 
-    private Object[] getPk(Map<String , Object> record) {
+    private Object[] getPk(Map<String, Object> record) {
         Object[] pkValues = new Object[pks.length];
-        for(int i = 0 ; i < pks.length ; i ++){
+        for (int i = 0; i < pks.length; i++) {
             pkValues[i] = record.get(pks[i]);
         }
 
         return pkValues;
     }
 
-    public SelectItem getRowColumn(Row row, String columnName){
+    public SelectItem getRowColumn(Row row, String columnName) {
         Optional<SelectItem> opItem = row.getSelectItems()
                 .stream().filter(x -> x.getColumn().getName().equals(columnName)).findAny();
 
@@ -283,7 +284,7 @@ public class MapLocalStore {
         return opItem.get();
     }
 
-    public Optional<Object> getRowValue(Row row, String columnName){
+    public Optional<Object> getRowValue(Row row, String columnName) {
         Optional<SelectItem> opItem = row.getSelectItems()
                 .stream().filter(x -> x.getColumn().getName().equals(columnName)).findAny();
 

@@ -6,7 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
  * default filed operation
  * do nothing
  */
-public class DefaultFieldOperationHandler implements FieldOperationHandler{
+public class DefaultFieldOperationHandler implements FieldOperationHandler {
 
     @Override
     public boolean require(IEntityField field, Object obj) {

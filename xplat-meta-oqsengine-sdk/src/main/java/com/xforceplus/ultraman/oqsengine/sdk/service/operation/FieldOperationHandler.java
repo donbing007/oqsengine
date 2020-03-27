@@ -2,8 +2,6 @@ package com.xforceplus.ultraman.oqsengine.sdk.service.operation;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
-import java.util.function.BiFunction;
-
 /**
  * an operation on field
  */
@@ -14,7 +12,7 @@ public interface FieldOperationHandler extends Comparable<FieldOperationHandler>
 
     String UPDATE = "UPDATE";
 
-    default int getOrder(){
+    default int getOrder() {
         return 0;
     }
 
@@ -27,19 +25,20 @@ public interface FieldOperationHandler extends Comparable<FieldOperationHandler>
     Object onUnHandle(IEntityField field, Object o);
 
     @Override
-    default Object apply(IEntityField field, Object o, String phase){
-        if(require(field, o)){
-            if(phase.equalsIgnoreCase(CREATE)){
+    default Object apply(IEntityField field, Object o, String phase) {
+        if (require(field, o)) {
+            if (phase.equalsIgnoreCase(CREATE)) {
                 return onCreate(field, o);
-            }else if(phase.equalsIgnoreCase(UPDATE)){
+            } else if (phase.equalsIgnoreCase(UPDATE)) {
                 return onUpdate(field, o);
-            }else{
+            } else {
                 return onUnHandle(field, o);
             }
         }
         return o;
     }
 
+    @Override
     default int compareTo(FieldOperationHandler fieldOperationHandler) {
         return Integer.compare(getOrder(), fieldOperationHandler.getOrder());
     }

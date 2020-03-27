@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.command;
 
+/**
+ * query one record
+ */
 public class SingleQueryCmd implements MetaDataLikeCmd{
 
     private String boId;

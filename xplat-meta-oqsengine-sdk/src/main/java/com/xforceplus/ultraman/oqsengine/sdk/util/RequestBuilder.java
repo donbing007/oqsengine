@@ -5,7 +5,11 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class RequestBuilder  {
+/**
+ * TODO may add new mutable method
+ * request builder
+ */
+public class RequestBuilder {
     private Integer pageNo;
     private Integer pageSize;
     private ConditionBuilder conditionBuilder = new ConditionBuilder();
@@ -24,13 +28,13 @@ public class RequestBuilder  {
         return this;
     }
 
-    public RequestBuilder field(String code, ConditionOp op, Object...values) {
+    public RequestBuilder field(String code, ConditionOp op, Object... values) {
         List<String> strValues = Arrays.stream(values).map(String::valueOf).collect(Collectors.toList());
         conditionBuilder.field(code, op, strValues);
         return this;
     }
 
-    public RequestBuilder subField(String entityCode, String code, ConditionOp op, Object...values) {
+    public RequestBuilder subField(String entityCode, String code, ConditionOp op, Object... values) {
         List<String> strValues = Arrays.stream(values).map(String::valueOf).collect(Collectors.toList());
         conditionBuilder.sub(entityCode).subField(code, op, strValues);
         return this;
@@ -47,12 +51,13 @@ public class RequestBuilder  {
         itemBuilder.sub(entityCode).subItem(fieldArr);
         return this;
     }
-    public RequestBuilder item(String...fields) {
+
+    public RequestBuilder item(String... fields) {
         itemBuilder.item(fields);
         return this;
     }
 
-    public RequestBuilder subItem(String entityCode, String...fields) {
+    public RequestBuilder subItem(String entityCode, String... fields) {
         itemBuilder.sub(entityCode).subItem(fields);
         return this;
     }
@@ -85,7 +90,7 @@ public class RequestBuilder  {
         return request;
     }
 
-    private class ConditionBuilder  {
+    private class ConditionBuilder {
         private List<FieldCondition> fieldConditions = new ArrayList<>();
         private Map<String, SubFieldCondition> subFieldConditions = new HashMap<>();
         private SubFieldCondition subFieldCondition;
@@ -126,12 +131,12 @@ public class RequestBuilder  {
         }
     }
 
-    private class ItemBuilder  {
+    private class ItemBuilder {
         private List<String> fields = new ArrayList<>();
         private Map<String, SubEntityItem> entities = new HashMap<>();
         private SubEntityItem subEntityItem;
 
-        public void item(String...fields) {
+        public void item(String... fields) {
             this.fields.addAll(Arrays.asList(fields));
         }
 
@@ -147,7 +152,7 @@ public class RequestBuilder  {
             return this;
         }
 
-        public void subItem(String...fields) {
+        public void subItem(String... fields) {
             subEntityItem.getFields().addAll(Arrays.asList(fields));
         }
 

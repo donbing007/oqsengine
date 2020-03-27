@@ -19,13 +19,13 @@ import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKe
 /**
  * handle all system operation
  */
-public class FixedDefaultSystemOperationHandler implements FieldOperationHandler{
+public class FixedDefaultSystemOperationHandler implements FieldOperationHandler {
 
     private Map<String, Supplier<Object>> fixed = new HashMap<>();
 
-    private static final Set<String> updateFields = Sets.newHashSet("update_time","update_user_id","update_user_name");
+    private static final Set<String> updateFields = Sets.newHashSet("update_time", "update_user_id", "update_user_name");
 
-    public FixedDefaultSystemOperationHandler(ContextService contextService){
+    public FixedDefaultSystemOperationHandler(ContextService contextService) {
 
         fixed.put("tenant_id", () -> contextService.get(TENANTID_KEY));
         fixed.put("create_time", () -> LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli());
@@ -39,6 +39,7 @@ public class FixedDefaultSystemOperationHandler implements FieldOperationHandler
 
     /**
      * make this always the end
+     *
      * @return
      */
     @Override
@@ -58,8 +59,8 @@ public class FixedDefaultSystemOperationHandler implements FieldOperationHandler
 
     @Override
     public Object onUpdate(IEntityField field, Object o) {
-        if(updateFields.contains(field.name())){
-            return  fixed.get(field.name()).get();
+        if (updateFields.contains(field.name())) {
+            return fixed.get(field.name()).get();
         }
         return null;
     }
@@ -70,7 +71,7 @@ public class FixedDefaultSystemOperationHandler implements FieldOperationHandler
         return null;
     }
 
-    private boolean isSystemDefaultField(IEntityField field){
+    private boolean isSystemDefaultField(IEntityField field) {
         String fieldName = field.name();
         return fixed.containsKey(fieldName);
     }

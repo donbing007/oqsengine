@@ -9,8 +9,6 @@ import com.xforceplus.ultraman.oqsengine.sdk.config.init.DictInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.ModuleInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.controller.*;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler;
-import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaFieldDefaultHandler;
-import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.CodeExtendedInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.DefaultSearchInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.MatchRouter;
@@ -51,6 +49,9 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * sdk auto-configuration
+ */
 @ConditionalOnProperty(value = "xplat.oqsengine.sdk.enabled", matchIfMissing = true)
 @AutoConfigureOrder
 @EnableGrpcServiceClients(basePackages = { "com.xforceplus.ultraman.metadata.grpc",  "com.xforceplus.ultraman.oqsengine.sdk"})
@@ -141,10 +142,10 @@ public class InitServiceAutoConfiguration {
 
         //先获取到converter列表
         List<HttpMessageConverter<?>> converters = builder.build().getMessageConverters();
-        for(HttpMessageConverter<?> converter : converters){
+        for ( HttpMessageConverter<?> converter : converters ) {
             //因为我们只想要jsonConverter支持对text/html的解析
-            if(converter instanceof MappingJackson2HttpMessageConverter){
-                try{
+            if ( converter instanceof MappingJackson2HttpMessageConverter ) {
+                try {
                     //先将原先支持的MediaType列表拷出
                     List<MediaType> mediaTypeList = new ArrayList<>(converter.getSupportedMediaTypes());
                     //加入对JSON的支持
@@ -152,8 +153,8 @@ public class InitServiceAutoConfiguration {
 //                    mediaTypeList.add(MediaType.TEXT_HTML);
                     //将已经加入了text/html的MediaType支持列表设置为其支持的媒体类型列表
                     ((MappingJackson2HttpMessageConverter) converter).setSupportedMediaTypes(mediaTypeList);
-                }catch(Exception e){
-                    e.printStackTrace();
+                } catch (Exception e) {
+//                    e.printStackTrace();
                 }
             }
         }
@@ -163,8 +164,10 @@ public class InitServiceAutoConfiguration {
     @Bean
     public ClientHttpRequestFactory simpleClientHttpRequestFactory(){
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setReadTimeout(5000);//单位为ms
-        factory.setConnectTimeout(5000);//单位为ms
+        //单位为ms
+        factory.setReadTimeout(5000);
+        //单位为ms
+        factory.setConnectTimeout(5000);
         return factory;
     }
 
@@ -178,17 +181,6 @@ public class InitServiceAutoConfiguration {
     public MessageDispatcherInterceptor<?> DefaultSearchInterceptor(MatchRouter<String, ConditionQueryRequest> matchRouter){
         return new DefaultSearchInterceptor<>(matchRouter);
     }
-
-    @Bean
-    public EntityMetaHandler entityMetaHandler(){
-        return new EntityMetaHandler();
-    }
-
-    @Bean
-    public EntityMetaFieldDefaultHandler entityMetaFieldDefaultHandler(){
-        return new EntityMetaFieldDefaultHandler();
-    }
-
 
     //----------------------------init for operation and validator
 

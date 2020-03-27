@@ -4,7 +4,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.xplat.galaxy.framework.context.ContextKeys;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 
-public class SimpleExpressionFieldOperationHandler implements FieldOperationHandler{
+/**
+ * context service field
+ */
+public class SimpleExpressionFieldOperationHandler implements FieldOperationHandler {
 
 
     private ContextService contextService;
@@ -15,7 +18,7 @@ public class SimpleExpressionFieldOperationHandler implements FieldOperationHand
 
     @Override
     public boolean require(IEntityField field, Object obj) {
-        return obj instanceof String && obj.toString().startsWith("{{") &&  obj.toString().endsWith("}}");
+        return obj instanceof String && obj.toString().startsWith("{{") && obj.toString().endsWith("}}");
     }
 
     @Override
@@ -35,26 +38,26 @@ public class SimpleExpressionFieldOperationHandler implements FieldOperationHand
         return null;
     }
 
-    private Object calculateValFromString(String key){
-        try{
+    private Object calculateValFromString(String key) {
+        try {
             ContextKeys.LongKeys longKey = ContextKeys.LongKeys.valueOf(key.toUpperCase());
             return contextService.get(longKey);
-        } catch (Exception ex){
+        } catch (Exception ex) {
 
         }
 
 
-        try{
+        try {
             ContextKeys.StringKeys stringKeys = ContextKeys.StringKeys.valueOf(key.toUpperCase());
             return contextService.get(stringKeys);
-        } catch (Exception ex){
+        } catch (Exception ex) {
 
         }
 
         return null;
     }
 
-    private String getKey(String obj){
-        return obj.substring(2, obj.length() -2 );
+    private String getKey(String obj) {
+        return obj.substring(2, obj.length() - 2);
     }
 }

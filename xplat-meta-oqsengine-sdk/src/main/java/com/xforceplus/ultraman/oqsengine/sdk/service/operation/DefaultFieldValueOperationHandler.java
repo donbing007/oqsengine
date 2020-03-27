@@ -16,7 +16,7 @@ public class DefaultFieldValueOperationHandler implements FieldOperationHandler 
 
         if ("ENUM".equals(type)) {
             if (!StringUtils.isEmpty(dictId) && !StringUtils.isEmpty(defaultValue)) {
-               return true;
+                return true;
             }
         } else if ("LONG".equals(type)) {
             if (!StringUtils.isEmpty(defaultValue)) {
@@ -28,7 +28,7 @@ public class DefaultFieldValueOperationHandler implements FieldOperationHandler 
 
     @Override
     public Object onCreate(IEntityField field, Object o) {
-        if(o == null){
+        if (o == null) {
             return field.defaultValue();
         }
         return o;

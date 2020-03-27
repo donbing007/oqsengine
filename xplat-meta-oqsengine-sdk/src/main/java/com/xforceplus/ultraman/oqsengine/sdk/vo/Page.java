@@ -13,6 +13,8 @@ import java.util.Objects;
  * 分页转换对象
  * @version 0.1 2020/2/13 15:30
  * @author wangzheng
+ * @param <T>
+ *
  * @since 1.8
  */
 public class Page<T> implements Externalizable, Cloneable {

@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.event;
 
 import java.util.Map;
 
+/**
+ * local entity deleted event
+ */
 public class EntityDeleted implements EntityEvent {
 
     private String code;

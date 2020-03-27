@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
+/**
+ * dict item
+ */
 public class DictItem {
 
     private String value;

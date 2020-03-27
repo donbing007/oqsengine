@@ -6,6 +6,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * some configuration
+ */
 @Configuration
 @ConditionalOnClass(name = "org.springframework.boot.context.properties.bind.Binder")
 @ConfigurationProperties(prefix = "xplat.meta.oqsengine")

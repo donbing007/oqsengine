@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
+/**
+ * field sort
+ */
 public class FieldSort {
 
     private String field;

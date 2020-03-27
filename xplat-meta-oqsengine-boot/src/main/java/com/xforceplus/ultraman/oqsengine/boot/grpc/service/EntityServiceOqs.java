@@ -21,12 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Map;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -36,6 +35,9 @@ import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.ofEmpt
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
 
+/**
+ * grpc server
+ */
 @Component
 public class EntityServiceOqs implements EntityServicePowerApi {
 
@@ -67,9 +69,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             return CompletableFuture.completedFuture(
                     OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                    .buildPartial());
+                            .setCode(OperationResult.Code.EXCEPTION)
+                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                            .buildPartial());
         }
     }
 
@@ -83,10 +85,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         try {
             IEntity entity = entityManagementService.build(toEntity(entityClass, in));
-            OperationResult.Builder builder= OperationResult.newBuilder()
+            OperationResult.Builder builder = OperationResult.newBuilder()
                     .addIds(entity.id());
 
-            if(entity.family() != null && entity.family().parent() > 0){
+            if (entity.family() != null && entity.family().parent() > 0) {
                 builder.addIds(entity.family().parent());
             }
 
@@ -116,9 +118,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
             if (ds.isPresent()) {
                 IEntity entity = null;
-                if(mode.filter("replace"::equals).isPresent()){
+                if (mode.filter("replace"::equals).isPresent()) {
                     entity = toEntity(entityClass, in);
-                }else{
+                } else {
                     entity = ds.get();
                     updateEntity(entity, toEntity(entityClass, in));
                 }
@@ -157,20 +159,20 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         OperationResult result;
 
-        try{
+        try {
             IEntityClass entityClass = toEntityClass(in);
 
             //find one
             Optional<IEntity> op = entitySearchService.selectOne(in.getObjId(), entityClass);
 
-            if(op.isPresent()){
+            if (op.isPresent()) {
                 IEntity entity = op.get();
                 entityManagementService.delete(entity);
                 result = OperationResult.newBuilder()
                         .setAffectedRow(1)
                         .setCode(OperationResult.Code.OK)
                         .buildPartial();
-            }else{
+            } else {
                 result = OperationResult.newBuilder()
                         .setAffectedRow(0)
                         .setCode(OperationResult.Code.OK)
@@ -202,14 +204,14 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
 
-            if(ds.isPresent()){
-                if(ds.get().family() != null && ds.get().family().parent() > 0 && entityClass.extendEntityClass() != null){
+            if (ds.isPresent()) {
+                if (ds.get().family() != null && ds.get().family().parent() > 0 && entityClass.extendEntityClass() != null) {
                     Optional<IEntity> parentDS = entitySearchService.selectOne(ds.get().family().parent(), entityClass.extendEntityClass());
 
                     Optional<IEntity> finalDs = ds;
                     parentDS.ifPresent(x ->
                             finalDs.ifPresent(y -> leftAppend(y, x)));
-                } else if(ds.get().family() != null && ds.get().family().child() > 0 &&  subEntityClass != null) {
+                } else if (ds.get().family() != null && ds.get().family().child() > 0 && subEntityClass != null) {
                     Optional<IEntity> childDs = entitySearchService.selectOne(ds.get().family().child(), subEntityClass);
 
                     Optional<IEntity> finalDs = ds;
@@ -260,7 +262,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             Page page = null;
 
             //add find in list
-            if(!in.getIdsList().isEmpty()){
+            if (!in.getIdsList().isEmpty()) {
 
                 List<Long> ids = in.getIdsList();
                 entities = entitySearchService.selectMultiple(ids.toArray(new Long[]{}), entityClass);
@@ -313,8 +315,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             //extend entities
             Map<Long, List<QueryFieldsUp>> mappedQueryFields = queryField.stream()
-                                                                .collect(Collectors.groupingBy(QueryFieldsUp::getEntityId));
-
+                    .collect(Collectors.groupingBy(QueryFieldsUp::getEntityId));
 
 
             Optional.ofNullable(entities).orElseGet(Collections::emptyList)
@@ -325,28 +326,28 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             Optional<IEntityClass> iEntityClassOp = getRelatedEntityClassById(entityClass, subEntityClassId);
                             Optional<IEntityField> relationFieldOp = findRelationField(entityClass, subEntityClassId);
 
-                            if(iEntityClassOp.isPresent() && relationFieldOp.isPresent()){
-                               Optional<IValue> subObjRelated = entity
-                                       .entityValue().getValue(relationFieldOp.get().id());
-                               if(subObjRelated.isPresent()){
-                                   try {
+                            if (iEntityClassOp.isPresent() && relationFieldOp.isPresent()) {
+                                Optional<IValue> subObjRelated = entity
+                                        .entityValue().getValue(relationFieldOp.get().id());
+                                if (subObjRelated.isPresent()) {
+                                    try {
 
-                                       IValue subId = subObjRelated.get();
-                                       //how to judge this is the primary key
-                                       if(subId instanceof LongValue){
+                                        IValue subId = subObjRelated.get();
+                                        //how to judge this is the primary key
+                                        if (subId instanceof LongValue) {
                                             //id
                                             Optional<IEntity> leftEntity = entitySearchService.selectOne(subId.valueToLong(), iEntityClassOp.get());
                                             leftEntity.ifPresent(left ->
                                                     leftAppend(entity, left));
 
-                                       }else{
-                                           logger.warn("not support now");
-                                       }
+                                        } else {
+                                            logger.warn("not support now");
+                                        }
 
-                                    }catch(Exception ex){
+                                    } catch (Exception ex) {
                                         logger.error("{}", ex);
                                     }
-                               }
+                                }
                             }
                         });
             });
@@ -370,26 +371,26 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return CompletableFuture.completedFuture(result);
     }
 
-    private Optional<IEntityClass> getRelatedEntityClassById(IEntityClass entityClass, long subEntityClassId){
+    private Optional<IEntityClass> getRelatedEntityClassById(IEntityClass entityClass, long subEntityClassId) {
         return entityClass.entityClasss().stream().filter(x -> x.id() == subEntityClassId).findFirst();
     }
 
     /**
-     *
      * @param entity
      * @param leftEntity
      */
-    private void leftAppend(IEntity entity, IEntity leftEntity){
+    private void leftAppend(IEntity entity, IEntity leftEntity) {
         entity.entityValue().addValues(leftEntity.entityValue().values());
     }
 
     /**
      * only one to one || many to one
+     *
      * @param entityClass
      * @param subEntityClassId
      * @return
      */
-    private Optional<IEntityField> findRelationField(IEntityClass entityClass, long subEntityClassId){
+    private Optional<IEntityField> findRelationField(IEntityClass entityClass, long subEntityClassId) {
         return entityClass.relations()
                 .stream()
                 .filter(rel -> ("onetoone".equalsIgnoreCase(rel.getRelationType())
@@ -446,12 +447,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return CompletableFuture.completedFuture(result);
     }
 
-    private Optional<Long> extractTransaction(Metadata metadata){
-        Optional<String> transactionId =  metadata.getText("transaction-id");
+    private Optional<Long> extractTransaction(Metadata metadata) {
+        Optional<String> transactionId = metadata.getText("transaction-id");
         return transactionId.map(Long::valueOf);
     }
 
-    private EntityUp toEntityUp(IEntity entity){
+    private EntityUp toEntityUp(IEntity entity) {
         EntityUp.Builder builder = EntityUp.newBuilder();
 
         builder.setObjId(entity.id());
@@ -461,7 +462,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return builder.build();
     }
 
-    private ValueUp toValueUp(IValue value){
+    private ValueUp toValueUp(IValue value) {
         //TODO format?
         IEntityField field = value.getField();
         return ValueUp.newBuilder()
@@ -472,16 +473,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 .build();
     }
 
-    private String toValueStr(IValue value){
+    private String toValueStr(IValue value) {
         String retVal
-         = Match(value)
-                .of( Case($(instanceOf(DateTimeValue.class)), x -> String.valueOf(x.valueToLong())),
+                = Match(value)
+                .of(Case($(instanceOf(DateTimeValue.class)), x -> String.valueOf(x.valueToLong())),
                         Case($(), IValue::valueToString));
         return retVal;
     }
 
     //TODO version
-    private IEntity toEntity(IEntityClass entityClass, EntityUp in){
+    private IEntity toEntity(IEntityClass entityClass, EntityUp in) {
         return new Entity(in.getObjId(), entityClass, toEntityValue(entityClass, in));
     }
 
@@ -491,22 +492,22 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     //To condition
-    private  Optional<Conditions> toConditions(IEntityClass entityClass, ConditionsUp conditionsUp){
+    private Optional<Conditions> toConditions(IEntityClass entityClass, ConditionsUp conditionsUp) {
 
-        Optional<Conditions> conditions =conditionsUp.getFieldsList().stream().map(x -> {
+        Optional<Conditions> conditions = conditionsUp.getFieldsList().stream().map(x -> {
             return toOneConditions(entityClass, x);
-        }).reduce((a,b) -> a.addOr(b, true));
+        }).reduce((a, b) -> a.addOr(b, true));
 
-       return conditions;
+        return conditions;
     }
 
     //TODO error handler
-    private Conditions toOneConditions(IEntityClass entityClass, FieldConditionUp fieldCondition){
+    private Conditions toOneConditions(IEntityClass entityClass, FieldConditionUp fieldCondition) {
 
         Optional<IEntityField> fieldOp = getFieldFromEntityClass(entityClass, fieldCondition.getField().getId());
         Conditions conditions = null;
 
-        if(fieldOp.isPresent()) {
+        if (fieldOp.isPresent()) {
             FieldConditionUp.Op op = fieldCondition.getOperation();
 
             //in order
@@ -517,7 +518,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .collect(Collectors.toList());
 
             //return if field with invalid
-            if(nonNullValueList.isEmpty()){
+            if (nonNullValueList.isEmpty()) {
                 conditions = Conditions.buildEmtpyConditions();
                 return conditions;
             }
@@ -527,7 +528,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.EQUALS
                             , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0))));
+                            , nonNullValueList.get(0))));
                     break;
                 case ne:
                     conditions = new Conditions(new Condition(fieldOp.get()
@@ -556,12 +557,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                         Condition right = new Condition(fieldOp.get()
                                 , ConditionOperator.MINOR_THAN_EQUALS
-                             , toTypedValue(fieldOp.get()
+                                , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(1)));
 
                         conditions = new Conditions(left).addAnd(right);
 
-                    }else{
+                    } else {
                         logger.warn("required value more then 2, fallback to ge");
                         conditions = new Conditions(new Condition(fieldOp.get()
                                 , ConditionOperator.GREATER_THAN_EQUALS
@@ -584,7 +585,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                         conditions = new Conditions(left).addAnd(right);
 
-                    }else{
+                    } else {
                         logger.warn("required value more then 2, fallback to gt");
                         conditions = new Conditions(new Condition(fieldOp.get()
                                 , ConditionOperator.GREATER_THAN
@@ -607,7 +608,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                         conditions = new Conditions(left).addAnd(right);
 
-                    }else{
+                    } else {
                         logger.warn("required value more then 2, fallback to ge");
                         conditions = new Conditions(new Condition(fieldOp.get()
                                 , ConditionOperator.GREATER_THAN_EQUALS
@@ -658,12 +659,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 //                    }
                     break;
                 case ni:
-                    if(nonNullValueList.size() == 1 ){
+                    if (nonNullValueList.size() == 1) {
                         conditions = new Conditions(new Condition(fieldOp.get()
                                 , ConditionOperator.NOT_EQUALS
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(0))));
-                    }else{
+                    } else {
                         conditions = new Conditions(new Condition(fieldOp.get()
                                 , ConditionOperator.NOT_EQUALS
                                 , toTypedValue(fieldOp.get()
@@ -693,11 +694,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     //TODO currently only id
-    private Optional<IEntityField> getFieldFromEntityClass(IEntityClass entityClass, Long id){
+    private Optional<IEntityField> getFieldFromEntityClass(IEntityClass entityClass, Long id) {
         return IEntityClassHelper.findFieldById(entityClass, id);
     }
 
-    private IEntityClass toRawEntityClass(EntityUp entityUp){
+    private IEntityClass toRawEntityClass(EntityUp entityUp) {
         return new EntityClass(
                 entityUp.getId()
                 , entityUp.getCode()
@@ -708,7 +709,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         );
     }
 
-    private IEntityValue toEntityValue(IEntityClass entityClass, EntityUp entityUp){
+    private IEntityValue toEntityValue(IEntityClass entityClass, EntityUp entityUp) {
         List<IValue> valueList = entityUp.getValuesList().stream()
                 .map(y -> {
                     return toTypedValue(entityClass, y.getFieldId(), y.getValue());
@@ -718,7 +719,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return entityValue;
     }
 
-    private IValue toTypedValue(IEntityField entityField, String value){
+    private IValue toTypedValue(IEntityField entityField, String value) {
         try {
             Objects.requireNonNull(value, "value值不能为空");
             Objects.requireNonNull(entityField, "field值不能为空");
@@ -747,69 +748,69 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     retValue = new StringValue(entityField, value);
             }
             return retValue;
-        }catch (Exception ex){
+        } catch (Exception ex) {
             logger.error("{}", ex);
             throw new RuntimeException("类型转换失败 " + ex.getMessage());
         }
     }
 
-    private IValue toTypedValue(IEntityClass entityClass, Long id, String value){
+    private IValue toTypedValue(IEntityClass entityClass, Long id, String value) {
         try {
             Objects.requireNonNull(value, "值不能为空");
             Optional<IEntityField> fieldOp = entityClass.field(id);
-            if(entityClass.extendEntityClass() != null && !fieldOp.isPresent()){
+            if (entityClass.extendEntityClass() != null && !fieldOp.isPresent()) {
                 fieldOp = entityClass.extendEntityClass().field(id);
             }
-            if(fieldOp.isPresent()) {
+            if (fieldOp.isPresent()) {
                 return toTypedValue(fieldOp.get(), value);
             } else {
                 logger.error("不存在对应的field id:{}", id);
                 return null;
             }
-        }catch (Exception ex){
+        } catch (Exception ex) {
             logger.error("{}", ex);
             throw new RuntimeException("类型转换失败 " + ex.getMessage());
         }
     }
 
     //TODO
-    private Field toEntityField(FieldUp fieldUp){
+    private Field toEntityField(FieldUp fieldUp) {
         return new Field(
-                  fieldUp.getId()
+                fieldUp.getId()
                 , fieldUp.getCode()
                 , FieldType.valueOf(fieldUp.getFieldType())
                 , FieldConfig.build()
-                    .searchable(ofEmptyStr(fieldUp.getSearchable())
-                            .map(Boolean::valueOf).orElse(false))
-                    .max(ofEmptyStr(fieldUp.getMaxLength())
-                            .map(String::valueOf)
-                            .map(Long::parseLong).orElse(-1L))
-                    .min(ofEmptyStr(fieldUp.getMinLength()).map(String::valueOf)
-                            .map(Long::parseLong).orElse(-1L))
-                    .precision(fieldUp.getPrecision())
-               );
+                .searchable(ofEmptyStr(fieldUp.getSearchable())
+                        .map(Boolean::valueOf).orElse(false))
+                .max(ofEmptyStr(fieldUp.getMaxLength())
+                        .map(String::valueOf)
+                        .map(Long::parseLong).orElse(-1L))
+                .min(ofEmptyStr(fieldUp.getMinLength()).map(String::valueOf)
+                        .map(Long::parseLong).orElse(-1L))
+                .precision(fieldUp.getPrecision())
+        );
     }
 
 
-    private Relation toEntityRelation(RelationUp relationUp){
+    private Relation toEntityRelation(RelationUp relationUp) {
         return new Relation(relationUp.getName()
-                         , relationUp.getRelatedEntityClassId()
-                         , relationUp.getRelationType()
-                         , relationUp.getIdentity()
-                         , toEntityField(relationUp.getEntityField()));
+                , relationUp.getRelatedEntityClassId()
+                , relationUp.getRelationType()
+                , relationUp.getIdentity()
+                , toEntityField(relationUp.getEntityField()));
     }
 
-    private IEntityClass getSubEntityClass(EntityUp entityUp){
+    private IEntityClass getSubEntityClass(EntityUp entityUp) {
         boolean hasSubClass = entityUp.hasField(EntityUp.getDescriptor().findFieldByNumber(EntityUp.SUBENTITYCLASS_FIELD_NUMBER));
 
-        if(hasSubClass){
+        if (hasSubClass) {
             return toEntityClass(entityUp.getSubEntityClass());
         }
 
         return null;
     }
 
-    private IEntityClass toEntityClass(EntityUp entityUp){
+    private IEntityClass toEntityClass(EntityUp entityUp) {
 
         boolean hasExtendedClass = entityUp.hasField(EntityUp.getDescriptor().findFieldByNumber(EntityUp.EXTENDENTITYCLASS_FIELD_NUMBER));
 
@@ -818,11 +819,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 entityUp.getId()
                 , entityUp.getCode()
                 , entityUp.getRelationList().stream()
-                    .map(this::toEntityRelation)
-                    .collect(Collectors.toList())
+                .map(this::toEntityRelation)
+                .collect(Collectors.toList())
                 , entityUp.getEntityClassesList().stream()
-                    .map(this::toRawEntityClass)
-                    .collect(Collectors.toList())
+                .map(this::toRawEntityClass)
+                .collect(Collectors.toList())
                 , hasExtendedClass ? toRawEntityClass(entityUp.getExtendEntityClass()) : null
                 , entityUp.getFieldsList().stream().map(this::toEntityField).collect(Collectors.toList())
         );

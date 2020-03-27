@@ -12,13 +12,15 @@ import io.vavr.control.Either;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ResolvableType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.AbstractController;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-
+/**
+ *
+ * @author admin
+ */
 @RequestMapping
 public class EntityController {
 
@@ -30,10 +32,10 @@ public class EntityController {
     @ResponseBody
     public Response<Map<String, Object>> singleQuery(
             @PathVariable String boId,
-            @PathVariable String id){
+            @PathVariable String id) {
 
         Either<String, Map<String, Object>> result = dispatcher.querySync(new SingleQueryCmd(boId, id)
-                , DefaultUiService.class,"singleQuery");
+                , DefaultUiService.class, "singleQuery");
 
         return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
             Response<Map<String, Object>> rep = new Response<>();
@@ -52,9 +54,9 @@ public class EntityController {
     @DeleteMapping("/bos/{boId}/entities/{id}")
     @ResponseBody
     public Response<String> singleDelete(
-        @PathVariable String boId,
-        @PathVariable String id
-    ){
+            @PathVariable String boId,
+            @PathVariable String id
+    ) {
 
         Either<String, Integer> result = dispatcher.querySync(new SingleDeleteCmd(boId, id)
                 , ResolvableType.forClassWithGenerics(Either.class, String.class, Integer.class));
@@ -77,24 +79,23 @@ public class EntityController {
     /**
      * 新增
      * request: {
-     *     url: '/api/{tenantId}/{appCode}/bos/{boid}/entities',
-     *     method: 'post'
-     *     body: {
-     *         key: value
-     *     }
-     *     response: {code:string, message:string}
+     * url: '/api/{tenantId}/{appCode}/bos/{boid}/entities',
+     * method: 'post'
+     * body: {
+     * key: value
      * }
-     *
+     * response: {code:string, message:string}
+     * }
      */
     @PostMapping("/bos/{boId}/entities")
     @ResponseBody
-    public Response<String> singleCreate( @PathVariable String boId,
-                                          @RequestBody Map<String, Object> body
-    ){
+    public Response<String> singleCreate(@PathVariable String boId,
+                                         @RequestBody Map<String, Object> body
+    ) {
 
         Either<String, Long> result = dispatcher
                 .querySync(new SingleCreateCmd(boId, body)
-                , DefaultUiService.class, "singleCreate");
+                        , DefaultUiService.class, "singleCreate");
 
         return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
             Response<String> rep = new Response<>();
@@ -122,10 +123,10 @@ public class EntityController {
 
     @PutMapping("/bos/{boId}/entities/{id}")
     @ResponseBody
-    public Response<String> singleModify( @PathVariable String boId,
-                                          @PathVariable Long id,
-                                          @RequestBody Map<String, Object> body
-    ){
+    public Response<String> singleModify(@PathVariable String boId,
+                                         @PathVariable Long id,
+                                         @RequestBody Map<String, Object> body
+    ) {
 
         Either<String, Integer> result = dispatcher.querySync(new SingleUpdateCmd(boId, id, body)
                 , ResolvableType.forClassWithGenerics(Either.class, String.class, Integer.class));
@@ -148,81 +149,81 @@ public class EntityController {
     /**
      * 条件查询
      * request: {
-     *     url: '/api/{tenantId}/{appCode}/bos/{boid}/entities',
-     *     method: 'post',
-     *     body: {
-     *         pageNo: number,
-     *         pageSize: number,
-     *         conditions: {
-     *             fields: [
-     *                 {
-     *                     code: string,
-     *                     operation: enum{equal, like, in, gteq&lteq, gteq&lt, gt&lteq, gt&lt, gt, gteq, lt, lteq},
-     *                     value: Array
-     *                 }
-     *             ],
-     *             entities: [
-     *                 {
-     *                     code: 'otherEntity',
-     *                     fields: [
-     *                         {
-     *                             code: string,
-     *                             operation: enum{equal, like, in, gteq&lteq, gteq&lt, gt&lteq, gt&lt, gt, gteq, lt, lteq},
-     *                             value: Array
-     *                         }
-     *                     ],
-     *                 }
-     *             ]
-     *         },
-     *         sort: [
-     *             {
-     *                 field: string,
-     *                 order: enum{asc, desc}
-     *             }
-     *         ],
-     *         entity: {
-     *             fields: ['id', 'name', 'field1', 'field2', 'field3'],
-     *             entities: [
-     *                 {
-     *                     code: 'otherEntity1',
-     *                     fields: ['name'],
-     *                 },
-     *                 {
-     *                     code: 'otherEntity2',
-     *                     fields: ['name'],
-     *                 },
-     *             ],
-     *         },
-     *     }
+     * url: '/api/{tenantId}/{appCode}/bos/{boid}/entities',
+     * method: 'post',
+     * body: {
+     * pageNo: number,
+     * pageSize: number,
+     * conditions: {
+     * fields: [
+     * {
+     * code: string,
+     * operation: enum{equal, like, in, gteq&lteq, gteq&lt, gt&lteq, gt&lt, gt, gteq, lt, lteq},
+     * value: Array
+     * }
+     * ],
+     * entities: [
+     * {
+     * code: 'otherEntity',
+     * fields: [
+     * {
+     * code: string,
+     * operation: enum{equal, like, in, gteq&lteq, gteq&lt, gt&lteq, gt&lt, gt, gteq, lt, lteq},
+     * value: Array
+     * }
+     * ],
+     * }
+     * ]
+     * },
+     * sort: [
+     * {
+     * field: string,
+     * order: enum{asc, desc}
+     * }
+     * ],
+     * entity: {
+     * fields: ['id', 'name', 'field1', 'field2', 'field3'],
+     * entities: [
+     * {
+     * code: 'otherEntity1',
+     * fields: ['name'],
+     * },
+     * {
+     * code: 'otherEntity2',
+     * fields: ['name'],
+     * },
+     * ],
+     * },
+     * }
      * }
      * response: {
-     *     code: string,
-     *     message: string,
-     *     result: {
-     *         rows: [
-     *             {key(${EntityCode.FieldCode}): value}
-     *         ],
-     *         summary: {
-     *             total: 100,
-     *         },
-     *     }
+     * code: string,
+     * message: string,
+     * result: {
+     * rows: [
+     * {key(${EntityCode.FieldCode}): value}
+     * ],
+     * summary: {
+     * total: 100,
+     * },
+     * }
      * }
      */
 
     @PostMapping("/bos/{boId}/entities/query")
     @ResponseBody
     public Response<RowItem<Map<String, Object>>> conditionQuery(@PathVariable String boId,
-                                                                 @RequestBody ConditionQueryRequest condition){
+                                                                 @RequestBody ConditionQueryRequest condition) {
 
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> result =
                 dispatcher.querySync(new ConditionSearchCmd(boId, condition)
                         , DefaultUiService.class, "conditionSearch");
-        return  extractRepList(Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")));
+        return extractRepList(Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")));
     }
 
-    private <T> Response<RowItem<T>> extractRepList(Either<String, Tuple2<Integer, List<T>>> result){
+    private <T> Response<RowItem<T>> extractRepList(Either<String, Tuple2<Integer, List<T>>> result) {
         Response rep = new Response();
-        if(result.isRight()){
+        if (result.isRight()) {
             rep.setCode("1");
             Tuple2<Integer, List<T>> tuple = result.get();
             RowItem<T> rowItem = new RowItem<>();
@@ -231,7 +232,7 @@ public class EntityController {
             rep.setResult(rowItem);
             rep.setMessage("操作成功");
             return rep;
-        }else{
+        } else {
             rep.setCode("-1");
             rep.setMessage(result.getLeft());
             return rep;

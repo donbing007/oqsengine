@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * @author admin
+ */
 @RequestMapping
 public class DictController {
 
@@ -25,22 +28,22 @@ public class DictController {
     @ResponseBody
     public Response<ResponseList<DictItem>> getDict(@PathVariable("id") String enumId
             , @RequestParam(required = false) String enumCode
-    ){
+    ) {
         DataSet ds = null;
         List<Row> rows = new ArrayList<Row>();
-        if(StringUtils.isEmpty(enumCode)) {
+        if (StringUtils.isEmpty(enumCode)) {
             ds = store.query().selectAll()
                     .where("publishDictId")
                     .eq(enumId).execute();
             rows = ds.toRows();
 
-            if (!(rows!=null && rows.size() > 0)){
+            if (!(rows != null && rows.size() > 0)) {
                 ds = store.query().selectAll()
                         .where("dictId")
                         .eq(enumId).execute();
                 rows = ds.toRows();
             }
-        }else{
+        } else {
             ds = store.query().selectAll()
                     .where("publishDictId")
                     .eq(enumId)
@@ -48,7 +51,7 @@ public class DictController {
                     .execute();
             rows = ds.toRows();
 
-            if (!(rows!=null && rows.size() > 0)) {
+            if (!(rows != null && rows.size() > 0)) {
                 ds = store.query().selectAll()
                         .where("dictId")
                         .eq(enumId)
@@ -69,7 +72,7 @@ public class DictController {
         return response;
     }
 
-    private  DictItem toDictItem(Row row){
+    private DictItem toDictItem(Row row) {
         DictItem dictItem = new DictItem();
         dictItem.setText(RowUtils.getRowValue(row, "name").map(Object::toString).orElse(""));
         dictItem.setValue(RowUtils.getRowValue(row, "code").map(Object::toString).orElse(""));

@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
 import java.util.List;
 
+/**
+ * entity Item
+ */
 public class EntityItem {
 
     List<String> fields;

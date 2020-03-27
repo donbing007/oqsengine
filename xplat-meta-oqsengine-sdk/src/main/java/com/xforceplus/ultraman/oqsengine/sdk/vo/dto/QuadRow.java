@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
+/**
+ * row for id code name and desc
+ */
 public class QuadRow {
 
     private String id;

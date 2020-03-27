@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
+/**
+ * ult page boitem
+ */
 public class UltPageBoItem {
     /**
      * 配置的id

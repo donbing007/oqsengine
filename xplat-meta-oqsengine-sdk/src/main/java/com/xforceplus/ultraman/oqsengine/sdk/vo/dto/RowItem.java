@@ -2,6 +2,10 @@ package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
 import java.util.List;
 
+/**
+ * row item
+ * @param <T>
+ */
 public class RowItem<T> implements ResponseItem{
 
     private List<T> rows;
