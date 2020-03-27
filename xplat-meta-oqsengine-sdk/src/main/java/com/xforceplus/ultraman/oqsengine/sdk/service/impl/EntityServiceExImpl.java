@@ -9,11 +9,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
+import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaFieldDefaultHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
+import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
@@ -59,6 +61,9 @@ public class EntityServiceExImpl implements EntityServiceEx {
     private EntityMetaFieldDefaultHandler entityMetaFieldDefaultHandler;
 
     @Autowired
+    private HandleValueService handleValueService;
+
+    @Autowired
     private ApplicationEventPublisher publisher;
 
     @Override
@@ -73,16 +78,18 @@ public class EntityServiceExImpl implements EntityServiceEx {
 
         //处理系统字段的逻辑-add by wz
 
-        if(entityClass.extendEntityClass() != null) {
-            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
-        }else{
-            body = entityMetaHandler.insertFill(entityClass,body);
-        }
-        //添加字段默认值
-        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
+//        if(entityClass.extendEntityClass() != null) {
+//            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
+//        }else{
+//            body = entityMetaHandler.insertFill(entityClass,body);
+//        }
+//        //添加字段默认值
+//        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
+
+        List<ValueUp> valueUps = handleValueService.handlerValue(entityClass, body, "create");
 
         OperationResult createResult = buildBuilder
-                .invoke(toEntityUp(entityClass, null, body))
+                .invoke(toEntityUp(entityClass, null, valueUps))
                 .toCompletableFuture().join();
 
         if(createResult.getCode() == OperationResult.Code.OK){

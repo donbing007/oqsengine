@@ -68,11 +68,23 @@
             <artifactId>xplat-core-framework</artifactId>
             <groupId>com.xforceplus.xplat-galaxy</groupId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.xforceplus.xplat</groupId>
+                    <artifactId>xplat-logger</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.9</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
@@ -91,8 +103,6 @@
             </plugin>
         </plugins>
     </build>
-
-
 
     <dependencyManagement>
         <dependencies>

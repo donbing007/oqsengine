@@ -16,8 +16,14 @@ import com.xforceplus.ultraman.oqsengine.sdk.interceptor.DefaultSearchIntercepto
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.MatchRouter;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
+import com.xforceplus.ultraman.oqsengine.sdk.service.impl.DefaultHandleValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.EntityServiceExImpl;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.EntityServiceImpl;
+import com.xforceplus.ultraman.oqsengine.sdk.service.operation.*;
+import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.FieldValidator;
+import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.RegxValidator;
+import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.RequiredValidator;
+import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.TypeCheckValidator;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.DictMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
@@ -181,6 +187,51 @@ public class InitServiceAutoConfiguration {
     @Bean
     public EntityMetaFieldDefaultHandler entityMetaFieldDefaultHandler(){
         return new EntityMetaFieldDefaultHandler();
+    }
+
+
+    //----------------------------init for operation and validator
+
+    @Bean
+    public FieldValidator regex(){
+        return new RegxValidator();
+    }
+
+    @Bean
+    public FieldValidator required(){
+        return new RequiredValidator();
+    }
+
+    @Bean
+    public FieldValidator typedCheck(){
+        return new TypeCheckValidator();
+    }
+
+    @Bean
+    public FieldOperationHandler defaultField(){
+        return new DefaultFieldOperationHandler();
+    }
+
+
+    @Bean
+    public FieldOperationHandler defaultValueField(){
+        return new DefaultFieldValueOperationHandler();
+    }
+
+    @Bean
+    public FieldOperationHandler defaultSystemField(ContextService contextService){
+        return new FixedDefaultSystemOperationHandler(contextService);
+    }
+
+    @Bean
+    public FieldOperationHandler simpleExpressionFieldOperationHandler(ContextService contextService){
+        return new SimpleExpressionFieldOperationHandler(contextService);
+    }
+
+
+    @Bean
+    public DefaultHandleValueService defaultHandleValueService(){
+        return new DefaultHandleValueService();
     }
 
 

@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaFieldDefaultHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
@@ -46,12 +47,14 @@ public class EntityServiceImpl implements EntityService {
     @Autowired
     private ApplicationEventPublisher publisher;
 
+    @Autowired
+    private HandleValueService handlerValueService;
+
     public EntityServiceImpl(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
         this.metadataRepository = metadataRepository;
         this.entityServiceClient = entityServiceClient;
         this.contextService = contextService;
     }
-
 
     @Override
     public Optional<EntityClass> load(String boId){
@@ -62,7 +65,6 @@ public class EntityServiceImpl implements EntityService {
         return metadataRepository.load(tenantId, appCode, boId);
     }
 
-    @Override
     public Optional<EntityClass> loadByCode(String bocode) {
         String tenantId = contextService.get(TENANTID_KEY);
         String appCode  = contextService.get(APPCODE);
@@ -171,24 +173,6 @@ public class EntityServiceImpl implements EntityService {
         return map;
     }
 
-    private EntityDeleted buildDeleteEvent(EntityClass entityClass, Long id){
-        String code = entityClass.code();
-        Map<String, String> context = getContext();
-        return new EntityDeleted(code, id, context);
-    }
-
-    private EntityCreated buildCreatedEvent(EntityClass entityClass, Long id, Map<String, Object> data){
-        String code = entityClass.code();
-        Map<String, String> context = getContext();
-        return new EntityCreated(code, id, data, context);
-    }
-
-    private EntityUpdated buildUpdatedEvent(EntityClass entityClass, Long id, Map<String, Object> data){
-        String code = entityClass.code();
-        Map<String, String> context = getContext();
-        return new EntityUpdated(code, id, data, context);
-    }
-
     @Override
     public Either<String, Integer> updateById(EntityClass entityClass, Long id, Map<String, Object> body){
 
@@ -198,10 +182,12 @@ public class EntityServiceImpl implements EntityService {
             replaceBuilder.addHeader("transaction-id", transId);
         }
         //处理系统字段的逻辑-add by wz
-        body = entityMetaHandler.updateFill(entityClass,body);
+//        body = entityMetaHandler.updateFill(entityClass,body);
+
+        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, "update");
 
         OperationResult updateResult = entityServiceClient.replace()
-                .invoke(toEntityUp(entityClass, id, body))
+                .invoke(toEntityUp(entityClass, id, valueUps))
                 .toCompletableFuture().join();
 
         if(updateResult.getCode() == OperationResult.Code.OK){
@@ -218,6 +204,7 @@ public class EntityServiceImpl implements EntityService {
         }
     }
 
+
     @Override
     public Either<String, Integer> replaceById(EntityClass entityClass, Long id, Map<String, Object> body) {
         String transId = contextService.get(TRANSACTION_KEY);
@@ -225,13 +212,16 @@ public class EntityServiceImpl implements EntityService {
         if(transId != null){
             replaceBuilder.addHeader("transaction-id", transId);
         }
-        //处理系统字段的逻辑-add by wz
-        body = entityMetaHandler.updateFill(entityClass,body);
 
         replaceBuilder.addHeader("mode", "replace");
 
+        //处理系统字段的逻辑-add by wz
+//        body = entityMetaHandler.updateFill(entityClass,body);
+
+        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, "update");
+
         OperationResult updateResult = entityServiceClient.replace()
-                .invoke(toEntityUp(entityClass, id, body))
+                .invoke(toEntityUp(entityClass, id, valueUps))
                 .toCompletableFuture().join();
 
         if(updateResult.getCode() == OperationResult.Code.OK){
@@ -298,17 +288,21 @@ public class EntityServiceImpl implements EntityService {
         if(transId != null){
             buildBuilder.addHeader("transaction-id", transId);
         }
-        //处理系统字段的逻辑-add by wz
-        if(entityClass.extendEntityClass() != null) {
-            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
-        }else{
-            body = entityMetaHandler.insertFill(entityClass, body);
-        }
-        //添加字段默认值
-        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
+
+//        //处理系统字段的逻辑-add by wz
+//        if(entityClass.extendEntityClass() != null) {
+//            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
+//        }else{
+//            body = entityMetaHandler.insertFill(entityClass, body);
+//        }
+//
+//        //添加字段默认值
+//        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
+
+        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, "create");
 
         OperationResult createResult = buildBuilder
-                .invoke(toEntityUp(entityClass, null, body))
+                .invoke(toEntityUp(entityClass, null, valueUps))
                 .toCompletableFuture().join();
 
         if(createResult.getCode() == OperationResult.Code.OK){
@@ -357,5 +351,30 @@ public class EntityServiceImpl implements EntityService {
         String appCode  = contextService.get(APPCODE);
 
         return metadataRepository.findSubEntitiesByCode(tenantId, appCode, bocode);
+    }
+
+    /**
+     * TODO move to another file
+     * event related
+     * @param entityClass
+     * @param id
+     * @return
+     */
+    private EntityDeleted buildDeleteEvent(EntityClass entityClass, Long id){
+        String code = entityClass.code();
+        Map<String, String> context = getContext();
+        return new EntityDeleted(code, id, context);
+    }
+
+    private EntityCreated buildCreatedEvent(EntityClass entityClass, Long id, Map<String, Object> data){
+        String code = entityClass.code();
+        Map<String, String> context = getContext();
+        return new EntityCreated(code, id, data, context);
+    }
+
+    private EntityUpdated buildUpdatedEvent(EntityClass entityClass, Long id, Map<String, Object> data){
+        String code = entityClass.code();
+        Map<String, String> context = getContext();
+        return new EntityUpdated(code, id, data, context);
     }
 }

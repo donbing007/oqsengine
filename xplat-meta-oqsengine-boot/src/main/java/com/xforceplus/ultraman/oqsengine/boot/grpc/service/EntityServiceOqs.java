@@ -63,7 +63,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setCode(OperationResult.Code.OK)
                     .setTransactionResult(String.valueOf(transId)).buildPartial());
         } catch (Exception e) {
-            e.printStackTrace();
             logger.error("{}", e);
 
             return CompletableFuture.completedFuture(
