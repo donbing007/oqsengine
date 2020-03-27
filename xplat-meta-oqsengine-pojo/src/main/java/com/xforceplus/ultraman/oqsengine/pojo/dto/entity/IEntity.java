@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 /**
- * entity 实体定义.
+ * Entity实体定义.
+ * @author wangzheng
+ * @version 1.0 2020/3/26 15:10
  */
 public interface IEntity extends Cloneable {
 

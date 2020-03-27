@@ -6,7 +6,9 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * 表示实际 entity 实体.
+ * Entity实体定义.
+ * @author wangzheng
+ * @version 1.0 2020/3/26 15:10
  */
 public class Entity implements IEntity, Serializable {
 
@@ -105,7 +107,7 @@ public class Entity implements IEntity, Serializable {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        return new Entity(id(),entityClass(), (IEntityValue) entityValue().clone(), family(), version());
+        return new Entity(id(), entityClass(), (IEntityValue) entityValue().clone(), family(), version());
     }
 
     @Override

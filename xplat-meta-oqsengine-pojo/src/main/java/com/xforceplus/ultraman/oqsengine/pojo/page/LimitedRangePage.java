@@ -16,9 +16,7 @@ import java.io.ObjectOutput;
  * @version 1.00 2010-12-20
  * @since 1.5
  */
-public class LimitedRangePage
-        extends Page
-        implements Externalizable, Cloneable {
+public class LimitedRangePage extends Page implements Externalizable, Cloneable {
 
     private static final long serialVersionUID = 9022842831962237841L;
     /**
@@ -44,22 +42,22 @@ public class LimitedRangePage
      * 构造分页对象,每次返回的分页行号都会限制在左(包含),右(包含)行号内.
      * 如果限定的开始行号等于1,结束行号等于分页大小那么将退化成原始的标准分页对象.
      *
-     * @param index 当前页号.
+     * @param index    当前页号.
      * @param pageSize 页面大小.
-     * @param rangeL 页面中的开始最小行号.从1开始.
-     * @param rangeR 页面中的结束最大行号.从1开始.
+     * @param rangeL   页面中的开始最小行号.从1开始.
+     * @param rangeR   页面中的结束最大行号.从1开始.
      */
     public LimitedRangePage(long index, long pageSize, long rangeL, long rangeR) {
         super(index, pageSize);
         if (rangeL <= 0 || rangeR <= 0) {
             throw new IllegalArgumentException(
                     "Range of data errors, line "
-                    + "number limit is not less than about 1.");
+                            + "number limit is not less than about 1.");
         }
         if (rangeL > rangeR) {
             throw new IllegalArgumentException(
                     "Range of data errors, the left can not be equal to the "
-                    + "right of the line number line number.");
+                            + "right of the line number line number.");
         }
         _rangeL = rangeL;
         _rangeR = rangeR;
@@ -67,6 +65,7 @@ public class LimitedRangePage
 
     /**
      * 返回当前页,并限制了此页中的上下限数据.
+     *
      * @return 数据范围.
      */
     @Override
@@ -80,6 +79,7 @@ public class LimitedRangePage
 
     /**
      * 指定页的指定范围的列表行数开始和结束..
+     *
      * @param appointPageIndex 指定的页数.
      * @return 列表数据范围.
      */
@@ -94,6 +94,7 @@ public class LimitedRangePage
 
     /**
      * 限制返回结果的行号范围.
+     *
      * @param scope 原始范围.
      * @return 新的范围.
      */
@@ -117,13 +118,14 @@ public class LimitedRangePage
 
     /**
      * 在超类的基础上再读取左右限制行号.
+     *
      * @param in 左右行号.
-     * @throws IOException I/O异常.
+     * @throws IOException            I/O异常.
      * @throws ClassNotFoundException 类找不到.
      */
     @Override
     public void readExternal(ObjectInput in)
-            throws IOException,ClassNotFoundException {
+            throws IOException, ClassNotFoundException {
         super.readExternal(in);
         _rangeL = in.readLong();
         _rangeR = in.readLong();
@@ -131,6 +133,7 @@ public class LimitedRangePage
 
     /**
      * 在超类的基础上再写入左右限制行号.
+     *
      * @param out 输出流.
      * @throws IOException I/O异常.
      */
@@ -143,8 +146,9 @@ public class LimitedRangePage
 
     /**
      * 比较两个对象是否相等.除了超类的检查外还包含取的行数范围是否相等.
+     *
      * @param obj 需要比较的对象.
-     * @return true相等,false不相等.
+     * @return true相等, false不相等.
      */
     @Override
     public boolean equals(Object obj) {
@@ -163,6 +167,7 @@ public class LimitedRangePage
 
     /**
      * 生成哈希码.
+     *
      * @return 哈希码.
      */
     @Override

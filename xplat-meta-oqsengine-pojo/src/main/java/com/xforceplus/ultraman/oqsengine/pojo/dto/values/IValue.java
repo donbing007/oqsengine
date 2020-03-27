@@ -4,7 +4,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 /**
  * 表示一个 entity 的属性值.
- * @param <T> 实际类型.
+ * @author wangzheng dongbin
+ * @version 0.1 2020/2/18 20:54
+ * @since 1.8
+ *  @param <T> 实际类型.
  */
 public interface IValue<T> {
 

@@ -8,17 +8,32 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
  */
 public class ValueConditionNode extends ConditionNode {
 
+    /**
+     * 条件设置
+     */
     private Condition condition;
 
+    /**
+     * 构造方法
+     * @param condition
+     */
     public ValueConditionNode(Condition condition) {
         super(null, null);
         this.condition = condition;
     }
 
+    /**
+     * 获取条件信息
+     * @return
+     */
     public Condition getCondition() {
         return condition;
     }
 
+    /**
+     * toString方法
+     * @return
+     */
     @Override
     public String toString() {
         if (isClosed()) {
