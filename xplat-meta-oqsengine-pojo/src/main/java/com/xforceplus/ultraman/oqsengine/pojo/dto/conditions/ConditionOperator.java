@@ -34,14 +34,14 @@ public enum ConditionOperator {
     GREATER_THAN_EQUALS(">="),
 
     /**
-     * 大于.
+     * 小于.
      */
-    MINOR_THAN("<"),
+    LESS_THAN("<"),
 
     /**
      * 小于等于.
      */
-    MINOR_THAN_EQUALS("<="),
+    LESS_THAN_EQUALS("<="),
 
     /**
      * 等于多个值.

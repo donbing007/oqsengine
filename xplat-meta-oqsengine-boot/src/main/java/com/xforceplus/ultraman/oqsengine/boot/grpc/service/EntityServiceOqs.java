@@ -21,12 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Map;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -556,7 +555,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 , nonNullValueList.get(0)));
 
                         Condition right = new Condition(fieldOp.get()
-                                , ConditionOperator.MINOR_THAN_EQUALS
+                            , ConditionOperator.LESS_THAN_EQUALS
                              , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(1)));
 
@@ -578,7 +577,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 , nonNullValueList.get(0)));
 
                         Condition right = new Condition(fieldOp.get()
-                                , ConditionOperator.MINOR_THAN_EQUALS
+                            , ConditionOperator.LESS_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(1)));
 
@@ -601,7 +600,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 , nonNullValueList.get(0)));
 
                         Condition right = new Condition(fieldOp.get()
-                                , ConditionOperator.MINOR_THAN
+                            , ConditionOperator.LESS_THAN
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(1)));
 
@@ -618,13 +617,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     break;
                 case le:
                     conditions = new Conditions(new Condition(fieldOp.get()
-                            , ConditionOperator.MINOR_THAN_EQUALS
+                        , ConditionOperator.LESS_THAN_EQUALS
                             , toTypedValue(fieldOp.get()
                             , nonNullValueList.get(0))));
                     break;
                 case lt:
                     conditions = new Conditions(new Condition(fieldOp.get()
-                            , ConditionOperator.MINOR_THAN
+                        , ConditionOperator.LESS_THAN
                             , toTypedValue(fieldOp.get()
                             , nonNullValueList.get(0))));
                     break;

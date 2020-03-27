@@ -4,13 +4,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.SphinxQLConditionQueryBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.SphinxQLConditionQueryBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
-import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 
@@ -25,6 +24,8 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
 
     private StorageStrategyFactory storageStrategyFactory;
 
+    private SphinxQLConditionQueryBuilderFactory conditionQueryBuilderFactory;
+
     /**
      * 没有 or 只有 and 不需要关注连接符.
      */
@@ -32,89 +33,75 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
     public String build(Conditions conditions) {
 
         StringBuilder idBuff = new StringBuilder();
-        StringBuilder attribute = new StringBuilder();
-        attribute.append("MATCH('@").append(FieldDefine.FULL_FIELDS).append(" ");
+        StringBuilder buff = new StringBuilder();
+        buff.append("MATCH('@").append(FieldDefine.FULL_FIELDS).append(" ");
         // 用以判断是否还没有条件,方便条件之间的空格.
-        int emtpyLen = attribute.length();
+        int idEmptyLen = idBuff.length();
+        int emtpyLen = buff.length();
         boolean allNegative = true;
+        SphinxQLConditionQueryBuilder conditionQueryBuilder;
 
         for (ConditionNode node : conditions.collection()) {
             if (Conditions.isValueNode(node)) {
                 Condition condition = ((ValueConditionNode) node).getCondition();
 
-                IValue logicValue = condition.getValue();
-                StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(logicValue.getField().type());
-                StorageValue storageValue = storageStrategy.toStorageValue(logicValue);
-
                 if (condition.getField().config().isIdentifie()) {
+                    conditionQueryBuilder = conditionQueryBuilderFactory.getQueryBuilder(condition, false);
 
-                    // 主键查询.
-                    idBuff.append("id ");
-                    switch(condition.getOperator()) {
-                        case EQUALS:
-                        case NOT_EQUALS: {
-                            idBuff.append(condition.getOperator().getSymbol());
-                            break;
-                        }
-                        default:
-                            throw new IllegalStateException("Id search can only use eq or not_eq.");
+                    if (idBuff.length() > idEmptyLen) {
+                        idBuff.append(" ").append(SqlKeywordDefine.AND).append(" ");
                     }
-                        idBuff.append(" ").append(storageValue.value());
+                    idBuff.append(conditionQueryBuilder.build(condition));
 
                 } else {
-
-                    while (storageValue != null) {
-                        if (attribute.length() > emtpyLen) {
-                            attribute.append(" ");
+                    conditionQueryBuilder = conditionQueryBuilderFactory.getQueryBuilder(condition, true);
+                    if (buff.length() > emtpyLen) {
+                        buff.append(" ");
+                    }
+                    buff.append(conditionQueryBuilder.build(condition));
+                    switch (condition.getOperator()) {
+                        case EQUALS:
+                        case MULTIPLE_EQUALS:
+                        case LIKE: {
+                            allNegative = false;
+                            break;
                         }
-
-                        switch (condition.getOperator()) {
-                            case EQUALS: {
-                                attribute.append("=");
-                                allNegative = false;
-                                break;
-                            }
-                            case NOT_EQUALS: {
-                                attribute.append("-");
-                                break;
-                            }
-                            case LIKE: {
-                                allNegative = false;
-                            }
+                        case NOT_EQUALS: {
+                            break;
                         }
-
-                        attribute.append(SphinxQLHelper.encodeFullText(storageValue));
-
-
-                        // 多值可能
-                        storageValue = storageValue.next();
-
                     }
                 }
+
+
             }
         }
 
         //判断是否都是不等于条件,是的话需要补充所有字段才能成立排除.
         // -F123 =Sg 表示从所有字段中排除掉 F123.
         if (allNegative) {
-            attribute.append(" =").append(SphinxQLHelper.ALL_DATA_FULL_TEXT);
+            buff.append(" =").append(SphinxQLHelper.ALL_DATA_FULL_TEXT);
         }
-        attribute.append("')");
+        buff.append("')");
 
         if (idBuff.length() > 0) {
-            attribute.append(" ").append(SqlKeywordDefine.AND).append(" ").append(idBuff.toString());
+            buff.append(" ").append(SqlKeywordDefine.AND).append(" ").append(idBuff.toString());
         }
 
-        return attribute.toString();
+        return buff.toString();
     }
 
     @Override
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
+
+        this.conditionQueryBuilderFactory = new SphinxQLConditionQueryBuilderFactory(this.storageStrategyFactory);
     }
 
     public StorageStrategyFactory getStorageStrategyFactory() {
         return storageStrategyFactory;
     }
 
+    public SphinxQLConditionQueryBuilderFactory getConditionQueryBuilderFactory() {
+        return conditionQueryBuilderFactory;
+    }
 }

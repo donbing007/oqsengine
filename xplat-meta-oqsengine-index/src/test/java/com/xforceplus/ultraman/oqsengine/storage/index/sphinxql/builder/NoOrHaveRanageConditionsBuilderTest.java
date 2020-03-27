@@ -97,8 +97,8 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new DecimalValue(new Field(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
                     )
                 ),
-                FieldDefine.JSON_FIELDS + ".3L0 >= 123 "
-                    + SqlKeywordDefine.AND + " " + FieldDefine.JSON_FIELDS + ".3L1 > 56789"
+                "(" + FieldDefine.JSON_FIELDS + ".3L0 >= 123 "
+                    + SqlKeywordDefine.AND + " " + FieldDefine.JSON_FIELDS + ".3L1 > 56789)"
             )
             ,
             new Case(
@@ -115,9 +115,28 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test*")
                     )
                 ),
-                FieldDefine.JSON_FIELDS + ".3L0 >= 123 " + SqlKeywordDefine.AND + " " +
-                    FieldDefine.JSON_FIELDS + ".3L1 > 56789 " + SqlKeywordDefine.AND + " " +
+                "(" + FieldDefine.JSON_FIELDS + ".3L0 >= 123 " + SqlKeywordDefine.AND + " " +
+                    FieldDefine.JSON_FIELDS + ".3L1 > 56789) " + SqlKeywordDefine.AND + " " +
                     "MATCH('@" + FieldDefine.FULL_FIELDS + " F2Stest*')"
+            )
+            ,
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            new Field(1, "c1", FieldType.STRING),
+                            ConditionOperator.MULTIPLE_EQUALS,
+                            new StringValue(new Field(1, "c1", FieldType.STRING), "v1"),
+                            new StringValue(new Field(1, "c1", FieldType.STRING), "v2")
+                        )
+                    ).addAnd(
+                    new Condition(
+                        new Field(2, "c2", FieldType.STRING),
+                        ConditionOperator.EQUALS,
+                        new StringValue(new Field(2, "c2", FieldType.STRING), "v3")
+                    )
+                ),
+                "MATCH('@" + FieldDefine.FULL_FIELDS + " (=F1Sv1 | =F1Sv2) =F2Sv3')"
             )
             ,
             new Case(
@@ -142,10 +161,10 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new LongValue(new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 3L)
                     )
                 ),
-                FieldDefine.JSON_FIELDS + ".3L0 >= 123 " + SqlKeywordDefine.AND + " " +
-                    FieldDefine.JSON_FIELDS + ".3L1 > 56789 " + SqlKeywordDefine.AND + " " +
-                    "id IN (1,2,3) " + SqlKeywordDefine.AND + " " +
-                    "MATCH('@" + FieldDefine.FULL_FIELDS + " F2Stest*')"
+                "(" + FieldDefine.JSON_FIELDS + ".3L0 >= 123 " + SqlKeywordDefine.AND + " " +
+                    FieldDefine.JSON_FIELDS + ".3L1 > 56789) " + SqlKeywordDefine.AND + " " +
+                    "MATCH('@" + FieldDefine.FULL_FIELDS + " F2Stest*') " +
+                    SqlKeywordDefine.AND + " id IN (1,2,3)"
             )
         );
     }

@@ -50,6 +50,7 @@ public class NoOrNoRanageConditionsBuilderTest {
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
         builder.setStorageStrategy(storageStrategyFactory);
 
+
         buildCase().stream().forEach(c -> {
             String where = builder.build(c.conditions);
             Assert.assertEquals(c.expected, where);
@@ -111,7 +112,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                     new Condition(
                         new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
                         ConditionOperator.EQUALS,
-                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L)))
+                        new LongValue(new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 100L)))
                     .addAnd(new Condition(
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
@@ -123,8 +124,22 @@ public class NoOrNoRanageConditionsBuilderTest {
                     new Condition(
                         new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
                         ConditionOperator.EQUALS,
-                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L))),
+                        new LongValue(new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 100L))),
                 "MATCH('@fullfields  =Sg') AND id = 100"
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        ConditionOperator.EQUALS,
+                        new LongValue(new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 100L))
+                ).addAnd(
+                    new Condition(
+                        new Field(2, "c2", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        ConditionOperator.EQUALS,
+                        new LongValue(new Field(2, "c2", FieldType.LONG, FieldConfig.build().identifie(true)), 200L))
+                ),
+                "MATCH('@fullfields  =Sg') AND id = 100 AND id = 200"
             ),
             new Case(
                 new Conditions(

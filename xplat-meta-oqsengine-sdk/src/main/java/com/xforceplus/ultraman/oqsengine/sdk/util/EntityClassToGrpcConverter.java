@@ -1,8 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.sdk.util;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
@@ -13,7 +14,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.*;
-import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Conditions;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.springframework.util.StringUtils;
@@ -21,7 +21,6 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.combine;
 import static com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Op.*;
@@ -323,10 +322,10 @@ public class EntityClassToGrpcConverter {
             case NOT_EQUALS:
                 op = ne;
                 break;
-            case MINOR_THAN_EQUALS:
+            case LESS_THAN_EQUALS:
                 op = le;
                 break;
-            case MINOR_THAN:
+            case LESS_THAN:
                 op = lt;
                 break;
             default:
