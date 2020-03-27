@@ -10,6 +10,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
  */
 public class EnumValue extends AbstractValue<String> {
 
+    /**
+     * 多个值之间的分隔符.
+     */
+    public static final String DELIMITER = ",";
+
     public EnumValue(IEntityField field, String value) {
         super(field, value);
     }

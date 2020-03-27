@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -20,11 +21,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.BoolStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.LongStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.StringStorageStrategy;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -54,6 +51,8 @@ public class SQLMasterStorageTest {
     private DataSourcePackage dataSourcePackage;
     private SQLMasterStorage storage;
     private List<IEntity> expectedEntitys;
+    private IEntityField fixEnumField = new Field(100000, "enum", FieldType.ENUM);
+    private EnumValue fixEnumValue = new EnumValue(fixEnumField, "1,2,3,500002,测试");
 
     @Before
     public void before() throws Exception {
@@ -239,6 +238,8 @@ public class SQLMasterStorageTest {
 
     private IEntity buildEntity(long baseId) {
         Collection<IEntityField> fields = buildRandomFields(baseId, 3);
+        fields.add(fixEnumField);
+
         return new Entity(
             baseId,
             new EntityClass(baseId, "test", fields),
@@ -262,6 +263,8 @@ public class SQLMasterStorageTest {
             switch (f.type()) {
                 case STRING:
                     return new StringValue(f, buildRandomString(30));
+                case ENUM:
+                    return fixEnumValue;
                 default:
                     return new LongValue(f, (long) buildRandomLong(10, 100000));
             }

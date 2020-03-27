@@ -3,10 +3,8 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.compare.ConditionCompareStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.compare.SphinxQLConditionCompareStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.SphinxQLConditionQueryBuilder;
 
 /**
  * 所有连接符都是 and,但是比较符号出现了大于小于等.
@@ -30,12 +28,16 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
                 Condition condition = ((ValueConditionNode) cn).getCondition();
 
                 if (condition.isRange()) {
+
                     if (buff.length() != 0) {
                         buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
                     }
-                    SphinxQLConditionCompareStrategy compareStrategy =
-                        ConditionCompareStrategyFactory.getStrategy(condition.getField().type());
-                    buff.append(compareStrategy.build(FieldDefine.JSON_FIELDS, condition, getStorageStrategyFactory()));
+                    SphinxQLConditionQueryBuilder builder =
+                        getConditionQueryBuilderFactory().getQueryBuilder(condition, false);
+
+                    buff.append(builder.build(condition));
+
+
                 } else {
                     eqConditions.addAnd(condition);
                 }
@@ -43,7 +45,10 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
         });
 
         if (!eqConditions.isEmtpy()) {
-            buff.append(" ").append(SqlKeywordDefine.AND).append(" ").append(super.build(eqConditions));
+            if (buff.length() > 0) {
+                buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
+            }
+            buff.append(super.build(eqConditions));
         }
         return buff.toString();
     }

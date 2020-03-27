@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
-import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 
 /**
@@ -34,6 +34,10 @@ public class SphinxQLHelper {
      * @return 序例化结果.
      */
     public static String encodeFullText(StorageValue value) {
+        return encodeFullText(value, false);
+    }
+
+    public static String encodeFullText(StorageValue value, boolean useGroupName) {
         Object targetValue;
         if (StorageType.STRING == value.type()) {
             targetValue = encodeString((String) value.value());
@@ -42,7 +46,7 @@ public class SphinxQLHelper {
         }
 
         return ATTRIBUTE_FULL_FIELD_PREFIX
-            + value.storageName()
+            + (useGroupName ? (value.groupStorageName() + SqlKeywordDefine.EVERY_THING) : value.storageName())
             + (value.type() == StorageType.STRING ? unicode((String) targetValue) : targetValue);
     }
 

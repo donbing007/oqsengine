@@ -5,18 +5,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.*;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.HaveOrHaveRanageConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.HaveOrNoRanageConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.NoOrHaveRanageConditionsBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.builder.NoOrNoRanageConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.Before;
 import org.junit.After;
-
-import java.util.Arrays;
-import java.util.Collection;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * DefaultSphinxQLQueryOptimizer Tester.
@@ -85,7 +84,7 @@ public class DefaultSphinxQLQueryOptimizerTest {
                 new LongValue(new Field(1, "c1", FieldType.LONG), 100L)));
         conditions.addOr(new Condition(
             new Field(1, "c1", FieldType.LONG),
-            ConditionOperator.MINOR_THAN,
+            ConditionOperator.LESS_THAN,
             new LongValue(new Field(1, "c2", FieldType.LONG), 100L)));
         builder = optimizer.optimizeConditions(conditions);
         Assert.assertEquals(HaveOrHaveRanageConditionsBuilder.class, builder.getClass());

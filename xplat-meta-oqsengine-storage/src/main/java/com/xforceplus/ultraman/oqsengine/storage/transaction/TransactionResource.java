@@ -41,4 +41,5 @@ public interface TransactionResource<V> {
      * @throws SQLException
      */
     void destroy() throws SQLException;
+
 }

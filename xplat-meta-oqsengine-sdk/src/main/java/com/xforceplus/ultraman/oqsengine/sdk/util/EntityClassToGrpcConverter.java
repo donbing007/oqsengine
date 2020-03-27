@@ -334,10 +334,10 @@ public class EntityClassToGrpcConverter {
             case NOT_EQUALS:
                 op = ne;
                 break;
-            case MINOR_THAN_EQUALS:
+            case LESS_THAN_EQUALS:
                 op = le;
                 break;
-            case MINOR_THAN:
+            case LESS_THAN:
                 op = lt;
                 break;
             default:
