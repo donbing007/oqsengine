@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.auth.Authorization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
-import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +22,8 @@ import java.util.List;
 
 /**
  * 初始化Form信息
+ *
+ * @author admin
  */
 @Order(2) // @Order注解可以改变执行顺序，越小越先执行
 @Component
@@ -44,7 +45,6 @@ public class UltFormInitService implements CommandLineRunner {
                 , accessUri);
         Authorization auth = new Authorization();
         auth.setAppId(Long.parseLong(config.getAppId()));
-//        auth.setTenantId(Long.parseLong(config.getTenant()));
         auth.setEnv(config.getEnv());
         Response<List<UltForm>> result = new Response<List<UltForm>>();
         try {
@@ -52,18 +52,17 @@ public class UltFormInitService implements CommandLineRunner {
             MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
             headers.setContentType(type);
             headers.add("Accept", MediaType.APPLICATION_JSON.toString());
-            HttpEntity authorizeEntity = new HttpEntity(auth,headers);
-//            result = restTemplate.getForObject(url,Response.class);
-            result = restTemplate.postForObject(url, authorizeEntity,Response.class);
-            if (result.getResult()!=null){
+            HttpEntity authorizeEntity = new HttpEntity(auth, headers);
+            result = restTemplate.postForObject(url, authorizeEntity, Response.class);
+            if (result.getResult() != null) {
                 List<UltForm> ultForms = result.getResult();
-                for (int i = 0;i<ultForms.size();i++) {
-                    UltForm saveUltForm = JSON.parseObject(JSON.toJSONString(ultForms.get(i)),UltForm.class);
+                for (int i = 0; i < ultForms.size(); i++) {
+                    UltForm saveUltForm = JSON.parseObject(JSON.toJSONString(ultForms.get(i)), UltForm.class);
                     formBoMapLocalStore.save(saveUltForm);
                 }
                 logger.info("init forms config success --" + LocalDateTime.now());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             logger.info("init forms config faild--" + LocalDateTime.now());
         }
 

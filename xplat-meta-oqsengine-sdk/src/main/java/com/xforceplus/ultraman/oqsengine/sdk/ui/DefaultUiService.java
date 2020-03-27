@@ -7,7 +7,11 @@ import io.vavr.control.Either;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * default ui service
+ */
 public interface DefaultUiService {
+
     Either<String, Map<String, Object>> singleQuery(SingleQueryCmd cmd);
 
     Either<String, Integer> singleDelete(SingleDeleteCmd cmd);

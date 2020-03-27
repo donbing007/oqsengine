@@ -25,7 +25,9 @@ import java.util.stream.Stream;
 import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.combine;
 import static com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Op.*;
 
-
+/**
+ * static converter
+ */
 public class EntityClassToGrpcConverter {
 
     public static EntityUp toEntityUp(IEntityClass entityClass) {
@@ -36,7 +38,7 @@ public class EntityClassToGrpcConverter {
         return toEntityUpBuilder(entityClass, id).build();
     }
 
-    public static EntityUp toRawEntityUp(IEntityClass entity){
+    public static EntityUp toRawEntityUp(IEntityClass entity) {
         return EntityUp.newBuilder()
                 .setId(entity.id())
                 .setCode(entity.code())
@@ -44,15 +46,15 @@ public class EntityClassToGrpcConverter {
                 .build();
     }
 
-
-
     /**
      * TODO check
+     *
      * @param entityClass
      * @param body
      * @return
      */
-    public static EntityUp toEntityUp(EntityClass entityClass, Long id, Map<String, Object> body){
+    @Deprecated
+    public static EntityUp toEntityUp(EntityClass entityClass, Long id, Map<String, Object> body) {
         //build entityUp
         EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
 
@@ -66,7 +68,7 @@ public class EntityClassToGrpcConverter {
                     Optional<IEntityField> fieldFinal = combine(fieldOp, fieldOpParent, fieldOpRel);
 
                     //filter null obj
-                    if(entry.getValue() == null){
+                    if (entry.getValue() == null) {
                         return Optional.<ValueUp>empty();
                     }
 
@@ -86,63 +88,71 @@ public class EntityClassToGrpcConverter {
         return builder.build();
     }
 
+    public static EntityUp toEntityUp(EntityClass entityClass, Long id, List<ValueUp> valueList) {
+        //build entityUp
+        EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
+        builder.addAllValues(valueList);
+        return builder.build();
+    }
+
+
     public static SelectByCondition toSelectByCondition(EntityClass entityClass
-                                                , EntityItem entityItem
-                                                , com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions conditions
-                                                , Sort sort, Page page){
+            , EntityItem entityItem
+            , com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions conditions
+            , Sort sort, Page page) {
         SelectByCondition.Builder select = SelectByCondition
                 .newBuilder();
 
-        if(page != null){
+        if (page != null) {
             select.setPageNo(Long.valueOf(page.getIndex()).intValue());
             select.setPageSize(Long.valueOf(page.getPageSize()).intValue());
         }
 
-        if(sort != null){
+        if (sort != null) {
             select.addSort(toSortUp(sort.getField(), sort.isAsc()));
         }
 
         select.setEntity(toEntityUp(entityClass));
 
-        if(conditions != null){
+        if (conditions != null) {
             select.setConditions(toConditionsUp(conditions));
         }
 
-        if( entityItem != null ){
+        if (entityItem != null) {
             select.addAllQueryFields(toQueryFields(entityClass, entityItem));
         }
 
         return select.build();
     }
 
-    public static SelectByCondition toSelectByCondition(EntityClass entityClass, List<Long> ids, ConditionQueryRequest condition){
+    public static SelectByCondition toSelectByCondition(EntityClass entityClass, List<Long> ids, ConditionQueryRequest condition) {
         SelectByCondition.Builder select = SelectByCondition
                 .newBuilder();
 
-        if(condition.getPageNo() != null){
+        if (condition.getPageNo() != null) {
             select.setPageNo(condition.getPageNo());
         }
 
-        if(condition.getPageSize() != null ){
+        if (condition.getPageSize() != null) {
             select.setPageSize(condition.getPageSize());
         }
 
-        if(condition.getConditions() != null){
+        if (condition.getConditions() != null) {
             select.setConditions(toConditionsUp(entityClass, condition.getConditions()));
         }
 
-        if(condition.getSort() != null){
+        if (condition.getSort() != null) {
             select.addAllSort(toSortUp(condition.getSort()));
         }
 
         select.setEntity(toEntityUp(entityClass));
 
         EntityItem entityItem = condition.getEntity();
-        if( entityItem != null ){
+        if (entityItem != null) {
             select.addAllQueryFields(toQueryFields(entityClass, entityItem));
         }
 
-        if(ids != null){
+        if (ids != null) {
             select.addAllIds(ids);
         }
 
@@ -151,23 +161,24 @@ public class EntityClassToGrpcConverter {
 
     /**
      * EntityClass to entityUp builder
+     *
      * @param entityClass
      * @param id
      * @return
      */
-    public static EntityUp.Builder toEntityUpBuilder(IEntityClass entityClass, Long id){
+    public static EntityUp.Builder toEntityUpBuilder(IEntityClass entityClass, Long id) {
 
         EntityUp.Builder builder = EntityUp.newBuilder();
 
         //add parent
-        if(entityClass.extendEntityClass() != null){
+        if (entityClass.extendEntityClass() != null) {
             IEntityClass parent = entityClass.extendEntityClass();
             EntityUp parentUp = toRawEntityUp(parent);
             builder.setExtendEntityClass(parentUp);
         }
 
         //add obj id
-        if(id != null) {
+        if (id != null) {
             builder.setObjId(id);
         }
 
@@ -186,7 +197,7 @@ public class EntityClassToGrpcConverter {
                 .setCode(entityClass.code())
                 .addAllFields(entityClass.fields().stream().map(EntityClassToGrpcConverter::toFieldUp).collect(Collectors.toList()));
 
-        if(entityClass.entityClasss() != null && !entityClass.entityClasss().isEmpty()){
+        if (entityClass.entityClasss() != null && !entityClass.entityClasss().isEmpty()) {
             builder.addAllEntityClasses(entityClass.entityClasss().stream()
                     .map(EntityClassToGrpcConverter::toRawEntityUp).collect(Collectors.toList()));
         }
@@ -236,20 +247,20 @@ public class EntityClassToGrpcConverter {
     }
 
 
-    private static Optional<IEntityField> getKeyFromRelation(EntityClass entityClass, String key) {
-        return entityClass.relations().stream().filter(x ->  x.getName().equals(key)).map(Relation::getEntityField).findFirst();
+    public static Optional<IEntityField> getKeyFromRelation(EntityClass entityClass, String key) {
+        return entityClass.relations().stream().filter(x -> x.getName().equals(key)).map(Relation::getEntityField).findFirst();
     }
 
     //TODO sub search
-    private static Optional<IEntityField> getKeyFromEntityClass(EntityClass entityClass, String key ){
+    public static Optional<IEntityField> getKeyFromEntityClass(EntityClass entityClass, String key) {
         return entityClass.field(key);
     }
 
-    private static Optional<IEntityField> getKeyFromParent(EntityClass entityClass, String key ){
+    public static Optional<IEntityField> getKeyFromParent(EntityClass entityClass, String key) {
         return Optional.ofNullable(entityClass.extendEntityClass()).flatMap(x -> x.field(key));
     }
 
-    private static FieldSortUp toSortUp(IEntityField field, boolean isAsc){
+    private static FieldSortUp toSortUp(IEntityField field, boolean isAsc) {
         return FieldSortUp.newBuilder()
                 .setCode(field.name())
                 .setOrder(isAsc ? FieldSortUp.Order.asc : FieldSortUp.Order.desc)
@@ -267,6 +278,7 @@ public class EntityClassToGrpcConverter {
 
     /**
      * flatten all the conditions to field condition
+     *
      * @param conditions
      * @return
      */
@@ -292,11 +304,11 @@ public class EntityClassToGrpcConverter {
         return conditionsUpBuilder.build();
     }
 
-    private static ConditionsUp toConditionsUp(com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions conditions){
+    private static ConditionsUp toConditionsUp(com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions conditions) {
 
         ConditionsUp.Builder conditionsUpBuilder = ConditionsUp.newBuilder();
         conditionsUpBuilder.addAllFields(conditions.collection().stream().filter(com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions::isValueNode)
-                .map(x -> ((ValueConditionNode)x).getCondition())
+                .map(x -> ((ValueConditionNode) x).getCondition())
                 .map(EntityClassToGrpcConverter::toFieldCondition)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -304,9 +316,9 @@ public class EntityClassToGrpcConverter {
         return conditionsUpBuilder.build();
     }
 
-    private static FieldConditionUp.Op toConditionOp(ConditionOperator conditionOperator){
+    private static FieldConditionUp.Op toConditionOp(ConditionOperator conditionOperator) {
         FieldConditionUp.Op op;
-        switch (conditionOperator){
+        switch (conditionOperator) {
             case GREATER_THAN:
                 op = gt;
                 break;
@@ -314,7 +326,7 @@ public class EntityClassToGrpcConverter {
                 op = ge;
                 break;
             case LIKE:
-                op =  like;
+                op = like;
                 break;
             case EQUALS:
                 op = eq;
@@ -334,13 +346,13 @@ public class EntityClassToGrpcConverter {
         return op;
     }
 
-    private static Optional<FieldConditionUp> toFieldCondition(Condition condition){
+    private static Optional<FieldConditionUp> toFieldCondition(Condition condition) {
 
         IEntityField field = condition.getField();
         IValue value = condition.getValue();
         ConditionOperator operator = condition.getOperator();
         //check
-        if(value == null || field == null || operator == null){
+        if (value == null || field == null || operator == null) {
             return Optional.empty();
         }
 
@@ -357,11 +369,12 @@ public class EntityClassToGrpcConverter {
     /**
      * robust if op is not present return with eq
      * filter any null value in value list
+     *
      * @param entityClass
      * @param fieldCondition
      * @return
      */
-    private static Optional<FieldConditionUp> toFieldCondition(IEntityClass entityClass, FieldCondition fieldCondition){
+    private static Optional<FieldConditionUp> toFieldCondition(IEntityClass entityClass, FieldCondition fieldCondition) {
 
         Optional<IEntityField> fieldOp = IEntityClassHelper.findFieldByCode(entityClass, fieldCondition.getCode());
 
@@ -380,7 +393,7 @@ public class EntityClassToGrpcConverter {
                     Optional<FieldCondition> fieldConditionOp = entityCondition.getFields()
                             .stream()
                             .filter(enc -> {
-                                String code = entityCondition.getCode() + "." +enc.getCode();
+                                String code = entityCondition.getCode() + "." + enc.getCode();
                                 return rel.getEntityField().name().equalsIgnoreCase(code);
                             }).findFirst();
                     return fieldConditionOp.map(fieldCon -> Tuple.of(fieldCon, rel));
@@ -400,22 +413,22 @@ public class EntityClassToGrpcConverter {
     }
 
 
-    private static Stream<Optional<FieldConditionUp>> toFieldCondition(EntityClass entityClass, SubFieldCondition subFieldCondition){
+    private static Stream<Optional<FieldConditionUp>> toFieldCondition(EntityClass entityClass, SubFieldCondition subFieldCondition) {
         return entityClass.entityClasss().stream()
-                .filter(x -> x.code().equals( subFieldCondition.getCode()))
+                .filter(x -> x.code().equals(subFieldCondition.getCode()))
                 .flatMap(entity -> subFieldCondition
                         .getFields()
                         .stream()
                         .map(subField -> toFieldCondition(entity, subField)));
     }
 
-    private static FieldUp toFieldUp(IEntityField field){
+    private static FieldUp toFieldUp(IEntityField field) {
         FieldUp.Builder builder =
                 FieldUp.newBuilder()
                         .setCode(field.name())
                         .setFieldType(field.type().name())
                         .setId(field.id());
-        if(field.config() != null){
+        if (field.config() != null) {
             builder.setSearchable(String.valueOf(field.config().isSearchable()));
             builder.setMaxLength(String.valueOf(field.config().getMax()));
             builder.setMinLength(String.valueOf(field.config().getMin()));
@@ -425,26 +438,26 @@ public class EntityClassToGrpcConverter {
     }
 
     public static Map<String, Object> toResultMap(EntityClass entityClass
-                                    , EntityClass subEntityClass, EntityUp up) {
+            , EntityClass subEntityClass, EntityUp up) {
 
         Map<String, Object> map = new HashMap<>();
 
         up.getValuesList().forEach(entry -> {
             Optional<Tuple2<IEntityClass, IEntityField>> fieldByIdInAll = IEntityClassHelper
-                                            .findFieldByIdInAll(entityClass, entry.getFieldId());
+                    .findFieldByIdInAll(entityClass, entry.getFieldId());
             Optional<Tuple2<IEntityClass, IEntityField>> subField = IEntityClassHelper.findFieldById(subEntityClass, entry.getFieldId())
-                                                                    .map(x -> Tuple.of(subEntityClass, x));
-           combine(fieldByIdInAll, subField).ifPresent(tuple2 -> {
+                    .map(x -> Tuple.of(subEntityClass, x));
+            combine(fieldByIdInAll, subField).ifPresent(tuple2 -> {
                 IEntityField field = tuple2._2();
                 IEntityClass entity = tuple2._1();
                 String fieldName = null;
-                if(entityClass.id() != entity.id()){
+                if (entityClass.id() != entity.id()) {
                     fieldName = entity.code() + "." + field.name();
-                }else{
+                } else {
                     fieldName = field.name();
                 }
 
-                if(field.type() == FieldType.BOOLEAN) {
+                if (field.type() == FieldType.BOOLEAN) {
 
                     map.put(fieldName, Boolean.valueOf(entry.getValue()));
                 } else {
@@ -453,8 +466,7 @@ public class EntityClassToGrpcConverter {
             });
         });
 
-
-        if(!StringUtils.isEmpty(up.getObjId())){
+        if (!StringUtils.isEmpty(up.getObjId())) {
             map.put("id", String.valueOf(up.getObjId()));
         }
 
@@ -473,13 +485,13 @@ public class EntityClassToGrpcConverter {
                 IEntityField field = tuple2._2();
                 IEntityClass entity = tuple2._1();
                 String fieldName = null;
-                if(entityClass.id() != entity.id()){
+                if (entityClass.id() != entity.id()) {
                     fieldName = entity.code() + "." + field.name();
-                }else{
+                } else {
                     fieldName = field.name();
                 }
 
-                if(field.type() == FieldType.BOOLEAN) {
+                if (field.type() == FieldType.BOOLEAN) {
 
                     map.put(fieldName, Boolean.valueOf(entry.getValue()));
                 } else {
@@ -488,16 +500,16 @@ public class EntityClassToGrpcConverter {
             });
         });
 
-        if(!StringUtils.isEmpty(up.getObjId())){
+        if (!StringUtils.isEmpty(up.getObjId())) {
             map.put("id", String.valueOf(up.getObjId()));
         }
 
         return map;
     }
 
-    public static Map<String, Object> filterItem(Map<String, Object> values, String mainEntityCode, EntityItem entityItem){
+    public static Map<String, Object> filterItem(Map<String, Object> values, String mainEntityCode, EntityItem entityItem) {
 
-        if(entityItem == null || entityItem.getEntities() == null || entityItem.getEntities().isEmpty()){
+        if (entityItem == null || entityItem.getEntities() == null || entityItem.getEntities().isEmpty()) {
             return values;
         }
 
@@ -505,14 +517,14 @@ public class EntityClassToGrpcConverter {
 
         //setup main
         entityItem.getFields().forEach(x -> {
-            Object value  = values.get(x);
-            if(value != null){
+            Object value = values.get(x);
+            if (value != null) {
                 newResult.put(x, value);
             }
 
             Object otherValue = values.get(mainEntityCode + "." + x);
 
-            if(otherValue != null){
+            if (otherValue != null) {
                 newResult.put(x, value);
             }
         });
@@ -521,7 +533,7 @@ public class EntityClassToGrpcConverter {
             subEntity.getFields().forEach(field -> {
                 String subKey = subEntity.getCode() + "." + field;
                 Object value = values.get(subKey);
-                if(value != null){
+                if (value != null) {
                     newResult.put(subKey, value);
                 }
             });

@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
+/**
+ * vo api item
+ */
 public class ApiItem {
 
     private String url;

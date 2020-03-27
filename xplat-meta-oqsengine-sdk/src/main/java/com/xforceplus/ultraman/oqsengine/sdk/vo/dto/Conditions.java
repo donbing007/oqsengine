@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
 import java.util.List;
 
+/**
+ * conditions
+ */
 public class Conditions {
 
     private List<FieldCondition> fields;

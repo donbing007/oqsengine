@@ -13,7 +13,7 @@
 
 
     <properties>
-        <checkstyle.skip>true</checkstyle.skip>
+        <checkstyle.skip>false</checkstyle.skip>
         <dependencies.version>6.0.1-SNAPSHOT</dependencies.version>
     </properties>
 
@@ -80,6 +80,12 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.9</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -97,8 +103,6 @@
             </plugin>
         </plugins>
     </build>
-
-
 
     <dependencyManagement>
         <dependencies>

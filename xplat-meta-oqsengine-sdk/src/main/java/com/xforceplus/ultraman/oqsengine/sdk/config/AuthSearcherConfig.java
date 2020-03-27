@@ -10,7 +10,7 @@ import java.util.Objects;
 /**
  * 授权信息配置.
  * @version 0.1 2019/11/19 15:22
- * @auth dongbin - wangzheng
+ * @author dongbin - wangzheng
  * @since 1.8
  */
 @EnableConfigurationProperties

@@ -13,7 +13,7 @@ import java.util.concurrent.Callable;
 /**
  * user api
  */
-public interface EntityService  {
+public interface EntityService {
 
     Optional<EntityClass> load(String boId);
 
@@ -37,5 +37,5 @@ public interface EntityService  {
 
     Integer count(EntityClass entityClass, ConditionQueryRequest condition);
 
-    List<EntityClass> loadSonByCode(String bocode,String tenantId);
+    List<EntityClass> loadSonByCode(String bocode, String tenantId);
 }

@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.event;
 
 import java.util.Map;
 
+/**
+ * local entity updated event
+ */
 public class EntityUpdated implements EntityEvent{
 
     private String code;
