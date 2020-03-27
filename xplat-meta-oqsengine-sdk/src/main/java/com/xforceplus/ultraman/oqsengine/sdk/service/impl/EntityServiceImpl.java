@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
@@ -10,26 +9,25 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaFieldDefaultHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.FieldValidator;
+import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
-import io.vavr.control.Validation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.combine;
 import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.*;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
 
@@ -46,12 +44,11 @@ public class EntityServiceImpl implements EntityService {
     @Autowired
     private EntityMetaFieldDefaultHandler entityMetaFieldDefaultHandler;
 
-
-    @Autowired
-    private List<FieldValidator<Object>> fieldValidators;
-
     @Autowired
     private ApplicationEventPublisher publisher;
+
+    @Autowired
+    private HandleValueService handlerValueService;
 
     public EntityServiceImpl(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
         this.metadataRepository = metadataRepository;
@@ -68,7 +65,6 @@ public class EntityServiceImpl implements EntityService {
         return metadataRepository.load(tenantId, appCode, boId);
     }
 
-    @Override
     public Optional<EntityClass> loadByCode(String bocode) {
         String tenantId = contextService.get(TENANTID_KEY);
         String appCode  = contextService.get(APPCODE);
@@ -177,24 +173,6 @@ public class EntityServiceImpl implements EntityService {
         return map;
     }
 
-    private EntityDeleted buildDeleteEvent(EntityClass entityClass, Long id){
-        String code = entityClass.code();
-        Map<String, String> context = getContext();
-        return new EntityDeleted(code, id, context);
-    }
-
-    private EntityCreated buildCreatedEvent(EntityClass entityClass, Long id, Map<String, Object> data){
-        String code = entityClass.code();
-        Map<String, String> context = getContext();
-        return new EntityCreated(code, id, data, context);
-    }
-
-    private EntityUpdated buildUpdatedEvent(EntityClass entityClass, Long id, Map<String, Object> data){
-        String code = entityClass.code();
-        Map<String, String> context = getContext();
-        return new EntityUpdated(code, id, data, context);
-    }
-
     @Override
     public Either<String, Integer> updateById(EntityClass entityClass, Long id, Map<String, Object> body){
 
@@ -204,10 +182,12 @@ public class EntityServiceImpl implements EntityService {
             replaceBuilder.addHeader("transaction-id", transId);
         }
         //处理系统字段的逻辑-add by wz
-        body = entityMetaHandler.updateFill(entityClass,body);
+//        body = entityMetaHandler.updateFill(entityClass,body);
+
+        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, "update");
 
         OperationResult updateResult = entityServiceClient.replace()
-                .invoke(toEntityUp(entityClass, id, body))
+                .invoke(toEntityUp(entityClass, id, valueUps))
                 .toCompletableFuture().join();
 
         if(updateResult.getCode() == OperationResult.Code.OK){
@@ -224,6 +204,7 @@ public class EntityServiceImpl implements EntityService {
         }
     }
 
+
     @Override
     public Either<String, Integer> replaceById(EntityClass entityClass, Long id, Map<String, Object> body) {
         String transId = contextService.get(TRANSACTION_KEY);
@@ -231,13 +212,16 @@ public class EntityServiceImpl implements EntityService {
         if(transId != null){
             replaceBuilder.addHeader("transaction-id", transId);
         }
-        //处理系统字段的逻辑-add by wz
-        body = entityMetaHandler.updateFill(entityClass,body);
 
         replaceBuilder.addHeader("mode", "replace");
 
+        //处理系统字段的逻辑-add by wz
+//        body = entityMetaHandler.updateFill(entityClass,body);
+
+        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, "update");
+
         OperationResult updateResult = entityServiceClient.replace()
-                .invoke(toEntityUp(entityClass, id, body))
+                .invoke(toEntityUp(entityClass, id, valueUps))
                 .toCompletableFuture().join();
 
         if(updateResult.getCode() == OperationResult.Code.OK){
@@ -304,21 +288,21 @@ public class EntityServiceImpl implements EntityService {
         if(transId != null){
             buildBuilder.addHeader("transaction-id", transId);
         }
-        //处理系统字段的逻辑-add by wz
-        if(entityClass.extendEntityClass() != null) {
-            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
-        }else{
-            body = entityMetaHandler.insertFill(entityClass, body);
-        }
 
-        //添加字段默认值
-        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
+//        //处理系统字段的逻辑-add by wz
+//        if(entityClass.extendEntityClass() != null) {
+//            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
+//        }else{
+//            body = entityMetaHandler.insertFill(entityClass, body);
+//        }
+//
+//        //添加字段默认值
+//        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
 
-
-
+        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, "create");
 
         OperationResult createResult = buildBuilder
-                .invoke(toEntityUp(entityClass, null, body))
+                .invoke(toEntityUp(entityClass, null, valueUps))
                 .toCompletableFuture().join();
 
         if(createResult.getCode() == OperationResult.Code.OK){
@@ -370,68 +354,27 @@ public class EntityServiceImpl implements EntityService {
     }
 
     /**
-     * TODO field and body
-     * handle value framework
+     * TODO move to another file
+     * event related
      * @param entityClass
-     * @param body
+     * @param id
+     * @return
      */
-    private void handlerValue(EntityClass entityClass, Map<String, Object> body, String phase){
-
-        //pick field in entityClass And entityClass.extendedClass
-        Stream<IEntityField> idea = entityClass.fields().stream();
-
-        List<ValueUp> values = body.entrySet().stream()
-            .map(entry -> {
-                String key = entry.getKey();
-                Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
-                Optional<IEntityField> fieldOpRel = getKeyFromRelation(entityClass, key);
-                Optional<IEntityField> fieldOpParent = getKeyFromParent(entityClass, key);
-
-                Optional<IEntityField> fieldFinal = combine(fieldOp, fieldOpParent, fieldOpRel);
-
-                //filter null obj
-                if(entry.getValue() == null){
-                    return Optional.<ValueUp>empty();
-                }
-
-                //Field Object
-                // This is a shape
-                //TODO object toString is ok?
-                return fieldFinal.map(field -> {
-                    Object value = pipeline(entry.getValue().toString(), field, phase);
-
-                    List<Validation<String, Object>> validations = validate(field, value);
-
-                    if(!validations.isEmpty()){
-                        throw new RuntimeException(validations.stream()
-                                .map(Validation::getError)
-                                .collect(Collectors.joining(",")));
-                    }
-                    
-                    if(value != null){
-                        return ValueUp.newBuilder()
-                                .setFieldId(field.id())
-                                .setFieldType(field.type().getType())
-                                .setValue(value.toString())
-                                .build();
-                    }else{
-                        return null;
-                    }
-                }).filter(Objects::nonNull);
-            })
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.toList());
+    private EntityDeleted buildDeleteEvent(EntityClass entityClass, Long id){
+        String code = entityClass.code();
+        Map<String, String> context = getContext();
+        return new EntityDeleted(code, id, context);
     }
 
-    private Object pipeline(Object value, IEntityField field, String phase){
-        return null;
+    private EntityCreated buildCreatedEvent(EntityClass entityClass, Long id, Map<String, Object> data){
+        String code = entityClass.code();
+        Map<String, String> context = getContext();
+        return new EntityCreated(code, id, data, context);
     }
 
-    private List<Validation<String, Object>>  validate(IEntityField field, Object obj){
-
-       return fieldValidators.stream().map(x -> x.validate(field, obj))
-                .filter(Validation::isInvalid)
-                .collect(Collectors.toList());
+    private EntityUpdated buildUpdatedEvent(EntityClass entityClass, Long id, Map<String, Object> data){
+        String code = entityClass.code();
+        Map<String, String> context = getContext();
+        return new EntityUpdated(code, id, data, context);
     }
 }

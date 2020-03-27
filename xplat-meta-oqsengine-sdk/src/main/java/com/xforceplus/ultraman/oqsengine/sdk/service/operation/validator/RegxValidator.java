@@ -15,7 +15,7 @@ public class RegxValidator implements FieldValidator<Object> {
     @Override
     public Validation<String, Object> validate(IEntityField field, Object obj) {
 
-        if(obj != null && StringUtils.isEmpty(field.config().getValidateRegexString())){
+        if(obj != null && !StringUtils.isEmpty(field.config().getValidateRegexString())){
             Pattern pattern = Pattern.compile(field.config().getValidateRegexString());
             if(isSplittable(field)){
                 String[] term = obj.toString().split(field.config().getValidateRegexString());

@@ -26,12 +26,14 @@ public class TypeCheckValidator implements FieldValidator<Object> {
     static {
         canParse.put(BOOLEAN, s -> {try {Boolean.parseBoolean(s); return true;} catch(Exception e) {return false;}});
         canParse.put(LONG, s -> {try {Long.parseLong(s); return true;} catch(Exception e) {return false;}});
-        canParse.put(ENUM, s -> {try {Integer.parseInt(s); return true;} catch(Exception e) {return false;}});
+
         canParse.put(DECIMAL, s -> { try { new BigDecimal(s); return true; } catch(Exception e) {return false;}});
         canParse.put(DATETIME, s -> {try {
                                         Instant.ofEpochMilli(Long.parseLong(s));
                                         return true;
                                 } catch(Exception e) {return false;}});
+        canParse.put(STRING, s -> true);
+        canParse.put(ENUM, s -> true );
     };
 
 
@@ -50,8 +52,9 @@ public class TypeCheckValidator implements FieldValidator<Object> {
                         Validation.invalid(String.format("%s is not satisfied to type %s", obj, field.type()));
             } else {
                 return checkType(field.type(), obj) ?
-                        Validation.invalid(String.format("%s is not satisfied to type %s", obj, field.type())):
-                        Validation.valid(obj);
+                        Validation.valid(obj):
+                        Validation.invalid(String.format("%s is not satisfied to type %s", obj, field.type()));
+
             }
         }
         return Validation.valid(obj);

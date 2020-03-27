@@ -37,7 +37,7 @@ public class SimpleExpressionFieldOperationHandler implements FieldOperationHand
 
     private Object calculateValFromString(String key){
         try{
-            ContextKeys.LongKeys longKey = ContextKeys.LongKeys.valueOf(key);
+            ContextKeys.LongKeys longKey = ContextKeys.LongKeys.valueOf(key.toUpperCase());
             return contextService.get(longKey);
         } catch (Exception ex){
 
@@ -45,7 +45,7 @@ public class SimpleExpressionFieldOperationHandler implements FieldOperationHand
 
 
         try{
-            ContextKeys.StringKeys stringKeys = ContextKeys.StringKeys.valueOf(key);
+            ContextKeys.StringKeys stringKeys = ContextKeys.StringKeys.valueOf(key.toUpperCase());
             return contextService.get(stringKeys);
         } catch (Exception ex){
 
@@ -55,6 +55,6 @@ public class SimpleExpressionFieldOperationHandler implements FieldOperationHand
     }
 
     private String getKey(String obj){
-        return obj.substring(1, obj.length() -2 );
+        return obj.substring(2, obj.length() -2 );
     }
 }

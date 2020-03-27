@@ -163,8 +163,9 @@ public class FieldConfig implements Serializable {
         return isRequired;
     }
 
-    public void setRequired(boolean required) {
+    public FieldConfig required(boolean required) {
         isRequired = required;
+        return this;
     }
 
     public String getValidateRegexString() {
@@ -179,16 +180,19 @@ public class FieldConfig implements Serializable {
         return isSplittable;
     }
 
-    public void setSplittable(boolean splittable) {
+    public FieldConfig splittable(boolean splittable) {
+
         isSplittable = splittable;
+        return this;
     }
 
     public String getDelimiter() {
         return delimiter;
     }
 
-    public void setDelimiter(String delimiter) {
+    public FieldConfig delimiter(String delimiter) {
         this.delimiter = delimiter;
+        return this;
     }
 
     @Override

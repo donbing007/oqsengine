@@ -29,14 +29,14 @@ public class DefaultFieldValueOperationHandler implements FieldOperationHandler 
     @Override
     public Object onCreate(IEntityField field, Object o) {
         if(o == null){
-
+            return field.defaultValue();
         }
         return o;
     }
 
     @Override
     public Object onUpdate(IEntityField field, Object o) {
-        return null;
+        return o;
     }
 
     @Override
