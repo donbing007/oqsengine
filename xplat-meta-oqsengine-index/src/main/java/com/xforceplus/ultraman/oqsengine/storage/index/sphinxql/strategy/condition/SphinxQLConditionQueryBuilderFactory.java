@@ -77,18 +77,18 @@ public class SphinxQLConditionQueryBuilderFactory {
             new MeqNotMatchConditionQueryBuilder(storageStrategyFactory, FieldType.LONG)
         );
 
-        // enum
+        // strings
         builders.put(
-            buildKey(FieldType.ENUM, ConditionOperator.EQUALS, true, false),
-            new MatchConditionQueryBuilder(storageStrategyFactory, FieldType.ENUM, ConditionOperator.EQUALS, true)
+            buildKey(FieldType.STRINGS, ConditionOperator.EQUALS, true, false),
+            new MatchConditionQueryBuilder(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.EQUALS, true)
         );
         builders.put(
-            buildKey(FieldType.ENUM, ConditionOperator.NOT_EQUALS, true, false),
-            new MatchConditionQueryBuilder(storageStrategyFactory, FieldType.ENUM, ConditionOperator.NOT_EQUALS, true)
+            buildKey(FieldType.STRINGS, ConditionOperator.NOT_EQUALS, true, false),
+            new MatchConditionQueryBuilder(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.NOT_EQUALS, true)
         );
         builders.put(
-            buildKey(FieldType.ENUM, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.ENUM, true)
+            buildKey(FieldType.STRINGS, ConditionOperator.MULTIPLE_EQUALS, true, false),
+            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.STRINGS, true)
         );
     }
 

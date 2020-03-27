@@ -65,7 +65,7 @@ public class SphinxQLIndexStorageTest {
     // 所有数据都会有的负数字符串.
     private IEntityField fixStringNumber = new Field(100002, "Negative string", FieldType.STRING);
 
-    private IEntityField fixEnumField = new Field(100003, "enum", FieldType.ENUM);
+    private IEntityField fixStringsField = new Field(100003, "strings", FieldType.STRINGS);
 
 
     @Before
@@ -489,11 +489,14 @@ public class SphinxQLIndexStorageTest {
                 }
             )
             ,
-            // enum eq
+            // strings eq
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(
-                        new Condition(fixEnumField, ConditionOperator.EQUALS, new EnumValue(fixEnumField, "500002"))
+                        new Condition(
+                            fixStringsField,
+                            ConditionOperator.EQUALS,
+                            new StringsValue(fixStringsField, new String[]{"500002"}))
                     ),
                 expectedEntitys.get(0).entityClass(),
                 Page.newSinglePage(100),
@@ -504,11 +507,14 @@ public class SphinxQLIndexStorageTest {
                 }
             )
             ,
-            // enum not eq
+            // strings not eq
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(
-                        new Condition(fixEnumField, ConditionOperator.NOT_EQUALS, new EnumValue(fixEnumField, "500002"))
+                        new Condition(
+                            fixStringsField,
+                            ConditionOperator.NOT_EQUALS,
+                            new StringsValue(fixStringsField, new String[] {"500002"}))
                     ),
                 expectedEntitys.get(0).entityClass(),
                 Page.newSinglePage(100),
@@ -524,10 +530,10 @@ public class SphinxQLIndexStorageTest {
                 Conditions.buildEmtpyConditions()
                     .addAnd(
                         new Condition(
-                            fixEnumField,
+                            fixStringsField,
                             ConditionOperator.MULTIPLE_EQUALS,
-                            new EnumValue(fixEnumField, "500002"),
-                            new EnumValue(fixEnumField, "1"))
+                            new StringsValue(fixStringsField, new String[] {"500002"} ),
+                            new StringsValue(fixStringsField, new String[] {"1"}))
                     ),
                 expectedEntitys.get(0).entityClass(),
                 Page.newSinglePage(100),
@@ -594,7 +600,7 @@ public class SphinxQLIndexStorageTest {
         fields.add(fixFieldAll);
         fields.add(fixFieldRange);
         fields.add(fixStringNumber);
-        fields.add(fixEnumField);
+        fields.add(fixStringsField);
 
         return fields;
     }
@@ -625,8 +631,8 @@ public class SphinxQLIndexStorageTest {
                 return new StringValue(f, "-1");
             }
 
-            if (f == fixEnumField) {
-                return new EnumValue(fixEnumField, "1,2,3,500002,测试");
+            if (f == fixStringsField) {
+                return new StringsValue(fixStringsField, "1,2,3,500002,测试".split(","));
             }
 
             switch (f.type()) {

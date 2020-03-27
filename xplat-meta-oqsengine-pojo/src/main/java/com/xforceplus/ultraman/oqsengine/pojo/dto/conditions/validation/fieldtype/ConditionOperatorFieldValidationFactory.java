@@ -25,6 +25,7 @@ public final class ConditionOperatorFieldValidationFactory {
         VALIDATION_MAP.put(FieldType.LONG, new LongConditionValidation());
         VALIDATION_MAP.put(FieldType.STRING, new StringConditionValidation());
         VALIDATION_MAP.put(FieldType.DECIMAL, new DecimalConditionValidation());
+        VALIDATION_MAP.put(FieldType.STRINGS, new StringsConditionValidation());
     }
 
     // 不允许实例化.

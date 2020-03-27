@@ -12,6 +12,7 @@ public enum FieldType {
     DATETIME("DateTime"),
     LONG("Long"),
     STRING("String"),
+    STRINGS("Strings"),
     DECIMAL("Decimal");
 
     private String type;
