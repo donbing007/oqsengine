@@ -556,7 +556,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 , nonNullValueList.get(0)));
 
                         Condition right = new Condition(fieldOp.get()
-                                , ConditionOperator.MINOR_THAN_EQUALS
+                                , ConditionOperator.LESS_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(1)));
 
@@ -578,7 +578,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 , nonNullValueList.get(0)));
 
                         Condition right = new Condition(fieldOp.get()
-                                , ConditionOperator.MINOR_THAN_EQUALS
+                                , ConditionOperator.LESS_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(1)));
 
@@ -601,7 +601,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 , nonNullValueList.get(0)));
 
                         Condition right = new Condition(fieldOp.get()
-                                , ConditionOperator.MINOR_THAN
+                                , ConditionOperator.LESS_THAN
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(1)));
 
@@ -618,13 +618,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     break;
                 case le:
                     conditions = new Conditions(new Condition(fieldOp.get()
-                            , ConditionOperator.MINOR_THAN_EQUALS
+                            , ConditionOperator.LESS_THAN_EQUALS
                             , toTypedValue(fieldOp.get()
                             , nonNullValueList.get(0))));
                     break;
                 case lt:
                     conditions = new Conditions(new Condition(fieldOp.get()
-                            , ConditionOperator.MINOR_THAN
+                            , ConditionOperator.LESS_THAN
                             , toTypedValue(fieldOp.get()
                             , nonNullValueList.get(0))));
                     break;
