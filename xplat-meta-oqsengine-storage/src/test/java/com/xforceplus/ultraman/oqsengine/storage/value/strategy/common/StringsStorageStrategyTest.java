@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import org.junit.After;
@@ -18,7 +19,7 @@ import org.junit.Test;
  * @version 1.0 03/27/2020
  * @since <pre>Mar 27, 2020</pre>
  */
-public class EnumStorageStrategyTest {
+public class StringsStorageStrategyTest {
 
     private EnumStorageStrategy storageStrategy = new EnumStorageStrategy();
     private IEntityField field = new Field(1, "enum", FieldType.ENUM);
@@ -43,7 +44,7 @@ public class EnumStorageStrategyTest {
             "3",
         };
 
-        EnumValue logicValue = new EnumValue(field, String.join(EnumValue.DELIMITER, expectedValues));
+        StringsValue logicValue = new StringsValue(field, expectedValues);
 
         StorageValue storageValue = storageStrategy.toStorageValue(logicValue);
 
@@ -82,16 +83,16 @@ public class EnumStorageStrategyTest {
             }
         }
 
-        EnumValue enumValue = (EnumValue) storageStrategy.toLogicValue(field, head);
+        StringsValue stringsValue = (StringsValue) storageStrategy.toLogicValue(field, head);
 
-        Assert.assertEquals(String.join(",", expectedValues), enumValue.getValue());
+        Assert.assertEquals(String.join(",", expectedValues), String.join(",", stringsValue.getValue()));
 
     }
 
     @Test
-    public void testOneValueEnum() throws Exception {
+    public void testOneValue() throws Exception {
         String[] expectedValues = {"one"};
-        EnumValue logicValue = new EnumValue(field, String.join(EnumValue.DELIMITER, expectedValues));
+        StringsValue logicValue = new StringsValue(field, expectedValues);
         StorageValue storageValue = storageStrategy.toStorageValue(logicValue);
 
         Assert.assertEquals(0, storageValue.location());
