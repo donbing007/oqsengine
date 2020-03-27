@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.handler;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
@@ -9,10 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Entity默认字段数据填充处理类
@@ -30,6 +28,9 @@ public class EntityMetaFieldDefaultHandler {
      */
     public Map<String, Object> insertFill(EntityClass entityClass, Map<String, Object> body){
         List<IEntityField> fields = getDefaultFields(entityClass);
+        if(entityClass.extendEntityClass() != null){
+            fields.addAll(getDefaultFields(entityClass.extendEntityClass()));
+        }
         for (IEntityField field : fields) {
             Object o = this.getFieldValByName(entityClass,body,field.name());
             if (null == o){
@@ -55,8 +56,9 @@ public class EntityMetaFieldDefaultHandler {
      * @param entityClass
      * @return List<IEntityField>
      */
-    public List<IEntityField> getDefaultFields(EntityClass entityClass){
-        List<IEntityField> fields = entityClass.fields();
+    public List<IEntityField> getDefaultFields(IEntityClass entityClass){
+        Collection<IEntityField> fields = entityClass.fields();
+
         List<IEntityField> defaultFields = new ArrayList<>();
         fields.forEach(f -> {
             String dictId = f.dictId();

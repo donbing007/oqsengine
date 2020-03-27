@@ -24,24 +24,16 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CommonConfiguration {
 
-
-    @Value("${storage.master.name:oqsbigentity}")
-    private String masterTableName;
-
-    @Value("${storage.master.shard.table.size:1}")
-    private int masterSize;
-
-    @Value("${instance.id:0}")
-    private int instanceId;
-
     @Bean
-    public LongIdGenerator longIdGenerator() {
+    public LongIdGenerator longIdGenerator(@Value("${instance.id:0}") int instanceId) {
         return new SnowflakeLongIdGenerator(instanceId);
     }
 
     @ConditionalOnExpression("${storage.master.shard.table.enabled} == true")
     @Bean("tableNameSelector")
-    public Selector<String> shardTableNameSelector() {
+    public Selector<String> shardTableNameSelector(
+        @Value("${storage.master.name:oqsbigentity}") String masterTableName,
+        @Value("${storage.master.shard.table.size:1}") int masterSize) {
         return new SuffixNumberHashSelector(masterTableName, masterSize);
     }
 

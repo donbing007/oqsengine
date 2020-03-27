@@ -273,6 +273,44 @@ public class EntityServiceTest {
                 .forEach(System.out::println);
     }
 
+    @Test
+    public void testSystemProperties() throws InterruptedException {
+        Thread.sleep(10000);
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("baseBill");
+
+        Optional<EntityClass> subEntityOpt = entityService.loadByCode("salesBill");
+
+        Map<String, Object> o = new HashMap<>();
+        o.put("image_id", "1231231");
+        o.put("seller_name", "hello");
+
+        Either<String, IEntity> iEntities = entityServiceEx.create(subEntityOpt.get(), o);
+
+        Long parent = iEntities.get().family().parent();
+        Long child = iEntities.get().id();
+
+        System.out.println(entityOpt.get());
+
+        System.out.println(subEntityOpt.get());
+
+        Either<String, Map<String, Object>> either = entityService.findOne(subEntityOpt.get(), child);
+
+        System.out.println(entityService.findOne(subEntityOpt.get(), child));
+
+        System.out.println(entityService.findOne(entityOpt.get(), parent));
+
+        System.out.println(entityServiceEx.findOneByParentId(entityOpt.get(), subEntityOpt.get(),parent));
+
+        //search by create_time
+
+        Object create_time = either.get().get("create_time");
+
+        entityService.findByCondition(entityOpt.get(), new RequestBuilder()
+                .field("create_time", ConditionOp.eq, create_time)
+                .build()).forEach(System.out::println);
+    }
+
 
     @Test
     public void testError() throws InterruptedException {
@@ -298,4 +336,19 @@ public class EntityServiceTest {
         Optional<EntityClass> entityOpt1 = entityService.loadByCode("ticket");
         Either<String, Map<String, Object>> mapEither = entityService.findOne(entityOpt1.get(), fId);
     }
+
+
+    @Test
+    public void testLikeOnConfigMapping() throws InterruptedException {
+
+        Thread.sleep(10000);
+
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("configDataMapping");
+
+        System.out.println(entityService.findByCondition(entityOpt.get(), new RequestBuilder().field("document_type", ConditionOp.like, "*30001001*").build()));
+
+
+    }
+
 }

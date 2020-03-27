@@ -23,7 +23,7 @@ public class OptionalHelper {
     }
 
     public static Optional<String> ofEmptyStr(Object r){
-        return ofEmpty((String)r, OptionalHelper::isEmpty);
+        return ofEmpty((String) r, OptionalHelper::isEmpty);
     }
 
     public static <T> Boolean orFalse(T r, Function<T, Boolean> func){
@@ -45,10 +45,10 @@ public class OptionalHelper {
         return Stream.of(candidates).filter(Optional::isPresent).map(Optional::get).findFirst();
     }
 
-    static public <T,U> Optional<T> tryGet(U input, Function<U,T> mapper){
-        try{
+    public static <T, U> Optional<T> tryGet(U input, Function<U, T> mapper){
+        try {
             return Optional.ofNullable(input).map(mapper);
-        }catch(Exception ex){
+        } catch (Exception ex){
             return Optional.empty();
         }
     }

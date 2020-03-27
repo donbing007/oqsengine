@@ -5,7 +5,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 
 import java.util.Objects;
 
-
+/**
+ * 关系对象
+ * @author wangzheng
+ * @version 1.0 2020/3/26 15:10
+ */
 public class Relation {
 
     /**

@@ -11,6 +11,8 @@ import java.util.*;
  * 两者使用 entityClassId 标识进行联系.
  * relations 表示关联对象的本地字段信息,关联类型.
  * entityClasss 表示联系对象的类型.
+ * @author wangzheng
+ * @version 1.0 2020/3/26 15:10
  */
 public class EntityClass implements IEntityClass, Serializable {
 
@@ -19,6 +21,9 @@ public class EntityClass implements IEntityClass, Serializable {
      */
     private long id;
 
+    /**
+     * 对象code
+     */
     private String code;
     /**
      * 关系信息

@@ -72,7 +72,12 @@ public class EntityServiceExImpl implements EntityServiceEx {
         }
 
         //处理系统字段的逻辑-add by wz
-        body = entityMetaHandler.insertFill(entityClass,body);
+
+        if(entityClass.extendEntityClass() != null) {
+            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
+        }else{
+            body = entityMetaHandler.insertFill(entityClass,body);
+        }
         //添加字段默认值
         body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
 
@@ -178,6 +183,8 @@ public class EntityServiceExImpl implements EntityServiceEx {
                         .eq(pageCode)
                         .and("tenantId")
                         .eq(tenantId)
+                        .and("envStatus")
+                        .eq("UP")
                         .execute();
                 trows = ds.toRows();
             }
@@ -188,6 +195,8 @@ public class EntityServiceExImpl implements EntityServiceEx {
                 ds = pageBoMapLocalStore.query().selectAll()
                         .where("code")
                         .eq(pageCode)
+                        .and("envStatus")
+                        .eq("UP")
                         .execute();
                 List<Row> rows = ds.toRows();
                 ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
@@ -210,6 +219,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
         ultPageBoItem.setBoName(RowUtils.getRowValue(row, "boName").map(Object::toString).orElse(""));
         ultPageBoItem.setRemark(RowUtils.getRowValue(row, "remark").map(Object::toString).orElse(""));
         ultPageBoItem.setCode(RowUtils.getRowValue(row, "code").map(Object::toString).orElse(""));
+        ultPageBoItem.setEnvStatus(RowUtils.getRowValue(row, "envStatus").map(Object::toString).orElse(""));
         return ultPageBoItem;
     }
 }

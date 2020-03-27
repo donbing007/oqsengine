@@ -9,6 +9,7 @@ import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.interceptor.MessageDispatcherInterceptor;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.messaging.QueryMessage;
 import org.springframework.core.Ordered;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.function.BiFunction;
@@ -31,7 +32,18 @@ public class CodeExtendedInterceptor<T,R> implements MessageDispatcherIntercepto
 
                 SimpleBoItem boItem = metadataRepository.findOneById(((MetaDataLikeCmd)queryMessage.getPayload()).getBoId());
                 if(boItem != null) {
-                    return (QueryMessage)queryMessage.withMetaData(queryMessage.getMetaData().and("code", boItem.getCode()));
+
+                    if( boItem.getParentId() != null && !StringUtils.isEmpty(boItem.getParentId()) ){
+                        SimpleBoItem boParentItem = metadataRepository
+                                .findOneById(boItem.getParentId());
+                        if( boParentItem != null ){
+                            return (QueryMessage)queryMessage
+                                    .withMetaData(queryMessage.getMetaData().and("code", boItem.getCode()).and("parentCode", boParentItem.getCode()));
+                        }
+                    }else{
+                        return (QueryMessage)queryMessage
+                                .withMetaData(queryMessage.getMetaData().and("code", boItem.getCode()).and("parentCode", ""));
+                    }
                 }else{
                     return (QueryMessage)queryMessage.withMetaData(queryMessage.getMetaData().and("code", ""));
                 }

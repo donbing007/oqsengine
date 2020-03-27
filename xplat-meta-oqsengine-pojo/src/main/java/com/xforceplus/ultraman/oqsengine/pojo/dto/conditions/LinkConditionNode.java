@@ -8,17 +8,34 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
  */
 public class LinkConditionNode extends ConditionNode {
 
+    /**
+     * 条件连接方式
+     */
     private ConditionLink link;
 
+    /**
+     * 构造方法
+     * @param l
+     * @param r
+     * @param link
+     */
     public LinkConditionNode(ConditionNode l, ConditionNode r, ConditionLink link) {
         super(l, r);
         this.link = link;
     }
 
+    /**
+     * 获取连接方式
+     * @return
+     */
     public ConditionLink getLink() {
         return link;
     }
 
+    /**
+     * toString方法
+     * @return
+     */
     @Override
     public String toString() {
         StringBuilder buff = new StringBuilder();

@@ -6,6 +6,11 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+/**
+ * Entity实体值对象.
+ * @author wangzheng
+ * @version 1.0 2020/3/26 15:10
+ */
 public interface IEntityValue extends Cloneable{
     /**
      * 获得数据对象的id

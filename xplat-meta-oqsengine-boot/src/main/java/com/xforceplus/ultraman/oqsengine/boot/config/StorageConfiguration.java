@@ -16,17 +16,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class StorageConfiguration {
 
-    @Value("${storage.master.query.worker:0}")
-    private int masterWorkerSize;
-
-    @Value("${storage.master.query.timeout:3000}")
-    private long masterQueryTimeout;
-
-    @Value("${storage.index.name:oqsindex}")
-    private String indexTableName;
-
     @Bean
-    public MasterStorage masterStorage() {
+    public MasterStorage masterStorage(
+        @Value("${storage.master.query.worker:0}") int masterWorkerSize,
+        @Value("${storage.master.query.timeout:3000}") long masterQueryTimeout) {
         SQLMasterStorage storage = new SQLMasterStorage();
         storage.setWorkerSize(masterWorkerSize);
         storage.setQueryTimeout(masterQueryTimeout);
@@ -34,7 +27,7 @@ public class StorageConfiguration {
     }
 
     @Bean
-    public IndexStorage indexStorage() {
+    public IndexStorage indexStorage(@Value("${storage.index.name:oqsindex}") String indexTableName) {
 
         SphinxQLIndexStorage storage = new SphinxQLIndexStorage();
 //        storage.setIndexTableName(indexTableName);

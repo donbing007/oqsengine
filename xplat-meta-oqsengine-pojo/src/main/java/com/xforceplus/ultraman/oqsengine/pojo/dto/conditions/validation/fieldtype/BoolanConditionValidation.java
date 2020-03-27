@@ -14,6 +14,7 @@ public class BoolanConditionValidation implements ConditionValidation {
         switch (condition.getOperator()) {
             case EQUALS:
             case NOT_EQUALS:
+            case MULTIPLE_EQUALS:
                 return true;
             default:
                 return false;

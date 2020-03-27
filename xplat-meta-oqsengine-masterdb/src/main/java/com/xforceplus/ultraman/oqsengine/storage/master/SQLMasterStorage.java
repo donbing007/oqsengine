@@ -13,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
@@ -45,8 +44,21 @@ public class SQLMasterStorage implements MasterStorage {
 
     final Logger logger = LoggerFactory.getLogger(SQLMasterStorage.class);
 
-    @Resource
-    SQLMasterAction sqlMasterAction;
+
+    private static final String BUILD_SQL =
+        "insert into %s (id, entity, version, time, pref, cref, deleted, attribute) values(?,?,?,?,?,?,?,?)";
+    private static final String REPLACE_SQL =
+        "update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
+    private static final String REPLACE_VERSION_TIME_SQL =
+        "update %s set version = ?, time = ? where id = ?";
+    private static final String DELETE_SQL =
+        "update %s set version = version + 1, deleted = ?, time = ? where id = ? and version = ?";
+    private static final String SELECT_SQL =
+        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id = ? and deleted = false";
+    private static final String SELECT_IN_SQL =
+        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id in (%s) and deleted = false";
+    private static final String SELECT_VERSION_TIME_SQL =
+        "select version, time from %s where id = ?";
 
     @Resource(name = "masterDataSourceSelector")
     private Selector<DataSource> dataSourceSelector;
@@ -56,6 +68,9 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Resource(name = "storageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
+
+    @Resource(name = "masterStorageStrategy")
+    private StorageStrategyFactory storageStrategyFactory;
 
     private long queryTimeout;
 
@@ -95,6 +110,7 @@ public class SQLMasterStorage implements MasterStorage {
         ExecutorHelper.shutdownAndAwaitTermination(worker);
     }
 
+
     @Override
     public Optional<IEntity> select(long id, IEntityClass entityClass) throws SQLException {
         return (Optional<IEntity>) transactionExecutor.execute(
@@ -102,7 +118,36 @@ public class SQLMasterStorage implements MasterStorage {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    return sqlMasterAction.select((Connection) resource.value(), id, entityClass);
+                    String tableName = tableNameSelector.select(Long.toString(id));
+                    String sql = String.format(SELECT_SQL, tableName);
+
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+                    st.setLong(1, id); // id
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(st.toString());
+                    }
+
+                    ResultSet rs = st.executeQuery();
+                    // entity, version, time, pref, cref, deleted, attribute, refs
+
+                    try {
+                        if (rs.next()) {
+
+                            return buildEntityFromResultSet(rs, entityClass);
+
+                        } else {
+                            return Optional.empty();
+                        }
+                    } finally {
+                        if (rs != null) {
+                            rs.close();
+                        }
+
+                        if (st != null) {
+                            st.close();
+                        }
+                    }
                 }
             });
     }
@@ -110,7 +155,7 @@ public class SQLMasterStorage implements MasterStorage {
     @Override
     public Collection<IEntity> selectMultiple(Map<Long, IEntityClass> ids) throws SQLException {
         Map<DataSource, List<Long>> groupedMap = ids.keySet().stream().collect(
-                Collectors.groupingBy(id -> dataSourceSelector.select(Long.toString(id))));
+            Collectors.groupingBy(id -> dataSourceSelector.select(Long.toString(id))));
 
         CountDownLatch latch = new CountDownLatch(groupedMap.keySet().size());
         List<Future> futures = new ArrayList(groupedMap.keySet().size());
@@ -147,11 +192,36 @@ public class SQLMasterStorage implements MasterStorage {
             new DataSourceShardingTask(dataSourceSelector, Long.toString(sourceId)) {
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    Map result = sqlMasterAction.selectVersionTime((Connection) resource.value(), sourceId, targetId);
-                    newVersion[0] = (int)result.get("version");
-                    newTime[0] = (long)result.get("time");
+                    String tableName = tableNameSelector.select(Long.toString(sourceId));
+                    String sql = String.format(SELECT_VERSION_TIME_SQL, tableName);
 
-                    return null;
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+                    st.setLong(1, sourceId);
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(st.toString());
+                    }
+
+                    ResultSet rs = st.executeQuery();
+                    if (rs.next()) {
+                        newVersion[0] = rs.getInt(FieldDefine.VERSION);
+                        newTime[0] = rs.getLong(FieldDefine.TIME);
+                    } else {
+                        throw new SQLException(
+                            String.format("Can not found data %d.", sourceId, targetId));
+                    }
+
+                    try {
+                        return null;
+                    } finally {
+                        if (rs != null) {
+                            rs.close();
+                        }
+
+                        if (st != null) {
+                            st.close();
+                        }
+                    }
                 }
             }
         );
@@ -160,7 +230,31 @@ public class SQLMasterStorage implements MasterStorage {
             new DataSourceShardingTask(dataSourceSelector, Long.toString(targetId)) {
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    return sqlMasterAction.replaceVersionTime((Connection) resource.value(), sourceId, targetId, newVersion, newTime);
+                    String tableName = tableNameSelector.select(Long.toString(targetId));
+                    String sql = String.format(REPLACE_VERSION_TIME_SQL, tableName);
+
+
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+                    st.setInt(1, newVersion[0]);
+                    st.setLong(2, newTime[0]);
+                    st.setLong(3, targetId);
+
+                    int size = st.executeUpdate();
+
+                    final int onlyOne = 1;
+                    if (size != onlyOne) {
+                        throw new SQLException(
+                            String.format("Unable to synchronize information from %d to %d.", sourceId, targetId));
+                    }
+
+                    try {
+                        return null;
+                    } finally {
+                        if (st != null) {
+                            st.close();
+                        }
+                    }
+
                 }
             }
 
@@ -169,17 +263,53 @@ public class SQLMasterStorage implements MasterStorage {
 
     }
 
+
     @Override
     public void build(IEntity entity) throws SQLException {
         checkId(entity);
 
         transactionExecutor.execute(
             new DataSourceShardingTask(
-                dataSourceSelector, Long.toString(entity.id()), OpTypeEnum.BUILD) {
+                dataSourceSelector, Long.toString(entity.id())) {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    return sqlMasterAction.build((Connection) resource.value(), entity);
+                    String tableName = tableNameSelector.select(Long.toString(entity.id()));
+                    String sql = String.format(BUILD_SQL, tableName);
+
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+                    // id, entity, version, time, pref, cref, deleted, attribute,refs
+                    st.setLong(1, entity.id()); // id
+                    st.setLong(2, entity.entityClass().id()); // entity
+                    st.setInt(3, 0); // version
+                    st.setLong(4, System.currentTimeMillis()); // time
+                    st.setLong(5, entity.family().parent()); // pref
+                    st.setLong(6, entity.family().child()); // cref
+                    st.setBoolean(7, false); // deleted
+                    st.setString(8, toJson(entity.entityValue())); // attribute
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(st.toString());
+                    }
+
+                    int size = st.executeUpdate();
+
+                    /**
+                     * 插入影响条件恒定为1.
+                     */
+                    final int onlyOne = 1;
+                    if (size != onlyOne) {
+                        throw new SQLException(
+                            String.format("Entity{%s} could not be created successfully.", entity.toString()));
+                    }
+
+                    try {
+                        return null;
+                    } finally {
+                        if (st != null) {
+                            st.close();
+                        }
+                    }
                 }
             });
     }
@@ -190,11 +320,38 @@ public class SQLMasterStorage implements MasterStorage {
 
         transactionExecutor.execute(
             new DataSourceShardingTask(
-                dataSourceSelector, Long.toString(entity.id()), OpTypeEnum.REPLACE) {
+                dataSourceSelector, Long.toString(entity.id())) {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    return sqlMasterAction.replace((Connection) resource.value(), entity);
+                    String tableName = tableNameSelector.select(Long.toString(entity.id()));
+                    String sql = String.format(REPLACE_SQL, tableName);
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+
+                    // update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
+                    st.setLong(1, System.currentTimeMillis()); // time
+                    st.setString(2, toJson(entity.entityValue())); // attribute
+                    st.setLong(3, entity.id()); // id
+                    st.setInt(4, entity.version()); // version
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(st.toString());
+                    }
+
+                    int size = st.executeUpdate();
+
+                    final int onlyOne = 1;
+                    if (size != onlyOne) {
+                        throw new SQLException(String.format("Entity{%s} could not be replace successfully.", entity.toString()));
+                    }
+
+                    try {
+                        return null;
+                    } finally {
+                        if (st != null) {
+                            st.close();
+                        }
+                    }
                 }
             });
     }
@@ -205,11 +362,37 @@ public class SQLMasterStorage implements MasterStorage {
 
         transactionExecutor.execute(
             new DataSourceShardingTask(
-                dataSourceSelector, Long.toString(entity.id()), OpTypeEnum.DELETE) {
+                dataSourceSelector, Long.toString(entity.id())) {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    return sqlMasterAction.delete((Connection) resource.value(), entity);
+                    String tableName = tableNameSelector.select(Long.toString(entity.id()));
+                    String sql = String.format(DELETE_SQL, tableName);
+                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+
+                    // deleted time id version;
+                    st.setBoolean(1, true); // deleted
+                    st.setLong(2, System.currentTimeMillis()); // time
+                    st.setLong(3, entity.id()); // id
+                    st.setInt(4, entity.version()); // version
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(st.toString());
+                    }
+
+                    int size = st.executeUpdate();
+                    final int onlyOne = 1;
+                    if (size != onlyOne) {
+                        throw new SQLException(String.format("Entity{%s} could not be delete successfully.", entity.toString()));
+                    }
+
+                    try {
+                        return null;
+                    } finally {
+                        if (st != null) {
+                            st.close();
+                        }
+                    }
                 }
             });
     }
@@ -218,6 +401,114 @@ public class SQLMasterStorage implements MasterStorage {
         if (entity.id() == 0) {
             throw new SQLException("Invalid entity`s id.");
         }
+    }
+
+    /**
+     * {
+     * "numberAttribute": 1, # 普通数字属性
+     * "stringAttribute": "value" # 普通字符串属性.
+     * }
+     */
+    private IEntityValue toEntityValue(long id, IEntityClass entityClass, String json) throws SQLException {
+        JSONObject object = JSON.parseObject(json);
+
+        // 以字段逻辑名称为 key, 字段信息为 value.
+        Map<String, IEntityField> fieldTable = entityClass.fields()
+            .stream().collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0));
+
+        String logicName;
+        IEntityField field = null;
+        FieldType fieldType;
+        StorageStrategy storageStrategy;
+        StorageValue newStorageValue;
+        StorageValue oldStorageValue;
+        // key 为物理储存名称,值为构造出的储存值.
+        Map<String, EntityValuePack> storageValueCache = new HashMap<>(object.size());
+
+        for (String storageName : object.keySet()) {
+            try {
+
+                // 为了找出物理名称中的逻辑字段名称.
+                logicName = AnyStorageValue.getInstance(storageName).logicName();
+                field = fieldTable.get(logicName);
+
+                if (field == null) {
+                    continue;
+                }
+
+                fieldType = field.type();
+
+                storageStrategy = this.storageStrategyFactory.getStrategy(fieldType);
+                newStorageValue = StorageValueFactory.buildStorageValue(
+                    storageStrategy.storageType(), storageName, object.get(storageName));
+
+                // 如果是多值.使用 stick 追加.
+                if (storageStrategy.isMultipleStorageValue()) {
+                    Optional<StorageValue> oldStorageValueOp = Optional.ofNullable(
+                        storageValueCache.get(String.valueOf(field.id()))
+                    ).map(x -> x.storageValue);
+
+                    if (oldStorageValueOp.isPresent()) {
+                        oldStorageValue = oldStorageValueOp.get();
+                        storageValueCache.put(
+                            String.valueOf(field.id()),
+                            new EntityValuePack(field, oldStorageValue.stick(newStorageValue), storageStrategy));
+                    } else {
+                        storageValueCache.put(
+                            String.valueOf(field.id()),
+                            new EntityValuePack(field, newStorageValue, storageStrategy));
+                    }
+                } else {
+                    // 单值
+                    storageValueCache.put(String.valueOf(field.id()),
+                        new EntityValuePack(field, newStorageValue, storageStrategy));
+                }
+
+            } catch (Exception ex) {
+                throw new SQLException(
+                    String.format("Something wrong has occured.[entity:%d, class: %d, fieldId: %d, msg:%s]",
+                        id, entityClass.id(), field.id(), ex.getClass().getName() + ":" + ex.getMessage()));
+            }
+        }
+
+        IEntityValue values = new EntityValue(id);
+        storageValueCache.values().stream().forEach(e -> {
+            values.addValue(e.strategy.toLogicValue(e.logicField, e.storageValue));
+        });
+
+
+        return values;
+    }
+
+    // toEntity 临时解析结果.
+    static class EntityValuePack {
+        private IEntityField logicField;
+        private StorageValue storageValue;
+        private StorageStrategy strategy;
+
+        public EntityValuePack(IEntityField logicField, StorageValue storageValue, StorageStrategy strategy) {
+            this.logicField = logicField;
+            this.storageValue = storageValue;
+            this.strategy = strategy;
+        }
+    }
+
+    // 属性名称使用的是属性 id.
+    private String toJson(IEntityValue value) {
+
+        JSONObject object = new JSONObject();
+        StorageStrategy storageStrategy;
+        StorageValue storageValue;
+        for (IValue logicValue : value.values()) {
+            storageStrategy = storageStrategyFactory.getStrategy(logicValue.getField().type());
+            storageValue = storageStrategy.toStorageValue(logicValue);
+            while (storageValue != null) {
+                object.put(storageValue.storageName(), storageValue.value());
+                storageValue = storageValue.next();
+            }
+        }
+        return object.toJSONString();
+
     }
 
     /**
@@ -265,12 +556,63 @@ public class SQLMasterStorage implements MasterStorage {
                         private Collection<IEntity> select(
                             String tableName, List<Long> partitionTableIds, TransactionResource res)
                             throws SQLException {
-                            return sqlMasterAction.select((Connection)res.value(), tableName, partitionTableIds, entityTable);
+
+                            // 组织成 以逗号分隔的 id 字符串.
+                            String inSqlIds = partitionTableIds.stream().map(
+                                id -> id.toString()).collect(Collectors.joining(","));
+
+                            String sql = String.format(SELECT_IN_SQL, tableName, inSqlIds);
+                            PreparedStatement st = ((Connection) res.value()).prepareStatement(sql);
+                            ResultSet rs = st.executeQuery();
+
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(st.toString());
+                            }
+
+                            List<IEntity> entities = new ArrayList<>(partitionTableIds.size());
+
+                            while (rs.next()) {
+                                long id = rs.getLong(FieldDefine.ID);
+                                entities.add(buildEntityFromResultSet(rs, entityTable.get(id)).get());
+                            }
+
+                            try {
+                                return entities;
+                            } finally {
+                                if (rs != null) {
+                                    rs.close();
+                                }
+
+                                if (st != null) {
+                                    st.close();
+                                }
+                            }
                         }
                     });
             } finally {
                 latch.countDown();
             }
         }
+    }
+
+    private Optional<IEntity> buildEntityFromResultSet(ResultSet rs, IEntityClass entityClass) throws SQLException {
+        long dataEntityClassId = rs.getLong(FieldDefine.ENTITY);
+        if (entityClass.id() != dataEntityClassId) {
+            throw new SQLException(
+                String.format(
+                    "The incorrect Entity type is expected to be %d, but the actual data type is %d."
+                    , entityClass.id(), dataEntityClassId));
+        }
+
+        long id = rs.getLong(FieldDefine.ID);
+        Entity entity = new Entity(
+            id,
+            entityClass,
+            toEntityValue(rs.getLong(FieldDefine.ID), entityClass, rs.getString(FieldDefine.ATTRIBUTE)),
+            new EntityFamily(rs.getLong(FieldDefine.PREF), rs.getLong(FieldDefine.CREF)),
+            rs.getInt(FieldDefine.VERSION)
+        );
+
+        return Optional.of(entity);
     }
 }
