@@ -32,7 +32,7 @@
                 <configuration>
                     <configLocation>../checkstyle.xml</configLocation>
                     <encoding>${project.build.sourceEncoding}</encoding>
-                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <includeTestSourceDirectory>false</includeTestSourceDirectory>
                     <excludes>**/*Grpc.java</excludes>
                 </configuration>
                 <executions>

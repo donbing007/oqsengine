@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.command;
 
 import java.util.Map;
 
+/**
+ * single update
+ */
 public class SingleUpdateCmd implements MetaDataLikeCmd{
 
     private String boId;

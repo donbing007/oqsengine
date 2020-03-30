@@ -4,7 +4,11 @@ import com.xforceplus.ultraman.oqsengine.sdk.controller.*;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
-@ConditionalOnProperty(value = "xplat.oqsengine.sdk.endpoint.enabled", matchIfMissing = true)
+/**
+ * default endpoints auto-configuration
+ *
+ */
+@ConditionalOnProperty(value = "xplat.oqsengine.sdk.endpoints.enabled", matchIfMissing = true)
 public class DefaultEndpointConfiguration {
 
     //controller

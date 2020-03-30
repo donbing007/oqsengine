@@ -8,10 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoShardTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
@@ -51,8 +48,8 @@ public class SQLMasterStorageTest {
     private DataSourcePackage dataSourcePackage;
     private SQLMasterStorage storage;
     private List<IEntity> expectedEntitys;
-    private IEntityField fixEnumField = new Field(100000, "enum", FieldType.ENUM);
-    private EnumValue fixEnumValue = new EnumValue(fixEnumField, "1,2,3,500002,测试");
+    private IEntityField fixStringsField = new Field(100000, "strings", FieldType.STRINGS);
+    private StringsValue fixStringsValue = new StringsValue(fixStringsField, "1,2,3,500002,测试".split(","));
 
     @Before
     public void before() throws Exception {
@@ -238,7 +235,7 @@ public class SQLMasterStorageTest {
 
     private IEntity buildEntity(long baseId) {
         Collection<IEntityField> fields = buildRandomFields(baseId, 3);
-        fields.add(fixEnumField);
+        fields.add(fixStringsField);
 
         return new Entity(
             baseId,
@@ -264,7 +261,7 @@ public class SQLMasterStorageTest {
                 case STRING:
                     return new StringValue(f, buildRandomString(30));
                 case ENUM:
-                    return fixEnumValue;
+                    return fixStringsValue;
                 default:
                     return new LongValue(f, (long) buildRandomLong(10, 100000));
             }

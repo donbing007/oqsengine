@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.store.repository;
 
+/**
+ * simple boItem
+ */
 public class SimpleBoItem {
 
     private String parentId;

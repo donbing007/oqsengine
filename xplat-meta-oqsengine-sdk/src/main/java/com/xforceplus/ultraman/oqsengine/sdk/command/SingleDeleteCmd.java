@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.command;
 
+/**
+ * single record delete
+ */
 public class SingleDeleteCmd implements MetaDataLikeCmd{
 
     private String boId;

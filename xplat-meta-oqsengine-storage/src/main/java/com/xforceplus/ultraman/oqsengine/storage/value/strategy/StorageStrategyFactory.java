@@ -21,6 +21,7 @@ public class StorageStrategyFactory {
         put(FieldType.BOOLEAN, new BoolStorageStrategy());
         put(FieldType.DATETIME, new DateTimeStorageStrategy());
         put(FieldType.ENUM, new EnumStorageStrategy());
+        put(FieldType.STRINGS, new StringsStorageStrategy());
     }};
 
     private StorageStrategy DEFAULT_STRATEGY = new UnsupportStorageStrategy();

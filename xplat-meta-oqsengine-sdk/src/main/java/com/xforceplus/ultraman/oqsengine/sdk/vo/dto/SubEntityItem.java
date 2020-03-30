@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
 import java.util.List;
 
+/**
+ * sub entity
+ */
 public class SubEntityItem {
 
     private String code;

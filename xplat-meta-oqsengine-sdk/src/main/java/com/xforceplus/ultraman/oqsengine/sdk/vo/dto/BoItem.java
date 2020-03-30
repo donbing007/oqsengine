@@ -3,7 +3,10 @@ package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 import java.util.List;
 import java.util.Map;
 
-public class BoItem implements ResponseItem{
+/**
+ * boitem
+ */
+public class BoItem implements ResponseItem {
 
     private Map<String, ApiItem> api;
 

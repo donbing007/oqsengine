@@ -18,6 +18,9 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import java.util.List;
 
+/**
+ * controller
+ */
 @Configuration
 @Component
 public class ControllerExtendConfiguration implements WebMvcConfigurer , InitializingBean {

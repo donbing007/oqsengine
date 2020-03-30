@@ -9,15 +9,19 @@ import com.xforceplus.ultraman.oqsengine.sdk.config.init.DictInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.ModuleInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.controller.*;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler;
-import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaFieldDefaultHandler;
-import com.xforceplus.ultraman.oqsengine.sdk.handler.EntityMetaHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.CodeExtendedInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.DefaultSearchInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.MatchRouter;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
+import com.xforceplus.ultraman.oqsengine.sdk.service.impl.DefaultHandleValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.EntityServiceExImpl;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.EntityServiceImpl;
+import com.xforceplus.ultraman.oqsengine.sdk.service.operation.*;
+import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.FieldValidator;
+import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.RegxValidator;
+import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.RequiredValidator;
+import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.TypeCheckValidator;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.DictMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
@@ -45,6 +49,9 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * sdk auto-configuration
+ */
 @ConditionalOnProperty(value = "xplat.oqsengine.sdk.enabled", matchIfMissing = true)
 @AutoConfigureOrder
 @EnableGrpcServiceClients(basePackages = { "com.xforceplus.ultraman.metadata.grpc",  "com.xforceplus.ultraman.oqsengine.sdk"})
@@ -135,10 +142,10 @@ public class InitServiceAutoConfiguration {
 
         //先获取到converter列表
         List<HttpMessageConverter<?>> converters = builder.build().getMessageConverters();
-        for(HttpMessageConverter<?> converter : converters){
+        for ( HttpMessageConverter<?> converter : converters ) {
             //因为我们只想要jsonConverter支持对text/html的解析
-            if(converter instanceof MappingJackson2HttpMessageConverter){
-                try{
+            if ( converter instanceof MappingJackson2HttpMessageConverter ) {
+                try {
                     //先将原先支持的MediaType列表拷出
                     List<MediaType> mediaTypeList = new ArrayList<>(converter.getSupportedMediaTypes());
                     //加入对JSON的支持
@@ -146,8 +153,8 @@ public class InitServiceAutoConfiguration {
 //                    mediaTypeList.add(MediaType.TEXT_HTML);
                     //将已经加入了text/html的MediaType支持列表设置为其支持的媒体类型列表
                     ((MappingJackson2HttpMessageConverter) converter).setSupportedMediaTypes(mediaTypeList);
-                }catch(Exception e){
-                    e.printStackTrace();
+                } catch (Exception e) {
+//                    e.printStackTrace();
                 }
             }
         }
@@ -157,8 +164,10 @@ public class InitServiceAutoConfiguration {
     @Bean
     public ClientHttpRequestFactory simpleClientHttpRequestFactory(){
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setReadTimeout(5000);//单位为ms
-        factory.setConnectTimeout(5000);//单位为ms
+        //单位为ms
+        factory.setReadTimeout(5000);
+        //单位为ms
+        factory.setConnectTimeout(5000);
         return factory;
     }
 
@@ -173,14 +182,48 @@ public class InitServiceAutoConfiguration {
         return new DefaultSearchInterceptor<>(matchRouter);
     }
 
+    //----------------------------init for operation and validator
+
     @Bean
-    public EntityMetaHandler entityMetaHandler(){
-        return new EntityMetaHandler();
+    public FieldValidator regex(){
+        return new RegxValidator();
     }
 
     @Bean
-    public EntityMetaFieldDefaultHandler entityMetaFieldDefaultHandler(){
-        return new EntityMetaFieldDefaultHandler();
+    public FieldValidator required(){
+        return new RequiredValidator();
+    }
+
+    @Bean
+    public FieldValidator typedCheck(){
+        return new TypeCheckValidator();
+    }
+
+    @Bean
+    public FieldOperationHandler defaultField(){
+        return new DefaultFieldOperationHandler();
+    }
+
+
+    @Bean
+    public FieldOperationHandler defaultValueField(){
+        return new DefaultFieldValueOperationHandler();
+    }
+
+    @Bean
+    public FieldOperationHandler defaultSystemField(ContextService contextService){
+        return new FixedDefaultSystemOperationHandler(contextService);
+    }
+
+    @Bean
+    public FieldOperationHandler simpleExpressionFieldOperationHandler(ContextService contextService){
+        return new SimpleExpressionFieldOperationHandler(contextService);
+    }
+
+
+    @Bean
+    public DefaultHandleValueService defaultHandleValueService(){
+        return new DefaultHandleValueService();
     }
 
 

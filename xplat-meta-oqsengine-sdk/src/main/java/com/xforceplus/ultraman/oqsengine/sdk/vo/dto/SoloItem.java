@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
+/**
+ * solo item
+ */
 public class SoloItem {
 
     private Long id;

@@ -15,6 +15,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Condition test
+ */
 public class ConditionTest {
 
     @Test

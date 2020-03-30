@@ -40,6 +40,14 @@ public class FieldConfig implements Serializable {
      */
     private boolean identifie = false;
 
+    private boolean isRequired = false;
+
+    private String validateRegexString = "";
+
+    private boolean isSplittable = false;
+
+    private String delimiter = "";
+
     /**
      * 创建一个新的 FieldConfig.
      * @return 实例.
@@ -151,6 +159,42 @@ public class FieldConfig implements Serializable {
 //    }
 
 
+    public boolean isRequired() {
+        return isRequired;
+    }
+
+    public FieldConfig required(boolean required) {
+        isRequired = required;
+        return this;
+    }
+
+    public String getValidateRegexString() {
+        return validateRegexString;
+    }
+
+    public void setValidateRegexString(String validateRegexString) {
+        this.validateRegexString = validateRegexString;
+    }
+
+    public boolean isSplittable() {
+        return isSplittable;
+    }
+
+    public FieldConfig splittable(boolean splittable) {
+
+        isSplittable = splittable;
+        return this;
+    }
+
+    public String getDelimiter() {
+        return delimiter;
+    }
+
+    public FieldConfig delimiter(String delimiter) {
+        this.delimiter = delimiter;
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -162,6 +206,8 @@ public class FieldConfig implements Serializable {
                 precision == that.precision &&
                 identifie == that.identifie;
     }
+
+
 
     @Override
     public int hashCode() {

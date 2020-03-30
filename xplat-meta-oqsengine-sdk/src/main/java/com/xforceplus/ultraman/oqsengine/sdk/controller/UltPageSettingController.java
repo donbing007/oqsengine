@@ -2,21 +2,16 @@ package com.xforceplus.ultraman.oqsengine.sdk.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.pojo.auth.Authorization;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.PageBo;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltPage;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.UltPageBo;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
-import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.DictItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ResponseList;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.UltPageBoItem;
 import org.apache.metamodel.data.DataSet;
 import org.apache.metamodel.data.Row;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -26,6 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * ult page setting controller
+ */
 @RequestMapping
 public class UltPageSettingController {
 
@@ -40,9 +38,10 @@ public class UltPageSettingController {
 
     /**
      * 部署页面
+     *
      * @return
      */
-    @PostMapping("/pages/{id}/deployments" )
+    @PostMapping("/pages/{id}/deployments")
     @ResponseBody
     public Response deploymentsPage(@PathVariable String id) {
 
@@ -82,33 +81,34 @@ public class UltPageSettingController {
 
     /**
      * 获取页面bo列表
+     *
      * @return
      */
-    @GetMapping("/pages/{id}/bo-settings" )
+    @GetMapping("/pages/{id}/bo-settings")
     @ResponseBody
     public Response pageBos(HttpServletRequest request, @PathVariable String id) {
 
         DataSet ds = null;
         String tenantId = request.getParameter("tenantId");
         Response<ResponseList<UltPageBoItem>> response = new Response<>();
-        if(!StringUtils.isEmpty(id)) {
-            ResponseList<UltPageBoItem> items = getPageBos(id,tenantId);
-            if (items.size() > 0){
+        if (!StringUtils.isEmpty(id)) {
+            ResponseList<UltPageBoItem> items = getPageBos(id, tenantId);
+            if (items.size() > 0) {
                 response.setMessage("查询成功");
                 response.setCode("200");
                 response.setResult(items);
                 return response;
-            }else {
+            } else {
                 Response<List<UltPage>> result = initSeetings(id);
-                if (result.getResult().size() > 0){
-                    items = getPageBos(id,tenantId);
+                if (result.getResult().size() > 0) {
+                    items = getPageBos(id, tenantId);
                 }
-                if (items.size() > 0){
+                if (items.size() > 0) {
                     response.setMessage("查询成功");
                     response.setCode("200");
                     response.setResult(items);
                     return response;
-                }else {
+                } else {
                     response.setMessage("查询无结果");
                     response.setCode("500");
                     return response;
@@ -144,7 +144,7 @@ public class UltPageSettingController {
 //
 //            return response;
 
-        }else {
+        } else {
             response.setMessage("未传id");
             response.setCode("1");
 
@@ -154,15 +154,16 @@ public class UltPageSettingController {
 
     /**
      * 根据业务对象id获取详细json配置
+     *
      * @return
      */
-    @GetMapping("/bo-settings/{id}" )
+    @GetMapping("/bo-settings/{id}")
     @ResponseBody
     public Response pageBoSeetings(@PathVariable String id) {
 
         DataSet ds = null;
         Response<UltPageBoItem> response = new Response<>();
-        if(!StringUtils.isEmpty(id)) {
+        if (!StringUtils.isEmpty(id)) {
 //            ResponseList<UltPageBoItem> items = getSeetings(id);
 //            if (items.size() == 1){
 //                response.setMessage("查询成功");
@@ -197,12 +198,12 @@ public class UltPageSettingController {
             ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBoSeeting).collect(Collectors.toCollection(ResponseList::new));
             response.setMessage("查询成功");
             response.setCode("1");
-            if (items.size() == 1){
+            if (items.size() == 1) {
                 response.setResult(items.get(0));
             }
             return response;
 
-        }else {
+        } else {
             response.setMessage("未传id");
             response.setCode("1");
 
@@ -212,7 +213,7 @@ public class UltPageSettingController {
     }
 
 
-    private Response initSeetings(String id){
+    private Response initSeetings(String id) {
         String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
         String url = String.format("%s/pages/%s/deployments"
                 , accessUri
@@ -223,11 +224,11 @@ public class UltPageSettingController {
         auth.setEnv(config.getEnv());
         Response<List<UltPage>> result = new Response<List<UltPage>>();
         try {
-            result = restTemplate.postForObject(url, auth,Response.class);
-            if (result.getResult()!=null){
+            result = restTemplate.postForObject(url, auth, Response.class);
+            if (result.getResult() != null) {
                 List<UltPage> ultPages = result.getResult();
-                for (int i = 0;i<ultPages.size();i++) {
-                    UltPage saveUltPage = JSON.parseObject(JSON.toJSONString(ultPages.get(i)),UltPage.class);
+                for (int i = 0; i < ultPages.size(); i++) {
+                    UltPage saveUltPage = JSON.parseObject(JSON.toJSONString(ultPages.get(i)), UltPage.class);
                     pageBoMapLocalStore.save(saveUltPage);
                 }
 
@@ -237,19 +238,19 @@ public class UltPageSettingController {
 //                pageBoMapLocalStore.save(ultPage);
             }
             return result;
-        }catch (Exception e){
+        } catch (Exception e) {
             result.setCode("400");
             result.setMessage("部署失败");
             return result;
         }
     }
 
-    private ResponseList getPageBos(String id,String tenantId){
+    private ResponseList getPageBos(String id, String tenantId) {
         DataSet ds = null;
-        if(!StringUtils.isEmpty(id)) {
+        if (!StringUtils.isEmpty(id)) {
             Response<ResponseList<UltPageBoItem>> response = new Response<>();
             List<Row> trows = new ArrayList<>();
-            if (!StringUtils.isEmpty(tenantId)){
+            if (!StringUtils.isEmpty(tenantId)) {
                 ds = pageBoMapLocalStore.query().selectAll()
                         .where("refPageId")
                         .eq(id)
@@ -258,10 +259,10 @@ public class UltPageSettingController {
                         .execute();
                 trows = ds.toRows();
             }
-            if (ds!=null && trows!=null && trows.size() > 0){
+            if (ds != null && trows != null && trows.size() > 0) {
                 ResponseList<UltPageBoItem> items = trows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
                 return items;
-            }else {
+            } else {
                 ds = pageBoMapLocalStore.query().selectAll()
                         .where("id")
                         .eq(id)
@@ -270,14 +271,14 @@ public class UltPageSettingController {
                 ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
                 return items;
             }
-        }else {
+        } else {
             return null;
         }
     }
 
-    private ResponseList getSeetings(String id){
+    private ResponseList getSeetings(String id) {
         DataSet ds = null;
-        if(!StringUtils.isEmpty(id)) {
+        if (!StringUtils.isEmpty(id)) {
             Response<UltPageBoItem> response = new Response<>();
             ds = pageBoMapLocalStore.query().selectAll()
                     .where("settingId")
@@ -288,18 +289,18 @@ public class UltPageSettingController {
             ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBoSeeting).collect(Collectors.toCollection(ResponseList::new));
             return items;
 
-        }else {
+        } else {
             return null;
         }
     }
 
 
-    private UltPageBoItem toUltPageBos(Row row){
+    private UltPageBoItem toUltPageBos(Row row) {
         UltPageBoItem ultPageBoItem = new UltPageBoItem();
         ultPageBoItem.setId(Long.parseLong(RowUtils.getRowValue(row, "settingId").map(Object::toString).orElse("")));
         ultPageBoItem.setPageId(Long.parseLong(RowUtils.getRowValue(row, "id").map(Object::toString).orElse("")));
         ultPageBoItem.setBoCode(RowUtils.getRowValue(row, "boCode").map(Object::toString).orElse(""));
-        if (!"".equals(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse(""))){
+        if (!"".equals(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse(""))) {
             ultPageBoItem.setTenantId(Long.parseLong(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse("")));
         }
         ultPageBoItem.setTenantName(RowUtils.getRowValue(row, "tenantName").map(Object::toString).orElse(""));
@@ -310,7 +311,7 @@ public class UltPageSettingController {
         return ultPageBoItem;
     }
 
-    private UltPageBoItem toUltPageBoSeeting(Row row){
+    private UltPageBoItem toUltPageBoSeeting(Row row) {
         UltPageBoItem ultPageBoItem = new UltPageBoItem();
         ultPageBoItem.setId(Long.parseLong(RowUtils.getRowValue(row, "settingId").map(Object::toString).orElse("")));
         ultPageBoItem.setPageId(Long.parseLong(RowUtils.getRowValue(row, "id").map(Object::toString).orElse("")));

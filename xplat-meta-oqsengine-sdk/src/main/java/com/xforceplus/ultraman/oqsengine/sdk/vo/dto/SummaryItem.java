@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
+/**
+ * summary item
+ */
 public class SummaryItem {
 
     private Integer total;
