@@ -5,63 +5,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import io.vavr.control.Validation;
 import org.springframework.util.StringUtils;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType.*;
-
 /**
+ * TODO
+ * from field domain
  * check type
  */
 public class TypeCheckValidator implements FieldValidator<Object> {
-
-
-    private static Map<FieldType, Predicate<String>> canParse = new HashMap<>();
-
-    static {
-        canParse.put(BOOLEAN, s -> {
-            try {
-                Boolean.parseBoolean(s);
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        });
-        canParse.put(LONG, s -> {
-            try {
-                Long.parseLong(s);
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        });
-
-        canParse.put(DECIMAL, s -> {
-            try {
-                new BigDecimal(s);
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        });
-        canParse.put(DATETIME, s -> {
-            try {
-                Instant.ofEpochMilli(Long.parseLong(s));
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        });
-        canParse.put(STRING, s -> true);
-        canParse.put(ENUM, s -> true);
-    }
-
-    ;
-
 
     @Override
     public Validation<String, Object> validate(IEntityField field, Object obj) {
@@ -73,7 +24,7 @@ public class TypeCheckValidator implements FieldValidator<Object> {
                 String[] terms = value.split(field.config().getDelimiter());
 
                 return Stream.of(terms)
-                        .allMatch(canParse.get(field.type())) ?
+                        .allMatch(field.type()::canParseFrom) ?
                         Validation.valid(obj) :
                         Validation.invalid(String.format("%s is not satisfied to type %s", obj, field.type()));
             } else {
@@ -94,6 +45,7 @@ public class TypeCheckValidator implements FieldValidator<Object> {
      * @return
      */
     private boolean checkType(FieldType type, Object obj) {
-        return canParse.get(type).test(obj.toString());
+
+        return type.canParseFrom(obj.toString());
     }
 }

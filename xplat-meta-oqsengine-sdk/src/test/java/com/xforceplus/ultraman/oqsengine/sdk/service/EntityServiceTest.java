@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
@@ -507,7 +508,6 @@ public class EntityServiceTest {
         Either<String, Map<String, Object>> mapEither = entityService.findOne(entityOpt1.get(), fId);
     }
 
-
     @Test
     public void testLikeOnConfigMapping() throws InterruptedException {
 
@@ -523,9 +523,116 @@ public class EntityServiceTest {
 
 
     @Test
-    public void testBillIdSearch() throws InterruptedException {
+    public void testEq() throws InterruptedException {
         Thread.sleep(10000);
 
-        Optional<EntityClass> entityOpt = entityService.loadByCode("image");
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("salesBill");
+
+        Optional<EntityClass> parentOp = entityService.loadByCode("baseBill");
+
+        EntityClass entityClass = entityOpt.get();
+
+        EntityClass entityClass2 = parentOp.get();
+
+        Map<String, Object> map = new HashMap<>();
+
+        map.put("bill_data_status", "2");
+        map.put("seller_tax_no", "212324");
+
+        Either<String, Long> ret = entityService.create(entityClass, map);
+        Long id1 = ret.get();
+
+
+        Map<String, Object> map2 = new HashMap<>();
+
+        map.put("bill_data_status", "3");
+        map.put("seller_tax_no", "212324");
+
+        Either<String, Long> ret2 = entityService.create(entityClass, map2);
+        Long id2 = ret2.get();
+
+        System.out.println(entityService.findByCondition(entityClass2, new RequestBuilder()
+                                                    .field("bill_data_status", ConditionOp.eq, "2")
+                                                    .build()));
+
+
+        Map<String, Object> map3 = new HashMap<>();
+
+        map3.put("bill_data_status", "3");
+
+        //update
+        entityService.updateById(entityClass, id1, map3);
+
+        System.out.println(entityService.findByCondition(entityClass2, new RequestBuilder()
+                .field("bill_data_status", ConditionOp.eq, "2")
+                .build()));
+
+    }
+
+    @Test
+    public void testWeiredSalesBill() throws InterruptedException {
+        setupContext();
+
+        Thread.sleep(10000);
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("salesBill");
+
+        Map<String, Object> map3 = new HashMap<>();
+
+        Either<String, Long> ret2 = entityService.create(entityOpt.get(), map3);
+
+        System.out.println(entityService.findOne(entityOpt.get(), ret2.get()));
+    }
+
+    /**
+     *
+     * @return
+     */
+    private EntityClass entity() {
+        FieldConfig fieldConfig = new FieldConfig();
+        fieldConfig.required(true);
+        EntityClass entityClass = new EntityClass(123L, "TestDefault"
+                , Arrays.asList(new Field(123L, "defaultfield"
+                , FieldType.STRINGS, fieldConfig)));
+
+        return entityClass;
+    }
+
+    @Test
+    public void testStrings(){
+
+        EntityClass entityClass = entity();
+        Map<String, Object> map3 = new HashMap<>();
+        map3.put("defaultfield", "1,2,3,4");
+
+        Either<String, Long> ret2 = entityService.create(entityClass, map3);
+        System.out.println(entityService.findOne(entityClass, ret2.get()));
+
+        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.in
+                , "1,2").build()));
+
+        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.ne
+                , "1").build()));
+
+        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.eq
+                , "1").build()));
+    }
+
+    @Test
+    public void testSystemOverride() throws InterruptedException {
+        Thread.sleep(10000);
+
+        setupContext();
+        setupContext();
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("baseBill");
+
+        Map<String, Object> ss = new HashMap<>();
+        ss.put("create_user_id", "1111111");
+        Long x = entityService.create(entityOpt.get(), ss).get();
+
+        System.out.println(entityService.findOne(entityOpt.get(), x));
+
     }
 }

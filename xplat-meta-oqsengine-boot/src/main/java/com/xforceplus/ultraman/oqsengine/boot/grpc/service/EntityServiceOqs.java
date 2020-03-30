@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.ofEmptyStr;
 import static io.vavr.API.*;
@@ -528,37 +529,37 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.EQUALS
                             , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0))));
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case ne:
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.NOT_EQUALS
                             , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0))));
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case ge:
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.GREATER_THAN_EQUALS
                             , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0))));
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case gt:
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.GREATER_THAN
                             , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0))));
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case ge_le:
                     if (nonNullValueList.size() > 1) {
                         Condition left = new Condition(fieldOp.get()
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)));
+                                , nonNullValueList.get(0)).toArray(new IValue[]{}));
 
                         Condition right = new Condition(fieldOp.get()
                                 , ConditionOperator.LESS_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(1)));
+                                , nonNullValueList.get(1)).toArray(new IValue[]{}));
 
                         conditions = new Conditions(left).addAnd(right);
 
@@ -567,7 +568,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         conditions = new Conditions(new Condition(fieldOp.get()
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0))));
+                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
                 case gt_le:
@@ -575,12 +576,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         Condition left = new Condition(fieldOp.get()
                                 , ConditionOperator.GREATER_THAN
                                 , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)));
+                                , nonNullValueList.get(0)).toArray(new IValue[]{}));
 
                         Condition right = new Condition(fieldOp.get()
                                 , ConditionOperator.LESS_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(1)));
+                                , nonNullValueList.get(1)).toArray(new IValue[]{}));
 
 
                         conditions = new Conditions(left).addAnd(right);
@@ -590,7 +591,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         conditions = new Conditions(new Condition(fieldOp.get()
                                 , ConditionOperator.GREATER_THAN
                                 , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0))));
+                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
                 case ge_lt:
@@ -598,12 +599,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         Condition left = new Condition(fieldOp.get()
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)));
+                                , nonNullValueList.get(0)).toArray(new IValue[]{}));
 
                         Condition right = new Condition(fieldOp.get()
                                 , ConditionOperator.LESS_THAN
                                 , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(1)));
+                                , nonNullValueList.get(1)).toArray(new IValue[]{}));
 
 
                         conditions = new Conditions(left).addAnd(right);
@@ -613,26 +614,26 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         conditions = new Conditions(new Condition(fieldOp.get()
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0))));
+                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
                 case le:
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.LESS_THAN_EQUALS
                             , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0))));
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case lt:
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.LESS_THAN
                             , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0))));
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case in:
                     conditions = new Conditions(
                             new Condition(fieldOp.get()
                                     , ConditionOperator.MULTIPLE_EQUALS
-                                    , nonNullValueList.stream().map(x -> toTypedValue(fieldOp.get(), x))
+                                    , nonNullValueList.stream().flatMap(x -> toTypedValue(fieldOp.get(), x).stream())
                                     .toArray(IValue[]::new)
                             )
                     );
@@ -663,19 +664,19 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         conditions = new Conditions(new Condition(fieldOp.get()
                                 , ConditionOperator.NOT_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0))));
+                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     } else {
                         conditions = new Conditions(new Condition(fieldOp.get()
                                 , ConditionOperator.NOT_EQUALS
                                 , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0))));
+                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
 
                         Conditions finalConditions = conditions;
                         nonNullValueList.stream().skip(1).forEach(x -> {
                             finalConditions.addAnd(new Conditions(new Condition(fieldOp.get()
                                     , ConditionOperator.NOT_EQUALS
                                     , toTypedValue(fieldOp.get()
-                                    , x))), false);
+                                    , x).toArray(new IValue[]{}))), false);
                         });
 
                         conditions = finalConditions;
@@ -685,7 +686,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     conditions = new Conditions(new Condition(fieldOp.get()
                             , ConditionOperator.LIKE
                             , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0))));
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
             }
         }
@@ -711,50 +712,54 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     private IEntityValue toEntityValue(IEntityClass entityClass, EntityUp entityUp) {
         List<IValue> valueList = entityUp.getValuesList().stream()
-                .map(y -> {
-                    return toTypedValue(entityClass, y.getFieldId(), y.getValue());
+                .flatMap(y -> {
+                    return toTypedValue(entityClass, y.getFieldId(), y.getValue()).stream();
                 }).filter(Objects::nonNull).collect(Collectors.toList());
         EntityValue entityValue = new EntityValue(entityUp.getId());
         entityValue.addValues(valueList);
         return entityValue;
     }
 
-    private IValue toTypedValue(IEntityField entityField, String value) {
+    private List<IValue> toTypedValue(IEntityField entityField, String value) {
         try {
             Objects.requireNonNull(value, "value值不能为空");
             Objects.requireNonNull(entityField, "field值不能为空");
-            IValue retValue = null;
+            List<IValue> iValues = new LinkedList<>();
             switch (entityField.type()) {
                 case LONG:
-                    retValue = new LongValue(entityField, Long.parseLong(value));
+                    iValues.add(new LongValue(entityField, Long.parseLong(value)));
                     break;
                 case DATETIME:
                     //DATETIME is a timestamp
                     Instant instant = Instant.ofEpochMilli(Long.parseLong(value));
-                    retValue = new DateTimeValue(entityField, LocalDateTime.ofInstant(instant, DateTimeValue.zoneId));
+                    iValues.add(new DateTimeValue(entityField, LocalDateTime.ofInstant(instant, DateTimeValue.zoneId)));
                     break;
                 case ENUM:
-                    retValue = new EnumValue(entityField, value);
+                    iValues.add(new EnumValue(entityField, value));
                     break;
                 case BOOLEAN:
-                    retValue = new BooleanValue(entityField, Boolean.parseBoolean(value));
+                    iValues.add(new BooleanValue(entityField, Boolean.parseBoolean(value)));
                     break;
                 case DECIMAL:
                     //min is 1
                     int precision = Optional.ofNullable(entityField.config()).map(FieldConfig::getPrecision).filter(x -> x > 0).orElse(1);
-                    retValue = new DecimalValue(entityField, new BigDecimal(value).setScale(precision, RoundingMode.HALF_UP));
+                    iValues.add(new DecimalValue(entityField, new BigDecimal(value).setScale(precision, RoundingMode.HALF_UP)));
+                    break;
+                case STRINGS:
+                    Stream.of(value.split(",")).map(x ->
+                            new StringsValue(entityField, new String[]{x})).forEach(iValues::add);
                     break;
                 default:
-                    retValue = new StringValue(entityField, value);
+                    iValues.add(new StringValue(entityField, value));
             }
-            return retValue;
+            return iValues;
         } catch (Exception ex) {
             logger.error("{}", ex);
             throw new RuntimeException("类型转换失败 " + ex.getMessage());
         }
     }
 
-    private IValue toTypedValue(IEntityClass entityClass, Long id, String value) {
+    private List<IValue> toTypedValue(IEntityClass entityClass, Long id, String value) {
         try {
             Objects.requireNonNull(value, "值不能为空");
             Optional<IEntityField> fieldOp = entityClass.field(id);

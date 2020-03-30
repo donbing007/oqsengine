@@ -8,33 +8,10 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import org.apache.metamodel.data.Row;
 
 /**
+ * TODO
  * helper to handler several object
  */
 public class FieldHelper {
-
-
-    private static FieldType toFieldType(String typeStr) {
-
-        try {
-            return FieldType.valueOf(typeStr.toUpperCase());
-        } catch (Exception ex) {
-            //to
-        }
-
-        if ("bigint".equalsIgnoreCase(typeStr) || "long".equalsIgnoreCase(typeStr)) {
-            return FieldType.LONG;
-        } else if ("enum".equalsIgnoreCase(typeStr)) {
-            return FieldType.ENUM;
-        } else if ("boolean".equalsIgnoreCase(typeStr)) {
-            return FieldType.BOOLEAN;
-        } else if ("timestamp".equalsIgnoreCase(typeStr)) {
-            return FieldType.DATETIME;
-        } else if ("double".equalsIgnoreCase(typeStr)) {
-            return FieldType.DECIMAL;
-        } else {
-            return FieldType.STRING;
-        }
-    }
 
     /**
      * TODO splitter
@@ -52,7 +29,7 @@ public class FieldHelper {
         String name = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
         FieldType fieldType = RowUtils.getRowValue(row, "fieldType")
                 .map(String::valueOf)
-                .map(FieldHelper::toFieldType)
+                .map(FieldType::fromRawType)
                 .orElse(FieldType.STRING);
 
         Boolean searchable = RowUtils.getRowValue(row, "searchable")

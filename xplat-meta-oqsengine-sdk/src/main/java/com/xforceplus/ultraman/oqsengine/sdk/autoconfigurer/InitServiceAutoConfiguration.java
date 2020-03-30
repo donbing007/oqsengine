@@ -33,6 +33,7 @@ import com.xforceplus.xplat.galaxy.framework.dispatcher.interceptor.MessageDispa
 import com.xforceplus.xplat.galaxy.framework.dispatcher.messaging.QueryMessage;
 import com.xforceplus.xplat.galaxy.grpc.spring.EnableGrpcServiceClients;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -211,8 +212,8 @@ public class InitServiceAutoConfiguration {
     }
 
     @Bean
-    public FieldOperationHandler defaultSystemField(ContextService contextService){
-        return new FixedDefaultSystemOperationHandler(contextService);
+    public FieldOperationHandler defaultSystemField(ContextService contextService, @Value("${xplat.oqsengine.sdk.override:false}") Boolean isOverride){
+        return new FixedDefaultSystemOperationHandler(contextService, isOverride);
     }
 
     @Bean
@@ -225,6 +226,5 @@ public class InitServiceAutoConfiguration {
     public DefaultHandleValueService defaultHandleValueService(){
         return new DefaultHandleValueService();
     }
-
 
 }
