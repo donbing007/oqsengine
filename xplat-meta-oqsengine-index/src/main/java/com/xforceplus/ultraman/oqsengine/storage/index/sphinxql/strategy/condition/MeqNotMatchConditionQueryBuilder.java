@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -50,7 +51,7 @@ public class MeqNotMatchConditionQueryBuilder extends SphinxQLConditionQueryBuil
     private String buildConditionValue(StorageValue storageValue, StorageStrategy storageStrategy) {
         String conditionValue;
         if (storageStrategy.storageType() == StorageType.STRING) {
-            conditionValue = "'" + storageValue.value() + "'";
+            conditionValue = "'" + SphinxQLHelper.encodeString((String) storageValue.value()) + "'";
         } else {
             conditionValue = storageValue.value().toString();
         }

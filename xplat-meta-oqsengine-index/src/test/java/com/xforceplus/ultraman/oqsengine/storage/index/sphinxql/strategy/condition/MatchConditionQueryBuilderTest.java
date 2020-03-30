@@ -63,7 +63,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.EQUALS,
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test")
                 ),
-                "=F11111S" + SphinxQLHelper.unicode("test")
+                "=F11111Stest"
             ),
             new Case(
                 new Condition(
@@ -87,7 +87,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.NOT_EQUALS,
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test")
                 ),
-                "-F11111S" + SphinxQLHelper.unicode("test")
+                "-F11111Stest"
             ),
             new Case(
                 new Condition(
@@ -95,7 +95,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.LIKE,
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test*")
                 ),
-                "F11111S" + SphinxQLHelper.unicode("test*")
+                "F11111Stest*"
             ),
             new Case(
                 new Condition(
@@ -103,7 +103,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.EQUALS,
                     new EnumValue(new Field(11111, "test", FieldType.ENUM), "test")
                 ),
-                "=F11111S*" + SphinxQLHelper.unicode("test"),
+                "=F11111S*test",
                 true
             ),
             new Case(
@@ -112,7 +112,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.NOT_EQUALS,
                     new EnumValue(new Field(11111, "test", FieldType.ENUM), "test")
                 ),
-                "-F11111S*" + SphinxQLHelper.unicode("test"),
+                "-F11111S*test",
                 true
             )
         );

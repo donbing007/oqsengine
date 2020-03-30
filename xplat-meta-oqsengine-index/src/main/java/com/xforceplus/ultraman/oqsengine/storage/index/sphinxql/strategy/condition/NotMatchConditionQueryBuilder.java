@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -53,10 +54,11 @@ public class NotMatchConditionQueryBuilder extends SphinxQLConditionQueryBuilder
 
             if (storageValue.type() == StorageType.STRING) {
                 buff.append(" '");
+                buff.append(SphinxQLHelper.encodeString((String) storageValue.value()));
             } else {
                 buff.append(" ");
+                buff.append(storageValue.value());
             }
-            buff.append(storageValue.value());
 
             if (storageValue.type() == StorageType.STRING) {
                 buff.append("'");

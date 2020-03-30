@@ -63,9 +63,9 @@ public class MeqMatchConditionQueryBuilderTest {
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test1"),
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test2")
                 ),
-                "(=F11111S" + SphinxQLHelper.unicode("test0") + " | " +
-                    "=F11111S" + SphinxQLHelper.unicode("test1") + " | " +
-                    "=F11111S" + SphinxQLHelper.unicode("test2") + ")"
+                "(=F11111Stest0" + " | " +
+                    "=F11111Stest1" + " | " +
+                    "=F11111Stest2" + ")"
             )
             ,
             new Case(

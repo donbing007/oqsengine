@@ -7,8 +7,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 /**
  * @author dongbin
  * @version 0.1 2020/2/22 18:41
- * @since 1.8
- */
+` * @since 1.8
+` */
 public class SphinxQLHelper {
 
     /**
@@ -47,28 +47,34 @@ public class SphinxQLHelper {
 
         return ATTRIBUTE_FULL_FIELD_PREFIX
             + (useGroupName ? (value.groupStorageName() + SqlKeywordDefine.EVERY_THING) : value.storageName())
-            + (value.type() == StorageType.STRING ? unicode((String) targetValue) : targetValue);
+            + (value.type() == StorageType.STRING ? encodeString((String) targetValue) : targetValue);
     }
 
     /**
-     * " ' \ 会被替换成分别为 ^, ` 和/.
+     * !    "    $    '    (    )    -    /    <    @    \    ^    |    ~ 会被替换成分别为 unicode 码.
+     * 为了在 sphinxQL中使用这些字符.
      */
     public static String encodeString(String source) {
         StringBuilder buff = new StringBuilder();
         for (char c : source.toCharArray()) {
             switch (c) {
-                case '\"': {
-                    buff.append('^');
+                case '\"':
+                case '\'':
+                case '\\':
+                case '!':
+                case '$':
+                case '(':
+                case ')':
+                case '-':
+                case '/':
+                case '<':
+                case '@':
+                case '^':
+                case '|':
+                case '~':
+                case '?':
+                    buff.append(Integer.toHexString(c));
                     break;
-                }
-                case '\'': {
-                    buff.append('`');
-                    break;
-                }
-                case '\\': {
-                    buff.append('/');
-                    break;
-                }
                 default:
                     buff.append(c);
             }
