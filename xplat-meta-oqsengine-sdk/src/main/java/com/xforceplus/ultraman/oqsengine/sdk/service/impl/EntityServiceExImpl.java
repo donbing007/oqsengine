@@ -197,6 +197,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
                         .eq(pageCode)
                         .and("envStatus")
                         .eq("UP")
+                        .and("tenantId").isNull()
                         .execute();
                 List<Row> rows = ds.toRows();
                 ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
