@@ -11,6 +11,8 @@ import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ResolvableType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,7 +32,7 @@ public class EntityController {
 
     @GetMapping("/bos/{boId}/entities/{id}")
     @ResponseBody
-    public Response<Map<String, Object>> singleQuery(
+    public ResponseEntity<Response<Map<String, Object>>> singleQuery(
             @PathVariable String boId,
             @PathVariable String id) {
 
@@ -42,18 +44,18 @@ public class EntityController {
             rep.setCode("1");
             rep.setMessage("获取成功");
             rep.setResult(x);
-            return rep;
+            return ResponseEntity.ok(rep);
         }).getOrElseGet(str -> {
             Response<Map<String, Object>> rep = new Response<>();
             rep.setCode("-1");
             rep.setMessage(str);
-            return rep;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
         });
     }
 
     @DeleteMapping("/bos/{boId}/entities/{id}")
     @ResponseBody
-    public Response<String> singleDelete(
+    public ResponseEntity<Response<String>> singleDelete(
             @PathVariable String boId,
             @PathVariable String id
     ) {
@@ -66,13 +68,13 @@ public class EntityController {
             rep.setCode("1");
             rep.setResult(String.valueOf(x));
             rep.setMessage("操作成功");
-            return rep;
+            return ResponseEntity.ok(rep);
         }).getOrElseGet(str -> {
             Response<String> rep = new Response<>();
             rep.setCode("-1");
             rep.setMessage("操作失败");
             rep.setResult(str);
-            return rep;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
         });
     }
 
@@ -89,7 +91,7 @@ public class EntityController {
      */
     @PostMapping("/bos/{boId}/entities")
     @ResponseBody
-    public Response<String> singleCreate(@PathVariable String boId,
+    public ResponseEntity<Response<String>> singleCreate(@PathVariable String boId,
                                          @RequestBody Map<String, Object> body
     ) {
 
@@ -102,13 +104,13 @@ public class EntityController {
             rep.setCode("1");
             rep.setResult(String.valueOf(x));
             rep.setMessage("操作成功");
-            return rep;
+            return ResponseEntity.ok(rep);
         }).getOrElseGet(str -> {
             Response<String> rep = new Response<>();
             rep.setCode("-1");
             rep.setMessage("操作失败");
             rep.setResult(str);
-            return rep;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
         });
     }
 
@@ -123,7 +125,7 @@ public class EntityController {
 
     @PutMapping("/bos/{boId}/entities/{id}")
     @ResponseBody
-    public Response<String> singleModify(@PathVariable String boId,
+    public ResponseEntity<Response<String>> singleModify(@PathVariable String boId,
                                          @PathVariable Long id,
                                          @RequestBody Map<String, Object> body
     ) {
@@ -136,13 +138,13 @@ public class EntityController {
             rep.setCode("1");
             rep.setResult(String.valueOf(x));
             rep.setMessage("操作成功");
-            return rep;
+            return ResponseEntity.ok(rep);
         }).getOrElseGet(str -> {
             Response<String> rep = new Response<>();
             rep.setCode("-1");
             rep.setMessage("操作失败");
             rep.setResult(str);
-            return rep;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
         });
     }
 
@@ -212,7 +214,7 @@ public class EntityController {
 
     @PostMapping("/bos/{boId}/entities/query")
     @ResponseBody
-    public Response<RowItem<Map<String, Object>>> conditionQuery(@PathVariable String boId,
+    public ResponseEntity<Response<RowItem<Map<String, Object>>>> conditionQuery(@PathVariable String boId,
                                                                  @RequestBody ConditionQueryRequest condition) {
 
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> result =
@@ -221,7 +223,7 @@ public class EntityController {
         return extractRepList(Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")));
     }
 
-    private <T> Response<RowItem<T>> extractRepList(Either<String, Tuple2<Integer, List<T>>> result) {
+    private <T> ResponseEntity<Response<RowItem<T>>> extractRepList(Either<String, Tuple2<Integer, List<T>>> result) {
         Response rep = new Response();
         if (result.isRight()) {
             rep.setCode("1");
@@ -231,11 +233,11 @@ public class EntityController {
             rowItem.setRows(tuple._2());
             rep.setResult(rowItem);
             rep.setMessage("操作成功");
-            return rep;
+            return ResponseEntity.ok(rep);
         } else {
             rep.setCode("-1");
             rep.setMessage(result.getLeft());
-            return rep;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
         }
     }
 }

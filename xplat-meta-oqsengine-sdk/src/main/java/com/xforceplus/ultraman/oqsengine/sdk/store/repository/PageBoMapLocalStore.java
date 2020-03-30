@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.sdk.store.repository;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltPage;
 import com.xforceplus.ultraman.oqsengine.sdk.store.MapLocalStore;
 import org.apache.metamodel.delete.DeleteFrom;
+import org.apache.metamodel.update.Update;
+import org.springframework.util.StringUtils;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,6 +30,12 @@ public class PageBoMapLocalStore extends MapLocalStore {
             //有配置数据才保存
             //删除重复的先
             dc.executeUpdate(new DeleteFrom(getTable()).where("settingId").eq(ultPageBo.getSettingId()));
+            //如果有相同code的但是版本不同的记录对它的状态进行删除
+            if (!StringUtils.isEmpty(ultPage.getCode())){
+                dc.executeUpdate(new DeleteFrom(getTable()).where("code").eq(ultPage.getCode())
+                        .where("version").ne(ultPage.getVersion()));
+            }
+
             Map<String, Object> map = new HashMap<>();
             map.put("settingId", ultPageBo.getSettingId());
             map.put("id", ultPage.getId());
