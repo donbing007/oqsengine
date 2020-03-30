@@ -73,6 +73,7 @@ public class SphinxQLHelper {
                 case '|':
                 case '~':
                 case '?':
+                case '*':
                     buff.append(Integer.toHexString(c));
                     break;
                 default:
