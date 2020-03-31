@@ -61,6 +61,7 @@ public class EntityServiceImpl implements EntityService {
         return metadataRepository.load(tenantId, appCode, boId);
     }
 
+    @Override
     public Optional<EntityClass> loadByCode(String bocode) {
         String tenantId = contextService.get(TENANTID_KEY);
         String appCode = contextService.get(APPCODE);

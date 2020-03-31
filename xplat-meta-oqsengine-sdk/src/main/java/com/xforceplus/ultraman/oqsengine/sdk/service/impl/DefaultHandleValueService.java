@@ -92,6 +92,7 @@ public class DefaultHandleValueService implements HandleValueService {
                 .stream();
 
         return Stream.concat(parentFields, Stream.concat(fields, relationFields))
+                .distinct()
                 .map(x -> Tuple.of(x, body.get(x.name())));
     }
 

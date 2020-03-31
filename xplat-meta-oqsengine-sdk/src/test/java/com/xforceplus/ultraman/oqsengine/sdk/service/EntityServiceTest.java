@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
@@ -625,7 +624,6 @@ public class EntityServiceTest {
 
 
         setupContext();
-        setupContext();
 
         Optional<EntityClass> entityOpt = entityService.loadByCode("baseBill");
 
@@ -634,6 +632,11 @@ public class EntityServiceTest {
         Long x = entityService.create(entityOpt.get(), ss).get();
 
         System.out.println(entityService.findOne(entityOpt.get(), x));
+
+    }
+
+    @Test
+    public void testMultiValues(){
 
     }
 }

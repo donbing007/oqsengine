@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -762,7 +763,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private List<IValue> toTypedValue(IEntityClass entityClass, Long id, String value) {
         try {
             Objects.requireNonNull(value, "值不能为空");
-            Optional<IEntityField> fieldOp = entityClass.field(id);
+            Optional<Tuple2<IEntityClass, IEntityField>> fieldTuple = IEntityClassHelper.findFieldByIdInAll(entityClass, id);
+
+            Optional<IEntityField> fieldOp = fieldTuple.map(Tuple2::_2);
+
             if (entityClass.extendEntityClass() != null && !fieldOp.isPresent()) {
                 fieldOp = entityClass.extendEntityClass().field(id);
             }
