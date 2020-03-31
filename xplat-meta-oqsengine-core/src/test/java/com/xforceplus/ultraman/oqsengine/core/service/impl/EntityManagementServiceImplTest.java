@@ -7,10 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -54,7 +51,7 @@ public class EntityManagementServiceImplTest {
         fatherEntityClass = new EntityClass(idGenerator.next(), "father", Arrays.asList(
             new Field(idGenerator.next(), "f1", FieldType.LONG, FieldConfig.build().searchable(true)),
             new Field(idGenerator.next(), "f2", FieldType.STRING, FieldConfig.build().searchable(false)),
-            new Field(idGenerator.next(), "f2", FieldType.DECIMAL, FieldConfig.build().searchable(true))
+            new Field(idGenerator.next(), "f3", FieldType.DECIMAL, FieldConfig.build().searchable(true))
         ));
 
         childEntityClass = new EntityClass(
@@ -204,6 +201,30 @@ public class EntityManagementServiceImplTest {
                 f.config().isSearchable() && f.id() != removeField.id()).count(),
             indexEntity.entityValue().values().stream().filter(v -> v.getField().id() != removeField.id()).count()
         );
+    }
+
+    @Test
+    public void testExtendReplace() throws Exception {
+        IEntity expectedEntity = buildEntity(childEntityClass, false);
+        expectedEntity = service.build(expectedEntity);
+
+        // 更新父类属性
+        expectedEntity.entityValue().addValue(
+            new DecimalValue(fatherEntityClass.fields().stream().skip(2).findFirst().get(), new BigDecimal("8888.8888"))
+        );
+
+        service.replace(expectedEntity);
+
+        // 验证父类
+        IEntity masterEntity = masterStorage.select(expectedEntity.family().parent(), fatherEntityClass).get();
+        Assert.assertEquals("8888.8888",masterEntity.entityValue().getValue("f3").get().valueToString());
+        // 验证父类索引
+        masterEntity = indexStorage.select(expectedEntity.family().parent()).get();
+        Assert.assertEquals("8888.8888",masterEntity.entityValue().getValue("f3").get().valueToString());
+
+        //验证子类索引
+        IEntity indexEntity = indexStorage.select(expectedEntity.id()).get();
+        Assert.assertEquals("8888.8888",indexEntity.entityValue().getValue("f3").get().valueToString());
     }
 
     private static IEntity copyEntity(IEntity source) {

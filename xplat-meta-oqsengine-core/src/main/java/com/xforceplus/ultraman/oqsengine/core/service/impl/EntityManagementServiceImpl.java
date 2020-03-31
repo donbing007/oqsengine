@@ -155,7 +155,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     masterStorage.synchronize(target.id(), target.family().child());
 
                     // 同步子类索引信息.
-                    indexStorage.replaceAttribute(indexEntity.entityValue());
+                    IEntityValue childIndexValue = new EntityValue(target.family().child());
+                    childIndexValue.addValues(indexEntity.entityValue().values());
+                    indexStorage.replaceAttribute(childIndexValue);
                 }
             }
 
