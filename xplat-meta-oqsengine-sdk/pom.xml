@@ -13,7 +13,7 @@
 
 
     <properties>
-        <checkstyle.skip>false</checkstyle.skip>
+        <checkstyle.skip>true</checkstyle.skip>
         <dependencies.version>6.0.1-SNAPSHOT</dependencies.version>
     </properties>
 
