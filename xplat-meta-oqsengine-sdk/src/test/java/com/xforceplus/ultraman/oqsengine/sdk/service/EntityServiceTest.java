@@ -623,13 +623,39 @@ public class EntityServiceTest {
     public void testSystemOverride() throws InterruptedException {
         Thread.sleep(10000);
 
-
         setupContext();
 
         Optional<EntityClass> entityOpt = entityService.loadByCode("baseBill");
 
         Map<String, Object> ss = new HashMap<>();
         ss.put("create_user_id", "1111111");
+        Long x = entityService.create(entityOpt.get(), ss).get();
+
+        System.out.println(entityService.findOne(entityOpt.get(), x));
+
+        //search by create_user_name
+        System.out.println(entityService.findByCondition(entityOpt.get()
+                , new RequestBuilder()
+                        .field("create_user_name", ConditionOp.eq, "created")
+                        .build()));
+    }
+
+    @Test
+    public void testImageQuery() throws InterruptedException {
+
+        Thread.sleep(10000);
+
+        setupContext();
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("image");
+
+        System.out.println(entityOpt.get());
+
+        Map<String, Object> ss = new HashMap<>();
+        ss.put("create_user_id", "1111111");
+
+        System.out.println(entityService.create(entityOpt.get(), ss));
+
         Long x = entityService.create(entityOpt.get(), ss).get();
 
         System.out.println(entityService.findOne(entityOpt.get(), x));

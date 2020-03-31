@@ -43,7 +43,7 @@ public class IEntityClassHelper {
     }
 
     public static Optional<IEntityField> findFieldInRel(Relation relation, Long id) {
-        if (relation.getEntityField() != null) {
+        if (relation.getEntityField() != null && relation.getEntityField().id() == id) {
             return Optional.ofNullable(relation.getEntityField());
         } else {
             return Optional.empty();
