@@ -610,7 +610,7 @@ public class EntityServiceTest {
         System.out.println(entityService.findOne(entityClass, ret2.get()));
 
         System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.in
-                , "1,2").build()));
+                , "1", "2").build()));
 
         System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.ne
                 , "1").build()));
@@ -622,6 +622,7 @@ public class EntityServiceTest {
     @Test
     public void testSystemOverride() throws InterruptedException {
         Thread.sleep(10000);
+
 
         setupContext();
         setupContext();

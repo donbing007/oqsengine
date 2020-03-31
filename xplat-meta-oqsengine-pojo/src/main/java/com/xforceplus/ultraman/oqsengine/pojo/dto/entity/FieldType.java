@@ -38,7 +38,7 @@ public enum FieldType {
         } catch (Exception e) {
             return false;
         }
-    }, new String[]{"bigint", "long"}),
+    }, new String[]{"bigint", "long", "serialNo"}),
     STRING("String", new String[]{"string"}),
     STRINGS("Strings", new String[]{"strings"}),
     DECIMAL("Decimal", s -> {
