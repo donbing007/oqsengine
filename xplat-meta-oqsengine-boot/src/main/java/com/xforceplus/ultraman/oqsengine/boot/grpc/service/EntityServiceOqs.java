@@ -747,8 +747,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     iValues.add(new DecimalValue(entityField, new BigDecimal(value).setScale(precision, RoundingMode.HALF_UP)));
                     break;
                 case STRINGS:
-                    Stream.of(value.split(",")).map(x ->
-                            new StringsValue(entityField, new String[]{x})).forEach(iValues::add);
+//                    Stream.of(value.split(",")).map(x ->
+//                            new StringsValue(entityField, new String[]{x})).forEach(iValues::add);
+                    iValues.add(new StringsValue(entityField, value));
                     break;
                 default:
                     iValues.add(new StringValue(entityField, value));

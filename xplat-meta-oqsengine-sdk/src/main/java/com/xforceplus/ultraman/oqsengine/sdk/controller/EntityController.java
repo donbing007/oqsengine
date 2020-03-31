@@ -30,6 +30,8 @@ public class EntityController {
     @Autowired
     private ServiceDispatcher dispatcher;
 
+    private static String FAILED = "操作失败:";
+
     @GetMapping("/bos/{boId}/entities/{id}")
     @ResponseBody
     public ResponseEntity<Response<Map<String, Object>>> singleQuery(
@@ -48,7 +50,7 @@ public class EntityController {
         }).getOrElseGet(str -> {
             Response<Map<String, Object>> rep = new Response<>();
             rep.setCode("-1");
-            rep.setMessage(str);
+            rep.setMessage(FAILED.concat(str));
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
         });
     }
@@ -72,7 +74,7 @@ public class EntityController {
         }).getOrElseGet(str -> {
             Response<String> rep = new Response<>();
             rep.setCode("-1");
-            rep.setMessage("操作失败");
+            rep.setMessage(FAILED.concat(str));
             rep.setResult(str);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
         });
@@ -108,7 +110,7 @@ public class EntityController {
         }).getOrElseGet(str -> {
             Response<String> rep = new Response<>();
             rep.setCode("-1");
-            rep.setMessage("操作失败");
+            rep.setMessage(FAILED.concat(str));
             rep.setResult(str);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
         });
@@ -142,7 +144,7 @@ public class EntityController {
         }).getOrElseGet(str -> {
             Response<String> rep = new Response<>();
             rep.setCode("-1");
-            rep.setMessage("操作失败");
+            rep.setMessage(FAILED.concat(str));
             rep.setResult(str);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
         });
@@ -236,7 +238,7 @@ public class EntityController {
             return ResponseEntity.ok(rep);
         } else {
             rep.setCode("-1");
-            rep.setMessage(result.getLeft());
+            rep.setMessage(FAILED.concat(result.getLeft()));
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
         }
     }

@@ -33,8 +33,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
-import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.TENANTID_KEY;
-import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.USERNAME;
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
 import static org.springframework.test.util.AssertionErrors.assertTrue;
 
 /**
@@ -311,7 +310,8 @@ public class EntityServiceTest {
          *         fixed.put("update_user_name", () -> contextService.get(USERNAME));
          */
         contextService.set(ID, 123454L);
-        contextService.set(USERNAME, "created username");
+        contextService.set(USERNAME, "created");
+        contextService.set(USER_DISPLAYNAME, "created");
         contextService.set(TENANTID_KEY, "12312312312");
     }
 
@@ -539,17 +539,18 @@ public class EntityServiceTest {
         map.put("bill_data_status", "2");
         map.put("seller_tax_no", "212324");
 
-        Either<String, Long> ret = entityService.create(entityClass, map);
-        Long id1 = ret.get();
+        Either<String, IEntity> ret = entityServiceEx.create(entityClass, map);
+//        Long id1 = ret.get();
 
+        Long id2 = ret.get().family().parent();
 
         Map<String, Object> map2 = new HashMap<>();
 
         map.put("bill_data_status", "3");
         map.put("seller_tax_no", "212324");
 
-        Either<String, Long> ret2 = entityService.create(entityClass, map2);
-        Long id2 = ret2.get();
+//        Either<String, Integer> integers = entityService.updateById(entityClass, id2, map2);= entityService.updateById(entityClass, id2, map2);
+
 
         System.out.println(entityService.findByCondition(entityClass2, new RequestBuilder()
                                                     .field("bill_data_status", ConditionOp.eq, "2")
@@ -561,12 +562,11 @@ public class EntityServiceTest {
         map3.put("bill_data_status", "3");
 
         //update
-        entityService.updateById(entityClass, id1, map3);
+        entityService.updateById(entityClass2, id2, map3);
 
-        System.out.println(entityService.findByCondition(entityClass2, new RequestBuilder()
+        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder()
                 .field("bill_data_status", ConditionOp.eq, "2")
                 .build()));
-
     }
 
     @Test
@@ -589,7 +589,8 @@ public class EntityServiceTest {
      * @return
      */
     private EntityClass entity() {
-        FieldConfig fieldConfig = new FieldConfig();
+        FieldConfig fieldConfig = new FieldConfig().searchable(true);
+
         fieldConfig.required(true);
         EntityClass entityClass = new EntityClass(123L, "TestDefault"
                 , Arrays.asList(new Field(123L, "defaultfield"
@@ -633,10 +634,10 @@ public class EntityServiceTest {
 
         System.out.println(entityService.findOne(entityOpt.get(), x));
 
-    }
-
-    @Test
-    public void testMultiValues(){
-
+        //search by create_user_name
+        System.out.println(entityService.findByCondition(entityOpt.get()
+                , new RequestBuilder()
+                        .field("create_user_name", ConditionOp.eq, "created")
+                        .build()));
     }
 }
