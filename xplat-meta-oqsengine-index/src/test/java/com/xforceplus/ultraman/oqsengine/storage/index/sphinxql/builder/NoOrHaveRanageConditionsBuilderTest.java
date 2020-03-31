@@ -76,7 +76,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                     new Condition(
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.LIKE,
-                        new StringValue(new Field(2, "c2", FieldType.STRING), "test*")
+                        new StringValue(new Field(2, "c2", FieldType.STRING), "test")
                     )
                 ).addAnd(
                     new Condition(
@@ -86,7 +86,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                     )
                 ),
                 FieldDefine.JSON_FIELDS + ".1L > 100 "
-                    + SqlKeywordDefine.AND + " MATCH('@" + FieldDefine.FULL_FIELDS + " F2Stest*')"
+                    + SqlKeywordDefine.AND + " MATCH('@" + FieldDefine.FULL_FIELDS + " (F2S* << *test*)')"
             ),
 
             new Case(
@@ -112,12 +112,12 @@ public class NoOrHaveRanageConditionsBuilderTest {
                     new Condition(
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.LIKE,
-                        new StringValue(new Field(2, "c2", FieldType.STRING), "test*")
+                        new StringValue(new Field(2, "c2", FieldType.STRING), "test")
                     )
                 ),
                 "(" + FieldDefine.JSON_FIELDS + ".3L0 >= 123 " + SqlKeywordDefine.AND + " " +
                     FieldDefine.JSON_FIELDS + ".3L1 > 56789) " + SqlKeywordDefine.AND + " " +
-                    "MATCH('@" + FieldDefine.FULL_FIELDS + " F2Stest*')"
+                    "MATCH('@" + FieldDefine.FULL_FIELDS + " (F2S* << *test*)')"
             )
             ,
             new Case(
@@ -136,7 +136,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new StringValue(new Field(2, "c2", FieldType.STRING), "v3")
                     )
                 ),
-                "MATCH('@" + FieldDefine.FULL_FIELDS + " (=F1Sv1 | =F1Sv2) =F2Sv3')"
+                "MATCH('@" + FieldDefine.FULL_FIELDS + " (=(F1S << v1) | =(F1S << v2)) =(F2S << v3)')"
             )
             ,
             new Case(
@@ -150,7 +150,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                     new Condition(
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.LIKE,
-                        new StringValue(new Field(2, "c2", FieldType.STRING), "test*")
+                        new StringValue(new Field(2, "c2", FieldType.STRING), "test")
                     )
                 ).addAnd(
                     new Condition(
@@ -163,7 +163,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                 ),
                 "(" + FieldDefine.JSON_FIELDS + ".3L0 >= 123 " + SqlKeywordDefine.AND + " " +
                     FieldDefine.JSON_FIELDS + ".3L1 > 56789) " + SqlKeywordDefine.AND + " " +
-                    "MATCH('@" + FieldDefine.FULL_FIELDS + " F2Stest*') " +
+                    "MATCH('@" + FieldDefine.FULL_FIELDS + " (F2S* << *test*)') " +
                     SqlKeywordDefine.AND + " id IN (1,2,3)"
             )
         );

@@ -7,7 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.After;
@@ -63,9 +63,7 @@ public class MeqMatchConditionQueryBuilderTest {
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test1"),
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test2")
                 ),
-                "(=F11111Stest0" + " | " +
-                    "=F11111Stest1" + " | " +
-                    "=F11111Stest2" + ")"
+                "(=(F11111S << test0) | =(F11111S << test1) | =(F11111S << test2))"
             )
             ,
             new Case(
@@ -76,18 +74,26 @@ public class MeqMatchConditionQueryBuilderTest {
                     new LongValue(new Field(11111, "test", FieldType.LONG), 2L),
                     new LongValue(new Field(11111, "test", FieldType.LONG), 3L)
                 ),
-                "(=F11111L1 | =F11111L2 | =F11111L3)"
+                "(=(F11111L << 1) | =(F11111L << 2) | =(F11111L << 3))"
             )
             ,
             new Case(
                 new Condition(
                     new Field(11111, "test", FieldType.ENUM),
                     ConditionOperator.MULTIPLE_EQUALS,
-                    new EnumValue(new Field(11111, "test", FieldType.ENUM), "one"),
-                    new EnumValue(new Field(11111, "test", FieldType.ENUM), "two"),
-                    new EnumValue(new Field(11111, "test", FieldType.ENUM), "three")
+                    new EnumValue(new Field(11111, "test", FieldType.ENUM), "one")
                 ),
-                "(=F11111S*one | =F11111S*two | =F11111S*three)",
+                "(=(F11111S << one))"
+            )
+            ,
+            new Case(
+                new Condition(
+                    new Field(1, "test", FieldType.STRINGS),
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new StringsValue(new Field(1, "test", FieldType.STRINGS), "one"),
+                    new StringsValue(new Field(1, "test", FieldType.STRINGS), "two")
+                ),
+                "(=(F1S* << one) | =(F1S* << two))",
                 true
             )
         );

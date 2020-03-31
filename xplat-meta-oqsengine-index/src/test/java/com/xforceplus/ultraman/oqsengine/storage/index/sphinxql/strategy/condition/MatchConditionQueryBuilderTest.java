@@ -4,11 +4,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.After;
@@ -63,7 +59,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.EQUALS,
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test")
                 ),
-                "=F11111Stest"
+                "=(F11111S << test)"
             ),
             new Case(
                 new Condition(
@@ -71,7 +67,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.EQUALS,
                     new LongValue(new Field(11111, "test", FieldType.LONG), 200L)
                 ),
-                "=F11111L200"
+                "=(F11111L << 200)"
             ),
             new Case(
                 new Condition(
@@ -79,7 +75,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.EQUALS,
                     new DecimalValue(new Field(11111, "test", FieldType.DECIMAL), new BigDecimal("123.246"))
                 ),
-                "=F11111L0123 =F11111L1246"
+                "=(F11111L0 << 123) =(F11111L1 << 246)"
             ),
             new Case(
                 new Condition(
@@ -87,15 +83,15 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.NOT_EQUALS,
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test")
                 ),
-                "-F11111Stest"
+                "-(F11111S << test)"
             ),
             new Case(
                 new Condition(
                     new Field(11111, "test", FieldType.STRING),
                     ConditionOperator.LIKE,
-                    new StringValue(new Field(11111, "test", FieldType.STRING), "test*")
+                    new StringValue(new Field(11111, "test", FieldType.STRING), "test")
                 ),
-                "F11111Stest*"
+                "(F11111S* << *test*)"
             ),
             new Case(
                 new Condition(
@@ -103,8 +99,8 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.EQUALS,
                     new EnumValue(new Field(11111, "test", FieldType.ENUM), "test")
                 ),
-                "=F11111S*test",
-                true
+                "=(F11111S << test)",
+                false
             ),
             new Case(
                 new Condition(
@@ -112,9 +108,19 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.NOT_EQUALS,
                     new EnumValue(new Field(11111, "test", FieldType.ENUM), "test")
                 ),
-                "-F11111S*test",
+                "-(F11111S << test)",
+                false
+            ),
+            new Case(
+                new Condition(
+                    new Field(1, "test", FieldType.STRINGS),
+                    ConditionOperator.EQUALS,
+                    new StringsValue(new Field(1, "test", FieldType.STRINGS), "v1"),
+                    new StringsValue(new Field(1, "test", FieldType.STRINGS), "v2")
+                ),
+                "=(F1S* << v1)",
                 true
-            )
+                )
         );
     }
 

@@ -69,7 +69,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                expectPrefix + "=F1L100" + expectAfter
+                expectPrefix + "=(F1L << 100)" + expectAfter
             )
             ,
             new Case(
@@ -77,10 +77,10 @@ public class NoOrNoRanageConditionsBuilderTest {
                     new Condition(
                         new Field(1, "c1", FieldType.STRING),
                         ConditionOperator.LIKE,
-                        new StringValue(new Field(1, "c1", FieldType.STRING), "test*")
+                        new StringValue(new Field(1, "c1", FieldType.STRING), "test")
                     )
                 ),
-                expectPrefix + "F1Stest*" + expectAfter
+                expectPrefix + "(F1S* << *test*)" + expectAfter
             )
             ,
             new Case(
@@ -93,7 +93,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "=F1L100 =F2Stest" + expectAfter
+                expectPrefix + "=(F1L << 100) =(F2S << test)" + expectAfter
             ),
             new Case(
                 new Conditions(
@@ -105,7 +105,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-F1L100 -F2Stest =Sg" + expectAfter
+                expectPrefix + "-(F1L << 100) -(F2S << test) =Sg" + expectAfter
             ),
             new Case(
                 new Conditions(
@@ -117,7 +117,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-F2Stest =Sg" + expectAfter + " " + SqlKeywordDefine.AND + " id = 100"
+                expectPrefix + "-(F2S << test) =Sg" + expectAfter + " " + SqlKeywordDefine.AND + " id = 100"
             ),
             new Case(
                 new Conditions(
@@ -151,7 +151,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         )
                     )
                 ),
-                expectPrefix + "=F1L0123456 =F1L1123456" + expectAfter
+                expectPrefix + "=(F1L0 << 123456) =(F1L1 << 123456)" + expectAfter
             )
         );
     }

@@ -117,7 +117,7 @@ public class NotMatchConditionQueryBuilderTest {
                         new Field(Long.MAX_VALUE, "test", FieldType.STRING),
                         "'!@#$%^&*()200")
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "S = '" + SphinxQLHelper.encodeString("'!@#$%^&*()200") + ""
+                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "S = '" + SphinxQLHelper.encodeString("'!@#$%^&*()200") + "'"
             )
         );
     }

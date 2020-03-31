@@ -142,6 +142,10 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                     }
 
                     PageScope scope = page.getNextPage();
+                    // 超出页数
+                    if (scope == null) {
+                        return Collections.emptyList();
+                    }
 
                     String orderBy = buildOrderBy(sort);
 

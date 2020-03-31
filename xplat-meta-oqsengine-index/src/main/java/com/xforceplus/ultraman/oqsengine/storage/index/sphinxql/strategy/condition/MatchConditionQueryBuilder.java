@@ -32,6 +32,7 @@ public class MatchConditionQueryBuilder extends SphinxQLConditionQueryBuilder {
         StringBuilder buff = new StringBuilder();
 
         String symbol;
+        boolean fuzzy = false;
         while (storageValue != null) {
             switch (operator()) {
                 case NOT_EQUALS:
@@ -42,6 +43,7 @@ public class MatchConditionQueryBuilder extends SphinxQLConditionQueryBuilder {
                     break;
                 case LIKE:
                     symbol = "";
+                    fuzzy = true;
                     break;
                 default:
                     throw new IllegalStateException(String.format("Unsupported operator.[%s]", operator().getSymbol()));
@@ -50,7 +52,14 @@ public class MatchConditionQueryBuilder extends SphinxQLConditionQueryBuilder {
             if (buff.length() > 0) {
                 buff.append(" ");
             }
-            buff.append(symbol).append(SphinxQLHelper.encodeFullText(storageValue, isUseStorageGroupName()));
+
+            String queryString = SphinxQLHelper.encodeFullText(storageValue, isUseStorageGroupName());
+            queryString = SphinxQLHelper.encodeQueryFullText(queryString, fuzzy);
+
+            buff.append(symbol);
+            buff.append("(");
+            buff.append(queryString);
+            buff.append(")");
 
             storageValue = storageValue.next();
         }

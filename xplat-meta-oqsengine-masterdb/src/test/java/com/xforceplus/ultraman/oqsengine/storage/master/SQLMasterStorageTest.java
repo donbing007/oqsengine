@@ -195,13 +195,16 @@ public class SQLMasterStorageTest {
     @Test
     public void testDelete() throws Exception {
 
-        storage.delete(expectedEntitys.stream().findAny().get());
         Map<Long, IEntityClass> idMap = expectedEntitys.stream().collect(toMap(IEntity::id, IEntity::entityClass));
+        IEntity targetEntity = expectedEntitys.stream().findAny().get();
+        storage.delete(targetEntity);
         Collection<IEntity> queryEntitys = storage.selectMultiple(idMap);
         Assert.assertEquals(expectedEntitys.size() - 1, queryEntitys.size());
 
-        Assert.assertEquals(0,
-            queryEntitys.stream().filter(e -> !expectedEntitys.contains(e)).collect(Collectors.toList()).size());
+        Assert.assertEquals(expectedEntitys.size() - 1, queryEntitys.size());
+        queryEntitys.stream().forEach(e -> {
+            Assert.assertNotEquals(targetEntity.id(), e.id());
+        });
 
     }
 
@@ -260,7 +263,7 @@ public class SQLMasterStorageTest {
             switch (f.type()) {
                 case STRING:
                     return new StringValue(f, buildRandomString(30));
-                case ENUM:
+                case STRINGS:
                     return fixStringsValue;
                 default:
                     return new LongValue(f, (long) buildRandomLong(10, 100000));

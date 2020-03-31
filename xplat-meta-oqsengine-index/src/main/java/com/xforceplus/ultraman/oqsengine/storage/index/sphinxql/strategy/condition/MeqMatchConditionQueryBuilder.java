@@ -31,12 +31,13 @@ public class MeqMatchConditionQueryBuilder extends SphinxQLConditionQueryBuilder
             StorageValue storageValue = storageStrategy.toStorageValue(v);
 
             String fValue = SphinxQLHelper.encodeFullText(storageValue, isUseStorageGroupName());
+            fValue = SphinxQLHelper.encodeQueryFullText(fValue, false);
 
             if (buff.length() > emptyLen) {
                 buff.append(" | ");
             }
 
-            buff.append("=").append(fValue);
+            buff.append("=").append("(").append(fValue).append(")");
         }
         buff.append(")");
 
