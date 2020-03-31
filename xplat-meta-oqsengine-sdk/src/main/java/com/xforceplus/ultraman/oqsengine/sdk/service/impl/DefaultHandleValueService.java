@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.FieldOperationHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.TriFunction;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.FieldValidator;
@@ -37,7 +38,7 @@ public class DefaultHandleValueService implements HandleValueService {
      * @param body
      */
     @Override
-    public List<ValueUp> handlerValue(EntityClass entityClass, Map<String, Object> body, String phase) {
+    public List<ValueUp> handlerValue(EntityClass entityClass, Map<String, Object> body, OperationType phase) {
 
         //get field from entityClass
         List<ValueUp> values = zipValue(entityClass, body)
@@ -51,7 +52,7 @@ public class DefaultHandleValueService implements HandleValueService {
 
                     //pipeline and validate
                     Object value = pipeline(obj, field, phase);
-                    List<Validation<String, Object>> validations = validate(field, value);
+                    List<Validation<String, Object>> validations = validate(field, value, phase);
 
                     if (!validations.isEmpty()) {
                         throw new RuntimeException(validations.stream()
@@ -92,10 +93,11 @@ public class DefaultHandleValueService implements HandleValueService {
                 .stream();
 
         return Stream.concat(parentFields, Stream.concat(fields, relationFields))
+                .distinct()
                 .map(x -> Tuple.of(x, body.get(x.name())));
     }
 
-    private Object pipeline(Object value, IEntityField field, String phase) {
+    private Object pipeline(Object value, IEntityField field, OperationType phase) {
 
         return fieldOperationHandlers.stream()
                 .sorted()
@@ -105,10 +107,10 @@ public class DefaultHandleValueService implements HandleValueService {
                 .apply(field, value, phase);
     }
 
-    private List<Validation<String, Object>> validate(IEntityField field, Object obj) {
+    private List<Validation<String, Object>> validate(IEntityField field, Object obj, OperationType phase) {
 
         return fieldValidators.stream()
-                .map(x -> x.validate(field, obj))
+                .map(x -> x.validate(field, obj, phase))
                 .filter(Validation::isInvalid)
                 .collect(Collectors.toList());
     }

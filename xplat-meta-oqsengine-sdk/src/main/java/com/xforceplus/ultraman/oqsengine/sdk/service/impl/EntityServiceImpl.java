@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityDeleted;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
@@ -61,6 +62,7 @@ public class EntityServiceImpl implements EntityService {
         return metadataRepository.load(tenantId, appCode, boId);
     }
 
+    @Override
     public Optional<EntityClass> loadByCode(String bocode) {
         String tenantId = contextService.get(TENANTID_KEY);
         String appCode = contextService.get(APPCODE);
@@ -182,7 +184,7 @@ public class EntityServiceImpl implements EntityService {
         //处理系统字段的逻辑-add by wz
 //        body = entityMetaHandler.updateFill(entityClass,body);
 
-        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, "update");
+        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.UPDATE);
 
         OperationResult updateResult = entityServiceClient.replace()
                 .invoke(toEntityUp(entityClass, id, valueUps))
@@ -216,7 +218,7 @@ public class EntityServiceImpl implements EntityService {
         //处理系统字段的逻辑-add by wz
 //        body = entityMetaHandler.updateFill(entityClass,body);
 
-        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, "update");
+        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.REPLACE);
 
         OperationResult updateResult = entityServiceClient.replace()
                 .invoke(toEntityUp(entityClass, id, valueUps))
@@ -298,7 +300,7 @@ public class EntityServiceImpl implements EntityService {
 //        //添加字段默认值
 //        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
 
-        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, "create");
+        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.CREATE);
 
         OperationResult createResult = buildBuilder
                 .invoke(toEntityUp(entityClass, null, valueUps))

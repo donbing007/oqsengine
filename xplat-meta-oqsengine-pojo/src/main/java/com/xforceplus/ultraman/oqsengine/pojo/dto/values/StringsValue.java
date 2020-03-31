@@ -22,6 +22,11 @@ public class StringsValue extends AbstractValue<String[]> {
     }
 
     @Override
+    public String valueToString() {
+        return String.join(",", getValue());
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 /**
  * regx validator
  */
-public class RegxValidator implements FieldValidator<Object> {
+public class RegxValidator implements ConsistFieldValidator<Object> {
 
     @Override
     public Validation<String, Object> validate(IEntityField field, Object obj) {

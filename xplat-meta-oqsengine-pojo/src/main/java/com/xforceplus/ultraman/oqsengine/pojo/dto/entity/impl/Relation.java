@@ -12,6 +12,8 @@ import java.util.Objects;
  */
 public class Relation {
 
+    private Long id;
+
     /**
      * 关系名称 - 目前采用关系ID来填入
      */
@@ -22,7 +24,13 @@ public class Relation {
      */
     private long entityClassId;
 
-    /**
+    private String entityClassName;
+
+    private long relOwnerClassId;
+
+    private String relOwnerClassName;
+
+   /**
      * 关系类型 - 使用关系的code填入
      */
     private String relationType;
@@ -56,6 +64,22 @@ public class Relation {
         this.relationType = relationType;
         this.identity = identity;
         this.entityField = entityField;
+    }
+
+    public Relation(Long id, String name, String entityClassName, String ownerClassName, String relationType) {
+        this.name = name;
+        this.entityClassName = entityClassName;
+        this.relOwnerClassName = ownerClassName;
+        this.relationType = relationType;
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -96,6 +120,30 @@ public class Relation {
 
     public void setEntityField(IEntityField entityField) {
         this.entityField = entityField;
+    }
+
+    public String getEntityClassName() {
+        return entityClassName;
+    }
+
+    public void setEntityClassName(String entityClassName) {
+        this.entityClassName = entityClassName;
+    }
+
+    public long getRelOwnerClassId() {
+        return relOwnerClassId;
+    }
+
+    public void setRelOwnerClassId(long relOwnerClassId) {
+        this.relOwnerClassId = relOwnerClassId;
+    }
+
+    public String getRelOwnerClassName() {
+        return relOwnerClassName;
+    }
+
+    public void setRelOwnerClassName(String relOwnerClassName) {
+        this.relOwnerClassName = relOwnerClassName;
     }
 
     @Override

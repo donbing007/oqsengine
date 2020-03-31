@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.service.LoggerUtils.typeConverterError;
 import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.ofEmptyStr;
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
@@ -53,7 +55,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Autowired(required = false)
     private TransactionManager transactionManager;
-
 
     private Logger logger = LoggerFactory.getLogger(EntityServicePowerApi.class);
 
@@ -746,8 +747,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     iValues.add(new DecimalValue(entityField, new BigDecimal(value).setScale(precision, RoundingMode.HALF_UP)));
                     break;
                 case STRINGS:
-                    Stream.of(value.split(",")).map(x ->
-                            new StringsValue(entityField, new String[]{x})).forEach(iValues::add);
+//                    Stream.of(value.split(",")).map(x ->
+//                            new StringsValue(entityField, new String[]{x})).forEach(iValues::add);
+                    iValues.add(new StringsValue(entityField, value));
                     break;
                 default:
                     iValues.add(new StringValue(entityField, value));
@@ -755,14 +757,17 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             return iValues;
         } catch (Exception ex) {
             logger.error("{}", ex);
-            throw new RuntimeException("类型转换失败 " + ex.getMessage());
+            throw new RuntimeException(typeConverterError(entityField, value, ex));
         }
     }
 
     private List<IValue> toTypedValue(IEntityClass entityClass, Long id, String value) {
         try {
             Objects.requireNonNull(value, "值不能为空");
-            Optional<IEntityField> fieldOp = entityClass.field(id);
+            Optional<Tuple2<IEntityClass, IEntityField>> fieldTuple = IEntityClassHelper.findFieldByIdInAll(entityClass, id);
+
+            Optional<IEntityField> fieldOp = fieldTuple.map(Tuple2::_2);
+
             if (entityClass.extendEntityClass() != null && !fieldOp.isPresent()) {
                 fieldOp = entityClass.extendEntityClass().field(id);
             }

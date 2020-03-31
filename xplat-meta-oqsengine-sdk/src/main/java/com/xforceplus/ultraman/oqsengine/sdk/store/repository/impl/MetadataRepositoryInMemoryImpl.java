@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.metadata.grpc.Api;
 import com.xforceplus.ultraman.metadata.grpc.BoUp;
 import com.xforceplus.ultraman.metadata.grpc.Field;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldLikeRelationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -279,6 +280,11 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         String relationType = RowUtils.getRowValue(relRow, "relType")
                 .map(String::valueOf)
                 .orElse("");
+
+        String name = RowUtils.getRowValue(relRow, "name")
+                .map(String::valueOf)
+                .orElse("");
+
         Long joinBoId = RowUtils.getRowValue(relRow, "joinBoId")
                 .map(String::valueOf)
                 .map(Long::valueOf)
@@ -295,20 +301,35 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             List<IEntityField> listFields = new LinkedList<>();
 
             //assemble relation Field
-            com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field field;
-            Relation relation;
-            if (relationType.equalsIgnoreCase("onetoone")
-                    || relationType.equalsIgnoreCase("manytoone")) {
-                //Field is from main id
-                field = toEntityClassFieldFromRel(relRow, subCode);
-                relation = new Relation(subCode, joinBoId, relationType, true, field);
+            /**
+             *  used as dto
+             *   public Relation(Long id, String name, String entityClassName, String ownerClassName, String relationType) {
+             */
+            Relation relation = new Relation(joinBoId, name, subCode, mainBoCode, relationType);
 
-            } else {
-                //relation is onetomany
-                field = toEntityClassFieldFromRel(relRow, mainBoCode);
-                relation = new Relation(mainBoCode, joinBoId, relationType, true, field);
-                listFields.add(field);
-            }
+            FieldLikeRelationType.from(relationType).ifPresent(x -> {
+                IEntityField relField = x.getField(relation);
+                relation.setEntityField(relField);
+
+                if(!x.isOwnerSide()){
+                    listFields.add(relField);
+                }
+            });
+
+//            if (relationType.equalsIgnoreCase("onetoone")
+//                    || relationType.equalsIgnoreCase("manytoone")) {
+//                //Field is from main id
+//                field = toEntityClassFieldFromRel(relRow, subCode);
+//                relation = new Relation(subCode, joinBoId, relationType, true, field);
+//
+//            } else if (relationType.equalsIgnoreCase(MultiValues)){
+//                //relation is onetomany
+//                field = toEntityClassFieldFromRel(relRow, mainBoCode);
+//                relation = new Relation(mainBoCode, joinBoId, relationType, true, field);
+//                listFields.add(field);
+//            } else if (relationType.equalsIgnoreCase(MultiValues)) {
+//
+//            }
 
             listFields.addAll(loadFields(boId));
             //assemble entity class
@@ -322,7 +343,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             return Tuple.of(relation, entityClass);
         });
     }
-
 
     @Override
     public Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode) {
@@ -440,7 +460,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         List<IEntityClass> entityClassList = new LinkedList<>();
         List<Relation> relationList = new LinkedList<>();
 
-        List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField> allFields = new LinkedList<>();
+        List<IEntityField> allFields = new LinkedList<>();
         allFields.addAll(fields);
 
         relatedEntityClassList.forEach(tuple -> {
@@ -448,8 +468,12 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             relationList.add(tuple._1());
         });
 
-        List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> refFields = loadRelationField(relsRows);
-        allFields.addAll(refFields);
+        //append all rel fields to fields
+        relationList.stream().filter(x -> {
+            return FieldLikeRelationType.from(x.getRelationType())
+                    .map(FieldLikeRelationType::isOwnerSide)
+                    .orElse(false);
+        }).forEach(x -> allFields.add(x.getEntityField()));
 
         EntityClass entityClass = new EntityClass(Long.valueOf(boId)
                 , code, relationList, entityClassList
@@ -463,7 +487,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * @param id
      * @return
      */
-    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationField(String id) {
+    private List<IEntityField> loadRelationField(String id) {
         //load onetoone and many to one
         DataSet relDs = dc.query().from("rels")
                 .selectAll().where("boId").eq(id)
@@ -703,10 +727,10 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         });
 
         //deal relation field
-        List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> refFields = loadRelationField(relsRows);
-        List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField> fields = loadFields(boId);
+        List<IEntityField> refFields = loadRelationField(relsRows);
+        List<IEntityField> fields = loadFields(boId);
 
-        List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField> allFields = new LinkedList<>();
+        List<IEntityField> allFields = new LinkedList<>();
         allFields.addAll(fields);
         allFields.addAll(refFields);
 
@@ -716,7 +740,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         return Optional.of(entityClass);
     }
 
-    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField> loadFields(String id) {
+    private List<IEntityField> loadFields(String id) {
         DataSet fieldDs = dc.query().from("fields")
                 .selectAll().where("boId").eq(id).execute();
         return fieldDs.toRows().stream()
@@ -730,7 +754,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * @param relations
      * @return
      */
-    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationField(List<Row> relations) {
+    private List<IEntityField> loadRelationField(List<Row> relations) {
         //relation to field
         return relations.stream().filter(row -> {
             return RowUtils.getRowValue(row, "relType")
