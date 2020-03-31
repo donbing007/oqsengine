@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
-import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 
 /**
  * @author dongbin
@@ -89,7 +88,7 @@ public class SphinxQLHelper {
     }
 
     /**
-     * !    "    $    '    (    )    -    /    <    @    \    ^    |    ~ 会被替换成分别为 unicode 码.
+     * " ' \ 会被替换成分别为 unicode 码.
      * 为了在 sphinxQL中使用这些字符.
      */
     public static String encodeString(String source) {
@@ -99,20 +98,7 @@ public class SphinxQLHelper {
                 case '\"':
                 case '\'':
                 case '\\':
-                case '!':
-                case '$':
-                case '(':
-                case ')':
-                case '-':
-                case '/':
-                case '<':
-                case '@':
-                case '^':
-                case '|':
-                case '~':
-                case '?':
-                case '*':
-                    buff.append(doUnicode(c)).append(" ");
+                    buff.append(doUnicode(c)).append(' ');
                     break;
                 default:
                     buff.append(c);
@@ -159,10 +145,5 @@ public class SphinxQLHelper {
 
     private static String doUnicode(char c) {
         return Integer.toHexString(c);
-    }
-
-    public static void main(String[] args) {
-        String data = "2d100";
-        System.out.println(encodeFullText(new StringStorageValue("1S", "2d100", false)));
     }
 }
