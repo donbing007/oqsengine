@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
@@ -152,6 +153,24 @@ public class NoOrNoRanageConditionsBuilderTest {
                     )
                 ),
                 expectPrefix + "=(F1L0 << 123456) =(F1L1 << 123456)" + expectAfter
+            ),
+            new Case(
+                Conditions.buildEmtpyConditions()
+                .addAnd(new Condition(
+                    new Field(1, "c1", FieldType.STRINGS),
+                    ConditionOperator.EQUALS,
+                    new StringsValue(new Field(1, "c1", FieldType.STRINGS), "v1")
+                )),
+                expectPrefix + "=(F1S* << v1)" + expectAfter
+            ),
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        new Field(1, "c1", FieldType.STRINGS),
+                        ConditionOperator.NOT_EQUALS,
+                        new StringsValue(new Field(1, "c1", FieldType.STRINGS), "v1")
+                    )),
+                expectPrefix + "-(F1S* << v1) =Sg" + expectAfter
             )
         );
     }
