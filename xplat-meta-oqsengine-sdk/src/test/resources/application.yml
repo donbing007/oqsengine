@@ -1,7 +1,9 @@
 xplat:
   oqsengine:
     sdk:
+      override: true
       enabled: true
+
   meta:
     oqsengine:
       permissions:

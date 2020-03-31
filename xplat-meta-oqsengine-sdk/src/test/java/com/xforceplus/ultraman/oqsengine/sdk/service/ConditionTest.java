@@ -37,8 +37,6 @@ public class ConditionTest {
         EntityClassToGrpcConverter.toSelectByCondition(entityClass, null, abc);
     }
 
-
-
     @Test
     public void testCreateNull(){
         String x = null;
