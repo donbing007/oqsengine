@@ -70,6 +70,10 @@ public class SphinxQLConditionQueryBuilderFactory {
             buildKey(FieldType.BOOLEAN, ConditionOperator.MULTIPLE_EQUALS, true, false),
             new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.BOOLEAN, false)
         );
+        builders.put(
+            buildKey(FieldType.ENUM, ConditionOperator.MULTIPLE_EQUALS, true, false),
+            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.ENUM, false)
+        );
 
         // long
         builders.put(
