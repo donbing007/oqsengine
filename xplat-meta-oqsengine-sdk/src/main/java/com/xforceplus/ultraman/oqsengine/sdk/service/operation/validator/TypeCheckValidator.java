@@ -12,7 +12,7 @@ import java.util.stream.Stream;
  * from field domain
  * check type
  */
-public class TypeCheckValidator implements FieldValidator<Object> {
+public class TypeCheckValidator implements ConsistFieldValidator<Object> {
 
     @Override
     public Validation<String, Object> validate(IEntityField field, Object obj) {

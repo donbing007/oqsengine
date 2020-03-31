@@ -1,16 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service.operation;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
 
 /**
  * an operation on field
  */
 public interface FieldOperationHandler extends Comparable<FieldOperationHandler>
-        , TriFunction<IEntityField, Object, String, Object> {
-
-    String CREATE = "CREATE";
-
-    String UPDATE = "UPDATE";
+        , TriFunction<IEntityField, Object, OperationType, Object> {
 
     default int getOrder() {
         return 0;
@@ -22,15 +19,22 @@ public interface FieldOperationHandler extends Comparable<FieldOperationHandler>
 
     Object onUpdate(IEntityField field, Object o);
 
-    Object onUnHandle(IEntityField field, Object o);
+    default Object onReplace(IEntityField field, Object o){
+        return onUpdate(field, o);
+    }
 
-    @Override
-    default Object apply(IEntityField field, Object o, String phase) {
+    default Object onUnHandle(IEntityField field, Object o){
+        return null;
+    }
+
+    default Object apply(IEntityField field, Object o, OperationType phase) {
         if (require(field, o)) {
-            if (phase.equalsIgnoreCase(CREATE)) {
+            if (phase == OperationType.CREATE) {
                 return onCreate(field, o);
-            } else if (phase.equalsIgnoreCase(UPDATE)) {
+            } else if (phase == OperationType.UPDATE) {
                 return onUpdate(field, o);
+            } else if (phase == OperationType.REPLACE) {
+                return onReplace(field, o);
             } else {
                 return onUnHandle(field, o);
             }

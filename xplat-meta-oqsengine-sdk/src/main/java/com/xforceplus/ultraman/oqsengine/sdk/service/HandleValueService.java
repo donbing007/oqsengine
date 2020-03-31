@@ -12,6 +12,6 @@ import java.util.Map;
  */
 public interface HandleValueService {
 
-    List<ValueUp> handlerValue(EntityClass entityClass, Map<String, Object> body, String phase);
+    List<ValueUp> handlerValue(EntityClass entityClass, Map<String, Object> body, OperationType phase);
 
 }

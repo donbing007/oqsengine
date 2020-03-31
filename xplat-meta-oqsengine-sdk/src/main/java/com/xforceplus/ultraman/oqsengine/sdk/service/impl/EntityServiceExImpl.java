@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ResponseList;
@@ -77,7 +78,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
 //        //添加字段默认值
 //        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
 
-        List<ValueUp> valueUps = handleValueService.handlerValue(entityClass, body, "create");
+        List<ValueUp> valueUps = handleValueService.handlerValue(entityClass, body, OperationType.CREATE);
 
         OperationResult createResult = buildBuilder
                 .invoke(toEntityUp(entityClass, null, valueUps))

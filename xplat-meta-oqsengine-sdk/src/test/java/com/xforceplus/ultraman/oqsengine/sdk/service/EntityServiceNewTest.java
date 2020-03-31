@@ -89,6 +89,18 @@ public class EntityServiceNewTest {
         return entityClass;
     }
 
+    private EntityClass longEntity() {
+        FieldConfig fieldConfig = new FieldConfig().searchable(true);
+
+        fieldConfig.required(true);
+        EntityClass entityClass = new EntityClass(123L, "TestDefault"
+                , Arrays.asList(new Field(123L, "defaultfield"
+                , FieldType.LONG, fieldConfig)));
+
+        return entityClass;
+    }
+
+
     private EntityClass stringEntity() {
         FieldConfig fieldConfig = new FieldConfig().searchable(true);
 
@@ -160,5 +172,30 @@ public class EntityServiceNewTest {
                 , new RequestBuilder()
                         .field("defaultfield", ConditionOp.like, "low")
                         .build()));
+    }
+
+    @Test
+    public void testFieldTypeCheckWhenUpdate(){
+
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("defaultfield", "123456");
+
+        EntityClass entityClass = longEntity();
+
+        Long id = entityService.create(entityClass, maps).get();
+
+        System.out.println(entityService.findByCondition(entityClass
+                , new RequestBuilder()
+                        .field("defaultfield", ConditionOp.eq, "123456")
+                        .build()));
+
+        Map<String, Object> maps2 = new HashMap<>();
+        maps2.put("defaultfield", "N345");
+
+        try {
+            entityService.updateById(entityClass, id, maps2);
+        }catch (Exception ex){
+
+        }
     }
 }

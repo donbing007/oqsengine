@@ -33,6 +33,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.xforceplus.ultraman.oqsengine.boot.grpc.service.LoggerUtils.typeConverterError;
 import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.ofEmptyStr;
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
@@ -54,7 +55,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Autowired(required = false)
     private TransactionManager transactionManager;
-
 
     private Logger logger = LoggerFactory.getLogger(EntityServicePowerApi.class);
 
@@ -757,7 +757,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             return iValues;
         } catch (Exception ex) {
             logger.error("{}", ex);
-            throw new RuntimeException("类型转换失败 " + ex.getMessage());
+            throw new RuntimeException(typeConverterError(entityField, value, ex));
         }
     }
 
