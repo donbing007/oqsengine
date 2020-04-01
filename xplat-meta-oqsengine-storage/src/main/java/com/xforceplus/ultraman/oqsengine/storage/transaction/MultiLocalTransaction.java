@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +13,7 @@ import java.util.Optional;
  * Simple multi-local transaction implementation ensures atomicity before the commit,
  * but there is no guarantee of atomicity in the event that a commit produces an error.
  * Thread safety.
+ *
  * @author dongbin
  * @version 0.1 2020/2/13 20:47
  * @since 1.8
@@ -25,6 +27,7 @@ public class MultiLocalTransaction implements Transaction {
     private List<TransactionResource> transactionResourceHolder;
     private boolean committed;
     private boolean rollback;
+    private UndoExecutor undoExecutor;
 
     public MultiLocalTransaction(long id) {
         transactionResourceHolder = new LinkedList<>();
@@ -36,6 +39,11 @@ public class MultiLocalTransaction implements Transaction {
     @Override
     public long id() {
         return id;
+    }
+
+    @Override
+    public void setUndoExecutor(UndoExecutor undoExecutor) {
+        this.undoExecutor = undoExecutor;
     }
 
     @Override
@@ -164,7 +172,7 @@ public class MultiLocalTransaction implements Transaction {
     private void check() throws SQLException {
         if (isCompleted()) {
             throw new SQLException(
-                String.format("The transaction has completed.[commit=%b, rollback=%b]", isCommitted(), isRollback()));
+                    String.format("The transaction has completed.[commit=%b, rollback=%b]", isCommitted(), isRollback()));
         }
     }
 
@@ -174,6 +182,7 @@ public class MultiLocalTransaction implements Transaction {
             for (TransactionResource transactionResource : transactionResourceHolder) {
                 if (commit) {
                     transactionResource.commit();
+                    undoExecutor.saveUndoLog(transactionResource);
                 } else {
                     transactionResource.rollback();
                 }
@@ -187,21 +196,25 @@ public class MultiLocalTransaction implements Transaction {
                 if (!transactionResource.isDestroyed()) {
                     transactionResource.rollback();
                 } else {
-                    if(commit) {
-                        transactionResource.undo();
+                    if (commit) {
+                        undoExecutor.undo(transactionResource);
                     }
                 }
             }
         } finally {
             for (TransactionResource transactionResource : transactionResourceHolder) {
                 try {
-                    if(!transactionResource.isDestroyed()) {
+                    if (!transactionResource.isDestroyed()) {
                         transactionResource.destroy();
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
             }
+        }
+
+        if(exHolder.isEmpty()) {
+            undoExecutor.removeTxUndoLog(id);
         }
 
         throwSQLExceptionIfNecessary(exHolder);

@@ -45,6 +45,17 @@ public class RedisUndoLogStore implements UndoLogStore {
         getUndoLog().remove(key);
     }
 
+    @Override
+    public void remove(Long txId) {
+        DbTypeEnum[] dbTypeEnums = DbTypeEnum.values();
+        OpTypeEnum[] opTypeEnums = OpTypeEnum.values();
+        for(DbTypeEnum dbType:dbTypeEnums) {
+            for(OpTypeEnum opType:opTypeEnums) {
+                remove(txId, dbType, opType);
+            }
+        }
+    }
+
     RMap getUndoLog() {
         return redissonClient.getMap(CacheConstant.UNDO_LOG);
     }

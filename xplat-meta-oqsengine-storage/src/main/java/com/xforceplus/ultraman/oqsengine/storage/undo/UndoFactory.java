@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo;
 
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
@@ -15,7 +13,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * 版权：    上海云砺信息科技有限公司
@@ -36,6 +34,8 @@ public class UndoFactory {
 
     private Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers;
 
+    private UndoExecutor undoExecutor;
+
     @PostConstruct
     public void init() {
         this.storageCommandInvokers = new HashMap<>();
@@ -45,6 +45,11 @@ public class UndoFactory {
                 new TransactionResourceHandler(undoLogQ);
 
         transactionResourceHandler.start();
+
+        UndoExecutor undoExecutor = new UndoExecutor(storageCommandInvokers);
+        undoExecutor.setUndoLogStore(undoLogStore);
+        undoExecutor.setUndoQ(undoLogQ);
+        this.undoExecutor = undoExecutor;
     }
 
     public UndoFactory(UndoLogStore undoLogStore){
@@ -60,42 +65,11 @@ public class UndoFactory {
         storageCommandInvokers.put(dbType, cmdInvoker);
     }
 
-    public StorageCommand getStorageCommand(DbTypeEnum dbType, OpTypeEnum opType){
-        if(dbType == null || opType == null) {
-            logger.error("GetStorageCommand failed. The dbType or opType was null.");
-            return null; }
-
-        if(!storageCommandInvokers.containsKey(dbType) || storageCommandInvokers.get(dbType) == null) {
-            logger.error("Can't find storageCommand which dbType is {}", dbType.name());
-            return null;
-        }
-
-        return storageCommandInvokers.get(dbType).selectCommand(opType);
-    }
-
     private void saveLog(Long txId, DbTypeEnum dbType, OpTypeEnum opType, Object object){
         undoLogStore.save(txId, dbType, opType, object);
     }
 
-    public UndoExecutor getUndo(Long txId, DbTypeEnum dbType, OpTypeEnum opType, Object undoData) {
-//        saveLog(txId, dbType, opType, undoData);
-        OpTypeEnum undoOpType = null;
-        switch (opType) {
-            case BUILD: undoOpType = OpTypeEnum.DELETE; break;
-            case DELETE: undoOpType = OpTypeEnum.BUILD; break;
-            case REPLACE: undoOpType = OpTypeEnum.REPLACE; break;
-            case REPLACE_ATTRIBUTE: undoOpType = OpTypeEnum.REPLACE_ATTRIBUTE; break;
-            default:
-        }
-
-        if(undoOpType == null) {
-            logger.error("Can't find undo OpType by {}", opType);
-            return null;
-        }
-
-        UndoExecutor undoExecutor = new UndoExecutor(getStorageCommand(dbType, undoOpType), undoData);
-        undoExecutor.setErrorTransactionResourceQ(undoLogQ);
-
+    public UndoExecutor getUndoExecutor() {
         return undoExecutor;
     }
 

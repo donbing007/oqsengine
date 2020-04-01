@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
+
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -76,4 +78,5 @@ public interface Transaction {
      */
     void attach(long id);
 
+    void setUndoExecutor(UndoExecutor undoExecutor);
 }

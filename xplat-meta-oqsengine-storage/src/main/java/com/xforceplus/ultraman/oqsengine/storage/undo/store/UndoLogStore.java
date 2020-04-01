@@ -2,9 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.undo.store;
 
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
-
-import java.util.List;
 
 /**
  * 版权：    上海云砺信息科技有限公司
@@ -22,4 +19,6 @@ public interface UndoLogStore {
     boolean isExist(Long txId, DbTypeEnum dbType, OpTypeEnum opType);
 
     void remove(Long txId, DbTypeEnum dbType, OpTypeEnum opType);
+
+    void remove(Long txId);
 }

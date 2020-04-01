@@ -1,8 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.sql;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoInfo;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -19,7 +20,7 @@ public class SphinxQLTransactionResource implements TransactionResource<Connecti
 
     private DataSource key;
     private Connection conn;
-    private UndoExecutor undo;
+    private UndoInfo undoInfo;
 
     public SphinxQLTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
@@ -68,15 +69,25 @@ public class SphinxQLTransactionResource implements TransactionResource<Connecti
     }
 
     @Override
-    public void undo() throws SQLException {
-        undo.execute(this);
-        conn.close();
+    public void setUndoInfo(Long txId, OpTypeEnum opType, Object obj){
+        this.undoInfo = new UndoInfo(txId, dbType(), opType, obj);
     }
 
     @Override
-    public void setUndo(UndoExecutor undo){
-        this.undo = undo;
+    public UndoInfo getUndoInfo() {
+        return undoInfo;
     }
+
+//    @Override
+//    public void undo() throws SQLException {
+//        undo.execute(this);
+//        conn.close();
+//    }
+//
+//    @Override
+//    public void setUndo(UndoExecutor undo){
+//        this.undo = undo;
+//    }
 
     private void execute(String command) throws SQLException {
         Statement st = conn.createStatement();

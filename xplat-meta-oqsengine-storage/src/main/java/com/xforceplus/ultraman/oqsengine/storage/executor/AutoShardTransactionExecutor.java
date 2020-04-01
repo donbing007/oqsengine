@@ -1,16 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.undo.UndoFactory;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.store.UndoLogStore;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Constructor;
@@ -95,14 +88,12 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
         }
 
         try {
-            Object res =  task.run(resource);
+            Object res = task.run(resource);
 
-            resource.setUndo(
-                    undoFactory.getUndo(
-                            tx.get().id(),
-                            resource.dbType(),
-                            shardTask.getOpType(), res)
-            );
+            if (tx.isPresent()) {
+                resource.setUndoInfo(tx.get().id(),  shardTask.getOpType(), res);
+                tx.get().setUndoExecutor(undoFactory.getUndoExecutor());
+            }
 
             return res;
         } finally {
@@ -113,10 +104,10 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
     }
 
     private TransactionResource buildResource(DataSource key, Connection value, boolean autocommit)
-        throws Exception {
+            throws Exception {
 
         Constructor<TransactionResource> constructor =
-            resourceClass.getConstructor(DataSource.class, Connection.class, Boolean.TYPE);
+                resourceClass.getConstructor(DataSource.class, Connection.class, Boolean.TYPE);
         return constructor.newInstance(key, value, autocommit);
     }
 }
