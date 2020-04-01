@@ -183,14 +183,23 @@ public class EntityClassToGrpcConverter {
         }
 
         //add relation
+        //relation may has no field
         builder.addAllRelation(entityClass.relations().stream().map(rel -> {
-            return RelationUp.newBuilder()
-                    .setEntityField(toFieldUp(rel.getEntityField()))
-                    .setName(rel.getName())
-                    .setRelationType(rel.getRelationType())
-                    .setIdentity(rel.isIdentity())
-                    .setRelatedEntityClassId(rel.getEntityClassId())
-                    .build();
+            RelationUp.Builder relation =  RelationUp.newBuilder();
+
+            if(rel.getEntityField() != null){
+                relation.setEntityField(toFieldUp(rel.getEntityField()));
+            }
+
+            relation.setName(Optional.ofNullable(rel.getName()).orElse(""));
+            relation.setRelationType(rel.getRelationType());
+
+            if(rel.isIdentity()){
+                relation.setIdentity(rel.isIdentity());
+            }
+
+            relation.setRelatedEntityClassId(rel.getEntityClassId());
+            return relation.build();
         }).collect(Collectors.toList()));
 
         builder.setId(entityClass.id())

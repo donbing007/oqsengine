@@ -290,6 +290,11 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .map(Long::valueOf)
                 .orElse(0L);
 
+        Long relId = RowUtils.getRowValue(relRow, "id")
+                .map(String::valueOf)
+                .map(Long::valueOf)
+                .orElse(0L);
+
         return findOneById("bos", boId).map(row -> {
             Optional<IEntityClass> parentEntityClass = RowUtils
                     .getRowValue(row, "parentId")
@@ -305,7 +310,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
              *  used as dto
              *   public Relation(Long id, String name, String entityClassName, String ownerClassName, String relationType) {
              */
-            Relation relation = new Relation(joinBoId, name, subCode, mainBoCode, relationType);
+            Relation relation = new Relation(relId, name, joinBoId, subCode, mainBoCode, relationType);
 
             FieldLikeRelationType.from(relationType).ifPresent(x -> {
                 IEntityField relField = x.getField(relation);
@@ -508,22 +513,22 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     //maybe useless
-    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationFieldForSub(String id
-            , String subId, String code) {
-        //load onetoone and many to one
-        DataSet relDs = dc.query().from("rels")
-                .selectAll()
-                .where("joinBoId").eq(id)
-                .and("boId").eq(subId)
-                .and("relType").eq("OneToMany")
-                .execute();
-
-        //to relDs
-        return relDs.toRows().stream()
-                .map(row -> {
-                    return toEntityClassFieldFromRel(row, code);
-                }).collect(Collectors.toList());
-    }
+//    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationFieldForSub(String id
+//            , String subId, String code) {
+//        //load onetoone and many to one
+//        DataSet relDs = dc.query().from("rels")
+//                .selectAll()
+//                .where("joinBoId").eq(id)
+//                .and("boId").eq(subId)
+//                .and("relType").eq("OneToMany")
+//                .execute();
+//
+//        //to relDs
+//        return relDs.toRows().stream()
+//                .map(row -> {
+//                    return toEntityClassFieldFromRel(row, code);
+//                }).collect(Collectors.toList());
+//    }
 
 
     private Table getTable(String tableName) {
@@ -693,53 +698,53 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      *
      * @param row
      * @return
-     */
-    private Optional<IEntityClass> toEntityClassFlow(Row row) {
-
-        String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
-        String boId = RowUtils.getRowValue(row, "id").map(String::valueOf).orElse("0");
-
-        //deal with parent
-        String parentId = RowUtils.getRowValue(row, "parentId").map(String::valueOf).orElse("");
-        Optional<IEntityClass> parentEntityClassOp = loadParentEntityClass(parentId);
-
-        //deal relation
-        List<IEntityClass> entityClassList = new LinkedList<>();
-        List<Relation> relationList = new LinkedList<>();
-
-        DataSet relDs = dc.query()
-                .from("rels")
-                .selectAll().where("boId")
-                .eq(boId)
-                .execute();
-
-        List<Row> relsRows = relDs.toRows();
-        List<Tuple2<Relation, IEntityClass>> relatedEntityClassList = relsRows.stream().map(relRow -> {
-            Optional<String> relatedBoIdOp = RowUtils
-                    .getRowValue(relRow, "joinBoId")
-                    .map(String::valueOf);
-            return relatedBoIdOp.flatMap(x -> loadRelationEntityClass(x, relRow, code));
-        }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
-
-        relatedEntityClassList.forEach(tuple -> {
-            entityClassList.add(tuple._2());
-            relationList.add(tuple._1());
-        });
-
-        //deal relation field
-        List<IEntityField> refFields = loadRelationField(relsRows);
-        List<IEntityField> fields = loadFields(boId);
-
-        List<IEntityField> allFields = new LinkedList<>();
-        allFields.addAll(fields);
-        allFields.addAll(refFields);
-
-        EntityClass entityClass = new EntityClass(Long.valueOf(boId)
-                , code, relationList, entityClassList
-                , parentEntityClassOp.orElse(null), allFields);
-        return Optional.of(entityClass);
-    }
-
+//     */
+//    private Optional<IEntityClass> toEntityClassFlow(Row row) {
+//
+//        String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
+//        String boId = RowUtils.getRowValue(row, "id").map(String::valueOf).orElse("0");
+//
+//        //deal with parent
+//        String parentId = RowUtils.getRowValue(row, "parentId").map(String::valueOf).orElse("");
+//        Optional<IEntityClass> parentEntityClassOp = loadParentEntityClass(parentId);
+//
+//        //deal relation
+//        List<IEntityClass> entityClassList = new LinkedList<>();
+//        List<Relation> relationList = new LinkedList<>();
+//
+//        DataSet relDs = dc.query()
+//                .from("rels")
+//                .selectAll().where("boId")
+//                .eq(boId)
+//                .execute();
+//
+//        List<Row> relsRows = relDs.toRows();
+//        List<Tuple2<Relation, IEntityClass>> relatedEntityClassList = relsRows.stream().map(relRow -> {
+//            Optional<String> relatedBoIdOp = RowUtils
+//                    .getRowValue(relRow, "joinBoId")
+//                    .map(String::valueOf);
+//            return relatedBoIdOp.flatMap(x -> loadRelationEntityClass(x, relRow, code));
+//        }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+//
+//        relatedEntityClassList.forEach(tuple -> {
+//            entityClassList.add(tuple._2());
+//            relationList.add(tuple._1());
+//        });
+//
+//        //deal relation field
+//        List<IEntityField> refFields = loadRelationField(relsRows);
+//        List<IEntityField> fields = loadFields(boId);
+//
+//        List<IEntityField> allFields = new LinkedList<>();
+//        allFields.addAll(fields);
+//        allFields.addAll(refFields);
+//
+//        EntityClass entityClass = new EntityClass(Long.valueOf(boId)
+//                , code, relationList, entityClassList
+//                , parentEntityClassOp.orElse(null), allFields);
+//        return Optional.of(entityClass);
+//    }
+//
     private List<IEntityField> loadFields(String id) {
         DataSet fieldDs = dc.query().from("fields")
                 .selectAll().where("boId").eq(id).execute();
@@ -759,7 +764,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         return relations.stream().filter(row -> {
             return RowUtils.getRowValue(row, "relType")
                     .map(String::valueOf)
-                    .filter(type -> type.equalsIgnoreCase("onetoone") || type.equalsIgnoreCase("manytoone"))
+                    .flatMap(FieldLikeRelationType::from)
                     .isPresent();
         }).map(row -> {
             //get joinBoId

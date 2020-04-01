@@ -116,12 +116,17 @@ public class EntityServiceTest {
         //save image
         Map<String, Object> map = new HashMap<>();
         map.put("rec_start_time", new DateTimeValue(imageBill.get().field("rec_start_time").get(), LocalDateTime.now()).valueToLong());
-        System.out.println(entityService.create(imageBill.get(), map).get());
+        Long id = entityService.create(imageBill.get(), map).get();
 
 //        Either<String, Tuple2<Integer, List<Map<String, Object>>>> bills = entityService.findByCondition(imageBill.get(), new RequestBuilder()
 //                .field("bill_id", ConditionOp.eq, 0).build());
 //
 //        bills.forEach(x -> System.out.println(x));
+
+        Either<String, Tuple2<Integer, List<Map<String, Object>>>> bills = entityService.findByCondition(imageBill.get(), new RequestBuilder()
+                .build());
+
+        System.out.println(bills);
     }
 
     @Test
@@ -154,6 +159,8 @@ public class EntityServiceTest {
         Either<String, Integer> result = entityService.updateById(testBill.get(), parentId, update);
 
         System.out.println("result:" + result.get());
+
+        System.out.println(entityService.findByCondition(testBill.get(), new RequestBuilder().field("bill_code", ConditionOp.eq, "test2").build()));
 
         //delete sub
 
@@ -217,6 +224,9 @@ public class EntityServiceTest {
 
         System.out.println(entityService.findByCondition(ticket.get(), new RequestBuilder()
                 .field("image_id", ConditionOp.eq, 6643745129398009857L).build()));
+
+        System.out.println(entityService.findByCondition(ticket.get(), new RequestBuilder().field("enable", ConditionOp.eq, "1")
+                .build()));
     }
 
     @Test
@@ -493,6 +503,9 @@ public class EntityServiceTest {
         String hstr = "'create_user':'1214481717915123712','image_id':'6645968161583661057','warning_info':'','invoice_sheet':'1','invoice_type':'s','x_point':0,'y_point':0,'width':0,'height':0,'angle':0}";
         JSONObject json1 = JSONObject.parseObject(qstr + hstr);
         Either<String, IEntity> iEntityEither = entityServiceEx.create(entityOpt.get(), json1);
+
+        System.out.println(iEntityEither.get());
+
         Long sId = iEntityEither.get().id();
         Long fId = iEntityEither.get().family().parent();
 
@@ -660,7 +673,38 @@ public class EntityServiceTest {
 
         System.out.println(entityService.findOne(entityOpt.get(), x));
 
-        //search by create_user_name
+        //search by create_user_namepa
+        System.out.println(entityService.findByCondition(entityOpt.get()
+                , new RequestBuilder()
+                        .field("create_user_name", ConditionOp.eq, "created")
+                        .build()));
+    }
+
+    @Test
+    public void testLabelQuery() throws InterruptedException {
+
+        Thread.sleep(10000);
+
+        setupContext();
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("label");
+
+        System.out.println(entityOpt.get());
+
+        Map<String, Object> ss = new HashMap<>();
+        ss.put("create_user_id", "1111111");
+
+        System.out.println(entityService.create(entityOpt.get(), ss));
+
+        ss.put("create_user_id", "1111112");
+
+        System.out.println(entityService.create(entityOpt.get(), ss));
+
+        Long x = entityService.create(entityOpt.get(), ss).get();
+
+        System.out.println(entityService.findOne(entityOpt.get(), x));
+
+        //search by create_user_namepa
         System.out.println(entityService.findByCondition(entityOpt.get()
                 , new RequestBuilder()
                         .field("create_user_name", ConditionOp.eq, "created")

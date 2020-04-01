@@ -386,6 +386,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     /**
+     * TODO
+     * related
      * only one to one || many to one
      *
      * @param entityClass
@@ -807,7 +809,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 , relationUp.getRelatedEntityClassId()
                 , relationUp.getRelationType()
                 , relationUp.getIdentity()
-                , toEntityField(relationUp.getEntityField()));
+                , relationUp.hasEntityField() ? toEntityField(relationUp.getEntityField()) : null);
     }
 
     private IEntityClass getSubEntityClass(EntityUp entityUp) {

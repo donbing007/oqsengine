@@ -86,7 +86,7 @@ public class DefaultHandleValueService implements HandleValueService {
      */
     private Stream<Tuple2<IEntityField, Object>> zipValue(IEntityClass entityClass, Map<String, Object> body) {
         Stream<IEntityField> fields = entityClass.fields().stream();
-        Stream<IEntityField> relationFields = entityClass.relations().stream().map(Relation::getEntityField);
+        Stream<IEntityField> relationFields = entityClass.relations().stream().map(Relation::getEntityField).filter(Objects::nonNull);
         Stream<IEntityField> parentFields = Optional.ofNullable(entityClass.extendEntityClass())
                 .map(IEntityClass::fields)
                 .orElseGet(Collections::emptyList)
