@@ -25,10 +25,8 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import javax.management.relation.RelationType;
+import java.util.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -78,6 +76,40 @@ public class EntityServiceNewTest {
                 .build();
     }
 
+
+    /**
+     * Long id, String name
+     * , long entityClassId
+     * , String entityClassName
+     * , String ownerClassName
+     * , String relationType
+     * @return
+     */
+
+    private ModuleUpResult manyToOne() {
+        return ModuleUpResult
+                .newBuilder()
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setId("1")
+                        .setCode("main")
+                        .addRelations(Relation.newBuilder()
+                                .setId("1001")
+                                .setRelationType("ManyToOne")
+                                .setJoinBoId("2")
+                                .setBoId("1")
+                                .build())
+                        .build())
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setId("2")
+                        .setCode("rel1")
+                        .build())
+                .build();
+    }
+
+
+
     private EntityClass enumEntity() {
         FieldConfig fieldConfig = new FieldConfig().searchable(true);
 
@@ -111,6 +143,8 @@ public class EntityServiceNewTest {
 
         return entityClass;
     }
+
+
 
     @Test
     public void testMultiValueService(){
@@ -198,4 +232,29 @@ public class EntityServiceNewTest {
 
         }
     }
+
+    @Test
+    public void testManyToOne(){
+        metadataRepository.save(manyToOne(), "1", "1");
+
+        Optional<EntityClass> entityClass = metadataRepository.load("1", "1", "1");
+
+        EntityClass entityClassReal = entityClass.get();
+
+        System.out.println(entityClassReal);
+
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("rel1.id", "1234");
+
+        Long id = entityService.create(entityClassReal, maps).get();
+
+        System.out.println(entityService.findOne(entityClassReal, id));
+
+        System.out.println(entityService.findByCondition(entityClassReal
+                , new RequestBuilder()
+                        .field("rel1.id", ConditionOp.eq, "1234")
+                        .build()));
+    }
+
+
 }
