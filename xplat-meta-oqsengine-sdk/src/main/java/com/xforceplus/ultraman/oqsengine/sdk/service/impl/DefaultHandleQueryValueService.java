@@ -46,14 +46,18 @@ public class DefaultHandleQueryValueService implements HandleQueryValueService {
 
         ConditionsUp.Builder conditionsUpBuilder = ConditionsUp.newBuilder();
 
-        Stream<Optional<FieldConditionUp>> fieldInMainStream = Optional.ofNullable(conditions.getFields())
+        Stream<Optional<FieldConditionUp>> fieldInMainStream = Optional
+                .ofNullable(conditions)
+                .map(Conditions::getFields)
                 .orElseGet(Collections::emptyList).stream().map(fieldCondition -> {
                     return toFieldCondition(entityClass, fieldCondition);
                 });
 
+
         //from relation to condition
-        Stream<Optional<FieldConditionUp>> fieldInRelationStream = conditions
-                .getEntities()
+        Stream<Optional<FieldConditionUp>> fieldInRelationStream = Optional.ofNullable(conditions)
+                .map(x -> x.getEntities())
+                .orElseGet(Collections::emptyList)
                 .stream().flatMap(entityCondition -> {
                     return toFieldConditionFromRel(entityClass, entityCondition);
                 });
