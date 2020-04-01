@@ -57,31 +57,30 @@ public class SphinxQLHelper {
      */
     public static String encodeQueryFullText(String value, boolean fuzzy) {
         StringBuilder buff = new StringBuilder();
-        // 是否已经有<<标识了.
-        boolean lastHave = false;
-        for (char c : value.toCharArray()) {
-            if (c == ' ') {
-                if (!lastHave) {
-
-                    if (fuzzy) {
-                        buff.append(SqlKeywordDefine.EVERY_THING);
-                    }
-
-                    buff.append(" << ");
-
-                    if (fuzzy) {
-                        buff.append(SqlKeywordDefine.EVERY_THING);
-                    }
-
-                    lastHave = true;
-                }
-            } else {
-                buff.append(c);
-                lastHave = false;
-            }
-        }
         if (fuzzy) {
+            // 是否已经有<<标识了.
+            boolean lastHave = false;
+            for (char c : value.toCharArray()) {
+                if (c == ' ') {
+                    if (!lastHave) {
+
+                        buff.append(SqlKeywordDefine.EVERY_THING);
+
+                        buff.append(" << ");
+
+                        buff.append(SqlKeywordDefine.EVERY_THING);
+
+                        lastHave = true;
+                    }
+                } else {
+                    buff.append(c);
+                    lastHave = false;
+                }
+            }
             buff.append(SqlKeywordDefine.EVERY_THING);
+        } else {
+
+            buff.append("\"").append(value).append("\"");
         }
 
         return buff.toString();
@@ -145,5 +144,10 @@ public class SphinxQLHelper {
 
     private static String doUnicode(char c) {
         return Integer.toHexString(c);
+    }
+
+    public static void main(String[] args) {
+        String data = "F123214213L 1";
+        System.out.println(encodeQueryFullText(data, false));
     }
 }
