@@ -9,8 +9,11 @@ package com.xforceplus.ultraman.oqsengine.storage.undo.constant;
  */
 public class CacheConstant {
 
-    public static final String UNDO_LOG = "UNDO_LOG";
-    public static String getTxIdKey(Long txId){
-        return "txId" + txId;
+    public static final String UNDO_LOG = "OQSENGINE_UNDO_LOG";
+
+    public static final String SEPARATOR = "-";
+
+    public static String getLogKey(Long txId, DbTypeEnum dbType, OpTypeEnum opType){
+        return "LogKey@" + txId + SEPARATOR  + dbType.name() + SEPARATOR + opType.name();
     }
 }

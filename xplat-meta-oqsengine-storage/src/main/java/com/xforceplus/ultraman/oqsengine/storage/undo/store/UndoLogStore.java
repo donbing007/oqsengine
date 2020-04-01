@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.store;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.TxUndoLog;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 
 import java.util.List;
 
@@ -13,11 +15,11 @@ import java.util.List;
  */
 public interface UndoLogStore {
 
-    List<TxUndoLog> get(Long txId);
+    Object get(Long txId, DbTypeEnum dbType, OpTypeEnum opType);
 
-    void update(Long txId, List<TxUndoLog> txUndoLogs);
+    void save(Long txId, DbTypeEnum dbType, OpTypeEnum opType, Object data);
 
-    void add(Long txId, TxUndoLog txUndoLog);
+    boolean isExist(Long txId, DbTypeEnum dbType, OpTypeEnum opType);
 
-    void remove(Long txId);
+    void remove(Long txId, DbTypeEnum dbType, OpTypeEnum opType);
 }

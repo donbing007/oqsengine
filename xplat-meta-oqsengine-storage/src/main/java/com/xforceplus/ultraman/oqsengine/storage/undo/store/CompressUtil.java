@@ -188,6 +188,7 @@ public class CompressUtil {
     public static Object decompressToObj(byte[] data) {
         return toObj(decompress(data));
     }
+
 //    public static void main(String[] args) {
 //        Map n = new HashMap();
 //        n.put("xxxxxxx", "fffffffffffffffffff");

@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 
 import java.sql.SQLException;
 
@@ -14,6 +14,12 @@ import java.sql.SQLException;
  * @since 1.8
  */
 public interface TransactionResource<V> {
+
+    /**
+     * 资源类型的标记
+     * @return
+     */
+    DbTypeEnum dbType();
 
     /**
      * 资源的标识.
@@ -45,7 +51,19 @@ public interface TransactionResource<V> {
      */
     void destroy() throws SQLException;
 
-    void setUndoExecutor(UndoExecutor undoExecutor);
+    /**
+     * 资源是否销毁或者回收
+     */
+    boolean isDestroyed() throws SQLException;
 
-    void undo(OpTypeEnum opType) throws SQLException;
+    /**
+     * 还原资源操作
+     * @throws SQLException
+     */
+    void undo() throws SQLException;
+
+    /**
+     * 设置还原操作句柄
+     */
+    void setUndo(UndoExecutor undo);
 }

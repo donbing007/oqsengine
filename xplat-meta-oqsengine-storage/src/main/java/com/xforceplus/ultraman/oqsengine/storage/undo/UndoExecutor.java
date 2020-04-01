@@ -1,10 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 
 import java.sql.SQLException;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * 版权：    上海云砺信息科技有限公司
@@ -13,26 +14,30 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public abstract class UndoExecutor {
+public class UndoExecutor {
 
-    public abstract void setTxId(Long txId);
+    private BlockingQueue<UndoLog> undoLogQ;
+    private StorageCommand cmd;
+    private Object undoData;
 
-    public abstract void setDbType(DbTypeEnum dbTypeEnum);
+    public UndoExecutor(StorageCommand cmd, Object undoData) {
+        this.cmd = cmd;
+        this.undoData = undoData;
+    }
 
-    public void run(OpTypeEnum opType) throws SQLException {
-        switch (opType) {
-            case BUILD: this.build(); break;
-            case REPLACE: this.replace(); break;
-            case DELETE: this.delete(); break;
-            default:
+    public void execute(TransactionResource resource) {
+        try {
+            cmd.execute(resource, undoData);
+        } catch (SQLException e) {
+            if(undoLogQ != null) {
+                undoLogQ.add(
+                        new UndoLog(resource.dbType().name(), cmd.opType().name(), undoData)
+                );
+            }
         }
     }
 
-    public abstract void build() throws SQLException;
-
-    public abstract void replace() throws SQLException;
-
-    public abstract void delete() throws SQLException;
-
-    public abstract void saveUndoLog(DbTypeEnum dbTypeEnum, OpTypeEnum opTypeEnum, Long txId, IEntity entity);
+    public void setErrorTransactionResourceQ(BlockingQueue<UndoLog> undoLogQ) {
+        this.undoLogQ = undoLogQ;
+    }
 }

@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -195,13 +195,23 @@ public class MultiLocalTransactionTest {
         }
 
         @Override
-        public void setUndoExecutor(UndoExecutor undoExecutor) {
+        public DbTypeEnum dbType() {
+            return null;
+        }
+
+        @Override
+        public void undo() throws SQLException {
 
         }
 
         @Override
-        public void undo(OpTypeEnum opType) throws SQLException {
+        public void setUndo(UndoExecutor undo) {
 
+        }
+
+        @Override
+        public boolean isDestroyed() throws SQLException {
+            return false;
         }
     }
 

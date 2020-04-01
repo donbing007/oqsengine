@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction.sql;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -19,7 +19,7 @@ public class SphinxQLTransactionResource implements TransactionResource<Connecti
 
     private DataSource key;
     private Connection conn;
-    private UndoExecutor undoExecutor;
+    private UndoExecutor undo;
 
     public SphinxQLTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
@@ -30,6 +30,11 @@ public class SphinxQLTransactionResource implements TransactionResource<Connecti
         if (!autocommit) {
             execute("begin");
         }
+    }
+
+    @Override
+    public DbTypeEnum dbType() {
+        return DbTypeEnum.INDEX;
     }
 
     @Override
@@ -54,18 +59,23 @@ public class SphinxQLTransactionResource implements TransactionResource<Connecti
 
     @Override
     public void destroy() throws SQLException {
-
         conn.close();
     }
 
     @Override
-    public void setUndoExecutor(UndoExecutor undoExecutor) {
-        this.undoExecutor = undoExecutor;
+    public boolean isDestroyed() throws SQLException {
+        return conn.isClosed();
     }
 
     @Override
-    public void undo(OpTypeEnum opType) throws SQLException {
-        this.undoExecutor.run(opType);
+    public void undo() throws SQLException {
+        undo.execute(this);
+        conn.close();
+    }
+
+    @Override
+    public void setUndo(UndoExecutor undo){
+        this.undo = undo;
     }
 
     private void execute(String command) throws SQLException {

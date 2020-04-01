@@ -67,7 +67,7 @@ public class AutoShardTransactionExecutorTest {
 
         AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class);
         // 分片键不关心
-        te.execute(new DataSourceShardingTask(dataSourceSelector, "", null) {
+        te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override
             public Object run(TransactionResource resource) throws SQLException {
                 Connection conn = (Connection) resource.value();
@@ -93,7 +93,7 @@ public class AutoShardTransactionExecutorTest {
 
         AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class);
         // 分片键不关心
-        te.execute(new DataSourceShardingTask(dataSourceSelector, "", null) {
+        te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override
             public Object run(TransactionResource resource) throws SQLException {
                 Connection conn = (Connection) resource.value();
@@ -125,7 +125,7 @@ public class AutoShardTransactionExecutorTest {
 
         AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class);
         // 分片键不关心
-        te.execute(new DataSourceShardingTask(dataSourceSelector, "", null) {
+        te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override
             public Object run(TransactionResource resource) throws SQLException {
                 Assert.assertEquals(currentT.query(mockDataSource).get(), resource);

@@ -30,7 +30,7 @@ public class StorageConfiguration {
     public IndexStorage indexStorage(@Value("${storage.index.name:oqsindex}") String indexTableName) {
 
         SphinxQLIndexStorage storage = new SphinxQLIndexStorage();
-//        storage.setIndexTableName(indexTableName);
+        storage.setIndexTableName(indexTableName);
         return storage;
     }
 }

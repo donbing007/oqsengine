@@ -1,20 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
-import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.AutoShardTransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexAction;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexUndoExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterAction;
-import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterUndoExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.SphinxQLIndexStorageCommandInvoker;
+import com.xforceplus.ultraman.oqsengine.storage.master.command.SQLMasterStorageCommandInvoker;
+import com.xforceplus.ultraman.oqsengine.storage.undo.UndoFactory;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.store.RedisUndoLogStore;
 import com.xforceplus.ultraman.oqsengine.storage.undo.store.UndoLogStore;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,58 +22,29 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class UndoConfiguration {
 
-    @Autowired
-    private TransactionManager tm;
-
-    @Value("${storage.master.query.worker:0}")
-    private int masterWorkerSize;
-
-    @Value("${storage.master.query.timeout:3000}")
-    private long masterQueryTimeout;
-
-    @Value("${storage.index.name:oqsindex}")
-    private String indexTableName;
-
-
     @Bean
     public UndoLogStore undoLogStore(RedissonClient redissonClient){
         return new RedisUndoLogStore(redissonClient);
     }
 
     @Bean
-    public SphinxQLIndexAction sphinxQLIndexAction() {
-        SphinxQLIndexAction sphinxQLIndexAction = new SphinxQLIndexAction();
-        sphinxQLIndexAction.setIndexTableName(indexTableName);
-        return sphinxQLIndexAction;
+    public StorageCommandInvoker sphinxQLIndexStorageCommandInvoker(@Value("${storage.index.name:oqsindex}") String indexTableName) {
+        return new SphinxQLIndexStorageCommandInvoker(indexTableName);
     }
 
     @Bean
-    public SQLMasterAction sqlMasterAction() {
-        return new SQLMasterAction();
+    public StorageCommandInvoker sqlMasterStorageCommandInvoker() {
+        return new SQLMasterStorageCommandInvoker();
     }
 
     @Bean
-    public SphinxQLIndexUndoExecutor sphinxQLIndexUndoExecutor(SphinxQLIndexAction sphinxQLIndexAction, UndoLogStore undoLogStore){
-        return new SphinxQLIndexUndoExecutor(sphinxQLIndexAction, undoLogStore);
-    }
+    public UndoFactory undoFactory(UndoLogStore undoLogStore,
+                                   StorageCommandInvoker sphinxQLIndexStorageCommandInvoker,
+                                   StorageCommandInvoker sqlMasterStorageCommandInvoker){
+        UndoFactory undoFactory = new UndoFactory(undoLogStore);
+        undoFactory.register(DbTypeEnum.INDEX, sphinxQLIndexStorageCommandInvoker);
+        undoFactory.register(DbTypeEnum.MASTOR, sqlMasterStorageCommandInvoker);
 
-    @Bean
-    public SQLMasterUndoExecutor sqlMasterUndoExecutor(SQLMasterAction sqlMasterAction, UndoLogStore undoLogStore){
-        return new SQLMasterUndoExecutor(sqlMasterAction, undoLogStore);
-    }
-
-    @Bean
-    public TransactionExecutor storageSphinxQLTransactionExecutor(SphinxQLIndexUndoExecutor sphinxQLIndexUndoExecutor) {
-        return new AutoShardTransactionExecutor(tm, SphinxQLTransactionResource.class, sphinxQLIndexUndoExecutor);
-    }
-
-    @Bean
-    public TransactionExecutor storageJDBCTransactionExecutor(SQLMasterUndoExecutor sqlMasterUndoExecutor) {
-        return new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class, sqlMasterUndoExecutor);
-    }
-
-    @Bean
-    public TransactionExecutor serviceTransactionExecutor(SQLMasterUndoExecutor sqlMasterUndoExecutor) {
-        return new AutoCreateTransactionExecutor(tm, sqlMasterUndoExecutor);
+        return undoFactory;
     }
 }

@@ -167,4 +167,54 @@ public class MultiLocalTransaction implements Transaction {
                 String.format("The transaction has completed.[commit=%b, rollback=%b]", isCommitted(), isRollback()));
         }
     }
+
+    private void doEndNew(boolean commit) throws SQLException {
+        List<SQLException> exHolder = new LinkedList<>();
+        try {
+            for (TransactionResource transactionResource : transactionResourceHolder) {
+                if (commit) {
+                    transactionResource.commit();
+                } else {
+                    transactionResource.rollback();
+                }
+                transactionResource.destroy();
+            }
+        } catch (SQLException ex) {
+            exHolder.add(0, ex);
+
+            //TODO: 发生了异常,需要 rollback, 这里需要 undo 日志.by dongbin 2020/02/17
+            for (TransactionResource transactionResource : transactionResourceHolder) {
+                if (!transactionResource.isDestroyed()) {
+                    transactionResource.rollback();
+                } else {
+                    if(commit) {
+                        transactionResource.undo();
+                    }
+                }
+            }
+        } finally {
+            for (TransactionResource transactionResource : transactionResourceHolder) {
+                try {
+                    if(!transactionResource.isDestroyed()) {
+                        transactionResource.destroy();
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        throwSQLExceptionIfNecessary(exHolder);
+
+        if (commit) {
+
+            committed = true;
+
+        } else {
+
+            rollback = true;
+
+        }
+
+    }
 }

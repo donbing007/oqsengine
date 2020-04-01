@@ -7,8 +7,10 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.undo.UndoFactory;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.store.UndoLogStore;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Constructor;
@@ -29,7 +31,7 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
 
     private Class resourceClass;
 
-    private UndoExecutor undoExecutor;
+    private UndoFactory undoFactory;
 
     /**
      * 构造一个事务执行器,需要一个事务管理器.
@@ -41,10 +43,10 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
         this.resourceClass = resourceClass;
     }
 
-    public AutoShardTransactionExecutor(TransactionManager transactionManager, Class resourceClass, UndoExecutor undoExecutor) {
+    public AutoShardTransactionExecutor(TransactionManager transactionManager, Class resourceClass, UndoFactory undoFactory) {
         this.transactionManager = transactionManager;
         this.resourceClass = resourceClass;
-        this.undoExecutor = undoExecutor;
+        this.undoFactory = undoFactory;
     }
 
     @Override
@@ -55,9 +57,6 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
         } else {
             throw new SQLException("Task types other than DataSourceShardingTask are not supported.");
         }
-
-        DbTypeEnum dbType = resourceClass.isInstance(SphinxQLTransactionResource.class) ? DbTypeEnum.INDEX :
-                resourceClass.isInstance(ConnectionTransactionResource.class) ? DbTypeEnum.MASTOR : null;
 
         DataSource targetDataSource = shardTask.getDataSourceSelector().select(shardTask.getShardKey());
 
@@ -85,11 +84,6 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
 
                 tx.get().join(resource);
             }
-
-            //-------------------------------------------
-            this.undoExecutor.setDbType(dbType);
-            this.undoExecutor.setTxId(tx.get().id());
-            resource.setUndoExecutor(this.undoExecutor);
         } else {
             // 无事务运行.
             Connection conn = targetDataSource.getConnection();
@@ -103,10 +97,12 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
         try {
             Object res =  task.run(resource);
 
-            //--------------------------------------------------------------------------------------------
-
-            OpTypeEnum opType = ((DataSourceShardingTask) task).getOpType();
-            undoExecutor.saveUndoLog(dbType, opType, tx.get().id(), (IEntity) res);
+            resource.setUndo(
+                    undoFactory.getUndo(
+                            tx.get().id(),
+                            resource.dbType(),
+                            shardTask.getOpType(), res)
+            );
 
             return res;
         } finally {
