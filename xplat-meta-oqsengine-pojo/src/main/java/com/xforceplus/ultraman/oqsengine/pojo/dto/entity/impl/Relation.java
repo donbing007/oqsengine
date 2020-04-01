@@ -66,12 +66,13 @@ public class Relation {
         this.entityField = entityField;
     }
 
-    public Relation(Long id, String name, String entityClassName, String ownerClassName, String relationType) {
+    public Relation(Long id, String name, long entityClassId, String entityClassName, String ownerClassName, String relationType) {
         this.name = name;
         this.entityClassName = entityClassName;
         this.relOwnerClassName = ownerClassName;
         this.relationType = relationType;
         this.id = id;
+        this.entityClassId = entityClassId;
     }
 
     public Long getId() {
