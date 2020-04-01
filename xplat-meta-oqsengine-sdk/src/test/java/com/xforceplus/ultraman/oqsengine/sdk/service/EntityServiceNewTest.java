@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.client.RestTemplateAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.ContextConfiguration;
@@ -27,6 +28,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.management.relation.RelationType;
 import java.util.*;
+
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.TENANT_ID;
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -146,6 +151,7 @@ public class EntityServiceNewTest {
 
 
 
+
     @Test
     public void testMultiValueService(){
 
@@ -234,8 +240,17 @@ public class EntityServiceNewTest {
     }
 
     @Test
-    public void testManyToOne(){
+    public void testManyToOne() throws InterruptedException {
+
+        metadataRepository.save(mockModuleUpResult(), "1", "1");
+
+        Optional<EntityClass> entityClass2 = metadataRepository.load("1", "1", "1");
+
         metadataRepository.save(manyToOne(), "1", "1");
+
+        metadataRepository.save(manyToOne(), "1", "1");
+        metadataRepository.save(manyToOne(), "1", "1");
+
 
         Optional<EntityClass> entityClass = metadataRepository.load("1", "1", "1");
 
@@ -244,7 +259,7 @@ public class EntityServiceNewTest {
         System.out.println(entityClassReal);
 
         Map<String, Object> maps = new HashMap<>();
-        maps.put("rel1.id", "1234");
+        maps.put("rel1.id", "{{tenant_id}}");
 
         Long id = entityService.create(entityClassReal, maps).get();
 
@@ -252,8 +267,46 @@ public class EntityServiceNewTest {
 
         System.out.println(entityService.findByCondition(entityClassReal
                 , new RequestBuilder()
-                        .field("rel1.id", ConditionOp.eq, "1234")
+                        .field("rel1.id", ConditionOp.eq, "1235")
                         .build()));
+    }
+
+
+    private void setupContext() {
+
+        /**
+         *         fixed.put("tenant_id", () -> contextService.get(TENANTID_KEY));
+         *         fixed.put("create_time", () -> LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli());
+         *         fixed.put("create_user_name", () -> contextService.get(USERNAME));
+         *         fixed.put("create_user_id", () -> contextService.get(ID));
+         *         fixed.put("delete_flag", () -> "1");
+         *         fixed.put("update_time", () -> LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli());
+         *         fixed.put("update_user_id", () -> contextService.get(ID));
+         *         fixed.put("update_user_name", () -> contextService.get(USERNAME));
+         */
+        contextService.set(ID, 123454L);
+        contextService.set(USERNAME, "created");
+        contextService.set(USER_DISPLAYNAME, "created");
+        contextService.set(TENANTID_KEY, "12312312312");
+        contextService.set(TENANT_ID, 1111111L);
+    }
+
+
+    @Test
+    public void testQuery(){
+
+        setupContext();
+
+        EntityClass s = longEntity();
+
+        Map<String, Object> value = new HashMap<>();
+        value.put("defaultfield", "{{tenant_id}}");
+
+        entityService.create(s, value);
+
+
+        System.out.println(entityService.findByCondition(s,
+                new RequestBuilder().field("defaultfield", ConditionOp.eq, "{{tenant_id}}").build()));
     }
 
 

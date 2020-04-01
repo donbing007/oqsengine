@@ -27,6 +27,7 @@ public interface FieldOperationHandler extends Comparable<FieldOperationHandler>
         return null;
     }
 
+    @Override
     default Object apply(IEntityField field, Object o, OperationType phase) {
         if (require(field, o)) {
             if (phase == OperationType.CREATE) {

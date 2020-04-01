@@ -14,6 +14,9 @@ import com.xforceplus.ultraman.oqsengine.sdk.interceptor.DefaultSearchIntercepto
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.MatchRouter;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
+import com.xforceplus.ultraman.oqsengine.sdk.service.HandleQueryValueService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.impl.DefaultHandleQueryValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.DefaultHandleValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.EntityServiceExImpl;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.EntityServiceImpl;
@@ -221,10 +224,13 @@ public class InitServiceAutoConfiguration {
         return new SimpleExpressionFieldOperationHandler(contextService);
     }
 
-
     @Bean
-    public DefaultHandleValueService defaultHandleValueService(){
+    public HandleValueService defaultHandleValueService(){
         return new DefaultHandleValueService();
     }
 
+    @Bean
+    public HandleQueryValueService defaultHandleQueryValueService() {
+        return new DefaultHandleQueryValueService();
+    }
 }

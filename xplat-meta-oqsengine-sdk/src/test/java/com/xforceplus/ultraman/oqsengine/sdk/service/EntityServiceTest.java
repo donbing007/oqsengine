@@ -710,4 +710,29 @@ public class EntityServiceTest {
                         .field("create_user_name", ConditionOp.eq, "created")
                         .build()));
     }
+
+
+    @Test
+    public void testLabel() throws InterruptedException {
+
+        Thread.sleep(10000);
+
+        setupContext();
+
+        Optional<EntityClass> entityOpt = entityService.load("1245188810426675202");
+
+        System.out.println(entityOpt.get());
+
+        Map<String, Object> ss = new HashMap<>();
+        ss.put("company.id", "1111111");
+
+        Long id = entityService.create(entityOpt.get(), ss).get();
+
+        System.out.println(entityService.findOne(entityOpt.get(), id));
+
+
+        System.out.println(entityService.findByCondition(entityOpt.get(), new RequestBuilder().build()));
+
+        //search by create_user_namepa
+    }
 }
