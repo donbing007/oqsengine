@@ -4,8 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.pojo.auth.Authorization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
+import com.xforceplus.ultraman.oqsengine.sdk.config.ExternalServiceConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
+import org.omg.CORBA.NO_RESPONSE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,8 +41,8 @@ public class UltFormInitService implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        logger.info("begin init forms config --" + LocalDateTime.now());
-        String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
+        logger.info("begin init forms config");
+        String accessUri = ExternalServiceConfig.PfcpAccessUri();
         String url = String.format("%s/forms/init"
                 , accessUri);
         Authorization auth = new Authorization();
@@ -60,10 +62,12 @@ public class UltFormInitService implements CommandLineRunner {
                     UltForm saveUltForm = JSON.parseObject(JSON.toJSONString(ultForms.get(i)), UltForm.class);
                     formBoMapLocalStore.save(saveUltForm);
                 }
-                logger.info("init forms config success --" + LocalDateTime.now());
+                logger.info("init forms config success");
             }
         } catch (Exception e) {
-            logger.info("init forms config faild--" + LocalDateTime.now());
+            logger.info("init forms config faild");
+            throw new NO_RESPONSE(
+                    String.format("init forms config faild,The url is '%s'.", url));
         }
 
     }
