@@ -14,10 +14,12 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
-import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.TENANTID_KEY;
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.USER_DISPLAYNAME;
 
 /**
  * handle all system operation
+ *
  * @author admin
  */
 public class FixedDefaultSystemOperationHandler implements FieldOperationHandler {
@@ -26,7 +28,7 @@ public class FixedDefaultSystemOperationHandler implements FieldOperationHandler
 
     private Map<String, Supplier<Object>> fixed = new HashMap<>();
 
-    private static final Set<String> updateFields = Sets.newHashSet("update_time", "update_user_id", "update_user_name");
+    private static final Set<String> UPDATE_FIELDS = Sets.newHashSet("update_time", "update_user_id", "update_user_name");
 
     public FixedDefaultSystemOperationHandler(ContextService contextService, boolean isOverride) {
 
@@ -59,12 +61,12 @@ public class FixedDefaultSystemOperationHandler implements FieldOperationHandler
 
     @Override
     public Object onCreate(IEntityField field, Object o) {
-        if(isOverride && o != null){
-            if(o instanceof String){
-                if(!StringUtils.isEmpty((String)o)) {
+        if (isOverride && o != null) {
+            if (o instanceof String) {
+                if (!StringUtils.isEmpty((String) o)) {
                     return o;
                 }
-            }else{
+            } else {
                 return o;
             }
         }
@@ -74,18 +76,18 @@ public class FixedDefaultSystemOperationHandler implements FieldOperationHandler
 
     @Override
     public Object onUpdate(IEntityField field, Object o) {
-        if(isOverride && o != null){
-            if(o instanceof String){
-                if(!StringUtils.isEmpty((String)o)) {
+        if (isOverride && o != null) {
+            if (o instanceof String) {
+                if (!StringUtils.isEmpty((String) o)) {
                     return o;
                 }
-            }else{
+            } else {
                 return o;
             }
 
         }
 
-        if (updateFields.contains(field.name())) {
+        if (UPDATE_FIELDS.contains(field.name())) {
             return fixed.get(field.name()).get();
         }
         return null;

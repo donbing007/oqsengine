@@ -7,10 +7,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * AbstractTransactionManager Tester.
@@ -74,6 +74,55 @@ public class AbstractTransactionManagerTest {
         Assert.assertTrue(tx.isCompleted());
         Assert.assertFalse(tx.isRollback());
         Assert.assertTrue(tx.isCommitted());
+    }
+
+    @Test
+    public void testSize() throws Exception {
+        MockTransactionManager tm = new MockTransactionManager();
+        ExecutorService worker = Executors.newFixedThreadPool(3);
+        CountDownLatch startLatch = new CountDownLatch(3);
+
+        worker.submit(() -> {
+            try {
+                startLatch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+            tm.create();
+        });
+        worker.submit(() -> {
+            try {
+                startLatch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+            tm.create();
+        });
+        worker.submit(() -> {
+            try {
+                startLatch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+            tm.create();
+        });
+        startLatch.countDown();
+        startLatch.countDown();
+        startLatch.countDown();
+        worker.shutdown();
+
+        TimeUnit.SECONDS.sleep(1);
+        Assert.assertEquals(3, tm.size());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFreeze() throws Exception {
+        MockTransactionManager tm = new MockTransactionManager();
+        Transaction tx = tm.create();
+        Assert.assertNotNull(tx);
+
+        tm.freeze();
+        tm.create();
     }
 
     @Test(expected = IllegalArgumentException.class)

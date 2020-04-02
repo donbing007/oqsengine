@@ -40,10 +40,10 @@ public class EntityClassToGrpcConverter {
 
     public static EntityUp toRawEntityUp(IEntityClass entity) {
         return EntityUp.newBuilder()
-                .setId(entity.id())
-                .setCode(entity.code())
-                .addAllFields(entity.fields().stream().map(EntityClassToGrpcConverter::toFieldUp).collect(Collectors.toList()))
-                .build();
+            .setId(entity.id())
+            .setCode(entity.code())
+            .addAllFields(entity.fields().stream().map(EntityClassToGrpcConverter::toFieldUp).collect(Collectors.toList()))
+            .build();
     }
 
     /**
@@ -59,30 +59,30 @@ public class EntityClassToGrpcConverter {
         EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
 
         List<ValueUp> values = body.entrySet().stream()
-                .map(entry -> {
-                    String key = entry.getKey();
-                    Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
-                    Optional<IEntityField> fieldOpRel = getKeyFromRelation(entityClass, key);
-                    Optional<IEntityField> fieldOpParent = getKeyFromParent(entityClass, key);
+            .map(entry -> {
+                String key = entry.getKey();
+                Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
+                Optional<IEntityField> fieldOpRel = getKeyFromRelation(entityClass, key);
+                Optional<IEntityField> fieldOpParent = getKeyFromParent(entityClass, key);
 
-                    Optional<IEntityField> fieldFinal = combine(fieldOp, fieldOpParent, fieldOpRel);
+                Optional<IEntityField> fieldFinal = combine(fieldOp, fieldOpParent, fieldOpRel);
 
-                    //filter null obj
-                    if (entry.getValue() == null) {
-                        return Optional.<ValueUp>empty();
-                    }
+                //filter null obj
+                if (entry.getValue() == null) {
+                    return Optional.<ValueUp>empty();
+                }
 
-                    return fieldFinal.map(field -> {
-                        return ValueUp.newBuilder()
-                                .setFieldId(field.id())
-                                .setFieldType(field.type().getType())
-                                .setValue(entry.getValue().toString())
-                                .build();
-                    });
-                })
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
+                return fieldFinal.map(field -> {
+                    return ValueUp.newBuilder()
+                        .setFieldId(field.id())
+                        .setFieldType(field.type().getType())
+                        .setValue(entry.getValue().toString())
+                        .build();
+                });
+            })
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
 
         builder.addAllValues(values);
         return builder.build();
@@ -97,11 +97,11 @@ public class EntityClassToGrpcConverter {
 
 
     public static SelectByCondition toSelectByCondition(EntityClass entityClass
-            , EntityItem entityItem
-            , com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions conditions
-            , Sort sort, Page page) {
+        , EntityItem entityItem
+        , com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions conditions
+        , Sort sort, Page page) {
         SelectByCondition.Builder select = SelectByCondition
-                .newBuilder();
+            .newBuilder();
 
         if (page != null) {
             select.setPageNo(Long.valueOf(page.getIndex()).intValue());
@@ -127,7 +127,7 @@ public class EntityClassToGrpcConverter {
 
     public static SelectByCondition toSelectByCondition(EntityClass entityClass, List<Long> ids, ConditionQueryRequest condition) {
         SelectByCondition.Builder select = SelectByCondition
-                .newBuilder();
+            .newBuilder();
 
         if (condition.getPageNo() != null) {
             select.setPageNo(condition.getPageNo());
@@ -185,16 +185,16 @@ public class EntityClassToGrpcConverter {
         //add relation
         //relation may has no field
         builder.addAllRelation(entityClass.relations().stream().map(rel -> {
-            RelationUp.Builder relation =  RelationUp.newBuilder();
+            RelationUp.Builder relation = RelationUp.newBuilder();
 
-            if(rel.getEntityField() != null){
+            if (rel.getEntityField() != null) {
                 relation.setEntityField(toFieldUp(rel.getEntityField()));
             }
 
             relation.setName(Optional.ofNullable(rel.getName()).orElse(""));
             relation.setRelationType(rel.getRelationType());
 
-            if(rel.isIdentity()){
+            if (rel.isIdentity()) {
                 relation.setIdentity(rel.isIdentity());
             }
 
@@ -203,12 +203,12 @@ public class EntityClassToGrpcConverter {
         }).collect(Collectors.toList()));
 
         builder.setId(entityClass.id())
-                .setCode(entityClass.code())
-                .addAllFields(entityClass.fields().stream().map(EntityClassToGrpcConverter::toFieldUp).collect(Collectors.toList()));
+            .setCode(entityClass.code())
+            .addAllFields(entityClass.fields().stream().map(EntityClassToGrpcConverter::toFieldUp).collect(Collectors.toList()));
 
         if (entityClass.entityClasss() != null && !entityClass.entityClasss().isEmpty()) {
             builder.addAllEntityClasses(entityClass.entityClasss().stream()
-                    .map(EntityClassToGrpcConverter::toRawEntityUp).collect(Collectors.toList()));
+                .map(EntityClassToGrpcConverter::toRawEntityUp).collect(Collectors.toList()));
         }
 
         return builder;
@@ -217,40 +217,40 @@ public class EntityClassToGrpcConverter {
     private static List<QueryFieldsUp> toQueryFields(IEntityClass entityClass, EntityItem entityItem) {
 
         Stream<QueryFieldsUp> fieldsUp = Optional.ofNullable(entityItem)
-                .map(EntityItem::getFields)
-                .orElseGet(Collections::emptyList)
-                .stream()
-                .map(entityClass::field)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .map(x -> QueryFieldsUp
-                        .newBuilder()
-                        .setCode(x.name())
-                        .setEntityId(entityClass.id())
-                        .setId(x.id())
-                        .build());
+            .map(EntityItem::getFields)
+            .orElseGet(Collections::emptyList)
+            .stream()
+            .map(entityClass::field)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .map(x -> QueryFieldsUp
+                .newBuilder()
+                .setCode(x.name())
+                .setEntityId(entityClass.id())
+                .setId(x.id())
+                .build());
 
         Stream<QueryFieldsUp> fieldsUpFrom = Optional.ofNullable(entityItem)
-                .map(EntityItem::getEntities).orElseGet(Collections::emptyList)
-                .stream()
-                .flatMap(subEntityItem -> {
+            .map(EntityItem::getEntities).orElseGet(Collections::emptyList)
+            .stream()
+            .flatMap(subEntityItem -> {
 
-                    Optional<IEntityClass> subEntityClassOp = entityClass.entityClasss().stream()
-                            .filter(ec -> {
-                                return subEntityItem.getCode().equalsIgnoreCase(ec.code());
-                            }).findFirst();
+                Optional<IEntityClass> subEntityClassOp = entityClass.entityClasss().stream()
+                    .filter(ec -> {
+                        return subEntityItem.getCode().equalsIgnoreCase(ec.code());
+                    }).findFirst();
 
-                    return subEntityClassOp.map(iEntityClass -> subEntityItem.getFields().stream()
-                            .map(iEntityClass::field)
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .map(x -> QueryFieldsUp
-                                    .newBuilder()
-                                    .setCode(x.name())
-                                    .setEntityId(iEntityClass.id())
-                                    .setId(x.id())
-                                    .build())).orElseGet(Stream::empty);
-                });
+                return subEntityClassOp.map(iEntityClass -> subEntityItem.getFields().stream()
+                    .map(iEntityClass::field)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .map(x -> QueryFieldsUp
+                        .newBuilder()
+                        .setCode(x.name())
+                        .setEntityId(iEntityClass.id())
+                        .setId(x.id())
+                        .build())).orElseGet(Stream::empty);
+            });
 
         return Stream.concat(fieldsUp, fieldsUpFrom).collect(Collectors.toList());
     }
@@ -271,17 +271,17 @@ public class EntityClassToGrpcConverter {
 
     private static FieldSortUp toSortUp(IEntityField field, boolean isAsc) {
         return FieldSortUp.newBuilder()
-                .setCode(field.name())
-                .setOrder(isAsc ? FieldSortUp.Order.asc : FieldSortUp.Order.desc)
-                .build();
+            .setCode(field.name())
+            .setOrder(isAsc ? FieldSortUp.Order.asc : FieldSortUp.Order.desc)
+            .build();
     }
 
     private static List<FieldSortUp> toSortUp(List<FieldSort> sort) {
         return sort.stream().map(x -> {
             return FieldSortUp.newBuilder()
-                    .setCode(x.getField())
-                    .setOrder(FieldSortUp.Order.valueOf(x.getOrder()))
-                    .build();
+                .setCode(x.getField())
+                .setOrder(FieldSortUp.Order.valueOf(x.getOrder()))
+                .build();
         }).collect(Collectors.toList());
     }
 
@@ -295,21 +295,21 @@ public class EntityClassToGrpcConverter {
         ConditionsUp.Builder conditionsUpBuilder = ConditionsUp.newBuilder();
 
         Stream<Optional<FieldConditionUp>> fieldInMainStream = Optional.ofNullable(conditions.getFields())
-                .orElseGet(Collections::emptyList).stream().map(fieldCondition -> {
-                    return toFieldCondition(entityClass, fieldCondition);
-                });
+            .orElseGet(Collections::emptyList).stream().map(fieldCondition -> {
+                return toFieldCondition(entityClass, fieldCondition);
+            });
 
         //from relation to condition
         Stream<Optional<FieldConditionUp>> fieldInRelationStream = conditions
-                .getEntities()
-                .stream().flatMap(entityCondition -> {
-                    return toFieldConditionFromRel(entityClass, entityCondition);
-                });
+            .getEntities()
+            .stream().flatMap(entityCondition -> {
+                return toFieldConditionFromRel(entityClass, entityCondition);
+            });
 
         conditionsUpBuilder.addAllFields(Stream.concat(fieldInMainStream, fieldInRelationStream)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList()));
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList()));
         return conditionsUpBuilder.build();
     }
 
@@ -317,11 +317,11 @@ public class EntityClassToGrpcConverter {
 
         ConditionsUp.Builder conditionsUpBuilder = ConditionsUp.newBuilder();
         conditionsUpBuilder.addAllFields(conditions.collection().stream().filter(com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions::isValueNode)
-                .map(x -> ((ValueConditionNode) x).getCondition())
-                .map(EntityClassToGrpcConverter::toFieldCondition)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList()));
+            .map(x -> ((ValueConditionNode) x).getCondition())
+            .map(EntityClassToGrpcConverter::toFieldCondition)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList()));
         return conditionsUpBuilder.build();
     }
 
@@ -366,11 +366,11 @@ public class EntityClassToGrpcConverter {
         }
 
         FieldConditionUp fieldCondition = FieldConditionUp.newBuilder()
-                .setCode(field.name())
-                .setOperation(toConditionOp(operator))
-                .addValues(value.valueToString())
-                .setField(toFieldUp(field))
-                .build();
+            .setCode(field.name())
+            .setOperation(toConditionOp(operator))
+            .addValues(value.valueToString())
+            .setField(toFieldUp(field))
+            .build();
 
         return Optional.of(fieldCondition);
     }
@@ -388,25 +388,25 @@ public class EntityClassToGrpcConverter {
         Optional<IEntityField> fieldOp = IEntityClassHelper.findFieldByCode(entityClass, fieldCondition.getCode());
 
         return fieldOp.map(x -> FieldConditionUp.newBuilder()
-                .setCode(fieldCondition.getCode())
-                .setOperation(Optional.ofNullable(fieldCondition.getOperation()).map(Enum::name).map(FieldConditionUp.Op::valueOf).orElse(eq))
-                .addAllValues(Optional.ofNullable(fieldCondition.getValue()).orElseGet(Collections::emptyList).stream().filter(Objects::nonNull).collect(Collectors.toList()))
-                .setField(toFieldUp(fieldOp.get()))
-                .build());
+            .setCode(fieldCondition.getCode())
+            .setOperation(Optional.ofNullable(fieldCondition.getOperation()).map(Enum::name).map(FieldConditionUp.Op::valueOf).orElse(eq))
+            .addAllValues(Optional.ofNullable(fieldCondition.getValue()).orElseGet(Collections::emptyList).stream().filter(Objects::nonNull).collect(Collectors.toList()))
+            .setField(toFieldUp(fieldOp.get()))
+            .build());
     }
 
 
     private static Stream<? extends Optional<FieldConditionUp>> toFieldConditionFromRel(EntityClass entityClass, SubFieldCondition entityCondition) {
         return entityClass.relations().stream()
-                .map(rel -> {
-                    Optional<FieldCondition> fieldConditionOp = entityCondition.getFields()
-                            .stream()
-                            .filter(enc -> {
-                                String code = entityCondition.getCode() + "." + enc.getCode();
-                                return rel.getEntityField().name().equalsIgnoreCase(code);
-                            }).findFirst();
-                    return fieldConditionOp.map(fieldCon -> Tuple.of(fieldCon, rel));
-                }).map(tuple -> tuple.map(EntityClassToGrpcConverter::toFieldCondition));
+            .map(rel -> {
+                Optional<FieldCondition> fieldConditionOp = entityCondition.getFields()
+                    .stream()
+                    .filter(enc -> {
+                        String code = entityCondition.getCode() + "." + enc.getCode();
+                        return rel.getEntityField().name().equalsIgnoreCase(code);
+                    }).findFirst();
+                return fieldConditionOp.map(fieldCon -> Tuple.of(fieldCon, rel));
+            }).map(tuple -> tuple.map(EntityClassToGrpcConverter::toFieldCondition));
     }
 
     private static FieldConditionUp toFieldCondition(Tuple2<FieldCondition, Relation> tuple) {
@@ -414,29 +414,29 @@ public class EntityClassToGrpcConverter {
         IEntityField entityField = tuple._2().getEntityField();
 
         return FieldConditionUp.newBuilder()
-                .setCode(fieldCondition.getCode())
-                .setOperation(FieldConditionUp.Op.valueOf(fieldCondition.getOperation().name()))
-                .addAllValues(Optional.ofNullable(fieldCondition.getValue()).orElseGet(Collections::emptyList))
-                .setField(toFieldUp(entityField))
-                .build();
+            .setCode(fieldCondition.getCode())
+            .setOperation(FieldConditionUp.Op.valueOf(fieldCondition.getOperation().name()))
+            .addAllValues(Optional.ofNullable(fieldCondition.getValue()).orElseGet(Collections::emptyList))
+            .setField(toFieldUp(entityField))
+            .build();
     }
 
 
     private static Stream<Optional<FieldConditionUp>> toFieldCondition(EntityClass entityClass, SubFieldCondition subFieldCondition) {
         return entityClass.entityClasss().stream()
-                .filter(x -> x.code().equals(subFieldCondition.getCode()))
-                .flatMap(entity -> subFieldCondition
-                        .getFields()
-                        .stream()
-                        .map(subField -> toFieldCondition(entity, subField)));
+            .filter(x -> x.code().equals(subFieldCondition.getCode()))
+            .flatMap(entity -> subFieldCondition
+                .getFields()
+                .stream()
+                .map(subField -> toFieldCondition(entity, subField)));
     }
 
     private static FieldUp toFieldUp(IEntityField field) {
         FieldUp.Builder builder =
-                FieldUp.newBuilder()
-                        .setCode(field.name())
-                        .setFieldType(field.type().name())
-                        .setId(field.id());
+            FieldUp.newBuilder()
+                .setCode(field.name())
+                .setFieldType(field.type().name())
+                .setId(field.id());
         if (field.config() != null) {
             builder.setSearchable(String.valueOf(field.config().isSearchable()));
             builder.setMaxLength(String.valueOf(field.config().getMax()));
@@ -447,15 +447,15 @@ public class EntityClassToGrpcConverter {
     }
 
     public static Map<String, Object> toResultMap(EntityClass entityClass
-            , EntityClass subEntityClass, EntityUp up) {
+        , EntityClass subEntityClass, EntityUp up) {
 
         Map<String, Object> map = new HashMap<>();
 
         up.getValuesList().forEach(entry -> {
             Optional<Tuple2<IEntityClass, IEntityField>> fieldByIdInAll = IEntityClassHelper
-                    .findFieldByIdInAll(entityClass, entry.getFieldId());
+                .findFieldByIdInAll(entityClass, entry.getFieldId());
             Optional<Tuple2<IEntityClass, IEntityField>> subField = IEntityClassHelper.findFieldById(subEntityClass, entry.getFieldId())
-                    .map(x -> Tuple.of(subEntityClass, x));
+                .map(x -> Tuple.of(subEntityClass, x));
             combine(fieldByIdInAll, subField).ifPresent(tuple2 -> {
                 IEntityField field = tuple2._2();
                 IEntityClass entity = tuple2._1();

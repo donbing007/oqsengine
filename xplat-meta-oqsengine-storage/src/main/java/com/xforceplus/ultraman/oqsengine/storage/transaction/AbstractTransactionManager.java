@@ -10,6 +10,8 @@ import java.sql.SQLException;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The main responsibilities are as follows.
@@ -27,6 +29,11 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     final Logger logger = LoggerFactory.getLogger(AbstractTransactionManager.class);
 
     /**
+     * 当前是否处于冻结状态.true 是, false 不是.
+     */
+    private AtomicBoolean frozenness = new AtomicBoolean(false);
+
+    /**
      * 允许的早小事务超时,毫秒.
      */
     private static final int MIN_TRANSACTION_LIVE_TIME_MS = 200;
@@ -42,6 +49,11 @@ public abstract class AbstractTransactionManager implements TransactionManager {
      * 在 bind/unbind/rebind,会操作此 map.
      */
     private ConcurrentMap<Long, Transaction> using;
+
+    /**
+     * 记录事务数量.基数量等于survival中存在的事务数量.
+     */
+    private AtomicInteger size = new AtomicInteger(0);
 
     /**
      * 事务的最大存活时间.(毫秒)
@@ -75,21 +87,57 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
     @Override
     public Transaction create(long timeoutMs) {
-        checkTimeout(timeoutMs);
-
-        Transaction transaction = doCreate();
-
-        survival.put(transaction.id(), transaction);
-
-        timerWheel.add(transaction.id(), timeoutMs);
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Start new Transaction({}),timeout will occur in {} milliseconds.", transaction.id(), timeoutMs);
+        if (frozenness.get()) {
+            throw new IllegalStateException("Unable to create transaction, frozen.");
         }
 
-        this.bind(transaction);
+        checkTimeout(timeoutMs);
 
-        return transaction;
+        Transaction transaction = null;
+
+        try {
+            transaction = doCreate();
+
+            survival.put(transaction.id(), transaction);
+
+            timerWheel.add(transaction.id(), timeoutMs);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("Start new Transaction({}),timeout will occur in {} milliseconds.", transaction.id(), timeoutMs);
+            }
+
+            this.bind(transaction);
+
+        } catch (Exception ex) {
+
+            /**
+             * 在创建事务时发生意外错误时进行清理.
+             */
+            if (transaction != null) {
+                try {
+                    survival.remove(transaction.id());
+                    timerWheel.remove(transaction.id());
+                    this.unbind();
+                } catch (Exception e) {
+                    logger.warn("An error occurred in creating the transaction, as well as in cleaning it up.", e);
+                }
+            }
+
+            if (RuntimeException.class.isInstance(ex)) {
+                throw (RuntimeException) ex;
+            }
+
+        }
+
+        try {
+
+            return transaction;
+
+        } finally {
+
+            size.incrementAndGet();
+
+        }
     }
 
     protected abstract Transaction doCreate();
@@ -153,6 +201,8 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
         survival.remove(tx.id());
 
+        size.decrementAndGet();
+
         using.remove(tx.attachment());
         tx.attach(Transaction.NOT_ATTACHMENT);
 
@@ -170,6 +220,21 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         if (current.isPresent()) {
             finish(current.get());
         }
+    }
+
+    @Override
+    public int size() {
+        return size.get();
+    }
+
+    @Override
+    public void freeze() {
+        frozenness.set(true);
+    }
+
+    @Override
+    public void unfreeze() {
+        frozenness.set(false);
     }
 
     class TransaxtionTimeoutNotification implements TimeoutNotification<Long> {

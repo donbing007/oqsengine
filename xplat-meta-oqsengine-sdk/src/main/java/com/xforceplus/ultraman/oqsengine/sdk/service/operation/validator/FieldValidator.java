@@ -8,8 +8,9 @@ import org.springframework.util.StringUtils;
 
 /**
  * field validator for type T
- * @author admin
+ *
  * @param <T>
+ * @author admin
  */
 public interface FieldValidator<T> {
 
@@ -17,8 +18,8 @@ public interface FieldValidator<T> {
 
     default boolean isSplittable(IEntityField field) {
         return field.config() != null &&
-                field.config().isSplittable() &&
-                !StringUtils.isEmpty(field.config().getDelimiter());
+            field.config().isSplittable() &&
+            !StringUtils.isEmpty(field.config().getDelimiter());
 
     }
 }

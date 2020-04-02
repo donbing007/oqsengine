@@ -34,8 +34,8 @@ public class ApiItem {
     @Override
     public String toString() {
         return "ApiItem{" +
-                "url='" + url + '\'' +
-                ", method='" + method + '\'' +
-                '}';
+            "url='" + url + '\'' +
+            ", method='" + method + '\'' +
+            '}';
     }
 }

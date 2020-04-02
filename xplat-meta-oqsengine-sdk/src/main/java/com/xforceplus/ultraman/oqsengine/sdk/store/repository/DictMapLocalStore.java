@@ -15,7 +15,7 @@ public class DictMapLocalStore extends MapLocalStore {
 
     public static DictMapLocalStore create() {
         return new DictMapLocalStore("dicts", "dict", new String[]{"name", "dictId", "dictCode", "dictName", "publishDictId", "tenantId", "appId", "code", "version"}
-                , null, false, null);
+            , null, false, null);
     }
 
     private DictMapLocalStore(String schema, String tableName, String[] columns, String[] pkColumns, boolean hasVersion, Comparator<Object> versionComparator) {

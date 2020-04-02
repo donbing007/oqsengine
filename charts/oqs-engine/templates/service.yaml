@@ -1,17 +1,39 @@
-{{- if .Values.service.enable }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.service.name }}
+  name: {{ template "oqsengine.fullname" . }}-http
   labels:
-{{ include "service.labels.standard" . | indent 4 }}
+    app: {{ template "oqsengine.name" . }}
+    chart: {{ template "oqsengine.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    - port: {{ .Values.service.port.http }}
+      targetPort: http-metrics
       protocol: TCP
       name: http
   selector:
-{{ include "service.labels.standard" . | indent 4 }}
-{{- end }}
+    app: {{ template "oqsengine.name" . }}
+    release: {{ .Release.Name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "oqsengine.fullname" . }}-grpc
+  labels:
+    app: {{ template "oqsengine.name" . }}
+    chart: {{ template "oqsengine.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port.grpc }}
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+  selector:
+    app: {{ template "oqsengine.name" . }}
+    release: {{ .Release.Name }}

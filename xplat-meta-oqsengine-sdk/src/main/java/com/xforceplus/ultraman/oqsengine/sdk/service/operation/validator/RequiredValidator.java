@@ -17,10 +17,10 @@ public class RequiredValidator implements FieldValidator<Object> {
 
     @Override
     public Validation<String, Object> validate(IEntityField field, Object obj, OperationType phase) {
-        if(phase != OperationType.UPDATE){
+        if (phase != OperationType.UPDATE) {
             return isRequired(field) && obj == null
-                    ? Validation.invalid(String.format("Required field %s must be present", field.name()))
-                    : Validation.valid(obj);
+                ? Validation.invalid(String.format("Required field %s must be present", field.name()))
+                : Validation.valid(obj);
         }
 
         return Validation.valid(obj);

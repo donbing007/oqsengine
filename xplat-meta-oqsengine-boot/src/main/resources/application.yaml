@@ -1,4 +1,6 @@
 instance:
+  # static | statefulset 前者读取配置文件,后者使用 k8s statefulset 生成的 hostname.
+  type: static
   id: 0
 
 grpc:
@@ -31,11 +33,21 @@ storage:
     name: "oqsindex"
 
 management:
-  endpoint:
-    health:
-      show-details: never
+  health:
+    redis:
+      enabled: false
   endpoints:
+    enabled-by-default: false
     web:
       exposure:
         include: "*"
-      base-path: "/"
+  endpoint:
+    health:
+      enabled: true
+      show-details: never
+    shutdown:
+      enabled: true
+    info:
+      enabled: true
+    prometheus:
+      enabled: true

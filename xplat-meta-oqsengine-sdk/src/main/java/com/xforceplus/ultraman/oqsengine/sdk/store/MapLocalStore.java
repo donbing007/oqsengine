@@ -62,8 +62,8 @@ public class MapLocalStore {
     private Integer maxVersion = 3;
 
     public MapLocalStore(String schema, String tableName
-            , String[] columns, String[] pkColumns
-            , boolean hasVersion, Comparator<Object> versionComparator) {
+        , String[] columns, String[] pkColumns
+        , boolean hasVersion, Comparator<Object> versionComparator) {
         this.columns = columns;
         this.schema = schema;
         this.tableName = tableName;
@@ -96,13 +96,13 @@ public class MapLocalStore {
         if (pks != null) {
             //build up filter
             List<FilterItem> filterItems = Stream.of(pks).map(pk -> new SelectItem(dc
-                    .getColumnByQualifiedLabel(schema + "." + tableName + "." + pk)))
-                    .map(pk -> new FilterItem(pk, OperatorType.EQUALS_TO, new QueryParameter()))
-                    .collect(Collectors.toList());
+                .getColumnByQualifiedLabel(schema + "." + tableName + "." + pk)))
+                .map(pk -> new FilterItem(pk, OperatorType.EQUALS_TO, new QueryParameter()))
+                .collect(Collectors.toList());
 
             Query query = dc.query().from(tableName)
-                    .selectAll()
-                    .where(filterItems).toQuery();
+                .selectAll()
+                .where(filterItems).toQuery();
 
             pkQuery = dc.compileQuery(query);
         }
@@ -141,7 +141,7 @@ public class MapLocalStore {
                             System.out.println(toBeDeleted);
 
                             dc.executeUpdate(new DeleteFrom(table)
-                                    .where(rowToFilterItem(toBeDeleted)));
+                                .where(rowToFilterItem(toBeDeleted)));
 
                             insert(record);
                         }
@@ -167,7 +167,7 @@ public class MapLocalStore {
 
     //insert directly
     //TODO
-     private synchronized void insert(Map<String, Object> record) {
+    private synchronized void insert(Map<String, Object> record) {
 
         InsertInto insert = new InsertInto(table);
 
@@ -190,7 +190,7 @@ public class MapLocalStore {
         }).collect(Collectors.toList());
 
         Update update = new Update(table)
-                .where(filterItems);
+            .where(filterItems);
 
         //selective update
         for (int i = 0; i < columns.length; i++) {
@@ -205,11 +205,11 @@ public class MapLocalStore {
     private void update(Map<String, Object> record) {
 
         List<FilterItem> filterItems = Stream.of(pks).map(pk -> new SelectItem(table.getColumnByName(pk)))
-                .map(pk -> new FilterItem(pk, OperatorType.EQUALS_TO, record.get(pk.getColumn().getName())))
-                .collect(Collectors.toList());
+            .map(pk -> new FilterItem(pk, OperatorType.EQUALS_TO, record.get(pk.getColumn().getName())))
+            .collect(Collectors.toList());
 
         Update update = new Update(table)
-                .where(filterItems);
+            .where(filterItems);
 
 
         //selective update
@@ -247,7 +247,7 @@ public class MapLocalStore {
     private List<FilterItem> rowToFilterItem(Row row) {
 
         return row.getSelectItems().stream().map(x -> new FilterItem(new SelectItem(table.getColumnByName(x.getColumn().getName()))
-                , OperatorType.EQUALS_TO, row.getValue(x.getColumn()))).collect(Collectors.toList());
+            , OperatorType.EQUALS_TO, row.getValue(x.getColumn()))).collect(Collectors.toList());
     }
 
 
@@ -278,7 +278,7 @@ public class MapLocalStore {
 
     public SelectItem getRowColumn(Row row, String columnName) {
         Optional<SelectItem> opItem = row.getSelectItems()
-                .stream().filter(x -> x.getColumn().getName().equals(columnName)).findAny();
+            .stream().filter(x -> x.getColumn().getName().equals(columnName)).findAny();
 
         //Todo throw exception ?
         return opItem.get();
@@ -286,7 +286,7 @@ public class MapLocalStore {
 
     public Optional<Object> getRowValue(Row row, String columnName) {
         Optional<SelectItem> opItem = row.getSelectItems()
-                .stream().filter(x -> x.getColumn().getName().equals(columnName)).findAny();
+            .stream().filter(x -> x.getColumn().getName().equals(columnName)).findAny();
 
         return opItem.map(row::getValue);
     }

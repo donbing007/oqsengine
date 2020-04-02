@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.common.id;
 
+import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
+
 /**
  * snowflake 的 ID 算法生成.
  * 结果是一个64位的长整形. 组合方式如下.
@@ -21,11 +23,12 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
 
     private int node;
 
-    public SnowflakeLongIdGenerator(int node) {
-        if (node < 0 || node > MAX_NODE) {
+    public SnowflakeLongIdGenerator(NodeIdGenerator nodeIdGenerator) {
+        int nodeId = nodeIdGenerator.next();
+        if (nodeId < 0 || nodeId > MAX_NODE) {
             throw new IllegalArgumentException(String.format("node is between %s and %s", 0, MAX_NODE));
         }
-        this.node = node;
+        this.node = nodeId;
     }
 
     @Override

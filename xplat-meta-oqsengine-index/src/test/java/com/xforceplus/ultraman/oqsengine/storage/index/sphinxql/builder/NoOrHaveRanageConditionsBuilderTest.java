@@ -136,7 +136,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new StringValue(new Field(2, "c2", FieldType.STRING), "v3")
                     )
                 ),
-                "MATCH('@" + FieldDefine.FULL_FIELDS + " (=(F1S << v1) | =(F1S << v2)) =(F2S << v3)')"
+                "MATCH('@" + FieldDefine.FULL_FIELDS + " (=(\"F1S v1\") | =(\"F1S v2\")) =(\"F2S v3\")')"
             )
             ,
             new Case(

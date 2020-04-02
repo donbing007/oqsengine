@@ -32,6 +32,7 @@
 
     <properties>
         <checkstyle.skip>false</checkstyle.skip>
+        <deployment.skip>false</deployment.skip>
     </properties>
 
 </project>

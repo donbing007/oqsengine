@@ -19,18 +19,18 @@ public class TypeCheckValidator implements ConsistFieldValidator<Object> {
 
         if (obj != null) {
             if (field.config().isSplittable() &&
-                    !StringUtils.isEmpty(field.config().getDelimiter())) {
+                !StringUtils.isEmpty(field.config().getDelimiter())) {
                 String value = obj.toString();
                 String[] terms = value.split(field.config().getDelimiter());
 
                 return Stream.of(terms)
-                        .allMatch(field.type()::canParseFrom) ?
-                        Validation.valid(obj) :
-                        Validation.invalid(String.format("%s is not satisfied to type %s", obj, field.type()));
+                    .allMatch(field.type()::canParseFrom) ?
+                    Validation.valid(obj) :
+                    Validation.invalid(String.format("%s is not satisfied to type %s", obj, field.type()));
             } else {
                 return checkType(field.type(), obj) ?
-                        Validation.valid(obj) :
-                        Validation.invalid(String.format("%s is not satisfied to type %s", obj, field.type()));
+                    Validation.valid(obj) :
+                    Validation.invalid(String.format("%s is not satisfied to type %s", obj, field.type()));
 
             }
         }

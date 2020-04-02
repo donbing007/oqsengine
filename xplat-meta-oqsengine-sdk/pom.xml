@@ -13,8 +13,9 @@
 
 
     <properties>
-        <checkstyle.skip>true</checkstyle.skip>
+        <checkstyle.skip>false</checkstyle.skip>
         <dependencies.version>6.0.1-SNAPSHOT</dependencies.version>
+        <deployment.skip>false</deployment.skip>
     </properties>
 
     <dependencies>
@@ -33,17 +34,16 @@
             <artifactId>spring-boot-starter-web</artifactId>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.apache.metamodel</groupId>
             <artifactId>MetaModel-pojo</artifactId>
-            <version>5.3.2</version>
         </dependency>
+
         <dependency>
             <groupId>org.apache.metamodel</groupId>
             <artifactId>MetaModel-json</artifactId>
-            <version>5.3.2</version>
         </dependency>
-        <!-- TODO -->
 
         <dependency>
             <groupId>com.alibaba</groupId>
@@ -58,9 +58,14 @@
         </dependency>
         <!-- OQSENGINE client -->
         <dependency>
-            <groupId>com.xforceplus.ultraman</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-sdk-client</artifactId>
-            <version>0.1.1-SNAPSHOT</version>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
 
         <!-- TEST -->
@@ -80,12 +85,7 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.9</version>
-            <scope>compile</scope>
-        </dependency>
+
     </dependencies>
 
     <build>
@@ -116,26 +116,4 @@
         </dependencies>
     </dependencyManagement>
 
-
-    <repositories>
-        <repository>
-            <id>snapshots-4.0</id>
-            <url>http://120.27.140.65:8081/nexus/content/repositories/snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>releases-4.0</id>
-            <url>http://120.27.140.65:8081/nexus/content/repositories/releases/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-        <repository>
-            <id>thirdparty-4.0</id>
-            <url>http://120.27.140.65:8081/nexus/content/repositories/thirdparty/</url>
-        </repository>
-    </repositories>
 </project>

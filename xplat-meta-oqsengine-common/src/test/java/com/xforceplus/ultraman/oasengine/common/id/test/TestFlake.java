@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oasengine.common.id.test;
 
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -13,7 +14,7 @@ public class TestFlake {
 
     @Test
     public void testGenID() throws InterruptedException {
-        SnowflakeLongIdGenerator generator = new SnowflakeLongIdGenerator(1);
+        SnowflakeLongIdGenerator generator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(1));
 
         CountDownLatch latch = new CountDownLatch(5000);
 

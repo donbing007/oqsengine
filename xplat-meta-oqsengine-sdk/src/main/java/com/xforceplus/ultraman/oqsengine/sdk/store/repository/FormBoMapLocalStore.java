@@ -15,8 +15,8 @@ public class FormBoMapLocalStore extends MapLocalStore {
 
     public static FormBoMapLocalStore create() {
         return new FormBoMapLocalStore("formBos", "formBo",
-                new String[]{"id", "appId", "name", "code", "refFormId", "tenantId", "tenantName", "setting", "version"}
-                , null, false, null);
+            new String[]{"id", "appId", "name", "code", "refFormId", "tenantId", "tenantName", "setting", "version"}
+            , null, false, null);
     }
 
     private FormBoMapLocalStore(String schema, String tableName, String[] columns, String[] pkColumns, boolean hasVersion, Comparator<Object> versionComparator) {

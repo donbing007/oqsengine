@@ -6,6 +6,7 @@ import io.vavr.control.Validation;
 
 /**
  * consist field validator
+ * @param <T> 字段类型.
  */
 public interface ConsistFieldValidator<T> extends FieldValidator<T>{
 

@@ -4,6 +4,7 @@ import java.util.Objects;
 
 /**
  * special function with context only change 2rd params
+ *
  * @param <T>
  * @param <U>
  * @param <P>

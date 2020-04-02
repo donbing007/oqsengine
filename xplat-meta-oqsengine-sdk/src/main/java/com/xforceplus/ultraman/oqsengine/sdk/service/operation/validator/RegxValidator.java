@@ -20,17 +20,17 @@ public class RegxValidator implements ConsistFieldValidator<Object> {
             if (isSplittable(field)) {
                 String[] term = obj.toString().split(field.config().getValidateRegexString());
                 return Stream.of(term)
-                        .allMatch(x -> checkRegex(pattern, x)) ?
-                        Validation.valid(obj) :
-                        Validation.invalid(String.format("%s is not satisfied with regex %s"
-                                , obj
-                                , field.config().getValidateRegexString()));
+                    .allMatch(x -> checkRegex(pattern, x)) ?
+                    Validation.valid(obj) :
+                    Validation.invalid(String.format("%s is not satisfied with regex %s"
+                        , obj
+                        , field.config().getValidateRegexString()));
             } else {
                 return checkRegex(pattern, obj.toString()) ?
-                        Validation.valid(obj) :
-                        Validation.invalid(String.format("%s is not satisfied with regex %s"
-                                , obj
-                                , field.config().getValidateRegexString()));
+                    Validation.valid(obj) :
+                    Validation.invalid(String.format("%s is not satisfied with regex %s"
+                        , obj
+                        , field.config().getValidateRegexString()));
             }
         }
 

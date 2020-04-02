@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.storage.value.strategy.common;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
@@ -21,7 +20,7 @@ import org.junit.Test;
  */
 public class StringsStorageStrategyTest {
 
-    private EnumStorageStrategy storageStrategy = new EnumStorageStrategy();
+    private StringsStorageStrategy storageStrategy = new StringsStorageStrategy();
     private IEntityField field = new Field(1, "enum", FieldType.ENUM);
 
     @Before

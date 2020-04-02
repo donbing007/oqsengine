@@ -2,12 +2,16 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -46,7 +50,7 @@ public class EntityManagementServiceImplTest {
     @Before
     public void before() throws Exception {
 
-        idGenerator = new SnowflakeLongIdGenerator(0);
+        idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0));
 
         fatherEntityClass = new EntityClass(idGenerator.next(), "father", Arrays.asList(
             new Field(idGenerator.next(), "f1", FieldType.LONG, FieldConfig.build().searchable(true)),

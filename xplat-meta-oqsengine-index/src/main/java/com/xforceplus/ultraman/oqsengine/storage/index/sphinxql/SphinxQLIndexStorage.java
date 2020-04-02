@@ -479,7 +479,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         final String sql = String.format(replacement ? replaceSql : buildSql, indexTableName);
 
         return (boolean) transactionExecutor.execute(
-            new DataSourceShardingTask(searchDataSourceSelector, Long.toString(storageEntity.getId())) {
+            new DataSourceShardingTask(writerDataSourceSelector, Long.toString(storageEntity.getId())) {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {

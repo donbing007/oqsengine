@@ -7,7 +7,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
  * an operation on field
  */
 public interface FieldOperationHandler extends Comparable<FieldOperationHandler>
-        , TriFunction<IEntityField, Object, OperationType, Object> {
+    , TriFunction<IEntityField, Object, OperationType, Object> {
 
     default int getOrder() {
         return 0;
@@ -19,11 +19,11 @@ public interface FieldOperationHandler extends Comparable<FieldOperationHandler>
 
     Object onUpdate(IEntityField field, Object o);
 
-    default Object onReplace(IEntityField field, Object o){
+    default Object onReplace(IEntityField field, Object o) {
         return onUpdate(field, o);
     }
 
-    default Object onUnHandle(IEntityField field, Object o){
+    default Object onUnHandle(IEntityField field, Object o) {
         return null;
     }
 

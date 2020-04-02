@@ -59,7 +59,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.EQUALS,
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test")
                 ),
-                "=(F11111S << test)"
+                "=(\"F11111S test\")"
             ),
             new Case(
                 new Condition(
@@ -67,7 +67,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.EQUALS,
                     new LongValue(new Field(11111, "test", FieldType.LONG), 200L)
                 ),
-                "=(F11111L << 200)"
+                "=(\"F11111L 200\")"
             ),
             new Case(
                 new Condition(
@@ -75,7 +75,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.EQUALS,
                     new DecimalValue(new Field(11111, "test", FieldType.DECIMAL), new BigDecimal("123.246"))
                 ),
-                "=(F11111L0 << 123) =(F11111L1 << 246)"
+                "=(\"F11111L0 123\") =(\"F11111L1 246\")"
             ),
             new Case(
                 new Condition(
@@ -83,7 +83,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.NOT_EQUALS,
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test")
                 ),
-                "-(F11111S << test)"
+                "-(\"F11111S test\")"
             ),
             new Case(
                 new Condition(
@@ -99,7 +99,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.EQUALS,
                     new EnumValue(new Field(11111, "test", FieldType.ENUM), "test")
                 ),
-                "=(F11111S << test)",
+                "=(\"F11111S test\")",
                 false
             ),
             new Case(
@@ -108,7 +108,7 @@ public class MatchConditionQueryBuilderTest {
                     ConditionOperator.NOT_EQUALS,
                     new EnumValue(new Field(11111, "test", FieldType.ENUM), "test")
                 ),
-                "-(F11111S << test)",
+                "-(\"F11111S test\")",
                 false
             ),
             new Case(
@@ -118,7 +118,7 @@ public class MatchConditionQueryBuilderTest {
                     new StringsValue(new Field(1, "test", FieldType.STRINGS), "v1"),
                     new StringsValue(new Field(1, "test", FieldType.STRINGS), "v2")
                 ),
-                "=(F1S* << v1)",
+                "=(\"F1S* v1\")",
                 true
                 )
         );

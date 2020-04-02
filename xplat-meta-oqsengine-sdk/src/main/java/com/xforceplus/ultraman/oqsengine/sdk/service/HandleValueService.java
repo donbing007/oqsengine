@@ -8,6 +8,7 @@ import java.util.Map;
 
 /**
  * TODO apply on query?
+ *
  * @author admin
  */
 public interface HandleValueService {
