@@ -4,28 +4,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
 
 /**
- * an operation on field
+ * query side field operation
  */
-public interface FieldOperationHandler extends Comparable<FieldOperationHandler>
-    , TriFunction<IEntityField, Object, OperationType, Object> {
+public interface QuerySideFieldOperationHandler extends FieldOperationHandler{
 
-    default int getOrder() {
-        return 0;
-    }
-
-    boolean require(IEntityField field, Object obj);
-
-    Object onCreate(IEntityField field, Object o);
-
-    Object onUpdate(IEntityField field, Object o);
-
-    default Object onReplace(IEntityField field, Object o) {
-        return onUpdate(field, o);
-    }
-
-    default Object onUnHandle(IEntityField field, Object o) {
-        return null;
-    }
+    Object onQuery(IEntityField field, Object o);
 
     @Override
     default Object apply(IEntityField field, Object o, OperationType phase) {
@@ -36,6 +19,8 @@ public interface FieldOperationHandler extends Comparable<FieldOperationHandler>
                 return onUpdate(field, o);
             } else if (phase == OperationType.REPLACE) {
                 return onReplace(field, o);
+            } else if (phase == OperationType.QUERY) {
+                return onQuery(field, o);
             } else {
                 return onUnHandle(field, o);
             }
@@ -43,8 +28,4 @@ public interface FieldOperationHandler extends Comparable<FieldOperationHandler>
         return o;
     }
 
-    @Override
-    default int compareTo(FieldOperationHandler fieldOperationHandler) {
-        return Integer.compare(getOrder(), fieldOperationHandler.getOrder());
-    }
 }

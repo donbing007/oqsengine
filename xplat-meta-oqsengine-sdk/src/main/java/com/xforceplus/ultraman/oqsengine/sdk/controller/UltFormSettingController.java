@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.pojo.auth.Authorization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
+import com.xforceplus.ultraman.oqsengine.sdk.config.ExternalServiceConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
@@ -15,6 +16,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import javax.naming.directory.NoSuchAttributeException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,34 +44,9 @@ public class UltFormSettingController {
      */
     @PostMapping("/form-settings/{id}/deployments")
     @ResponseBody
-    public Response deploymentsForm(@PathVariable String id) {
+    public Response deploymentsForm(@PathVariable String id) throws NoSuchAttributeException {
         Response<List<UltForm>> result = initSeetings(id);
         return result;
-//        String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
-//        String url = String.format("%s/forms/%s/deployments"
-//                , accessUri
-//                , id);
-//        Authorization auth = new Authorization();
-//        auth.setAppId(Long.parseLong(config.getAppId()));
-////        auth.setTenantId(Long.parseLong(config.getTenant()));
-//        auth.setEnv(config.getEnv());
-//        Response<List<UltForm>> result = new Response<List<UltForm>>();
-//        try {
-////            result = restTemplate.getForObject(url,Response.class);
-//            result = restTemplate.postForObject(url, auth,Response.class);
-//            if (result.getResult()!=null){
-//                List<UltForm> ultForms = result.getResult();
-//                for (int i = 0;i<ultForms.size();i++) {
-//                    UltForm saveUltForm = JSON.parseObject(JSON.toJSONString(ultForms.get(i)),UltForm.class);
-//                    formBoMapLocalStore.save(saveUltForm);
-//                }
-//            }
-//            return result;
-//        }catch (Exception e){
-//            result.setCode("400");
-//            result.setMessage("部署失败");
-//            return result;
-//        }
     }
 
     /**
@@ -79,7 +56,7 @@ public class UltFormSettingController {
      */
     @GetMapping("/form-settings/{id}")
     @ResponseBody
-    public Response pageBoSeetings(HttpServletRequest request, @PathVariable String id) {
+    public Response pageBoSeetings(HttpServletRequest request, @PathVariable String id) throws NoSuchAttributeException {
         DataSet ds = null;
         String tenantId = request.getParameter("tenantId");
         Response<UltForm> response = new Response<>();
@@ -106,49 +83,6 @@ public class UltFormSettingController {
                     return response;
                 }
             }
-
-//            Response<UltForm> response = new Response<>();
-//            List<Row> trows = new ArrayList<>();
-//            if (!StringUtils.isEmpty(tenantId)) {
-//                ds = formBoMapLocalStore.query().selectAll()
-//                        .where("refFormId")
-//                        .eq(id)
-//                        .and("tenantId")
-//                        .eq(tenantId)
-//                        .execute();
-//                trows = ds.toRows();
-//            }
-//            if (ds!=null && trows!=null && trows.size() > 0){
-//                ResponseList<UltForm> items = trows.stream().
-//                        map(this::toUltForm).collect(Collectors.toCollection(ResponseList::new));
-//                response.setMessage("查询成功");
-//                response.setCode("1");
-//                if (items.size() == 1) {
-//                    response.setResult(items.get(0));
-//                }
-//            }else {
-//                ds = formBoMapLocalStore.query().selectAll()
-//                        .where("id")
-//                        .eq(id)
-//                        .execute();
-//
-//                List<Row> rows = ds.toRows();
-//                ResponseList<UltForm> items = rows.stream().
-//                        map(this::toUltForm).collect(Collectors.toCollection(ResponseList::new));
-//
-//                response.setMessage("查询成功");
-//                response.setCode("1");
-//                if (items.size() == 1) {
-//                    response.setResult(items.get(0));
-//                }else {
-//                    Response<List<UltForm>> result = initSeetings(id);
-//                    if (result.getResult().size() > 0) {
-//
-//                    }
-//                }
-//            }
-//            return response;
-//
         } else {
             response.setMessage("未传id");
             response.setCode("1");
@@ -156,8 +90,8 @@ public class UltFormSettingController {
         }
     }
 
-    private Response initSeetings(String id) {
-        String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
+    private Response initSeetings(String id) throws NoSuchAttributeException {
+        String accessUri = ExternalServiceConfig.PfcpAccessUri();
         String url = String.format("%s/forms/%s/deployments"
                 , accessUri
                 , id);
@@ -178,7 +112,7 @@ public class UltFormSettingController {
             }
             return result;
         } catch (Exception e) {
-            result.setCode("400");
+            result.setCode("500");
             result.setMessage("获取失败");
             return result;
         }

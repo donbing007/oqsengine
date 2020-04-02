@@ -11,5 +11,7 @@ public enum OperationType {
 
     REPLACE,
 
-    DELETE;
+    DELETE,
+
+    QUERY;
 }

@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityDeleted;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.HandleQueryValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
@@ -46,6 +47,9 @@ public class EntityServiceImpl implements EntityService {
 
     @Autowired
     private HandleValueService handlerValueService;
+
+    @Autowired
+    private HandleQueryValueService handleQueryValueService;
 
     public EntityServiceImpl(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
         this.metadataRepository = metadataRepository;
@@ -262,7 +266,13 @@ public class EntityServiceImpl implements EntityService {
             requestBuilder.addHeader("transaction-id", transId);
         }
 
-        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, ids, condition))
+        ConditionsUp conditionsUp = handleQueryValueService
+                    .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY);
+
+        /**
+         * condition
+         */
+        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, ids, condition, conditionsUp))
                 .toCompletableFuture().join();
 
         if (result.getCode() == OperationResult.Code.OK) {

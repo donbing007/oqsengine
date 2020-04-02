@@ -105,7 +105,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         return map;
     }
 
-
     private List<FieldItem> toFieldItemList(DataSet fields) {
         List<FieldItem> items = new ArrayList<>();
 
@@ -133,7 +132,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     @Override
-    public BoItem getBoDetailById(String id) {
+    public synchronized BoItem getBoDetailById(String id) {
 
         DataSet boDetails = dc.query().from("bos")
             .selectAll()
@@ -252,7 +251,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      *
      * @return
      */
-    private Optional<IEntityClass> loadParentEntityClass(String boId) {
+    private synchronized Optional<IEntityClass> loadParentEntityClass(String boId) {
 
         DataSet boDs = dc.query()
             .from("bos")
@@ -275,7 +274,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * @param boId
      * @return
      */
-    private Optional<Tuple2<Relation, IEntityClass>> loadRelationEntityClass(String boId, Row relRow, String mainBoCode) {
+    private synchronized Optional<Tuple2<Relation, IEntityClass>> loadRelationEntityClass(String boId, Row relRow, String mainBoCode) {
 
         String relationType = RowUtils.getRowValue(relRow, "relType")
             .map(String::valueOf)
@@ -350,7 +349,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     @Override
-    public Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode) {
+    public synchronized Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode) {
 
         DataSet boDs = dc.query()
             .from("bos")
@@ -366,7 +365,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     @Override
-    public List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId) {
+    public synchronized List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId) {
 
         DataSet boDs = dc.query()
             .from("bos")
@@ -384,7 +383,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
 
     @Override
-    public List<EntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode) {
+    public synchronized List<EntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode) {
 
         DataSet boDs = dc.query()
             .from("bos")
@@ -410,7 +409,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * @return
      */
     @Override
-    public Optional<EntityClass> load(String tenantId, String appCode, String boId) {
+    public synchronized Optional<EntityClass> load(String tenantId, String appCode, String boId) {
 
         DataSet boDs = dc.query()
             .from("bos")
@@ -535,7 +534,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         return dc.getTableByQualifiedLabel("metadata." + tableName);
     }
 
-    private Optional<Row> findOneById(String tableName, String id) {
+    private synchronized Optional<Row> findOneById(String tableName, String id) {
         DataSet ds = dc.query().from(tableName)
             .selectAll()
             .where("id").eq(id)
@@ -565,7 +564,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     //TODO typed converter
     @Override
-    public SimpleBoItem findOneById(String boId) {
+    public synchronized SimpleBoItem findOneById(String boId) {
         DataSet boDs = dc.query()
             .from("bos")
             .selectAll().where("id").eq(boId)
@@ -745,7 +744,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 //        return Optional.of(entityClass);
 //    }
 //
-    private List<IEntityField> loadFields(String id) {
+    private synchronized List<IEntityField> loadFields(String id) {
         DataSet fieldDs = dc.query().from("fields")
             .selectAll().where("boId").eq(id).execute();
         return fieldDs.toRows().stream()

@@ -159,6 +159,48 @@ public class EntityClassToGrpcConverter {
         return select.build();
     }
 
+
+    /**
+     * new
+     * @param entityClass
+     * @param ids
+     * @param condition
+     * @return
+     */
+    public static SelectByCondition toSelectByCondition(EntityClass entityClass, List<Long> ids, ConditionQueryRequest condition, ConditionsUp conditionsUp) {
+        SelectByCondition.Builder select = SelectByCondition
+                .newBuilder();
+
+        if (condition.getPageNo() != null) {
+            select.setPageNo(condition.getPageNo());
+        }
+
+        if (condition.getPageSize() != null) {
+            select.setPageSize(condition.getPageSize());
+        }
+
+        if (condition.getConditions() != null) {
+            select.setConditions(conditionsUp);
+        }
+
+        if (condition.getSort() != null) {
+            select.addAllSort(toSortUp(condition.getSort()));
+        }
+
+        select.setEntity(toEntityUp(entityClass));
+
+        EntityItem entityItem = condition.getEntity();
+        if (entityItem != null) {
+            select.addAllQueryFields(toQueryFields(entityClass, entityItem));
+        }
+
+        if (ids != null) {
+            select.addAllIds(ids);
+        }
+
+        return select.build();
+    }
+
     /**
      * EntityClass to entityUp builder
      *
@@ -431,7 +473,7 @@ public class EntityClassToGrpcConverter {
                 .map(subField -> toFieldCondition(entity, subField)));
     }
 
-    private static FieldUp toFieldUp(IEntityField field) {
+    public static FieldUp toFieldUp(IEntityField field) {
         FieldUp.Builder builder =
             FieldUp.newBuilder()
                 .setCode(field.name())

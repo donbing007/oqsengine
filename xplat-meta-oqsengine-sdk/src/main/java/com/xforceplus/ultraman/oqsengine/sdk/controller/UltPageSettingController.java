@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.pojo.auth.Authorization;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltPage;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
+import com.xforceplus.ultraman.oqsengine.sdk.config.ExternalServiceConfig;
+import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
@@ -16,6 +18,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import javax.naming.directory.NoSuchAttributeException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +39,9 @@ public class UltPageSettingController {
     @Autowired
     private AuthSearcherConfig config;
 
+    @Autowired
+    private EntityServiceEx entityServiceEx;
+
     /**
      * 部署页面
      *
@@ -43,40 +49,10 @@ public class UltPageSettingController {
      */
     @PostMapping("/pages/{id}/deployments")
     @ResponseBody
-    public Response deploymentsPage(@PathVariable String id) {
+    public Response deploymentsPage(@PathVariable String id) throws NoSuchAttributeException {
 
         Response<List<UltPage>> result = initSeetings(id);
         return result;
-
-//        String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
-//        String url = String.format("%s/pages/%s/deployments"
-//                , accessUri
-//                , id);
-//        Authorization auth = new Authorization();
-//        auth.setAppId(Long.parseLong(config.getAppId()));
-////        auth.setTenantId(Long.parseLong(config.getTenant()));
-//        auth.setEnv(config.getEnv());
-//        Response<List<UltPage>> result = new Response<List<UltPage>>();
-//        try {
-//            result = restTemplate.postForObject(url, auth,Response.class);
-//            if (result.getResult()!=null){
-//                List<UltPage> ultPages = result.getResult();
-//                for (int i = 0;i<ultPages.size();i++) {
-//                    UltPage saveUltPage = JSON.parseObject(JSON.toJSONString(ultPages.get(i)),UltPage.class);
-//                    pageBoMapLocalStore.save(saveUltPage);
-//                }
-//
-//                //将List转成Entity
-////                UltPage ultPage = JSON.parseObject(JSON.toJSONString(result.getResult()),UltPage.class);
-//                //将数据保存到内存中
-////                pageBoMapLocalStore.save(ultPage);
-//            }
-//            return result;
-//        }catch (Exception e){
-//            result.setCode("400");
-//            result.setMessage("部署失败");
-//            return result;
-//        }
     }
 
     /**
@@ -86,7 +62,7 @@ public class UltPageSettingController {
      */
     @GetMapping("/pages/{id}/bo-settings")
     @ResponseBody
-    public Response pageBos(HttpServletRequest request, @PathVariable String id) {
+    public Response pageBos(HttpServletRequest request, @PathVariable String id) throws NoSuchAttributeException {
 
         DataSet ds = null;
         String tenantId = request.getParameter("tenantId");
@@ -99,54 +75,61 @@ public class UltPageSettingController {
                 response.setResult(items);
                 return response;
             } else {
-                Response<List<UltPage>> result = initSeetings(id);
-                if (result.getResult().size() > 0) {
-                    items = getPageBos(id, tenantId);
-                }
-                if (items.size() > 0) {
-                    response.setMessage("查询成功");
-                    response.setCode("200");
-                    response.setResult(items);
-                    return response;
-                } else {
+                try {
+                    Response<List<UltPage>> result = initSeetings(id);
+                    if (result.getResult().size() > 0) {
+                        items = getPageBos(id, tenantId);
+                    }
+                    if (items.size() > 0) {
+                        response.setMessage("查询成功");
+                        response.setCode("200");
+                        response.setResult(items);
+                        return response;
+                    } else {
+                        response.setMessage("查询无结果");
+                        response.setCode("500");
+                        return response;
+                    }
+                } catch (Exception e) {
                     response.setMessage("查询无结果");
                     response.setCode("500");
                     return response;
                 }
             }
 
-//            List<Row> trows = new ArrayList<>();
-//            if (!StringUtils.isEmpty(tenantId)){
-//                ds = pageBoMapLocalStore.query().selectAll()
-//                        .where("refPageId")
-//                        .eq(id)
-//                        .and("tenantId")
-//                        .eq(tenantId)
-//                        .execute();
-//                trows = ds.toRows();
-//            }
-//            if (ds!=null && trows!=null && trows.size() > 0){
-//                ResponseList<UltPageBoItem> items = trows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
-//                response.setMessage("查询成功");
-//                response.setCode("1");
-//                response.setResult(items);
-//            }else {
-//                ds = pageBoMapLocalStore.query().selectAll()
-//                        .where("id")
-//                        .eq(id)
-//                        .execute();
-//                List<Row> rows = ds.toRows();
-//                ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
-//                response.setMessage("查询成功");
-//                response.setCode("1");
-//                response.setResult(items);
-//            }
-//
-//            return response;
-
         } else {
             response.setMessage("未传id");
             response.setCode("1");
+
+            return response;
+        }
+    }
+    /**
+     * 根据页面Code获取页面bo列表
+     *
+     * @return
+     */
+    @GetMapping("/page-codes/{code}/bo-settings")
+    @ResponseBody
+    public Response pageBosByCode(HttpServletRequest request, @PathVariable String code) throws NoSuchAttributeException {
+        String tenantId = request.getParameter("tenantId");
+        Response<ResponseList<UltPageBoItem>> response = new Response<>();
+        if (!StringUtils.isEmpty(code)) {
+            List<UltPageBoItem> items =  entityServiceEx.findPageBos(code, tenantId);
+            if (items.size() > 0) {
+                response.setMessage("查询成功");
+                response.setCode("200");
+                response.setResult((ResponseList<UltPageBoItem>)items);
+                return response;
+            } else {
+                response.setMessage("查询无结果");
+                response.setCode("500");
+                return response;
+            }
+
+        } else {
+            response.setMessage("未传Code");
+            response.setCode("500");
 
             return response;
         }
@@ -164,31 +147,6 @@ public class UltPageSettingController {
         DataSet ds = null;
         Response<UltPageBoItem> response = new Response<>();
         if (!StringUtils.isEmpty(id)) {
-//            ResponseList<UltPageBoItem> items = getSeetings(id);
-//            if (items.size() == 1){
-//                response.setMessage("查询成功");
-//                response.setCode("200");
-//                response.setResult(items.get(0));
-//                return response;
-//            }else {
-//                Response<List<UltPage>> result = initSeetings(id);
-//                if (result != null && result.getResult().size() > 0){
-//                    items = getSeetings(id);
-//                }
-//                if (items.size() == 1){
-//                    response.setMessage("查询成功");
-//                    response.setCode("200");
-//                    response.setResult(items.get(0));
-//                    return response;
-//                }else {
-//                    response.setMessage("查询无结果");
-//                    response.setCode("500");
-//                    return response;
-//                }
-//            }
-
-
-//            Response<UltPageBoItem> response = new Response<>();
             ds = pageBoMapLocalStore.query().selectAll()
                     .where("settingId")
                     .eq(id)
@@ -213,8 +171,8 @@ public class UltPageSettingController {
     }
 
 
-    private Response initSeetings(String id) {
-        String accessUri = "http://pfcp.phoenix-t.xforceplus.com";
+    private Response initSeetings(String id) throws NoSuchAttributeException {
+        String accessUri = ExternalServiceConfig.PfcpAccessUri();
         String url = String.format("%s/pages/%s/deployments"
                 , accessUri
                 , id);

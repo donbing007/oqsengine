@@ -14,18 +14,18 @@ public enum FieldLikeRelationType {
 
     ONE2ONE("onetoone", rel -> {
 
-        return toField(rel, FieldType.LONG, "id", true, true, true);
+        return toField(rel, FieldType.LONG, "id", true, false, true);
     }, true),
 
     ONE2MANY("onetomany", rel -> {
 
-        return toField(rel, FieldType.LONG, "id", true, true, true);
-    }, true),
+        return toField(rel, FieldType.LONG, "id", true, false, false);
+    }, false),
 
     MANY2ONE("manytoone", rel -> {
 
-        return toField(rel, FieldType.LONG, "id", true, true, false);
-    }, false),
+        return toField(rel, FieldType.LONG, "id", true, false, true);
+    }, true),
 
     MULTI_VALUES("multivalues", rel -> {
 

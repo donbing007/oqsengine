@@ -7,7 +7,7 @@ import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 /**
  * context service field
  */
-public class SimpleExpressionFieldOperationHandler implements FieldOperationHandler {
+public class SimpleExpressionFieldOperationHandler implements QuerySideFieldOperationHandler {
 
 
     private ContextService contextService;
@@ -27,10 +27,26 @@ public class SimpleExpressionFieldOperationHandler implements FieldOperationHand
         return calculateValFromString(key);
     }
 
+    /**
+     * same as create
+     * @param field
+     * @param o
+     * @return
+     */
     @Override
     public Object onUpdate(IEntityField field, Object o) {
-        String key = getKey(o.toString());
-        return calculateValFromString(key);
+        return onCreate(field, o);
+    }
+
+    /**
+     * same as create
+     * @param field
+     * @param o
+     * @return
+     */
+    @Override
+    public Object onQuery(IEntityField field, Object o) {
+        return onCreate(field, o);
     }
 
     @Override
@@ -45,7 +61,6 @@ public class SimpleExpressionFieldOperationHandler implements FieldOperationHand
         } catch (Exception ex) {
 
         }
-
 
         try {
             ContextKeys.StringKeys stringKeys = ContextKeys.StringKeys.valueOf(key.toUpperCase());
