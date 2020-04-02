@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.constant;
 
+import org.springframework.util.StringUtils;
+
 /**
  * 版权：    上海云砺信息科技有限公司
  * 创建者:   youyifan
@@ -14,6 +16,38 @@ public class CacheConstant {
     public static final String SEPARATOR = "-";
 
     public static String getLogKey(Long txId, DbTypeEnum dbType, OpTypeEnum opType){
-        return "LogKey@" + txId + SEPARATOR  + dbType.name() + SEPARATOR + opType.name();
+        return txId + SEPARATOR  + dbType.name() + SEPARATOR + opType.name();
     }
+
+    public static Long getTxIdByKey(String key){
+        if(StringUtils.isEmpty(key)) {
+            return null;
+        }
+        String[] items = key.split("-");
+        if(!isNumeric(items[0])) {
+            return null;
+        }
+        return Long.parseLong(items[0]);
+    }
+
+    public static boolean isNumeric(String str) {
+        if (str == null) {
+            return false;
+        } else {
+            int sz = str.length();
+
+            for(int i = 0; i < sz; ++i) {
+                if (!Character.isDigit(str.charAt(i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
+//    public static void main(String[] args) {
+//        System.out.println(CacheConstant.getTxIdByKey(getLogKey(2222L, DbTypeEnum.INDEX, OpTypeEnum.DELETE)));
+//    }
+
 }

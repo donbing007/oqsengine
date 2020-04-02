@@ -3,8 +3,14 @@ package com.xforceplus.ultraman.oqsengine.storage.undo.store;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.CacheConstant;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoInfo;
+import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * 版权：    上海云砺信息科技有限公司
@@ -22,15 +28,17 @@ public class RedisUndoLogStore implements UndoLogStore {
     }
 
     @Override
-    public Object get(Long txId, DbTypeEnum dbType, OpTypeEnum opType) {
+    public UndoLog get(Long txId, DbTypeEnum dbType, OpTypeEnum opType) {
         String key = CacheConstant.getLogKey(txId, dbType, opType);
-        return getUndoLog().containsKey(key) ? CompressUtil.decompressToObj((byte[]) getUndoLog().get(key)) : null;
+        return getUndoLog().containsKey(key) ?
+                (UndoLog) CompressUtil.decompressToObj((byte[]) getUndoLog().get(key)) : null;
     }
 
     @Override
-    public void save(Long txId, DbTypeEnum dbType, OpTypeEnum opType, Object data) {
+    public void save(Long txId, String dbKey, DbTypeEnum dbType, OpTypeEnum opType, Object data) {
         String key = CacheConstant.getLogKey(txId, dbType, opType);
-        getUndoLog().put(key, CompressUtil.compress(data));
+        UndoLog undoLog = new UndoLog(dbKey, dbType, opType, data);
+        getUndoLog().put(key, CompressUtil.compress(undoLog));
     }
 
     @Override
@@ -56,7 +64,33 @@ public class RedisUndoLogStore implements UndoLogStore {
         }
     }
 
+    @Override
+    public List<UndoInfo> getAllUndoInfo() {
+        RMap undoLogs = getUndoLog();
+
+        Set<String> keySet = undoLogs.keySet();
+        List<UndoInfo> undoInfos = new ArrayList<>();
+        for(String key:keySet) {
+            UndoLog undoLog = get(key);
+
+            Long txId = CacheConstant.getTxIdByKey(key);
+
+            UndoInfo undoInfo = new UndoInfo(
+                    txId, undoLog.getDbKey(), undoLog.getDbType(),
+                    undoLog.getOpType(), undoLog.getData());
+
+            undoInfos.add(undoInfo);
+        }
+
+        return undoInfos;
+    }
+
     RMap getUndoLog() {
         return redissonClient.getMap(CacheConstant.UNDO_LOG);
+    }
+
+    UndoLog get(String key){
+        return getUndoLog().containsKey(key) ?
+                (UndoLog) CompressUtil.decompressToObj((byte[]) getUndoLog().get(key)) : null;
     }
 }

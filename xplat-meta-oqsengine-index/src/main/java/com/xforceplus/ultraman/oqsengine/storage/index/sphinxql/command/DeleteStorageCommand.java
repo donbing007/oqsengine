@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
@@ -27,12 +25,7 @@ public class DeleteStorageCommand implements StorageCommand {
     }
 
     @Override
-    public OpTypeEnum opType() {
-        return OpTypeEnum.DELETE;
-    }
-
-    @Override
-    public Object execute(TransactionResource resource, Object data) throws SQLException {
+    public Object execute(Connection conn, Object data) throws SQLException {
         return null;
     }
 

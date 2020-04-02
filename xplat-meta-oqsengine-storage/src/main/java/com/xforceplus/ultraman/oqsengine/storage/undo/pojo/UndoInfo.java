@@ -12,12 +12,14 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
  */
 public class UndoInfo {
     Long txId;
+    String dbKey;
     DbTypeEnum dbType;
     OpTypeEnum opType;
     Object data;
 
-    public UndoInfo(Long txId, DbTypeEnum dbType, OpTypeEnum opType, Object data) {
+    public UndoInfo(Long txId, String dbKey, DbTypeEnum dbType, OpTypeEnum opType, Object data) {
         this.txId = txId;
+        this.dbKey = dbKey;
         this.dbType = dbType;
         this.opType = opType;
         this.data = data;
@@ -29,6 +31,14 @@ public class UndoInfo {
 
     public void setTxId(Long txId) {
         this.txId = txId;
+    }
+
+    public String getDbKey() {
+        return dbKey;
+    }
+
+    public void setDbKey(String dbKey) {
+        this.dbKey = dbKey;
     }
 
     public DbTypeEnum getDbType() {

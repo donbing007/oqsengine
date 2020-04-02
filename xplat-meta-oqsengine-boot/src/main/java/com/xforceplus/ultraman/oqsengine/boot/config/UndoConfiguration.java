@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.SphinxQLIndexStorageCommandInvoker;
 import com.xforceplus.ultraman.oqsengine.storage.master.command.SQLMasterStorageCommandInvoker;
+import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.undo.UndoFactory;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
@@ -11,6 +12,8 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import javax.sql.DataSource;
 
 /**
  * 版权：    上海云砺信息科技有限公司
@@ -40,10 +43,14 @@ public class UndoConfiguration {
     @Bean
     public UndoFactory undoFactory(UndoLogStore undoLogStore,
                                    StorageCommandInvoker sphinxQLIndexStorageCommandInvoker,
-                                   StorageCommandInvoker sqlMasterStorageCommandInvoker){
+                                   StorageCommandInvoker sqlMasterStorageCommandInvoker,
+                                   Selector<DataSource> indexWriteDataSourceSelector,
+                                   Selector<DataSource> masterDataSourceSelector){
         UndoFactory undoFactory = new UndoFactory(undoLogStore);
         undoFactory.register(DbTypeEnum.INDEX, sphinxQLIndexStorageCommandInvoker);
         undoFactory.register(DbTypeEnum.MASTOR, sqlMasterStorageCommandInvoker);
+        undoFactory.register(DbTypeEnum.INDEX, indexWriteDataSourceSelector);
+        undoFactory.register(DbTypeEnum.MASTOR, masterDataSourceSelector);
 
         return undoFactory;
     }

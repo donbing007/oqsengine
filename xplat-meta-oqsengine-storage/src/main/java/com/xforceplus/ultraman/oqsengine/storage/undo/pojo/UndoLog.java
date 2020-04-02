@@ -11,14 +11,24 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
  * 修改历史:
  */
 public class UndoLog {
+    String dbKey;
     DbTypeEnum dbType;
     OpTypeEnum opType;
     Object data;
 
-    public UndoLog(DbTypeEnum dbType, OpTypeEnum opType, Object data) {
+    public UndoLog(String dbKey, DbTypeEnum dbType, OpTypeEnum opType, Object data) {
         this.dbType = dbType;
         this.opType = opType;
         this.data = data;
+        this.dbKey = dbKey;
+    }
+
+    public String getDbKey() {
+        return dbKey;
+    }
+
+    public void setDbKey(String dbKey) {
+        this.dbKey = dbKey;
     }
 
     public DbTypeEnum getDbType() {

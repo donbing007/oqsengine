@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoInfo;
@@ -8,7 +7,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -207,7 +205,7 @@ public class MultiLocalTransactionTest {
         }
 
         @Override
-        public void setUndoInfo(Long txId, OpTypeEnum opType, Object obj) {
+        public void setUndoInfo(Long txId, String dbType, OpTypeEnum opType, Object obj) {
 
         }
 

@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.command;
 
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
-
+import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
@@ -14,8 +12,6 @@ import java.sql.SQLException;
  */
 public interface  StorageCommand {
 
-    OpTypeEnum opType();
-
-    Object execute(TransactionResource resource, Object data) throws SQLException;
+    Object execute(Connection conn, Object data) throws SQLException;
 
 }

@@ -7,9 +7,7 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
@@ -62,16 +60,11 @@ public class ReplaceAttributeStorageCommand implements StorageCommand {
     }
 
     @Override
-    public OpTypeEnum opType() {
-        return OpTypeEnum.REPLACE_ATTRIBUTE;
-    }
-
-    @Override
-    public Object execute(TransactionResource resource, Object data) throws SQLException {
+    public Object execute(Connection conn, Object data) throws SQLException {
         IEntityValue attribute = (IEntityValue) data;
 
         long dataId = attribute.id();
-        Optional<StorageEntity> oldStorageEntityOptional = doSelectStorageEntity(resource, dataId);
+        Optional<StorageEntity> oldStorageEntityOptional = doSelectStorageEntity(conn, dataId);
         if (oldStorageEntityOptional.isPresent()) {
 
             StorageEntity storageEntity = oldStorageEntityOptional.get();
@@ -90,7 +83,7 @@ public class ReplaceAttributeStorageCommand implements StorageCommand {
             storageEntity.setJsonFields(completeJson);
             storageEntity.setFullFields(completeFull);
 
-            doBuildReplaceStorageEntity(resource, storageEntity, true);
+            doBuildReplaceStorageEntity(conn, storageEntity, true);
 
         } else {
 
@@ -172,12 +165,12 @@ public class ReplaceAttributeStorageCommand implements StorageCommand {
     }
 
     // 查询原始数据.
-    private Optional<StorageEntity> doSelectStorageEntity(TransactionResource resource, long id) throws SQLException {
+    private Optional<StorageEntity> doSelectStorageEntity(Connection conn, long id) throws SQLException {
             PreparedStatement st = null;
             ResultSet rs = null;
             try {
                 String sql = String.format(SQLConstant.SELECT_FROM_ID_SQL, indexTableName);
-                st = ((Connection) resource.value()).prepareStatement(sql);
+                st = conn.prepareStatement(sql);
                 st.setLong(1, id);
 
                 rs = st.executeQuery();
@@ -206,11 +199,11 @@ public class ReplaceAttributeStorageCommand implements StorageCommand {
     }
 
     // 更新原始数据.
-    private boolean doBuildReplaceStorageEntity(TransactionResource resource, StorageEntity storageEntity, boolean replacement) throws SQLException {
+    private boolean doBuildReplaceStorageEntity(Connection conn, StorageEntity storageEntity, boolean replacement) throws SQLException {
 
         final String sql = String.format(replacement ? replaceSql : buildSql, indexTableName);
 
-        PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+        PreparedStatement st = conn.prepareStatement(sql);
 
         // id, entity, pref, cref, jsonfileds, fullfileds
         st.setLong(1, storageEntity.getId()); // id

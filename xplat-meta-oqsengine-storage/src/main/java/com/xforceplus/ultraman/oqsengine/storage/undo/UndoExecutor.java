@@ -6,11 +6,12 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvo
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoInfo;
-import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 import com.xforceplus.ultraman.oqsengine.storage.undo.store.UndoLogStore;
+import com.xforceplus.ultraman.oqsengine.storage.undo.util.UndoUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -28,15 +29,20 @@ public class UndoExecutor {
 
     final Logger logger = LoggerFactory.getLogger(UndoExecutor.class);
 
-    private BlockingQueue<UndoLog> undoLogQ;
+    private BlockingQueue<UndoInfo> undoLogQ;
     private UndoLogStore undoLogStore;
     private Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers;
 
-    public UndoExecutor(Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers) {
+    public UndoExecutor(
+            BlockingQueue<UndoInfo> undoLogQ,
+            UndoLogStore undoLogStore,
+            Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers) {
+        this.undoLogQ = undoLogQ;
+        this.undoLogStore = undoLogStore;
         this.storageCommandInvokers = storageCommandInvokers;
     }
 
-    public void undo(TransactionResource resource) {
+    public void undo(TransactionResource resource) throws SQLException {
         UndoInfo undoInfo = resource.getUndoInfo();
 
         OpTypeEnum undoOpType = null;
@@ -49,31 +55,37 @@ public class UndoExecutor {
         }
 
         if(undoOpType == null) {
-            logger.error("Can't find undo OpType by {}", undoInfo.getOpType());
+            String errMsg = String.format("Can't find undo OpType by %s", undoInfo.getOpType().name());
+            logger.error(errMsg);
+            throw new RuntimeException(errMsg);
         }
 
-        StorageCommand cmd = getStorageCommand(undoInfo.getDbType(), undoInfo.getOpType());
+        StorageCommand undoCmd = UndoUtil.selectUndoStorageCommand(
+                storageCommandInvokers, undoInfo.getDbType(), undoInfo.getOpType());
+        if(undoCmd == null) {
+            String errMsg = String.format("Can't find undo Storage Command by dbType-{} opType-{}",undoInfo.getDbType().name(), undoInfo.getOpType().name());
+            logger.error(errMsg);
+            throw new RuntimeException(errMsg);
+        }
 
         try {
-            cmd.execute(resource, undoInfo.getData());
-            removeUndoLog(resource);
+            undoCmd.execute((Connection) resource.value(), undoInfo.getData());
         } catch (SQLException e) {
             if(undoLogQ != null) {
-                undoLogQ.add(new UndoLog(undoInfo.getDbType(), undoInfo.getOpType(), undoInfo.getData()));
+                undoLogQ.add(undoInfo);
             }
+            throw e;
         }
-    }
 
-    public void setUndoQ(BlockingQueue<UndoLog> undoLogQ) {
-        this.undoLogQ = undoLogQ;
+        removeUndoLog(resource);
     }
 
     public void saveUndoLog(TransactionResource resource){
         UndoInfo undoInfo = resource.getUndoInfo();
 
         if(this.undoLogStore != null) {
-            this.undoLogStore.save(undoInfo.getTxId(), undoInfo.getDbType(),
-                    undoInfo.getOpType(), undoInfo.getData());
+            this.undoLogStore.save(undoInfo.getTxId(), undoInfo.getDbKey(),
+                    undoInfo.getDbType(), undoInfo.getOpType(), undoInfo.getData());
         }
     }
 
@@ -88,23 +100,6 @@ public class UndoExecutor {
         if(this.undoLogStore != null) {
             this.undoLogStore.remove(txId);
         }
-    }
-
-    public void setUndoLogStore(UndoLogStore undoLogStore) {
-        this.undoLogStore = undoLogStore;
-    }
-
-    public StorageCommand getStorageCommand(DbTypeEnum dbType, OpTypeEnum opType){
-        if(dbType == null || opType == null) {
-            logger.error("GetStorageCommand failed. The dbType or opType was null.");
-            return null; }
-
-        if(!storageCommandInvokers.containsKey(dbType) || storageCommandInvokers.get(dbType) == null) {
-            logger.error("Can't find storageCommand which dbType is {}", dbType.name());
-            return null;
-        }
-
-        return storageCommandInvokers.get(dbType).selectCommand(opType);
     }
 
 }

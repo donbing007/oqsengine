@@ -44,7 +44,7 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
 
     @Override
     public Object execute(Task task) throws SQLException {
-        DataSourceShardingTask shardTask = null;
+        DataSourceShardingTask shardTask;
         if (DataSourceShardingTask.class.isInstance(task)) {
             shardTask = (DataSourceShardingTask) task;
         } else {
@@ -91,7 +91,7 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
             Object res = task.run(resource);
 
             if (tx.isPresent()) {
-                resource.setUndoInfo(tx.get().id(),  shardTask.getOpType(), res);
+                resource.setUndoInfo(tx.get().id(), shardTask.getShardKey(), shardTask.getOpType(), res);
                 tx.get().setUndoExecutor(undoFactory.getUndoExecutor());
             }
 

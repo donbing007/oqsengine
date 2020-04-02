@@ -49,7 +49,7 @@ public class MultiLocalTransaction implements Transaction {
     @Override
     public synchronized void commit() throws SQLException {
         check();
-        doEnd(true);
+        doEndNew(true);
 
         if (logger.isDebugEnabled()) {
             logger.debug("Transaction ({}), commit.", id);
@@ -59,7 +59,7 @@ public class MultiLocalTransaction implements Transaction {
     @Override
     public synchronized void rollback() throws SQLException {
         check();
-        doEnd(false);
+        doEndNew(false);
 
         if (logger.isDebugEnabled()) {
             logger.debug("Transaction ({}), rollback.", id);

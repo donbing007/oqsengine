@@ -67,8 +67,8 @@ public class ConnectionTransactionResource implements TransactionResource<Connec
     }
 
     @Override
-    public void setUndoInfo(Long txId, OpTypeEnum opType, Object obj){
-        this.undoInfo = new UndoInfo(txId, dbType(), opType, obj);
+    public void setUndoInfo(Long txId, String dbKey, OpTypeEnum opType, Object obj){
+        this.undoInfo = new UndoInfo(txId, dbKey, dbType(), opType, obj);
     }
 
     @Override
@@ -76,14 +76,4 @@ public class ConnectionTransactionResource implements TransactionResource<Connec
         return undoInfo;
     }
 
-    //    @Override
-//    public void undo() throws SQLException {
-//        undo.execute(this);
-//        conn.close();
-//    }
-//
-//    @Override
-//    public void setUndo(UndoExecutor undo){
-//        this.undo = undo;
-//    }
 }
