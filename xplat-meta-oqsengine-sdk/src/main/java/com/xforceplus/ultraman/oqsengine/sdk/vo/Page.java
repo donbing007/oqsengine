@@ -11,8 +11,10 @@ import java.util.Objects;
 
 /**
  * 分页转换对象
- * @version 0.1 2020/2/13 15:30
+ *
+ * @param <T>
  * @author wangzheng
+ * @version 0.1 2020/2/13 15:30
  * @since 1.8
  */
 public class Page<T> implements Externalizable, Cloneable {
@@ -84,6 +86,7 @@ public class Page<T> implements Externalizable, Cloneable {
     public void writeExternal(ObjectOutput out) throws IOException {
 
     }
+
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 
@@ -91,13 +94,17 @@ public class Page<T> implements Externalizable, Cloneable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Page)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Page)) {
+            return false;
+        }
         Page<?> page = (Page<?>) o;
         return getSize() == page.getSize() &&
-                getCurrent() == page.getCurrent() &&
-                Objects.equals(getRows(), page.getRows()) &&
-                Objects.equals(getSummary(), page.getSummary());
+            getCurrent() == page.getCurrent() &&
+            Objects.equals(getRows(), page.getRows()) &&
+            Objects.equals(getSummary(), page.getSummary());
     }
 
     @Override

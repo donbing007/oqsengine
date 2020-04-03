@@ -7,6 +7,9 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * metadata repository
+ */
 public interface MetadataRepository {
 
     BoItem getBoDetailById(String id);

@@ -41,7 +41,7 @@ public class Condition implements Serializable {
      * @param operator 操作符.
      * @param values   值.
      */
-    public Condition(IEntityField field, ConditionOperator operator, IValue ...values) {
+    public Condition(IEntityField field, ConditionOperator operator, IValue... values) {
         this.field = field;
         this.operator = operator;
         this.values = values;
@@ -72,17 +72,18 @@ public class Condition implements Serializable {
 
     // 判断是否含有范围查询符号.
     private void checkRange() {
+
         switch (getOperator()) {
-            case MINOR_THAN:
+            case LESS_THAN:
             case GREATER_THAN:
-            case MINOR_THAN_EQUALS:
+            case LESS_THAN_EQUALS:
             case GREATER_THAN_EQUALS:
-            case MULTIPLE_EQUALS:
                 range = true;
                 break;
             default:
                 range = false;
         }
+
     }
 
     @Override

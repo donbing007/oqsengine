@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: {{ template "oqsengine.fullname" . }}-configmap
+    labels:
+        app: {{ template "oqsengine.name" . }}
+        chart: {{ template "oqsengine.chart" . }}
+        release: {{ .Release.Name }}
+        heritage: {{ .Release.Service }}
+data:
+    application.yml: |
+        instance:
+          type: statefulset
+          id: 0
+        server:
+          port: {{ .Values.service.port.http }}
+        grpc:
+          server:
+            port: {{ .Values.service.port.grpc }}
+        logging:
+          level:
+            root: {{ .Values.logger.level }}
+        management:
+          health:
+            redis:
+              enabled: false
+          endpoints:
+            enabled-by-default: false
+          web:
+            exposure:
+                include: "*"
+          endpoint:
+            health:
+              enabled: true
+              show-details: never
+            shutdown:
+              enabled: true
+            info:
+              enabled: true
+            prometheus:
+              enabled: true
+        spring:
+          application:
+            name: "oqsengine"
+        transaction:
+            timeoutms: {{ .Values.storage.transaction.timeoutMs }}
+        storage:
+          master:
+            name: {{ .Values.storage.master.name }}
+            query:
+              worker: {{ .Values.storage.master.query.worker }}
+              timeout: {{ .Values.storage.master.query.timeout }}
+            shard:
+              table:
+                enabled: {{ .Values.storage.master.shard.table.enabled }}
+                size: {{ .Values.storage.master.shard.table.size }}
+          index:
+            name: {{ .Values.storage.index.name }}
+
+    oqsengine-ds.conf: |
+        {
+          "dataSources": {
+            "index": {
+              "write": [
+            {{ .Values.datasource.master | indent 14 }}
+              ],
+              "search": [
+            {{ .Values.datasource.master | indent 14 }}
+              ]
+            },
+          "master": [
+            {{ .Values.datasource.master | indent 12 }}
+          ]
+        }
+        akka {
+          loglevel = "INFO"
+        }
+        }
+
+
+

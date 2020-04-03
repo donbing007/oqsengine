@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
+/**
+ * triple row
+ */
 public class TripleRow {
 
     private String id;

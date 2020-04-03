@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 /**
  * 表示一个浮点数字段的值.
@@ -20,5 +21,33 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
     @Override
     public long valueToLong() {
         return getValue().longValue();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getField(), getValue());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof DecimalValue)) {
+            return false;
+        }
+
+        DecimalValue that = (DecimalValue) o;
+
+        return Objects.equals(getField(), that.getField()) &&
+            Objects.equals(this.getValue(), that.getValue());
+    }
+
+    @Override
+    public String toString() {
+        return "DecimalValue{" +
+            "field=" + getField() +
+            ", value=" + getValue() +
+            '}';
     }
 }

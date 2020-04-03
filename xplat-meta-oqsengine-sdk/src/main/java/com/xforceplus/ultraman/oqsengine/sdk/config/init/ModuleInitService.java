@@ -11,6 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+/**
+ * module grpc init service
+ */
 public class ModuleInitService implements InitializingBean {
 
     private Logger logger = LoggerFactory.getLogger(ModuleInitService.class);

@@ -20,14 +20,4 @@
         <checkstyle.skip>true</checkstyle.skip>
     </properties>
 
-<!--    <distributionManagement>-->
-<!--        <snapshotRepository>-->
-<!--            <id>com</id>-->
-<!--            <url>http://120.27.140.65:8081/nexus/content/repositories/snapshots/</url>-->
-<!--        </snapshotRepository>-->
-<!--        <repository>-->
-<!--            <id>com</id>-->
-<!--            <url>http://120.27.140.65:8081/nexus/content/repositories/releases/</url>-->
-<!--        </repository>-->
-<!--    </distributionManagement>-->
 </project>

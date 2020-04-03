@@ -1,43 +1,103 @@
-# Default values for manager-service.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 replicaCount: 1
+
+#fullnameOverride: oqsengine
 
 image:
   repository: registry.cn-hangzhou.aliyuncs.com/xf-bm-xplat-msg/xplat-meta-oqsengine-boot
+  # default .Chart.Version
+  #tag: "2019.11.26-160902-develop"
   pullPolicy: IfNotPresent
 
-
-deployment:
-  managementPort: 8080
-  grpcPort: 8081
-
-env:
-  open:
-    JAVA_OPTS: -server -XX:+UseSerialGC -Djava.awt.headless=true
-
-metrics:
-  path: /prometheus
-  group: spring-boot
-
-logs:
-  parser: spring-boot
-
-
 service:
-  enable: false
   type: ClusterIP
-  port: 18080
+  port:
+    http: 8086
+    grpc: 8081
 
 ingress:
-  enable: false
+  enabled: false
+  annotations: {}
+  # kubernetes.io/ingress.class: nginx
+  # kubernetes.io/tls-acme: "true"
+  path: /
+  hosts:
+    - chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
 
 resources:
   limits:
-    cpu: 4000m
-    memory: 4Gi
+    cpu: 2000m
+    memory: 2048Mi
   requests:
-    cpu: 1500m
-    memory: 2Gi
+    cpu: 500m
+    memory: 1024Mi
 
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+annotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8086"
+  prometheus.io/path: "/actuator/prometheus"
+
+jvm:
+  - -server
+  - -version:gc
+  - -XX:+UseParallelGC
+  - -XX:+PrintGCTimeStamps
+
+
+logger:
+  level: INFO
+
+storage:
+  transaction:
+    # The transaction is valid for a period of time that will be rollback.
+    timeoutMs: 3000
+  master:
+    name: "oqsbigentity"
+    query:
+      # Number of worker threads and query timeout when the main library loads an asynchronous query.
+      worker: 3
+      timeout: 3000
+    shard:
+      table:
+        # Whether sub-tables are needed and the number of sub-tables.
+        enabled: true
+        size: 1
+  index:
+    name: "oqsindex"
+
+# datasource json config
+# Multiple data sources are separated by Numbers.
+datasource:
+  master: |-
+    {
+      driverClassName: "com.mysql.cj.jdbc.Driver"
+      jdbcUrl: "jdbc:mysql://120.55.249.44:23112/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8"
+      password: "root"
+      username: "azYBG3RW9N"
+    }
+  index:
+    # Note that the url of the index must take the following parameters.
+    # maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai
+    write: |-
+      {
+        driverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcUrl: "jdbc:mysql://120.55.249.44:23113/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
+        password: "root"
+        username: "root"
+      }
+    search: |-
+      {
+        driverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcUrl: "jdbc:mysql://120.55.249.44:23113/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
+        password: "root"
+        username: "root"
+      }

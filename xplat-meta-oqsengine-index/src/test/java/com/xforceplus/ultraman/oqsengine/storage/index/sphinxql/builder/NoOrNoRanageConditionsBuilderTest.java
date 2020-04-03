@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
@@ -50,6 +51,7 @@ public class NoOrNoRanageConditionsBuilderTest {
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
         builder.setStorageStrategy(storageStrategyFactory);
 
+
         buildCase().stream().forEach(c -> {
             String where = builder.build(c.conditions);
             Assert.assertEquals(c.expected, where);
@@ -68,7 +70,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                expectPrefix + "=F1L100" + expectAfter
+                expectPrefix + "=(\"F1L 100\")" + expectAfter
             )
             ,
             new Case(
@@ -76,10 +78,10 @@ public class NoOrNoRanageConditionsBuilderTest {
                     new Condition(
                         new Field(1, "c1", FieldType.STRING),
                         ConditionOperator.LIKE,
-                        new StringValue(new Field(1, "c1", FieldType.STRING), "test*")
+                        new StringValue(new Field(1, "c1", FieldType.STRING), "test")
                     )
                 ),
-                expectPrefix + "F1Stest*" + expectAfter
+                expectPrefix + "(F1S* << *test*)" + expectAfter
             )
             ,
             new Case(
@@ -92,7 +94,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "=F1L100 =F2Stest" + expectAfter
+                expectPrefix + "=(\"F1L 100\") =(\"F2S test\")" + expectAfter
             ),
             new Case(
                 new Conditions(
@@ -104,27 +106,41 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-F1L100 -F2Stest =Sg" + expectAfter
+                expectPrefix + "-(\"F1L 100\") -(\"F2S test\") =Sg" + expectAfter
             ),
             new Case(
                 new Conditions(
                     new Condition(
                         new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
                         ConditionOperator.EQUALS,
-                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L)))
+                        new LongValue(new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 100L)))
                     .addAnd(new Condition(
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-F2Stest =Sg" + expectAfter + " " + SqlKeywordDefine.AND + " id = 100"
+                expectPrefix + "-(\"F2S test\") =Sg" + expectAfter + " " + SqlKeywordDefine.AND + " id = 100"
             ),
             new Case(
                 new Conditions(
                     new Condition(
                         new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
                         ConditionOperator.EQUALS,
-                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L))),
+                        new LongValue(new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 100L))),
                 "MATCH('@fullfields  =Sg') AND id = 100"
+            ),
+            new Case(
+                new Conditions(
+                    new Condition(
+                        new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        ConditionOperator.EQUALS,
+                        new LongValue(new Field(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 100L))
+                ).addAnd(
+                    new Condition(
+                        new Field(2, "c2", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        ConditionOperator.EQUALS,
+                        new LongValue(new Field(2, "c2", FieldType.LONG, FieldConfig.build().identifie(true)), 200L))
+                ),
+                "MATCH('@fullfields  =Sg') AND id = 100 AND id = 200"
             ),
             new Case(
                 new Conditions(
@@ -136,7 +152,25 @@ public class NoOrNoRanageConditionsBuilderTest {
                         )
                     )
                 ),
-                expectPrefix + "=F1L0123456 =F1L1123456" + expectAfter
+                expectPrefix + "=(\"F1L0 123456\") =(\"F1L1 123456\")" + expectAfter
+            ),
+            new Case(
+                Conditions.buildEmtpyConditions()
+                .addAnd(new Condition(
+                    new Field(1, "c1", FieldType.STRINGS),
+                    ConditionOperator.EQUALS,
+                    new StringsValue(new Field(1, "c1", FieldType.STRINGS), "v1")
+                )),
+                expectPrefix + "=(\"F1S* v1\")" + expectAfter
+            ),
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        new Field(1, "c1", FieldType.STRINGS),
+                        ConditionOperator.NOT_EQUALS,
+                        new StringsValue(new Field(1, "c1", FieldType.STRINGS), "v1")
+                    )),
+                expectPrefix + "-(\"F1S* v1\") =Sg" + expectAfter
             )
         );
     }

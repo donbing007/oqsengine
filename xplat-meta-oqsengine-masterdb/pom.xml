@@ -53,12 +53,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <optional>true</optional>
@@ -68,6 +62,7 @@
 
     <properties>
         <checkstyle.skip>false</checkstyle.skip>
+        <deployment.skip>true</deployment.skip>
     </properties>
 
 

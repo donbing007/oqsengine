@@ -8,9 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoShardTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
@@ -20,11 +18,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.BoolStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.LongStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.StringStorageStrategy;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -54,6 +48,8 @@ public class SQLMasterStorageTest {
     private DataSourcePackage dataSourcePackage;
     private SQLMasterStorage storage;
     private List<IEntity> expectedEntitys;
+    private IEntityField fixStringsField = new Field(100000, "strings", FieldType.STRINGS);
+    private StringsValue fixStringsValue = new StringsValue(fixStringsField, "1,2,3,500002,测试".split(","));
 
     @Before
     public void before() throws Exception {
@@ -199,13 +195,16 @@ public class SQLMasterStorageTest {
     @Test
     public void testDelete() throws Exception {
 
-        storage.delete(expectedEntitys.stream().findAny().get());
         Map<Long, IEntityClass> idMap = expectedEntitys.stream().collect(toMap(IEntity::id, IEntity::entityClass));
+        IEntity targetEntity = expectedEntitys.stream().findAny().get();
+        storage.delete(targetEntity);
         Collection<IEntity> queryEntitys = storage.selectMultiple(idMap);
         Assert.assertEquals(expectedEntitys.size() - 1, queryEntitys.size());
 
-        Assert.assertEquals(0,
-            queryEntitys.stream().filter(e -> !expectedEntitys.contains(e)).collect(Collectors.toList()).size());
+        Assert.assertEquals(expectedEntitys.size() - 1, queryEntitys.size());
+        queryEntitys.stream().forEach(e -> {
+            Assert.assertNotEquals(targetEntity.id(), e.id());
+        });
 
     }
 
@@ -239,6 +238,8 @@ public class SQLMasterStorageTest {
 
     private IEntity buildEntity(long baseId) {
         Collection<IEntityField> fields = buildRandomFields(baseId, 3);
+        fields.add(fixStringsField);
+
         return new Entity(
             baseId,
             new EntityClass(baseId, "test", fields),
@@ -262,6 +263,8 @@ public class SQLMasterStorageTest {
             switch (f.type()) {
                 case STRING:
                     return new StringValue(f, buildRandomString(30));
+                case STRINGS:
+                    return fixStringsValue;
                 default:
                     return new LongValue(f, (long) buildRandomLong(10, 100000));
             }

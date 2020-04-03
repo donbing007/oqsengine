@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
+/**
+ * vo api item
+ */
 public class ApiItem {
 
     private String url;
@@ -31,8 +34,8 @@ public class ApiItem {
     @Override
     public String toString() {
         return "ApiItem{" +
-                "url='" + url + '\'' +
-                ", method='" + method + '\'' +
-                '}';
+            "url='" + url + '\'' +
+            ", method='" + method + '\'' +
+            '}';
     }
 }

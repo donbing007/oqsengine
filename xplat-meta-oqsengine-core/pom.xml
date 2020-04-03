@@ -65,6 +65,7 @@
 
     <properties>
         <checkstyle.skip>false</checkstyle.skip>
+        <deployment.skip>true</deployment.skip>
     </properties>
 
 

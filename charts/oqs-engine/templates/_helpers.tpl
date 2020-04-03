@@ -1,28 +1,43 @@
 {{/* vim: set filetype=mustache: */}}
-{{- /*
-service.labels.standard prints the standard service Helm labels.
-The standard labels are frequently used in metadata.
-*/ -}}
-
-{{- define "service.microservice.labels" -}}
-choerodon.io/version: {{ .Chart.Version | quote }}
-choerodon.io/service: {{ .Chart.Name | quote }}
-choerodon.io/metrics-port: {{ .Values.deployment.managementPort | quote }}
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "oqsengine.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "service.labels.standard" -}}
-choerodon.io/release: {{ .Release.Name | quote }}
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "oqsengine.fullname" -}}
+{{- if .Values.fullnameOverride -}}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 
-{{- define "service.match.labels" -}}
-choerodon.io/release: {{ .Release.Name | quote }}
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "oqsengine.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "service.logging.deployment.label" -}}
-choerodon.io/logs-parser: {{ .Values.logs.parser | quote }}
+{{/*
+Determine the image version.
+*/}}
+{{- define "image.tag" -}}
+{{- if .Values.image.tag }}
+{{- printf "%s" .Values.image.tag -}}
+{{- else -}}
+{{- printf "%s" .Chart.Version -}}
 {{- end -}}
-
-{{- define "service.monitoring.pod.annotations" -}}
-choerodon.io/metrics-group: {{ .Values.metrics.group | quote }}
-choerodon.io/metrics-path: {{ .Values.metrics.path | quote }}
 {{- end -}}

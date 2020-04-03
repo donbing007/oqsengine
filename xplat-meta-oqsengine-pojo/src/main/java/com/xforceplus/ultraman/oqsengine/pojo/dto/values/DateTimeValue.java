@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Objects;
 
 /**
  * 表示日期/时间值,储存时时间使用 Asia/Shanghai.
@@ -27,5 +28,33 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
     public long valueToLong() {
         Instant instant = getValue().atZone(zoneId).toInstant();
         return instant.toEpochMilli();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getField(), getValue());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof DateTimeValue)) {
+            return false;
+        }
+
+        DateTimeValue that = (DateTimeValue) o;
+
+        return Objects.equals(getField(), that.getField()) &&
+            Objects.equals(this.getValue(), that.getValue());
+    }
+
+    @Override
+    public String toString() {
+        return "DateTimeValue{" +
+            "field=" + getField() +
+            ", value=" + getValue() +
+            '}';
     }
 }

@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
@@ -49,12 +50,12 @@ public class EntityManagementServiceImplTest {
     @Before
     public void before() throws Exception {
 
-        idGenerator = new SnowflakeLongIdGenerator(0);
+        idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0));
 
         fatherEntityClass = new EntityClass(idGenerator.next(), "father", Arrays.asList(
             new Field(idGenerator.next(), "f1", FieldType.LONG, FieldConfig.build().searchable(true)),
             new Field(idGenerator.next(), "f2", FieldType.STRING, FieldConfig.build().searchable(false)),
-            new Field(idGenerator.next(), "f2", FieldType.DECIMAL, FieldConfig.build().searchable(true))
+            new Field(idGenerator.next(), "f3", FieldType.DECIMAL, FieldConfig.build().searchable(true))
         ));
 
         childEntityClass = new EntityClass(
@@ -204,6 +205,30 @@ public class EntityManagementServiceImplTest {
                 f.config().isSearchable() && f.id() != removeField.id()).count(),
             indexEntity.entityValue().values().stream().filter(v -> v.getField().id() != removeField.id()).count()
         );
+    }
+
+    @Test
+    public void testExtendReplace() throws Exception {
+        IEntity expectedEntity = buildEntity(childEntityClass, false);
+        expectedEntity = service.build(expectedEntity);
+
+        // 更新父类属性
+        expectedEntity.entityValue().addValue(
+            new DecimalValue(fatherEntityClass.fields().stream().skip(2).findFirst().get(), new BigDecimal("8888.8888"))
+        );
+
+        service.replace(expectedEntity);
+
+        // 验证父类
+        IEntity masterEntity = masterStorage.select(expectedEntity.family().parent(), fatherEntityClass).get();
+        Assert.assertEquals("8888.8888",masterEntity.entityValue().getValue("f3").get().valueToString());
+        // 验证父类索引
+        masterEntity = indexStorage.select(expectedEntity.family().parent()).get();
+        Assert.assertEquals("8888.8888",masterEntity.entityValue().getValue("f3").get().valueToString());
+
+        //验证子类索引
+        IEntity indexEntity = indexStorage.select(expectedEntity.id()).get();
+        Assert.assertEquals("8888.8888",indexEntity.entityValue().getValue("f3").get().valueToString());
     }
 
     private static IEntity copyEntity(IEntity source) {

@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
 import java.util.List;
 
+/**
+ * sub field
+ */
 public class SubFieldCondition {
 
     private String code;

@@ -8,86 +8,72 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import org.apache.metamodel.data.Row;
 
 /**
+ * TODO
  * helper to handler several object
  */
 public class FieldHelper {
 
-
-    private static FieldType toFieldType(String typeStr){
-
-        try{
-            return FieldType.valueOf(typeStr.toUpperCase());
-        }catch(Exception ex) {
-            //to
-        }
-
-        if("bigint".equalsIgnoreCase(typeStr) || "long".equalsIgnoreCase(typeStr)){
-            return FieldType.LONG;
-        } else if ( "enum".equalsIgnoreCase(typeStr)) {
-            return FieldType.ENUM;
-        } else if ( "boolean".equalsIgnoreCase(typeStr)) {
-            return FieldType.BOOLEAN;
-        } else if ( "timestamp".equalsIgnoreCase(typeStr)) {
-            return FieldType.DATETIME;
-        } else if ( "double".equalsIgnoreCase(typeStr)) {
-            return FieldType.DECIMAL;
-        } else {
-            return FieldType.STRING;
-        }
-    }
-
     /**
+     * TODO splitter
      * Row => field
+     *
      * @param row
      * @return
      */
-    public static Field toEntityClassField(Row row){
+    public static Field toEntityClassField(Row row) {
 
         Long id = RowUtils.getRowValue(row, "id")
-                .map(String::valueOf)
-                .map(Long::valueOf)
-                .orElse(-1l);
+            .map(String::valueOf)
+            .map(Long::valueOf)
+            .orElse(-1L);
         String name = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
         FieldType fieldType = RowUtils.getRowValue(row, "fieldType")
-                .map(String::valueOf)
-                .map(FieldHelper::toFieldType)
-                .orElse(FieldType.STRING);
+            .map(String::valueOf)
+            .map(FieldType::fromRawType)
+            .orElse(FieldType.STRING);
 
         Boolean searchable = RowUtils.getRowValue(row, "searchable")
-                .map(String::valueOf)
-                .map(Boolean::valueOf).orElse(false);
+            .map(String::valueOf)
+            .map(Boolean::valueOf).orElse(false);
+
+
+        Boolean required = RowUtils.getRowValue(row, "required")
+            .map(String::valueOf)
+            .map(Boolean::valueOf).orElse(false);
+
 
         Long max = RowUtils.getRowValue(row, "maxLength")
-                .flatMap(OptionalHelper::ofEmptyStr)
-                .map(Long::valueOf).orElse(-1L);
+            .flatMap(OptionalHelper::ofEmptyStr)
+            .map(Long::valueOf).orElse(-1L);
 
         Integer precision = RowUtils.getRowValue(row, "precision")
-                .flatMap(OptionalHelper::ofEmptyStr)
-                .map(Integer::valueOf).orElse(0);
+            .flatMap(OptionalHelper::ofEmptyStr)
+            .map(Integer::valueOf).orElse(0);
 
         String defaultValue = RowUtils.getRowValue(row, "defaultValue")
-               .map(String::valueOf).orElse("");
+            .map(String::valueOf).orElse("");
 
         String dictId = RowUtils.getRowValue(row, "dictId")
-                .map(String::valueOf).orElse("");
+            .map(String::valueOf).orElse("");
 
         FieldConfig fieldConfig = FieldConfig
-                .build()
-                .searchable(searchable)
-                .max(max)
-                .precision(precision);
+            .build()
+            .searchable(searchable)
+            .max(max)
+            .required(required)
+            .precision(precision);
 
         Field field =
-                new Field(id, name, fieldType, fieldConfig, dictId, defaultValue);
+            new Field(id, name, fieldType, fieldConfig, dictId, defaultValue);
         return field;
     }
 
 
     public static Field toEntityClassFieldFromRel(Row row, String boCode) {
         Long id = RowUtils.getRowValue(row, "id")
-                .map(String::valueOf)
-                .map(Long::valueOf)
-                .orElse(-1L);
+            .map(String::valueOf)
+            .map(Long::valueOf)
+            .orElse(-1L);
 
         //TODO current is id
         //fixed
@@ -95,10 +81,10 @@ public class FieldHelper {
         FieldType fieldType = FieldType.LONG;
 
         FieldConfig fieldConfig = FieldConfig
-                .build()
-                .searchable(true);
+            .build()
+            .searchable(true);
         Field field =
-                new Field(id, name, fieldType, fieldConfig);
+            new Field(id, name, fieldType, fieldConfig);
         return field;
     }
 }

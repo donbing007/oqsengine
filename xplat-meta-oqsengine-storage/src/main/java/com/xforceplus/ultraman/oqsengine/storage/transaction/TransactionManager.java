@@ -60,4 +60,22 @@ public interface TransactionManager {
      */
     void finish() throws SQLException;
 
+    /**
+     * 获取运行中的事务数量.
+     *
+     * @return 事务数量.
+     */
+    int size();
+
+    /**
+     * 冻结,当前事务管理器不能再产生新的事务.
+     * 但已有的事务仍旧可以工作.
+     */
+    void freeze();
+
+    /**
+     * 斛除冻结,恢复正常.
+     */
+    void unfreeze();
+
 }

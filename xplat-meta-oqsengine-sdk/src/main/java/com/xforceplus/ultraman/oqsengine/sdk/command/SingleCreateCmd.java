@@ -2,6 +2,10 @@ package com.xforceplus.ultraman.oqsengine.sdk.command;
 
 import java.util.Map;
 
+
+/**
+ * create a single record
+ */
 public class SingleCreateCmd implements MetaDataLikeCmd{
 
     private String boId;

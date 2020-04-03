@@ -142,6 +142,10 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                     }
 
                     PageScope scope = page.getNextPage();
+                    // 超出页数
+                    if (scope == null) {
+                        return Collections.emptyList();
+                    }
 
                     String orderBy = buildOrderBy(sort);
 
@@ -475,7 +479,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         final String sql = String.format(replacement ? replaceSql : buildSql, indexTableName);
 
         return (boolean) transactionExecutor.execute(
-            new DataSourceShardingTask(searchDataSourceSelector, Long.toString(storageEntity.getId())) {
+            new DataSourceShardingTask(writerDataSourceSelector, Long.toString(storageEntity.getId())) {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {

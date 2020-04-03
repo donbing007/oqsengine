@@ -1,3 +1,5 @@
+[![coverage report](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/badges/develop/coverage.svg)](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/commits/develop)
+
 #引言
 
 为元数据提供统一下的对象查询储存引擎.
@@ -14,6 +16,7 @@
 * xplat-meta-oqsengine-pojo 相关封装对象定义.(EntityClass等)
 * xplat-meta-oqsengine-sdk SDK 实现.
 * xplat-meta-oqsengine-transfer 通信实现.
+* xplat-meta-oqsengine-testreport 测试覆盖的聚合项目.不影响实际功能.
 
 包名前辍统一使用 `com.xforceplus.ultraman.oqsengine`
 
@@ -66,6 +69,7 @@ storage:
       worker: 3 # 查询的时候多线程时的最大线程数量,默认为 CPU 核数.
       timeout: 3000 # 查询超时时间,单位为毫秒.默认为3秒.
     shard:
+      enabled: false # 是否表分区.
       size: 1 # 逻辑表分片数量,默认为1.
   index:
     name: "oqsindex" # 索引库名称,和主库作用相同.
@@ -88,6 +92,7 @@ create table oqsbigentity
 ```
 不过由于主库进行了分表设计,使用的是表名加上数字,从0开始.如里分表为3,那么如下需要3个物理表.
 oqsbigentity0, oqsbigentity1, oqsbigentity2
+storage.master.shard.enabled = true 才会启效.
 
 ## mainticore (Sphinx) 结构
 索引的结构需要预先在配置文件中指定.如下.
@@ -103,9 +108,7 @@ index oqsindex
         rt_field = fullfields
 
         rt_mem_limit = 1024m
-        enable_star = 1
         min_infix_len = 3
-        infix_fields = stringfield
 }
 ```
 以上索引结构中,id 是默认的其和主库保持同步.即同一个 id 表示同一个实例数据.
@@ -113,4 +116,19 @@ index oqsindex
 * pref        指向实例父类实例id.
 * cref        指向实例子类实例 id.
 * jsonfields  搜索的索引属性集合,是一个 JSON 格式.
-* fullfields  搜索的全文索引属性集合,是一个以 f + {fieldID}+{fieldValue | unicode} 组成并以空格分隔的字符串.
+* fullfields  搜索的全文索引属性集合,是一个以 F{fieldID}{fieldType} {fieldValue | unicode} 组成并以空格分隔的字符串.
+
+# 启动/关闭服务
+这是一个标准的 sprint boot 实现. 最低需求 jdk8.
+关闭只需要执行以下 http 请求.
+`curl -X POST http://host:8086/actuator/shutdown`
+
+# 监控
+oqsengine 会在 /actuator/prometheus 公开一系列指标来输出当前系统状态.如下.
+
+* oqsengine.insert.number.second 每秒创建的 entity 数量.
+* oqsengine.replace.number.second 每秒更新的 entity 数量.
+* oqsengine.delete.number.second 每秒更新的数量.
+* oqsengine.select.number.second 每秒查询数量.
+* oqsengine.query.avg.second 平均查询时间.
+* oqsengine.update.avg.second 平均更新时间.

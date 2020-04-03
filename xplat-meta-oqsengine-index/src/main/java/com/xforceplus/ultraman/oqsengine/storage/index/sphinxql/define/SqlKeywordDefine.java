@@ -29,4 +29,8 @@ public final class SqlKeywordDefine {
      * 降序排序类型.
      */
     public static final String ORDER_TYPE_DESC = "DESC";
+    /**
+     * 通配符.
+     */
+    public static final String EVERY_THING = "*";
 }

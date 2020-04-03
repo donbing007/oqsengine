@@ -39,31 +39,5 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof AbstractValue)) {
-            return false;
-        }
-        AbstractValue<?> that = (AbstractValue<?>) o;
-        return Objects.equals(getField(), that.getField()) &&
-            Objects.equals(getValue(), that.getValue());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getField(), getValue());
-    }
-
-    @Override
-    public String toString() {
-        return "AbstractValue{" +
-            "field=" + field +
-            ", value=" + value +
-            '}';
-    }
-
-    @Override
     public abstract long valueToLong();
 }

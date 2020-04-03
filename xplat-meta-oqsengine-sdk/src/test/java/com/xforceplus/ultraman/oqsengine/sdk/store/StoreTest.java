@@ -21,6 +21,9 @@ import java.util.stream.IntStream;
 
 import static org.springframework.test.util.AssertionErrors.assertTrue;
 
+/**
+ * Store test
+ */
 public class StoreTest {
 
     /**

@@ -18,8 +18,8 @@ public class LongConditionValidation implements ConditionValidation {
             case EQUALS:
             case NOT_EQUALS:
             case GREATER_THAN:
-            case MINOR_THAN:
-            case MINOR_THAN_EQUALS:
+            case LESS_THAN:
+            case LESS_THAN_EQUALS:
             case GREATER_THAN_EQUALS:
             case MULTIPLE_EQUALS:
                 return true;

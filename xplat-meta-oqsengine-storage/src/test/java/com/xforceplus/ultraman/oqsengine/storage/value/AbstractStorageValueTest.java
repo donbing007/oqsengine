@@ -1,11 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.value;
 
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.Before;
 import org.junit.After;
-import org.mockito.Mock;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * AbstractStorageValue Tester.
@@ -99,6 +98,12 @@ public class AbstractStorageValueTest {
         head = one.stick(two);
         Assert.assertEquals(two, head);
         Assert.assertTrue(two.haveNext());
+    }
+
+    @Test
+    public void testGroupName() throws Exception {
+        MockStorageValue v1 = new MockStorageValue("111", 0L, true);
+        Assert.assertEquals("111L", v1.groupStorageName());
     }
 
     static class MockStorageValue extends AbstractStorageValue<Long> {

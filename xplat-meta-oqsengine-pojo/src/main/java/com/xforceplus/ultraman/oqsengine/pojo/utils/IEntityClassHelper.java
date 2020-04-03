@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.utils;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 
@@ -18,6 +19,7 @@ public class IEntityClassHelper {
 
     /**
      * find field from entity fields and entityParent fields
+     *
      * @param entityClass
      * @param fieldId
      * @return
@@ -40,12 +42,23 @@ public class IEntityClassHelper {
         return combine(entityFieldOp, entityClassFromParent);
     }
 
-    public static Optional<Tuple2<IEntityClass, IEntityField>> findFieldByIdInAll(IEntityClass entityClass, long fieldId){
-        Stream<Optional<Tuple2<IEntityClass, IEntityField>>> field  =
+    public static Optional<IEntityField> findFieldInRel(Relation relation, Long id) {
+        if (relation.getEntityField() != null && relation.getEntityField().id() == id) {
+            return Optional.ofNullable(relation.getEntityField());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<Tuple2<IEntityClass, IEntityField>> findFieldByIdInAll(IEntityClass entityClass, long fieldId) {
+        Stream<Optional<Tuple2<IEntityClass, IEntityField>>> field =
                 Stream.of(findFieldById(entityClass, fieldId).map(x -> Tuple.of(entityClass, x)));
         Stream<Optional<Tuple2<IEntityClass, IEntityField>>> subStream = Optional.ofNullable(entityClass.entityClasss())
                 .orElseGet(Collections::emptyList).stream()
                 .map(x -> findFieldById(x, fieldId).map(y -> Tuple.of(x, y)));
-        return Stream.concat(field, subStream).filter(Optional::isPresent).map(Optional::get).findFirst();
+        Stream<Optional<Tuple2<IEntityClass, IEntityField>>> relStream = Optional.ofNullable(entityClass.relations())
+                .orElseGet(Collections::emptyList).stream()
+                .map(x -> findFieldInRel(x, fieldId).map(y -> Tuple.of(entityClass, y)));
+        return Stream.concat(relStream, Stream.concat(field, subStream)).filter(Optional::isPresent).map(Optional::get).findFirst();
     }
 }

@@ -65,6 +65,9 @@ public class SphinxQLIndexStorageTest {
     // 所有数据都会有的负数字符串.
     private IEntityField fixStringNumber = new Field(100002, "Negative string", FieldType.STRING);
 
+    private IEntityField fixStringsField = new Field(100003, "strings", FieldType.STRINGS);
+
+
     @Before
     public void before() throws Exception {
 
@@ -485,6 +488,61 @@ public class SphinxQLIndexStorageTest {
                     return true;
                 }
             )
+            ,
+            // strings eq
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            fixStringsField,
+                            ConditionOperator.EQUALS,
+                            new StringsValue(fixStringsField, new String[]{"500002"}))
+                    ),
+                expectedEntitys.get(0).entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+                    Assert.assertEquals(expectedEntitys.size(), refs.size());
+
+                    return true;
+                }
+            )
+            ,
+            // strings not eq
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            fixStringsField,
+                            ConditionOperator.NOT_EQUALS,
+                            new StringsValue(fixStringsField, new String[] {"500002"}))
+                    ),
+                expectedEntitys.get(0).entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+                    Assert.assertEquals(0, refs.size());
+
+                    return true;
+                }
+            )
+            ,
+            // enum meq
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            fixStringsField,
+                            ConditionOperator.MULTIPLE_EQUALS,
+                            new StringsValue(fixStringsField, new String[] {"500002"} ),
+                            new StringsValue(fixStringsField, new String[] {"1"}))
+                    ),
+                expectedEntitys.get(0).entityClass(),
+                Page.newSinglePage(100),
+                refs -> {
+                    Assert.assertEquals(expectedEntitys.size(), refs.size());
+
+                    return true;
+                }
+            )
         );
     }
 
@@ -542,6 +600,7 @@ public class SphinxQLIndexStorageTest {
         fields.add(fixFieldAll);
         fields.add(fixFieldRange);
         fields.add(fixStringNumber);
+        fields.add(fixStringsField);
 
         return fields;
     }
@@ -570,6 +629,10 @@ public class SphinxQLIndexStorageTest {
 
             if (f == fixStringNumber) {
                 return new StringValue(f, "-1");
+            }
+
+            if (f == fixStringsField) {
+                return new StringsValue(fixStringsField, "1,2,3,500002,测试".split(","));
             }
 
             switch (f.type()) {

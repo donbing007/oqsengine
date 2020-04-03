@@ -32,7 +32,7 @@
                 <configuration>
                     <configLocation>../checkstyle.xml</configLocation>
                     <encoding>${project.build.sourceEncoding}</encoding>
-                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <includeTestSourceDirectory>false</includeTestSourceDirectory>
                     <excludes>**/*Grpc.java</excludes>
                 </configuration>
                 <executions>
@@ -44,6 +44,37 @@
                         </goals>
                         <configuration>
                             <failOnViolation>true</failOnViolation>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
+                <configuration>
+                    <skip>${deployment.skip}</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.5</version>
+                <executions>
+                    <execution>
+                        <id>pre-unit-test</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>post-unit-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/../target/site/jacoco</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
@@ -60,20 +91,44 @@
         <module>xplat-meta-oqsengine-transfer</module>
         <module>xplat-meta-oqsengine-sdk</module>
         <module>xplat-meta-oqsengine-boot</module>
+        <module>xplat-meta-oqsengine-testreport</module>
     </modules>
 
     <distributionManagement>
         <repository>
-            <id>releases</id>
+            <id>xplat-releases</id>
             <name>Nexus Release Repository</name>
             <url>${repository.host}/content/repositories/releases/</url>
         </repository>
         <snapshotRepository>
-            <id>snapshots</id>
+            <id>xplat-snapshots</id>
             <name>Nexus Snapshot Repository</name>
             <url>${repository.host}/content/repositories/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>xplat-snapshots</id>
+            <url>${repository.host}/content/repositories/snapshots/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>xplat-releases</id>
+            <url>${repository.host}/content/repositories/releases/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>xplat-thirdparty</id>
+            <url>${repository.host}/content/repositories/thirdparty/</url>
+        </repository>
+    </repositories>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -82,6 +137,24 @@
                 <version>2.2.1.RELEASE</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.9</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.metamodel</groupId>
+                <artifactId>MetaModel-pojo</artifactId>
+                <version>5.3.2</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.metamodel</groupId>
+                <artifactId>MetaModel-json</artifactId>
+                <version>5.3.2</version>
             </dependency>
 
             <dependency>
@@ -146,19 +219,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <checkstyle.skip>true</checkstyle.skip>
         <repository.host>http://120.27.140.65:8081/nexus</repository.host>
+        <deployment.skip>false</deployment.skip>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>alimaven</id>
-            <name>aliyun maven</name>
-            <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 </project>
