@@ -14,6 +14,7 @@
 * xplat-meta-oqsengine-pojo 相关封装对象定义.(EntityClass等)
 * xplat-meta-oqsengine-sdk SDK 实现.
 * xplat-meta-oqsengine-transfer 通信实现.
+* xplat-meta-oqsengine-testreport 测试覆盖的聚合项目.不影响实际功能.
 
 包名前辍统一使用 `com.xforceplus.ultraman.oqsengine`
 

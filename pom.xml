@@ -71,7 +71,7 @@
                         <id>post-unit-test</id>
                         <phase>test</phase>
                         <goals>
-                            <goal>report</goal>
+                            <goal>report-aggregate</goal>
                         </goals>
                         <configuration>
                             <outputDirectory>${basedir}/../target/site/jacoco</outputDirectory>
@@ -91,6 +91,7 @@
         <module>xplat-meta-oqsengine-transfer</module>
         <module>xplat-meta-oqsengine-sdk</module>
         <module>xplat-meta-oqsengine-boot</module>
+        <module>xplat-meta-oqsengine-testreport</module>
     </modules>
 
     <distributionManagement>
