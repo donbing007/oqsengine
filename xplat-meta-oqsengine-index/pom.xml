@@ -69,6 +69,7 @@
     <properties>
         <checkstyle.skip>false</checkstyle.skip>
         <deployment.skip>true</deployment.skip>
+        <maven.test.skip>true</maven.test.skip>
     </properties>
 
     <profiles>
