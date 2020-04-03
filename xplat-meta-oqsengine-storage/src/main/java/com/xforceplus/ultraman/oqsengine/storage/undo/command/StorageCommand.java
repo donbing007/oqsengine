@@ -10,8 +10,8 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public interface  StorageCommand {
+public interface  StorageCommand<T> {
 
-    Object execute(Connection conn, Object data) throws SQLException;
+    Object execute(Connection conn, T data) throws SQLException;
 
 }

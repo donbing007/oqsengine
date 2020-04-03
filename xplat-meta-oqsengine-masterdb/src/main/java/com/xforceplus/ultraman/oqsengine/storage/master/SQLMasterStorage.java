@@ -7,9 +7,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.command.BuildStorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.master.command.CommonUtil;
+import com.xforceplus.ultraman.oqsengine.storage.master.command.DeleteStorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.master.command.ReplaceStorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -44,15 +47,8 @@ public class SQLMasterStorage implements MasterStorage {
 
     final Logger logger = LoggerFactory.getLogger(SQLMasterStorage.class);
 
-
-    private static final String BUILD_SQL =
-        "insert into %s (id, entity, version, time, pref, cref, deleted, attribute) values(?,?,?,?,?,?,?,?)";
-    private static final String REPLACE_SQL =
-        "update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
     private static final String REPLACE_VERSION_TIME_SQL =
         "update %s set version = ?, time = ? where id = ?";
-    private static final String DELETE_SQL =
-        "update %s set version = version + 1, deleted = ?, time = ? where id = ? and version = ?";
     private static final String SELECT_SQL =
         "select id, entity, version, time, pref, cref, deleted, attribute from %s where id = ? and deleted = false";
     private static final String SELECT_IN_SQL =
@@ -266,7 +262,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Override
     public void build(IEntity entity) throws SQLException {
-        checkId(entity);
+        CommonUtil.checkId(entity);
 
         transactionExecutor.execute(
             new DataSourceShardingTask(
@@ -274,49 +270,15 @@ public class SQLMasterStorage implements MasterStorage {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    String tableName = tableNameSelector.select(Long.toString(entity.id()));
-                    String sql = String.format(BUILD_SQL, tableName);
-
-                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-                    // id, entity, version, time, pref, cref, deleted, attribute,refs
-                    st.setLong(1, entity.id()); // id
-                    st.setLong(2, entity.entityClass().id()); // entity
-                    st.setInt(3, 0); // version
-                    st.setLong(4, System.currentTimeMillis()); // time
-                    st.setLong(5, entity.family().parent()); // pref
-                    st.setLong(6, entity.family().child()); // cref
-                    st.setBoolean(7, false); // deleted
-                    st.setString(8, toJson(entity.entityValue())); // attribute
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(st.toString());
-                    }
-
-                    int size = st.executeUpdate();
-
-                    /**
-                     * 插入影响条件恒定为1.
-                     */
-                    final int onlyOne = 1;
-                    if (size != onlyOne) {
-                        throw new SQLException(
-                            String.format("Entity{%s} could not be created successfully.", entity.toString()));
-                    }
-
-                    try {
-                        return null;
-                    } finally {
-                        if (st != null) {
-                            st.close();
-                        }
-                    }
+                    return new BuildStorageCommand(storageStrategyFactory, tableNameSelector)
+                            .execute(((Connection) resource.value()), entity);
                 }
             });
     }
 
     @Override
     public void replace(IEntity entity) throws SQLException {
-        checkId(entity);
+        CommonUtil.checkId(entity);
 
         transactionExecutor.execute(
             new DataSourceShardingTask(
@@ -324,41 +286,15 @@ public class SQLMasterStorage implements MasterStorage {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    String tableName = tableNameSelector.select(Long.toString(entity.id()));
-                    String sql = String.format(REPLACE_SQL, tableName);
-                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-
-                    // update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
-                    st.setLong(1, System.currentTimeMillis()); // time
-                    st.setString(2, toJson(entity.entityValue())); // attribute
-                    st.setLong(3, entity.id()); // id
-                    st.setInt(4, entity.version()); // version
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(st.toString());
-                    }
-
-                    int size = st.executeUpdate();
-
-                    final int onlyOne = 1;
-                    if (size != onlyOne) {
-                        throw new SQLException(String.format("Entity{%s} could not be replace successfully.", entity.toString()));
-                    }
-
-                    try {
-                        return null;
-                    } finally {
-                        if (st != null) {
-                            st.close();
-                        }
-                    }
+                    return new ReplaceStorageCommand(storageStrategyFactory, tableNameSelector)
+                            .execute(((Connection) resource.value()), entity);
                 }
             });
     }
 
     @Override
     public void delete(IEntity entity) throws SQLException {
-        checkId(entity);
+        CommonUtil.checkId(entity);
 
         transactionExecutor.execute(
             new DataSourceShardingTask(
@@ -366,41 +302,10 @@ public class SQLMasterStorage implements MasterStorage {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    String tableName = tableNameSelector.select(Long.toString(entity.id()));
-                    String sql = String.format(DELETE_SQL, tableName);
-                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-
-                    // deleted time id version;
-                    st.setBoolean(1, true); // deleted
-                    st.setLong(2, System.currentTimeMillis()); // time
-                    st.setLong(3, entity.id()); // id
-                    st.setInt(4, entity.version()); // version
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(st.toString());
-                    }
-
-                    int size = st.executeUpdate();
-                    final int onlyOne = 1;
-                    if (size != onlyOne) {
-                        throw new SQLException(String.format("Entity{%s} could not be delete successfully.", entity.toString()));
-                    }
-
-                    try {
-                        return null;
-                    } finally {
-                        if (st != null) {
-                            st.close();
-                        }
-                    }
+                    return new DeleteStorageCommand(tableNameSelector)
+                            .execute(((Connection) resource.value()), entity);
                 }
             });
-    }
-
-    private void checkId(IEntity entity) throws SQLException {
-        if (entity.id() == 0) {
-            throw new SQLException("Invalid entity`s id.");
-        }
     }
 
     /**
@@ -491,24 +396,6 @@ public class SQLMasterStorage implements MasterStorage {
             this.storageValue = storageValue;
             this.strategy = strategy;
         }
-    }
-
-    // 属性名称使用的是属性 id.
-    private String toJson(IEntityValue value) {
-
-        JSONObject object = new JSONObject();
-        StorageStrategy storageStrategy;
-        StorageValue storageValue;
-        for (IValue logicValue : value.values()) {
-            storageStrategy = storageStrategyFactory.getStrategy(logicValue.getField().type());
-            storageValue = storageStrategy.toStorageValue(logicValue);
-            while (storageValue != null) {
-                object.put(storageValue.storageName(), storageValue.value());
-                storageValue = storageValue.next();
-            }
-        }
-        return object.toJSONString();
-
     }
 
     /**

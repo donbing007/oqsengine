@@ -1,10 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
@@ -14,7 +17,7 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class DeleteStorageCommand implements StorageCommand {
+public class DeleteStorageCommand implements StorageCommand<IEntity> {
 
     final Logger logger = LoggerFactory.getLogger(DeleteStorageCommand.class);
 
@@ -25,8 +28,25 @@ public class DeleteStorageCommand implements StorageCommand {
     }
 
     @Override
-    public Object execute(Connection conn, Object data) throws SQLException {
-        return null;
+    public Object execute(Connection conn, IEntity entity) throws SQLException {
+        String sql = String.format(SQLConstant.DELETE_SQL, indexTableName);
+        PreparedStatement st = conn.prepareStatement(sql);
+        st.setLong(1, entity.id()); // id
+
+        if (logger.isDebugEnabled()) {
+            logger.debug(st.toString());
+        }
+
+        // 在事务状态,返回值恒等于0.
+        st.executeUpdate();
+
+        try {
+            return entity;
+        } finally {
+            if (st != null) {
+                st.close();
+            }
+        }
     }
 
 }
