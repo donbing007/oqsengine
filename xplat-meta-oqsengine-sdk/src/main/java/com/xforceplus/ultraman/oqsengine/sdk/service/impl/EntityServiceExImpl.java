@@ -81,8 +81,8 @@ public class EntityServiceExImpl implements EntityServiceEx {
         List<ValueUp> valueUps = handleValueService.handlerValue(entityClass, body, OperationType.CREATE);
 
         OperationResult createResult = buildBuilder
-                .invoke(toEntityUp(entityClass, null, valueUps))
-                .toCompletableFuture().join();
+            .invoke(toEntityUp(entityClass, null, valueUps))
+            .toCompletableFuture().join();
 
         if (createResult.getCode() == OperationResult.Code.OK) {
             if (createResult.getIdsList().size() < 1) {
@@ -102,7 +102,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
                     Long parentId = createResult.getIdsList().get(1);
 
                     entity = new Entity(createResult.getIdsList().get(0), entityClass, new EntityValue(0L)
-                            , new EntityFamily(createResult.getIdsList().get(1), 0), 0);
+                        , new EntityFamily(createResult.getIdsList().get(1), 0), 0);
 
                     publisher.publishEvent(buildCreatedEvent(entityClass, parentId, id, body));
                 } else {
@@ -139,7 +139,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
     @Override
     public Either<String, Map<String, Object>> findOneByParentId(EntityClass entityClass, EntityClass subEntityClass, long id) {
         if (subEntityClass != null && subEntityClass.extendEntityClass() != null
-                && entityClass != null && entityClass.id() == subEntityClass.extendEntityClass().id()) {
+            && entityClass != null && entityClass.id() == subEntityClass.extendEntityClass().id()) {
 
             String transId = contextService.get(TRANSACTION_KEY);
 
@@ -150,11 +150,11 @@ public class EntityServiceExImpl implements EntityServiceEx {
             }
 
             EntityUp entityUp = toEntityUpBuilder(entityClass, id)
-                    .setSubEntityClass(toRawEntityUp(subEntityClass))
-                    .build();
+                .setSubEntityClass(toRawEntityUp(subEntityClass))
+                .build();
 
             OperationResult queryResult = queryResultBuilder.invoke(entityUp)
-                    .toCompletableFuture().join();
+                .toCompletableFuture().join();
 
             if (queryResult.getCode() == OperationResult.Code.OK) {
                 if (queryResult.getTotalRow() > 0) {
@@ -178,13 +178,13 @@ public class EntityServiceExImpl implements EntityServiceEx {
             List<Row> trows = new ArrayList<>();
             if (!StringUtils.isEmpty(tenantId)) {
                 ds = pageBoMapLocalStore.query().selectAll()
-                        .where("code")
-                        .eq(pageCode)
-                        .and("tenantId")
-                        .eq(tenantId)
-                        .and("envStatus")
-                        .eq("UP")
-                        .execute();
+                    .where("code")
+                    .eq(pageCode)
+                    .and("tenantId")
+                    .eq(tenantId)
+                    .and("envStatus")
+                    .eq("UP")
+                    .execute();
                 trows = ds.toRows();
             }
             if (ds != null && trows != null && trows.size() > 0) {
@@ -192,12 +192,12 @@ public class EntityServiceExImpl implements EntityServiceEx {
                 return items;
             } else {
                 ds = pageBoMapLocalStore.query().selectAll()
-                        .where("code")
-                        .eq(pageCode)
-                        .and("envStatus")
-                        .eq("UP")
-                        .and("tenantId").isNull()
-                        .execute();
+                    .where("code")
+                    .eq(pageCode)
+                    .and("envStatus")
+                    .eq("UP")
+                    .and("tenantId").isNull()
+                    .execute();
                 List<Row> rows = ds.toRows();
                 ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
                 return items;

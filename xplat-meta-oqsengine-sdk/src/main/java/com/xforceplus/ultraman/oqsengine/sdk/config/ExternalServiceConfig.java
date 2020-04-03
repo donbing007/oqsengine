@@ -9,6 +9,7 @@ import java.io.File;
 
 /**
  * 读取application.conf中的pfcp 配置
+ *
  * @author wangzheng
  * @version 0.1 2020/2/23 16:25
  * @since 1.8
@@ -32,13 +33,13 @@ public class ExternalServiceConfig {
             uri = config.getString(PFCP_ACCESSURI);
             if (StringUtils.isEmpty(uri)) {
                 throw new NoSuchAttributeException(
-                        String.format("The '%s' property setting error in application.conf.", PFCP_ACCESSURI));
-            }else {
+                    String.format("The '%s' property setting error in application.conf.", PFCP_ACCESSURI));
+            } else {
                 return uri;
             }
-        }else {
+        } else {
             throw new NoSuchAttributeException(
-                    String.format("The '%s' property setting could not be found in application.conf.", PFCP_ACCESSURI));
+                String.format("The '%s' property setting could not be found in application.conf.", PFCP_ACCESSURI));
         }
     }
 

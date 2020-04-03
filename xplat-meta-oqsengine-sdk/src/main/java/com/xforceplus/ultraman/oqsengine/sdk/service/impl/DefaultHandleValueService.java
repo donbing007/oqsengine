@@ -42,37 +42,37 @@ public class DefaultHandleValueService implements HandleValueService {
 
         //get field from entityClass
         List<ValueUp> values = zipValue(entityClass, body)
-                .map(tuple -> {
+            .map(tuple -> {
 
-                    //Field Object
-                    // This is a shape
-                    //TODO object toString is ok?
-                    IEntityField field = tuple._1();
-                    Object obj = tuple._2();
+                //Field Object
+                // This is a shape
+                //TODO object toString is ok?
+                IEntityField field = tuple._1();
+                Object obj = tuple._2();
 
-                    //pipeline and validate
-                    Object value = pipeline(obj, field, phase);
-                    List<Validation<String, Object>> validations = validate(field, value, phase);
+                //pipeline and validate
+                Object value = pipeline(obj, field, phase);
+                List<Validation<String, Object>> validations = validate(field, value, phase);
 
-                    if (!validations.isEmpty()) {
-                        throw new RuntimeException(validations.stream()
-                                .map(Validation::getError)
-                                .collect(Collectors.joining(",")));
-                    }
+                if (!validations.isEmpty()) {
+                    throw new RuntimeException(validations.stream()
+                        .map(Validation::getError)
+                        .collect(Collectors.joining(",")));
+                }
 
-                    if (value != null) {
-                        return ValueUp.newBuilder()
-                                .setFieldId(field.id())
-                                .setFieldType(field.type().getType())
-                                .setValue(value.toString())
-                                .build();
-                    } else {
-                        return null;
-                    }
+                if (value != null) {
+                    return ValueUp.newBuilder()
+                        .setFieldId(field.id())
+                        .setFieldType(field.type().getType())
+                        .setValue(value.toString())
+                        .build();
+                } else {
+                    return null;
+                }
 
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
 
         return values;
     }
@@ -88,30 +88,30 @@ public class DefaultHandleValueService implements HandleValueService {
         Stream<IEntityField> fields = entityClass.fields().stream();
         Stream<IEntityField> relationFields = entityClass.relations().stream().map(Relation::getEntityField).filter(Objects::nonNull);
         Stream<IEntityField> parentFields = Optional.ofNullable(entityClass.extendEntityClass())
-                .map(IEntityClass::fields)
-                .orElseGet(Collections::emptyList)
-                .stream();
+            .map(IEntityClass::fields)
+            .orElseGet(Collections::emptyList)
+            .stream();
 
         return Stream.concat(parentFields, Stream.concat(fields, relationFields))
-                .distinct()
-                .map(x -> Tuple.of(x, body.get(x.name())));
+            .distinct()
+            .map(x -> Tuple.of(x, body.get(x.name())));
     }
 
     private Object pipeline(Object value, IEntityField field, OperationType phase) {
 
         return fieldOperationHandlers.stream()
-                .sorted()
-                .map(x -> (TriFunction) x)
-                .reduce(TriFunction::andThen)
-                .get()
-                .apply(field, value, phase);
+            .sorted()
+            .map(x -> (TriFunction) x)
+            .reduce(TriFunction::andThen)
+            .get()
+            .apply(field, value, phase);
     }
 
     private List<Validation<String, Object>> validate(IEntityField field, Object obj, OperationType phase) {
 
         return fieldValidators.stream()
-                .map(x -> x.validate(field, obj, phase))
-                .filter(Validation::isInvalid)
-                .collect(Collectors.toList());
+            .map(x -> x.validate(field, obj, phase))
+            .filter(Validation::isInvalid)
+            .collect(Collectors.toList());
     }
 }

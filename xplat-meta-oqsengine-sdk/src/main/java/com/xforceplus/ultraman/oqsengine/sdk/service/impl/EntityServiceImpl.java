@@ -77,15 +77,15 @@ public class EntityServiceImpl implements EntityService {
     @Override
     public <T> Either<String, T> transactionalExecute(Callable<T> supplier) {
         OperationResult result = entityServiceClient
-                .commit(TransactionUp.newBuilder().build()).toCompletableFuture().join();
+            .commit(TransactionUp.newBuilder().build()).toCompletableFuture().join();
 
         if (result.getCode() == OperationResult.Code.OK) {
             contextService.set(TRANSACTION_KEY, result.getTransactionResult());
             try {
                 T t = supplier.call();
                 CompletableFuture<T> commitedT = entityServiceClient.commit(TransactionUp.newBuilder()
-                        .setId(result.getTransactionResult())
-                        .build()).thenApply(x -> {
+                    .setId(result.getTransactionResult())
+                    .build()).thenApply(x -> {
                     if (x.getCode() == OperationResult.Code.OK) {
                         return t;
                     } else {
@@ -100,8 +100,8 @@ public class EntityServiceImpl implements EntityService {
                 }
             } catch (Exception ex) {
                 entityServiceClient.rollBack(TransactionUp.newBuilder()
-                        .setId(result.getTransactionResult())
-                        .build());
+                    .setId(result.getTransactionResult())
+                    .build());
                 return Either.left(ex.getMessage());
             }
         } else {
@@ -120,7 +120,7 @@ public class EntityServiceImpl implements EntityService {
         }
 
         OperationResult queryResult = queryResultBuilder.invoke(toEntityUp(entityClass, id))
-                .toCompletableFuture().join();
+            .toCompletableFuture().join();
 
         if (queryResult.getCode() == OperationResult.Code.OK) {
             if (queryResult.getTotalRow() > 0) {
@@ -151,8 +151,8 @@ public class EntityServiceImpl implements EntityService {
         }
 
         OperationResult updateResult =
-                removeBuilder.invoke(toEntityUp(entityClass, id))
-                        .toCompletableFuture().join();
+            removeBuilder.invoke(toEntityUp(entityClass, id))
+                .toCompletableFuture().join();
 
         if (updateResult.getCode() == OperationResult.Code.OK) {
             int rows = updateResult.getAffectedRow();
@@ -191,8 +191,8 @@ public class EntityServiceImpl implements EntityService {
         List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.UPDATE);
 
         OperationResult updateResult = entityServiceClient.replace()
-                .invoke(toEntityUp(entityClass, id, valueUps))
-                .toCompletableFuture().join();
+            .invoke(toEntityUp(entityClass, id, valueUps))
+            .toCompletableFuture().join();
 
         if (updateResult.getCode() == OperationResult.Code.OK) {
             int rows = updateResult.getAffectedRow();
@@ -225,8 +225,8 @@ public class EntityServiceImpl implements EntityService {
         List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.REPLACE);
 
         OperationResult updateResult = entityServiceClient.replace()
-                .invoke(toEntityUp(entityClass, id, valueUps))
-                .toCompletableFuture().join();
+            .invoke(toEntityUp(entityClass, id, valueUps))
+            .toCompletableFuture().join();
 
         if (updateResult.getCode() == OperationResult.Code.OK) {
             int rows = updateResult.getAffectedRow();
@@ -267,21 +267,21 @@ public class EntityServiceImpl implements EntityService {
         }
 
         ConditionsUp conditionsUp = handleQueryValueService
-                    .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY);
+            .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY);
 
         /**
          * condition
          */
         OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, ids, condition, conditionsUp))
-                .toCompletableFuture().join();
+            .toCompletableFuture().join();
 
         if (result.getCode() == OperationResult.Code.OK) {
             List<Map<String, Object>> repList = result.getQueryResultList()
-                    .stream()
-                    .map(x -> {
-                        Map<String, Object> resultMap = toResultMap(entityClass, x);
-                        return filterItem(resultMap, x.getCode(), condition.getEntity());
-                    }).collect(Collectors.toList());
+                .stream()
+                .map(x -> {
+                    Map<String, Object> resultMap = toResultMap(entityClass, x);
+                    return filterItem(resultMap, x.getCode(), condition.getEntity());
+                }).collect(Collectors.toList());
             Tuple2<Integer, List<Map<String, Object>>> queryResult = Tuple.of(result.getTotalRow(), repList);
             return Either.right(queryResult);
         } else {
@@ -313,8 +313,8 @@ public class EntityServiceImpl implements EntityService {
         List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.CREATE);
 
         OperationResult createResult = buildBuilder
-                .invoke(toEntityUp(entityClass, null, valueUps))
-                .toCompletableFuture().join();
+            .invoke(toEntityUp(entityClass, null, valueUps))
+            .toCompletableFuture().join();
 
         if (createResult.getCode() == OperationResult.Code.OK) {
             if (createResult.getIdsList().size() < 1) {
@@ -344,7 +344,7 @@ public class EntityServiceImpl implements EntityService {
         }
 
         OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, null, condition))
-                .toCompletableFuture().join();
+            .toCompletableFuture().join();
 
         if (result.getCode() == OperationResult.Code.OK) {
             return result.getTotalRow();

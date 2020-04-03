@@ -104,6 +104,7 @@ public class UltPageSettingController {
             return response;
         }
     }
+
     /**
      * 根据页面Code获取页面bo列表
      *
@@ -115,11 +116,11 @@ public class UltPageSettingController {
         String tenantId = request.getParameter("tenantId");
         Response<ResponseList<UltPageBoItem>> response = new Response<>();
         if (!StringUtils.isEmpty(code)) {
-            List<UltPageBoItem> items =  entityServiceEx.findPageBos(code, tenantId);
+            List<UltPageBoItem> items = entityServiceEx.findPageBos(code, tenantId);
             if (items.size() > 0) {
                 response.setMessage("查询成功");
                 response.setCode("200");
-                response.setResult((ResponseList<UltPageBoItem>)items);
+                response.setResult((ResponseList<UltPageBoItem>) items);
                 return response;
             } else {
                 response.setMessage("查询无结果");
@@ -148,9 +149,9 @@ public class UltPageSettingController {
         Response<UltPageBoItem> response = new Response<>();
         if (!StringUtils.isEmpty(id)) {
             ds = pageBoMapLocalStore.query().selectAll()
-                    .where("settingId")
-                    .eq(id)
-                    .execute();
+                .where("settingId")
+                .eq(id)
+                .execute();
 
             List<Row> rows = ds.toRows();
             ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBoSeeting).collect(Collectors.toCollection(ResponseList::new));
@@ -174,8 +175,8 @@ public class UltPageSettingController {
     private Response initSeetings(String id) throws NoSuchAttributeException {
         String accessUri = ExternalServiceConfig.PfcpAccessUri();
         String url = String.format("%s/pages/%s/deployments"
-                , accessUri
-                , id);
+            , accessUri
+            , id);
         Authorization auth = new Authorization();
         auth.setAppId(Long.parseLong(config.getAppId()));
 //        auth.setTenantId(Long.parseLong(config.getTenant()));
@@ -210,11 +211,11 @@ public class UltPageSettingController {
             List<Row> trows = new ArrayList<>();
             if (!StringUtils.isEmpty(tenantId)) {
                 ds = pageBoMapLocalStore.query().selectAll()
-                        .where("refPageId")
-                        .eq(id)
-                        .and("tenantId")
-                        .eq(tenantId)
-                        .execute();
+                    .where("refPageId")
+                    .eq(id)
+                    .and("tenantId")
+                    .eq(tenantId)
+                    .execute();
                 trows = ds.toRows();
             }
             if (ds != null && trows != null && trows.size() > 0) {
@@ -222,9 +223,9 @@ public class UltPageSettingController {
                 return items;
             } else {
                 ds = pageBoMapLocalStore.query().selectAll()
-                        .where("id")
-                        .eq(id)
-                        .execute();
+                    .where("id")
+                    .eq(id)
+                    .execute();
                 List<Row> rows = ds.toRows();
                 ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBos).collect(Collectors.toCollection(ResponseList::new));
                 return items;
@@ -239,9 +240,9 @@ public class UltPageSettingController {
         if (!StringUtils.isEmpty(id)) {
             Response<UltPageBoItem> response = new Response<>();
             ds = pageBoMapLocalStore.query().selectAll()
-                    .where("settingId")
-                    .eq(id)
-                    .execute();
+                .where("settingId")
+                .eq(id)
+                .execute();
 
             List<Row> rows = ds.toRows();
             ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBoSeeting).collect(Collectors.toCollection(ResponseList::new));
