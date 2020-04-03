@@ -56,6 +56,26 @@
                     <skip>${deployment.skip}</skip>
                 </configuration>
             </plugin>
+            <!--            <plugin>-->
+            <!--                <groupId>org.jacoco</groupId>-->
+            <!--                <artifactId>jacoco-maven-plugin</artifactId>-->
+            <!--                <version>0.8.5</version>-->
+            <!--                <executions>-->
+            <!--                    <execution>-->
+            <!--                        <id>pre-unit-test</id>-->
+            <!--                        <goals>-->
+            <!--                            <goal>prepare-agent</goal>-->
+            <!--                        </goals>-->
+            <!--                    </execution>-->
+            <!--                    <execution>-->
+            <!--                        <id>post-unit-test</id>-->
+            <!--                        <phase>test</phase>-->
+            <!--                        <goals>-->
+            <!--                            <goal>report</goal>-->
+            <!--                        </goals>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
         </plugins>
     </build>
     <modules>
@@ -195,7 +215,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <checkstyle.skip>true</checkstyle.skip>
         <repository.host>http://120.27.140.65:8081/nexus</repository.host>
-        <deployment.skip>true</deployment.skip>
+        <deployment.skip>false</deployment.skip>
     </properties>
 
 </project>

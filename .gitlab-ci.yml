@@ -11,7 +11,7 @@ maven-test-build:
     - update_pom_version
     - ./mvnw clean install -s ./.mvn/wrapper/settings.xml -Dmaven.test.skip=true
     - mkdir -p /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
-    - cp ./target/app.jar /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}/app.jar
+    - cp ./target/xplat-meta-oqsengine.jar /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}/app.jar
 
 tag-mvn-deploy:
   stage: tag-mvn-deploy

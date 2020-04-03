@@ -15,7 +15,6 @@
     <properties>
         <checkstyle.skip>false</checkstyle.skip>
         <dependencies.version>6.0.1-SNAPSHOT</dependencies.version>
-        <deployment.skip>false</deployment.skip>
     </properties>
 
     <dependencies>

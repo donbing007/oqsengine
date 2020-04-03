@@ -17,7 +17,6 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <akka.grpc.version>0.7.3</akka.grpc.version>
         <project.encoding>UTF-8</project.encoding>
-        <deployment.skip>false</deployment.skip>
     </properties>
     <dependencies>
         <dependency>

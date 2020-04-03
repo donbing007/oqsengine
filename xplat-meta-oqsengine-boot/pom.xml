@@ -14,6 +14,7 @@
 
     <properties>
         <checkstyle.skip>false</checkstyle.skip>
+        <deployment.skip>true</deployment.skip>
     </properties>
 
     <dependencies>
@@ -141,7 +142,7 @@
                         <phase>package</phase>
                         <configuration>
                             <tasks>
-                                <copy tofile="../target/app.jar">
+                                <copy tofile="../target/xplat-meta-oqsengine.jar">
                                     <fileset dir="target">
                                         <include name="xplat-meta-oqsengine.jar"/>
                                     </fileset>
