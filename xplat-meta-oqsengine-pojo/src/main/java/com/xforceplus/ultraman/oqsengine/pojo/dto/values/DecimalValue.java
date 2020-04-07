@@ -24,6 +24,11 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
     }
 
     @Override
+    public String valueToString() {
+        return getValue().toPlainString();
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(getField(), getValue());
     }
