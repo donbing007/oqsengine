@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.config.ExternalServiceConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
-import org.omg.CORBA.NO_RESPONSE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -66,7 +64,7 @@ public class UltFormInitService implements CommandLineRunner {
             }
         } catch (Exception e) {
             logger.info("init forms config faild");
-            throw new NO_RESPONSE(
+            throw new Exception(
                     String.format("init forms config faild,The url is '%s'.", url));
         }
 
