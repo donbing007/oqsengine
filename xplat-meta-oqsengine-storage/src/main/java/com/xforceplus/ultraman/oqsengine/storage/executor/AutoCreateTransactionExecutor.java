@@ -56,7 +56,9 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
 
         } finally {
 
-            transactionManager.finish(tx);
+            if (localTx) {
+                transactionManager.finish(tx);
+            }
 
         }
 
