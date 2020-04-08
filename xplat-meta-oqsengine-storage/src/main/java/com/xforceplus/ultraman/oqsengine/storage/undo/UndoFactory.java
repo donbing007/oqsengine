@@ -43,7 +43,7 @@ public class UndoFactory {
     @PostConstruct
     public void init() {
         this.undoLogQ = new LinkedBlockingQueue<>();
-        List<UndoInfo> undoInfos = undoLogStore.getAllUndoInfo();
+        List<UndoInfo> undoInfos = undoLogStore.loadAllUndoInfo();
         this.undoLogQ.addAll(undoInfos);
 
         UndoExecutor undoExecutor = new UndoExecutor(

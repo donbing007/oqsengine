@@ -79,4 +79,6 @@ public interface Transaction {
     void attach(long id);
 
     void setUndoExecutor(UndoExecutor undoExecutor);
+
+    UndoExecutor getUndoExecutor();
 }

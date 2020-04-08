@@ -27,8 +27,8 @@ public class SphinxQLIndexStorageCommandInvoker extends AbstractStorageCommandIn
 
     public SphinxQLIndexStorageCommandInvoker(String indexTableName){
         storageCommands = new HashMap<>();
-        storageCommands.put(OpTypeEnum.BUILD, new BuildStorageCommand(indexTableName));
-        storageCommands.put(OpTypeEnum.REPLACE, new ReplaceStorageCommand(indexTableName));
+        storageCommands.put(OpTypeEnum.BUILD, new BuildStorageCommand(storageStrategyFactory, indexTableName));
+        storageCommands.put(OpTypeEnum.REPLACE, new ReplaceStorageCommand(storageStrategyFactory, indexTableName));
         storageCommands.put(OpTypeEnum.REPLACE_ATTRIBUTE, new ReplaceAttributeStorageCommand(storageStrategyFactory, indexTableName));
         storageCommands.put(OpTypeEnum.DELETE, new DeleteStorageCommand(indexTableName));
     }

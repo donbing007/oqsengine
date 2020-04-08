@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,16 +64,20 @@ public class UndoTest {
     }
 
     @Test
-    public void test() {
-        transactionManager.create();
+    public void testBuild() throws SQLException {
+
+
+        Transaction tx = transactionManager.create();
+
+        tx.getUndoExecutor().setMockError(true);
 
         IEntity entity = buildEntity(fatherEntityClass, false);
-        try {
-            entityManagementService.build(entity);
-        } catch (SQLException e) {
 
-        }
+        entityManagementService.build(entity);
+
     }
+
+
 
     private IEntity buildEntity(IEntityClass entityClass, boolean buildId) {
         long entityId = 0;

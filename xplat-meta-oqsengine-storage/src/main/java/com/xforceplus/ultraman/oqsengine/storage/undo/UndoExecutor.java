@@ -32,6 +32,7 @@ public class UndoExecutor {
     private BlockingQueue<UndoInfo> undoLogQ;
     private UndoLogStore undoLogStore;
     private Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers;
+    private boolean mockError;
 
     public UndoExecutor(
             BlockingQueue<UndoInfo> undoLogQ,
@@ -40,6 +41,7 @@ public class UndoExecutor {
         this.undoLogQ = undoLogQ;
         this.undoLogStore = undoLogStore;
         this.storageCommandInvokers = storageCommandInvokers;
+        this.mockError = false;
     }
 
     public void undo(TransactionResource resource) throws SQLException {
@@ -102,4 +104,13 @@ public class UndoExecutor {
         }
     }
 
+    public void mock() throws SQLException {
+        if(mockError) {
+            throw new SQLException("");
+        }
+    }
+
+    public void setMockError(boolean mockError) {
+        this.mockError = mockError;
+    }
 }

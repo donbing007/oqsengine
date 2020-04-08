@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.command.BuildStorageComm
 import com.xforceplus.ultraman.oqsengine.storage.master.command.CommonUtil;
 import com.xforceplus.ultraman.oqsengine.storage.master.command.DeleteStorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.master.command.ReplaceStorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.master.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -46,15 +47,6 @@ import java.util.stream.Collectors;
 public class SQLMasterStorage implements MasterStorage {
 
     final Logger logger = LoggerFactory.getLogger(SQLMasterStorage.class);
-
-    private static final String REPLACE_VERSION_TIME_SQL =
-        "update %s set version = ?, time = ? where id = ?";
-    private static final String SELECT_SQL =
-        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id = ? and deleted = false";
-    private static final String SELECT_IN_SQL =
-        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id in (%s) and deleted = false";
-    private static final String SELECT_VERSION_TIME_SQL =
-        "select version, time from %s where id = ?";
 
     @Resource(name = "masterDataSourceSelector")
     private Selector<DataSource> dataSourceSelector;
@@ -106,7 +98,6 @@ public class SQLMasterStorage implements MasterStorage {
         ExecutorHelper.shutdownAndAwaitTermination(worker);
     }
 
-
     @Override
     public Optional<IEntity> select(long id, IEntityClass entityClass) throws SQLException {
         return (Optional<IEntity>) transactionExecutor.execute(
@@ -115,7 +106,7 @@ public class SQLMasterStorage implements MasterStorage {
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
                     String tableName = tableNameSelector.select(Long.toString(id));
-                    String sql = String.format(SELECT_SQL, tableName);
+                    String sql = String.format(SQLConstant.SELECT_SQL, tableName);
 
                     PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
                     st.setLong(1, id); // id
@@ -189,7 +180,7 @@ public class SQLMasterStorage implements MasterStorage {
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
                     String tableName = tableNameSelector.select(Long.toString(sourceId));
-                    String sql = String.format(SELECT_VERSION_TIME_SQL, tableName);
+                    String sql = String.format(SQLConstant.SELECT_VERSION_TIME_SQL, tableName);
 
                     PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
                     st.setLong(1, sourceId);
@@ -227,7 +218,7 @@ public class SQLMasterStorage implements MasterStorage {
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
                     String tableName = tableNameSelector.select(Long.toString(targetId));
-                    String sql = String.format(REPLACE_VERSION_TIME_SQL, tableName);
+                    String sql = String.format(SQLConstant.REPLACE_VERSION_TIME_SQL, tableName);
 
 
                     PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
@@ -258,7 +249,6 @@ public class SQLMasterStorage implements MasterStorage {
 
 
     }
-
 
     @Override
     public void build(IEntity entity) throws SQLException {
@@ -448,7 +438,7 @@ public class SQLMasterStorage implements MasterStorage {
                             String inSqlIds = partitionTableIds.stream().map(
                                 id -> id.toString()).collect(Collectors.joining(","));
 
-                            String sql = String.format(SELECT_IN_SQL, tableName, inSqlIds);
+                            String sql = String.format(SQLConstant.SELECT_IN_SQL, tableName, inSqlIds);
                             PreparedStatement st = ((Connection) res.value()).prepareStatement(sql);
                             ResultSet rs = st.executeQuery();
 

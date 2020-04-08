@@ -7,8 +7,6 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 
 import java.util.Map;
 
-import static com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum.REPLACE_ATTRIBUTE;
-
 /**
  * 版权：    上海云砺信息科技有限公司
  * 创建者:   youyifan
@@ -41,7 +39,7 @@ public class UndoUtil {
             case BUILD: undoOpType = OpTypeEnum.DELETE; break;
             case DELETE: undoOpType = OpTypeEnum.BUILD; break;
             case REPLACE: undoOpType = OpTypeEnum.REPLACE; break;
-            case REPLACE_ATTRIBUTE: undoOpType = REPLACE_ATTRIBUTE; break;
+            case REPLACE_ATTRIBUTE: undoOpType = OpTypeEnum.REPLACE_ATTRIBUTE; break;
             default:
         }
 

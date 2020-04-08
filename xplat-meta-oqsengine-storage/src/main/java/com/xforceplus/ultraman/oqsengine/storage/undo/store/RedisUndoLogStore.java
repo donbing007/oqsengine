@@ -7,6 +7,8 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoInfo;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +22,8 @@ import java.util.Set;
  * 修改历史:
  */
 public class RedisUndoLogStore implements UndoLogStore {
+
+    final Logger logger = LoggerFactory.getLogger(RedisUndoLogStore.class);
 
     private RedissonClient redissonClient;
 
@@ -65,7 +69,7 @@ public class RedisUndoLogStore implements UndoLogStore {
     }
 
     @Override
-    public List<UndoInfo> getAllUndoInfo() {
+    public List<UndoInfo> loadAllUndoInfo() {
         RMap undoLogs = getUndoLog();
 
         Set<String> keySet = undoLogs.keySet();
@@ -81,7 +85,7 @@ public class RedisUndoLogStore implements UndoLogStore {
 
             undoInfos.add(undoInfo);
         }
-
+        logger.debug("Loading undo info size {} from redis", undoInfos.size());
         return undoInfos;
     }
 

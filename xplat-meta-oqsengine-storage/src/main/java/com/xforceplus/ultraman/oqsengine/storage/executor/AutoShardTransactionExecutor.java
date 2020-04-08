@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.storage.executor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.UndoFactory;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Constructor;
@@ -24,8 +23,6 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
 
     private Class resourceClass;
 
-    private UndoFactory undoFactory;
-
     /**
      * 构造一个事务执行器,需要一个事务管理器.
      *
@@ -34,12 +31,6 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
     public AutoShardTransactionExecutor(TransactionManager transactionManager, Class resourceClass) {
         this.transactionManager = transactionManager;
         this.resourceClass = resourceClass;
-    }
-
-    public AutoShardTransactionExecutor(TransactionManager transactionManager, Class resourceClass, UndoFactory undoFactory) {
-        this.transactionManager = transactionManager;
-        this.resourceClass = resourceClass;
-        this.undoFactory = undoFactory;
     }
 
     @Override
@@ -92,7 +83,6 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
 
             if (tx.isPresent()) {
                 resource.setUndoInfo(tx.get().id(), shardTask.getShardKey(), shardTask.getOpType(), res);
-                tx.get().setUndoExecutor(undoFactory.getUndoExecutor());
             }
 
             return res;

@@ -47,6 +47,11 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
+    public UndoExecutor getUndoExecutor() {
+        return undoExecutor;
+    }
+
+    @Override
     public synchronized void commit() throws SQLException {
         check();
         doEndNew(true);
@@ -188,10 +193,10 @@ public class MultiLocalTransaction implements Transaction {
                 }
                 transactionResource.destroy();
             }
+            undoExecutor.mock();
         } catch (SQLException ex) {
             exHolder.add(0, ex);
 
-            //TODO: 发生了异常,需要 rollback, 这里需要 undo 日志.by dongbin 2020/02/17
             for (TransactionResource transactionResource : transactionResourceHolder) {
                 if (!transactionResource.isDestroyed()) {
                     transactionResource.rollback();
@@ -213,7 +218,7 @@ public class MultiLocalTransaction implements Transaction {
             }
         }
 
-        if(exHolder.isEmpty()) {
+        if(!exHolder.isEmpty()) {
             undoExecutor.removeTxUndoLog(id);
         }
 

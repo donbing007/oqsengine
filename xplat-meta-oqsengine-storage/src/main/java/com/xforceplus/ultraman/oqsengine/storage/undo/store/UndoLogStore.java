@@ -26,5 +26,5 @@ public interface UndoLogStore {
 
     void remove(Long txId);
 
-    List<UndoInfo> getAllUndoInfo();
+    List<UndoInfo> loadAllUndoInfo();
 }
