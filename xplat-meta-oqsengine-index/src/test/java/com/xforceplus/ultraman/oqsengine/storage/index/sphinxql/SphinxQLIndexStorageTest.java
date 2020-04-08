@@ -72,7 +72,8 @@ public class SphinxQLIndexStorageTest {
     public void before() throws Exception {
 
 
-        Selector<DataSource> dataSourceSelector = buildDataSourceSelector("./src/test/resources/sql_index_storage.conf");
+        Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector("./src/test/resources/sql_index_storage.conf");
+        Selector<DataSource> searchDataSourceSelector = buildSearchDataSourceSelector("./src/test/resources/sql_index_storage.conf");
 
 
         truncate();
@@ -91,8 +92,8 @@ public class SphinxQLIndexStorageTest {
         optimizer.init();
 
         storage = new SphinxQLIndexStorage();
-        ReflectionTestUtils.setField(storage, "writerDataSourceSelector", dataSourceSelector);
-        ReflectionTestUtils.setField(storage, "searchDataSourceSelector", dataSourceSelector);
+        ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
+        ReflectionTestUtils.setField(storage, "searchDataSourceSelector", searchDataSourceSelector);
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "queryOptimizer", optimizer);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
@@ -672,12 +673,21 @@ public class SphinxQLIndexStorageTest {
         return random.nextInt(max) % (max - min + 1) + min;
     }
 
-    private Selector<DataSource> buildDataSourceSelector(String file) {
+    private Selector<DataSource> buildWriteDataSourceSelector(String file) {
         System.setProperty(DataSourceFactory.CONFIG_FILE, file);
 
         dataSourcePackage = DataSourceFactory.build();
 
         return new TakeTurnsSelector<>(dataSourcePackage.getIndexWriter());
+
+    }
+
+    private Selector<DataSource> buildSearchDataSourceSelector(String file) {
+        System.setProperty(DataSourceFactory.CONFIG_FILE, file);
+
+        dataSourcePackage = DataSourceFactory.build();
+
+        return new TakeTurnsSelector<>(dataSourcePackage.getIndexSearch());
 
     }
 } 
