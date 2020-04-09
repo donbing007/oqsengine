@@ -86,10 +86,10 @@ public class LogUndoHandler extends Thread {
 
         dataSource = this.dataSourceSelectors
                 .get(undoInfo.getDbType())
-                .select(undoInfo.getDbKey());
+                .select(undoInfo.getShardKey());
 
         if(dataSource == null) {
-            logger.error("can't find datasource by dbKey-{}", undoInfo.getDbKey());
+            logger.error("can't find datasource by dbKey-{}", undoInfo.getShardKey());
             return ;
         }
 
@@ -98,7 +98,7 @@ public class LogUndoHandler extends Thread {
 
         if(cmd == null) {
             logger.error("can't find storage command by dbType-{}, opType-{}",
-                    undoInfo.getDbKey(), undoInfo.getOpType());
+                    undoInfo.getShardKey(), undoInfo.getOpType());
             return ;
         }
 

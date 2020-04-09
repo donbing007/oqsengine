@@ -1,14 +1,20 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.command;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.storage.master.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 /**
  * 版权：    上海云砺信息科技有限公司
@@ -40,5 +46,10 @@ public class CommonUtil {
         }
         return object.toJSONString();
     }
+
+    public static IEntity selectStorageEntity(Connection conn, String tableName, long id) throws SQLException {
+        return null;
+    }
+
 
 }

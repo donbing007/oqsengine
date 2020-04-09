@@ -4,12 +4,17 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -112,5 +117,36 @@ public class CommonUtil {
         return fullfileds;
     }
 
+    public static StorageEntity selectStorageEntity(Connection conn, String tableName, long id) throws SQLException {
+        PreparedStatement st = null;
+        ResultSet rs = null;
+        try {
+            String sql = String.format(SQLConstant.SELECT_FROM_ID_SQL, tableName);
+            st = conn.prepareStatement(sql);
+            st.setLong(1, id);
 
+            rs = st.executeQuery();
+            StorageEntity storageEntity = null;
+            if (rs.next()) {
+                storageEntity = new StorageEntity(
+                        id,
+                        rs.getLong(FieldDefine.ENTITY),
+                        rs.getLong(FieldDefine.PREF),
+                        rs.getLong(FieldDefine.CREF),
+                        JSON.parseObject(rs.getString(FieldDefine.JSON_FIELDS)),
+                        null
+                );
+            }
+
+            return storageEntity;
+        } finally {
+            if (rs != null) {
+                rs.close();
+            }
+
+            if (st != null) {
+                st.close();
+            }
+        }
+    }
 }

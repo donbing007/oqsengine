@@ -60,7 +60,6 @@ public class UndoFactory {
 
     public UndoFactory(UndoLogStore undoLogStore){
         this.undoLogStore = undoLogStore;
-
         this.storageCommandInvokers = new HashMap<>();
         this.dataSourceSelectors = new HashMap<>();
     }
@@ -89,6 +88,7 @@ public class UndoFactory {
 
     @PreDestroy
     void destroy(){
+        logger.debug("undo log task is stopped");
         logUndoHandler.close();
     }
 }

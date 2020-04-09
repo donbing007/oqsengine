@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.sql;
 
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.AbstractTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoInfo;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -15,13 +13,22 @@ import java.sql.SQLException;
  * @version 0.1 2020/2/15 21:57
  * @since 1.8
  */
-public class ConnectionTransactionResource implements TransactionResource<Connection> {
+public class ConnectionTransactionResource extends AbstractTransactionResource<Connection> {
 
-    private DataSource key;
+    private Object key;
     private Connection conn;
-    private UndoInfo undoInfo;
 
     public ConnectionTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
+        this.key = key;
+        this.conn = conn;
+        if (autocommit) {
+            this.conn.setAutoCommit(true);
+        } else {
+            this.conn.setAutoCommit(false);
+        }
+    }
+
+    public ConnectionTransactionResource(String key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
         this.conn = conn;
         if (autocommit) {
@@ -64,16 +71,6 @@ public class ConnectionTransactionResource implements TransactionResource<Connec
     @Override
     public boolean isDestroyed() throws SQLException {
         return conn.isClosed();
-    }
-
-    @Override
-    public void setUndoInfo(Long txId, String dbKey, OpTypeEnum opType, Object obj){
-        this.undoInfo = new UndoInfo(txId, dbKey, dbType(), opType, obj);
-    }
-
-    @Override
-    public UndoInfo getUndoInfo() {
-        return undoInfo;
     }
 
 }

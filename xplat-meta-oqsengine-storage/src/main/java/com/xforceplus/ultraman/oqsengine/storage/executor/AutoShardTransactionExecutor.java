@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.executor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.util.UndoUtil;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Constructor;
@@ -42,26 +43,27 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
             throw new SQLException("Task types other than DataSourceShardingTask are not supported.");
         }
 
-        DataSource targetDataSource = shardTask.getDataSourceSelector().select(shardTask.getShardKey());
+        String dbKey = UndoUtil.createDbKey(resourceClass.getSimpleName(), shardTask.getShardKey());
 
+        DataSource targetDataSource = shardTask.getDataSourceSelector().select(shardTask.getShardKey());
         TransactionResource resource;
         Optional<Transaction> tx = transactionManager.getCurrent();
         if (tx.isPresent()) {
-            Optional<TransactionResource> currentRes = tx.get().query(targetDataSource);
+            Optional<TransactionResource> currentRes = tx.get().query(dbKey);
             if (currentRes.isPresent()) {
                 /**
                  * 已经存在资源,重用.
                  */
                 resource = currentRes.get();
-
             } else {
+
                 /**
                  * 资源不存在,重新创建.
                  */
                 Connection conn = targetDataSource.getConnection();
 
                 try {
-                    resource = buildResource(targetDataSource, conn, false);
+                    resource = buildResource(dbKey, conn, false);
                 } catch (Exception ex) {
                     throw new SQLException(ex.getMessage(), ex);
                 }
@@ -72,20 +74,14 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
             // 无事务运行.
             Connection conn = targetDataSource.getConnection();
             try {
-                resource = buildResource(targetDataSource, conn, true);
+                resource = buildResource(dbKey, conn, true);
             } catch (Exception ex) {
                 throw new SQLException(ex.getMessage(), ex);
             }
         }
 
         try {
-            Object res = task.run(resource);
-
-            if (tx.isPresent()) {
-                resource.setUndoInfo(tx.get().id(), shardTask.getShardKey(), shardTask.getOpType(), res);
-            }
-
-            return res;
+            return task.run(resource);
         } finally {
             if (!tx.isPresent()) {
                 resource.destroy();
@@ -100,4 +96,13 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
                 resourceClass.getConstructor(DataSource.class, Connection.class, Boolean.TYPE);
         return constructor.newInstance(key, value, autocommit);
     }
+
+    private TransactionResource buildResource(String key, Connection value, boolean autocommit)
+            throws Exception {
+
+        Constructor<TransactionResource> constructor =
+                resourceClass.getConstructor(String.class, Connection.class, Boolean.TYPE);
+        return constructor.newInstance(key, value, autocommit);
+    }
+
 }

@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
@@ -15,6 +16,8 @@ import java.util.Map;
  * 修改历史:
  */
 public class UndoUtil {
+
+    public final static String SEPARATOR = "-";
 
     public static StorageCommand selectStorageCommand(
             Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers,
@@ -44,5 +47,17 @@ public class UndoUtil {
         }
 
         return selectStorageCommand(storageCommandInvokers, dbType, undoOpType);
+    }
+
+    public static String createDbKey(String resourceName, String shardKey){
+        return resourceName + SEPARATOR + shardKey;
+    }
+
+    public static String getShardKeyFromDbKey(String dbKey) {
+        if(StringUtils.isEmpty(dbKey)) {
+            return null;
+        }
+        String[] parts = dbKey.split(SEPARATOR);
+        return parts.length == 2 ? parts[1]:null;
     }
 }

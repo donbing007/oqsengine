@@ -19,6 +19,8 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywor
 import com.xforceplus.ultraman.oqsengine.storage.query.QueryOptimizer;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
@@ -64,6 +66,10 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     @Resource(name = "indexStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
+
+    @Resource(name = "sphinxQLIndexStorageCommandInvoker")
+    private StorageCommandInvoker storageCommandInvoker;
+
 
     private String indexTableName;
 
@@ -195,7 +201,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    return new ReplaceAttributeStorageCommand(storageStrategyFactory, indexTableName).execute((Connection) resource.value(), attribute);
+                    return storageCommandInvoker.execute(resource, OpTypeEnum.REPLACE_ATTRIBUTE, attribute);
                 }
             });
     }
@@ -208,7 +214,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                 new DataSourceShardingTask(writerDataSourceSelector, Long.toString(entity.id())) {
                     @Override
                     public Object run(TransactionResource resource) throws SQLException {
-                        return new BuildStorageCommand(storageStrategyFactory, indexTableName).execute((Connection) resource.value(), entity);
+                        return storageCommandInvoker.execute(resource, OpTypeEnum.BUILD, entity);
                     }
                 });
     }
@@ -221,7 +227,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                 new DataSourceShardingTask(writerDataSourceSelector, Long.toString(entity.id())) {
                     @Override
                     public Object run(TransactionResource resource) throws SQLException {
-                        return new ReplaceStorageCommand(storageStrategyFactory, indexTableName).execute((Connection) resource.value(), entity);
+                        return storageCommandInvoker.execute(resource, OpTypeEnum.BUILD, entity);
                     }
                 });
     }
@@ -234,7 +240,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
             @Override
             public Object run(TransactionResource resource) throws SQLException {
-                return new DeleteStorageCommand(indexTableName).execute((Connection) resource.value(), entity);
+                return storageCommandInvoker.execute(resource, OpTypeEnum.DELETE, entity);
             }
         });
 

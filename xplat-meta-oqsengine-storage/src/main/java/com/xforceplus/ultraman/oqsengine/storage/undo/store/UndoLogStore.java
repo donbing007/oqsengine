@@ -20,6 +20,8 @@ public interface UndoLogStore {
 
     void save(Long txId, String dbKey, DbTypeEnum dbType, OpTypeEnum opType, Object data);
 
+    boolean isExist(Long txId);
+
     boolean isExist(Long txId, DbTypeEnum dbType, OpTypeEnum opType);
 
     void remove(Long txId, DbTypeEnum dbType, OpTypeEnum opType);

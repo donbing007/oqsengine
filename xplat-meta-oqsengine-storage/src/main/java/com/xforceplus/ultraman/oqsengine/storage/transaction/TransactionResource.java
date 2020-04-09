@@ -57,7 +57,4 @@ public interface TransactionResource<V> {
      */
     boolean isDestroyed() throws SQLException;
 
-    void setUndoInfo(Long txId, String dbKey, OpTypeEnum opType, Object obj);
-
-    UndoInfo getUndoInfo();
 }

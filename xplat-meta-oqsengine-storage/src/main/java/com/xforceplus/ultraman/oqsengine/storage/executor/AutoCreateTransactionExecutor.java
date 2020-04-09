@@ -40,10 +40,9 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
 
             Object res = task.run(null);
 
-//            if (localTx) {
-//                tx.commit();
-//            }
-            tx.commit();
+            if (localTx) {
+                tx.commit();
+            }
 
             return res;
 
@@ -57,7 +56,9 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
 
         } finally {
 
-            transactionManager.finish(tx);
+            if (localTx) {
+                transactionManager.finish(tx);
+            }
 
         }
 

@@ -42,7 +42,21 @@ public class RedisUndoLogStore implements UndoLogStore {
     public void save(Long txId, String dbKey, DbTypeEnum dbType, OpTypeEnum opType, Object data) {
         String key = CacheConstant.getLogKey(txId, dbType, opType);
         UndoLog undoLog = new UndoLog(dbKey, dbType, opType, data);
-        getUndoLog().put(key, CompressUtil.compress(undoLog));
+        getUndoLog().put(key,
+                CompressUtil.compress(undoLog));
+    }
+
+    @Override
+    public boolean isExist(Long txId) {
+        boolean isExist = false;
+        DbTypeEnum[] dbTypeEnums = DbTypeEnum.values();
+        OpTypeEnum[] opTypeEnums = OpTypeEnum.values();
+        for(DbTypeEnum dbType:dbTypeEnums) {
+            for(OpTypeEnum opType:opTypeEnums) {
+                isExist = isExist(txId, dbType, opType);
+            }
+        }
+        return isExist;
     }
 
     @Override
@@ -80,7 +94,7 @@ public class RedisUndoLogStore implements UndoLogStore {
             Long txId = CacheConstant.getTxIdByKey(key);
 
             UndoInfo undoInfo = new UndoInfo(
-                    txId, undoLog.getDbKey(), undoLog.getDbType(),
+                    txId, undoLog.getShardKey(), undoLog.getDbType(),
                     undoLog.getOpType(), undoLog.getData());
 
             undoInfos.add(undoInfo);

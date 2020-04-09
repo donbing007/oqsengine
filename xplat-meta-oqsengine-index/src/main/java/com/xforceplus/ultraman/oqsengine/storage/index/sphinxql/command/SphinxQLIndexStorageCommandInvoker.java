@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.AbstractStorageCommandInvoker;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -20,12 +23,10 @@ import java.util.HashMap;
  */
 public class SphinxQLIndexStorageCommandInvoker extends AbstractStorageCommandInvoker {
 
-    final Logger logger = LoggerFactory.getLogger(SphinxQLIndexStorageCommandInvoker.class);
+    private String indexTableName;
 
-    @Resource(name = "masterStorageStrategy")
-    private StorageStrategyFactory storageStrategyFactory;
-
-    public SphinxQLIndexStorageCommandInvoker(String indexTableName){
+    public SphinxQLIndexStorageCommandInvoker(String indexTableName, StorageStrategyFactory storageStrategyFactory){
+        this.indexTableName = indexTableName;
         storageCommands = new HashMap<>();
         storageCommands.put(OpTypeEnum.BUILD, new BuildStorageCommand(storageStrategyFactory, indexTableName));
         storageCommands.put(OpTypeEnum.REPLACE, new ReplaceStorageCommand(storageStrategyFactory, indexTableName));
@@ -34,8 +35,22 @@ public class SphinxQLIndexStorageCommandInvoker extends AbstractStorageCommandIn
     }
 
     @Override
-    public Object execute(OpTypeEnum opType, Connection conn, Object data) throws SQLException {
-        return selectCommand(opType).execute(conn, data);
-    }
+    public Object execute(TransactionResource resource, OpTypeEnum opType, Object data) throws SQLException {
 
+        Object result = super.execute(resource, opType, data);
+
+        switch (opType) {
+            case REPLACE:
+                result = CommonUtil.selectStorageEntity((Connection) resource.value(), indexTableName, ((IEntity)data).id());
+                break;
+            case REPLACE_ATTRIBUTE:
+                result = CommonUtil.selectStorageEntity((Connection) resource.value(), indexTableName, ((IEntityValue)data).id());
+                break;
+            case BUILD:;
+            case DELETE:;
+            default:
+        }
+
+        return result;
+    }
 }

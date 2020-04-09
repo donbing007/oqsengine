@@ -8,7 +8,9 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvo
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.store.RedisUndoLogStore;
 import com.xforceplus.ultraman.oqsengine.storage.undo.store.UndoLogStore;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,19 +27,30 @@ import javax.sql.DataSource;
 @Configuration
 public class UndoConfiguration {
 
+    @Autowired
+    StorageStrategyFactory masterStorageStrategy;
+
+    @Autowired
+    StorageStrategyFactory indexStorageStrategy;
+
+    @Autowired
+    Selector<String> tableNameSelector;
+
     @Bean
     public UndoLogStore undoLogStore(RedissonClient redissonClient){
         return new RedisUndoLogStore(redissonClient);
     }
 
     @Bean
-    public StorageCommandInvoker sphinxQLIndexStorageCommandInvoker(@Value("${storage.index.name:oqsindex}") String indexTableName) {
-        return new SphinxQLIndexStorageCommandInvoker(indexTableName);
+    public StorageCommandInvoker sphinxQLIndexStorageCommandInvoker(@Value("${storage.index.name:oqsindex}") String indexTableName
+
+    ) {
+        return new SphinxQLIndexStorageCommandInvoker(indexTableName, indexStorageStrategy);
     }
 
     @Bean
     public StorageCommandInvoker sqlMasterStorageCommandInvoker() {
-        return new SQLMasterStorageCommandInvoker();
+        return new SQLMasterStorageCommandInvoker(tableNameSelector, masterStorageStrategy);
     }
 
     @Bean

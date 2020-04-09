@@ -203,16 +203,6 @@ public class MultiLocalTransactionTest {
         public boolean isDestroyed() throws SQLException {
             return false;
         }
-
-        @Override
-        public void setUndoInfo(Long txId, String dbType, OpTypeEnum opType, Object obj) {
-
-        }
-
-        @Override
-        public UndoInfo getUndoInfo() {
-            return null;
-        }
     }
 
 }

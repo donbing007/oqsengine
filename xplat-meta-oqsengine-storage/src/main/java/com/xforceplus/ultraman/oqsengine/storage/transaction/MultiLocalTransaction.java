@@ -187,26 +187,30 @@ public class MultiLocalTransaction implements Transaction {
             for (TransactionResource transactionResource : transactionResourceHolder) {
                 if (commit) {
                     transactionResource.commit();
-                    undoExecutor.saveUndoLog(transactionResource);
+                    undoExecutor.saveUndoLog(id, transactionResource);
                 } else {
                     transactionResource.rollback();
                 }
-                transactionResource.destroy();
+//                transactionResource.destroy();
             }
             undoExecutor.mock();
         } catch (SQLException ex) {
             exHolder.add(0, ex);
-
+            logger.debug("[UNDO] start to rollback or undo commit");
             for (TransactionResource transactionResource : transactionResourceHolder) {
                 if (!transactionResource.isDestroyed()) {
+                    logger.debug("[UNDO] transacitonResource {} rollback", transactionResource.key());
                     transactionResource.rollback();
                 } else {
                     if (commit) {
+                        logger.debug("[UNDO] transacitonResource {} rollback", transactionResource.key());
                         undoExecutor.undo(transactionResource);
                     }
                 }
             }
+            logger.debug("[UNDO] finish to rollback or undo commit");
         } finally {
+            logger.debug("clear transactionResource");
             for (TransactionResource transactionResource : transactionResourceHolder) {
                 try {
                     if (!transactionResource.isDestroyed()) {

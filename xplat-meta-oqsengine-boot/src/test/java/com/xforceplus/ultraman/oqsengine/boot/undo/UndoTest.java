@@ -54,7 +54,7 @@ public class UndoTest {
     private IEntityClass fatherEntityClass;
 
     @Before
-    public void before() throws Exception {
+    public void before() {
 
         fatherEntityClass = new EntityClass(longIdGenerator.next(), "father", Arrays.asList(
                 new Field(longIdGenerator.next(), "f1", FieldType.LONG, FieldConfig.build().searchable(true)),
@@ -74,6 +74,8 @@ public class UndoTest {
         IEntity entity = buildEntity(fatherEntityClass, false);
 
         entityManagementService.build(entity);
+
+        tx.commit();
 
     }
 

@@ -17,6 +17,8 @@ import com.xforceplus.ultraman.oqsengine.storage.master.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
@@ -59,6 +61,9 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Resource(name = "masterStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
+
+    @Resource(name = "sqlMasterStorageCommandInvoker")
+    private StorageCommandInvoker storageCommandInvoker;
 
     private long queryTimeout;
 
@@ -260,8 +265,7 @@ public class SQLMasterStorage implements MasterStorage {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    return new BuildStorageCommand(storageStrategyFactory, tableNameSelector)
-                            .execute(((Connection) resource.value()), entity);
+                    return storageCommandInvoker.execute(resource, OpTypeEnum.BUILD, entity);
                 }
             });
     }
@@ -276,8 +280,7 @@ public class SQLMasterStorage implements MasterStorage {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    return new ReplaceStorageCommand(storageStrategyFactory, tableNameSelector)
-                            .execute(((Connection) resource.value()), entity);
+                    return storageCommandInvoker.execute(resource, OpTypeEnum.REPLACE, entity);
                 }
             });
     }
@@ -292,8 +295,7 @@ public class SQLMasterStorage implements MasterStorage {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    return new DeleteStorageCommand(tableNameSelector)
-                            .execute(((Connection) resource.value()), entity);
+                    return storageCommandInvoker.execute(resource, OpTypeEnum.DELETE, entity);
                 }
             });
     }
