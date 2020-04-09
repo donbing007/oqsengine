@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>xplat-meta-oqsengine-testreport</artifactId>
+    <description>Test rate statistics aggregation, no actual working code.</description>
 
     <dependencies>
         <dependency>
