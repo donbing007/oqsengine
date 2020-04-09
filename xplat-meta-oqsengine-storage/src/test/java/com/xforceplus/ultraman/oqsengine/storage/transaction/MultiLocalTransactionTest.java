@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoInfo;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

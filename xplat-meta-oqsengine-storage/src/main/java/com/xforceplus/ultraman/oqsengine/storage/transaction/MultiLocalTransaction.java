@@ -13,7 +13,6 @@ import java.util.Optional;
  * Simple multi-local transaction implementation ensures atomicity before the commit,
  * but there is no guarantee of atomicity in the event that a commit produces an error.
  * Thread safety.
- *
  * @author dongbin
  * @version 0.1 2020/2/13 20:47
  * @since 1.8
@@ -177,7 +176,7 @@ public class MultiLocalTransaction implements Transaction {
     private void check() throws SQLException {
         if (isCompleted()) {
             throw new SQLException(
-                    String.format("The transaction has completed.[commit=%b, rollback=%b]", isCommitted(), isRollback()));
+                String.format("The transaction has completed.[commit=%b, rollback=%b]", isCommitted(), isRollback()));
         }
     }
 

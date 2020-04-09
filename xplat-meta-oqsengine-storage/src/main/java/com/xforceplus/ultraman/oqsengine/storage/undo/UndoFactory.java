@@ -3,9 +3,9 @@ package com.xforceplus.ultraman.oqsengine.storage.undo;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoInfo;
+import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 import com.xforceplus.ultraman.oqsengine.storage.undo.store.UndoLogStore;
-import com.xforceplus.ultraman.oqsengine.storage.undo.thread.LogUndoHandler;
+import com.xforceplus.ultraman.oqsengine.storage.undo.task.UndoLogTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,11 +28,11 @@ public class UndoFactory {
 
     final Logger logger = LoggerFactory.getLogger(UndoFactory.class);
 
-    private LinkedBlockingQueue<UndoInfo> undoLogQ;
+    private LinkedBlockingQueue<UndoLog> undoLogQ;
 
     private UndoLogStore undoLogStore;
 
-    private LogUndoHandler logUndoHandler;
+    private UndoLogTask logUndoHandler;
 
     private Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers;
 
@@ -43,14 +43,14 @@ public class UndoFactory {
     @PostConstruct
     public void init() {
         this.undoLogQ = new LinkedBlockingQueue<>();
-        List<UndoInfo> undoInfos = undoLogStore.loadAllUndoInfo();
+        List<UndoLog> undoInfos = undoLogStore.loadAllUndoInfo();
         this.undoLogQ.addAll(undoInfos);
 
         UndoExecutor undoExecutor = new UndoExecutor(
                 undoLogQ, undoLogStore, storageCommandInvokers);
         this.undoExecutor = undoExecutor;
 
-        this.logUndoHandler = new LogUndoHandler(
+        this.logUndoHandler = new UndoLogTask(
                 undoLogQ,
                 undoLogStore,
                 storageCommandInvokers,

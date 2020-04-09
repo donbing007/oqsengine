@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.undo.store;
 
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoInfo;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 
 import java.util.List;
@@ -28,5 +27,5 @@ public interface UndoLogStore {
 
     void remove(Long txId);
 
-    List<UndoInfo> loadAllUndoInfo();
+    List<UndoLog> loadAllUndoInfo();
 }

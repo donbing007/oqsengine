@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoInfo;
+import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,17 +15,17 @@ import java.util.List;
  */
 public abstract class AbstractTransactionResource<V> implements TransactionResource<V> {
 
-    protected List<UndoInfo> undoInfos;
+    protected List<UndoLog> undoInfos;
 
     public AbstractTransactionResource(){
         undoInfos = new ArrayList<>();
     }
 
     public void addUndoInfo(String dbKey, OpTypeEnum opType, Object obj) {
-        this.undoInfos.add(new UndoInfo(null, dbKey, dbType(), opType, obj));
+        this.undoInfos.add(new UndoLog(null, dbKey, dbType(), opType, obj));
     }
 
-    public List<UndoInfo> undoInfos() {
+    public List<UndoLog> undoInfos() {
         return undoInfos;
     }
 }

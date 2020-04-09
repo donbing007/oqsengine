@@ -9,7 +9,7 @@ import org.springframework.util.StringUtils;
  * 功能描述:
  * 修改历史:
  */
-public class CacheConstant {
+public class LogStoreConstant {
 
     public static final String UNDO_LOG = "OQSENGINE_UNDO_LOG";
 

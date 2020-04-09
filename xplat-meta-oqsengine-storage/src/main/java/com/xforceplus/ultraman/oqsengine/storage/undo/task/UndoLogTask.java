@@ -1,10 +1,10 @@
-package com.xforceplus.ultraman.oqsengine.storage.undo.thread;
+package com.xforceplus.ultraman.oqsengine.storage.undo.task;
 
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoInfo;
+import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 import com.xforceplus.ultraman.oqsengine.storage.undo.store.UndoLogStore;
 import com.xforceplus.ultraman.oqsengine.storage.undo.util.UndoUtil;
 import org.slf4j.Logger;
@@ -24,13 +24,13 @@ import java.util.concurrent.BlockingQueue;
  * 功能描述:
  * 修改历史:
  */
-public class LogUndoHandler extends Thread {
+public class UndoLogTask extends Thread {
 
-    private static final Logger logger = LoggerFactory.getLogger(LogUndoHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(UndoLogTask.class);
 
     private volatile boolean closed;
 
-    private BlockingQueue<UndoInfo> undoLogQ;
+    private BlockingQueue<UndoLog> undoLogQ;
 
     private UndoLogStore undoLogStore;
 
@@ -38,10 +38,10 @@ public class LogUndoHandler extends Thread {
 
     private Map<DbTypeEnum, Selector<DataSource>> dataSourceSelectors;
 
-    public LogUndoHandler(BlockingQueue<UndoInfo> undoLogQ,
-                          UndoLogStore undoLogStore,
-                          Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers,
-                          Map<DbTypeEnum, Selector<DataSource>> dataSourceSelectors
+    public UndoLogTask(BlockingQueue<UndoLog> undoLogQ,
+                       UndoLogStore undoLogStore,
+                       Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers,
+                       Map<DbTypeEnum, Selector<DataSource>> dataSourceSelectors
     ) {
         this.closed = false;
         this.undoLogQ = undoLogQ;
@@ -67,14 +67,14 @@ public class LogUndoHandler extends Thread {
     }
 
     void handleRemainingUndoLog() {
-        List<UndoInfo> undoInfos = new ArrayList<>();
+        List<UndoLog> undoInfos = new ArrayList<>();
         undoLogQ.drainTo(undoInfos);
-        for(UndoInfo undoInfo:undoInfos) {
+        for(UndoLog undoInfo:undoInfos) {
             handle(undoInfo);
         }
     }
 
-    void handle(UndoInfo undoInfo) {
+    void handle(UndoLog undoInfo) {
         DataSource dataSource;
 
         if(undoInfo.getDbType() == null ||

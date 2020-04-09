@@ -6,7 +6,7 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoInfo;
+import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 import com.xforceplus.ultraman.oqsengine.storage.undo.store.UndoLogStore;
 import com.xforceplus.ultraman.oqsengine.storage.undo.util.UndoUtil;
 import org.slf4j.Logger;
@@ -31,13 +31,13 @@ public class UndoExecutor {
 
     final Logger logger = LoggerFactory.getLogger(UndoExecutor.class);
 
-    private BlockingQueue<UndoInfo> undoLogQ;
+    private BlockingQueue<UndoLog> undoLogQ;
     private UndoLogStore undoLogStore;
     private Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers;
     private boolean mockError;
 
     public UndoExecutor(
-            BlockingQueue<UndoInfo> undoLogQ,
+            BlockingQueue<UndoLog> undoLogQ,
             UndoLogStore undoLogStore,
             Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers) {
         this.undoLogQ = undoLogQ;
@@ -52,10 +52,10 @@ public class UndoExecutor {
     public void undo(TransactionResource res) {
         AbstractTransactionResource resource = (AbstractTransactionResource) res;
 
-        List<UndoInfo> undoInfos = resource.undoInfos();
+        List<UndoLog> undoInfos = resource.undoInfos();
 
         logger.debug("[UndoExecutor UNDO] start undo {} items", undoInfos.size());
-        for(UndoInfo undoInfo:undoInfos) {
+        for(UndoLog undoInfo:undoInfos) {
             OpTypeEnum undoOpType = null;
             switch (undoInfo.getOpType()) {
                 case BUILD:
@@ -109,16 +109,16 @@ public class UndoExecutor {
     public void saveUndoLog(Long txId, TransactionResource res){
         AbstractTransactionResource resource = (AbstractTransactionResource) res;
         if (this.undoLogStore != null) {
-            List<UndoInfo> undoInfos = resource.undoInfos();
+            List<UndoLog> undoInfos = resource.undoInfos();
             logger.debug("[UndoExecutor UNDO] save undo infos {} items in store ", undoInfos.size());
-            for(UndoInfo undoInfo:undoInfos) {
+            for(UndoLog undoInfo:undoInfos) {
                 this.undoLogStore.save(txId, undoInfo.getShardKey(),
                         undoInfo.getDbType(), undoInfo.getOpType(), undoInfo.getData());
             }
         }
     }
 
-    public void removeUndoLog(UndoInfo undoInfo){
+    public void removeUndoLog(UndoLog undoInfo){
         if (this.undoLogStore != null) {
             this.undoLogStore.remove(undoInfo.getTxId(), undoInfo.getDbType(), undoInfo.getOpType());
             logger.debug("[UndoExecutor UNDO] success to clear undo log in store");
