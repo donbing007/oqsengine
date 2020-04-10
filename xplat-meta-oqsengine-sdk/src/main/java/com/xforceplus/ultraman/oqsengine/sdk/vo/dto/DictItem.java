@@ -9,6 +9,8 @@ public class DictItem {
 
     private String text;
 
+    private String version;
+
     public String getValue() {
         return value;
     }
@@ -23,5 +25,13 @@ public class DictItem {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }
