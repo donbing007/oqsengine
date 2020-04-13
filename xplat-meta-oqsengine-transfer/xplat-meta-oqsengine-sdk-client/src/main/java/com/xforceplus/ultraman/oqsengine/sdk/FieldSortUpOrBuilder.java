@@ -10,7 +10,7 @@ public interface FieldSortUpOrBuilder extends
   /**
    * <code>string code = 1;</code>
    */
-  java.lang.String getCode();
+  String getCode();
   /**
    * <code>string code = 1;</code>
    */
@@ -24,7 +24,7 @@ public interface FieldSortUpOrBuilder extends
   /**
    * <code>.FieldSortUp.Order order = 2;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.FieldSortUp.Order getOrder();
+  FieldSortUp.Order getOrder();
 
   /**
    * <code>.FieldUp field = 3;</code>
@@ -33,9 +33,9 @@ public interface FieldSortUpOrBuilder extends
   /**
    * <code>.FieldUp field = 3;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.FieldUp getField();
+  FieldUp getField();
   /**
    * <code>.FieldUp field = 3;</code>
    */
-  com.xforceplus.ultraman.oqsengine.sdk.FieldUpOrBuilder getFieldOrBuilder();
+  FieldUpOrBuilder getFieldOrBuilder();
 }

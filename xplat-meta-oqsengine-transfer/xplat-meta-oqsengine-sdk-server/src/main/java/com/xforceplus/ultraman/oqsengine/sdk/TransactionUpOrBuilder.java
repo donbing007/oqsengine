@@ -10,7 +10,7 @@ public interface TransactionUpOrBuilder extends
   /**
    * <code>string id = 1;</code>
    */
-  java.lang.String getId();
+  String getId();
   /**
    * <code>string id = 1;</code>
    */
@@ -20,7 +20,7 @@ public interface TransactionUpOrBuilder extends
   /**
    * <code>string service = 2;</code>
    */
-  java.lang.String getService();
+  String getService();
   /**
    * <code>string service = 2;</code>
    */
@@ -30,7 +30,7 @@ public interface TransactionUpOrBuilder extends
   /**
    * <code>string tansType = 3;</code>
    */
-  java.lang.String getTansType();
+  String getTansType();
   /**
    * <code>string tansType = 3;</code>
    */

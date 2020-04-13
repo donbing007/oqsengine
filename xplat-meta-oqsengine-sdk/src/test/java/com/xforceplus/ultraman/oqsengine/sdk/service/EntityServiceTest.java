@@ -409,7 +409,7 @@ public class EntityServiceTest {
          * long id, String name, FieldType fieldType, FieldConfig config, String dictId, String defaultValue
          */
         FieldConfig fieldConfig = new FieldConfig();
-        fieldConfig.setValidateRegexString("^(\\w)+(\\.\\w+)*@(\\w)+((\\.\\w{2,3}){1,3})$");
+        fieldConfig.validateRegexString("^(\\w)+(\\.\\w+)*@(\\w)+((\\.\\w{2,3}){1,3})$");
         EntityClass entityClass = new EntityClass(123L, "TestDefault"
                 , Arrays.asList(new Field(123L, "defaultfield"
                 , FieldType.STRING, fieldConfig)));
@@ -711,6 +711,37 @@ public class EntityServiceTest {
                         .build()));
     }
 
+
+    @Test
+    public void testQueryIn() throws InterruptedException {
+
+        Thread.sleep(10000);
+
+
+        Optional<EntityClass> entityOpt = entityService.loadByCode("configDataMapping");
+
+        Map<String, Object> map = new HashMap<>();
+        Long id = entityService.create(entityOpt.get(), map).get();
+
+        Long id2 = entityService.create(entityOpt.get(), map).get();
+
+//
+//        System.out.println(entityService.findByCondition(entityOpt.get(), new RequestBuilder()
+//                                                        .field("id", ConditionOp.eq, id)
+//                                                        .build()));
+//
+//        System.out.println(entityService.findByConditionWithIds(entityOpt.get(), Arrays.asList(id, id2), new ConditionQueryRequest()));
+
+
+        System.out.println(entityService.findByCondition(entityOpt.get()
+                , new RequestBuilder()
+                        .field("id",  ConditionOp.eq, id)
+//                        .field("create_time", ConditionOp.eq, "1586766405080")
+                        .build()
+                )
+        );
+        entityService.deleteOne(entityOpt.get(), id);
+    }
 
 //    @Test
 //    public void testLabel() throws InterruptedException {
