@@ -2,11 +2,11 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.ConditionValidation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.fieldtype.ConditionOperatorFieldValidationFactory;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 
 import java.io.Serializable;
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * 表示一系列条件组合.只支持以 And 方式进行组合.
@@ -245,8 +245,10 @@ public class Conditions implements Serializable {
 
         }
 
-        // 如果本条件没有 OR 连接,那么查看新条件中是否有条件连接.
-        if (!or) {
+        if (ConditionLink.OR == link) {
+            or = true;
+        } else if (!or) {
+
             or = conditions.haveOrLink();
         }
 
