@@ -107,8 +107,17 @@ index oqsindex
         rt_attr_json = jsonfields
         rt_field = fullfields
 
+        # 实时索引的块大小,建议在1G 到 2G 范围.
         rt_mem_limit = 1024m
+        # 中辍索引的最小字符范围,不能小于2.
         min_infix_len = 3
+        ngram_chars = U+3000..U+2FA1F
+        ngram_len = 1 
+        
+        # 以下两个配置项为必须,因为 OQSEngine 会用到区域匹配.
+        # see https://docs.manticoresearch.com/latest/html/conf_options_reference/index_configuration_options.html#index-zones
+        index_zones = F*
+        html_strip = 1
 }
 ```
 以上索引结构中,id 是默认的其和主库保持同步.即同一个 id 表示同一个实例数据.
@@ -116,7 +125,18 @@ index oqsindex
 * pref        指向实例父类实例id.
 * cref        指向实例子类实例 id.
 * jsonfields  搜索的索引属性集合,是一个 JSON 格式.
-* fullfields  搜索的全文索引属性集合,是一个以 F{fieldID}{fieldType} {fieldValue | unicode} 组成并以空格分隔的字符串.
+* fullfields  搜索的全文索引属性集合结构如下.
+              <F{groupName}>F{fieldName}{fieldType} {value}</groupName>
+              
+jsonFields 可以理解作为一个普通的属性来使用,支持范围查询.
+fullfields 实际是一个全文索引字段,以文本形式组织了文档.并以 html 的格式将每一个字段分隔开.
+所以对于 mainticore 的服务端必须要打开如下配置.
+```text
+index_zones = F*              # 范围的 html 标识,所有以 F 开头的都是合法的字段标签.
+html_strip = 1                # 打开 html 标签索引支持.
+ngram_chars = U+3000..U+2FA1F # 非英文字符范围指定.
+ngram_len = 1                 # 非英文字符的分词最小单位.
+```
 
 # 启动/关闭服务
 这是一个标准的 sprint boot 实现. 最低需求 jdk8.

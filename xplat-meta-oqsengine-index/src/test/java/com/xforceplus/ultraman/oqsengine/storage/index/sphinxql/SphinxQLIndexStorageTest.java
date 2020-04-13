@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoShardTransactionExecutor;
@@ -37,10 +38,14 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * SphinxQLIndexStorage Tester.
@@ -54,18 +59,108 @@ public class SphinxQLIndexStorageTest {
 
     private TransactionManager transactionManager = new DefaultTransactionManager(
         new IncreasingOrderLongIdGenerator(0));
-    private LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator(1);
-    private SphinxQLIndexStorage storage;
-    private List<IEntity> expectedEntitys;
-    private DataSourcePackage dataSourcePackage;
-    // 所有数据都会有的字段,用以选择所有数据
-    private IEntityField fixFieldAll = new Field(100000, "all", FieldType.BOOLEAN);
-    // 所有数据都会有的字段,用以范围选择.值为随机数字.
-    private IEntityField fixFieldRange = new Field(100001, "range", FieldType.LONG);
-    // 所有数据都会有的负数字符串.
-    private IEntityField fixStringNumber = new Field(100002, "Negative string", FieldType.STRING);
+    private LongIdGenerator idGenerator = new LongIdGenerator() {
 
-    private IEntityField fixStringsField = new Field(100003, "strings", FieldType.STRINGS);
+        private AtomicLong id = new AtomicLong(Long.MAX_VALUE);
+
+        @Override
+        public Long next() {
+            return id.getAndDecrement();
+        }
+    };
+    private SphinxQLIndexStorage storage;
+    private DataSourcePackage dataSourcePackage;
+
+
+    private static IEntityField longField = new Field(Long.MAX_VALUE, "long", FieldType.LONG);
+    private static IEntityField stringField = new Field(Long.MAX_VALUE - 1, "string", FieldType.STRING);
+    private static IEntityField boolField = new Field(Long.MAX_VALUE - 2, "bool", FieldType.BOOLEAN);
+    private static IEntityField dateTimeField = new Field(Long.MAX_VALUE - 3, "datetime", FieldType.DATETIME);
+    private static IEntityField decimalField = new Field(Long.MAX_VALUE - 4, "decimal", FieldType.DECIMAL);
+    private static IEntityField enumField = new Field(Long.MAX_VALUE - 5, "enum", FieldType.ENUM);
+    private static IEntityField stringsField = new Field(Long.MAX_VALUE - 6, "strings", FieldType.STRINGS);
+
+    private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "test", Arrays.asList(
+        longField,
+        stringField,
+        boolField,
+        dateTimeField,
+        decimalField,
+        enumField,
+        stringsField
+    ));
+
+    private static IEntity[] entityes;
+
+    static {
+        entityes = new IEntity[5];
+
+        long id = Long.MAX_VALUE;
+        IEntityValue values = new EntityValue(id);
+        values.addValues(Arrays.asList(
+            new LongValue(longField, 1L),
+            new StringValue(stringField, "v1"),
+            new BooleanValue(boolField, true),
+            new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1)),
+            new DecimalValue(decimalField, BigDecimal.ZERO),
+            new EnumValue(enumField, "1"),
+            new StringsValue(stringsField, "value1", "value2")
+        ));
+        entityes[0] = new Entity(id, entityClass, values);
+
+        id = Long.MAX_VALUE - 1;
+        values = new EntityValue(id);
+        values.addValues(Arrays.asList(
+            new LongValue(longField, 2L),
+            new StringValue(stringField, "v2"),
+            new BooleanValue(boolField, true),
+            new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 9, 0, 1)),
+            new DecimalValue(decimalField, BigDecimal.ONE),
+            new EnumValue(enumField, "CODE"),
+            new StringsValue(stringsField, "value1", "value2", "value3")
+        ));
+        entityes[1] = new Entity(id, entityClass, values);
+
+        id = Long.MAX_VALUE - 2;
+        values = new EntityValue(id);
+        values.addValues(Arrays.asList(
+            new LongValue(longField, 2L),
+            new StringValue(stringField, "hello world"),
+            new BooleanValue(boolField, false),
+            new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 11, 18, 1)),
+            new DecimalValue(decimalField, BigDecimal.ONE),
+            new EnumValue(enumField, "CODE"),
+            new StringsValue(stringsField, "value1", "value2", "value3")
+        ));
+        entityes[2] = new Entity(id, entityClass, values);
+
+        id = Long.MAX_VALUE - 3;
+        values = new EntityValue(id);
+        values.addValues(Arrays.asList(
+            new LongValue(longField, 76L),
+            new StringValue(stringField, "中文测试chinese test"),
+            new BooleanValue(boolField, false),
+            new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1)),
+            new DecimalValue(decimalField, BigDecimal.ONE),
+            new EnumValue(enumField, "CODE"),
+            new StringsValue(stringsField, "value1", "value2", "value3")
+        ));
+        entityes[3] = new Entity(id, entityClass, values);
+
+        id = Long.MAX_VALUE - 4;
+        values = new EntityValue(id);
+        values.addValues(Arrays.asList(
+            new LongValue(longField, 86L),
+            new StringValue(stringField, "\"@带有符号的中文@\"\'"),
+            new BooleanValue(boolField, false),
+            new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
+            new DecimalValue(decimalField, new BigDecimal("123.7582193213")),
+            new EnumValue(enumField, "CODE"),
+            new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN")
+        ));
+        entityes[4] = new Entity(id, entityClass, values);
+
+    }
 
 
     @Before
@@ -103,7 +198,7 @@ public class SphinxQLIndexStorageTest {
 
         transactionManager.create();
 
-        expectedEntitys = initData(storage, 10);
+        initData(storage);
 
         // 确认没有事务.
         Assert.assertFalse(transactionManager.getCurrent().isPresent());
@@ -156,22 +251,25 @@ public class SphinxQLIndexStorageTest {
     public void testReplaceAttribute() throws Exception {
         transactionManager.create();
 
-        IEntity expectedEntity = expectedEntitys.stream().findAny().get();
-        IValue value = expectedEntity.entityValue().values().stream().filter(
-            v -> v.getField().id() == fixStringNumber.id()).findFirst().get();
-
-        IEntityField field = value.getField();
-        IValue newValue = new StringValue(field, "-100");
-
-        expectedEntity.entityValue().addValue(newValue);
+        IEntity expectedEntity = (IEntity) entityes[0].clone();
+        expectedEntity.entityValue().addValue(
+            new LongValue(longField, 760L)
+        );
+        expectedEntity.entityValue().addValue(
+            new StringsValue(stringsField, "\\\'新的字段,会有特殊字符.\'\\", "value3")
+        );
 
         storage.replaceAttribute(expectedEntity.entityValue());
-
         transactionManager.getCurrent().get().commit();
         transactionManager.finish();
 
         Conditions conditions = Conditions.buildEmtpyConditions();
-        conditions.addAnd(new Condition(field, ConditionOperator.EQUALS, newValue));
+        conditions.addAnd(new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 760L)));
+        conditions.addAnd(
+            new Condition(
+                stringsField,
+                ConditionOperator.EQUALS,
+                new StringsValue(stringsField, "\\\'新的字段,会有特殊字符.\'\\")));
 
         Collection<EntityRef> refs = storage.select(
             conditions, expectedEntity.entityClass(), null, Page.newSinglePage(100));
@@ -181,6 +279,7 @@ public class SphinxQLIndexStorageTest {
         Assert.assertEquals(expectedEntity.family().parent(), refs.stream().findFirst().get().getPref());
         Assert.assertEquals(expectedEntity.family().child(), refs.stream().findFirst().get().getCref());
 
+
     }
 
     @Test
@@ -188,58 +287,21 @@ public class SphinxQLIndexStorageTest {
 
         transactionManager.create();
 
-        expectedEntitys.stream().forEach(e -> {
-            try {
-
-                storage.delete(e);
-
-
-            } catch (Exception ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
-            }
-        });
+        IEntity expectedEntity = (IEntity) entityes[0].clone();
+        storage.delete(expectedEntity);
 
         transactionManager.getCurrent().get().commit();
         transactionManager.finish();
 
         Collection<EntityRef> refs = storage.select(
-            new Conditions(new Condition(fixFieldAll, ConditionOperator.EQUALS, new BooleanValue(fixFieldAll, true))),
-            expectedEntitys.stream().findFirst().get().entityClass(),
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 1L))),
+            entityClass,
             null,
             Page.newSinglePage(100)
         );
 
         Assert.assertEquals(0, refs.size());
-    }
-
-    @Test
-    public void testDeleteFailure() throws Exception {
-
-        transactionManager.create();
-
-        expectedEntitys.stream().forEach(e -> {
-            try {
-
-                storage.delete(e);
-
-
-            } catch (Exception ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
-            }
-        });
-
-        // 无条件 rollback.
-        transactionManager.getCurrent().get().rollback();
-        transactionManager.finish();
-
-        Collection<EntityRef> refs = storage.select(
-            new Conditions(new Condition(fixFieldAll, ConditionOperator.EQUALS, new BooleanValue(fixFieldAll, true))),
-            expectedEntitys.stream().findFirst().get().entityClass(),
-            null,
-            Page.newSinglePage(100)
-        );
-
-        Assert.assertEquals(expectedEntitys.size(), refs.size());
     }
 
     @Test
@@ -252,7 +314,7 @@ public class SphinxQLIndexStorageTest {
 
             Collection<EntityRef> refs = null;
             try {
-                refs = storage.select(c.conditions, c.entityClass, null, c.page);
+                refs = storage.select(c.conditions, c.entityClass, c.sort, c.page);
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
@@ -262,285 +324,388 @@ public class SphinxQLIndexStorageTest {
 
     }
 
-    private static class Case {
-        private Conditions conditions;
-        private IEntityClass entityClass;
-        private Page page;
-        private Predicate<? super Collection<EntityRef>> check;
-
-        public Case(Conditions conditions, IEntityClass entityClass, Page page,
-                    Predicate<? super Collection<EntityRef>> check) {
-            this.conditions = conditions;
-            this.entityClass = entityClass;
-            this.page = page;
-            this.check = check;
-        }
-    }
-
     private Collection<Case> buildSelectCase() {
         return Arrays.asList(
-            // Negative string, example -1.
+            // long eq
             new Case(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(
-                        fixStringNumber,
+                        longField,
                         ConditionOperator.EQUALS,
-                        new StringValue(fixStringNumber, "-1")
+                        new LongValue(longField, 2L)
                     )
                 ),
-                expectedEntitys.stream().findFirst().get().entityClass(),
-                Page.newSinglePage(100),
-                refs -> {
-
-                    Assert.assertEquals(expectedEntitys.size(), refs.size());
-
-                    return true;
-                }
-            )
-            ,
-            // =
-            new Case(
-                new Conditions(new Condition(
-                    expectedEntitys.stream().skip(3)
-                        .findFirst().get().entityValue().values().stream().findFirst().get().getField(),
-                    ConditionOperator.EQUALS,
-                    expectedEntitys.stream().skip(3)
-                        .findFirst().get().entityValue().values().stream().findFirst().get()
-                )),
-                expectedEntitys.stream().findFirst().get().entityClass(),
-                Page.newSinglePage(10),
-                refs -> {
-                    Assert.assertEquals(1, refs.size());
-                    Assert.assertEquals(expectedEntitys.stream().skip(3).findFirst().get().id(),
-                        refs.stream().findFirst().get().getId());
-                    return true;
-                }
-            ),
-            // !=
-            new Case(
-                new Conditions(new Condition(
-                    expectedEntitys.stream().skip(1)
-                        .findFirst().get().entityValue().values().stream().findFirst().get().getField(),
-                    ConditionOperator.NOT_EQUALS,
-                    expectedEntitys.stream().skip(1)
-                        .findFirst().get().entityValue().values().stream().findFirst().get()
-                )),
-                expectedEntitys.stream().findFirst().get().entityClass(),
-                Page.newSinglePage(100),
-                refs -> {
-
-                    Assert.assertEquals(expectedEntitys.size() - 1, refs.size());
-                    List<IEntity> onlyOne = expectedEntitys.stream().filter(
-                        e -> e.id() == refs.stream().findFirst().get().getId()
-                    ).collect(Collectors.toList());
-
-                    Assert.assertEquals(1, onlyOne.size());
-
-                    return true;
-                }
-            ),
-            // = !=
-            new Case(
-                new Conditions(new Condition(
-                    expectedEntitys.stream().skip(1)
-                        .findFirst().get().entityValue().values().stream().findFirst().get().getField(),
-                    ConditionOperator.NOT_EQUALS,
-                    expectedEntitys.stream().skip(1)
-                        .findFirst().get().entityValue().values().stream().findFirst().get()
-                )).addAnd(
-                    new Condition(
-                        expectedEntitys.stream().skip(2)
-                            .findFirst().get().entityValue().values().stream().findFirst().get().getField(),
-                        ConditionOperator.EQUALS,
-                        expectedEntitys.stream().skip(2)
-                            .findFirst().get().entityValue().values().stream().findFirst().get()
-                    )
-                ),
-                expectedEntitys.stream().findFirst().get().entityClass(),
-                Page.newSinglePage(100),
-                refs -> {
-
-                    Assert.assertEquals(1, refs.size());
-                    List<IEntity> onlyOne = expectedEntitys.stream().filter(
-                        e -> e.id() == refs.stream().findFirst().get().getId()
-                    ).collect(Collectors.toList());
-
-                    Assert.assertEquals(1, onlyOne.size());
-
-                    return true;
-                }
-            ),
-            // = page
-            new Case(
-                new Conditions(new Condition(
-                    expectedEntitys.stream().skip(3)
-                        .findFirst().get().entityValue().values().stream().findFirst().get().getField(),
-                    ConditionOperator.EQUALS,
-                    expectedEntitys.stream().skip(3)
-                        .findFirst().get().entityValue().values().stream().findFirst().get()
-                )),
-                expectedEntitys.stream().findFirst().get().entityClass(),
-                new Page(1, 100),
-                refs -> {
-                    Assert.assertEquals(1, refs.size());
-                    Assert.assertEquals(expectedEntitys.stream().skip(3).findFirst().get().id(),
-                        refs.stream().findFirst().get().getId());
-                    return true;
-                }
-            ),
-            // >=
-            new Case(
-                new Conditions(new Condition(
-                    fixFieldRange,
-                    ConditionOperator.GREATER_THAN,
-                    expectedEntitys.stream().skip(1)
-                        .findFirst().get().entityValue().getValue(fixFieldRange.name()).get()
-                )).addAnd(
-                    new Condition(
-                        expectedEntitys.stream().skip(2)
-                            .findFirst().get().entityValue().values().stream().findFirst().get().getField(),
-                        ConditionOperator.EQUALS,
-                        expectedEntitys.stream().skip(2)
-                            .findFirst().get().entityValue().values().stream().findFirst().get()
-                    )
-                ),
-                expectedEntitys.stream().findFirst().get().entityClass(),
-                Page.newSinglePage(100),
-                refs -> {
-
-                    IValue<Long> oneCondition = expectedEntitys.stream().skip(1)
-                        .findFirst().get().entityValue().getValue(fixFieldRange.name()).get();
-                    IValue twoCondition = expectedEntitys.stream().skip(2)
-                        .findFirst().get().entityValue().values().stream().findFirst().get();
-
-                    int expectedSize = expectedEntitys.stream().filter(e -> {
-                        IValue<Long> oneTarget = e.entityValue().getValue(fixFieldRange.name()).get();
-                        IValue twoTarget = e.entityValue().values().stream().findFirst().get();
-
-
-                        return oneTarget.valueToLong() > oneCondition.valueToLong() && twoTarget.equals(twoCondition);
-
-                    }).collect(Collectors.toList()).size();
-                    Assert.assertEquals(expectedSize, refs.size());
-                    return true;
-                }
-            )
-            ,
-            // id in()
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            new Field(Long.MAX_VALUE, "id", FieldType.LONG, FieldConfig.build().identifie(true)),
-                            ConditionOperator.MULTIPLE_EQUALS,
-                            new LongValue(
-                                new Field(
-                                    Long.MAX_VALUE, "id", FieldType.LONG, FieldConfig.build().identifie(true)),
-                                expectedEntitys.get(0).id()),
-                            new LongValue(
-                                new Field(
-                                    Long.MAX_VALUE, "id", FieldType.LONG, FieldConfig.build().identifie(true)),
-                                expectedEntitys.get(1).id())
-                        )
-                    ).addAnd(
-                    new Condition(fixFieldAll, ConditionOperator.EQUALS, new BooleanValue(fixFieldAll, true))
-                ),
-                expectedEntitys.stream().findFirst().get().entityClass(),
+                entityClass,
                 Page.newSinglePage(100),
                 refs -> {
 
                     Assert.assertEquals(2, refs.size());
-                    Assert.assertEquals(expectedEntitys.get(0).id(), refs.stream().findFirst().get().getId());
-                    Assert.assertEquals(expectedEntitys.get(1).id(), refs.stream().skip(1).findFirst().get().getId());
+                    long[] expectedIds = new long[]{Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+
                     return true;
                 }
             )
             ,
-            // attribute in()
+            // long not eq
             new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        fixFieldAll,
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        longField,
+                        ConditionOperator.NOT_EQUALS,
+                        new LongValue(longField, 2L)
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(3, refs.size());
+                    long[] expectedIds = new long[]{Long.MAX_VALUE - 4, Long.MAX_VALUE - 3, Long.MAX_VALUE};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+
+                    return true;
+                }
+            )
+            ,
+            // long >
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        longField,
+                        ConditionOperator.GREATER_THAN,
+                        new LongValue(longField, 2L)
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(2, refs.size());
+                    long[] expectedIds =
+                        new long[]{Long.MAX_VALUE - 4, Long.MAX_VALUE - 3};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+
+                    return true;
+                }
+            )
+            ,
+            // long >=
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        longField,
+                        ConditionOperator.GREATER_THAN_EQUALS,
+                        new LongValue(longField, 2L)
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(4, refs.size());
+                    long[] expectedIds =
+                        new long[]{Long.MAX_VALUE - 4, Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+
+                    return true;
+                }
+            )
+            ,
+            // long <
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        longField,
+                        ConditionOperator.LESS_THAN,
+                        new LongValue(longField, 2L)
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(1, refs.size());
+                    long[] expectedIds =
+                        new long[]{Long.MAX_VALUE};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+
+                    return true;
+                }
+            )
+            ,
+            // long <=
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        longField,
+                        ConditionOperator.LESS_THAN_EQUALS,
+                        new LongValue(longField, 2L)
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(3, refs.size());
+                    long[] expectedIds =
+                        new long[]{Long.MAX_VALUE - 2, Long.MAX_VALUE - 1, Long.MAX_VALUE};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+
+                    return true;
+                }
+            )
+            ,
+            // long in
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        longField,
                         ConditionOperator.MULTIPLE_EQUALS,
-                        new BooleanValue(fixFieldAll, true),
-                        new BooleanValue(fixFieldAll, false)
-                    )),
-                expectedEntitys.get(0).entityClass(),
+                        new LongValue(longField, 2L),
+                        new LongValue(longField, 76L)
+                    )
+                ),
+                entityClass,
                 Page.newSinglePage(100),
                 refs -> {
-                    Assert.assertEquals(expectedEntitys.size(), refs.size());
-                    return true;
-                }
-            )
-            ,
-            // all
-            new Case(
-                Conditions.buildEmtpyConditions(),
-                expectedEntitys.stream().findFirst().get().entityClass(),
-                Page.newSinglePage(100),
-                refs -> {
-                    Assert.assertEquals(expectedEntitys.size(), refs.size());
 
-                    refs.stream().forEach(r -> {
-                        Assert.assertEquals(1,
-                            expectedEntitys.stream().filter(e -> e.id() == r.getId()).collect(Collectors.toList()).size());
-                    });
+                    Assert.assertEquals(3, refs.size());
+                    long[] expectedIds =
+                        new long[]{Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
             )
             ,
-            // strings eq
+            // string eq
             new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            fixStringsField,
-                            ConditionOperator.EQUALS,
-                            new StringsValue(fixStringsField, new String[]{"500002"}))
-                    ),
-                expectedEntitys.get(0).entityClass(),
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        stringField,
+                        ConditionOperator.EQUALS,
+                        new StringValue(stringField, "\"@带有符号的中文@\"\'")
+                    )
+                ),
+                entityClass,
                 Page.newSinglePage(100),
                 refs -> {
-                    Assert.assertEquals(expectedEntitys.size(), refs.size());
+
+                    Assert.assertEquals(1, refs.size());
+                    long[] expectedIds = new long[]{Long.MAX_VALUE - 4};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
             )
             ,
-            // strings not eq
+            // string no eq
             new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            fixStringsField,
-                            ConditionOperator.NOT_EQUALS,
-                            new StringsValue(fixStringsField, new String[] {"500002"}))
-                    ),
-                expectedEntitys.get(0).entityClass(),
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        stringField,
+                        ConditionOperator.NOT_EQUALS,
+                        new StringValue(stringField, "\"@带有符号的中文@\"\'")
+                    )
+                ),
+                entityClass,
                 Page.newSinglePage(100),
                 refs -> {
-                    Assert.assertEquals(0, refs.size());
+
+                    Assert.assertEquals(4, refs.size());
+                    long[] expectedIds = new long[]{Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1, Long.MAX_VALUE};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
             )
             ,
-            // enum meq
+            // string like
             new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            fixStringsField,
-                            ConditionOperator.MULTIPLE_EQUALS,
-                            new StringsValue(fixStringsField, new String[] {"500002"} ),
-                            new StringsValue(fixStringsField, new String[] {"1"}))
-                    ),
-                expectedEntitys.get(0).entityClass(),
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        stringField,
+                        ConditionOperator.LIKE,
+                        new StringValue(stringField, "中文")
+                    )
+                ),
+                entityClass,
                 Page.newSinglePage(100),
                 refs -> {
-                    Assert.assertEquals(expectedEntitys.size(), refs.size());
 
+                    Assert.assertEquals(2, refs.size());
+                    long[] expectedIds = new long[]{Long.MAX_VALUE - 4, Long.MAX_VALUE - 3};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+
+                    return true;
+                }
+            )
+            ,
+            // decimal eq
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        decimalField,
+                        ConditionOperator.EQUALS,
+                        new DecimalValue(decimalField, BigDecimal.ONE)
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(3, refs.size());
+                    long[] expectedIds = new long[]{Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+
+                    return true;
+                }
+            )
+            ,
+            // decimal no eq
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        decimalField,
+                        ConditionOperator.NOT_EQUALS,
+                        new DecimalValue(decimalField, BigDecimal.ONE)
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(2, refs.size());
+                    long[] expectedIds = new long[]{Long.MAX_VALUE - 4, Long.MAX_VALUE};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+
+                    return true;
+                }
+            )
+            ,
+            // decimal >
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        decimalField,
+                        ConditionOperator.GREATER_THAN,
+                        new DecimalValue(decimalField, BigDecimal.ONE)
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(1, refs.size());
+                    long[] expectedIds = new long[]{Long.MAX_VALUE - 4};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+
+                    return true;
+                }
+            )
+            ,
+            // decimal >=
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        decimalField,
+                        ConditionOperator.GREATER_THAN_EQUALS,
+                        new DecimalValue(decimalField, BigDecimal.ONE)
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(4, refs.size());
+                    long[] expectedIds =
+                        new long[]{Long.MAX_VALUE - 4, Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+
+                    return true;
+                }
+            )
+            ,
+            // dateTimeField between
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        dateTimeField,
+                        ConditionOperator.GREATER_THAN,
+                        new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1))
+                    )
+                ).addAnd(
+                    new Condition(
+                        dateTimeField,
+                        ConditionOperator.LESS_THAN,
+                        new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1))
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(2, refs.size());
+                    long[] expectedIds = new long[]{Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                    return true;
+                }
+            )
+            ,
+            // stringsField =
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        stringsField,
+                        ConditionOperator.EQUALS,
+                        new StringsValue(stringsField, "UNKNOWN")
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+                    Assert.assertEquals(1, refs.size());
+                    long[] expectedIds = new long[]{Long.MAX_VALUE - 4};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                    return true;
+                }
+            )
+            ,
+            // stringsField in
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        stringsField,
+                        ConditionOperator.MULTIPLE_EQUALS,
+                        new StringsValue(stringsField, "UNKNOWN"),
+                        new StringsValue(stringsField, "value3")
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+                    Assert.assertEquals(4, refs.size());
+                    long[] expectedIds = new long[]{
+                        Long.MAX_VALUE - 4, Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
                     return true;
                 }
             )
@@ -548,14 +713,9 @@ public class SphinxQLIndexStorageTest {
     }
 
     // 初始化数据
-    private List<IEntity> initData(SphinxQLIndexStorage storage, int size) throws Exception {
-        List<IEntity> expectedEntitys = new ArrayList<>(size);
-        for (int i = 1; i <= size; i++) {
-            expectedEntitys.add(buildEntity());
-        }
-
+    private void initData(SphinxQLIndexStorage storage) throws Exception {
         try {
-            expectedEntitys.stream().forEach(e -> {
+            Arrays.stream(entityes).forEach(e -> {
                 try {
                     storage.build(e);
                 } catch (SQLException ex) {
@@ -571,123 +731,49 @@ public class SphinxQLIndexStorageTest {
         Transaction tx = transactionManager.getCurrent().get();
         tx.commit();
         transactionManager.finish();
-
-        return expectedEntitys;
-    }
-
-    private IEntity buildEntity() {
-        Collection<IEntityField> fields = buildRandomFields(3);
-        long id = idGenerator.next();
-        return new Entity(
-            id,
-            new EntityClass(1, "test", fields),
-            buildRandomValue(id, fields)
-        );
-    }
-
-    private Collection<IEntityField> buildRandomFields(int size) {
-        List<IEntityField> fields = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-            long fieldId = idGenerator.next();
-            fields.add(
-                new Field(idGenerator.next(),
-                    "c" + fieldId,
-                    randomFieldType()
-                )
-            );
-        }
-
-        // 一个固定的所有都有的字段.
-        fields.add(fixFieldAll);
-        fields.add(fixFieldRange);
-        fields.add(fixStringNumber);
-        fields.add(fixStringsField);
-
-        return fields;
-    }
-
-    private FieldType randomFieldType() {
-        long n = buildRandomLong(0, 100);
-        if (n > 30) {
-            return FieldType.STRING;
-        } else if (n > 60) {
-            return FieldType.LONG;
-        } else {
-            return FieldType.DECIMAL;
-        }
-    }
-
-    private IEntityValue buildRandomValue(long id, Collection<IEntityField> fields) {
-        Collection<IValue> values = fields.stream().map(f -> {
-
-            if (f == fixFieldAll) {
-                return new BooleanValue(f, true);
-            }
-
-            if (f == fixFieldRange) {
-                return new LongValue(f, (long) buildRandomLong(10, 100000));
-            }
-
-            if (f == fixStringNumber) {
-                return new StringValue(f, "-1");
-            }
-
-            if (f == fixStringsField) {
-                return new StringsValue(fixStringsField, "1,2,3,500002,测试".split(","));
-            }
-
-            switch (f.type()) {
-                case STRING:
-                    return new StringValue(f, buildRandomString(30));
-                case DECIMAL:
-                    return new DecimalValue(
-                        f,
-                        new BigDecimal(
-                            Long.toString(buildRandomLong(0, 10000)) + "." + Long.toString(buildRandomLong(0, 10000))
-                        )
-                    );
-                default:
-                    return new LongValue(f, (long) buildRandomLong(10, 100000));
-            }
-        }).collect(Collectors.toList());
-
-        EntityValue value = new EntityValue(id);
-        value.addValues(values);
-        return value;
-    }
-
-    private String buildRandomString(int size) {
-        StringBuilder buff = new StringBuilder();
-        Random rand = new Random(47);
-        for (int i = 0; i < size; i++) {
-            buff.append(rand.nextInt(26) + 'a');
-        }
-        // 加上特殊的字符.
-        buff.append('\\').append('@').append('\'').append('-').append('\"').append('(').append(')');
-        return buff.toString();
-    }
-
-    private int buildRandomLong(int min, int max) {
-        Random random = new Random();
-
-        return random.nextInt(max) % (max - min + 1) + min;
     }
 
     private Selector<DataSource> buildWriteDataSourceSelector(String file) {
-        System.setProperty(DataSourceFactory.CONFIG_FILE, file);
+        if (dataSourcePackage == null) {
+            System.setProperty(DataSourceFactory.CONFIG_FILE, file);
 
-        dataSourcePackage = DataSourceFactory.build();
+            dataSourcePackage = DataSourceFactory.build();
+        }
 
         return new TakeTurnsSelector<>(dataSourcePackage.getIndexWriter());
 
     }
 
     private Selector<DataSource> buildSearchDataSourceSelector(String file) {
-        System.setProperty(DataSourceFactory.CONFIG_FILE, file);
+        if (dataSourcePackage == null) {
+            System.setProperty(DataSourceFactory.CONFIG_FILE, file);
 
-        dataSourcePackage = DataSourceFactory.build();
+            dataSourcePackage = DataSourceFactory.build();
+        }
 
         return new TakeTurnsSelector<>(dataSourcePackage.getIndexSearch());
 
+    }
+
+    private static class Case {
+        private Conditions conditions;
+        private IEntityClass entityClass;
+        private Page page;
+        private Sort sort;
+        private Predicate<? super Collection<EntityRef>> check;
+
+        public Case(Conditions conditions, IEntityClass entityClass, Page page,
+                    Predicate<? super Collection<EntityRef>> check) {
+            this(conditions, entityClass, page, check, null);
+        }
+
+        public Case(Conditions conditions, IEntityClass entityClass, Page page,
+                    Predicate<? super Collection<EntityRef>> check, Sort sort) {
+            this.conditions = conditions;
+            this.entityClass = entityClass;
+            this.page = page;
+            this.check = check;
+            this.sort = sort;
+        }
     }
 } 
