@@ -15,7 +15,9 @@ import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.DictMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.DictItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ResponseList;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.UltPageBoItem;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
@@ -51,6 +53,9 @@ public class EntityServiceExImpl implements EntityServiceEx {
 
     @Autowired
     private PageBoMapLocalStore pageBoMapLocalStore;
+
+    @Autowired
+    private DictMapLocalStore dictMapLocalStore;
 
     @Autowired
     private HandleValueService handleValueService;
@@ -207,6 +212,44 @@ public class EntityServiceExImpl implements EntityServiceEx {
         }
     }
 
+    @Override
+    public List<DictItem> findDictItems(String enumId, String enumCode) {
+        DataSet ds = null;
+        List<Row> rows = new ArrayList<Row>();
+        if (StringUtils.isEmpty(enumCode)) {
+            ds = dictMapLocalStore.query().selectAll()
+                    .where("publishDictId")
+                    .eq(enumId)
+                    .execute();
+            rows = ds.toRows();
+
+            if (!(rows != null && rows.size() > 0)) {
+                ds = dictMapLocalStore.query().selectAll()
+                        .where("dictId")
+                        .eq(enumId).execute();
+                rows = ds.toRows();
+            }
+        } else {
+            ds = dictMapLocalStore.query().selectAll()
+                    .where("publishDictId")
+                    .eq(enumId)
+                    .and("code").eq(enumCode)
+                    .execute();
+            rows = ds.toRows();
+
+            if (!(rows != null && rows.size() > 0)) {
+                ds = dictMapLocalStore.query().selectAll()
+                        .where("dictId")
+                        .eq(enumId)
+                        .and("code").eq(enumCode)
+                        .execute();
+                rows = ds.toRows();
+            }
+        }
+        List<DictItem> items = rows.stream().map(this::toDictItem).collect(Collectors.toCollection(ResponseList::new));
+        return getMaxVersionList(items);
+    }
+
     private UltPageBoItem toUltPageBos(Row row) {
         UltPageBoItem ultPageBoItem = new UltPageBoItem();
         ultPageBoItem.setId(Long.parseLong(RowUtils.getRowValue(row, "settingId").map(Object::toString).orElse("")));
@@ -221,5 +264,35 @@ public class EntityServiceExImpl implements EntityServiceEx {
         ultPageBoItem.setCode(RowUtils.getRowValue(row, "code").map(Object::toString).orElse(""));
         ultPageBoItem.setEnvStatus(RowUtils.getRowValue(row, "envStatus").map(Object::toString).orElse(""));
         return ultPageBoItem;
+    }
+
+    private DictItem toDictItem(Row row) {
+        DictItem dictItem = new DictItem();
+        dictItem.setText(RowUtils.getRowValue(row, "name").map(Object::toString).orElse(""));
+        dictItem.setValue(RowUtils.getRowValue(row, "code").map(Object::toString).orElse(""));
+        dictItem.setVersion(RowUtils.getRowValue(row, "version").map(Object::toString).orElse(""));
+        return dictItem;
+    }
+
+    /**
+     * 返回最大版本的字典数据
+     * @param dictItems
+     * @return
+     */
+    private List<DictItem> getMaxVersionList(List<DictItem> dictItems){
+        List<DictItem> dictItemList = new ResponseList<>();
+        if (dictItems.size() > 0){
+            String maxVersion = dictItems.get(0).getVersion();
+            for (int i = 0; i < dictItems.size(); i++) {
+                if (maxVersion.compareTo(dictItems.get(i).getVersion()) < 0){
+                    dictItemList.clear();
+                    dictItemList.add(dictItems.get(i));
+                    maxVersion = dictItems.get(i).getVersion();
+                } else {
+                    dictItemList.add(dictItems.get(i));
+                }
+            }
+        }
+        return dictItemList;
     }
 }
