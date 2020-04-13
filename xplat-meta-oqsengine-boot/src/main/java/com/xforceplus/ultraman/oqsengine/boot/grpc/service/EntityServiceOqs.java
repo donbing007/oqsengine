@@ -207,13 +207,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             if (ds.isPresent()) {
                 if (ds.get().family() != null && ds.get().family().parent() > 0 && entityClass.extendEntityClass() != null) {
-                    Optional<IEntity> parentDS = entitySearchService.selectOne(ds.get().family().parent(), entityClass.extendEntityClass());
+                    Optional<IEntity> parentDS = entitySearchService
+                            .selectOne(ds.get().family().parent(), entityClass.extendEntityClass());
 
                     Optional<IEntity> finalDs = ds;
                     parentDS.ifPresent(x ->
                         finalDs.ifPresent(y -> leftAppend(y, x)));
                 } else if (ds.get().family() != null && ds.get().family().child() > 0 && subEntityClass != null) {
-                    Optional<IEntity> childDs = entitySearchService.selectOne(ds.get().family().child(), subEntityClass);
+                    Optional<IEntity> childDs = entitySearchService
+                            .selectOne(ds.get().family().child(), subEntityClass);
 
                     Optional<IEntity> finalDs = ds;
                     childDs.ifPresent(x ->
@@ -262,57 +264,49 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             Page page = null;
 
-            //add find in list
-            if (!in.getIdsList().isEmpty()) {
+            List<FieldSortUp> sort = in.getSortList();
 
-                List<Long> ids = in.getIdsList();
-                entities = entitySearchService.selectMultiple(ids.toArray(new Long[]{}), entityClass);
+            ConditionsUp conditions = in.getConditions();
 
+            int pageNo = in.getPageNo();
+            int pageSize = in.getPageSize();
+            page = new Page(pageNo, pageSize);
+
+            Optional<IEntityField> sortField;
+
+            if (sort == null || sort.isEmpty()) {
+                sortField = Optional.empty();
             } else {
+                FieldSortUp sortUp = sort.get(0);
+                //get related field
+                sortField = IEntityClassHelper.findFieldByCode(entityClass, sortUp.getCode());
+            }
 
-                List<FieldSortUp> sort = in.getSortList();
-
-                ConditionsUp conditions = in.getConditions();
-
-                int pageNo = in.getPageNo();
-                int pageSize = in.getPageSize();
-                page = new Page(pageNo, pageSize);
-
-                Optional<IEntityField> sortField;
-
-                if (sort == null || sort.isEmpty()) {
-                    sortField = Optional.empty();
+            if (!sortField.isPresent()) {
+                Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList());
+                if (consOp.isPresent()) {
+                    entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
                 } else {
-                    FieldSortUp sortUp = sort.get(0);
-                    //get related field
-                    sortField = IEntityClassHelper.findFieldByCode(entityClass, sortUp.getCode());
+                    entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                }
+            } else {
+                FieldSortUp sortUp = sort.get(0);
+                Sort sortParam;
+                if (sortUp.getOrder() == FieldSortUp.Order.asc) {
+                    sortParam = Sort.buildAscSort(sortField.get());
+                } else {
+                    sortParam = Sort.buildDescSort(sortField.get());
                 }
 
-                if (!sortField.isPresent()) {
-                    Optional<Conditions> consOp = toConditions(entityClass, conditions);
-                    if (consOp.isPresent()) {
-                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
-                    } else {
-                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
-                    }
+                Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList());
+                if (consOp.isPresent()) {
+                    entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
+
                 } else {
-                    FieldSortUp sortUp = sort.get(0);
-                    Sort sortParam;
-                    if (sortUp.getOrder() == FieldSortUp.Order.asc) {
-                        sortParam = Sort.buildAscSort(sortField.get());
-                    } else {
-                        sortParam = Sort.buildDescSort(sortField.get());
-                    }
-
-                    Optional<Conditions> consOp = toConditions(entityClass, conditions);
-                    if (consOp.isPresent()) {
-                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
-
-                    } else {
-                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
-                    }
+                    entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
                 }
             }
+
 
             //extend entities
             Map<Long, List<QueryFieldsUp>> mappedQueryFields = queryField.stream()
@@ -495,11 +489,30 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     //To condition
-    private Optional<Conditions> toConditions(IEntityClass entityClass, ConditionsUp conditionsUp) {
+    private Optional<Conditions> toConditions(IEntityClass entityClass
+            , ConditionsUp conditionsUp, List<Long> ids) {
 
         Optional<Conditions> conditions = conditionsUp.getFieldsList().stream().map(x -> {
             return toOneConditions(entityClass, x);
-        }).reduce((a, b) -> a.addOr(b, true));
+        }).reduce((a, b) -> a.addAnd(b, true));
+
+        if(ids != null && !ids.isEmpty()){
+
+            Optional<IEntityField> idField = IEntityClassHelper.findFieldByCode(entityClass, "id");
+            Optional<Conditions> conditionsIds = idField.map(field -> {
+                return new Conditions(new Condition(field
+                        , ConditionOperator.MULTIPLE_EQUALS
+                        , ids.stream().map(x -> new LongValue(field, x)).toArray(IValue[]::new)));
+            });
+
+            if(conditions.isPresent() ){
+                if(conditionsIds.isPresent()) {
+                    return conditions.map(x -> x.addAnd(conditionsIds.get(), true));
+                }
+            }else{
+                return conditionsIds;
+            }
+        }
 
         return conditions;
     }
@@ -799,6 +812,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             .min(ofEmptyStr(fieldUp.getMinLength()).map(String::valueOf)
                 .map(Long::parseLong).orElse(-1L))
             .precision(fieldUp.getPrecision())
+            .identifie(fieldUp.getIdentifier())
         );
     }
 

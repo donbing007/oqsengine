@@ -66,7 +66,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         SimpleTableDef fieldTableDef = new SimpleTableDef("fields", new String[]{"boId"
             , "id"
-            , "code", "displayType", "editable", "enumCode", "maxLength", "name", "required", "fieldType", "searchable", "dictId", "defaultValue", "precision"});
+            , "code", "displayType", "editable", "enumCode", "maxLength", "name", "required", "fieldType"
+                , "searchable", "dictId", "defaultValue", "precision", "identifier", "validateRule"});
         TableDataProvider fieldTableDataProvider = new MapTableDataProvider(fieldTableDef, fieldStore);
 
         /**
@@ -644,14 +645,19 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         String editable = field.getEditable();
         String searchable = field.getSearchable();
+        String identifier = field.getIdentifier();
 
         //todo formatter
-        if ("1".equals(field.getEditable())) {
+        if ("1".equals(editable)) {
             editable = "true";
         }
 
-        if ("1".equals(field.getSearchable())) {
+        if ("1".equals(searchable)) {
             searchable = "true";
+        }
+
+        if ("1".equals(identifier)) {
+            identifier = "true";
         }
 
 
@@ -669,7 +675,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             .value("searchable", searchable)
             .value("dictId", field.getDictId())
             .value("defaultValue", field.getDefaultValue())
-            .value("precision", String.valueOf(field.getPrecision()));
+            .value("precision", String.valueOf(field.getPrecision()))
+            .value("identifier", identifier)
+            .value("validateRule", field.getValidateRule());
         dc.executeUpdate(insert);
     }
 
