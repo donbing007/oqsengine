@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 public enum FieldType {
 
     UNKNOWN("Unknown", s -> false
-            , (f, v) -> Collections.singletonList(new StringValue(f, v))),
+            , StringValue::new),
     BOOLEAN("Boolean", s -> {
         try {
             Boolean.parseBoolean(s);
@@ -34,10 +34,9 @@ public enum FieldType {
         }
     }, new String[]{"boolean"}
             , (f, v) ->
-            Collections.singletonList(new BooleanValue(f, Boolean.parseBoolean(v)))),
+           new BooleanValue(f, Boolean.parseBoolean(v))),
     ENUM("Enum", new String[]{"enum"}
-            , (f, v) ->
-            Collections.singletonList(new EnumValue(f, v))),
+            , EnumValue::new),
     DATETIME("DateTime", s -> {
         try {
             Instant.ofEpochMilli(Long.parseLong(s));
@@ -48,9 +47,8 @@ public enum FieldType {
     }, new String[]{"timestamp"}
             , (f, v) -> {
         Instant instant = Instant.ofEpochMilli(Long.parseLong(v));
-        return Collections
-                .singletonList(new DateTimeValue(f
-                        , LocalDateTime.ofInstant(instant, DateTimeValue.zoneId)));
+        return new DateTimeValue(f
+                        , LocalDateTime.ofInstant(instant, DateTimeValue.zoneId));
     }),
     LONG("Long", s -> {
         try {
@@ -61,12 +59,12 @@ public enum FieldType {
         }
     }
             , new String[]{"bigint", "long", "serialNo"}
-            , (f, v) -> Collections.singletonList(new LongValue(f, Long.parseLong(v)))),
+            , (f, v) -> new LongValue(f, Long.parseLong(v))),
 
     STRING("String", new String[]{"string"}
-            , (f, v) -> Collections.singletonList(new StringValue(f, v))),
+            , StringValue::new),
     STRINGS("Strings", new String[]{"strings"}
-            , (f, v) -> Collections.singletonList(new StringsValue(f, v))),
+            , StringsValue::new),
     DECIMAL("Decimal", s -> {
         try {
             new BigDecimal(s);
@@ -79,8 +77,8 @@ public enum FieldType {
         int precision = Optional.ofNullable(f.config())
                 .map(FieldConfig::getPrecision)
                 .filter(x -> x > 0).orElse(1);
-        return Collections.singletonList(new DecimalValue(f, new BigDecimal(v)
-                .setScale(precision, RoundingMode.HALF_UP)));
+        return new DecimalValue(f, new BigDecimal(v)
+                .setScale(precision, RoundingMode.HALF_UP));
     });
 
     private String type;
