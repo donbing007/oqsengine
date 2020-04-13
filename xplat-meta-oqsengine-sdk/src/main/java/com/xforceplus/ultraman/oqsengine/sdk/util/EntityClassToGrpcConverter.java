@@ -171,19 +171,19 @@ public class EntityClassToGrpcConverter {
         SelectByCondition.Builder select = SelectByCondition
                 .newBuilder();
 
-        if (condition.getPageNo() != null) {
+        if (condition != null && condition.getPageNo() != null) {
             select.setPageNo(condition.getPageNo());
         }
 
-        if (condition.getPageSize() != null) {
+        if (condition != null && condition.getPageSize() != null) {
             select.setPageSize(condition.getPageSize());
         }
 
-        if (condition.getConditions() != null) {
+        if (condition != null && condition.getConditions() != null) {
             select.setConditions(conditionsUp);
         }
 
-        if (condition.getSort() != null) {
+        if (condition != null && condition.getSort() != null) {
             select.addAllSort(toSortUp(condition.getSort()));
         }
 
@@ -488,6 +488,7 @@ public class EntityClassToGrpcConverter {
         return builder.build();
     }
 
+
     public static Map<String, Object> toResultMap(EntityClass entityClass
         , EntityClass subEntityClass, EntityUp up) {
 
@@ -529,7 +530,6 @@ public class EntityClassToGrpcConverter {
     public static Map<String, Object> toResultMap(EntityClass entityClass, EntityUp up) {
 
         Map<String, Object> map = new HashMap<>();
-
 
         up.getValuesList().forEach(entry -> {
             IEntityClassHelper.findFieldByIdInAll(entityClass, entry.getFieldId()).ifPresent(tuple2 -> {
@@ -591,6 +591,4 @@ public class EntityClassToGrpcConverter {
         });
         return newResult;
     }
-
-
 }

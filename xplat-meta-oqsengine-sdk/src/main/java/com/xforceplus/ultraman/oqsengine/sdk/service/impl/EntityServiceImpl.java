@@ -250,13 +250,15 @@ public class EntityServiceImpl implements EntityService {
      * @return
      */
     @Override
-    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByCondition(EntityClass entityClass, ConditionQueryRequest condition) {
+    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByCondition(EntityClass entityClass
+            , ConditionQueryRequest condition) {
 
         return findByConditionWithIds(entityClass, null, condition);
     }
 
     @Override
-    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByConditionWithIds(EntityClass entityClass, List<Long> ids, ConditionQueryRequest condition) {
+    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByConditionWithIds(EntityClass entityClass
+            , List<Long> ids, ConditionQueryRequest condition) {
         String transId = contextService.get(TRANSACTION_KEY);
 
 
@@ -266,8 +268,14 @@ public class EntityServiceImpl implements EntityService {
             requestBuilder.addHeader("transaction-id", transId);
         }
 
-        ConditionsUp conditionsUp = handleQueryValueService
-            .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY);
+        /**
+         * to ConditionsUp
+         */
+        ConditionsUp conditionsUp = Optional.ofNullable(condition)
+                .map(ConditionQueryRequest::getConditions)
+                .map(x ->  handleQueryValueService
+                        .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY))
+                .orElseGet(() -> ConditionsUp.newBuilder().build());
 
         /**
          * condition
@@ -299,16 +307,6 @@ public class EntityServiceImpl implements EntityService {
         if (transId != null) {
             buildBuilder.addHeader("transaction-id", transId);
         }
-
-//        //处理系统字段的逻辑-add by wz
-//        if(entityClass.extendEntityClass() != null) {
-//            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
-//        }else{
-//            body = entityMetaHandler.insertFill(entityClass, body);
-//        }
-//
-//        //添加字段默认值
-//        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
 
         List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.CREATE);
 

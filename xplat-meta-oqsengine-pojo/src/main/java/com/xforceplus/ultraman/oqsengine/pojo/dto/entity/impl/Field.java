@@ -134,26 +134,18 @@ public class Field implements IEntityField, Serializable {
         this.defaultValue = defaultValue;
     }
 
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof Field)) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         Field field = (Field) o;
-        return id == field.id &&
-                Objects.equals(name, field.name) &&
-                fieldType == field.fieldType &&
-                Objects.equals(dictId, field.dictId) &&
-                Objects.equals(defaultValue, field.defaultValue) &&
-                Objects.equals(config, field.config);
+        return id == field.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, fieldType, dictId, defaultValue, config);
+        return Objects.hash(id);
     }
 
     @Override

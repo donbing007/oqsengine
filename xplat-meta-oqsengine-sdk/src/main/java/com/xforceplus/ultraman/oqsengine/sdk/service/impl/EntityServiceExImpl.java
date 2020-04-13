@@ -67,17 +67,6 @@ public class EntityServiceExImpl implements EntityServiceEx {
         if (transId != null) {
             buildBuilder.addHeader("transaction-id", transId);
         }
-
-        //处理系统字段的逻辑-add by wz
-
-//        if(entityClass.extendEntityClass() != null) {
-//            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
-//        }else{
-//            body = entityMetaHandler.insertFill(entityClass,body);
-//        }
-//        //添加字段默认值
-//        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
-
         List<ValueUp> valueUps = handleValueService.handlerValue(entityClass, body, OperationType.CREATE);
 
         OperationResult createResult = buildBuilder
@@ -88,7 +77,6 @@ public class EntityServiceExImpl implements EntityServiceEx {
             if (createResult.getIdsList().size() < 1) {
                 return Either.left("未获得结果");
             } else {
-//                return Either.right(createResult.getIdsList().get(0));
                 IEntity entity = null;
                 if (createResult.getIdsCount() == 1) {
                     Long id = createResult.getIdsList().get(0);

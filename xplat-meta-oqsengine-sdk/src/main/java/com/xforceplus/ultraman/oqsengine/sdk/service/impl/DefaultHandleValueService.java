@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
@@ -13,9 +13,13 @@ import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.FieldVa
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Validation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,11 +28,15 @@ import java.util.stream.Stream;
  */
 public class DefaultHandleValueService implements HandleValueService {
 
+    private Logger logger = LoggerFactory.getLogger(HandleValueService.class);
+
     @Autowired
     private List<FieldOperationHandler> fieldOperationHandlers;
 
     @Autowired
     private List<FieldValidator<Object>> fieldValidators;
+
+    private final static String FIELD_MISSING = "[{}] is not available in EntityClass [{}]";
 
     /**
      * TODO how to apply to any transformation
@@ -44,9 +52,6 @@ public class DefaultHandleValueService implements HandleValueService {
         List<ValueUp> values = zipValue(entityClass, body)
             .map(tuple -> {
 
-                //Field Object
-                // This is a shape
-                //TODO object toString is ok?
                 IEntityField field = tuple._1();
                 Object obj = tuple._2();
 
@@ -85,16 +90,17 @@ public class DefaultHandleValueService implements HandleValueService {
      * @return
      */
     private Stream<Tuple2<IEntityField, Object>> zipValue(IEntityClass entityClass, Map<String, Object> body) {
-        Stream<IEntityField> fields = entityClass.fields().stream();
-        Stream<IEntityField> relationFields = entityClass.relations().stream().map(Relation::getEntityField).filter(Objects::nonNull);
-        Stream<IEntityField> parentFields = Optional.ofNullable(entityClass.extendEntityClass())
-            .map(IEntityClass::fields)
-            .orElseGet(Collections::emptyList)
-            .stream();
 
-        return Stream.concat(parentFields, Stream.concat(fields, relationFields))
-            .distinct()
-            .map(x -> Tuple.of(x, body.get(x.name())));
+        IEntityClassReader reader = new IEntityClassReader(entityClass);
+
+        //input wrong fields
+        //TODO ? maybe should move the logger to some place else
+        reader.testBody(body).forEach(x -> logger.warn(FIELD_MISSING, x, entityClass.code()));
+
+        //TODO alias code name with same id?
+        return reader.fields().stream()
+                   .distinct()
+                   .map(x -> Tuple.of(x, body.get(x.name())));
     }
 
     private Object pipeline(Object value, IEntityField field, OperationType phase) {

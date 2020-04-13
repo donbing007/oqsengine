@@ -44,4 +44,7 @@ public interface IEntityField {
      */
     String defaultValue();
 
+    default Boolean acceptName(String name){
+        return name().equals(name);
+    }
 }
