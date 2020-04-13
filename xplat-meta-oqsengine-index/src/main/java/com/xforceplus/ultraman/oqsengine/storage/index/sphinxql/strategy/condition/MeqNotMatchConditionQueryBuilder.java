@@ -51,7 +51,7 @@ public class MeqNotMatchConditionQueryBuilder extends SphinxQLConditionQueryBuil
     private String buildConditionValue(StorageValue storageValue, StorageStrategy storageStrategy) {
         String conditionValue;
         if (storageStrategy.storageType() == StorageType.STRING) {
-            conditionValue = "'" + SphinxQLHelper.encodeString((String) storageValue.value()) + "'";
+            conditionValue = "'" + SphinxQLHelper.encodeSpecialCharset((String) storageValue.value()) + "'";
         } else {
             conditionValue = storageValue.value().toString();
         }

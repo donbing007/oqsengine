@@ -25,7 +25,13 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
 
     @Override
     public String valueToString() {
-        return getValue().toPlainString();
+        String value = getValue().toPlainString();
+        // 补足小数.
+        if (value.indexOf(".") < 0) {
+            return value + ".0";
+        } else {
+            return value;
+        }
     }
 
     @Override

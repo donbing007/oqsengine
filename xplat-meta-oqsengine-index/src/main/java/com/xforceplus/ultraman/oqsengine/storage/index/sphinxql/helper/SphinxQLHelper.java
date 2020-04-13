@@ -1,8 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+
+import java.util.AbstractMap;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author dongbin
@@ -28,79 +32,41 @@ public class SphinxQLHelper {
     public static final String ALL_DATA_FULL_TEXT = SYSTEM_FULL_FIELD_PREFIX + "g";
 
     /**
-     * 序列化SphinxQL的全文搜索字段.
-     * 不会处理多值.
+     * 处理以下字段.
+     * !    "    $    '    (    )    -    /    <    @    \    ^    |    ~
+     * 使用'\'转义.
      *
-     * @param value 目标值.
-     * @return 序例化结果.
+     * @param value 目标字串.
+     * @return 结果.
      */
-    public static String encodeFullText(StorageValue value) {
-        return encodeFullText(value, false);
-    }
-
-    public static String encodeFullText(StorageValue value, boolean useGroupName) {
-
-        return ATTRIBUTE_FULL_FIELD_PREFIX
-            + (useGroupName ? (value.groupStorageName() + SqlKeywordDefine.EVERY_THING) : value.storageName())
-            + " "
-            + (value.type() == StorageType.STRING ? unicode((String) value.value()) : value.value());
-    }
-
-    /**
-     * 构造查询字符串.
-     * 目标为 Fxxx xxx xxxx xxx 以空格分隔的字符串.
-     * 结果为 "xxx" << "xxxx" << "xxx"
-     *
-     * @param value 目标查询值.预期已经为被编码过的全文字段.
-     * @param fuzzy 模糊匹配.
-     * @return
-     */
-    public static String encodeQueryFullText(String value, boolean fuzzy) {
-        StringBuilder buff = new StringBuilder();
-        if (fuzzy) {
-            // 是否已经有<<标识了.
-            boolean lastHave = false;
-            for (char c : value.toCharArray()) {
-                if (c == ' ') {
-                    if (!lastHave) {
-
-                        buff.append(SqlKeywordDefine.EVERY_THING);
-
-                        buff.append(" << ");
-
-                        buff.append(SqlKeywordDefine.EVERY_THING);
-
-                        lastHave = true;
-                    }
-                } else {
-                    buff.append(c);
-                    lastHave = false;
-                }
-            }
-            buff.append(SqlKeywordDefine.EVERY_THING);
-        } else {
-
-            buff.append("\"").append(value).append("\"");
+    public static String encodeSpecialCharset(String value) {
+        if (value == null || value.isEmpty()) {
+            return value;
         }
-
-        return buff.toString();
-    }
-
-    /**
-     * " ' \ 会被替换成分别为 unicode 码.
-     * 为了在 sphinxQL中使用这些字符.
-     */
-    public static String encodeString(String source) {
         StringBuilder buff = new StringBuilder();
-        for (char c : source.toCharArray()) {
+        for (char c : value.toCharArray()) {
             switch (c) {
-                case '\"':
+                case '!':
+                case '$':
                 case '\'':
+                case '(':
+                case ')':
+                case '-':
+                case '/':
+                case '<':
+                case '@':
                 case '\\':
-                    buff.append(doUnicode(c)).append(' ');
+                case '^':
+                case '|':
+                case '~':
+                case '\"': {
+                    // 半角和全角差距为 65248.
+                    buff.append((char) (c + 65248));
                     break;
+                }
                 default:
                     buff.append(c);
+
             }
         }
 
@@ -108,46 +74,149 @@ public class SphinxQLHelper {
     }
 
     /**
-     * 数字,大小写字母除外都将使用 unicode 的十六进制码表示.
+     * 将 Map 序列化成 json 字符串.
+     * 只关注处理 String 和非字符串,并且不会级联处理子对象.
      *
-     * @param str 目标字符串.
-     * @return 编码结果.
+     * @param data 数据哈希.
+     * @return json.
      */
-    public static String unicode(String str) {
+    public static String serializableJson(Map<String, Object> data) {
         StringBuilder buff = new StringBuilder();
-        boolean lastUnicode = false;
-        for (char c : str.toCharArray()) {
-            if (c == ' ' || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c >= '0' && c <= '9') {
+        buff.append("{");
 
-                if (lastUnicode) {
-                    buff.append(' ');
+        final int emptyLen = buff.length();
+        for (AbstractMap.Entry<String, Object> entry : data.entrySet()) {
+            if (buff.length() > emptyLen) {
+                buff.append(",");
+            }
+            buff.append("\"").append(entry.getKey()).append("\"");
+            buff.append(":");
+            if (String.class.isInstance(entry.getValue())) {
+                buff.append("\"").append(entry.getValue().toString()).append("\"");
+            } else {
+                buff.append(entry.getValue().toString());
+            }
+        }
+
+        buff.append("}");
+
+        return buff.toString();
+    }
+
+    /**
+     * 将 serializableJson 的结果还原成 Map 表示.
+     *
+     * @param json json 字符串.
+     * @return 数据.
+     */
+    public static Map<String, Object> deserializeJson(String json) {
+        if (!json.startsWith("{")) {
+            throw new IllegalStateException("Wrong JSON format.");
+        }
+        if ("{}".equals(json)) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        StringBuilder buff = new StringBuilder();
+        String key = null;
+        String value;
+        boolean number;
+        for (char c : json.toCharArray()) {
+            // 首字符忽略.
+            if ('{' == c) {
+
+                continue;
+
+            } else if (':' == c) {
+
+                // 删除双引号
+                buff.deleteCharAt(0);
+                buff.deleteCharAt(buff.length() - 1);
+                key = buff.toString();
+                buff.delete(0, buff.length());
+
+            } else if (',' == c || '}' == c) {
+
+                number = (buff.indexOf("\"") != 0);
+
+                if (number) {
+                    // 长整形
+                    value = buff.toString();
+                    data.put(key, Long.valueOf(value));
+                } else {
+                    buff.deleteCharAt(0);
+                    buff.deleteCharAt(buff.length() - 1);
+                    value = buff.toString();
+                    // 字符串
+                    data.put(key, value);
                 }
+
+                buff.delete(0, buff.length());
+
+            } else {
 
                 buff.append(c);
 
-                lastUnicode = false;
-
-            } else {
-                // 隔开关键字
-                if (buff.length() > 0) {
-                    buff.append(' ');
-                }
-
-                buff.append(doUnicode(c));
-
-                lastUnicode = true;
             }
         }
 
+        return data;
+    }
+
+    /**
+     * 构造 sphinxQL 全文索引中精确查询语句.
+     * (ZONESPAN:{字段组名} "F{字段组名} value")
+     *
+     * @param value 目标字段.
+     * @return 结果.
+     */
+    public static String buildFullPreciseQuery(StorageValue value, boolean useGroupName) {
+        StringBuilder buff = new StringBuilder();
+        buff.append("(ZONESPAN:").append(ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(' ');
+        if (!useGroupName) {
+            buff.append('\"');
+        }
+        buff.append(ATTRIBUTE_FULL_FIELD_PREFIX);
+        if (useGroupName) {
+            buff.append(value.groupStorageName()).append("*");
+        } else {
+            buff.append(value.storageName());
+        }
+        buff.append(' ');
+        if (useGroupName) {
+            buff.append('\"');
+        }
+        if (StorageType.STRING == value.type()) {
+            buff.append(encodeSpecialCharset(value.value().toString()));
+        } else {
+            buff.append(value.value().toString());
+        }
+        buff.append("\")");
         return buff.toString();
     }
 
-    private static String doUnicode(char c) {
-        return Integer.toHexString(c);
-    }
+    /**
+     * 构造 sphinxQL 全文索引中的模糊查询语句.
+     * (ZONESPAN:{字段组名} F{字段组名} *value*)
+     *
+     * @param value
+     * @return
+     */
+    public static String buildFullFuzzyQuery(StorageValue value, boolean useGroupName) {
+        StringBuilder buff = new StringBuilder();
+        buff.append("(ZONESPAN:").append(ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(" ");
+        buff.append(ATTRIBUTE_FULL_FIELD_PREFIX)
+            .append(useGroupName ? value.groupStorageName() + "*" : value.storageName())
+            .append(" \"*");
 
-    public static void main(String[] args) {
-        String data = "F123214213L 1";
-        System.out.println(encodeQueryFullText(data, false));
+        if (StorageType.STRING == value.type()) {
+            buff.append(encodeSpecialCharset(value.value().toString()));
+        } else {
+            buff.append(value.value().toString());
+        }
+
+        buff.append("*\")");
+        return buff.toString();
     }
 }
