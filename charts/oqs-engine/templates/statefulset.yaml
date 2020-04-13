@@ -78,7 +78,7 @@ spec:
                       timeoutSeconds: 30
                   resources:
                         {{ toYaml .Values.resources | indent 12 }}
-                {{- if .Values.affinity-enabled }}
+                {{- if .Values.affinityenabled }}
                 {{- with .Values.affinity }}
             affinity:
                 {{ toYaml . | indent 10 }}
