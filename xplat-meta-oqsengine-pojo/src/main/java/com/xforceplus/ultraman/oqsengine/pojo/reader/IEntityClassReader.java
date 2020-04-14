@@ -37,6 +37,8 @@ public class IEntityClassReader {
 
     private List<IEntityField> allFields_related;
 
+    private Map<String, IEntityClass> relatedEntities;
+
     private static String FIELD_CODE_AMBIGUOUS = "field [{}] code is ambiguous, return first id [{}]";
 
 
@@ -49,12 +51,12 @@ public class IEntityClassReader {
                 .map(IEntityClass::fields)
                 .orElse(Collections.emptyList()).stream();
 
+        //TODO
         List<IEntityClass> narrowedIEntityClasses = related == null ? Collections.emptyList() : Arrays.asList(related);
 
         /**
          * this allow's duplicated
          * and will filter non-fieldLike relation
-         * many to one is
          */
         Map<Boolean, List<Relation>> fieldLikeRelation = entityClass.relations()
                 .stream()
@@ -65,7 +67,10 @@ public class IEntityClassReader {
                     return FieldLikeRelationType.from(x.getRelationType()).get().isOwnerSide();
                 }));
 
-        //TODO not
+        //
+        relatedEntities = entityClass.entityClasss().stream().collect(Collectors.toMap(IEntityClass::code, y -> y));
+
+        //TODO handle multi field
         //convert related field in the form x.x
         Stream<IEntityField> fieldsInRelated = entityClass
                 .entityClasss().stream()

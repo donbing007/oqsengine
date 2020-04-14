@@ -32,6 +32,9 @@ storage:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
     name: "oqsindex"
 
+
+
+
 management:
   health:
     redis:

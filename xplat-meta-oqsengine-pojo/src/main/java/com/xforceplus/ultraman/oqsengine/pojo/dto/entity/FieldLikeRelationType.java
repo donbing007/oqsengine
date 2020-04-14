@@ -8,7 +8,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
- * field like
+ * field like Relation
+ * relation name is the alias for the entity
  */
 public enum FieldLikeRelationType {
 
@@ -52,6 +53,16 @@ public enum FieldLikeRelationType {
         return fieldTransformer.apply(rel);
     }
 
+    /** concat fieldName
+      owner side => related field code . name
+                !=> owner field code .name
+      e.g
+      A 1:1 B | A N:1 B
+      A B.id
+      --------
+      A 1:N B
+      B A.id
+     **/
     public static IEntityField toField(
             Relation relation
             , FieldType fieldType
@@ -60,20 +71,23 @@ public enum FieldLikeRelationType {
             , boolean isIdentifier
             , boolean ownerSide) {
 
-        //relation name as field name
-        String fieldName = relation.getName();
-        if (fieldName == null || "".equals(fieldName)) {
-            fieldName = defaultName;
+
+        //determine which is the related field code
+        String relationName = relation.getName();
+        String relatedEntityName;
+        if(relationName == null || relationName.isEmpty()){
+            relatedEntityName = relation.getEntityClassName();
+        }else{
+            relatedEntityName = relationName;
         }
 
-        //concat fieldname
-        // owner side => related field code . name
-        //           !=> owner field code .name
-        fieldName = (!ownerSide ? relation.getRelOwnerClassName() : relation.getEntityClassName())
-                .concat(".").concat(fieldName);
+        String fieldName = (ownerSide ? relatedEntityName : relation.getRelOwnerClassName())
+                .concat(".").concat(defaultName);
 
         Long fieldId = relation.getId();
 
+        //TODO isIdentifier should always false
+        //TODO searchable should always true
         FieldConfig fieldConfig = FieldConfig
                 .build()
                 .searchable(searchable)

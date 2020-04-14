@@ -308,7 +308,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             Map<Long, List<QueryFieldsUp>> mappedQueryFields = queryField.stream()
                     .collect(Collectors.groupingBy(QueryFieldsUp::getEntityId));
 
-
+            /** TODO check this
+             * find related entity and its sub field
+             */
             Optional.ofNullable(entities).orElseGet(Collections::emptyList)
                     .stream().filter(Objects::nonNull).forEach(entity -> {
                 mappedQueryFields.keySet().stream()
