@@ -53,6 +53,8 @@ jvm:
   - -XX:+UseParallelGC
   - -XX:+PrintGCTimeStamps
 
+environment:
+  - JVM_HEAP_PERCENTAGE: 60
 
 logger:
   level: INFO
