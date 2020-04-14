@@ -77,18 +77,15 @@ spec:
                       failureThreshold: 3
                       timeoutSeconds: 30
                   resources:
-                        {{ toYaml .Values.resources | indent 12 }}
-                    {{- if .Values.affinity }}
-                {{- with .Values.affinity }}
-            affinity:
-                {{ toYaml . | indent 10 }}
-                {{- end }}
-                {{- else }}
+                {{ toYaml .Values.resources | indent 20 }}
             volumes:
                 - name: config
                   configMap:
                       name: {{ template "oqsengine.fullname" . }}-configmap
             affinity:
+                    {{- if .Values.affinity }}
+                    {{ toYaml .Values.affinity | indent 15 }}
+                    {{- else }}
                 podAntiAffinity:
                     requiredDuringSchedulingIgnoredDuringExecution:
                         - topologyKey: "kubernetes.io/hostname"
@@ -96,12 +93,12 @@ spec:
                               matchLabels:
                                   app: {{ template "oqsengine.name" . }}
                                   release: {{ .Release.Name }}
-                    {{- end }}
+                {{- end }}
                 {{- with .Values.nodeSelector }}
             nodeSelector:
-                {{ toYaml . | indent 14 }}
+                {{ toYaml . | indent 15 }}
                 {{- end }}
                 {{- with .Values.tolerations }}
             tolerations:
-            {{ toYaml . | indent 14 }}
+                {{ toYaml . | indent 15 }}
         {{- end }}
