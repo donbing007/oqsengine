@@ -27,7 +27,7 @@ public class EntityClass implements IEntityClass {
     /**
      * 关系信息
      */
-    private Collection<Relation> relations;
+    private List<Relation> relations;
     /**
      * 子对象结构信息
      */
@@ -152,7 +152,7 @@ public class EntityClass implements IEntityClass {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, relations, entityClasss, extendEntityClass, fields);
+        return Objects.hash(id, relations, entityClasses, extendEntityClass, fields);
     }
 
     @Override
@@ -160,7 +160,7 @@ public class EntityClass implements IEntityClass {
         return "EntityClass{" +
             "id=" + id +
             ", relations=" + relations +
-            ", entityClasss=" + entityClasss +
+            ", entityClasss=" + entityClasses +
             ", extendEntityClass=" + extendEntityClass +
             ", fields=" + fields +
             '}';

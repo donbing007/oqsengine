@@ -37,7 +37,7 @@ public class IEntityClassReader {
 
     private List<IEntityField> allFields_related;
 
-    private Map<String, IEntityClass> relatedEntities;
+    private Map<Long, IEntityClass> relatedEntities;
 
     private static String FIELD_CODE_AMBIGUOUS = "field [{}] code is ambiguous, return first id [{}]";
 
@@ -51,44 +51,56 @@ public class IEntityClassReader {
                 .map(IEntityClass::fields)
                 .orElse(Collections.emptyList()).stream();
 
-        //TODO
+
+
+        //TODO narrow usage?
         List<IEntityClass> narrowedIEntityClasses = related == null ? Collections.emptyList() : Arrays.asList(related);
 
         /**
          * this allow's duplicated
          * and will filter non-fieldLike relation
          */
-        Map<Boolean, List<Relation>> fieldLikeRelation = entityClass.relations()
-                .stream()
-                .filter(x -> x.getEntityField() != null)
-                .filter(x -> FieldLikeRelationType
-                        .from(x.getRelationType()).isPresent())
-                .collect(Collectors.groupingBy(x -> {
-                    return FieldLikeRelationType.from(x.getRelationType()).get().isOwnerSide();
-                }));
+        Map<Boolean, List<Relation>> fieldLikeRelation
+                = entityClass
+                    .relations()
+                    .stream()
+                    .filter(x -> x.getEntityField() != null)
+                    .filter(x -> FieldLikeRelationType
+                            .from(x.getRelationType()).isPresent())
+                    .collect(Collectors.groupingBy(x -> {
+                        return FieldLikeRelationType.from(x.getRelationType()).get().isOwnerSide();
+                    }));
 
-        //
-        relatedEntities = entityClass.entityClasss().stream().collect(Collectors.toMap(IEntityClass::code, y -> y));
+        //init related entities mapping
+        relatedEntities = entityClass
+                .entityClasss()
+                .stream()
+                .collect(Collectors
+                        .toMap(IEntityClass::id, y -> y));
 
         //TODO handle multi field
         //convert related field in the form x.x
         Stream<IEntityField> fieldsInRelated = entityClass
-                .entityClasss().stream()
-                .flatMap(x -> {
+            .relations()
+            .stream()
+            .flatMap(rel -> {
 
-                    Stream<IEntityField> selfStream = x.fields().stream()
-                            .map(field -> IEntityFieldHelper.withName(field
-                                    , x.code() + "." + field.name()));
+                IEntityClass iEntityClass = relatedEntities.get(rel.getEntityClassId());
 
-                    Stream<IEntityField> parentStream = Optional.ofNullable(x.extendEntityClass())
-                            .map(IEntityClass::fields)
-                            .orElseGet(Collections::emptyList)
-                            .stream()
-                            .map(field -> IEntityFieldHelper.withName(field
-                                    , x.code() + "." + field.name()));
+                //TODO
+                Stream<IEntityField> selfStream = x.fields().stream()
+                        .map(field -> IEntityFieldHelper.withName(field
+                                , x.code() + "." + field.name()));
 
-                    return Stream.concat(selfStream, parentStream);
-                });
+                Stream<IEntityField> parentStream = Optional.ofNullable(x.extendEntityClass())
+                        .map(IEntityClass::fields)
+                        .orElseGet(Collections::emptyList)
+                        .stream()
+                        .map(field -> IEntityFieldHelper.withName(field
+                                , x.code() + "." + field.name()));
+
+            return Stream.concat(selfStream, parentStream);
+        });;
 
         allFields_self = Stream.concat(
                 Stream.concat(entityFields, entityParentFields)
