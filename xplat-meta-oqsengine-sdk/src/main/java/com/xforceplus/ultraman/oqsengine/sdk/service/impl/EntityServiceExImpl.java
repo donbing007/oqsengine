@@ -250,6 +250,28 @@ public class EntityServiceExImpl implements EntityServiceEx {
         return getMaxVersionList(items);
     }
 
+    @Override
+    public List<DictItem> findDictItemsByCode(String code, String enumCode) {
+        DataSet ds = null;
+        List<Row> rows = new ArrayList<Row>();
+        if (StringUtils.isEmpty(enumCode)) {
+            ds = dictMapLocalStore.query().selectAll()
+                    .where("dictCode")
+                    .eq(code)
+                    .execute();
+            rows = ds.toRows();
+        } else {
+            ds = dictMapLocalStore.query().selectAll()
+                    .where("dictCode")
+                    .eq(code)
+                    .and("code").eq(enumCode)
+                    .execute();
+            rows = ds.toRows();
+        }
+        List<DictItem> items = rows.stream().map(this::toDictItem).collect(Collectors.toCollection(ResponseList::new));
+        return getMaxVersionList(items);
+    }
+
     private UltPageBoItem toUltPageBos(Row row) {
         UltPageBoItem ultPageBoItem = new UltPageBoItem();
         ultPageBoItem.setId(Long.parseLong(RowUtils.getRowValue(row, "settingId").map(Object::toString).orElse("")));
