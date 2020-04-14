@@ -62,14 +62,14 @@ data:
           "dataSources": {
             "index": {
               "write": [
-            {{ .Values.datasource.master | indent 14 }}
+{{ .Values.datasource.index.write | indent 17 }}
               ],
               "search": [
-            {{ .Values.datasource.master | indent 14 }}
+{{ .Values.datasource.index.search | indent 17 }}
               ]
             },
           "master": [
-            {{ .Values.datasource.master | indent 12 }}
+{{ .Values.datasource.master | indent 14 }}
           ]
         }
         akka {
