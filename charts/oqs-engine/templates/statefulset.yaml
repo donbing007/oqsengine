@@ -84,7 +84,7 @@ spec:
                       name: {{ template "oqsengine.fullname" . }}-configmap
             affinity:
             {{- if .Values.affinity }}
-{{ toYaml .Values.affinity | indent 15 }}
+{{ toYaml .Values.affinity | indent 14 }}
             {{- else }}
                 podAntiAffinity:
                     requiredDuringSchedulingIgnoredDuringExecution:
@@ -96,9 +96,9 @@ spec:
             {{- end }}
             {{- with .Values.nodeSelector }}
             nodeSelector:
-{{ toYaml . | indent 15 }}
+{{ toYaml . | indent 14 }}
             {{- end }}
             {{- with .Values.tolerations }}
             tolerations:
-{{ toYaml . | indent 15 }}
+{{ toYaml . | indent 14 }}
             {{- end }}
