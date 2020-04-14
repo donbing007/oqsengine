@@ -19,9 +19,9 @@ spec:
             labels:
                 app: {{ template "oqsengine.name" . }}
                 release: {{ .Release.Name }}
-                {{- with .Values.annotations }}
+            {{- with .Values.annotations }}
             annotations:
-                {{ toYaml . | indent 8 }}
+{{ toYaml . | indent 14 }}
             {{- end }}
         spec:
             containers:
@@ -77,15 +77,15 @@ spec:
                       failureThreshold: 3
                       timeoutSeconds: 30
                   resources:
-                {{ toYaml .Values.resources | indent 20 }}
+{{ toYaml .Values.resources | indent 20 }}
             volumes:
                 - name: config
                   configMap:
                       name: {{ template "oqsengine.fullname" . }}-configmap
             affinity:
-                    {{- if .Values.affinity }}
-                    {{ toYaml .Values.affinity | indent 15 }}
-                    {{- else }}
+            {{- if .Values.affinity }}
+{{ toYaml .Values.affinity | indent 15 }}
+            {{- else }}
                 podAntiAffinity:
                     requiredDuringSchedulingIgnoredDuringExecution:
                         - topologyKey: "kubernetes.io/hostname"
@@ -93,12 +93,12 @@ spec:
                               matchLabels:
                                   app: {{ template "oqsengine.name" . }}
                                   release: {{ .Release.Name }}
-                {{- end }}
-                {{- with .Values.nodeSelector }}
+            {{- end }}
+            {{- with .Values.nodeSelector }}
             nodeSelector:
-                {{ toYaml . | indent 15 }}
-                {{- end }}
-                {{- with .Values.tolerations }}
+{{ toYaml . | indent 15 }}
+            {{- end }}
+            {{- with .Values.tolerations }}
             tolerations:
-                {{ toYaml . | indent 15 }}
-        {{- end }}
+{{ toYaml . | indent 15 }}
+            {{- end }}
