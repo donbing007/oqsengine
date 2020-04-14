@@ -33,8 +33,12 @@ spec:
                           exec:
                               command: ["/bin/sh","-c","curl","-X","POST","http://127.0.0.1:8086/actuator/shutdown"]
                   env:
-                      - name: JVM_HEAP_PERCENTAGE
-                        value: "60"
+                  {{- range .Values.environment }}
+                  {{- range $k,$v := .}}
+                    - name: {{ $k }}
+                      value: {{ $v |quote }}
+                  {{- end}}
+                  {{- end}}
                   command: ["java"]
                   args:
                       - -jar
