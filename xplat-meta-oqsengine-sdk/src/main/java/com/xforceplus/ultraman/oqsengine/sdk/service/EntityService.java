@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 /**
  * user api
@@ -38,4 +39,6 @@ public interface EntityService {
     Integer count(EntityClass entityClass, ConditionQueryRequest condition);
 
     List<EntityClass> loadSonByCode(String bocode, String tenantId);
+
+    List<EntityClass> getEntityClasss();
 }

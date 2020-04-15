@@ -582,6 +582,20 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         }
     }
 
+    @Override
+    public synchronized List<EntityClass> findAllEntities() {
+        DataSet boDs = dc.query()
+                .from("bos")
+                .selectAll()
+                .execute();
+
+        List<Row> rows = boDs.toRows();
+
+        return rows.stream().map(this::toEntityClass)
+                .filter(Optional::isPresent)
+                .map(Optional::get).collect(Collectors.toList());
+    }
+
     private synchronized void insertBoTable(String id, String code, String parentId) {
         InsertInto insert = new InsertInto(getTable("bos"))
             .value("id", id)
@@ -703,7 +717,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * |-> build relation fields
      * deal with self fields
      *
-     * @param row
+     * @param
      * @return //
      */
 //    private Optional<IEntityClass> toEntityClassFlow(Row row) {
