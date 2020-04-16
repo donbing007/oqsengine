@@ -73,13 +73,14 @@ public class IEntityClassHelper {
 
     /**
      * Field <-- origin
-     *       <-- relation
-     *       <-- subfield
+     * <-- relation
+     * <-- subfield
      * find field in entityClass by Code
      * support x.x will
+     *
      * @return
      */
-    public static Optional<IEntityField> findFieldByCodeInAll(IEntityClass entityClass, String code){
+    public static Optional<IEntityField> findFieldByCodeInAll(IEntityClass entityClass, String code) {
         //first find in entityclass self 's field
 
         Optional<IEntityField> fieldInMain = entityClass.field(code);
@@ -92,11 +93,13 @@ public class IEntityClassHelper {
         String[] splitCode = code.split("\\.");
 
         Optional<IEntityField> fieldInRelOther;
-        if(splitCode.length > 1) {
+        if (splitCode.length > 1) {
             // field exists in Related EntityClass
-            fieldInRelOther = entityClass.entityClasss().stream().filter(x -> x.code().equals(splitCode[0]))
+            fieldInRelOther = entityClass.entityClasss()
+                    .stream()
+                    .filter(x -> x.code().equals(splitCode[0]))
                     .findFirst().map(x -> x.field(splitCode[1])).filter(Optional::isPresent).map(Optional::get);
-        }else{
+        } else {
             fieldInRelOther = Optional.empty();
         }
 

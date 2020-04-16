@@ -6,8 +6,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -34,7 +32,7 @@ public enum FieldType {
         }
     }, new String[]{"boolean"}
             , (f, v) ->
-           new BooleanValue(f, Boolean.parseBoolean(v))),
+            new BooleanValue(f, Boolean.parseBoolean(v))),
     ENUM("Enum", new String[]{"enum"}
             , EnumValue::new),
     DATETIME("DateTime", s -> {
@@ -48,7 +46,7 @@ public enum FieldType {
             , (f, v) -> {
         Instant instant = Instant.ofEpochMilli(Long.parseLong(v));
         return new DateTimeValue(f
-                        , LocalDateTime.ofInstant(instant, DateTimeValue.zoneId));
+                , LocalDateTime.ofInstant(instant, DateTimeValue.zoneId));
     }),
     LONG("Long", s -> {
         try {
@@ -73,7 +71,7 @@ public enum FieldType {
             return false;
         }
     }, new String[]{"double"}
-    , (f, v) -> {
+            , (f, v) -> {
         int precision = Optional.ofNullable(f.config())
                 .map(FieldConfig::getPrecision)
                 .filter(x -> x > 0).orElse(1);
@@ -90,9 +88,9 @@ public enum FieldType {
     private BiFunction<IEntityField, String, IValue> iValueConverter;
 
     /**
-     * @param type    field raw type
-     * @param tester  test if a string value can be considered as this type
-     * @param accepts alias for this type
+     * @param type            field raw type
+     * @param tester          test if a string value can be considered as this type
+     * @param accepts         alias for this type
      * @param iValueConverter converter ivalue
      */
     FieldType(String type, Predicate<String> tester, String[] accepts, BiFunction<IEntityField, String, IValue> iValueConverter) {
@@ -122,13 +120,13 @@ public enum FieldType {
         return tester.test(input);
     }
 
-    public Optional<IValue> toTypedValue(IEntityField entityField, String value){
+    public Optional<IValue> toTypedValue(IEntityField entityField, String value) {
         Objects.requireNonNull(value, "value值不能为空");
         Objects.requireNonNull(entityField, "field值不能为空");
 
-        if(this.tester.test(value)){
+        if (this.tester.test(value)) {
             return Optional.ofNullable(iValueConverter.apply(entityField, value));
-        }else{
+        } else {
             return Optional.empty();
         }
     }

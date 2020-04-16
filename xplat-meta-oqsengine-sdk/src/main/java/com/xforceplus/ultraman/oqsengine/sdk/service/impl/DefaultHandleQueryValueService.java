@@ -76,7 +76,7 @@ public class DefaultHandleQueryValueService implements HandleQueryValueService {
                             fieldCondition.getCode()
                             : code + "." + fieldCondition.getCode();
 
-                    Optional<IEntityField> fieldOp = reader.field(combinedName);
+                    Optional<? extends IEntityField> fieldOp = reader.column(combinedName);
 
 
                     return fieldOp.map(field ->
@@ -137,7 +137,6 @@ public class DefaultHandleQueryValueService implements HandleQueryValueService {
 //
 //
 //    }
-
 
     private List<String> doHandle(IEntityField field, List<String> origin) {
         return Optional.ofNullable(origin)

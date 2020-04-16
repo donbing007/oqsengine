@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
+package com.xforceplus.ultraman.oqsengine.pojo.reader;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -11,6 +11,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertTrue;
 
@@ -21,17 +23,31 @@ public class EntityHelperTest {
     @Before
     public void initEntityclass(){
 
+        Field rel1Field = new Field(2001L, "rel1.id", FieldType.LONG);
+        Field relDupField = new Field(2004L, "rel1Dup.id", FieldType.LONG);
+        Field rel2Field = new Field(3001L, "rel2.id", FieldType.LONG);
+        Field rel2DupField = new Field(3004L, "rel2Dup.id", FieldType.LONG);
+        Field rel3Field = new Field(4001L, "rel3.ids", FieldType.LONG);
+
         Relation rel1 = new Relation("rel1", 2L
                 , "OneToOne"
-                , false, new Field(2001L, "relFieldA", FieldType.LONG));
+                , false, rel1Field);
+
+        Relation rel1Dup = new Relation("rel1Dup", 2L
+                , "OneToOne"
+                , false, relDupField);
 
         Relation rel2 = new Relation("rel2", 3L
                 , "OneToMany"
-                , false, new Field(3001L, "relFieldB", FieldType.LONG));
+                , false, rel2Field);
+
+        Relation rel2Dup = new Relation("rel2Dup", 3L
+                , "OneToMany"
+                , false, rel2DupField);
 
         Relation rel3 = new Relation("rel3", 4L
                 , "MultiValues"
-                , false, new Field(4001L, "relFieldC", FieldType.LONG));
+                , false, rel3Field);
 
 
         IEntityClass relatedEntityA = new EntityClass(2L,"one2one-entity"
@@ -49,7 +65,9 @@ public class EntityHelperTest {
 
         IEntityClass parentEntity = new EntityClass(11L, "parent-entity"
                 , Arrays.asList(new Field(11002L, "fieldC2", FieldType.STRING)
-                , new Field(11003L, "fieldC3", FieldType.LONG)));
+                              , new Field(11003L, "fieldC3", FieldType.LONG)
+                              , new Field(11004L, "fieldC3", FieldType.LONG)
+        ));
 
         /**
          * Long id,
@@ -62,10 +80,10 @@ public class EntityHelperTest {
         entityClass = new EntityClass(
                 1L
                 , "test-entity"
-                , Arrays.asList(rel1, rel2, rel3)
+                , Arrays.asList(rel1, rel1Dup, rel2, rel2Dup, rel3)
                 , Arrays.asList(relatedEntityA, relatedEntityB, relatedEntityC)
                 , parentEntity
-                , Arrays.asList(new Field(1001L, "field1", FieldType.LONG), new Field(4001L, "relFieldC", FieldType.LONG)));
+                , Arrays.asList(new Field(1001L, "field1", FieldType.LONG)));
 
     }
 
@@ -77,7 +95,27 @@ public class EntityHelperTest {
     @Test
     public void fieldReaderTest(){
         IEntityClassReader reader = new IEntityClassReader(entityClass);
-        assertTrue("related field can be read", reader.field("one2one-entity.fieldA2").isPresent());
+        assertTrue("related column can be read", reader.column("rel1.fieldA2").isPresent());
     }
 
+    @Test
+    public void fieldReaderWillWarning(){
+        IEntityClassReader reader = new IEntityClassReader(entityClass);
+        assertTrue("related column can be read", reader.column("fieldC3").isPresent());
+    }
+
+    @Test
+    public void testAllFields(){
+        new IEntityClassReader(entityClass).fields().forEach(System.out::println);
+    }
+
+    @Test
+    public void testZip(){
+        Map<String, Object> map = new HashMap<>();
+        map.put("what", 1);
+        map.put("fieldC3", 3);
+
+        new IEntityClassReader(entityClass)
+                .zipValue(map).forEach(System.out::println);
+    }
 }

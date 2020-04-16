@@ -686,7 +686,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         List<IValue> valueList = entityUp.getValuesList().stream()
                 .flatMap(y -> {
-                    Optional<IEntityField> entityFieldOp = reader.field(y.getFieldId());
+                    Optional<? extends IEntityField> entityFieldOp = reader.field(y.getFieldId());
                     return entityFieldOp
                             .map(x -> toTypedValue(x, y.getValue()))
                             .orElseGet(Collections::emptyList)

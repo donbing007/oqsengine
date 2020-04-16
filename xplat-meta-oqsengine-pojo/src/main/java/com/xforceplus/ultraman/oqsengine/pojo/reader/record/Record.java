@@ -1,11 +1,17 @@
-package com.xforceplus.ultraman.oqsengine.sdk.record;
+package com.xforceplus.ultraman.oqsengine.pojo.reader.record;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import io.vavr.Tuple2;
 
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
+/**
+ *
+ */
 public interface Record extends Comparable<Record>  {
 
     Optional<Object> get(String fieldName);
@@ -25,4 +31,8 @@ public interface Record extends Comparable<Record>  {
     void set(IEntityField field, Object t);
 
     void setTypedValue(IValue iValue);
+
+    Stream<Tuple2<IEntityField, Object>> stream();
+
+    Map<String, Object> toMap(Set<String> keys);
 }

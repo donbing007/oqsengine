@@ -80,6 +80,18 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
         Optional<EntityClass> imageBill = entityService.loadByCode("image");
         assertTrue("image is present", imageBill.isPresent());
+
+        //clear
+        Either<String, Tuple2<Integer, List<Map<String, Object>>>> billsBefore =
+                entityService.findByCondition(imageBill.get()
+                        , new RequestBuilder().field("bill_image_id", ConditionOp.eq, 1111111111).build());
+
+
+        billsBefore.forEach(x -> x._2().forEach(row -> {
+            Long id = Long.parseLong(row.get("id").toString());
+            entityService.deleteOne(imageBill.get(), id);
+        }));
+
         Map<String, Object> body = new HashMap<>();
         body.put("bill_image_id", "1111111111");
 
@@ -563,9 +575,14 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
         Optional<EntityClass> entityOpt = entityService.loadByCode("ticketAttachment");
 
-        Map<String, Object> ret = entityService.findOne(entityOpt.get(), 6653532313399328770L).get();
-        Map<String, Object> ret2 = entityService.findByConditionWithIds(entityOpt.get(), Arrays.asList(6653532313399328770L), new ConditionQueryRequest()).get()._2().get(0);
+        Map<String, Object> map = new HashMap<>();
+        Long id = entityService.create(entityOpt.get(), map).get();
+
+        Map<String, Object> ret = entityService.findOne(entityOpt.get(), id).get();
+        Map<String, Object> ret2 = entityService.findByConditionWithIds(entityOpt.get(), Arrays.asList(id), new ConditionQueryRequest()).get()._2().get(0);
 
         assertEquals(ret, ret2);
+
+        entityService.deleteOne(entityOpt.get(), id);
     }
  }

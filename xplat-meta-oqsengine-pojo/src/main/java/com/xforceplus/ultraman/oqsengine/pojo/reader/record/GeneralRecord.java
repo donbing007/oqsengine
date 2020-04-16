@@ -1,12 +1,15 @@
-package com.xforceplus.ultraman.oqsengine.sdk.record;
+package com.xforceplus.ultraman.oqsengine.pojo.reader.record;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * Record
@@ -115,13 +118,13 @@ public class GeneralRecord implements Record {
     public <T> Optional<T> get(String fieldName, Class<? extends T> type) {
         return field(fieldName)
                 .flatMap(this::get)
-                .map(x -> (T)x);
+                .map(x -> (T) x);
     }
 
     @Override
     public <T> Optional<T> get(IEntityField field, Class<? extends T> type) {
         return get(field)
-                .map(x -> (T)x);
+                .map(x -> (T) x);
     }
 
     @Override
@@ -143,11 +146,38 @@ public class GeneralRecord implements Record {
     @Override
     public void setTypedValue(IValue iValue) {
 
-        if(iValue != null
+        if (iValue != null
                 && iValue.getValue() != null
-                && iValue.getField() != null){
+                && iValue.getField() != null) {
             set(iValue.getField(), iValue.getValue());
         }
+    }
+
+    @Override
+    public Stream<Tuple2<IEntityField, Object>> stream() {
+        return IntStream.range(0, fields.length).mapToObj(i -> Tuple.of(fields[i], values[i]));
+    }
+
+    @Override
+    public Map<String, Object> toMap(Set<String> filterName) {
+
+        Map<String, Object> map = new HashMap<>(values.length);
+
+        IntStream.range(0, values.length)
+                .forEach(i -> {
+
+                    String name = fields[i].name();
+                    if(filterName != null && !filterName.isEmpty()){
+                        if(filterName.contains(name)){
+                            map.put(name, values[i]);
+                        }
+                    }else{
+                        map.put(name, values[i]);
+                    }
+
+                });
+
+        return map;
     }
 
     /**

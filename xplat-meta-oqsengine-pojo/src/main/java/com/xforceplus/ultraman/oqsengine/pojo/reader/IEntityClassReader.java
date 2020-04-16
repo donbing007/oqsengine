@@ -3,15 +3,21 @@ package com.xforceplus.ultraman.oqsengine.pojo.reader;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldLikeRelationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AliasField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.ColumnField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityFieldHelper;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.record.GeneralRecord;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.reader.FieldScope.ALL;
 
@@ -19,30 +25,67 @@ import static com.xforceplus.ultraman.oqsengine.pojo.reader.FieldScope.ALL;
  * EntityClass Domain class
  * TODO move more code here
  * an EntityClassReader to handler EntityClass constraints
+ * <p>
+ * field from
+ * entitySelf          a
+ * entityParent        a
+ * entityRelation      rel
+ * entityRelatedField  rel.x
+ * related
+ *
+ *
+ * entity do not need know the rel field
+ *
  * @author luye
  */
 public class IEntityClassReader {
 
-    Logger logger = LoggerFactory.getLogger(IEntityClassReader.class);
+    private Logger logger = LoggerFactory.getLogger(IEntityClassReader.class);
+//
+//    /**
+//     * self id - field mapping including
+//     *           self fields
+//     *           parent fields
+//     *           rel fields (owner-side)
+//     */
+//    private Map<Long, AliasField> idMappingFields_self;
+//
+//    /**
+//     * related id - field mapping including
+//     *           related entityclass fields with their parent fields
+//     *           rel fields (non owner-side)
+//     */
+//    private Map<Long, AliasField> idMappingFields_related;
 
-    private Map<Long, List<IEntityField>> idMappingFields_self;
 
-    private Map<Long, List<IEntityField>> idMappingFields_related;
+    private IEntityClass entityClass;
 
-    private Map<String, List<IEntityField>> codedFields_self;
+    private Map<Long, AliasField> idMappingFieldsAll;
 
-    private Map<String, List<IEntityField>> codedFields_related;
+    private Map<String, List<ColumnField>> codedFields_self;
 
-    private List<IEntityField> allFields_self;
+    private Map<String, List<ColumnField>> codedFields_related;
 
-    private List<IEntityField> allFields_related;
+    private List<ColumnField> allColumn_self;
+
+    private List<ColumnField> allColumn_related;
 
     private Map<Long, IEntityClass> relatedEntities;
 
-    private static String FIELD_CODE_AMBIGUOUS = "field [{}] code is ambiguous, return first id [{}]";
+    private static final String FIELD_CODE_AMBIGUOUS = "field [{}] code is ambiguous, return first id [{}]";
 
+    private static final String FIELD_MISSING = "[{}] is not available in EntityClass [{}]";
 
-    public IEntityClassReader(IEntityClass entityClass, IEntityClass ... related){
+    private List<AliasField> allFields;
+
+    private IEntityClassReader(){
+
+    }
+
+    //TODO optimize
+    public IEntityClassReader(IEntityClass entityClass, IEntityClass... related) {
+
+        this.entityClass = entityClass;
 
         //self fields and parent fields
         Stream<IEntityField> entityFields = entityClass.fields().stream();
@@ -51,10 +94,9 @@ public class IEntityClassReader {
                 .map(IEntityClass::fields)
                 .orElse(Collections.emptyList()).stream();
 
-
-
-        //TODO narrow usage?
-        List<IEntityClass> narrowedIEntityClasses = related == null ? Collections.emptyList() : Arrays.asList(related);
+        //TODO narrow usage?'
+        List<IEntityClass> narrowedIEntityClasses = related == null ?
+                Collections.emptyList() : Arrays.asList(related);
 
         /**
          * this allow's duplicated
@@ -78,102 +120,125 @@ public class IEntityClassReader {
                 .collect(Collectors
                         .toMap(IEntityClass::id, y -> y));
 
+        //buildColumnes
+        AtomicInteger index = new AtomicInteger(0);
         //TODO handle multi field
         //convert related field in the form x.x
-        Stream<IEntityField> fieldsInRelated = entityClass
-            .relations()
-            .stream()
-            .flatMap(rel -> {
+        Stream<ColumnField> fieldsInRelated = entityClass
+                .relations()
+                .stream()
+                .flatMap(rel -> {
 
-                IEntityClass iEntityClass = relatedEntities.get(rel.getEntityClassId());
+                    //find related iEntityClass
+                    IEntityClass relatedEntityClass = relatedEntities.get(rel.getEntityClassId());
 
-                //TODO
-                Stream<IEntityField> selfStream = x.fields().stream()
-                        .map(field -> IEntityFieldHelper.withName(field
-                                , x.code() + "." + field.name()));
+                    //TODO
+                    Stream<ColumnField> selfStream = relatedEntityClass.fields().stream()
+                            .map(field -> new ColumnField(index.getAndIncrement()
+                                    , rel.getName() + "." + field.name()
+                                    , field
+                            ));
 
-                Stream<IEntityField> parentStream = Optional.ofNullable(x.extendEntityClass())
-                        .map(IEntityClass::fields)
-                        .orElseGet(Collections::emptyList)
-                        .stream()
-                        .map(field -> IEntityFieldHelper.withName(field
-                                , x.code() + "." + field.name()));
+                    Stream<ColumnField> parentStream = Optional
+                            .ofNullable(relatedEntityClass.extendEntityClass())
+                            .map(IEntityClass::fields)
+                            .orElseGet(Collections::emptyList)
+                            .stream()
+                            .map(field -> new ColumnField(index.getAndIncrement()
+                                    , rel.getName() + "." + field.name()
+                                    , field
+                            ));
 
-            return Stream.concat(selfStream, parentStream);
-        });;
+                    return Stream.concat(selfStream, parentStream);
+                });
 
-        allFields_self = Stream.concat(
+        /**
+         * turn every field as a column
+         */
+        allColumn_self = Stream.concat(
                 Stream.concat(entityFields, entityParentFields)
                 , Optional.ofNullable(fieldLikeRelation.get(true))
                         .orElseGet(Collections::emptyList)
                         .stream().map(Relation::getEntityField)
-        ).collect(Collectors.toList());
+        ).map(x -> {
+                    return new ColumnField(index.getAndIncrement(), x.name(), x);
+        }).collect(Collectors.toList());
 
-        allFields_related = Stream.concat(
+        allColumn_related = Stream.concat(
                 fieldsInRelated
                 , Optional.ofNullable(fieldLikeRelation.get(false))
                         .orElseGet(Collections::emptyList)
-                        .stream().map(Relation::getEntityField)
+                        .stream()
+                        .map(Relation::getEntityField)
+                        .map(x -> new ColumnField(index.getAndIncrement(), x.name(), x))
         ).collect(Collectors.toList());
 
-        idMappingFields_self = allFields_self.stream().collect(Collectors.groupingBy(IEntityField::id));
-        idMappingFields_related = allFields_related.stream().collect(Collectors.groupingBy(IEntityField::id));
+        codedFields_self = allColumn_self.stream().collect(Collectors.groupingBy(IEntityField::name));
+        codedFields_related = allColumn_related.stream().collect(Collectors.groupingBy(IEntityField::name));
 
-        codedFields_self = allFields_self.stream().collect(Collectors.groupingBy(IEntityField::name));
-        codedFields_related = allFields_related.stream().collect(Collectors.groupingBy(IEntityField::name));
+        //group all field
+        Stream<IEntityField> allStream = Stream.concat(allColumn_self.stream(), allColumn_related.stream());
+
+        Map<Long, List<IEntityField>> collect = allStream
+                .collect(Collectors.groupingBy(IEntityField::id));
+
+        allFields = collect.entrySet().stream()
+                .sorted(Comparator.comparingLong(Map.Entry::getKey)).map(x -> {
+
+                    AliasField field = new AliasField(x.getValue().get(0));
+                    x.getValue().stream().map(IEntityField::name).forEach(field::addName);
+                    return field;
+                }).collect(Collectors.toList());
+
+
+        idMappingFieldsAll = allFields.stream().collect(Collectors.toMap(AliasField::id, y -> y));
     }
 
-    public Optional<IEntityField> field(long id){
+
+    /**
+     * field will has multi name so return AliasField
+     * @param id
+     * @return
+     */
+    public Optional<AliasField> field(long id) {
         return field(id, ALL);
     }
 
-    public Optional<IEntityField> field(long id, FieldScope scope){
+    public Optional<AliasField> field(long id, FieldScope scope) {
+        return Optional.ofNullable(idMappingFieldsAll.get(id));
+    }
 
-        if(scope == null){
+    private boolean checkAmbiguous(List<ColumnField> candidates) {
+        return candidates.stream()
+                .map(ColumnField::originField)
+                .distinct()
+                .count() > 1;
+    }
+
+    /**
+     * find field code column
+     * @param code
+     * @param scope
+     * @return
+     */
+    public Optional<ColumnField> column(String code, FieldScope scope) {
+
+        if (scope == null) {
             scope = ALL;
         }
 
-        Optional<IEntityField> retFieldOp = Optional.empty();
+        List<ColumnField> codeSelectedField = Collections.emptyList();
 
-        switch(scope){
-            case SELF_ONLY:
-                retFieldOp = Optional.ofNullable(idMappingFields_self.get(id)).map(x -> x.get(0));
-                break;
-            case RELATED_ONLY:
-                retFieldOp = Optional.ofNullable(idMappingFields_related.get(id)).map(x -> x.get(0));
-                break;
-            case ALL:
-                retFieldOp = OptionalHelper.combine(
-                          Optional.ofNullable(idMappingFields_self.get(id)).map(x -> x.get(0))
-                        , Optional.ofNullable(idMappingFields_related.get(id)).map(x -> x.get(0)));
-                break;
-            default:
-        }
-        return retFieldOp;
-    }
-
-    private boolean checkAmbiguous(List<IEntityField> candidates){
-        return candidates.stream().distinct().count() > 1;
-    }
-
-    public Optional<IEntityField> field(String code, FieldScope scope){
-
-        if(scope == null){
-            scope = ALL;
-        }
-
-        List<IEntityField> codeSelectedField = Collections.emptyList();
-
-        switch(scope){
+        switch (scope) {
             case SELF_ONLY:
                 codeSelectedField = Optional
-                                    .ofNullable(codedFields_self.get(code))
-                                    .orElseGet(Collections::emptyList);
+                        .ofNullable(codedFields_self.get(code))
+                        .orElseGet(Collections::emptyList);
                 break;
             case RELATED_ONLY:
                 codeSelectedField = Optional
-                                    .ofNullable(codedFields_related.get(code))
-                                    .orElseGet(Collections::emptyList);
+                        .ofNullable(codedFields_related.get(code))
+                        .orElseGet(Collections::emptyList);
                 break;
             case ALL:
                 codeSelectedField = new LinkedList<>();
@@ -186,7 +251,7 @@ public class IEntityClassReader {
             default:
         }
 
-        if(!codeSelectedField.isEmpty() && checkAmbiguous(codeSelectedField)) {
+        if (!codeSelectedField.isEmpty() && checkAmbiguous(codeSelectedField)) {
             logger.error(FIELD_CODE_AMBIGUOUS, code, codeSelectedField.get(0));
         }
 
@@ -195,52 +260,98 @@ public class IEntityClassReader {
 
     /**
      * only get the first
-     * @param fieldCode
+     *
+     * @param code
      * @return
      */
-    public Optional<IEntityField> field(String fieldCode){
-        return field(fieldCode, ALL);
+    public Optional<ColumnField> column(String code) {
+        return column(code, ALL);
+    }
+
+    public List<ColumnField> columns(){
+        List<ColumnField> list = new ArrayList<>();
+        list.addAll(allColumn_self);
+        list.addAll(allColumn_related);
+        return list;
+    }
+//
+    /**
+     * unmodifiableList
+     *
+     * @return
+     */
+    public List<IEntityField> fields() {
+        return fields(ALL);
+    }
+// 
+    public List<IEntityField> fields(FieldScope fieldScope) {
+        return Collections.unmodifiableList(allFields);
     }
 
     /**
-     * unmodifiableList
+     * generate a subEntityClassReader switch to subClass
      * @return
      */
-    public List<IEntityField> fields(){
-        return fields(ALL);
-    }
+//    public IEntityClassReader related(FieldLikeRelationType relationType, String relName){
+//        IEntityClassReader subReader = new IEntityClassReader();
+//    }
 
-    public List<IEntityField> fields(FieldScope fieldScope){
-
-        if(fieldScope == null){
-            fieldScope = ALL;
-        }
-
-        List<IEntityField> fields = Collections.emptyList();
-
-        switch(fieldScope){
-            case SELF_ONLY:
-                fields = allFields_self;
-                break;
-            case RELATED_ONLY:
-                fields = allFields_related;
-                break;
-            case ALL:
-                fields = new LinkedList<>();
-                fields.addAll(allFields_self);
-                fields.addAll(allFields_related);
-                break;
-            default:
-        }
-
-        return Collections.unmodifiableList(fields);
-    }
-
-    public Set<String> testBody(Map<String, Object> map){
+    /**
+     * will get all unused key
+     * @param map
+     * @return
+     */
+    public Set<String> testBody(Map<String, Object> map) {
         Set<String> inputKeys = map.keySet();
         Set<String> allKeys = new HashSet<>();
         allKeys.addAll(codedFields_self.keySet());
         allKeys.addAll(codedFields_related.keySet());
         return inputKeys.stream().filter(x -> !allKeys.contains(x)).collect(Collectors.toSet());
+    }
+
+    /**
+     * zip field -> value
+     * e.g
+     * A[a,b,c]
+     * relB[a,b,c]
+     * body[A.a, A.b. B.c]
+     *
+     *
+     * @param body
+     * @return
+     */
+    public Stream<Tuple2<IEntityField, Object>> zipValue(Map<String, Object> body) {
+
+        //warn error field
+        testBody(body)
+                .forEach(x -> logger.warn(FIELD_MISSING, x, entityClass.code()));
+
+        Record record = toRecord(body);
+        return record.stream();
+    }
+
+    /**
+     * TODO field always needed
+     * currently
+     *      self + parent column + rel column
+     * @return
+     */
+    public Record toRecord(Map<String, Object> body){
+        //find Column by name
+
+        Set<ColumnField> columns = new HashSet<>();
+
+        //fields
+        List<ColumnField> valueColumn = body
+                .keySet().stream().map(this::column)
+                .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+
+        columns.addAll(valueColumn);
+        columns.addAll(allColumn_self);
+
+        Record record = new GeneralRecord(columns);
+
+        valueColumn.forEach(x -> record.set(x, body.get(x.name())));
+        return record;
     }
 }

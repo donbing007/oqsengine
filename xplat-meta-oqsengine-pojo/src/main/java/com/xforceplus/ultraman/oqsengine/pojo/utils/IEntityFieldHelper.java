@@ -27,15 +27,6 @@ public class IEntityFieldHelper {
 
     private Logger logger = LoggerFactory.getLogger(IEntityClassHelper.class);
 
-    public static IEntityField withName(IEntityField field, String newName){
-        /**
-         * @See com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field
-         * #Field(long, java.lang.String, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType, com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig, java.lang.String, java.lang.String)
-         */
-        return new Field(field.id(), newName, field.type(), field.config(), field.dictId(), field.defaultValue());
-    }
-
-
     private List<IValue> toTypedValue(IEntityField entityField, String value) {
         try {
             Objects.requireNonNull(value, "value值不能为空");

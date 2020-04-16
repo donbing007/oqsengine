@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityDeleted;
@@ -124,7 +126,7 @@ public class EntityServiceImpl implements EntityService {
 
         if (queryResult.getCode() == OperationResult.Code.OK) {
             if (queryResult.getTotalRow() > 0) {
-                return Either.right(toResultMap(entityClass, queryResult.getQueryResultList().get(0)));
+                return Either.right(toResultMap(entityClass, queryResult.getQueryResultList().get(0)).toMap(null));
             } else {
                 return Either.left("未查询到记录");
             }
@@ -287,8 +289,8 @@ public class EntityServiceImpl implements EntityService {
             List<Map<String, Object>> repList = result.getQueryResultList()
                 .stream()
                 .map(x -> {
-                    Map<String, Object> resultMap = toResultMap(entityClass, x);
-                    return filterItem(resultMap, x.getCode(), condition.getEntity());
+                    Record resultMap = toResultMap(entityClass, x);
+                    return resultMap.toMap(condition.getStringKeys());
                 }).collect(Collectors.toList());
             Tuple2<Integer, List<Map<String, Object>>> queryResult = Tuple.of(result.getTotalRow(), repList);
             return Either.right(queryResult);

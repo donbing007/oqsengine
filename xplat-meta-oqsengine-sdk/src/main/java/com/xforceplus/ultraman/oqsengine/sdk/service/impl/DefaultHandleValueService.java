@@ -24,7 +24,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * handle value to valueUp converter
+ *
+ * map to valueUp converter
  */
 public class DefaultHandleValueService implements HandleValueService {
 
@@ -48,8 +49,10 @@ public class DefaultHandleValueService implements HandleValueService {
     @Override
     public List<ValueUp> handlerValue(EntityClass entityClass, Map<String, Object> body, OperationType phase) {
 
+        IEntityClassReader reader = new IEntityClassReader(entityClass);
+
         //get field from entityClass
-        List<ValueUp> values = zipValue(entityClass, body)
+        List<ValueUp> values =  reader.zipValue(body)
             .map(tuple -> {
 
                 IEntityField field = tuple._1();
@@ -80,27 +83,6 @@ public class DefaultHandleValueService implements HandleValueService {
             .collect(Collectors.toList());
 
         return values;
-    }
-
-    /**
-     * zip two
-     *
-     * @param entityClass
-     * @param body
-     * @return
-     */
-    private Stream<Tuple2<IEntityField, Object>> zipValue(IEntityClass entityClass, Map<String, Object> body) {
-
-        IEntityClassReader reader = new IEntityClassReader(entityClass);
-
-        //input wrong fields
-        //TODO ? maybe should move the logger to some place else
-        reader.testBody(body).forEach(x -> logger.warn(FIELD_MISSING, x, entityClass.code()));
-
-        //TODO alias code name with same id?
-        return reader.fields().stream()
-                   .distinct()
-                   .map(x -> Tuple.of(x, body.get(x.name())));
     }
 
     private Object pipeline(Object value, IEntityField field, OperationType phase) {

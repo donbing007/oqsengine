@@ -11,6 +11,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.*;
@@ -489,76 +491,77 @@ public class EntityClassToGrpcConverter {
     }
 
 
-    public static Map<String, Object> toResultMap(EntityClass entityClass
-        , EntityClass subEntityClass, EntityUp up) {
+//    /**
+//     * only
+//     * @param entityClass
+//     * @param subEntityClass
+//     * @param up
+//     * @return
+//     */
+//    public static Map<String, Object> toResultMap(EntityClass entityClass
+//        , EntityClass subEntityClass, EntityUp up) {
+//
+//        Map<String, Object> map = new HashMap<>();
+//
+//
+//
+//
+//
+//        up.getValuesList().forEach(entry -> {
+//            Optional<Tuple2<IEntityClass, IEntityField>> fieldByIdInAll = IEntityClassHelper
+//                .findFieldByIdInAll(entityClass, entry.getFieldId());
+//            Optional<Tuple2<IEntityClass, IEntityField>> subField = IEntityClassHelper.findFieldById(subEntityClass, entry.getFieldId())
+//                .map(x -> Tuple.of(subEntityClass, x));
+//
+//
+//            combine(fieldByIdInAll, subField).ifPresent(tuple2 -> {
+//                IEntityField field = tuple2._2();
+//                IEntityClass entity = tuple2._1();
+//                String fieldName = null;
+//                if (entityClass.id() != entity.id()) {
+//                    fieldName = entity.code() + "." + field.name();
+//                } else {
+//                    fieldName = field.name();
+//                }
+//
+//                if (field.type() == FieldType.BOOLEAN) {
+//
+//                    map.put(fieldName, Boolean.valueOf(entry.getValue()));
+//                } else {
+//                    map.put(fieldName, entry.getValue());
+//                }
+//            });
+//        });
+//
+//        if (!StringUtils.isEmpty(up.getObjId())) {
+//            map.put("id", String.valueOf(up.getObjId()));
+//        }
+//
+//        return map;
+//    }
 
-        Map<String, Object> map = new HashMap<>();
+    /**
+     * test
+     * @param entityClass
+     * @param up
+     * @return
+     */
+    public static Record toResultMap(EntityClass entityClass, EntityUp up) {
 
-        up.getValuesList().forEach(entry -> {
-            Optional<Tuple2<IEntityClass, IEntityField>> fieldByIdInAll = IEntityClassHelper
-                .findFieldByIdInAll(entityClass, entry.getFieldId());
-            Optional<Tuple2<IEntityClass, IEntityField>> subField = IEntityClassHelper.findFieldById(subEntityClass, entry.getFieldId())
-                .map(x -> Tuple.of(subEntityClass, x));
-            combine(fieldByIdInAll, subField).ifPresent(tuple2 -> {
-                IEntityField field = tuple2._2();
-                IEntityClass entity = tuple2._1();
-                String fieldName = null;
-                if (entityClass.id() != entity.id()) {
-                    fieldName = entity.code() + "." + field.name();
-                } else {
-                    fieldName = field.name();
-                }
+        IEntityClassReader reader = new IEntityClassReader(entityClass);
 
-                if (field.type() == FieldType.BOOLEAN) {
-
-                    map.put(fieldName, Boolean.valueOf(entry.getValue()));
-                } else {
-                    map.put(fieldName, entry.getValue());
-                }
-            });
-        });
+        Map<String, Object> retValue = up.getValuesList().stream().collect(Collectors.toMap(ValueUp::getName, ValueUp::getValue));
+        Record record = reader.toRecord(retValue);
 
         if (!StringUtils.isEmpty(up.getObjId())) {
-            map.put("id", String.valueOf(up.getObjId()));
+            record.set("id", String.valueOf(up.getObjId()));
         }
 
-        return map;
+        return record;
     }
 
-
-    //TODO
-    public static Map<String, Object> toResultMap(EntityClass entityClass, EntityUp up) {
-
-        Map<String, Object> map = new HashMap<>();
-
-        up.getValuesList().forEach(entry -> {
-            IEntityClassHelper.findFieldByIdInAll(entityClass, entry.getFieldId()).ifPresent(tuple2 -> {
-                IEntityField field = tuple2._2();
-                IEntityClass entity = tuple2._1();
-                String fieldName = null;
-                if (entityClass.id() != entity.id()) {
-                    fieldName = entity.code() + "." + field.name();
-                } else {
-                    fieldName = field.name();
-                }
-
-                if (field.type() == FieldType.BOOLEAN) {
-
-                    map.put(fieldName, Boolean.valueOf(entry.getValue()));
-                } else {
-                    map.put(fieldName, entry.getValue());
-                }
-            });
-        });
-
-        if (!StringUtils.isEmpty(up.getObjId())) {
-            map.put("id", String.valueOf(up.getObjId()));
-        }
-
-        return map;
-    }
-
-    public static Map<String, Object> filterItem(Map<String, Object> values, String mainEntityCode, EntityItem entityItem) {
+    public static Map<String, Object> filterItem(Map<String, Object> values
+            , String mainEntityCode, EntityItem entityItem) {
 
         if (entityItem == null || entityItem.getEntities() == null || entityItem.getEntities().isEmpty()) {
             return values;

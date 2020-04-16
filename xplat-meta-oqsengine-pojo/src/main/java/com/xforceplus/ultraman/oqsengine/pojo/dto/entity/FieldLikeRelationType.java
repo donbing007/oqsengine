@@ -45,7 +45,7 @@ public enum FieldLikeRelationType {
         this.ownerSide = ownerSide;
     }
 
-    public boolean isOwnerSide(){
+    public boolean isOwnerSide() {
         return ownerSide;
     }
 
@@ -53,15 +53,16 @@ public enum FieldLikeRelationType {
         return fieldTransformer.apply(rel);
     }
 
-    /** concat fieldName
-      owner side => related field code . name
-                !=> owner field code .name
-      e.g
-      A 1:1 B | A N:1 B
-      A B.id
-      --------
-      A 1:N B
-      B A.id
+    /**
+     * concat fieldName
+     * owner side => related field code . name
+     * !=> owner field code .name
+     * e.g
+     * A 1:1 B | A N:1 B
+     * A B.id
+     * --------
+     * A 1:N B
+     * B A.id
      **/
     public static IEntityField toField(
             Relation relation
@@ -75,9 +76,9 @@ public enum FieldLikeRelationType {
         //determine which is the related field code
         String relationName = relation.getName();
         String relatedEntityName;
-        if(relationName == null || relationName.isEmpty()){
+        if (relationName == null || relationName.isEmpty()) {
             relatedEntityName = relation.getEntityClassName();
-        }else{
+        } else {
             relatedEntityName = relationName;
         }
 
