@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.After;
@@ -115,9 +114,9 @@ public class NotMatchConditionQueryBuilderTest {
                     ConditionOperator.EQUALS,
                     new StringValue(
                         new Field(Long.MAX_VALUE, "test", FieldType.STRING),
-                        "'!@#$%^&*()200")
+                        "!@#$%^&*()300")
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "S = '" + SphinxQLHelper.encodeString("'!@#$%^&*()200") + "'"
+                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "S = '！＠#＄%＾&*（）300'"
             )
         );
     }

@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.After;
@@ -96,7 +95,7 @@ public class MeqNotMatchConditionQueryBuilderTest {
                         new Field(1, "test", FieldType.STRING),
                         "!@#$%^&*()300")
                 ),
-                FieldDefine.JSON_FIELDS + ".1S IN ('" + SphinxQLHelper.encodeString("!@#$%^&*()300") + "')"
+                FieldDefine.JSON_FIELDS + ".1S IN ('！＠#＄%＾&*（）300')"
             )
         );
     }

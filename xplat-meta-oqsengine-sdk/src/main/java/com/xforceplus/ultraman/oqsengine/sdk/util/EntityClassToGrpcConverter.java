@@ -486,6 +486,7 @@ public class EntityClassToGrpcConverter {
             builder.setMaxLength(String.valueOf(field.config().getMax()));
             builder.setMinLength(String.valueOf(field.config().getMin()));
             builder.setPrecision(field.config().getPrecision());
+            builder.setIdentifier(field.config().isIdentifie());
         }
         return builder.build();
     }

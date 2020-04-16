@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -237,16 +235,13 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         /**
                          * 把新的属性插入旧属性集中替换已有,或新增.
                          */
-                        JSONObject completeJson = storageEntity.getJsonFields();
-                        JSONObject modifiedJson = serializeToJson(attribute, true);
-                        for (String key : modifiedJson.keySet()) {
-                            completeJson.put(key, modifiedJson.get(key));
-                        }
+                        Map<String, Object> completeAttribues = storageEntity.getJsonFields();
+                        Map<String, Object> modifiedAttributes = serializeToMap(attribute, true);
+                        completeAttribues.putAll(modifiedAttributes);
 
                         //处理 fulltext
-                        Set<String> completeFull = convertJsonToFull(completeJson);
-                        storageEntity.setJsonFields(completeJson);
-                        storageEntity.setFullFields(completeFull);
+                        storageEntity.setJsonFields(completeAttribues);
+                        storageEntity.setFullFields(convertJsonToFull(completeAttribues));
 
                         doBuildReplaceStorageEntity(storageEntity, true);
 
@@ -336,7 +331,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                 entity.entityClass().id(),
                 entity.family().parent(),
                 entity.family().child(),
-                serializeToJson(entity.entityValue(), true),
+                serializeToMap(entity.entityValue(), true),
                 serializeSetFull(entity.entityValue())
             ),
             replacement
@@ -344,15 +339,19 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     }
 
     /**
-     * fieldId + fieldvalue(unicode) + space + fieldId + fieldvalue(unicode)....n
+     * <f>fieldId + fieldvalue(unicode)</f> + <f>fieldId + fieldvalue(unicode)</f>....n
      */
     private Set<String> serializeSetFull(IEntityValue entityValue) {
         Set<String> fullSet = new HashSet<>();
+
         entityValue.values().stream().forEach(v -> {
 
             StorageValue storageValue = storageStrategyFactory.getStrategy(v.getField().type()).toStorageValue(v);
+
             while (storageValue != null) {
-                fullSet.add(SphinxQLHelper.encodeFullText(storageValue));
+                // 这里已经处理成了<F3S>F3S test</F3S>的储存样式.
+                fullSet.add(serializeStorageValueFull(storageValue));
+
                 storageValue = storageValue.next();
             }
         });
@@ -360,12 +359,26 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         return fullSet;
     }
 
+    // 处理成<F123L>F123L 789</F123L> 形式字符串.
+    private String serializeStorageValueFull(StorageValue value) {
+        StringBuilder buff = new StringBuilder();
+        buff.append("<").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
+        buff.append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.storageName()).append(' ');
+        if (value.type() == StorageType.STRING) {
+            buff.append(SphinxQLHelper.encodeSpecialCharset(value.value().toString()));
+        } else {
+            buff.append(value.value().toString());
+        }
+        buff.append("</").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
+        return buff.toString();
+    }
+
     /**
      * {
      * "{fieldId}" : fieldValue
      * }
      */
-    private JSONObject serializeToJson(IEntityValue values, boolean encodeString) {
+    private Map<String, Object> serializeToMap(IEntityValue values, boolean encodeString) {
         Map<String, Object> data = new HashMap<>(values.values().size());
         values.values().stream().forEach(v -> {
             StorageValue storageValue = storageStrategyFactory.getStrategy(v.getField().type()).toStorageValue(v);
@@ -373,7 +386,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             while (storageValue != null) {
                 if (storageValue.type() == StorageType.STRING) {
                     data.put(storageValue.storageName(),
-                        encodeString ? SphinxQLHelper.encodeString((String) storageValue.value()) : storageValue.value());
+                        encodeString ? SphinxQLHelper.encodeSpecialCharset((String) storageValue.value()) : storageValue.value());
                 } else {
                     data.put(storageValue.storageName(), storageValue.value());
                 }
@@ -381,33 +394,23 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             }
         });
 
-        return new JSONObject(data);
+        return data;
     }
 
     // 格式化全文属性为字符串.
     private String toFullString(Set<String> fullFields) {
-        return fullFields.stream().collect(Collectors.joining(" "));
-    }
-
-    // 格式化 JSON 属性为字符串.
-    private String toJsonString(JSONObject jsonObject) {
-        return JSON.toJSONString(jsonObject);
+        return fullFields.stream().collect(Collectors.joining(""));
     }
 
     // 转换 json 字段为全文搜索字段.
-    private Set<String> convertJsonToFull(JSONObject jsonObject) {
+    private Set<String> convertJsonToFull(Map<String, Object> attributes) {
         Set<String> fullfileds = new HashSet<>();
         Object value;
         StorageValue storageValue = null;
-        for (String key : jsonObject.keySet()) {
-            value = jsonObject.get(key);
+        for (String key : attributes.keySet()) {
+            value = attributes.get(key);
 
-            if (Integer.class.isInstance(value)) {
-
-                storageValue = new LongStorageValue(key, ((Integer) value).longValue(), false);
-
-
-            } else if (Long.class.isInstance(value)) {
+            if (Long.class.isInstance(value)) {
 
                 storageValue = new LongStorageValue(key, (Long) value, false);
 
@@ -416,7 +419,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                 storageValue = new StringStorageValue(key, (String) value, false);
             }
 
-            fullfileds.add(SphinxQLHelper.encodeFullText(storageValue));
+            fullfileds.add(serializeStorageValueFull(storageValue));
         }
 
         return fullfileds;
@@ -452,7 +455,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                                 rs.getLong(FieldDefine.ENTITY),
                                 rs.getLong(FieldDefine.PREF),
                                 rs.getLong(FieldDefine.CREF),
-                                JSON.parseObject(rs.getString(FieldDefine.JSON_FIELDS)),
+                                SphinxQLHelper.deserializeJson(rs.getString(FieldDefine.JSON_FIELDS)),
                                 null
                             );
                         }
@@ -490,9 +493,9 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                     st.setLong(2, storageEntity.getEntity()); // entity
                     st.setLong(3, storageEntity.getPref()); // pref
                     st.setLong(4, storageEntity.getCref()); // cref
-                    // attribute
-                    st.setString(5, toJsonString(storageEntity.getJsonFields()));
-                    // full
+                    // jsonfileds
+                    st.setString(5, SphinxQLHelper.serializableJson(storageEntity.getJsonFields()));
+                    // fullfileds
                     st.setString(6, toFullString(storageEntity.getFullFields()));
 
                     if (logger.isDebugEnabled()) {
@@ -519,10 +522,10 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         private long entity;
         private long pref;
         private long cref;
-        private JSONObject jsonFields;
+        private Map<String, Object> jsonFields;
         private Set<String> fullFields;
 
-        public StorageEntity(long id, long entity, long pref, long cref, JSONObject jsonFields, Set<String> fullFields) {
+        public StorageEntity(long id, long entity, long pref, long cref, Map<String, Object> jsonFields, Set<String> fullFields) {
             this.id = id;
             this.entity = entity;
             this.pref = pref;
@@ -547,7 +550,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             return cref;
         }
 
-        public JSONObject getJsonFields() {
+        public Map<String, Object> getJsonFields() {
             return jsonFields;
         }
 
@@ -571,7 +574,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             this.cref = cref;
         }
 
-        public void setJsonFields(JSONObject jsonFields) {
+        public void setJsonFields(Map<String, Object> jsonFields) {
             this.jsonFields = jsonFields;
         }
 

@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.service;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.DictItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.UltPageBoItem;
 import io.vavr.control.Either;
 
@@ -25,5 +26,13 @@ public interface EntityServiceEx {
      * @return
      */
     List<UltPageBoItem> findPageBos(String pageCode, String tenantId);
+
+    /**
+     * 根据字典ID查找字典信息，根据字典id+code查找具体的字典项
+     * @param enumId
+     * @param enumCode
+     * @return
+     */
+    List<DictItem> findDictItems(String enumId, String enumCode);
 
 }

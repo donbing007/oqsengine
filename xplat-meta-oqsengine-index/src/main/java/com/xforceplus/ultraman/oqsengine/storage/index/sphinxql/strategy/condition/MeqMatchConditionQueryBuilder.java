@@ -26,18 +26,18 @@ public class MeqMatchConditionQueryBuilder extends SphinxQLConditionQueryBuilder
         StringBuilder buff = new StringBuilder("(");
         int emptyLen = buff.length();
 
+        String query;
         for (IValue v : values) {
             StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(v.getField().type());
             StorageValue storageValue = storageStrategy.toStorageValue(v);
 
-            String fValue = SphinxQLHelper.encodeFullText(storageValue, isUseStorageGroupName());
-            fValue = SphinxQLHelper.encodeQueryFullText(fValue, false);
+            query = SphinxQLHelper.buildFullPreciseQuery(storageValue, isUseStorageGroupName());
 
             if (buff.length() > emptyLen) {
                 buff.append(" | ");
             }
 
-            buff.append("=").append("(").append(fValue).append(")");
+            buff.append(query);
         }
         buff.append(")");
 

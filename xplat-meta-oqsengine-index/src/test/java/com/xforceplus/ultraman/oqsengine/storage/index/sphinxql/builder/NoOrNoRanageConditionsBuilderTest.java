@@ -70,7 +70,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                expectPrefix + "=(\"F1L 100\")" + expectAfter
+                expectPrefix + "(ZONESPAN:F1L \"F1L 100\")" + expectAfter
             )
             ,
             new Case(
@@ -81,7 +81,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new StringValue(new Field(1, "c1", FieldType.STRING), "test")
                     )
                 ),
-                expectPrefix + "(F1S* << *test*)" + expectAfter
+                expectPrefix + "(ZONESPAN:F1S F1S \"*test*\")" + expectAfter
             )
             ,
             new Case(
@@ -94,7 +94,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "=(\"F1L 100\") =(\"F2S test\")" + expectAfter
+                expectPrefix + "(ZONESPAN:F1L \"F1L 100\") (ZONESPAN:F2S \"F2S test\")" + expectAfter
             ),
             new Case(
                 new Conditions(
@@ -106,7 +106,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-(\"F1L 100\") -(\"F2S test\") =Sg" + expectAfter
+                expectPrefix + "-(ZONESPAN:F1L \"F1L 100\") -(ZONESPAN:F2S \"F2S test\") =Sg" + expectAfter
             ),
             new Case(
                 new Conditions(
@@ -118,7 +118,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new Field(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new Field(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-(\"F2S test\") =Sg" + expectAfter + " " + SqlKeywordDefine.AND + " id = 100"
+                expectPrefix + "-(ZONESPAN:F2S \"F2S test\") =Sg" + expectAfter + " " + SqlKeywordDefine.AND + " id = 100"
             ),
             new Case(
                 new Conditions(
@@ -152,7 +152,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         )
                     )
                 ),
-                expectPrefix + "=(\"F1L0 123456\") =(\"F1L1 123456\")" + expectAfter
+                expectPrefix + "((ZONESPAN:F1L \"F1L0 123456\") (ZONESPAN:F1L \"F1L1 123456\"))" + expectAfter
             ),
             new Case(
                 Conditions.buildEmtpyConditions()
@@ -161,7 +161,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                     ConditionOperator.EQUALS,
                     new StringsValue(new Field(1, "c1", FieldType.STRINGS), "v1")
                 )),
-                expectPrefix + "=(\"F1S* v1\")" + expectAfter
+                expectPrefix + "(ZONESPAN:F1S F1S* \"v1\")" + expectAfter
             ),
             new Case(
                 Conditions.buildEmtpyConditions()
@@ -170,7 +170,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         ConditionOperator.NOT_EQUALS,
                         new StringsValue(new Field(1, "c1", FieldType.STRINGS), "v1")
                     )),
-                expectPrefix + "-(\"F1S* v1\") =Sg" + expectAfter
+                expectPrefix + "-(ZONESPAN:F1S F1S* \"v1\") =Sg" + expectAfter
             )
         );
     }

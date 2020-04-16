@@ -54,7 +54,7 @@ public class NotMatchConditionQueryBuilder extends SphinxQLConditionQueryBuilder
 
             if (storageValue.type() == StorageType.STRING) {
                 buff.append(" '");
-                buff.append(SphinxQLHelper.encodeString((String) storageValue.value()));
+                buff.append(SphinxQLHelper.encodeSpecialCharset((String) storageValue.value()));
             } else {
                 buff.append(" ");
                 buff.append(storageValue.value());

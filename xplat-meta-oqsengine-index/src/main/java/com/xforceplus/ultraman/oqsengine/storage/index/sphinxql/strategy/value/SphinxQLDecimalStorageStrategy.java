@@ -40,7 +40,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
 
     @Override
     public StorageValue toStorageValue(IValue value) {
-        String number = value.getValue().toString();
+        String number = value.valueToString();
 
         String[] numberArr = number.split("\\" + DIVIDE);
 

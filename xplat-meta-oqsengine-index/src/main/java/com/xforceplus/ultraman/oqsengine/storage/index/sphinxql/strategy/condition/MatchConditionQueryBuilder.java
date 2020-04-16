@@ -32,36 +32,48 @@ public class MatchConditionQueryBuilder extends SphinxQLConditionQueryBuilder {
         StringBuilder buff = new StringBuilder();
 
         String symbol;
-        boolean fuzzy = false;
+        boolean fuzzy;
+        switch (operator()) {
+            case NOT_EQUALS:
+                symbol = "-";
+                fuzzy = false;
+                break;
+            case EQUALS:
+                symbol = "";
+                fuzzy = false;
+                break;
+            case LIKE:
+                symbol = "";
+                fuzzy = true;
+                break;
+            default:
+                throw new IllegalStateException(String.format("Unsupported operator.[%s]", operator().getSymbol()));
+        }
+
+        int conditonSize = 0;
         while (storageValue != null) {
-            switch (operator()) {
-                case NOT_EQUALS:
-                    symbol = "-";
-                    break;
-                case EQUALS:
-                    symbol = "=";
-                    break;
-                case LIKE:
-                    symbol = "";
-                    fuzzy = true;
-                    break;
-                default:
-                    throw new IllegalStateException(String.format("Unsupported operator.[%s]", operator().getSymbol()));
-            }
+
+            String query = fuzzy ?
+                SphinxQLHelper.buildFullFuzzyQuery(storageValue, isUseStorageGroupName()) :
+                SphinxQLHelper.buildFullPreciseQuery(storageValue, isUseStorageGroupName());
 
             if (buff.length() > 0) {
-                buff.append(" ");
+                buff.append(' ');
             }
 
-            String queryString = SphinxQLHelper.encodeFullText(storageValue, isUseStorageGroupName());
-            queryString = SphinxQLHelper.encodeQueryFullText(queryString, fuzzy);
+            buff.append(query);
 
-            buff.append(symbol);
-            buff.append("(");
-            buff.append(queryString);
-            buff.append(")");
+            conditonSize++;
 
             storageValue = storageValue.next();
+        }
+
+        final int onlyOneValue = 1;
+        if (conditonSize > onlyOneValue) {
+            buff.insert(0, "(").insert(0, symbol);
+            buff.append(")");
+        } else {
+            buff.insert(0, symbol);
         }
 
         return buff.toString();

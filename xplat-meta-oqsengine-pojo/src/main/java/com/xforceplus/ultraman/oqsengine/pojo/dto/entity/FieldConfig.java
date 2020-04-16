@@ -172,8 +172,9 @@ public class FieldConfig implements Serializable {
         return validateRegexString;
     }
 
-    public void setValidateRegexString(String validateRegexString) {
+    public FieldConfig validateRegexString(String validateRegexString) {
         this.validateRegexString = validateRegexString;
+        return this;
     }
 
     public boolean isSplittable() {
