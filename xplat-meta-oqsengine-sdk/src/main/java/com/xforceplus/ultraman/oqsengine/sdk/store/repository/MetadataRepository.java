@@ -28,4 +28,6 @@ public interface MetadataRepository {
     void clearAllBoIdRelated(String boId);
 
     SimpleBoItem findOneById(String boId);
+
+    List<EntityClass> findAllEntities();
 }

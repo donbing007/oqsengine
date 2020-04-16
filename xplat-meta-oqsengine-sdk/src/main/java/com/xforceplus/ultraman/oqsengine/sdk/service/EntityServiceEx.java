@@ -35,4 +35,12 @@ public interface EntityServiceEx {
      */
     List<DictItem> findDictItems(String enumId, String enumCode);
 
+    /**
+     * 根据字典code查找字典信息，根据code+enumCode查找字典项
+     * @param code
+     * @param enumCode
+     * @return
+     */
+    List<DictItem> findDictItemsByCode(String code, String enumCode);
+
 }

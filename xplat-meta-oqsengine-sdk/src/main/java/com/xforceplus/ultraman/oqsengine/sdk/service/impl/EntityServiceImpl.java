@@ -364,6 +364,11 @@ public class EntityServiceImpl implements EntityService {
         return metadataRepository.findSubEntitiesByCode(tenantId, appCode, bocode);
     }
 
+    @Override
+    public List<EntityClass> getEntityClasss() {
+        return metadataRepository.findAllEntities();
+    }
+
     /**
      * TODO move to another file
      * event related

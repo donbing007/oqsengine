@@ -192,7 +192,7 @@ public class SphinxQLIndexStorageTest {
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "queryOptimizer", optimizer);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
-        storage.setIndexTableName("oqsindex");
+        storage.setIndexTableName("oqsindextest");
         storage.init();
 
 
@@ -214,7 +214,7 @@ public class SphinxQLIndexStorageTest {
                 conn.setAutoCommit(true);
 
                 Statement st = conn.createStatement();
-                st.executeUpdate("TRUNCATE RTINDEX oqsindex");
+                st.executeUpdate("TRUNCATE RTINDEX oqsindextest");
 
                 st.close();
 

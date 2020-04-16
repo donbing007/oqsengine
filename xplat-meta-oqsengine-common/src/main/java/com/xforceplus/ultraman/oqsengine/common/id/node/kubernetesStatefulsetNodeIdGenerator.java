@@ -11,7 +11,7 @@ public class kubernetesStatefulsetNodeIdGenerator implements NodeIdGenerator {
 
     @Override
     public Integer next() {
-        String hostName = System.getProperty("HOSTNAME");
+        String hostName = System.getenv("HOSTNAME");
 
         if (hostName == null) {
             throw new IllegalStateException("The HOSTNAME environment variable could not be found.");
