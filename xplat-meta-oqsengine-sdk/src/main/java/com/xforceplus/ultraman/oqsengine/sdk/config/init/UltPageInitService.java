@@ -25,7 +25,6 @@ import java.util.List;
  * 初始化Page信息
  */
 @Order(1) // @Order注解可以改变执行顺序，越小越先执行
-@Component
 public class UltPageInitService implements CommandLineRunner {
     final Logger logger = LoggerFactory.getLogger(UltPageInitService.class);
 

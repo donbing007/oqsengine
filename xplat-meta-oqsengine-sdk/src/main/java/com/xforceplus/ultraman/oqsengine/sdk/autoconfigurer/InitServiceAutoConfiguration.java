@@ -7,6 +7,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.DictInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.ModuleInitService;
+import com.xforceplus.ultraman.oqsengine.sdk.config.init.UltFormInitService;
+import com.xforceplus.ultraman.oqsengine.sdk.config.init.UltPageInitService;
 import com.xforceplus.ultraman.oqsengine.sdk.controller.*;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.CodeExtendedInterceptor;
@@ -232,5 +234,16 @@ public class InitServiceAutoConfiguration {
     @Bean
     public HandleQueryValueService defaultHandleQueryValueService() {
         return new DefaultHandleQueryValueService();
+    }
+
+
+    @Bean
+    public UltFormInitService ultFormInitService(){
+        return new UltFormInitService();
+    }
+
+    @Bean
+    public UltPageInitService ultPageInitService(){
+        return new UltPageInitService();
     }
 }

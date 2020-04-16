@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk;
 
+import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.DefaultEndpointConfiguration;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfiguration;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.xplat.galaxy.framework.configuration.AsyncTaskExecutorAutoConfiguration;
@@ -16,6 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest
 @ContextConfiguration(classes = {TestConfiguration.class
         , InitServiceAutoConfiguration.class
+        , DefaultEndpointConfiguration.class
         , AuthSearcherConfig.class
         , ServiceInvokerAutoConfiguration.class
         , AsyncTaskExecutorAutoConfiguration.class
