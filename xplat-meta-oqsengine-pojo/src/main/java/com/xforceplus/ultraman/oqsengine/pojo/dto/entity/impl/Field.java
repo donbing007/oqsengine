@@ -28,6 +28,11 @@ public class Field implements IEntityField, Serializable {
     private String name;
 
     /**
+     * 字典中文名
+     */
+    private String cnName;
+
+    /**
      * 字段类型
      */
     private FieldType fieldType;
@@ -70,6 +75,19 @@ public class Field implements IEntityField, Serializable {
     }
 
     /**
+     * 构造一个使用默认配置的字段.
+     * @param id 字段标识.
+     * @param name 字段名称.
+     * @param fieldType 字段类型.
+     */
+    public Field(long id, String name, String cnName, FieldType fieldType, FieldConfig config, String dictId, String defaultValue) {
+        this(id, name, fieldType, config);
+        this.cnName = cnName;
+        this.dictId = dictId;
+        this.defaultValue = defaultValue;
+    }
+
+    /**
      * 构造一个独特配置的字段.
      * @param id 字段标识.
      * @param name 字段名称.
@@ -97,6 +115,9 @@ public class Field implements IEntityField, Serializable {
     public String name() {
         return this.name;
     }
+
+    @Override
+    public String cnName() { return this.cnName; }
 
     @Override
     public FieldType type() {
@@ -133,6 +154,10 @@ public class Field implements IEntityField, Serializable {
     public void setDefaultValue(String defaultValue) {
         this.defaultValue = defaultValue;
     }
+
+    public String getCnName() { return cnName; }
+
+    public void setCnName(String cnName) { this.cnName = cnName; }
 
     @Override
     public boolean equals(Object o) {

@@ -21,6 +21,11 @@ public class EntityClass implements IEntityClass {
     private long id;
 
     /**
+     * 对象名称
+     */
+    private String name;
+
+    /**
      * 对象code
      */
     private String code;
@@ -89,6 +94,27 @@ public class EntityClass implements IEntityClass {
         this.extendEntityClass = extendEntityClass;
     }
 
+    /**
+     * 构造一个新的entity 类型信息.
+     *
+     * @param id                类型 id.
+     * @param code              类型 code.
+     * @param relations         关联对象信息.
+     * @param entityClasss      类型关联对象类型信息.
+     * @param extendEntityClass 继承对象信息.
+     * @param fields            属性列表.
+     */
+    public EntityClass(Long id,
+                       String code,
+                       String name,
+                       Collection<Relation> relations,
+                       Collection<IEntityClass> entityClasss,
+                       IEntityClass extendEntityClass,
+                       Collection<IEntityField> fields) {
+        this(id,code,relations,entityClasss,extendEntityClass,fields);
+        this.name = name;
+    }
+
     @Override
     public long id() {
         return id;
@@ -132,6 +158,14 @@ public class EntityClass implements IEntityClass {
     @Override
     public boolean isAny() {
         return false;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override

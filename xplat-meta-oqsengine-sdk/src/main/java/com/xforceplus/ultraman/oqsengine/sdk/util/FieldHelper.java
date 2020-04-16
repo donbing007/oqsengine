@@ -69,9 +69,12 @@ public class FieldHelper {
             .precision(precision)
             .identifie(identifier)
             .validateRegexString(validateRule);
+        String cnName = RowUtils.getRowValue(row, "name").map(String::valueOf).orElse("");
 
+//        Field field =
+//            new Field(id, name, fieldType, fieldConfig, dictId, defaultValue);
         Field field =
-            new Field(id, name, fieldType, fieldConfig, dictId, defaultValue);
+                new Field(id, name, cnName, fieldType, fieldConfig, dictId, defaultValue);
         return field;
     }
 

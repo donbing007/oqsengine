@@ -58,7 +58,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         //TODO typed column name
 
-        SimpleTableDef boTableDef = new SimpleTableDef("bos", new String[]{"id", "code", "parentId"});
+        SimpleTableDef boTableDef = new SimpleTableDef("bos", new String[]{"id", "code", "parentId", "name"});
         TableDataProvider boTableDataProvider = new MapTableDataProvider(boTableDef, boStore);
 
         SimpleTableDef ApiTableDef = new SimpleTableDef("apis", new String[]{"boId", "url", "method", "code"});
@@ -437,6 +437,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     private Optional<EntityClass> toEntityClass(Row row) {
         String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
         String boId = RowUtils.getRowValue(row, "id").map(String::valueOf).orElse("0");
+        String name = RowUtils.getRowValue(row, "name").map(String::valueOf).orElse("");
 
         List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField> fields = loadFields(boId);
 
@@ -481,7 +482,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         }).forEach(x -> allFields.add(x.getEntityField()));
 
         EntityClass entityClass = new EntityClass(Long.valueOf(boId)
-            , code, relationList, entityClassList
+            , code, name,relationList, entityClassList
             , parentEntityClassOp.orElse(null), allFields);
         return Optional.of(entityClass);
     }
@@ -582,11 +583,33 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         }
     }
 
+    @Override
+    public synchronized List<EntityClass> findAllEntities() {
+        DataSet boDs = dc.query()
+                .from("bos")
+                .selectAll()
+                .execute();
+
+        List<Row> rows = boDs.toRows();
+
+        return rows.stream().map(this::toEntityClass)
+                .filter(Optional::isPresent)
+                .map(Optional::get).collect(Collectors.toList());
+    }
+
     private synchronized void insertBoTable(String id, String code, String parentId) {
         InsertInto insert = new InsertInto(getTable("bos"))
             .value("id", id)
             .value("code", code)
             .value("parentId", parentId);
+        dc.executeUpdate(insert);
+    }
+    private synchronized void insertBoTable(String id, String code, String parentId, String name) {
+        InsertInto insert = new InsertInto(getTable("bos"))
+                .value("id", id)
+                .value("code", code)
+                .value("parentId", parentId)
+                .value("name", name);
         dc.executeUpdate(insert);
     }
 
@@ -597,7 +620,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      */
     private synchronized void insertBo(BoUp boUp) {
 
-        insertBoTable(boUp.getId(), boUp.getCode(), boUp.getParentBoId());
+        insertBoTable(boUp.getId(), boUp.getCode(), boUp.getParentBoId(), boUp.getName());
 
         //save relations
         boUp.getRelationsList().forEach(rel -> {
@@ -626,7 +649,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         boUp.getBoUpsList().stream()
             .filter(relatedBo -> !findOneById("bos", relatedBo.getId()).isPresent())
             .forEach(relatedBo -> {
-                insertBoTable(relatedBo.getId(), relatedBo.getCode(), relatedBo.getParentBoId());
+                insertBoTable(relatedBo.getId(), relatedBo.getCode(), relatedBo.getParentBoId(), relatedBo.getName());
 
                 //save fields
                 //insert apis
@@ -703,7 +726,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * |-> build relation fields
      * deal with self fields
      *
-     * @param row
+     * @param
      * @return //
      */
 //    private Optional<IEntityClass> toEntityClassFlow(Row row) {
