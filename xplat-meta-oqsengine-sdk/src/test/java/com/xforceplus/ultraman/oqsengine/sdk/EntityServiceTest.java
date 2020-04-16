@@ -60,15 +60,15 @@ public class EntityServiceTest {
     @Autowired
     ContextService contextService;
 
-    @Test
-    public void testPagenation() throws InterruptedException {
-        Thread.sleep(10000);
-
-        Optional<EntityClass> entityOpt = entityService.loadByCode("image");
-
-        System.out.println(entityService.findByCondition(entityOpt.get(), new RequestBuilder().pageNo(7)
-                .pageSize(10).build()).get()._2().size());
-    }
+//    @Test
+//    public void testPagenation() throws InterruptedException {
+//        Thread.sleep(10000);
+//
+//        Optional<EntityClass> entityOpt = entityService.loadByCode("image");
+//
+//        System.out.println(entityService.findByCondition(entityOpt.get(), new RequestBuilder().pageNo(7)
+//                .pageSize(10).build()).get()._2().size());
+//    }
 
 
     private void setupContext() {
