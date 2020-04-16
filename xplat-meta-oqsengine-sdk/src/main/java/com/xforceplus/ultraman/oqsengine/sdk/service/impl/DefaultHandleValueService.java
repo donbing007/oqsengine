@@ -37,8 +37,6 @@ public class DefaultHandleValueService implements HandleValueService {
     @Autowired
     private List<FieldValidator<Object>> fieldValidators;
 
-    private final static String FIELD_MISSING = "[{}] is not available in EntityClass [{}]";
-
     /**
      * TODO how to apply to any transformation
      * handle value framework

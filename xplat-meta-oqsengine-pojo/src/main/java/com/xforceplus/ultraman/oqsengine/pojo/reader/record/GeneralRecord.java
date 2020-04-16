@@ -138,7 +138,7 @@ public class GeneralRecord implements Record {
 
         if (index > -1 && index < values.length) {
             values[index] = t;
-        }else {
+        } else {
             log.warn("{} is not present", field.name());
         }
     }
@@ -167,11 +167,11 @@ public class GeneralRecord implements Record {
                 .forEach(i -> {
 
                     String name = fields[i].name();
-                    if(filterName != null && !filterName.isEmpty()){
-                        if(filterName.contains(name)){
+                    if (filterName != null && !filterName.isEmpty()) {
+                        if (filterName.contains(name)) {
                             map.put(name, values[i]);
                         }
-                    }else{
+                    } else {
                         map.put(name, values[i]);
                     }
 

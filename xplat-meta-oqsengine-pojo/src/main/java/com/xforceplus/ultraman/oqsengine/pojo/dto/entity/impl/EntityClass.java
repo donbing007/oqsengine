@@ -10,6 +10,7 @@ import java.util.*;
  * 两者使用 entityClassId 标识进行联系.
  * relations 表示关联对象的本地字段信息,关联类型.
  * entityClasss 表示联系对象的类型.
+ *
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
  */
@@ -64,7 +65,7 @@ public class EntityClass implements IEntityClass {
      * @param id                类型 id.
      * @param code              类型 code.
      * @param relations         关联对象信息.
-     * @param entityClasses      类型关联对象类型信息.
+     * @param entityClasses     类型关联对象类型信息.
      * @param extendEntityClass 继承对象信息.
      * @param fields            属性列表.
      */
@@ -111,7 +112,7 @@ public class EntityClass implements IEntityClass {
                        Collection<IEntityClass> entityClasss,
                        IEntityClass extendEntityClass,
                        Collection<IEntityField> fields) {
-        this(id,code,relations,entityClasss,extendEntityClass,fields);
+        this(id, code, relations, entityClasss, extendEntityClass, fields);
         this.name = name;
     }
 
@@ -178,10 +179,10 @@ public class EntityClass implements IEntityClass {
         }
         EntityClass that = (EntityClass) o;
         return id == that.id &&
-            Objects.equals(relations, that.relations) &&
-            Objects.equals(entityClasses, that.entityClasses) &&
-            Objects.equals(extendEntityClass, that.extendEntityClass) &&
-            Objects.equals(fields, that.fields);
+                Objects.equals(relations, that.relations) &&
+                Objects.equals(entityClasses, that.entityClasses) &&
+                Objects.equals(extendEntityClass, that.extendEntityClass) &&
+                Objects.equals(fields, that.fields);
     }
 
     @Override
@@ -192,11 +193,11 @@ public class EntityClass implements IEntityClass {
     @Override
     public String toString() {
         return "EntityClass{" +
-            "id=" + id +
-            ", relations=" + relations +
-            ", entityClasss=" + entityClasses +
-            ", extendEntityClass=" + extendEntityClass +
-            ", fields=" + fields +
-            '}';
+                "id=" + id +
+                ", relations=" + relations +
+                ", entityClasss=" + entityClasses +
+                ", extendEntityClass=" + extendEntityClass +
+                ", fields=" + fields +
+                '}';
     }
 }

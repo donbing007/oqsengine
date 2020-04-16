@@ -40,6 +40,11 @@ public class AliasField implements IEntityField, Serializable {
     }
 
     @Override
+    public String cnName() {
+        return originField.cnName();
+    }
+
+    @Override
     public FieldType type() {
         return originField.type();
     }
