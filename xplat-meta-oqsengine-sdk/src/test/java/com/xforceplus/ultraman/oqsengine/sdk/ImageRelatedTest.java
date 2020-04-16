@@ -1,9 +1,11 @@
-package com.xforceplus.ultraman.oqsengine.sdk.service;
+package com.xforceplus.ultraman.oqsengine.sdk;
 
 import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
+import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
@@ -572,7 +574,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         Thread.sleep(10000);
 
         setupContext();
-
         Optional<EntityClass> entityOpt = entityService.loadByCode("ticketAttachment");
 
         Map<String, Object> map = new HashMap<>();

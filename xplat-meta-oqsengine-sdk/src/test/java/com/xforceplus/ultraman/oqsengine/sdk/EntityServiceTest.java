@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.sdk.service;
+package com.xforceplus.ultraman.oqsengine.sdk;
 
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
@@ -7,6 +7,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfiguration;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
+import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
 import com.xforceplus.xplat.galaxy.framework.configuration.AsyncTaskExecutorAutoConfiguration;
@@ -107,7 +109,7 @@ public class EntityServiceTest {
          * long id, String name, FieldType fieldType, FieldConfig config, String dictId, String defaultValue
          */
         FieldConfig fieldConfig = new FieldConfig();
-        fieldConfig.setValidateRegexString("^(\\w)+(\\.\\w+)*@(\\w)+((\\.\\w{2,3}){1,3})$");
+        fieldConfig.validateRegexString("^(\\w)+(\\.\\w+)*@(\\w)+((\\.\\w{2,3}){1,3})$");
         EntityClass entityClass = new EntityClass(123L, "TestDefault"
                 , Arrays.asList(new Field(123L, "defaultfield"
                 , FieldType.STRING, fieldConfig)));

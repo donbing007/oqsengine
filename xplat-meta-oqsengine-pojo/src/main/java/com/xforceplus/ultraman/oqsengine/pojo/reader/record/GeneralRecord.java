@@ -103,7 +103,7 @@ public class GeneralRecord implements Record {
 
     @Override
     public Optional<IValue> getTypedValue(String fieldName) {
-        return Optional.empty();
+        return field(fieldName).flatMap(this::getTypedValue);
     }
 
     @Override
@@ -138,9 +138,9 @@ public class GeneralRecord implements Record {
 
         if (index > -1 && index < values.length) {
             values[index] = t;
+        }else {
+            log.warn("{} is not present", field.name());
         }
-
-        log.warn("{} is not present", field.name());
     }
 
     @Override

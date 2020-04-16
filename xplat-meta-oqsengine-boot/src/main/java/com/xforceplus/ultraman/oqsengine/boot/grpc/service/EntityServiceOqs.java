@@ -712,9 +712,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             .orElseGet(Collections::emptyList)
                             .stream();
                 }).filter(Objects::nonNull).collect(Collectors.toList());
-                .flatMap(y -> {
-                    return toTypedValue(entityClass, y.getFieldId(), y.getValue()).stream();
-                }).filter(Objects::nonNull).collect(Collectors.toList());
         EntityValue entityValue = new EntityValue(entityUp.getId());
         entityValue.addValues(valueList);
         return entityValue;
@@ -723,18 +720,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     //TODO
     private Field toEntityField(FieldUp fieldUp) {
         return new Field(
-                fieldUp.getId()
-                , fieldUp.getCode()
-                , FieldType.valueOf(fieldUp.getFieldType())
-                , FieldConfig.build()
-                .searchable(ofEmptyStr(fieldUp.getSearchable())
-                        .map(Boolean::valueOf).orElse(false))
-                .max(ofEmptyStr(fieldUp.getMaxLength())
-                        .map(String::valueOf)
-                        .map(Long::parseLong).orElse(-1L))
-                .min(ofEmptyStr(fieldUp.getMinLength()).map(String::valueOf)
-                        .map(Long::parseLong).orElse(-1L))
-                .precision(fieldUp.getPrecision())
                 fieldUp.getId()
                 , fieldUp.getCode()
                 , FieldType.valueOf(fieldUp.getFieldType())

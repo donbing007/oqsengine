@@ -18,7 +18,7 @@ import static org.junit.Assert.assertTrue;
 
 public class EntityHelperTest {
 
-    IEntityClass entityClass;
+    public IEntityClass entityClass;
 
     @Before
     public void initEntityclass(){
