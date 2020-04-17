@@ -13,5 +13,7 @@ public enum OperationType {
 
     DELETE,
 
-    QUERY;
+    QUERY,
+
+    RESULT;
 }

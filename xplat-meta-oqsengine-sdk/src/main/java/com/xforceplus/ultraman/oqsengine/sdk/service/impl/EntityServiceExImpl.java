@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
 import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
+import com.xforceplus.ultraman.oqsengine.sdk.service.HandleResultValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
@@ -59,6 +60,9 @@ public class EntityServiceExImpl implements EntityServiceEx {
 
     @Autowired
     private HandleValueService handleValueService;
+
+    @Autowired
+    private HandleResultValueService handleResultValueService;
 
     @Autowired
     private ApplicationEventPublisher publisher;
@@ -151,7 +155,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
 
             if (queryResult.getCode() == OperationResult.Code.OK) {
                 if (queryResult.getTotalRow() > 0) {
-                    return Either.right(toResultMap(subEntityClass, queryResult.getQueryResultList().get(0)).toMap(null));
+                    return Either.right(handleResultValueService.toRecord(subEntityClass, queryResult.getQueryResultList().get(0)).toMap(null));
                 } else {
                     return Either.left("未查询到记录");
                 }

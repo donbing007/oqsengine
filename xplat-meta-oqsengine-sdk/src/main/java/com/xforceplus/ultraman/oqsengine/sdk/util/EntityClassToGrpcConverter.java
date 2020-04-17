@@ -465,16 +465,6 @@ public class EntityClassToGrpcConverter {
             .build();
     }
 
-
-    private static Stream<Optional<FieldConditionUp>> toFieldCondition(EntityClass entityClass, SubFieldCondition subFieldCondition) {
-        return entityClass.entityClasss().stream()
-            .filter(x -> x.code().equals(subFieldCondition.getCode()))
-            .flatMap(entity -> subFieldCondition
-                .getFields()
-                .stream()
-                .map(subField -> toFieldCondition(entity, subField)));
-    }
-
     public static FieldUp toFieldUp(IEntityField field) {
         FieldUp.Builder builder =
             FieldUp.newBuilder()
@@ -489,110 +479,5 @@ public class EntityClassToGrpcConverter {
             builder.setIdentifier(field.config().isIdentifie());
         }
         return builder.build();
-    }
-
-
-//    /**
-//     * only
-//     * @param entityClass
-//     * @param subEntityClass
-//     * @param up
-//     * @return
-//     */
-//    public static Map<String, Object> toResultMap(EntityClass entityClass
-//        , EntityClass subEntityClass, EntityUp up) {
-//
-//        Map<String, Object> map = new HashMap<>();
-//
-//
-//
-//
-//
-//        up.getValuesList().forEach(entry -> {
-//            Optional<Tuple2<IEntityClass, IEntityField>> fieldByIdInAll = IEntityClassHelper
-//                .findFieldByIdInAll(entityClass, entry.getFieldId());
-//            Optional<Tuple2<IEntityClass, IEntityField>> subField = IEntityClassHelper.findFieldById(subEntityClass, entry.getFieldId())
-//                .map(x -> Tuple.of(subEntityClass, x));
-//
-//
-//            combine(fieldByIdInAll, subField).ifPresent(tuple2 -> {
-//                IEntityField field = tuple2._2();
-//                IEntityClass entity = tuple2._1();
-//                String fieldName = null;
-//                if (entityClass.id() != entity.id()) {
-//                    fieldName = entity.code() + "." + field.name();
-//                } else {
-//                    fieldName = field.name();
-//                }
-//
-//                if (field.type() == FieldType.BOOLEAN) {
-//
-//                    map.put(fieldName, Boolean.valueOf(entry.getValue()));
-//                } else {
-//                    map.put(fieldName, entry.getValue());
-//                }
-//            });
-//        });
-//
-//        if (!StringUtils.isEmpty(up.getObjId())) {
-//            map.put("id", String.valueOf(up.getObjId()));
-//        }
-//
-//        return map;
-//    }
-
-    /**
-     * test
-     * @param entityClass
-     * @param up
-     * @return
-     */
-    public static Record toResultMap(EntityClass entityClass, EntityUp up) {
-
-        IEntityClassReader reader = new IEntityClassReader(entityClass);
-
-        Map<String, Object> retValue = up.getValuesList().stream().collect(Collectors.toMap(ValueUp::getName, ValueUp::getValue));
-        Record record = reader.toRecord(retValue);
-
-        if (!StringUtils.isEmpty(up.getObjId())) {
-            record.set("id", String.valueOf(up.getObjId()));
-        }
-
-        return record;
-    }
-
-    public static Map<String, Object> filterItem(Map<String, Object> values
-            , String mainEntityCode, EntityItem entityItem) {
-
-        if (entityItem == null || entityItem.getEntities() == null || entityItem.getEntities().isEmpty()) {
-            return values;
-        }
-
-        Map<String, Object> newResult = new HashMap<>();
-
-        //setup main
-        entityItem.getFields().forEach(x -> {
-            Object value = values.get(x);
-            if (value != null) {
-                newResult.put(x, value);
-            }
-
-            Object otherValue = values.get(mainEntityCode + "." + x);
-
-            if (otherValue != null) {
-                newResult.put(x, value);
-            }
-        });
-
-        entityItem.getEntities().forEach(subEntity -> {
-            subEntity.getFields().forEach(field -> {
-                String subKey = subEntity.getCode() + "." + field;
-                Object value = values.get(subKey);
-                if (value != null) {
-                    newResult.put(subKey, value);
-                }
-            });
-        });
-        return newResult;
     }
 }

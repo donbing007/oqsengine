@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
@@ -41,8 +42,12 @@ public class DefaultHandleQueryValueService implements HandleQueryValueService {
 
     private Logger logger = LoggerFactory.getLogger(HandleQueryValueService.class);
 
-    @Autowired
+    final
     List<QuerySideFieldOperationHandler> querySideFieldOperationHandler;
+
+    public DefaultHandleQueryValueService(List<QuerySideFieldOperationHandler> querySideFieldOperationHandler) {
+        this.querySideFieldOperationHandler = querySideFieldOperationHandler;
+    }
 
     @Override
     public ConditionsUp handleQueryValue(EntityClass entityClass, Conditions conditions, OperationType phase) {
@@ -96,48 +101,6 @@ public class DefaultHandleQueryValueService implements HandleQueryValueService {
         return conditionsUpBuilder.build();
     }
 
-//    private Stream<? extends Optional<FieldConditionUp>> toFieldConditionFromRel(EntityClass entityClass
-//            , SubFieldCondition entityCondition) {
-//
-//        return entityClass.relations().stream()
-//            .map(rel -> {
-//                Optional<FieldCondition> fieldConditionOp = entityCondition.getFields()
-//                    .stream()
-//                    .filter(enc -> {
-//                        String code = entityCondition.getCode() + "." + enc.getCode();
-//                        return rel.getEntityField().name().equalsIgnoreCase(code);
-//                    }).findFirst();
-//                return fieldConditionOp.map(fieldCon -> Tuple.of(fieldCon, rel));
-//            }).map(tuple -> tuple.map(this::toFieldCondition));
-//    }
-
-//    /**
-//     * mapping field condition to real field
-//     * @param entityClass
-//     * @param fieldCondition
-//     * @return
-//     */
-//    private Optional<FieldConditionUp> toFieldCondition(EntityClass entityClass, FieldCondition fieldCondition) {
-//
-//        Optional<IEntityField> fieldOp = IEntityClassHelper.findFieldByCode(entityClass, fieldCondition.getCode());
-//
-//        return fieldOp.map(x -> FieldConditionUp.newBuilder()
-//            .setCode(fieldCondition.getCode())
-//            .setOperation(Optional.ofNullable(fieldCondition.getOperation())
-//                .map(Enum::name).map(FieldConditionUp.Op::valueOf).orElse(eq))
-//            .addAllValues(doHandle(x, fieldCondition.getValue()))
-//            .setField(toFieldUp(fieldOp.get()))
-//            .build());
-//    }
-
-
-//    private FieldConditionUp toFieldCondition(Tuple2<FieldCondition, Relation> tuple) {
-//        FieldCondition fieldCondition = tuple._1();
-//        IEntityField entityField = tuple._2().getEntityField();
-//
-//
-//    }
-
     private List<String> doHandle(IEntityField field, List<String> origin) {
         return Optional.ofNullable(origin)
             .orElseGet(Collections::emptyList).stream()
@@ -155,8 +118,9 @@ public class DefaultHandleQueryValueService implements HandleQueryValueService {
                 .sorted()
                 .map(x -> (TriFunction) x)
                 .reduce(TriFunction::andThen)
-                .get()
-                .apply(field, value, phase);
+                .map(x -> x.apply(field, value, phase))
+                .orElse(value);
+
         } catch (Exception ex) {
             logger.error("{}", ex);
             return null;

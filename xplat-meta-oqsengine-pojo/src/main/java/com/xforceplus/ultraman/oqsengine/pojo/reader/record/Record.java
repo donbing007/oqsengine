@@ -14,6 +14,14 @@ import java.util.stream.Stream;
  */
 public interface Record extends Comparable<Record>  {
 
+    /**
+     * always has a id;
+     * @return
+     */
+    Long getId();
+
+    void setId(Long id);
+
     Optional<Object> get(String fieldName);
 
     Optional<Object> get(IEntityField field);
@@ -29,6 +37,8 @@ public interface Record extends Comparable<Record>  {
     void set(String fieldName, Object t);
 
     void set(IEntityField field, Object t);
+
+    void fromMap(Map<String, Object> map);
 
     void setTypedValue(IValue iValue);
 

@@ -14,14 +14,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.CodeExtendedInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.DefaultSearchInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.MatchRouter;
-import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
-import com.xforceplus.ultraman.oqsengine.sdk.service.HandleQueryValueService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.impl.DefaultHandleQueryValueService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.impl.DefaultHandleValueService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.impl.EntityServiceExImpl;
-import com.xforceplus.ultraman.oqsengine.sdk.service.impl.EntityServiceImpl;
+import com.xforceplus.ultraman.oqsengine.sdk.service.*;
+import com.xforceplus.ultraman.oqsengine.sdk.service.impl.*;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.*;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.FieldValidator;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.RegxValidator;
@@ -227,15 +221,30 @@ public class InitServiceAutoConfiguration {
     }
 
     @Bean
-    public HandleValueService defaultHandleValueService(){
-        return new DefaultHandleValueService();
+    public HandleValueService defaultHandleValueService(List<FieldOperationHandler> fieldOperationHandlers, List<FieldValidator<Object>> fieldValidators){
+        return new DefaultHandleValueService(fieldOperationHandlers, fieldValidators);
     }
 
     @Bean
-    public HandleQueryValueService defaultHandleQueryValueService() {
-        return new DefaultHandleQueryValueService();
+    public HandleQueryValueService defaultHandleQueryValueService(List<QuerySideFieldOperationHandler> querySideFieldOperationHandler) {
+        return new DefaultHandleQueryValueService(querySideFieldOperationHandler);
     }
 
+    @Bean
+    public HandleResultValueService defaultHandleResultValueService(List<RecordOperationHandler> handlers
+            , List<ResultSideOperationHandler> resultSideOperationHandlers){
+        return new DefaultHandleResultValueService(handlers, resultSideOperationHandlers);
+    }
+
+    @Bean
+    public ResultSideOperationHandler booleanTyped(){
+        return new BooleanFieldOperationHandler();
+    }
+
+    @Bean
+    public RecordOperationHandler idAppend(){
+        return new IdAppenderRecordOperationHandler();
+    }
 
     @Bean
     public UltFormInitService ultFormInitService(){

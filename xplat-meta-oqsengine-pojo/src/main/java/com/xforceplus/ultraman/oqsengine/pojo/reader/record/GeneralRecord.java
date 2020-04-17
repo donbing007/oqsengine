@@ -14,15 +14,17 @@ import java.util.stream.Stream;
 /**
  * Record
  *
+ * field and Row
+ *
  * @author admin
  */
 public class GeneralRecord implements Record {
 
     private Logger log = LoggerFactory.getLogger(GeneralRecord.class);
 
-    final Object[] values;
+    private final Object[] values;
 
-    final IEntityField[] fields;
+    private final IEntityField[] fields;
 
     public GeneralRecord(Collection<? extends IEntityField> fields) {
 
@@ -36,6 +38,18 @@ public class GeneralRecord implements Record {
             this.fields[i] = field;
             i++;
         }
+    }
+
+    private Long id;
+
+    @Override
+    public Long getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.id = id;
     }
 
     /**
@@ -141,6 +155,11 @@ public class GeneralRecord implements Record {
         } else {
             log.warn("{} is not present", field.name());
         }
+    }
+
+    @Override
+    public void fromMap(Map<String, Object> map) {
+        map.forEach(this::set);
     }
 
     @Override

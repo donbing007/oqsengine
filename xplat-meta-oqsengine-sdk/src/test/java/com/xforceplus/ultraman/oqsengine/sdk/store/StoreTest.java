@@ -3,7 +3,10 @@ package com.xforceplus.ultraman.oqsengine.sdk.store;
 import com.xforceplus.ultraman.metadata.grpc.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
+import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
+import com.xforceplus.ultraman.oqsengine.sdk.service.impl.DefaultHandleValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.EntityServiceImpl;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.MetadataRepositoryInMemoryImpl;
@@ -11,14 +14,12 @@ import com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.toEntityUp;
 import static org.springframework.test.util.AssertionErrors.assertTrue;
 
 /**
@@ -432,7 +433,10 @@ public class StoreTest {
 
         data.put("", "");
 
-        EntityUp entity = EntityClassToGrpcConverter.toEntityUp(entityclassA.get(), null, data);
+        DefaultHandleValueService handleValueService = new DefaultHandleValueService(Collections.emptyList(), Collections.emptyList());
+
+        List<ValueUp> valueUps = handleValueService.handlerValue(entityclassA.get(), data, OperationType.CREATE);
+        EntityUp entity = toEntityUp(entityclassA.get(), null, valueUps);
 
         System.out.println(entity);
     }

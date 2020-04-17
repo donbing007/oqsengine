@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 
 import java.util.Map;
@@ -10,8 +12,6 @@ import java.util.Map;
  */
 public interface HandleResultValueService {
 
-    Map<String, Object> toMap(IEntityClass entityClass
-                            , EntityUp up, IEntityClass subEntityClass);
-
+    Record toRecord(EntityClass entityClass, EntityUp up);
 
 }

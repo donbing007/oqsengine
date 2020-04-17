@@ -2,16 +2,12 @@ package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
-import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityDeleted;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.HandleQueryValueService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
+import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
@@ -22,15 +18,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.*;
+import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.toEntityUp;
+import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.toSelectByCondition;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
 
 /**
@@ -52,6 +46,9 @@ public class EntityServiceImpl implements EntityService {
 
     @Autowired
     private HandleQueryValueService handleQueryValueService;
+
+    @Autowired
+    private HandleResultValueService handleResultValueService;
 
     public EntityServiceImpl(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
         this.metadataRepository = metadataRepository;
@@ -126,7 +123,10 @@ public class EntityServiceImpl implements EntityService {
 
         if (queryResult.getCode() == OperationResult.Code.OK) {
             if (queryResult.getTotalRow() > 0) {
-                return Either.right(toResultMap(entityClass, queryResult.getQueryResultList().get(0)).toMap(null));
+
+                return Either.right(
+                        handleResultValueService.toRecord(entityClass, queryResult.getQueryResultList().get(0))
+                        .toMap(null));
             } else {
                 return Either.left("未查询到记录");
             }
@@ -289,8 +289,11 @@ public class EntityServiceImpl implements EntityService {
             List<Map<String, Object>> repList = result.getQueryResultList()
                 .stream()
                 .map(x -> {
-                    Record resultMap = toResultMap(entityClass, x);
-                    return resultMap.toMap(condition.getStringKeys());
+
+                    return handleResultValueService.toRecord(entityClass, x)
+                            .toMap(Optional.ofNullable(condition)
+                            .map(ConditionQueryRequest::getStringKeys)
+                            .orElseGet(Collections::emptySet));
                 }).collect(Collectors.toList());
             Tuple2<Integer, List<Map<String, Object>>> queryResult = Tuple.of(result.getTotalRow(), repList);
             return Either.right(queryResult);

@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.metadata.grpc.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfiguration;
@@ -218,6 +219,17 @@ public class EntityServiceNewTest {
         return entityClass;
     }
 
+    private EntityClass booleanEntity(){
+        FieldConfig fieldConfig = new FieldConfig().searchable(true);
+        fieldConfig.required(true);
+
+        EntityClass entityClass = new EntityClass(123L, "TestDefault"
+                , Arrays.asList(new Field(123L, "defaultfield"
+                , FieldType.BOOLEAN, fieldConfig)));
+
+        return entityClass;
+    }
+
     @Test
     public void testMultiValueService(){
 
@@ -366,11 +378,13 @@ public class EntityServiceNewTest {
         Map<String, Object> value = new HashMap<>();
         value.put("defaultfield", "{{tenant_id}}");
 
-        entityService.create(s, value);
+        Long id = entityService.create(s, value).get();
 
 
         System.out.println(entityService.findByCondition(s,
                 new RequestBuilder().field("defaultfield", ConditionOp.eq, "{{tenant_id}}").build()));
+
+        entityService.deleteOne(s, id);
     }
 
     @Test
@@ -396,7 +410,23 @@ public class EntityServiceNewTest {
     @Test
     public void testUpdate(){
         metadataRepository.save(manyToOne(), "1", "1");
-
         metadataRepository.save(manyToOneNew(), "1", "1");
+    }
+
+    @Test
+    public void returnBooleanTyped(){
+
+        EntityClass boolEntity = booleanEntity();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("defaultfield", true);
+
+        Long result = entityService.create(boolEntity, map).get();
+
+        boolean retValue = (boolean)entityService
+                .findOne(boolEntity, result)
+                .get().get("defaultfield");
+
+        entityService.deleteOne(boolEntity, result);
     }
 }
