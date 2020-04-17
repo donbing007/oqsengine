@@ -12,9 +12,10 @@ public class IdAppenderRecordOperationHandler implements RecordOperationHandler 
 
     @Override
     public void accept(Record record, EntityUp entityUp) {
-        if (entityUp.getId() > 0) {
-            record.set("id", entityUp.getId());
-            record.setId(entityUp.getObjId());
+        long id = entityUp.getObjId();
+        if (id > 0) {
+            record.set("id", id);
+            record.setId(id);
         }
     }
 }
