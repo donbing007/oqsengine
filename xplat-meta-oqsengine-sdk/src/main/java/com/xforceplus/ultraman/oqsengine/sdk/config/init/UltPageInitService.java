@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.config.ExternalServiceConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
-import org.omg.CORBA.NO_RESPONSE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,6 @@ import java.util.List;
  * 初始化Page信息
  */
 @Order(1) // @Order注解可以改变执行顺序，越小越先执行
-@Component
 public class UltPageInitService implements CommandLineRunner {
     final Logger logger = LoggerFactory.getLogger(UltPageInitService.class);
 
@@ -69,7 +67,7 @@ public class UltPageInitService implements CommandLineRunner {
             }
         } catch (Exception e) {
             logger.info("init pages config faild");
-            throw new NO_RESPONSE(
+            throw new Exception(
                     String.format("init pages config faild,The url is '%s'.", url));
         }
     }

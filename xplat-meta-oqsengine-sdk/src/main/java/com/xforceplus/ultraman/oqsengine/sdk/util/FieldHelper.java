@@ -36,11 +36,13 @@ public class FieldHelper {
             .map(String::valueOf)
             .map(Boolean::valueOf).orElse(false);
 
+        Boolean identifier = RowUtils.getRowValue(row, "identifier")
+                .map(String::valueOf)
+                .map(Boolean::valueOf).orElse(false);
 
         Boolean required = RowUtils.getRowValue(row, "required")
             .map(String::valueOf)
             .map(Boolean::valueOf).orElse(false);
-
 
         Long max = RowUtils.getRowValue(row, "maxLength")
             .flatMap(OptionalHelper::ofEmptyStr)
@@ -56,15 +58,23 @@ public class FieldHelper {
         String dictId = RowUtils.getRowValue(row, "dictId")
             .map(String::valueOf).orElse("");
 
+        String validateRule = RowUtils.getRowValue(row, "validateRule")
+                .map(String::valueOf).orElse("");
+
         FieldConfig fieldConfig = FieldConfig
             .build()
             .searchable(searchable)
             .max(max)
             .required(required)
-            .precision(precision);
+            .precision(precision)
+            .identifie(identifier)
+            .validateRegexString(validateRule);
+        String cnName = RowUtils.getRowValue(row, "name").map(String::valueOf).orElse("");
 
+//        Field field =
+//            new Field(id, name, fieldType, fieldConfig, dictId, defaultValue);
         Field field =
-            new Field(id, name, fieldType, fieldConfig, dictId, defaultValue);
+                new Field(id, name, cnName, fieldType, fieldConfig, dictId, defaultValue);
         return field;
     }
 

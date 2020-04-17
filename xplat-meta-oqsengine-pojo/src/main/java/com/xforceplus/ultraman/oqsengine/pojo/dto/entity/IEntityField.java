@@ -21,6 +21,12 @@ public interface IEntityField {
     String name();
 
     /**
+     * 字段的中文名
+     * @return
+     */
+    String cnName();
+
+    /**
      * 字段的类型.
      * @return 类型.
      */
@@ -44,4 +50,7 @@ public interface IEntityField {
      */
     String defaultValue();
 
+    default Boolean acceptName(String name){
+        return name().equals(name);
+    }
 }

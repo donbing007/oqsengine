@@ -63,7 +63,7 @@ public class MeqMatchConditionQueryBuilderTest {
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test1"),
                     new StringValue(new Field(11111, "test", FieldType.STRING), "test2")
                 ),
-                "(=(\"F11111S test0\") | =(\"F11111S test1\") | =(\"F11111S test2\"))"
+                "((ZONESPAN:F11111S \"F11111S test0\") | (ZONESPAN:F11111S \"F11111S test1\") | (ZONESPAN:F11111S \"F11111S test2\"))"
             )
             ,
             new Case(
@@ -74,7 +74,7 @@ public class MeqMatchConditionQueryBuilderTest {
                     new LongValue(new Field(11111, "test", FieldType.LONG), 2L),
                     new LongValue(new Field(11111, "test", FieldType.LONG), 3L)
                 ),
-                "(=(\"F11111L 1\") | =(\"F11111L 2\") | =(\"F11111L 3\"))"
+                "((ZONESPAN:F11111L \"F11111L 1\") | (ZONESPAN:F11111L \"F11111L 2\") | (ZONESPAN:F11111L \"F11111L 3\"))"
             )
             ,
             new Case(
@@ -83,7 +83,7 @@ public class MeqMatchConditionQueryBuilderTest {
                     ConditionOperator.MULTIPLE_EQUALS,
                     new EnumValue(new Field(11111, "test", FieldType.ENUM), "one")
                 ),
-                "(=(\"F11111S one\"))"
+                "((ZONESPAN:F11111S \"F11111S one\"))"
             )
             ,
             new Case(
@@ -93,7 +93,7 @@ public class MeqMatchConditionQueryBuilderTest {
                     new StringsValue(new Field(1, "test", FieldType.STRINGS), "one"),
                     new StringsValue(new Field(1, "test", FieldType.STRINGS), "two")
                 ),
-                "(=(\"F1S* one\") | =(\"F1S* two\"))",
+                "((ZONESPAN:F1S F1S* \"one\") | (ZONESPAN:F1S F1S* \"two\"))",
                 true
             )
         );

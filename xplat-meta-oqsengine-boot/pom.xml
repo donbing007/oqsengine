@@ -175,7 +175,7 @@
                             <tasks>
                                 <copy tofile="../target/xplat-meta-oqsengine.jar">
                                     <fileset dir="target">
-                                        <include name="xplat-meta-oqsengine.jar"/>
+                                        <include name="xplat-meta-oqsengine-exec.jar"/>
                                     </fileset>
                                 </copy>
                             </tasks>

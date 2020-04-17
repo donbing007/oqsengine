@@ -1,0 +1,12 @@
+xplat:
+  oqsengine:
+    sdk:
+      override: true
+      enabled: true
+
+  meta:
+    oqsengine:
+      permissions:
+        tenant:
+        app-id: 5
+        env: 0

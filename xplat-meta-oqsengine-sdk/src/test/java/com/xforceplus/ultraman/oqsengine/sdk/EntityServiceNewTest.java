@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.sdk.service;
+package com.xforceplus.ultraman.oqsengine.sdk;
 
 import com.xforceplus.ultraman.metadata.grpc.BoUp;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
@@ -9,6 +9,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfiguration;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
+import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
@@ -20,14 +22,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.client.RestTemplateAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.management.relation.RelationType;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.TENANT_ID;
@@ -81,7 +88,6 @@ public class EntityServiceNewTest {
                 .build();
     }
 
-
     /**
      * Long id, String name
      * , long entityClassId
@@ -90,7 +96,6 @@ public class EntityServiceNewTest {
      * , String relationType
      * @return
      */
-
     private ModuleUpResult manyToOne() {
         return ModuleUpResult
                 .newBuilder()
@@ -104,6 +109,24 @@ public class EntityServiceNewTest {
                                 .setJoinBoId("2")
                                 .setBoId("1")
                                 .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field1")
+                                .setSearchable("1")
+                                .setId("1002")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field2")
+                                .setSearchable("1")
+                                .setId("1003")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field3")
+                                .setSearchable("0")
+                                .setId("1004")
+                                .build())
                         .build())
                 .addBoUps(BoUp
                         .newBuilder()
@@ -114,6 +137,53 @@ public class EntityServiceNewTest {
     }
 
 
+    /**
+     * Long id, String name
+     * , long entityClassId
+     * , String entityClassName
+     * , String ownerClassName
+     * , String relationType
+     * @return
+     */
+    private ModuleUpResult manyToOneNew() {
+        return ModuleUpResult
+                .newBuilder()
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setId("1")
+                        .setCode("main")
+                        .addRelations(Relation.newBuilder()
+                                .setId("1001")
+                                .setRelationType("ManyToOne")
+                                .setJoinBoId("2")
+                                .setBoId("1")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field1")
+                                .setSearchable("1")
+                                .setId("1003")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field2")
+                                .setSearchable("0")
+                                .setId("1004")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field3")
+                                .setSearchable("0")
+                                .setId("1005")
+                                .build())
+                        .build())
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setId("2")
+                        .setCode("rel1")
+                        .build())
+                .build();
+    }
 
     private EntityClass enumEntity() {
         FieldConfig fieldConfig = new FieldConfig().searchable(true);
@@ -137,7 +207,6 @@ public class EntityServiceNewTest {
         return entityClass;
     }
 
-
     private EntityClass stringEntity() {
         FieldConfig fieldConfig = new FieldConfig().searchable(true);
 
@@ -148,9 +217,6 @@ public class EntityServiceNewTest {
 
         return entityClass;
     }
-
-
-
 
     @Test
     public void testMultiValueService(){
@@ -271,7 +337,6 @@ public class EntityServiceNewTest {
                         .build()));
     }
 
-
     private void setupContext() {
 
         /**
@@ -291,7 +356,6 @@ public class EntityServiceNewTest {
         contextService.set(TENANT_ID, 1111111L);
     }
 
-
     @Test
     public void testQuery(){
 
@@ -309,5 +373,30 @@ public class EntityServiceNewTest {
                 new RequestBuilder().field("defaultfield", ConditionOp.eq, "{{tenant_id}}").build()));
     }
 
+    @Test
+    public void testConcurrent() throws InterruptedException {
 
+        ScheduledExecutorService scheduledExecutorService =
+                Executors.newScheduledThreadPool(1);
+
+        ScheduledFuture scheduledFuture =
+                scheduledExecutorService.scheduleAtFixedRate(() -> {
+                    metadataRepository.save(manyToOne(), "1", "1");
+                },5, 5, TimeUnit.SECONDS);
+
+        ScheduledFuture loadedFuture =
+                scheduledExecutorService.scheduleAtFixedRate(() -> {
+                    System.out.println(metadataRepository.loadByCode("1", "1", "main"));
+                },5, 5, TimeUnit.SECONDS);
+
+
+        Thread.sleep(15000L);
+    }
+
+    @Test
+    public void testUpdate(){
+        metadataRepository.save(manyToOne(), "1", "1");
+
+        metadataRepository.save(manyToOneNew(), "1", "1");
+    }
 }

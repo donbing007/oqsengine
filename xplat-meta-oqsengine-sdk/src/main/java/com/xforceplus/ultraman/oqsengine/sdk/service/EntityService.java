@@ -38,4 +38,6 @@ public interface EntityService {
     Integer count(EntityClass entityClass, ConditionQueryRequest condition);
 
     List<EntityClass> loadSonByCode(String bocode, String tenantId);
+
+    List<EntityClass> getEntityClasss();
 }

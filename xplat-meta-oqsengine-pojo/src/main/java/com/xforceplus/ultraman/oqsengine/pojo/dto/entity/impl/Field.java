@@ -28,6 +28,11 @@ public class Field implements IEntityField, Serializable {
     private String name;
 
     /**
+     * 字典中文名
+     */
+    private String cnName;
+
+    /**
      * 字段类型
      */
     private FieldType fieldType;
@@ -70,6 +75,19 @@ public class Field implements IEntityField, Serializable {
     }
 
     /**
+     * 构造一个使用默认配置的字段.
+     * @param id 字段标识.
+     * @param name 字段名称.
+     * @param fieldType 字段类型.
+     */
+    public Field(long id, String name, String cnName, FieldType fieldType, FieldConfig config, String dictId, String defaultValue) {
+        this(id, name, fieldType, config);
+        this.cnName = cnName;
+        this.dictId = dictId;
+        this.defaultValue = defaultValue;
+    }
+
+    /**
      * 构造一个独特配置的字段.
      * @param id 字段标识.
      * @param name 字段名称.
@@ -97,6 +115,9 @@ public class Field implements IEntityField, Serializable {
     public String name() {
         return this.name;
     }
+
+    @Override
+    public String cnName() { return this.cnName; }
 
     @Override
     public FieldType type() {
@@ -134,26 +155,21 @@ public class Field implements IEntityField, Serializable {
         this.defaultValue = defaultValue;
     }
 
+    public String getCnName() { return cnName; }
+
+    public void setCnName(String cnName) { this.cnName = cnName; }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof Field)) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         Field field = (Field) o;
-        return id == field.id &&
-                Objects.equals(name, field.name) &&
-                fieldType == field.fieldType &&
-                Objects.equals(dictId, field.dictId) &&
-                Objects.equals(defaultValue, field.defaultValue) &&
-                Objects.equals(config, field.config);
+        return id == field.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, fieldType, dictId, defaultValue, config);
+        return Objects.hash(id);
     }
 
     @Override

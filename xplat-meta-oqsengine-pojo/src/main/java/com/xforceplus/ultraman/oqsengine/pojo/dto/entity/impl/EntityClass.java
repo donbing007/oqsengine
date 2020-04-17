@@ -11,6 +11,7 @@ import java.util.*;
  * 两者使用 entityClassId 标识进行联系.
  * relations 表示关联对象的本地字段信息,关联类型.
  * entityClasss 表示联系对象的类型.
+ *
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
  */
@@ -22,17 +23,22 @@ public class EntityClass implements IEntityClass, Serializable {
     private long id;
 
     /**
+     * 对象名称
+     */
+    private String name;
+
+    /**
      * 对象code
      */
     private String code;
     /**
      * 关系信息
      */
-    private Collection<Relation> relations;
+    private List<Relation> relations;
     /**
      * 子对象结构信息
      */
-    private Collection<IEntityClass> entityClasss;
+    private Set<IEntityClass> entityClasses;
 
     /**
      * 继承的对象类型.
@@ -60,14 +66,14 @@ public class EntityClass implements IEntityClass, Serializable {
      * @param id                类型 id.
      * @param code              类型 code.
      * @param relations         关联对象信息.
-     * @param entityClasss      类型关联对象类型信息.
+     * @param entityClasses     类型关联对象类型信息.
      * @param extendEntityClass 继承对象信息.
      * @param fields            属性列表.
      */
     public EntityClass(Long id,
                        String code,
                        Collection<Relation> relations,
-                       Collection<IEntityClass> entityClasss,
+                       Collection<IEntityClass> entityClasses,
                        IEntityClass extendEntityClass,
                        Collection<IEntityField> fields) {
         this.id = id;
@@ -77,10 +83,10 @@ public class EntityClass implements IEntityClass, Serializable {
         } else {
             this.relations = new ArrayList<>(relations);
         }
-        if (entityClasss == null) {
-            this.entityClasss = Collections.emptyList();
+        if (entityClasses == null) {
+            this.entityClasses = Collections.emptySet();
         } else {
-            this.entityClasss = new ArrayList<>(entityClasss);
+            this.entityClasses = new HashSet<>(entityClasses);
         }
         if (fields == null) {
             this.fields = Collections.emptyList();
@@ -88,6 +94,27 @@ public class EntityClass implements IEntityClass, Serializable {
             this.fields = new ArrayList<>(fields);
         }
         this.extendEntityClass = extendEntityClass;
+    }
+
+    /**
+     * 构造一个新的entity 类型信息.
+     *
+     * @param id                类型 id.
+     * @param code              类型 code.
+     * @param relations         关联对象信息.
+     * @param entityClasss      类型关联对象类型信息.
+     * @param extendEntityClass 继承对象信息.
+     * @param fields            属性列表.
+     */
+    public EntityClass(Long id,
+                       String code,
+                       String name,
+                       Collection<Relation> relations,
+                       Collection<IEntityClass> entityClasss,
+                       IEntityClass extendEntityClass,
+                       Collection<IEntityField> fields) {
+        this(id, code, relations, entityClasss, extendEntityClass, fields);
+        this.name = name;
     }
 
     @Override
@@ -106,8 +133,8 @@ public class EntityClass implements IEntityClass, Serializable {
     }
 
     @Override
-    public List<IEntityClass> entityClasss() {
-        return new ArrayList<>(entityClasss);
+    public Set<IEntityClass> entityClasss() {
+        return Collections.unmodifiableSet(entityClasses);
     }
 
     @Override
@@ -135,6 +162,14 @@ public class EntityClass implements IEntityClass, Serializable {
         return false;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -145,25 +180,25 @@ public class EntityClass implements IEntityClass, Serializable {
         }
         EntityClass that = (EntityClass) o;
         return id == that.id &&
-            Objects.equals(relations, that.relations) &&
-            Objects.equals(entityClasss, that.entityClasss) &&
-            Objects.equals(extendEntityClass, that.extendEntityClass) &&
-            Objects.equals(fields, that.fields);
+                Objects.equals(relations, that.relations) &&
+                Objects.equals(entityClasses, that.entityClasses) &&
+                Objects.equals(extendEntityClass, that.extendEntityClass) &&
+                Objects.equals(fields, that.fields);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, relations, entityClasss, extendEntityClass, fields);
+        return Objects.hash(id, relations, entityClasses, extendEntityClass, fields);
     }
 
     @Override
     public String toString() {
         return "EntityClass{" +
-            "id=" + id +
-            ", relations=" + relations +
-            ", entityClasss=" + entityClasss +
-            ", extendEntityClass=" + extendEntityClass +
-            ", fields=" + fields +
-            '}';
+                "id=" + id +
+                ", relations=" + relations +
+                ", entityClasss=" + entityClasses +
+                ", extendEntityClass=" + extendEntityClass +
+                ", fields=" + fields +
+                '}';
     }
 }

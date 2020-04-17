@@ -1,18 +1,17 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.Before;
 import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.stream.Stream;
 
 /**
  * Conditions Tester.
@@ -29,6 +28,29 @@ public class ConditionsTest {
 
     @After
     public void after() throws Exception {
+    }
+
+    @Test
+    public void testAndOrFlag() throws Exception {
+        Conditions conditions = Conditions.buildEmtpyConditions();
+
+        Assert.assertEquals(false, conditions.haveOrLink());
+        Assert.assertEquals(false, conditions.haveRangeCondition());
+
+        IEntityField field = new Field(1, "test", FieldType.STRING);
+        conditions.addAnd(
+            new Condition(field, ConditionOperator.EQUALS, new StringValue(field, "test")));
+
+        Assert.assertEquals(false, conditions.haveOrLink());
+        Assert.assertEquals(false, conditions.haveRangeCondition());
+
+
+        Conditions orConnditons = Conditions.buildEmtpyConditions().addAnd(
+            new Condition(field, ConditionOperator.EQUALS, new StringValue(field, "test"))
+        );
+        conditions.addOr(orConnditons, true);
+        Assert.assertEquals(true, conditions.haveOrLink());
+        Assert.assertEquals(false, conditions.haveRangeCondition());
     }
 
     @Test

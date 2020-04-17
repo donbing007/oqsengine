@@ -8,5 +8,5 @@ xplat:
     oqsengine:
       permissions:
         tenant:
-        app-id: 5
+        app-id: 7
         env: 0
