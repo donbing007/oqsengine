@@ -1,5 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.storage.transaction;
+package com.xforceplus.ultraman.oqsengine.storage.undo.transaction;
 
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 

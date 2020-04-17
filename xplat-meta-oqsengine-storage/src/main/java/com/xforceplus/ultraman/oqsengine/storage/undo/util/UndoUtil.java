@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import org.springframework.util.StringUtils;
 
+import javax.sql.DataSource;
 import java.util.Map;
 
 /**
@@ -49,15 +50,8 @@ public class UndoUtil {
         return selectStorageCommand(storageCommandInvokers, dbType, undoOpType);
     }
 
-    public static String createDbKey(String resourceName, String shardKey){
-        return resourceName + SEPARATOR + shardKey;
+    public static String createDbKey(DataSource dataSource){
+        return dataSource == null ? null:dataSource.toString();
     }
 
-    public static String getShardKeyFromDbKey(String dbKey) {
-        if(StringUtils.isEmpty(dbKey)) {
-            return null;
-        }
-        String[] parts = dbKey.split(SEPARATOR);
-        return parts.length == 2 ? parts[1]:null;
-    }
 }

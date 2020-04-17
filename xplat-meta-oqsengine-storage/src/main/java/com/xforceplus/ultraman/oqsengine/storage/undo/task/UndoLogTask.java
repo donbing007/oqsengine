@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.task;
 
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
@@ -11,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
+import java.lang.reflect.Constructor;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,12 +56,12 @@ public class UndoLogTask extends Thread {
     }
 
     @Override
-    public void run(){
+    public void run() {
         loopHandleUndoLog();
         handleRemainingUndoLog();
     }
 
-    void loopHandleUndoLog(){
+    void loopHandleUndoLog() {
         while(!closed) {
             try {
                 handle(undoLogQ.take());
@@ -81,6 +86,7 @@ public class UndoLogTask extends Thread {
                 !this.dataSourceSelectors.containsKey(undoInfo.getDbType())) {
             String dbType = undoInfo.getDbType() == null ? null:undoInfo.getDbType().name();
             logger.error("can't find datasource select by dbType-{}", dbType);
+            undoLogQ.add(undoInfo);
             return ;
         }
 
@@ -90,6 +96,7 @@ public class UndoLogTask extends Thread {
 
         if(dataSource == null) {
             logger.error("can't find datasource by dbKey-{}", undoInfo.getShardKey());
+            undoLogQ.add(undoInfo);
             return ;
         }
 
@@ -97,13 +104,21 @@ public class UndoLogTask extends Thread {
                 storageCommandInvokers, undoInfo.getDbType(), undoInfo.getOpType());
 
         if(cmd == null) {
-            logger.error("can't find storage command by dbType-{}, opType-{}",
-                    undoInfo.getShardKey(), undoInfo.getOpType());
+            logger.error("can't find storage command by dbType-{}, opType-{}", undoInfo.getDbType(), undoInfo.getOpType());
+            undoLogQ.add(undoInfo);
             return ;
         }
 
+        TransactionResource resource;
         try {
-            cmd.execute(dataSource.getConnection(), undoInfo.getData());
+            resource = buildResource(undoInfo.getDbType(), undoInfo.getShardKey(), dataSource.getConnection(), true);
+        } catch (Exception e) {
+            undoLogQ.add(undoInfo);
+            return;
+        }
+
+        try {
+            cmd.execute(resource, undoInfo.getData());
         } catch (SQLException e) {
             e.printStackTrace();
             undoLogQ.add(undoInfo);
@@ -120,5 +135,16 @@ public class UndoLogTask extends Thread {
     public void close() {
         this.closed = true;
         interrupt();
+    }
+
+    private TransactionResource buildResource(DbTypeEnum dbType, String key, Connection value, boolean autocommit)
+            throws Exception {
+
+        Class resourceClass = DbTypeEnum.INDEX.equals(dbType) ? SphinxQLTransactionResource.class :
+                (DbTypeEnum.MASTOR.equals(dbType) ? ConnectionTransactionResource.class:null);
+
+        Constructor<TransactionResource> constructor =
+                resourceClass.getConstructor(String.class, Connection.class, Boolean.TYPE);
+        return constructor.newInstance(key, value, autocommit);
     }
 }

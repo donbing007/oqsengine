@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo;
 
-import com.xforceplus.ultraman.oqsengine.storage.transaction.AbstractTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.AbstractTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
@@ -90,7 +90,7 @@ public class UndoExecutor {
 
             logger.debug("[UndoExecutor UNDO] undo operate {} ", undoOpType.name());
             try {
-                undoCmd.execute((Connection) resource.value(), undoInfo.getData());
+                undoCmd.execute(resource, undoInfo.getData());
 
                 removeUndoLog(undoInfo);
             } catch (Exception e) {

@@ -32,7 +32,7 @@ public class UndoFactory {
 
     private UndoLogStore undoLogStore;
 
-    private UndoLogTask logUndoHandler;
+    private UndoLogTask logUndoTask;
 
     private Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers;
 
@@ -50,12 +50,12 @@ public class UndoFactory {
                 undoLogQ, undoLogStore, storageCommandInvokers);
         this.undoExecutor = undoExecutor;
 
-        this.logUndoHandler = new UndoLogTask(
+        this.logUndoTask = new UndoLogTask(
                 undoLogQ,
                 undoLogStore,
                 storageCommandInvokers,
                 dataSourceSelectors);
-        logUndoHandler.start();
+        logUndoTask.start();
     }
 
     public UndoFactory(UndoLogStore undoLogStore){
@@ -75,7 +75,7 @@ public class UndoFactory {
 
     public void register(DbTypeEnum dbType, Selector<DataSource> selector){
         if(dbType == null || selector == null) {
-            logger.error("Register failed. The dbType or invoker was null.");
+            logger.error("Register failed. The dbType or selector was null.");
             return;
         }
 
@@ -89,6 +89,6 @@ public class UndoFactory {
     @PreDestroy
     void destroy(){
         logger.debug("undo log task is stopped");
-        logUndoHandler.close();
+        logUndoTask.close();
     }
 }

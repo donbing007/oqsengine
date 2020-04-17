@@ -3,7 +3,10 @@ package com.xforceplus.ultraman.oqsengine.storage.master.command;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.AbstractStorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +22,7 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class ReplaceStorageCommand implements StorageCommand<IEntity> {
+public class ReplaceStorageCommand extends AbstractStorageCommand<IEntity> {
 
     final Logger logger = LoggerFactory.getLogger(ReplaceStorageCommand.class);
 
@@ -33,10 +36,15 @@ public class ReplaceStorageCommand implements StorageCommand<IEntity> {
     }
 
     @Override
-    public Object execute(Connection conn, IEntity entity) throws SQLException {
+    public IEntity execute(TransactionResource resource, IEntity entity) throws SQLException {
+        super.recordOriginalData(resource, OpTypeEnum.REPLACE, entity);
+        return this.doExecute(resource, entity);
+    }
+
+    IEntity doExecute(TransactionResource resource, IEntity entity) throws SQLException {
         String tableName = tableNameSelector.select(Long.toString(entity.id()));
         String sql = String.format(SQLConstant.REPLACE_SQL, tableName);
-        PreparedStatement st = conn.prepareStatement(sql);
+        PreparedStatement st = ((Connection)resource.value()).prepareStatement(sql);
 
         // update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
         st.setLong(1, System.currentTimeMillis()); // time

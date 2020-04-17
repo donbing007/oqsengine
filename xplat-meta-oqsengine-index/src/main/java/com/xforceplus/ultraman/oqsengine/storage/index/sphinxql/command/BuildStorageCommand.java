@@ -3,7 +3,9 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.AbstractStorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +24,7 @@ import static com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.C
  * 功能描述:
  * 修改历史:
  */
-public class BuildStorageCommand implements StorageCommand {
+public class BuildStorageCommand extends AbstractStorageCommand<StorageEntity> {
 
     final Logger logger = LoggerFactory.getLogger(BuildStorageCommand.class);
 
@@ -44,21 +46,26 @@ public class BuildStorageCommand implements StorageCommand {
     }
 
     @Override
-    public Object execute(Connection conn, Object data) throws SQLException {
-        IEntity entity = (IEntity) data;
+    public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+        super.recordOriginalData(resource, OpTypeEnum.BUILD, storageEntity);
+        return this.doExecute(resource, storageEntity);
+    }
 
-        StorageEntity storageEntity = new StorageEntity(
-                entity.id(),
-                entity.entityClass().id(),
-                entity.family().parent(),
-                entity.family().child(),
-                CommonUtil.serializeToJson(storageStrategyFactory, entity.entityValue(), true),
-                CommonUtil.serializeSetFull(storageStrategyFactory, entity.entityValue())
-        );
+    StorageEntity doExecute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+//        IEntity entity = (IEntity) data;
+//
+//        StorageEntity storageEntity = new StorageEntity(
+//                entity.id(),
+//                entity.entityClass().id(),
+//                entity.family().parent(),
+//                entity.family().child(),
+//                CommonUtil.serializeToJson(storageStrategyFactory, entity.entityValue(), true),
+//                CommonUtil.serializeSetFull(storageStrategyFactory, entity.entityValue())
+//        );
 
         final String sql = String.format(buildSql, indexTableName);
 
-        PreparedStatement st = conn.prepareStatement(sql);
+        PreparedStatement st = ((Connection)resource.value()).prepareStatement(sql);
 
         // id, entity, pref, cref, jsonfileds, fullfileds
         st.setLong(1, storageEntity.getId()); // id
@@ -82,11 +89,11 @@ public class BuildStorageCommand implements StorageCommand {
         final int onlyOne = 1;
         if (size != onlyOne) {
             throw new SQLException(
-                    String.format("Entity{%s} could not be created successfully.", entity.toString()));
+                    String.format("Entity{%s} could not be created successfully.", storageEntity.toString()));
         }
 
         try {
-            return entity;
+            return storageEntity;
         } finally {
             st.close();
         }

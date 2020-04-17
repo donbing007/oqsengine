@@ -3,7 +3,10 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.AbstractStorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +25,7 @@ import static com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.C
  * 功能描述:
  * 修改历史:
  */
-public class ReplaceStorageCommand implements StorageCommand {
+public class ReplaceStorageCommand extends AbstractStorageCommand<StorageEntity> {
 
     final Logger logger = LoggerFactory.getLogger(ReplaceStorageCommand.class);
 
@@ -44,21 +47,26 @@ public class ReplaceStorageCommand implements StorageCommand {
     }
 
     @Override
-    public Object execute(Connection conn, Object data) throws SQLException {
-        IEntity entity = (IEntity) data;
+    public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+        super.recordOriginalData(resource, OpTypeEnum.REPLACE, storageEntity);
+        return this.doExecute(resource, storageEntity);
+    }
 
-        StorageEntity storageEntity = new StorageEntity(
-                entity.id(),
-                entity.entityClass().id(),
-                entity.family().parent(),
-                entity.family().child(),
-                CommonUtil.serializeToJson(storageStrategyFactory, entity.entityValue(), true),
-                CommonUtil.serializeSetFull(storageStrategyFactory, entity.entityValue())
-        );
+    StorageEntity doExecute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+//        IEntity entity = (IEntity) data;
+//
+//        StorageEntity storageEntity = new StorageEntity(
+//                entity.id(),
+//                entity.entityClass().id(),
+//                entity.family().parent(),
+//                entity.family().child(),
+//                CommonUtil.serializeToJson(storageStrategyFactory, entity.entityValue(), true),
+//                CommonUtil.serializeSetFull(storageStrategyFactory, entity.entityValue())
+//        );
 
         final String sql = String.format(replaceSql, indexTableName);
 
-        PreparedStatement st = conn.prepareStatement(sql);
+        PreparedStatement st = ((Connection)resource.value()).prepareStatement(sql);
 
         // id, entity, pref, cref, jsonfileds, fullfileds
         st.setLong(1, storageEntity.getId()); // id
@@ -77,7 +85,7 @@ public class ReplaceStorageCommand implements StorageCommand {
         int size = st.executeUpdate();
 
         try {
-            return data;
+            return storageEntity;
         } finally {
             st.close();
         }

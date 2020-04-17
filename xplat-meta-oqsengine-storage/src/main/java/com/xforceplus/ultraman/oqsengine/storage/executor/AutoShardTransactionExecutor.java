@@ -43,9 +43,10 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
             throw new SQLException("Task types other than DataSourceShardingTask are not supported.");
         }
 
-        String dbKey = UndoUtil.createDbKey(resourceClass.getSimpleName(), shardTask.getShardKey());
-
         DataSource targetDataSource = shardTask.getDataSourceSelector().select(shardTask.getShardKey());
+
+        String dbKey = UndoUtil.createDbKey(targetDataSource);
+
         TransactionResource resource;
         Optional<Transaction> tx = transactionManager.getCurrent();
         if (tx.isPresent()) {

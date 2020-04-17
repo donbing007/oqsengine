@@ -5,7 +5,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.AbstractStorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +27,7 @@ import java.util.Set;
  * 功能描述:
  * 修改历史:
  */
-public class ReplaceAttributeStorageCommand implements StorageCommand {
+public class ReplaceAttributeStorageCommand extends AbstractStorageCommand<StorageEntity> {
 
     final Logger logger = LoggerFactory.getLogger(ReplaceAttributeStorageCommand.class);
 
@@ -46,45 +49,50 @@ public class ReplaceAttributeStorageCommand implements StorageCommand {
     }
 
     @Override
-    public Object execute(Connection conn, Object data) throws SQLException {
-        IEntityValue attribute = (IEntityValue) data;
+    public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+        super.recordOriginalData(resource, OpTypeEnum.REPLACE_ATTRIBUTE, storageEntity);
+        return this.doExecute(resource, storageEntity);
+    }
 
-        long dataId = attribute.id();
-        Optional<StorageEntity> oldStorageEntityOptional = doSelectStorageEntity(conn, dataId);
-        if (oldStorageEntityOptional.isPresent()) {
+    StorageEntity doExecute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+//        IEntityValue attribute = (IEntityValue) storageEntity;
+//
+//        long dataId = attribute.id();
+//        Optional<StorageEntity> oldStorageEntityOptional = doSelectStorageEntity(resource, dataId);
+//        if (oldStorageEntityOptional.isPresent()) {
 
-            StorageEntity storageEntity = oldStorageEntityOptional.get();
+//            StorageEntity storageEntity = oldStorageEntityOptional.get();
 
             /**
              * 把新的属性插入旧属性集中替换已有,或新增.
              */
-            JSONObject completeJson = storageEntity.getJsonFields();
-            JSONObject modifiedJson = CommonUtil.serializeToJson(storageStrategyFactory, attribute, true);
-            for (String key : modifiedJson.keySet()) {
-                completeJson.put(key, modifiedJson.get(key));
-            }
+//            JSONObject completeJson = storageEntity.getJsonFields();
+//            JSONObject modifiedJson = CommonUtil.serializeToJson(storageStrategyFactory, attribute, true);
+//            for (String key : modifiedJson.keySet()) {
+//                completeJson.put(key, modifiedJson.get(key));
+//            }
+//
+//            //处理 fulltext
+//            Set<String> completeFull = CommonUtil.convertJsonToFull(completeJson);
+//            storageEntity.setJsonFields(completeJson);
+//            storageEntity.setFullFields(completeFull);
 
-            //处理 fulltext
-            Set<String> completeFull = CommonUtil.convertJsonToFull(completeJson);
-            storageEntity.setJsonFields(completeJson);
-            storageEntity.setFullFields(completeFull);
-
-            doReplaceStorageEntity(storageEntity, conn);
-        } else {
-            throw new SQLException(
-                    String.format("Attempt to update a property on a data that does not exist.[%d]", dataId)
-            );
-        }
+            doReplaceStorageEntity(storageEntity, resource);
+//        } else {
+//            throw new SQLException(
+//                    String.format("Attempt to update a property on a data that does not exist.[%d]", dataId)
+//            );
+//        }
 
         return null;
     }
 
-    private Optional<StorageEntity> doSelectStorageEntity(Connection conn, long id) throws SQLException {
+    private Optional<StorageEntity> doSelectStorageEntity(TransactionResource resource, long id) throws SQLException {
         PreparedStatement st = null;
         ResultSet rs = null;
         try {
             String sql = String.format(SQLConstant.SELECT_FROM_ID_SQL, indexTableName);
-            st = conn.prepareStatement(sql);
+            st = ((Connection)resource.value()).prepareStatement(sql);
             st.setLong(1, id);
 
             rs = st.executeQuery();
@@ -112,10 +120,10 @@ public class ReplaceAttributeStorageCommand implements StorageCommand {
         }
     }
 
-    private boolean doReplaceStorageEntity(StorageEntity storageEntity, Connection conn) throws SQLException{
+    private boolean doReplaceStorageEntity(StorageEntity storageEntity, TransactionResource resource) throws SQLException{
         final String sql = String.format(replaceSql, indexTableName);
 
-        PreparedStatement st = conn.prepareStatement(sql);
+        PreparedStatement st = ((Connection)resource.value()).prepareStatement(sql);
 
         // id, entity, pref, cref, jsonfileds, fullfileds
         st.setLong(1, storageEntity.getId()); // id

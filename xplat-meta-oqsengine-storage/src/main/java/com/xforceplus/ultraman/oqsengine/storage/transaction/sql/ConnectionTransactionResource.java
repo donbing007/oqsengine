@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.sql;
 
-import com.xforceplus.ultraman.oqsengine.storage.transaction.AbstractTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.AbstractTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
 
 import javax.sql.DataSource;

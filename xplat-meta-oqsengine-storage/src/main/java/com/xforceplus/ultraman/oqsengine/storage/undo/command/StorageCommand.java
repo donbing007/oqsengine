@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.command;
 
-import java.sql.Connection;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+
 import java.sql.SQLException;
 
 /**
@@ -12,6 +13,6 @@ import java.sql.SQLException;
  */
 public interface  StorageCommand<T> {
 
-    Object execute(Connection conn, T data) throws SQLException;
+    T execute(TransactionResource resource, T data) throws SQLException;
 
 }

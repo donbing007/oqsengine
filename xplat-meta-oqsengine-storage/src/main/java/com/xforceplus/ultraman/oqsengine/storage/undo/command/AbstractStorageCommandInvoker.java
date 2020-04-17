@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.command;
 
-import com.xforceplus.ultraman.oqsengine.storage.transaction.AbstractTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.AbstractTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.undo.util.UndoUtil;
@@ -36,8 +36,8 @@ public abstract class AbstractStorageCommandInvoker implements StorageCommandInv
 
     @Override
     public Object execute(TransactionResource resource, OpTypeEnum opType, Object data) throws SQLException {
-        ((AbstractTransactionResource)resource).addUndoInfo(UndoUtil.getShardKeyFromDbKey((String)resource.key()), opType, data);
-        return selectCommand(opType).execute((Connection) resource.value(), data);
+        ((AbstractTransactionResource)resource).addUndoInfo(null, opType, data);
+        return selectCommand(opType).execute(resource, data);
     }
 
 }

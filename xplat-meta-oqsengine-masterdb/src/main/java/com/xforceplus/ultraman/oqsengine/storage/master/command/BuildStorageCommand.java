@@ -6,7 +6,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.AbstractStorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -24,7 +27,7 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class BuildStorageCommand implements StorageCommand<IEntity> {
+public class BuildStorageCommand extends AbstractStorageCommand<IEntity> {
 
     final Logger logger = LoggerFactory.getLogger(BuildStorageCommand.class);
 
@@ -38,11 +41,16 @@ public class BuildStorageCommand implements StorageCommand<IEntity> {
     }
 
     @Override
-    public Object execute(Connection conn, IEntity entity) throws SQLException {
+    public IEntity execute(TransactionResource resource, IEntity entity) throws SQLException {
+        super.recordOriginalData(resource, OpTypeEnum.BUILD, entity);
+        return this.doExecute(resource, entity);
+    }
+
+    IEntity doExecute(TransactionResource resource, IEntity entity) throws SQLException {
         String tableName = tableNameSelector.select(Long.toString(entity.id()));
         String sql = String.format(SQLConstant.BUILD_SQL, tableName);
 
-        PreparedStatement st = conn.prepareStatement(sql);
+        PreparedStatement st = ((Connection)resource.value()).prepareStatement(sql);
         // id, entity, version, time, pref, cref, deleted, attribute,refs
         st.setLong(1, entity.id()); // id
         st.setLong(2, entity.entityClass().id()); // entity
