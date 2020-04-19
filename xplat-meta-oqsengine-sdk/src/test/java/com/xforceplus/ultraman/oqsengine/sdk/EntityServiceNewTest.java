@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfi
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
+import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
@@ -105,8 +106,16 @@ public class EntityServiceNewTest {
                         .setId("1")
                         .setCode("main")
                         .addRelations(Relation.newBuilder()
-                                .setId("1001")
+                                .setId("10001")
                                 .setRelationType("ManyToOne")
+                                .setRelName("rel1")
+                                .setJoinBoId("2")
+                                .setBoId("1")
+                                .build())
+                        .addRelations(Relation.newBuilder()
+                                .setId("10002")
+                                .setRelationType("ManyToOne")
+                                .setRelName("rel2")
                                 .setJoinBoId("2")
                                 .setBoId("1")
                                 .build())
@@ -114,6 +123,7 @@ public class EntityServiceNewTest {
                                 .newBuilder()
                                 .setCode("field1")
                                 .setSearchable("1")
+                                .setFieldType("String")
                                 .setId("1002")
                                 .build())
                         .addFields(com.xforceplus.ultraman.metadata.grpc.Field
@@ -133,6 +143,13 @@ public class EntityServiceNewTest {
                         .newBuilder()
                         .setId("2")
                         .setCode("rel1")
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field21")
+                                .setSearchable("1")
+                                .setFieldType("String")
+                                .setId("2001")
+                                .build())
                         .build())
                 .build();
     }
@@ -154,10 +171,26 @@ public class EntityServiceNewTest {
                         .setId("1")
                         .setCode("main")
                         .addRelations(Relation.newBuilder()
-                                .setId("1001")
+                                .setId("10001")
                                 .setRelationType("ManyToOne")
+                                .setRelName("rel1")
                                 .setJoinBoId("2")
                                 .setBoId("1")
+                                .build())
+                        .addRelations(Relation.newBuilder()
+                                .setId("10002")
+                                .setRelationType("ManyToOne")
+                                .setRelName("rel2")
+                                .setJoinBoId("2")
+                                .setBoId("1")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("id")
+                                .setSearchable("1")
+                                .setId("1000001")
+                                .setFieldType("Long")
+                                .setIdentifier("1")
                                 .build())
                         .addFields(com.xforceplus.ultraman.metadata.grpc.Field
                                 .newBuilder()
@@ -182,6 +215,13 @@ public class EntityServiceNewTest {
                         .newBuilder()
                         .setId("2")
                         .setCode("rel1")
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field21")
+                                .setSearchable("1")
+                                .setFieldType("String")
+                                .setId("2001")
+                                .build())
                         .build())
                 .build();
     }
@@ -428,5 +468,45 @@ public class EntityServiceNewTest {
                 .get().get("defaultfield");
 
         entityService.deleteOne(boolEntity, result);
+    }
+
+    @Test
+    public void testLeftJoinTest(){
+        metadataRepository.save(manyToOneNew(), "1", "1");
+
+        EntityClass entityClass = entityService.load("1").get();
+
+        EntityClass entityClass2 = entityService.load("2").get();
+
+        Map<String, Object> one = new HashMap<>();
+        one.clear();
+        one.put("field21", "haha1");
+
+        Long id1 = entityService.create(entityClass2, one).get();
+
+        one.put("field21", "haha2");
+        Long id2 = entityService.create(entityClass2, one).get();
+
+        one.clear();
+        one.put("field1", "nogood");
+        one.put("rel1.id", id1);
+        one.put("rel2.id", id2);
+
+        Long id = entityService.create(entityClass, one).get();
+
+        System.out.println("Id is " + id);
+
+        entityService.findByCondition(entityClass
+                , new RequestBuilder()
+                        .field("id", ConditionOp.eq, id)
+                        .item("field1")
+                        .subItem("rel1", "field21")
+                        .subItem("rel2", "field21")
+                        .build())
+                .forEach(System.out::println);
+
+        entityService.deleteOne(entityClass2, id1);
+        entityService.deleteOne(entityClass2, id2);
+        entityService.deleteOne(entityClass, id);
     }
 }

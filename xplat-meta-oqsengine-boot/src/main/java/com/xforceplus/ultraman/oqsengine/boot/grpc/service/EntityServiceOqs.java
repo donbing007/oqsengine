@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -22,7 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.*;
@@ -242,6 +245,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return CompletableFuture.completedFuture(result);
     }
 
+    /**
+     * TODO modify to use IEntityReader
+     *
+     * @param in
+     * @param metadata
+     * @return
+     */
     @Override
     public CompletionStage<OperationResult> selectByConditions(SelectByCondition in, Metadata metadata) {
 
@@ -257,6 +267,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             IEntityClass entityClass = toEntityClass(entityUp);
 
+            IEntityClassReader reader = new IEntityClassReader(entityClass);
+
             Long mainEntityId = entityClass.id();
 
             Page page = null;
@@ -269,14 +281,14 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             int pageSize = in.getPageSize();
             page = new Page(pageNo, pageSize);
 
-            Optional<IEntityField> sortField;
+            Optional<? extends IEntityField> sortField;
 
             if (sort == null || sort.isEmpty()) {
                 sortField = Optional.empty();
             } else {
                 FieldSortUp sortUp = sort.get(0);
                 //get related field
-                sortField = IEntityClassHelper.findFieldByCode(entityClass, sortUp.getCode());
+                sortField = reader.column(sortUp.getCode());
             }
 
             if (!sortField.isPresent()) {
@@ -305,46 +317,99 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             }
 
 
-            //extend entities
-            Map<Long, List<QueryFieldsUp>> mappedQueryFields = queryField.stream()
-                    .collect(Collectors.groupingBy(QueryFieldsUp::getEntityId));
-
-            /** TODO check this
-             * find related entity and its sub field
+            /**
+             * find extends entity from field
+             * field a
+             * field b.a
+             * field b.b
+             *
+             *  --> "" -> a
+             *      "b" ->
              */
-            Optional.ofNullable(entities).orElseGet(Collections::emptyList)
-                    .stream().filter(Objects::nonNull).forEach(entity -> {
-                mappedQueryFields.keySet().stream()
-                        .filter(key -> !key.equals(mainEntityId))
-                        .forEach(subEntityClassId -> {
-                            Optional<IEntityClass> iEntityClassOp = getRelatedEntityClassById(entityClass, subEntityClassId);
-                            Optional<IEntityField> relationFieldOp = findRelationField(entityClass, subEntityClassId);
 
-                            if (iEntityClassOp.isPresent() && relationFieldOp.isPresent()) {
-                                Optional<IValue> subObjRelated = entity
-                                        .entityValue().getValue(relationFieldOp.get().id());
-                                if (subObjRelated.isPresent()) {
-                                    try {
+            /**
+             *  entities ->
+             */
 
-                                        IValue subId = subObjRelated.get();
-                                        //how to judge this is the primary key
-                                        if (subId instanceof LongValue) {
-                                            //id
-                                            Optional<IEntity> leftEntity = entitySearchService.selectOne(subId.valueToLong(), iEntityClassOp.get());
-                                            leftEntity.ifPresent(left ->
-                                                    leftAppend(entity, left));
+            //extend entities
+            Map<String, List<QueryFieldsUp>> mappedQueryFields = queryField.stream()
+                    .collect(Collectors.groupingBy(x -> {
+                        String code = x.getCode();
+                        String[] relCode = code.split("\\.");
+                        if (relCode.length > 1) {
+                            return relCode[0];
+                        } else {
+                            return "";
+                        }
+                    }));
 
-                                        } else {
-                                            logger.warn("not support now");
-                                        }
+            /**
+             * find all related field and change all these IEntity to use mixed IValue
+             */
+            Collection<IEntity> finalEntities = entities
+                    .stream()
+                    .map(iEntity -> {
+                        //find fieldName from ientity;
+                        iEntity.entityValue().values().stream()
+                                .forEach(envValue -> {
+                                    IEntityField field = envValue.getField();
+                                    entityClass.field(field.id()).ifPresent(envValue::setField);
+                                });
+                        iEntity.resetEntityValue(new MixedEntityValue(iEntity.entityValue()));
+                        return iEntity;
+            }).collect(Collectors.toList());
 
-                                    } catch (Exception ex) {
-                                        logger.error("{}", ex);
+            mappedQueryFields.entrySet().stream()
+                    .filter(x -> !StringUtils.isEmpty(x.getKey()))
+                    .forEach(entry -> {
+                        Optional<IEntityClass> searchableRelatedEntity = reader.getSearchableRelatedEntity(entry.getKey());
+                        String relatedField = entry.getKey() + ".id";
+                        Optional<? extends IEntityField> relationFieldOp = reader.column(relatedField);
+
+                        if (searchableRelatedEntity.isPresent() && relationFieldOp.isPresent()) {
+
+                            //always assume this is long
+                            List<Long> values = finalEntities
+                                    .stream()
+                                    .map(entity -> entity.entityValue()
+                                            .getValue(relatedField).map(IValue::valueToLong))
+                                    .filter(Optional::isPresent)
+                                    .map(Optional::get)
+                                    .collect(Collectors.toList());
+
+                            //in case idField is not absent build a dummy one;
+                            IEntityField idField = new Field(1, "dummy", FieldType.LONG, new FieldConfig().searchable(true).identifie(true));
+                            Conditions conditionsIds =
+                                    new Conditions(new Condition(idField
+                                            , ConditionOperator.MULTIPLE_EQUALS
+                                            , values.stream().map(x -> new LongValue(idField, x)).toArray(IValue[]::new)));
+
+                            try {
+                                Collection<IEntity> iEntities = entitySearchService.selectByConditions(conditionsIds, searchableRelatedEntity.get(), new Page(0, values.size()));
+
+                                //append value
+
+                                Map<Long, IEntity> leftEntities= iEntities.stream().collect(Collectors.toMap(IEntity::id, leftEntity -> leftEntity));
+
+                                finalEntities.stream().forEach(originEntity -> {
+                                    Long id = originEntity.entityValue()
+                                            .getValue(relatedField).map(IValue::valueToLong).orElse(0L);
+
+                                    if(leftEntities.get(id) != null && leftEntities.get(id).entityValue() != null){
+                                        entry.getValue().forEach(queryFieldsUp -> {
+                                            leftEntities.get(id).entityValue().getValue(queryFieldsUp.getId()).ifPresent(value -> {
+                                                leftAppend(originEntity, entry.getKey()  ,value);
+                                            });
+                                        });
                                     }
-                                }
+                                });
+
+                            } catch (SQLException ex) {
+                                ex.printStackTrace();
                             }
-                        });
-            });
+                        }
+                    });
+
 
             result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
@@ -375,6 +440,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
      */
     private void leftAppend(IEntity entity, IEntity leftEntity) {
         entity.entityValue().addValues(leftEntity.entityValue().values());
+    }
+
+    private void leftAppend(IEntity entity, String relName, IValue iValue) {
+
+        IEntityField originField = iValue.getField();
+        iValue.setField(new ColumnField(relName + "." + originField.name(), originField));
+        entity.entityValue().addValue(iValue);
     }
 
     /**
@@ -507,7 +579,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 return conditionsIds;
             }
         }
-
         return conditions;
     }
 
@@ -706,7 +777,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         List<IValue> valueList = entityUp.getValuesList().stream()
                 .flatMap(y -> {
-                    Optional<? extends IEntityField> entityFieldOp = reader.field(y.getFieldId());
+                    Optional<? extends IEntityField> entityFieldOp = reader.field(y.getFieldId()).map(AliasField::getOrigin);
                     return entityFieldOp
                             .map(x -> toTypedValue(x, y.getValue()))
                             .orElseGet(Collections::emptyList)

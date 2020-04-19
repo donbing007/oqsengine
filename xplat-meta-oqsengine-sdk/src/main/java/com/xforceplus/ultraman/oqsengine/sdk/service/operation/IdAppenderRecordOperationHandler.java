@@ -14,7 +14,7 @@ public class IdAppenderRecordOperationHandler implements RecordOperationHandler 
     public void accept(Record record, EntityUp entityUp) {
         long id = entityUp.getObjId();
         if (id > 0) {
-            record.set("id", id);
+            record.set("id", Long.toString(id));
             record.setId(id);
         }
     }

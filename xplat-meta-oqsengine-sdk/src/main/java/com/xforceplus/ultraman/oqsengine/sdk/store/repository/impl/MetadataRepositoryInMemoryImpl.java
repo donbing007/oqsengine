@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.FieldItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.SoloItem;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.metamodel.UpdateSummary;
 import org.apache.metamodel.UpdateableDataContext;
 import org.apache.metamodel.data.DataSet;
@@ -81,6 +82,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 , "relType"
                 , "identity"
                 , "joinBoId"
+                , "relName"
         });
 
         TableDataProvider relationTableDataProvider = new MapTableDataProvider(relationTableDef, RelationStore);
@@ -281,7 +283,11 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .map(String::valueOf)
                 .orElse("");
 
-        String name = RowUtils.getRowValue(relRow, "name")
+//        String relationName = RowUtils.getRowValue(relRow, "relName")
+//                .map(String::valueOf)
+//                .orElse("");
+
+        String name = RowUtils.getRowValue(relRow, "relName")
                 .map(String::valueOf)
                 .orElse("");
 
@@ -301,7 +307,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                     .map(String::valueOf)
                     .flatMap(this::loadParentEntityClass);
 
-            String subCode = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
+            String subCode = RowUtils.getRowValue(row, "code")
+                            .map(String::valueOf).orElse("");
 
             List<IEntityField> listFields = new LinkedList<>();
 
@@ -320,21 +327,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                     listFields.add(relField);
                 }
             });
-
-//            if (relationType.equalsIgnoreCase("onetoone")
-//                    || relationType.equalsIgnoreCase("manytoone")) {
-//                //Field is from main id
-//                field = toEntityClassFieldFromRel(relRow, subCode);
-//                relation = new Relation(subCode, joinBoId, relationType, true, field);
-//
-//            } else if (relationType.equalsIgnoreCase(MultiValues)){
-//                //relation is onetomany
-//                field = toEntityClassFieldFromRel(relRow, mainBoCode);
-//                relation = new Relation(mainBoCode, joinBoId, relationType, true, field);
-//                listFields.add(field);
-//            } else if (relationType.equalsIgnoreCase(MultiValues)) {
-//
-//            }
 
             listFields.addAll(loadFields(boId));
             //assemble entity class
@@ -630,7 +622,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                     .value("boId", rel.getBoId())
                     .value("joinBoId", rel.getJoinBoId())
                     .value("identity", rel.getIdentity())
-                    .value("relType", rel.getRelationType());
+                    .value("relType", rel.getRelationType())
+                    .value("relName", rel.getRelName());
             dc.executeUpdate(insertRel);
         });
 

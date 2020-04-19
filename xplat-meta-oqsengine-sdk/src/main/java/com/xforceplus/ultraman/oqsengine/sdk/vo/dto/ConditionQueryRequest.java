@@ -111,7 +111,7 @@ public class ConditionQueryRequest {
             Stream<String> stream = x.getFields()
                     .stream();
             Stream<String> keyStream = x.getEntities()
-                    .stream().flatMap(sub -> sub.getFields().stream());
+                    .stream().flatMap(sub -> sub.getFields().stream().map(subField -> sub.getCode() + "." + subField));
             return Stream.concat(stream, keyStream).collect(Collectors.toSet());
         }).orElseGet(Collections::emptySet);
     }

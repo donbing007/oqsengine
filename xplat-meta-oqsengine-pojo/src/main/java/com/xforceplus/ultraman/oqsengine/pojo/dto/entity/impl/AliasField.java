@@ -11,7 +11,7 @@ import java.util.Set;
 /**
  * @author admin
  */
-public class AliasField implements IEntityField, Serializable {
+public class AliasField implements IEntityField, Wrapped<IEntityField>, Serializable {
 
     /**
      * origin field
@@ -71,5 +71,10 @@ public class AliasField implements IEntityField, Serializable {
                 ", alias=" + alias +
                 ", originField=" + originField +
                 '}';
+    }
+
+    @Override
+    public IEntityField getOriginObject() {
+        return originField;
     }
 }

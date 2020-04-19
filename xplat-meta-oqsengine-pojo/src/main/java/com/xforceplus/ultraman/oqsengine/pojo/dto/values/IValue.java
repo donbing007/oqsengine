@@ -17,6 +17,8 @@ public interface IValue<T> {
      */
     public IEntityField getField();
 
+    public void setField(IEntityField field);
+
     /**
      * 根据属性名拿到值
      * @return 值.

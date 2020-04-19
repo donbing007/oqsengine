@@ -7,7 +7,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AliasField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.ColumnField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.record.GeneralRecord;
-import io.vavr.Tuple;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
+import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +17,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.reader.FieldScope.ALL;
 
@@ -32,8 +31,8 @@ import static com.xforceplus.ultraman.oqsengine.pojo.reader.FieldScope.ALL;
  * entityRelation      rel
  * entityRelatedField  rel.x
  * related
- *
- *
+ * <p>
+ * <p>
  * entity do not need know the rel field
  *
  * @author luye
@@ -78,7 +77,7 @@ public class IEntityClassReader {
 
     private List<AliasField> allFields;
 
-    private IEntityClassReader(){
+    private IEntityClassReader() {
 
     }
 
@@ -104,14 +103,14 @@ public class IEntityClassReader {
          */
         Map<Boolean, List<Relation>> fieldLikeRelation
                 = entityClass
-                    .relations()
-                    .stream()
-                    .filter(x -> x.getEntityField() != null)
-                    .filter(x -> FieldLikeRelationType
-                            .from(x.getRelationType()).isPresent())
-                    .collect(Collectors.groupingBy(x -> {
-                        return FieldLikeRelationType.from(x.getRelationType()).get().isOwnerSide();
-                    }));
+                .relations()
+                .stream()
+                .filter(x -> x.getEntityField() != null)
+                .filter(x -> FieldLikeRelationType
+                        .from(x.getRelationType()).isPresent())
+                .collect(Collectors.groupingBy(x -> {
+                    return FieldLikeRelationType.from(x.getRelationType()).get().isOwnerSide();
+                }));
 
         //init related entities mapping
         relatedEntities = entityClass
@@ -134,8 +133,8 @@ public class IEntityClassReader {
 
                     //TODO
                     Stream<ColumnField> selfStream = relatedEntityClass.fields().stream()
-                            .map(field -> new ColumnField(index.getAndIncrement()
-                                    , rel.getName() + "." + field.name()
+                            .map(field -> new ColumnField(
+                                    rel.getName() + "." + field.name()
                                     , field
                             ));
 
@@ -144,8 +143,8 @@ public class IEntityClassReader {
                             .map(IEntityClass::fields)
                             .orElseGet(Collections::emptyList)
                             .stream()
-                            .map(field -> new ColumnField(index.getAndIncrement()
-                                    , rel.getName() + "." + field.name()
+                            .map(field -> new ColumnField(
+                                    rel.getName() + "." + field.name()
                                     , field
                             ));
 
@@ -160,9 +159,10 @@ public class IEntityClassReader {
                 , Optional.ofNullable(fieldLikeRelation.get(true))
                         .orElseGet(Collections::emptyList)
                         .stream().map(Relation::getEntityField)
-        ).map(x -> {
-                    return new ColumnField(index.getAndIncrement(), x.name(), x);
-        }).collect(Collectors.toList());
+        ).map(x -> new ColumnField(x.name(), x))
+                .distinct()
+                .peek(x -> x.setIndex(index.getAndIncrement()))
+                .collect(Collectors.toList());
 
         allColumn_related = Stream.concat(
                 fieldsInRelated
@@ -170,8 +170,10 @@ public class IEntityClassReader {
                         .orElseGet(Collections::emptyList)
                         .stream()
                         .map(Relation::getEntityField)
-                        .map(x -> new ColumnField(index.getAndIncrement(), x.name(), x))
-        ).collect(Collectors.toList());
+                        .map(x -> new ColumnField(x.name(), x))
+        ) .distinct()
+          .peek(x -> x.setIndex(index.getAndIncrement()))
+          .collect(Collectors.toList());
 
         codedFields_self = allColumn_self.stream().collect(Collectors.groupingBy(IEntityField::name));
         codedFields_related = allColumn_related.stream().collect(Collectors.groupingBy(IEntityField::name));
@@ -197,6 +199,7 @@ public class IEntityClassReader {
 
     /**
      * field will has multi name so return AliasField
+     *
      * @param id
      * @return
      */
@@ -217,6 +220,7 @@ public class IEntityClassReader {
 
     /**
      * find field code column
+     *
      * @param code
      * @param scope
      * @return
@@ -268,13 +272,14 @@ public class IEntityClassReader {
         return column(code, ALL);
     }
 
-    public List<ColumnField> columns(){
+    public List<ColumnField> columns() {
         List<ColumnField> list = new ArrayList<>();
         list.addAll(allColumn_self);
         list.addAll(allColumn_related);
         return list;
     }
 //
+
     /**
      * unmodifiableList
      *
@@ -283,7 +288,8 @@ public class IEntityClassReader {
     public List<IEntityField> fields() {
         return fields(ALL);
     }
-// 
+
+    //
     public List<IEntityField> fields(FieldScope fieldScope) {
         return Collections.unmodifiableList(allFields);
     }
@@ -298,6 +304,7 @@ public class IEntityClassReader {
 
     /**
      * will get all unused key
+     *
      * @param map
      * @return
      */
@@ -316,7 +323,6 @@ public class IEntityClassReader {
      * relB[a,b,c]
      * body[A.a, A.b. B.c]
      *
-     *
      * @param body
      * @return
      */
@@ -333,10 +339,11 @@ public class IEntityClassReader {
     /**
      * TODO field always needed
      * currently
-     *      self + parent column + rel column
+     * self + parent column + rel column
+     *
      * @return
      */
-    public Record toRecord(Map<String, Object> body){
+    public Record toRecord(Map<String, Object> body) {
         //find Column by name
 
         Set<ColumnField> columns = new HashSet<>();
@@ -353,5 +360,20 @@ public class IEntityClassReader {
 
         valueColumn.forEach(x -> record.set(x, body.get(x.name())));
         return record;
+    }
+
+    /**
+     * Searchable is consider as only the field is field is ownerside
+     * @param key
+     * @return
+     */
+    public Optional<IEntityClass> getSearchableRelatedEntity(String key) {
+
+        return entityClass.relations().stream()
+                .filter(x -> FieldLikeRelationType.from(x.getRelationType()).map(FieldLikeRelationType::isOwnerSide)
+                        .orElse(false))
+                .filter(x -> key.equals(x.getName()))
+                .map(x -> relatedEntities.get(x.getEntityClassId()))
+                .findFirst();
     }
 }

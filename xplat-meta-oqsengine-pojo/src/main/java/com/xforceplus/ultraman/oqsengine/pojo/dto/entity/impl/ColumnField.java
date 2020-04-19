@@ -9,21 +9,29 @@ import java.util.Objects;
 
 /**
  * a field as a column
+ * only when column id and column name is same the column is same
  * @author admin
  */
-public class ColumnField implements IEntityField, Serializable {
+public class ColumnField implements IEntityField, Wrapped<IEntityField>, Serializable {
 
     private final IEntityField originField;
 
     private final String name;
 
-    private final int index;
+    private int index;
 
-    public ColumnField(int index, String name, IEntityField originField){
+    public ColumnField(String name, IEntityField originField){
         Objects.requireNonNull(originField, "field should not be null");
         this.originField = originField;
-        this.index = index;
         this.name = name;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     @Override
@@ -65,6 +73,21 @@ public class ColumnField implements IEntityField, Serializable {
         return originField;
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ColumnField that = (ColumnField) o;
+        return originField.equals(that.originField) &&
+                name.equals(that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(originField, name);
+    }
+
     @Override
     public String toString() {
         return "ColumnField{" +
@@ -72,5 +95,11 @@ public class ColumnField implements IEntityField, Serializable {
                 ", name='" + name + '\'' +
                 ", originField=" + originField +
                 '}';
+    }
+
+
+    @Override
+    public IEntityField getOriginObject() {
+        return originField;
     }
 }

@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.sdk.util;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
@@ -12,19 +11,19 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
-import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.*;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.combine;
 import static com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Op.*;
 
 /**
@@ -48,47 +47,47 @@ public class EntityClassToGrpcConverter {
             .build();
     }
 
-    /**
-     * TODO check
-     *
-     * @param entityClass
-     * @param body
-     * @return
-     */
-    @Deprecated
-    public static EntityUp toEntityUp(EntityClass entityClass, Long id, Map<String, Object> body) {
-        //build entityUp
-        EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
-
-        List<ValueUp> values = body.entrySet().stream()
-            .map(entry -> {
-                String key = entry.getKey();
-                Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
-                Optional<IEntityField> fieldOpRel = getKeyFromRelation(entityClass, key);
-                Optional<IEntityField> fieldOpParent = getKeyFromParent(entityClass, key);
-
-                Optional<IEntityField> fieldFinal = combine(fieldOp, fieldOpParent, fieldOpRel);
-
-                //filter null obj
-                if (entry.getValue() == null) {
-                    return Optional.<ValueUp>empty();
-                }
-
-                return fieldFinal.map(field -> {
-                    return ValueUp.newBuilder()
-                        .setFieldId(field.id())
-                        .setFieldType(field.type().getType())
-                        .setValue(entry.getValue().toString())
-                        .build();
-                });
-            })
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.toList());
-
-        builder.addAllValues(values);
-        return builder.build();
-    }
+//    /**
+//     * TODO check
+//     *
+//     * @param entityClass
+//     * @param body
+//     * @return
+//     */
+//    @Deprecated
+//    public static EntityUp toEntityUp(EntityClass entityClass, Long id, Map<String, Object> body) {
+//        //build entityUp
+//        EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
+//
+//        List<ValueUp> values = body.entrySet().stream()
+//            .map(entry -> {
+//                String key = entry.getKey();
+//                Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
+//                Optional<IEntityField> fieldOpRel = getKeyFromRelation(entityClass, key);
+//                Optional<IEntityField> fieldOpParent = getKeyFromParent(entityClass, key);
+//
+//                Optional<IEntityField> fieldFinal = combine(fieldOp, fieldOpParent, fieldOpRel);
+//
+//                //filter null obj
+//                if (entry.getValue() == null) {
+//                    return Optional.<ValueUp>empty();
+//                }
+//
+//                return fieldFinal.map(field -> {
+//                    return ValueUp.newBuilder()
+//                        .setFieldId(field.id())
+//                        .setFieldType(field.type().getType())
+//                        .setValue(entry.getValue().toString())
+//                        .build();
+//                });
+//            })
+//            .filter(Optional::isPresent)
+//            .map(Optional::get)
+//            .collect(Collectors.toList());
+//
+//        builder.addAllValues(values);
+//        return builder.build();
+//    }
 
     public static EntityUp toEntityUp(EntityClass entityClass, Long id, List<ValueUp> valueList) {
         //build entityUp
@@ -260,43 +259,38 @@ public class EntityClassToGrpcConverter {
 
     private static List<QueryFieldsUp> toQueryFields(IEntityClass entityClass, EntityItem entityItem) {
 
-        Stream<QueryFieldsUp> fieldsUp = Optional.ofNullable(entityItem)
-            .map(EntityItem::getFields)
-            .orElseGet(Collections::emptyList)
-            .stream()
-            .map(entityClass::field)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .map(x -> QueryFieldsUp
-                .newBuilder()
-                .setCode(x.name())
-                .setEntityId(entityClass.id())
-                .setId(x.id())
-                .build());
+        IEntityClassReader reader = new IEntityClassReader(entityClass);
 
-        Stream<QueryFieldsUp> fieldsUpFrom = Optional.ofNullable(entityItem)
+        /**
+         * only need to change query code name
+         */
+        Stream<String> fieldsUp = Optional.ofNullable(entityItem)
+            .map(EntityItem::getFields)
+            .orElseGet(Collections::emptyList).stream();
+
+
+        /**
+         * replace rel code with entityCode
+         */
+        Stream<String> fieldsUpFromRelatedEntities = Optional.ofNullable(entityItem)
             .map(EntityItem::getEntities).orElseGet(Collections::emptyList)
             .stream()
             .flatMap(subEntityItem -> {
-
-                Optional<IEntityClass> subEntityClassOp = entityClass.entityClasss().stream()
-                    .filter(ec -> {
-                        return subEntityItem.getCode().equalsIgnoreCase(ec.code());
-                    }).findFirst();
-
-                return subEntityClassOp.map(iEntityClass -> subEntityItem.getFields().stream()
-                    .map(iEntityClass::field)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .map(x -> QueryFieldsUp
-                        .newBuilder()
-                        .setCode(x.name())
-                        .setEntityId(iEntityClass.id())
-                        .setId(x.id())
-                        .build())).orElseGet(Stream::empty);
+                return subEntityItem.getFields().stream().map(x -> subEntityItem.getCode() + "." + x);
             });
 
-        return Stream.concat(fieldsUp, fieldsUpFrom).collect(Collectors.toList());
+        return Stream.concat(fieldsUp, fieldsUpFromRelatedEntities)
+                .map(reader::column)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(column -> {
+                    return QueryFieldsUp
+                        .newBuilder()
+                        .setCode(column.name())
+                        .setId(column.id())
+                        .build();
+                })
+                .collect(Collectors.toList());
     }
 
 
