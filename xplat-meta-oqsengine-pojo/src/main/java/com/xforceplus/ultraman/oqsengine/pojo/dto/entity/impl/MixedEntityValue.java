@@ -8,6 +8,9 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.Predicate;
 
+/**
+ * a mixed EntityValue can hold multi field from different entity
+ */
 public class MixedEntityValue implements IEntityValue, Cloneable, Serializable {
 
     /**

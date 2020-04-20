@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.ColumnField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.record.GeneralRecord;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,9 +170,9 @@ public class IEntityClassReader {
                         .stream()
                         .map(Relation::getEntityField)
                         .map(x -> new ColumnField(x.name(), x))
-        ) .distinct()
-          .peek(x -> x.setIndex(index.getAndIncrement()))
-          .collect(Collectors.toList());
+        ).distinct()
+                .peek(x -> x.setIndex(index.getAndIncrement()))
+                .collect(Collectors.toList());
 
         codedFields_self = allColumn_self.stream().collect(Collectors.groupingBy(IEntityField::name));
         codedFields_related = allColumn_related.stream().collect(Collectors.groupingBy(IEntityField::name));
@@ -364,6 +363,7 @@ public class IEntityClassReader {
 
     /**
      * Searchable is consider as only the field is field is ownerside
+     *
      * @param key
      * @return
      */

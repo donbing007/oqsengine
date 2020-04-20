@@ -15,7 +15,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
-import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -357,7 +356,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 });
                         iEntity.resetEntityValue(new MixedEntityValue(iEntity.entityValue()));
                         return iEntity;
-            }).collect(Collectors.toList());
+                    }).collect(Collectors.toList());
 
             mappedQueryFields.entrySet().stream()
                     .filter(x -> !StringUtils.isEmpty(x.getKey()))
@@ -389,16 +388,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                                 //append value
 
-                                Map<Long, IEntity> leftEntities= iEntities.stream().collect(Collectors.toMap(IEntity::id, leftEntity -> leftEntity));
+                                Map<Long, IEntity> leftEntities = iEntities.stream().collect(Collectors.toMap(IEntity::id, leftEntity -> leftEntity));
 
                                 finalEntities.stream().forEach(originEntity -> {
                                     Long id = originEntity.entityValue()
                                             .getValue(relatedField).map(IValue::valueToLong).orElse(0L);
 
-                                    if(leftEntities.get(id) != null && leftEntities.get(id).entityValue() != null){
+                                    if (leftEntities.get(id) != null && leftEntities.get(id).entityValue() != null) {
                                         entry.getValue().forEach(queryFieldsUp -> {
                                             leftEntities.get(id).entityValue().getValue(queryFieldsUp.getId()).ifPresent(value -> {
-                                                leftAppend(originEntity, entry.getKey()  ,value);
+                                                leftAppend(originEntity, entry.getKey(), value);
                                             });
                                         });
                                     }
