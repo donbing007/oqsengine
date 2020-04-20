@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.CurrentVersion;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.SimpleBoItem;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.tables.BoTable;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.tables.ModuleTable;
 import com.xforceplus.ultraman.oqsengine.sdk.util.FieldHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ApiItem;
@@ -38,6 +39,7 @@ import org.apache.metamodel.util.SimpleTableDef;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils.getRowValue;
 import static com.xforceplus.ultraman.oqsengine.sdk.util.FieldHelper.toEntityClassFieldFromRel;
@@ -48,26 +50,41 @@ import static com.xforceplus.ultraman.oqsengine.sdk.util.FieldHelper.toEntityCla
  */
 public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
-    private List<Map<String, ?>> boStore = new ArrayList<>();
-
     private List<Map<String, ?>> apiStore = new ArrayList<>();
 
     private List<Map<String, ?>> fieldStore = new ArrayList<>();
 
     private List<Map<String, ?>> RelationStore = new ArrayList<>();
 
-    private UpdateableDataContext dc;
+    private List<Tuple2<String, UpdateableDataContext>> dcs = new LinkedList<>();
+
+    private Map<Long, String>  versionedMap;
+
+    private int maxVersion = 3;
 
     public MetadataRepositoryInMemoryImpl() {
 
-        //TODO typed column name
+        /**
+         * init with base version
+         */
+        dcs.addAll(IntStream.range(0, maxVersion)
+                .mapToObj(i -> {
+                    return Tuple.of("base", generateNewDC());
+                }).collect(Collectors.toList()));
+    }
 
+    /**
+     * generate the new pojo updateContext
+     * @return
+     */
+    private UpdateableDataContext generateNewDC(){
         ModuleTable moduleTable = new ModuleTable();
         SimpleTableDef moduleTableDef = new SimpleTableDef(moduleTable.name(), moduleTable.columns());
         TableDataProvider moduleTableDataProvider = new MapTableDataProvider(moduleTableDef, moduleTable.getStore());
 
-        SimpleTableDef boTableDef = new SimpleTableDef("bos", new String[]{"id", "code", "parentId", "name"});
-        TableDataProvider boTableDataProvider = new MapTableDataProvider(boTableDef, boStore);
+        BoTable boTable = new BoTable();
+        SimpleTableDef boTableDef = new SimpleTableDef(moduleTable.name(), boTable.columns());
+        TableDataProvider boTableDataProvider = new MapTableDataProvider(boTableDef, boTable.getStore());
 
         SimpleTableDef ApiTableDef = new SimpleTableDef("apis", new String[]{"boId", "url", "method", "code"});
         TableDataProvider apiTableDataProvider = new MapTableDataProvider(ApiTableDef, apiStore);
@@ -94,7 +111,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         TableDataProvider relationTableDataProvider = new MapTableDataProvider(relationTableDef, RelationStore);
 
-        dc = new PojoDataContext("metadata", boTableDataProvider
+        return new PojoDataContext("metadata", boTableDataProvider
                 , apiTableDataProvider
                 , fieldTableDataProvider
                 , relationTableDataProvider
@@ -141,6 +158,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         return items;
     }
+
+
 
     @Override
     public synchronized BoItem getBoDetailById(String id) {
@@ -244,13 +263,23 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     @Override
     public void save(ModuleUpResult moduleUpResult, String tenantId, String appId) {
 
+        String version = moduleUpResult.getVersion();
+        long moduleId = moduleUpResult.getId();
+
+        //do version
+
+
         moduleUpResult.getBoUpsList().forEach(boUp -> {
+
+
+
+
 
             //TODO
             clearAllBoIdRelated(boUp.getId());
 
             //insert bo
-            insertBo(boUp);
+            insertBo(moduleId, version, boUp);
         });
     }
 
@@ -622,7 +651,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      *
      * @param boUp
      */
-    private synchronized void insertBo(BoUp boUp) {
+    private synchronized void insertBo(long moduleId, String version , BoUp boUp) {
 
         insertBoTable(boUp.getId(), boUp.getCode(), boUp.getParentBoId(), boUp.getName());
 
