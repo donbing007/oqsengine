@@ -30,6 +30,11 @@
         </dependency>
 
         <dependency>
+            <groupId>com.xforceplus.xplat-galaxy</groupId>
+            <artifactId>xplat-common</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <scope>provided</scope>
@@ -54,7 +59,7 @@
         <dependency>
             <groupId>com.xforceplus.xplat-galaxy.ultraman.metadata</groupId>
             <artifactId>config-client</artifactId>
-            <version>1.0.2-SNAPSHOT</version>
+            <version>1.0.3-SNAPSHOT</version>
         </dependency>
         <!-- OQSENGINE client -->
         <dependency>
@@ -103,6 +108,18 @@
                     <target>1.8</target>
                     <source>1.8</source>
                     <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                    </archive>
                 </configuration>
             </plugin>
         </plugins>

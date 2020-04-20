@@ -509,4 +509,10 @@ public class EntityServiceNewTest {
         entityService.deleteOne(entityClass2, id2);
         entityService.deleteOne(entityClass, id);
     }
+
+
+//    @Test
+//    public void testNodeReport() throws InterruptedException {
+//        Thread.sleep(Long.MAX_VALUE);
+//    }
 }

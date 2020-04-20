@@ -5,10 +5,7 @@ import akka.stream.ActorMaterializer;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
-import com.xforceplus.ultraman.oqsengine.sdk.config.init.DictInitService;
-import com.xforceplus.ultraman.oqsengine.sdk.config.init.ModuleInitService;
-import com.xforceplus.ultraman.oqsengine.sdk.config.init.UltFormInitService;
-import com.xforceplus.ultraman.oqsengine.sdk.config.init.UltPageInitService;
+import com.xforceplus.ultraman.oqsengine.sdk.config.init.*;
 import com.xforceplus.ultraman.oqsengine.sdk.controller.*;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.CodeExtendedInterceptor;
@@ -101,6 +98,11 @@ public class InitServiceAutoConfiguration {
     @Bean
     public ModuleInitService moduleInitService(){
         return new ModuleInitService();
+    }
+
+    @Bean
+    public NodeReporterInitService nodeReporterInitService(){
+        return new NodeReporterInitService();
     }
 
     @Bean

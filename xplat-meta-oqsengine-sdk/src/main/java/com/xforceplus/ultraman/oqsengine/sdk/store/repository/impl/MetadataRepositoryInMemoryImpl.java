@@ -12,8 +12,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.CurrentVersion;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.SimpleBoItem;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.tables.ModuleTable;
 import com.xforceplus.ultraman.oqsengine.sdk.util.FieldHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ApiItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
@@ -42,6 +44,7 @@ import static com.xforceplus.ultraman.oqsengine.sdk.util.FieldHelper.toEntityCla
 
 /**
  * TODO abstract this class with pojo
+ * TODO refactor this more typed
  */
 public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
@@ -58,6 +61,10 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     public MetadataRepositoryInMemoryImpl() {
 
         //TODO typed column name
+
+        ModuleTable moduleTable = new ModuleTable();
+        SimpleTableDef moduleTableDef = new SimpleTableDef(moduleTable.name(), moduleTable.columns());
+        TableDataProvider moduleTableDataProvider = new MapTableDataProvider(moduleTableDef, moduleTable.getStore());
 
         SimpleTableDef boTableDef = new SimpleTableDef("bos", new String[]{"id", "code", "parentId", "name"});
         TableDataProvider boTableDataProvider = new MapTableDataProvider(boTableDef, boStore);
@@ -90,8 +97,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         dc = new PojoDataContext("metadata", boTableDataProvider
                 , apiTableDataProvider
                 , fieldTableDataProvider
-                , relationTableDataProvider);
-
+                , relationTableDataProvider
+                , moduleTableDataProvider
+        );
     }
 
     private Map<String, ApiItem> toApiItemMap(DataSet apis) {
@@ -505,25 +513,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .collect(Collectors.toList());
     }
 
-    //maybe useless
-//    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationFieldForSub(String id
-//            , String subId, String code) {
-//        //load onetoone and many to one
-//        DataSet relDs = dc.query().from("rels")
-//                .selectAll()
-//                .where("joinBoId").eq(id)
-//                .and("boId").eq(subId)
-//                .and("relType").eq("OneToMany")
-//                .execute();
-//
-//        //to relDs
-//        return relDs.toRows().stream()
-//                .map(row -> {
-//                    return toEntityClassFieldFromRel(row, code);
-//                }).collect(Collectors.toList());
-//    }
-
-
     private Table getTable(String tableName) {
         return dc.getTableByQualifiedLabel("metadata." + tableName);
     }
@@ -587,6 +576,28 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         return rows.stream().map(this::toEntityClass)
                 .filter(Optional::isPresent)
                 .map(Optional::get).collect(Collectors.toList());
+    }
+
+    @Override
+    public CurrentVersion currentVersion() {
+
+        DataSet moduleDs = dc.query()
+                .from(ModuleTable.TABLE_MODULE)
+                .selectAll()
+                .execute();
+
+        List<Row> rows = moduleDs.toRows();
+
+        Map<String, String> versions = rows.stream()
+                .map(row ->  {
+            String code = RowUtils.getRowValue(row, ModuleTable.CODE).map(String::valueOf).orElse("UNKNOWN");
+            String version = RowUtils.getRowValue(row, ModuleTable.VERSION).map(String::valueOf).orElse("UNKNOWN");
+            return Tuple.of(code, version);
+        }).collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
+
+        CurrentVersion currentVersion = new CurrentVersion();
+        currentVersion.setVersionMapping(versions);
+        return currentVersion;
     }
 
     private synchronized void insertBoTable(String id, String code, String parentId) {
