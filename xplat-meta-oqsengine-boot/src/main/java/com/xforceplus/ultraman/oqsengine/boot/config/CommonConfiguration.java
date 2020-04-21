@@ -5,11 +5,11 @@ import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.kubernetesStatefulsetNodeIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.optimizer.DefaultSphinxQLQueryOptimizer;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.DecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.query.QueryOptimizer;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.DecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.selector.SuffixNumberHashSelector;
@@ -19,6 +19,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author dongbin
@@ -60,8 +65,8 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public QueryOptimizer indexQueryOptimizer() {
-        return new DefaultSphinxQLQueryOptimizer();
+    public SphinxQLConditionsBuilderFactory indexConditionsBuilderFactory() {
+        return new SphinxQLConditionsBuilderFactory();
     }
 
     @Bean
@@ -76,5 +81,19 @@ public class CommonConfiguration {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
         return storageStrategyFactory;
+    }
+
+    @Bean
+    public ExecutorService threadPool(@Value("${threadPool.size:0}") int size) {
+        if (size == 0) {
+            size = Runtime.getRuntime().availableProcessors() + 1;
+        }
+
+        return new ThreadPoolExecutor(size, size,
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(500),
+            ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
+            new ThreadPoolExecutor.AbortPolicy()
+        );
     }
 }

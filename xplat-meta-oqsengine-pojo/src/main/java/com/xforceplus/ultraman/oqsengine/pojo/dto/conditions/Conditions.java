@@ -7,6 +7,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * 表示一系列条件组合.只支持以 And 方式进行组合.
@@ -98,6 +100,7 @@ public class Conditions implements Serializable {
 
     /**
      * 是否有 or 连接符.
+     *
      * @return true 有,false 没有.
      */
     public boolean haveOrLink() {
@@ -106,6 +109,7 @@ public class Conditions implements Serializable {
 
     /**
      * 是否有范围条件.
+     *
      * @return true 有范围条件.,false 没有.
      */
     public boolean haveRangeCondition() {
@@ -122,19 +126,36 @@ public class Conditions implements Serializable {
      */
     public Collection<ConditionNode> collection() {
         List<ConditionNode> nodes = new ArrayList(size);
-        load(head, nodes);
+        load(head, nodes, c -> true);
         return nodes;
     }
 
-    private void load(ConditionNode point, List<ConditionNode> nodes) {
+    /**
+     * 只返回所有条件结点,忽略连接结点.
+     *
+     * @return 所有条件平面返回.
+     */
+    public Collection<Condition> collectionCondition() {
+        List<ConditionNode> nodes = new ArrayList(size);
+        load(head, nodes, c -> Conditions.isValueNode(c));
+        return nodes.stream().map(n -> ((ValueConditionNode) n).getCondition()).collect(Collectors.toList());
+    }
+
+    private void load(ConditionNode point, List<ConditionNode> nodes, Predicate<? super ConditionNode> predicate) {
         if (Conditions.isValueNode(point)) {
-            nodes.add(point);
+
+            if (predicate.test(point)) {
+                nodes.add(point);
+            }
+
         } else {
 
             LinkConditionNode link = (LinkConditionNode) point;
-            load(link.getLeft(), nodes);
-            nodes.add(point);
-            load(link.getRight(), nodes);
+            load(link.getLeft(), nodes, predicate);
+            if (predicate.test(point)) {
+                nodes.add(point);
+            }
+            load(link.getRight(), nodes, predicate);
         }
     }
 
@@ -163,6 +184,7 @@ public class Conditions implements Serializable {
 
     /**
      * 判断是否为空,没有任何条件.
+     *
      * @return true 为空,false 非空.
      */
     public boolean isEmtpy() {

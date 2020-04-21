@@ -1,9 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-
-import java.util.Objects;
 
 /**
  * 所有Value 对的超类实现.

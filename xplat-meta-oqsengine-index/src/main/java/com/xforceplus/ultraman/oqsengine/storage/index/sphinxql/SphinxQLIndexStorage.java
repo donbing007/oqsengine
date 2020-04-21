@@ -15,7 +15,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
-import com.xforceplus.ultraman.oqsengine.storage.query.QueryOptimizer;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
@@ -66,8 +66,8 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     private String buildSql;
     private String replaceSql;
 
-    @Resource(name = "indexQueryOptimizer")
-    private QueryOptimizer<String> queryOptimizer;
+    @Resource(name = "indexConditionsBuilderFactory")
+    private SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory;
 
     @Resource(name = "indexWriteDataSourceSelector")
     private Selector<DataSource> writerDataSourceSelector;
@@ -104,12 +104,11 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
         throws SQLException {
-
         return (Collection<EntityRef>) transactionExecutor.execute(
             new DataSourceShardingTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    String whereCondition = queryOptimizer.optimizeConditions(conditions).build(conditions);
+                    String whereCondition = sphinxQLConditionsBuilderFactory.getBuilder(conditions).build(conditions);
                     if (!whereCondition.isEmpty()) {
                         whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
                     }

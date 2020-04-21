@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto;
 
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 
 import java.io.Serializable;
 import java.util.List;
@@ -29,7 +29,7 @@ public class Bo implements Serializable {
     /**
      * fieldList列表
      */
-    private List<Field> fields;
+    private List<EntityField> fields;
     /**
      * 子对象List列表
      */
@@ -38,7 +38,7 @@ public class Bo implements Serializable {
     public Bo() {
     }
 
-    public Bo(Long id, String code, List<Api> apis, List<Field> fields, List<Bo> bos) {
+    public Bo(Long id, String code, List<Api> apis, List<EntityField> fields, List<Bo> bos) {
         this.id = id;
         this.code = code;
         this.apis = apis;
@@ -70,11 +70,11 @@ public class Bo implements Serializable {
         this.apis = apis;
     }
 
-    public List<Field> getFields() {
+    public List<EntityField> getFields() {
         return fields;
     }
 
-    public void setFields(List<Field> fields) {
+    public void setFields(List<EntityField> fields) {
         this.fields = fields;
     }
 
@@ -88,8 +88,12 @@ public class Bo implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Bo)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Bo)) {
+            return false;
+        }
         Bo bo = (Bo) o;
         return Objects.equals(getId(), bo.getId()) &&
                 Objects.equals(getCode(), bo.getCode()) &&

@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.query;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 
 /**
- * 条件构造器.
+ * 条件组构造器.
  *
  * @param <V> 条件构造结果类型.
  * @author dongbin

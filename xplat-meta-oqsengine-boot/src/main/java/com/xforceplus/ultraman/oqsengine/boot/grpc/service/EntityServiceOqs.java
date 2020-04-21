@@ -798,8 +798,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     //TODO
-    private Field toEntityField(FieldUp fieldUp) {
-        return new Field(
+    private IEntityField toEntityField(FieldUp fieldUp) {
+        return new EntityField(
                 fieldUp.getId()
                 , fieldUp.getCode()
                 , FieldType.valueOf(fieldUp.getFieldType())

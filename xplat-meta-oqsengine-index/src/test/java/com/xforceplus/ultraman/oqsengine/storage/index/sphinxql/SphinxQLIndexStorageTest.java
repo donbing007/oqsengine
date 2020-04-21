@@ -11,14 +11,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoShardTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.optimizer.DefaultSphinxQLQueryOptimizer;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.selector.TakeTurnsSelector;
@@ -72,13 +72,13 @@ public class SphinxQLIndexStorageTest {
     private DataSourcePackage dataSourcePackage;
 
 
-    private static IEntityField longField = new Field(Long.MAX_VALUE, "long", FieldType.LONG);
-    private static IEntityField stringField = new Field(Long.MAX_VALUE - 1, "string", FieldType.STRING);
-    private static IEntityField boolField = new Field(Long.MAX_VALUE - 2, "bool", FieldType.BOOLEAN);
-    private static IEntityField dateTimeField = new Field(Long.MAX_VALUE - 3, "datetime", FieldType.DATETIME);
-    private static IEntityField decimalField = new Field(Long.MAX_VALUE - 4, "decimal", FieldType.DECIMAL);
-    private static IEntityField enumField = new Field(Long.MAX_VALUE - 5, "enum", FieldType.ENUM);
-    private static IEntityField stringsField = new Field(Long.MAX_VALUE - 6, "strings", FieldType.STRINGS);
+    private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
+    private static IEntityField stringField = new EntityField(Long.MAX_VALUE - 1, "string", FieldType.STRING);
+    private static IEntityField boolField = new EntityField(Long.MAX_VALUE - 2, "bool", FieldType.BOOLEAN);
+    private static IEntityField dateTimeField = new EntityField(Long.MAX_VALUE - 3, "datetime", FieldType.DATETIME);
+    private static IEntityField decimalField = new EntityField(Long.MAX_VALUE - 4, "decimal", FieldType.DECIMAL);
+    private static IEntityField enumField = new EntityField(Long.MAX_VALUE - 5, "enum", FieldType.ENUM);
+    private static IEntityField stringsField = new EntityField(Long.MAX_VALUE - 6, "strings", FieldType.STRINGS);
 
     private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "test", Arrays.asList(
         longField,
@@ -182,15 +182,15 @@ public class SphinxQLIndexStorageTest {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
 
-        DefaultSphinxQLQueryOptimizer optimizer = new DefaultSphinxQLQueryOptimizer();
-        optimizer.setStorageStrategy(storageStrategyFactory);
-        optimizer.init();
+        SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
+        sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sphinxQLConditionsBuilderFactory.init();
 
         storage = new SphinxQLIndexStorage();
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
         ReflectionTestUtils.setField(storage, "searchDataSourceSelector", searchDataSourceSelector);
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
-        ReflectionTestUtils.setField(storage, "queryOptimizer", optimizer);
+        ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         storage.setIndexTableName("oqsindextest");
         storage.init();

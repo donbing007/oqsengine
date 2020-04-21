@@ -2,7 +2,8 @@ package com.xforceplus.ultraman.oqsengine.sdk.util;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
 import org.apache.metamodel.data.Row;
@@ -20,7 +21,7 @@ public class FieldHelper {
      * @param row
      * @return
      */
-    public static Field toEntityClassField(Row row) {
+    public static IEntityField toEntityClassField(Row row) {
 
         Long id = RowUtils.getRowValue(row, "id")
             .map(String::valueOf)
@@ -37,8 +38,8 @@ public class FieldHelper {
             .map(Boolean::valueOf).orElse(false);
 
         Boolean identifier = RowUtils.getRowValue(row, "identifier")
-                .map(String::valueOf)
-                .map(Boolean::valueOf).orElse(false);
+            .map(String::valueOf)
+            .map(Boolean::valueOf).orElse(false);
 
         Boolean required = RowUtils.getRowValue(row, "required")
             .map(String::valueOf)
@@ -59,7 +60,7 @@ public class FieldHelper {
             .map(String::valueOf).orElse("");
 
         String validateRule = RowUtils.getRowValue(row, "validateRule")
-                .map(String::valueOf).orElse("");
+            .map(String::valueOf).orElse("");
 
         FieldConfig fieldConfig = FieldConfig
             .build()
@@ -71,15 +72,11 @@ public class FieldHelper {
             .validateRegexString(validateRule);
         String cnName = RowUtils.getRowValue(row, "name").map(String::valueOf).orElse("");
 
-//        Field field =
-//            new Field(id, name, fieldType, fieldConfig, dictId, defaultValue);
-        Field field =
-                new Field(id, name, cnName, fieldType, fieldConfig, dictId, defaultValue);
-        return field;
+        return new EntityField(id, name, cnName, fieldType, fieldConfig, dictId, defaultValue);
     }
 
 
-    public static Field toEntityClassFieldFromRel(Row row, String boCode) {
+    public static IEntityField toEntityClassFieldFromRel(Row row, String boCode) {
         Long id = RowUtils.getRowValue(row, "id")
             .map(String::valueOf)
             .map(Long::valueOf)
@@ -93,8 +90,6 @@ public class FieldHelper {
         FieldConfig fieldConfig = FieldConfig
             .build()
             .searchable(true);
-        Field field =
-            new Field(id, name, fieldType, fieldConfig);
-        return field;
+        return new EntityField(id, name, fieldType, fieldConfig);
     }
 }

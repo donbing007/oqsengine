@@ -1,17 +1,17 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.Before;
 import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.math.BigDecimal;
 
@@ -41,7 +41,7 @@ public class SphinxQLDecimalStorageStrategyTest {
         value.stick(new LongStorageValue("test", 878783434L, true));
 
         IValue logicValue =
-            sphinxQLDecimalStorageStrategy.toLogicValue(new Field(1, "test", FieldType.DECIMAL), value);
+            sphinxQLDecimalStorageStrategy.toLogicValue(new EntityField(1, "test", FieldType.DECIMAL), value);
 
         Assert.assertEquals("12354435.878783434", logicValue.valueToString());
 
@@ -51,7 +51,7 @@ public class SphinxQLDecimalStorageStrategyTest {
     public void testStorageValue() throws Exception {
         SphinxQLDecimalStorageStrategy sphinxQLDecimalStorageStrategy = new SphinxQLDecimalStorageStrategy();
         IValue logicValue = new DecimalValue(
-            new Field(1, "test", FieldType.DECIMAL), new BigDecimal("123123213213.78887788"));
+            new EntityField(1, "test", FieldType.DECIMAL), new BigDecimal("123123213213.78887788"));
         StorageValue storageValue = sphinxQLDecimalStorageStrategy.toStorageValue(logicValue);
 
         Assert.assertEquals(123123213213L, storageValue.value());

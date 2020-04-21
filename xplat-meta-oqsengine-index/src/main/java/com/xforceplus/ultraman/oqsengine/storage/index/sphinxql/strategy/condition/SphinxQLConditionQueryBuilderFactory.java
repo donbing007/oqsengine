@@ -3,10 +3,10 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.GtEqNotMatchDecimalConditionQueryBuilder;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.GtNotMatchDecimalConditionQueryBuilder;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.LtEqNotMatchDecimalConditionQueryBuilder;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.LtNotMatchDecimalConditionQueryBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.GtEqNotMatchDecimalConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.GtNotMatchDecimalConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.LtEqNotMatchDecimalConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.LtNotMatchDecimalConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentMap;
 public class SphinxQLConditionQueryBuilderFactory {
 
     private StorageStrategyFactory storageStrategyFactory;
-    private ConcurrentMap<String, SphinxQLConditionQueryBuilder> builders;
+    private ConcurrentMap<String, SphinxQLConditionBuilder> builders;
 
     public SphinxQLConditionQueryBuilderFactory(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
@@ -42,66 +42,66 @@ public class SphinxQLConditionQueryBuilderFactory {
         // decimal
         builders.put(
             buildKey(FieldType.DECIMAL, ConditionOperator.GREATER_THAN, false, false),
-            new GtNotMatchDecimalConditionQueryBuilder(storageStrategyFactory)
+            new GtNotMatchDecimalConditionBuilder(storageStrategyFactory)
         );
         builders.put(
             buildKey(FieldType.DECIMAL, ConditionOperator.GREATER_THAN_EQUALS, false, false),
-            new GtEqNotMatchDecimalConditionQueryBuilder(storageStrategyFactory)
+            new GtEqNotMatchDecimalConditionBuilder(storageStrategyFactory)
         );
         builders.put(
             buildKey(FieldType.DECIMAL, ConditionOperator.LESS_THAN, false, false),
-            new LtNotMatchDecimalConditionQueryBuilder(storageStrategyFactory)
+            new LtNotMatchDecimalConditionBuilder(storageStrategyFactory)
         );
         builders.put(
             buildKey(FieldType.DECIMAL, ConditionOperator.LESS_THAN_EQUALS, false, false),
-            new LtEqNotMatchDecimalConditionQueryBuilder(storageStrategyFactory)
+            new LtEqNotMatchDecimalConditionBuilder(storageStrategyFactory)
         );
 
         // meq
         builders.put(
             buildKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.LONG, false)
+            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.LONG, false)
         );
         builders.put(
             buildKey(FieldType.STRING, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.STRING, false)
+            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.STRING, false)
         );
         builders.put(
             buildKey(FieldType.BOOLEAN, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.BOOLEAN, false)
+            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.BOOLEAN, false)
         );
         builders.put(
             buildKey(FieldType.ENUM, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.ENUM, false)
+            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.ENUM, false)
         );
 
         // long
         builders.put(
             buildKey(FieldType.LONG, ConditionOperator.MULTIPLE_EQUALS, false, true),
-            new MeqNotMatchConditionQueryBuilder(storageStrategyFactory, FieldType.LONG)
+            new MeqNotMatchConditionBuilder(storageStrategyFactory, FieldType.LONG)
         );
 
         // strings
         builders.put(
             buildKey(FieldType.STRINGS, ConditionOperator.EQUALS, true, false),
-            new MatchConditionQueryBuilder(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.EQUALS, true)
+            new MatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.EQUALS, true)
         );
         builders.put(
             buildKey(FieldType.STRINGS, ConditionOperator.NOT_EQUALS, true, false),
-            new MatchConditionQueryBuilder(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.NOT_EQUALS, true)
+            new MatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, ConditionOperator.NOT_EQUALS, true)
         );
         builders.put(
             buildKey(FieldType.STRINGS, ConditionOperator.MULTIPLE_EQUALS, true, false),
-            new MeqMatchConditionQueryBuilder(storageStrategyFactory, FieldType.STRINGS, true)
+            new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, true)
         );
     }
 
-    public SphinxQLConditionQueryBuilder getQueryBuilder(Condition condition, boolean match) {
+    public SphinxQLConditionBuilder getQueryBuilder(Condition condition, boolean match) {
 
         String key = buildKey(
             condition.getField().type(), condition.getOperator(), match, condition.getField().config().isIdentifie());
 
-        SphinxQLConditionQueryBuilder builder = builders.get(key);
+        SphinxQLConditionBuilder builder = builders.get(key);
         if (builder == null) {
 
             synchronized (key) {
@@ -110,11 +110,11 @@ public class SphinxQLConditionQueryBuilderFactory {
                 if (builder == null) {
 
                     if (match) {
-                        builder = new MatchConditionQueryBuilder(
+                        builder = new MatchConditionBuilder(
                             storageStrategyFactory, condition.getField().type(), condition.getOperator(), false);
                     } else {
 
-                        builder = new NotMatchConditionQueryBuilder(
+                        builder = new NotMatchConditionBuilder(
                             storageStrategyFactory, condition.getField().type(), condition.getOperator());
                     }
 

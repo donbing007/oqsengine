@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.shutdown;
 
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -28,12 +30,18 @@ public class Shutdown {
     @Resource
     private TransactionManager tm;
 
+    @Resource
+    private ExecutorService threadPool;
+
     @PreDestroy
     public void destroy() throws Exception {
 
         logger.info("Start closing the process....");
 
         tm.freeze();
+
+        // wait shutdown
+        ExecutorHelper.shutdownAndAwaitTermination(threadPool, 3600);
 
         // 每次等待时间(秒)
         final int waitTimeSec = 30;

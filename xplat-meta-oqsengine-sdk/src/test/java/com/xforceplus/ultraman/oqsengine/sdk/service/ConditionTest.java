@@ -2,8 +2,6 @@ package com.xforceplus.ultraman.oqsengine.sdk.service;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;

@@ -16,12 +16,14 @@ logging:
 transaction:
   timeoutms: 3000
 
+threadPool:
+  # 0 or not exist use cpu core + 1
+  size: 0
+
 storage:
   master:
     name: "oqsbigentity"
     query:
-      # default cpu core.
-      worker: 3
       # default 3 second
       timeout: 3000
     shard:
@@ -44,7 +46,7 @@ management:
   endpoint:
     health:
       enabled: true
-      show-details: never
+      show-details: always
     shutdown:
       enabled: true
     info:

@@ -67,7 +67,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         SimpleTableDef fieldTableDef = new SimpleTableDef("fields", new String[]{"boId"
             , "id"
             , "code", "displayType", "editable", "enumCode", "maxLength", "name", "required", "fieldType"
-                , "searchable", "dictId", "defaultValue", "precision", "identifier", "validateRule"});
+            , "searchable", "dictId", "defaultValue", "precision", "identifier", "validateRule"});
         TableDataProvider fieldTableDataProvider = new MapTableDataProvider(fieldTableDef, fieldStore);
 
         /**
@@ -482,7 +482,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         }).forEach(x -> allFields.add(x.getEntityField()));
 
         EntityClass entityClass = new EntityClass(Long.valueOf(boId)
-            , code, name,relationList, entityClassList
+            , code, name, relationList, entityClassList
             , parentEntityClassOp.orElse(null), allFields);
         return Optional.of(entityClass);
     }
@@ -586,15 +586,15 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     @Override
     public synchronized List<EntityClass> findAllEntities() {
         DataSet boDs = dc.query()
-                .from("bos")
-                .selectAll()
-                .execute();
+            .from("bos")
+            .selectAll()
+            .execute();
 
         List<Row> rows = boDs.toRows();
 
         return rows.stream().map(this::toEntityClass)
-                .filter(Optional::isPresent)
-                .map(Optional::get).collect(Collectors.toList());
+            .filter(Optional::isPresent)
+            .map(Optional::get).collect(Collectors.toList());
     }
 
     private synchronized void insertBoTable(String id, String code, String parentId) {
@@ -604,12 +604,13 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             .value("parentId", parentId);
         dc.executeUpdate(insert);
     }
+
     private synchronized void insertBoTable(String id, String code, String parentId, String name) {
         InsertInto insert = new InsertInto(getTable("bos"))
-                .value("id", id)
-                .value("code", code)
-                .value("parentId", parentId)
-                .value("name", name);
+            .value("id", id)
+            .value("code", code)
+            .value("parentId", parentId)
+            .value("name", name);
         dc.executeUpdate(insert);
     }
 
