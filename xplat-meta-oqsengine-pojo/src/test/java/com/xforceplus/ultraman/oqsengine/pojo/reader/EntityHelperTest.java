@@ -3,9 +3,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.reader;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
-import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,11 +22,11 @@ public class EntityHelperTest {
     @Before
     public void initEntityclass(){
 
-        Field rel1Field = new Field(2001L, "rel1.id", FieldType.LONG);
-        Field relDupField = new Field(2004L, "rel1Dup.id", FieldType.LONG);
-        Field rel2Field = new Field(3001L, "rel2.id", FieldType.LONG);
-        Field rel2DupField = new Field(3004L, "rel2Dup.id", FieldType.LONG);
-        Field rel3Field = new Field(4001L, "rel3.ids", FieldType.LONG);
+        EntityField rel1Field = new EntityField(2001L, "rel1.id", FieldType.LONG);
+        EntityField relDupField = new EntityField(2004L, "rel1Dup.id", FieldType.LONG);
+        EntityField rel2Field = new EntityField(3001L, "rel2.id", FieldType.LONG);
+        EntityField rel2DupField = new EntityField(3004L, "rel2Dup.id", FieldType.LONG);
+        EntityField rel3Field = new EntityField(4001L, "rel3.ids", FieldType.LONG);
 
         Relation rel1 = new Relation("rel1", 2L
                 , "OneToOne"
@@ -51,22 +50,22 @@ public class EntityHelperTest {
 
 
         IEntityClass relatedEntityA = new EntityClass(2L,"one2one-entity"
-                , Arrays.asList(new Field(2002L, "fieldA2", FieldType.STRING)
-                              , new Field(2003L, "fieldA3", FieldType.DECIMAL)));
+                , Arrays.asList(new EntityField(2002L, "fieldA2", FieldType.STRING)
+                              , new EntityField(2003L, "fieldA3", FieldType.DECIMAL)));
 
         IEntityClass relatedEntityB = new EntityClass(3L,"one2many-entity"
-                , Arrays.asList(new Field(3002L, "fieldB2", FieldType.STRING)
-                              , new Field(3003L, "fieldB3", FieldType.LONG)));
+                , Arrays.asList(new EntityField(3002L, "fieldB2", FieldType.STRING)
+                              , new EntityField(3003L, "fieldB3", FieldType.LONG)));
 
         IEntityClass relatedEntityC = new EntityClass(4L,"multivalues-entity"
-                , Arrays.asList(new Field(4002L, "fieldC2", FieldType.STRING)
-                              , new Field(4003L, "fieldC3", FieldType.LONG)));
+                , Arrays.asList(new EntityField(4002L, "fieldC2", FieldType.STRING)
+                              , new EntityField(4003L, "fieldC3", FieldType.LONG)));
 
 
         IEntityClass parentEntity = new EntityClass(11L, "parent-entity"
-                , Arrays.asList(new Field(11002L, "fieldC2", FieldType.STRING)
-                              , new Field(11003L, "fieldC3", FieldType.LONG)
-                              , new Field(11004L, "fieldC3", FieldType.LONG)
+                , Arrays.asList(new EntityField(11002L, "fieldC2", FieldType.STRING)
+                              , new EntityField(11003L, "fieldC3", FieldType.LONG)
+                              , new EntityField(11004L, "fieldC3", FieldType.LONG)
         ));
 
         /**
@@ -83,7 +82,7 @@ public class EntityHelperTest {
                 , Arrays.asList(rel1, rel1Dup, rel2, rel2Dup, rel3)
                 , Arrays.asList(relatedEntityA, relatedEntityB, relatedEntityC)
                 , parentEntity
-                , Arrays.asList(new Field(1001L, "field1", FieldType.LONG)));
+                , Arrays.asList(new EntityField(1001L, "field1", FieldType.LONG)));
 
     }
 

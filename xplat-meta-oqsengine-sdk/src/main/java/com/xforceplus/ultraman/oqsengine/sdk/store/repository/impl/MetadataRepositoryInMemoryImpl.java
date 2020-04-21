@@ -23,7 +23,6 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.FieldItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.SoloItem;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.metamodel.UpdateSummary;
 import org.apache.metamodel.UpdateableDataContext;
 import org.apache.metamodel.data.DataSet;

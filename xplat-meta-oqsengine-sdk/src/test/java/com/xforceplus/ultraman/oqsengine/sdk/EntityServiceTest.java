@@ -4,7 +4,7 @@ package com.xforceplus.ultraman.oqsengine.sdk;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfiguration;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
@@ -28,7 +28,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
@@ -98,7 +97,7 @@ public class EntityServiceTest {
 
         FieldConfig fieldConfig = new FieldConfig();
         EntityClass entityClass = new EntityClass(123L, "TestDefault"
-                , Arrays.asList(new Field(123L, "defaultfield", FieldType.ENUM, fieldConfig, "abc", "Happy")));
+                , Arrays.asList(new EntityField(123L, "defaultfield", FieldType.ENUM, fieldConfig, "abc", "Happy")));
 
         return entityClass;
     }
@@ -111,7 +110,7 @@ public class EntityServiceTest {
         FieldConfig fieldConfig = new FieldConfig();
         fieldConfig.validateRegexString("^(\\w)+(\\.\\w+)*@(\\w)+((\\.\\w{2,3}){1,3})$");
         EntityClass entityClass = new EntityClass(123L, "TestDefault"
-                , Arrays.asList(new Field(123L, "defaultfield"
+                , Arrays.asList(new EntityField(123L, "defaultfield"
                 , FieldType.STRING, fieldConfig)));
 
         return entityClass;
@@ -120,7 +119,7 @@ public class EntityServiceTest {
     private EntityClass expressionSampleEntity() {
         FieldConfig fieldConfig = new FieldConfig();
         EntityClass entityClass = new EntityClass(123L, "TestDefault"
-                , Arrays.asList(new Field(123L, "defaultfield"
+                , Arrays.asList(new EntityField(123L, "defaultfield"
                 , FieldType.STRING, fieldConfig)));
 
         return entityClass;
@@ -131,7 +130,7 @@ public class EntityServiceTest {
         FieldConfig fieldConfig = new FieldConfig();
         fieldConfig.required(true);
         EntityClass entityClass = new EntityClass(123L, "TestDefault"
-                , Arrays.asList(new Field(123L, "defaultfield"
+                , Arrays.asList(new EntityField(123L, "defaultfield"
                 , FieldType.STRING, fieldConfig)));
 
         return entityClass;
@@ -198,7 +197,7 @@ public class EntityServiceTest {
 
         fieldConfig.required(true);
         EntityClass entityClass = new EntityClass(123L, "TestDefault"
-                , Arrays.asList(new Field(123L, "defaultfield"
+                , Arrays.asList(new EntityField(123L, "defaultfield"
                 , FieldType.STRINGS, fieldConfig)));
 
         return entityClass;

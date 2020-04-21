@@ -1,9 +1,8 @@
-package com.xforceplus.ultraman.oqsengine.sdk.service;
+package com.xforceplus.ultraman.oqsengine.sdk;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
@@ -30,7 +29,7 @@ public class ConditionTest {
 
         //long id, String code, Collection<IEntityField> fields
         //long id, String name, FieldType fieldType
-        Field field = new Field(1L, "abc", FieldType.STRING);
+        EntityField field = new EntityField(1L, "abc", FieldType.STRING);
         EntityClass entityClass = new EntityClass(1L, "test", Collections.singleton(field));
 
 
@@ -47,7 +46,7 @@ public class ConditionTest {
 
         //long id, String code, Collection<IEntityField> fields
         //long id, String name, FieldType fieldType
-        Field field = new Field(1L, "abc", FieldType.STRING);
+        EntityField field = new EntityField(1L, "abc", FieldType.STRING);
         EntityClass entityClass = new EntityClass(1L, "test", Collections.singleton(field));
 
 
