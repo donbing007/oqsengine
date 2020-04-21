@@ -26,7 +26,6 @@ import java.util.List;
  * @author admin
  */
 @Order(2) // @Order注解可以改变执行顺序，越小越先执行
-@Component
 public class UltFormInitService implements CommandLineRunner {
     final Logger logger = LoggerFactory.getLogger(UltFormInitService.class);
 

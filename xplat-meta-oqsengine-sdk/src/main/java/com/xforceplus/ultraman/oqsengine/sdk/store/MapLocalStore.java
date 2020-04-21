@@ -109,7 +109,7 @@ public class MapLocalStore {
     }
 
     //synchronized maybe is enough
-    public void save(Map<String, Object> record) {
+    public synchronized void save(Map<String, Object> record) {
 
         if (hasPk(record)) {
             if (pks != null) {
@@ -121,7 +121,8 @@ public class MapLocalStore {
 
                         //check if version is same
 
-                        if (pkRow.stream().map(x -> x.getValue(versionedColumn)).anyMatch(x -> x.equals(record.get(versioned)))) {
+                        if (pkRow.stream().map(x -> RowUtils.getRowValue(x, versioned))
+                                .anyMatch(x -> x.equals(record.get(versioned)))) {
                             //Same version found
                             logger.debug("Same version found {}");
                             return;

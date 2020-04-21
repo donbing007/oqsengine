@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
 import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
+import com.xforceplus.ultraman.oqsengine.sdk.service.HandleResultValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
@@ -61,6 +62,9 @@ public class EntityServiceExImpl implements EntityServiceEx {
     private HandleValueService handleValueService;
 
     @Autowired
+    private HandleResultValueService handleResultValueService;
+
+    @Autowired
     private ApplicationEventPublisher publisher;
 
     @Override
@@ -72,17 +76,6 @@ public class EntityServiceExImpl implements EntityServiceEx {
         if (transId != null) {
             buildBuilder.addHeader("transaction-id", transId);
         }
-
-        //处理系统字段的逻辑-add by wz
-
-//        if(entityClass.extendEntityClass() != null) {
-//            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
-//        }else{
-//            body = entityMetaHandler.insertFill(entityClass,body);
-//        }
-//        //添加字段默认值
-//        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
-
         List<ValueUp> valueUps = handleValueService.handlerValue(entityClass, body, OperationType.CREATE);
 
         OperationResult createResult = buildBuilder
@@ -93,7 +86,6 @@ public class EntityServiceExImpl implements EntityServiceEx {
             if (createResult.getIdsList().size() < 1) {
                 return Either.left("未获得结果");
             } else {
-//                return Either.right(createResult.getIdsList().get(0));
                 IEntity entity = null;
                 if (createResult.getIdsCount() == 1) {
                     Long id = createResult.getIdsList().get(0);
@@ -163,7 +155,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
 
             if (queryResult.getCode() == OperationResult.Code.OK) {
                 if (queryResult.getTotalRow() > 0) {
-                    return Either.right(toResultMap(entityClass, subEntityClass, queryResult.getQueryResultList().get(0)));
+                    return Either.right(handleResultValueService.toRecord(subEntityClass, queryResult.getQueryResultList().get(0)).toMap(null));
                 } else {
                     return Either.left("未查询到记录");
                 }

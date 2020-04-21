@@ -7,9 +7,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityDeleted;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.HandleQueryValueService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.OperationType;
+import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
@@ -20,15 +18,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.*;
+import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.toEntityUp;
+import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.toSelectByCondition;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
 
 /**
@@ -50,6 +46,9 @@ public class EntityServiceImpl implements EntityService {
 
     @Autowired
     private HandleQueryValueService handleQueryValueService;
+
+    @Autowired
+    private HandleResultValueService handleResultValueService;
 
     public EntityServiceImpl(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
         this.metadataRepository = metadataRepository;
@@ -124,7 +123,10 @@ public class EntityServiceImpl implements EntityService {
 
         if (queryResult.getCode() == OperationResult.Code.OK) {
             if (queryResult.getTotalRow() > 0) {
-                return Either.right(toResultMap(entityClass, queryResult.getQueryResultList().get(0)));
+
+                return Either.right(
+                        handleResultValueService.toRecord(entityClass, queryResult.getQueryResultList().get(0))
+                        .toMap(null));
             } else {
                 return Either.left("未查询到记录");
             }
@@ -250,13 +252,15 @@ public class EntityServiceImpl implements EntityService {
      * @return
      */
     @Override
-    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByCondition(EntityClass entityClass, ConditionQueryRequest condition) {
+    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByCondition(EntityClass entityClass
+            , ConditionQueryRequest condition) {
 
         return findByConditionWithIds(entityClass, null, condition);
     }
 
     @Override
-    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByConditionWithIds(EntityClass entityClass, List<Long> ids, ConditionQueryRequest condition) {
+    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByConditionWithIds(EntityClass entityClass
+            , List<Long> ids, ConditionQueryRequest condition) {
         String transId = contextService.get(TRANSACTION_KEY);
 
 
@@ -266,8 +270,14 @@ public class EntityServiceImpl implements EntityService {
             requestBuilder.addHeader("transaction-id", transId);
         }
 
-        ConditionsUp conditionsUp = handleQueryValueService
-            .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY);
+        /**
+         * to ConditionsUp
+         */
+        ConditionsUp conditionsUp = Optional.ofNullable(condition)
+                .map(ConditionQueryRequest::getConditions)
+                .map(x ->  handleQueryValueService
+                        .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY))
+                .orElseGet(() -> ConditionsUp.newBuilder().build());
 
         /**
          * condition
@@ -279,8 +289,11 @@ public class EntityServiceImpl implements EntityService {
             List<Map<String, Object>> repList = result.getQueryResultList()
                 .stream()
                 .map(x -> {
-                    Map<String, Object> resultMap = toResultMap(entityClass, x);
-                    return filterItem(resultMap, x.getCode(), condition.getEntity());
+
+                    return handleResultValueService.toRecord(entityClass, x)
+                            .toMap(Optional.ofNullable(condition)
+                            .map(ConditionQueryRequest::getStringKeys)
+                            .orElseGet(Collections::emptySet));
                 }).collect(Collectors.toList());
             Tuple2<Integer, List<Map<String, Object>>> queryResult = Tuple.of(result.getTotalRow(), repList);
             return Either.right(queryResult);
@@ -299,16 +312,6 @@ public class EntityServiceImpl implements EntityService {
         if (transId != null) {
             buildBuilder.addHeader("transaction-id", transId);
         }
-
-//        //处理系统字段的逻辑-add by wz
-//        if(entityClass.extendEntityClass() != null) {
-//            body = entityMetaHandler.insertFill(entityClass.extendEntityClass(), body);
-//        }else{
-//            body = entityMetaHandler.insertFill(entityClass, body);
-//        }
-//
-//        //添加字段默认值
-//        body = entityMetaFieldDefaultHandler.insertFill(entityClass,body);
 
         List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.CREATE);
 

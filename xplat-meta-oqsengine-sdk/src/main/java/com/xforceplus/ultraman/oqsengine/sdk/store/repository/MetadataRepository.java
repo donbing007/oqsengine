@@ -30,4 +30,6 @@ public interface MetadataRepository {
     SimpleBoItem findOneById(String boId);
 
     List<EntityClass> findAllEntities();
+
+    CurrentVersion currentVersion();
 }

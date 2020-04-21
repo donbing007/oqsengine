@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.sdk.util;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
@@ -11,18 +10,20 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.*;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.combine;
 import static com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Op.*;
 
 /**
@@ -46,47 +47,47 @@ public class EntityClassToGrpcConverter {
             .build();
     }
 
-    /**
-     * TODO check
-     *
-     * @param entityClass
-     * @param body
-     * @return
-     */
-    @Deprecated
-    public static EntityUp toEntityUp(EntityClass entityClass, Long id, Map<String, Object> body) {
-        //build entityUp
-        EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
-
-        List<ValueUp> values = body.entrySet().stream()
-            .map(entry -> {
-                String key = entry.getKey();
-                Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
-                Optional<IEntityField> fieldOpRel = getKeyFromRelation(entityClass, key);
-                Optional<IEntityField> fieldOpParent = getKeyFromParent(entityClass, key);
-
-                Optional<IEntityField> fieldFinal = combine(fieldOp, fieldOpParent, fieldOpRel);
-
-                //filter null obj
-                if (entry.getValue() == null) {
-                    return Optional.<ValueUp>empty();
-                }
-
-                return fieldFinal.map(field -> {
-                    return ValueUp.newBuilder()
-                        .setFieldId(field.id())
-                        .setFieldType(field.type().getType())
-                        .setValue(entry.getValue().toString())
-                        .build();
-                });
-            })
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.toList());
-
-        builder.addAllValues(values);
-        return builder.build();
-    }
+//    /**
+//     * TODO check
+//     *
+//     * @param entityClass
+//     * @param body
+//     * @return
+//     */
+//    @Deprecated
+//    public static EntityUp toEntityUp(EntityClass entityClass, Long id, Map<String, Object> body) {
+//        //build entityUp
+//        EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
+//
+//        List<ValueUp> values = body.entrySet().stream()
+//            .map(entry -> {
+//                String key = entry.getKey();
+//                Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
+//                Optional<IEntityField> fieldOpRel = getKeyFromRelation(entityClass, key);
+//                Optional<IEntityField> fieldOpParent = getKeyFromParent(entityClass, key);
+//
+//                Optional<IEntityField> fieldFinal = combine(fieldOp, fieldOpParent, fieldOpRel);
+//
+//                //filter null obj
+//                if (entry.getValue() == null) {
+//                    return Optional.<ValueUp>empty();
+//                }
+//
+//                return fieldFinal.map(field -> {
+//                    return ValueUp.newBuilder()
+//                        .setFieldId(field.id())
+//                        .setFieldType(field.type().getType())
+//                        .setValue(entry.getValue().toString())
+//                        .build();
+//                });
+//            })
+//            .filter(Optional::isPresent)
+//            .map(Optional::get)
+//            .collect(Collectors.toList());
+//
+//        builder.addAllValues(values);
+//        return builder.build();
+//    }
 
     public static EntityUp toEntityUp(EntityClass entityClass, Long id, List<ValueUp> valueList) {
         //build entityUp
@@ -171,19 +172,19 @@ public class EntityClassToGrpcConverter {
         SelectByCondition.Builder select = SelectByCondition
                 .newBuilder();
 
-        if (condition.getPageNo() != null) {
+        if (condition != null && condition.getPageNo() != null) {
             select.setPageNo(condition.getPageNo());
         }
 
-        if (condition.getPageSize() != null) {
+        if (condition != null && condition.getPageSize() != null) {
             select.setPageSize(condition.getPageSize());
         }
 
-        if (condition.getConditions() != null) {
+        if (condition != null && condition.getConditions() != null) {
             select.setConditions(conditionsUp);
         }
 
-        if (condition.getSort() != null) {
+        if (condition != null && condition.getSort() != null) {
             select.addAllSort(toSortUp(condition.getSort()));
         }
 
@@ -258,43 +259,38 @@ public class EntityClassToGrpcConverter {
 
     private static List<QueryFieldsUp> toQueryFields(IEntityClass entityClass, EntityItem entityItem) {
 
-        Stream<QueryFieldsUp> fieldsUp = Optional.ofNullable(entityItem)
-            .map(EntityItem::getFields)
-            .orElseGet(Collections::emptyList)
-            .stream()
-            .map(entityClass::field)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .map(x -> QueryFieldsUp
-                .newBuilder()
-                .setCode(x.name())
-                .setEntityId(entityClass.id())
-                .setId(x.id())
-                .build());
+        IEntityClassReader reader = new IEntityClassReader(entityClass);
 
-        Stream<QueryFieldsUp> fieldsUpFrom = Optional.ofNullable(entityItem)
+        /**
+         * only need to change query code name
+         */
+        Stream<String> fieldsUp = Optional.ofNullable(entityItem)
+            .map(EntityItem::getFields)
+            .orElseGet(Collections::emptyList).stream();
+
+
+        /**
+         * replace rel code with entityCode
+         */
+        Stream<String> fieldsUpFromRelatedEntities = Optional.ofNullable(entityItem)
             .map(EntityItem::getEntities).orElseGet(Collections::emptyList)
             .stream()
             .flatMap(subEntityItem -> {
-
-                Optional<IEntityClass> subEntityClassOp = entityClass.entityClasss().stream()
-                    .filter(ec -> {
-                        return subEntityItem.getCode().equalsIgnoreCase(ec.code());
-                    }).findFirst();
-
-                return subEntityClassOp.map(iEntityClass -> subEntityItem.getFields().stream()
-                    .map(iEntityClass::field)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .map(x -> QueryFieldsUp
-                        .newBuilder()
-                        .setCode(x.name())
-                        .setEntityId(iEntityClass.id())
-                        .setId(x.id())
-                        .build())).orElseGet(Stream::empty);
+                return subEntityItem.getFields().stream().map(x -> subEntityItem.getCode() + "." + x);
             });
 
-        return Stream.concat(fieldsUp, fieldsUpFrom).collect(Collectors.toList());
+        return Stream.concat(fieldsUp, fieldsUpFromRelatedEntities)
+                .map(reader::column)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(column -> {
+                    return QueryFieldsUp
+                        .newBuilder()
+                        .setCode(column.name())
+                        .setId(column.id())
+                        .build();
+                })
+                .collect(Collectors.toList());
     }
 
 
@@ -463,16 +459,6 @@ public class EntityClassToGrpcConverter {
             .build();
     }
 
-
-    private static Stream<Optional<FieldConditionUp>> toFieldCondition(EntityClass entityClass, SubFieldCondition subFieldCondition) {
-        return entityClass.entityClasss().stream()
-            .filter(x -> x.code().equals(subFieldCondition.getCode()))
-            .flatMap(entity -> subFieldCondition
-                .getFields()
-                .stream()
-                .map(subField -> toFieldCondition(entity, subField)));
-    }
-
     public static FieldUp toFieldUp(IEntityField field) {
         FieldUp.Builder builder =
             FieldUp.newBuilder()
@@ -488,110 +474,4 @@ public class EntityClassToGrpcConverter {
         }
         return builder.build();
     }
-
-    public static Map<String, Object> toResultMap(EntityClass entityClass
-        , EntityClass subEntityClass, EntityUp up) {
-
-        Map<String, Object> map = new HashMap<>();
-
-        up.getValuesList().forEach(entry -> {
-            Optional<Tuple2<IEntityClass, IEntityField>> fieldByIdInAll = IEntityClassHelper
-                .findFieldByIdInAll(entityClass, entry.getFieldId());
-            Optional<Tuple2<IEntityClass, IEntityField>> subField = IEntityClassHelper.findFieldById(subEntityClass, entry.getFieldId())
-                .map(x -> Tuple.of(subEntityClass, x));
-            combine(fieldByIdInAll, subField).ifPresent(tuple2 -> {
-                IEntityField field = tuple2._2();
-                IEntityClass entity = tuple2._1();
-                String fieldName = null;
-                if (entityClass.id() != entity.id()) {
-                    fieldName = entity.code() + "." + field.name();
-                } else {
-                    fieldName = field.name();
-                }
-
-                if (field.type() == FieldType.BOOLEAN) {
-
-                    map.put(fieldName, Boolean.valueOf(entry.getValue()));
-                } else {
-                    map.put(fieldName, entry.getValue());
-                }
-            });
-        });
-
-        if (!StringUtils.isEmpty(up.getObjId())) {
-            map.put("id", String.valueOf(up.getObjId()));
-        }
-
-        return map;
-    }
-
-
-    //TODO
-    public static Map<String, Object> toResultMap(EntityClass entityClass, EntityUp up) {
-
-        Map<String, Object> map = new HashMap<>();
-
-
-        up.getValuesList().forEach(entry -> {
-            IEntityClassHelper.findFieldByIdInAll(entityClass, entry.getFieldId()).ifPresent(tuple2 -> {
-                IEntityField field = tuple2._2();
-                IEntityClass entity = tuple2._1();
-                String fieldName = null;
-                if (entityClass.id() != entity.id()) {
-                    fieldName = entity.code() + "." + field.name();
-                } else {
-                    fieldName = field.name();
-                }
-
-                if (field.type() == FieldType.BOOLEAN) {
-
-                    map.put(fieldName, Boolean.valueOf(entry.getValue()));
-                } else {
-                    map.put(fieldName, entry.getValue());
-                }
-            });
-        });
-
-        if (!StringUtils.isEmpty(up.getObjId())) {
-            map.put("id", String.valueOf(up.getObjId()));
-        }
-
-        return map;
-    }
-
-    public static Map<String, Object> filterItem(Map<String, Object> values, String mainEntityCode, EntityItem entityItem) {
-
-        if (entityItem == null || entityItem.getEntities() == null || entityItem.getEntities().isEmpty()) {
-            return values;
-        }
-
-        Map<String, Object> newResult = new HashMap<>();
-
-        //setup main
-        entityItem.getFields().forEach(x -> {
-            Object value = values.get(x);
-            if (value != null) {
-                newResult.put(x, value);
-            }
-
-            Object otherValue = values.get(mainEntityCode + "." + x);
-
-            if (otherValue != null) {
-                newResult.put(x, value);
-            }
-        });
-
-        entityItem.getEntities().forEach(subEntity -> {
-            subEntity.getFields().forEach(field -> {
-                String subKey = subEntity.getCode() + "." + field;
-                Object value = values.get(subKey);
-                if (value != null) {
-                    newResult.put(subKey, value);
-                }
-            });
-        });
-        return newResult;
-    }
-
-
 }

@@ -24,6 +24,7 @@ public class IEntityClassHelper {
      * @param fieldId
      * @return
      */
+    @Deprecated
     public static Optional<IEntityField> findFieldById(IEntityClass entityClass, long fieldId) {
 
         Optional<IEntityField> entityFieldOp = entityClass.field(fieldId);
@@ -50,6 +51,14 @@ public class IEntityClassHelper {
         }
     }
 
+    public static Optional<IEntityField> findFieldInRel(Relation relation, String code) {
+        if (relation.getEntityField() != null && relation.getEntityField().name().equals(code)) {
+            return Optional.ofNullable(relation.getEntityField());
+        } else {
+            return Optional.empty();
+        }
+    }
+
     public static Optional<Tuple2<IEntityClass, IEntityField>> findFieldByIdInAll(IEntityClass entityClass, long fieldId) {
         Stream<Optional<Tuple2<IEntityClass, IEntityField>>> field =
                 Stream.of(findFieldById(entityClass, fieldId).map(x -> Tuple.of(entityClass, x)));
@@ -60,5 +69,40 @@ public class IEntityClassHelper {
                 .orElseGet(Collections::emptyList).stream()
                 .map(x -> findFieldInRel(x, fieldId).map(y -> Tuple.of(entityClass, y)));
         return Stream.concat(relStream, Stream.concat(field, subStream)).filter(Optional::isPresent).map(Optional::get).findFirst();
+    }
+
+    /**
+     * Field <-- origin
+     * <-- relation
+     * <-- subfield
+     * find field in entityClass by Code
+     * support x.x will
+     *
+     * @return
+     */
+    public static Optional<IEntityField> findFieldByCodeInAll(IEntityClass entityClass, String code) {
+        //first find in entityclass self 's field
+
+        Optional<IEntityField> fieldInMain = entityClass.field(code);
+
+        Optional<IEntityField> fieldInParent = Optional.ofNullable(entityClass.extendEntityClass()).flatMap(x -> x.field(code));
+
+        Optional<IEntityField> fieldInRel = entityClass.relations().stream().map(x -> findFieldInRel(x, code))
+                .findFirst().filter(Optional::isPresent).map(Optional::get);
+
+        String[] splitCode = code.split("\\.");
+
+        Optional<IEntityField> fieldInRelOther;
+        if (splitCode.length > 1) {
+            // field exists in Related EntityClass
+            fieldInRelOther = entityClass.entityClasss()
+                    .stream()
+                    .filter(x -> x.code().equals(splitCode[0]))
+                    .findFirst().map(x -> x.field(splitCode[1])).filter(Optional::isPresent).map(Optional::get);
+        } else {
+            fieldInRelOther = Optional.empty();
+        }
+
+        return OptionalHelper.combine(fieldInMain, fieldInParent, fieldInRel, fieldInRelOther);
     }
 }

@@ -25,6 +25,11 @@ public abstract class AbstractValue<V> implements IValue<V> {
     }
 
     @Override
+    public void setField(IEntityField field) {
+        this.field = field;
+    }
+
+    @Override
     public V getValue() {
         return value;
     }

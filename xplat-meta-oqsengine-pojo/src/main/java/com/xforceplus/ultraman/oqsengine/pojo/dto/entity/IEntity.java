@@ -25,6 +25,8 @@ public interface IEntity extends Cloneable {
      */
     public IEntityValue entityValue();
 
+    public void resetEntityValue(IEntityValue iEntityValue);
+
     /**
      * 继承家族关系.
      * @return 家族信息.

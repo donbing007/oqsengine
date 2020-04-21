@@ -12,8 +12,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.CurrentVersion;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.SimpleBoItem;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.tables.ModuleTable;
 import com.xforceplus.ultraman.oqsengine.sdk.util.FieldHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ApiItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
@@ -21,6 +23,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.FieldItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.SoloItem;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.metamodel.UpdateSummary;
 import org.apache.metamodel.UpdateableDataContext;
 import org.apache.metamodel.data.DataSet;
@@ -41,6 +44,7 @@ import static com.xforceplus.ultraman.oqsengine.sdk.util.FieldHelper.toEntityCla
 
 /**
  * TODO abstract this class with pojo
+ * TODO refactor this more typed
  */
 public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
@@ -58,6 +62,10 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         //TODO typed column name
 
+        ModuleTable moduleTable = new ModuleTable();
+        SimpleTableDef moduleTableDef = new SimpleTableDef(moduleTable.name(), moduleTable.columns());
+        TableDataProvider moduleTableDataProvider = new MapTableDataProvider(moduleTableDef, moduleTable.getStore());
+
         SimpleTableDef boTableDef = new SimpleTableDef("bos", new String[]{"id", "code", "parentId", "name"});
         TableDataProvider boTableDataProvider = new MapTableDataProvider(boTableDef, boStore);
 
@@ -65,31 +73,33 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         TableDataProvider apiTableDataProvider = new MapTableDataProvider(ApiTableDef, apiStore);
 
         SimpleTableDef fieldTableDef = new SimpleTableDef("fields", new String[]{"boId"
-            , "id"
-            , "code", "displayType", "editable", "enumCode", "maxLength", "name", "required", "fieldType"
-            , "searchable", "dictId", "defaultValue", "precision", "identifier", "validateRule"});
+                , "id"
+                , "code", "displayType", "editable", "enumCode", "maxLength", "name", "required", "fieldType"
+                , "searchable", "dictId", "defaultValue", "precision", "identifier", "validateRule"});
         TableDataProvider fieldTableDataProvider = new MapTableDataProvider(fieldTableDef, fieldStore);
 
         /**
          * relation table
          */
         SimpleTableDef relationTableDef = new SimpleTableDef("rels"
-            , new String[]{
-            "id"
-            , "boId"
-            //onetomany manytoone onetoone
-            , "relType"
-            , "identity"
-            , "joinBoId"
+                , new String[]{
+                "id"
+                , "boId"
+                //onetomany manytoone onetoone
+                , "relType"
+                , "identity"
+                , "joinBoId"
+                , "relName"
         });
 
         TableDataProvider relationTableDataProvider = new MapTableDataProvider(relationTableDef, RelationStore);
 
         dc = new PojoDataContext("metadata", boTableDataProvider
-            , apiTableDataProvider
-            , fieldTableDataProvider
-            , relationTableDataProvider);
-
+                , apiTableDataProvider
+                , fieldTableDataProvider
+                , relationTableDataProvider
+                , moduleTableDataProvider
+        );
     }
 
     private Map<String, ApiItem> toApiItemMap(DataSet apis) {
@@ -136,74 +146,74 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     public synchronized BoItem getBoDetailById(String id) {
 
         DataSet boDetails = dc.query().from("bos")
-            .selectAll()
-            .where("id").eq(id)
-            .execute();
+                .selectAll()
+                .where("id").eq(id)
+                .execute();
 
         if (boDetails.next()) {
             Row ds = boDetails.getRow();
             DataSet apis = dc.query()
-                .from("apis")
-                .selectAll().where("boId").eq(id).execute();
+                    .from("apis")
+                    .selectAll().where("boId").eq(id).execute();
 
             Map<String, ApiItem> apiItemMap = toApiItemMap(apis);
 
             DataSet fields = dc.query()
-                .from("fields")
-                .selectAll()
-                .where("boId").eq(id).execute();
+                    .from("fields")
+                    .selectAll()
+                    .where("boId").eq(id).execute();
 
             List<FieldItem> fieldItemList = toFieldItemList(fields);
 
             //deal with rel
             DataSet rels = dc.query()
-                .from("rels")
-                .selectAll()
-                .where("boId").eq(id).execute();
+                    .from("rels")
+                    .selectAll()
+                    .where("boId").eq(id).execute();
 
             List<Row> rows = rels.toRows();
 
             List<String> relIds = rows
-                .stream()
-                .map(x -> RowUtils.getRowValue(x, "joinBoId")
-                    .map(String::valueOf).orElse(""))
-                .collect(Collectors.toList());
+                    .stream()
+                    .map(x -> RowUtils.getRowValue(x, "joinBoId")
+                            .map(String::valueOf).orElse(""))
+                    .collect(Collectors.toList());
 
             List<FieldItem> relField = this.loadRelationField(rows, row -> {
 
                 String joinBoId = RowUtils.getRowValue(row, "joinBoId")
-                    .map(String::valueOf)
-                    .orElse("");
+                        .map(String::valueOf)
+                        .orElse("");
 
                 DataSet boDs = dc.query().from("bos")
-                    .selectAll()
-                    .where("id").eq(joinBoId)
-                    .execute();
+                        .selectAll()
+                        .where("id").eq(joinBoId)
+                        .execute();
 
                 if (boDs.next()) {
 
                     Row bo = boDs.getRow();
                     String boCode = RowUtils.getRowValue(bo, "code")
-                        .map(String::valueOf)
-                        .orElse("");
+                            .map(String::valueOf)
+                            .orElse("");
 
                     SoloItem soloItem = new SoloItem();
                     soloItem.setId(Long.valueOf(joinBoId));
 
                     return new FieldItem(
-                        boCode.concat(".id")
-                        , boCode.concat(".id")
-                        , FieldType.LONG.getType()
-                        , ""
-                        , "false"
-                        , "true"
-                        , "false"
-                        , null
-                        , null
-                        , "0"
-                        , ""
-                        , ""
-                        , soloItem);
+                            boCode.concat(".id")
+                            , boCode.concat(".id")
+                            , FieldType.LONG.getType()
+                            , ""
+                            , "false"
+                            , "true"
+                            , "false"
+                            , null
+                            , null
+                            , "0"
+                            , ""
+                            , ""
+                            , soloItem);
                 }
                 return null;
             });
@@ -216,8 +226,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             boItem.setApi(apiItemMap);
             boItem.setFields(fieldTotalItems);
             boItem.setParentEntityId(
-                RowUtils.getRowValue(ds, "parentId")
-                    .map(String::valueOf).orElse(""));
+                    RowUtils.getRowValue(ds, "parentId")
+                            .map(String::valueOf).orElse(""));
             boItem.setSubEntities(relIds);
 
 
@@ -255,15 +265,15 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     private synchronized Optional<IEntityClass> loadParentEntityClass(String boId) {
 
         DataSet boDs = dc.query()
-            .from("bos")
-            .selectAll().where("id").eq(boId)
-            .execute();
+                .from("bos")
+                .selectAll().where("id").eq(boId)
+                .execute();
         if (boDs.next()) {
             Row row = boDs.getRow();
 
             String code = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
             return Optional.of(new EntityClass(Long.valueOf(boId), code, Collections.emptyList()
-                , Collections.emptyList(), null, loadFields(boId)));
+                    , Collections.emptyList(), null, loadFields(boId)));
         }
 
         return Optional.empty();
@@ -278,30 +288,35 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     private synchronized Optional<Tuple2<Relation, IEntityClass>> loadRelationEntityClass(String boId, Row relRow, String mainBoCode) {
 
         String relationType = RowUtils.getRowValue(relRow, "relType")
-            .map(String::valueOf)
-            .orElse("");
+                .map(String::valueOf)
+                .orElse("");
 
-        String name = RowUtils.getRowValue(relRow, "name")
-            .map(String::valueOf)
-            .orElse("");
+//        String relationName = RowUtils.getRowValue(relRow, "relName")
+//                .map(String::valueOf)
+//                .orElse("");
+
+        String name = RowUtils.getRowValue(relRow, "relName")
+                .map(String::valueOf)
+                .orElse("");
 
         Long joinBoId = RowUtils.getRowValue(relRow, "joinBoId")
-            .map(String::valueOf)
-            .map(Long::valueOf)
-            .orElse(0L);
+                .map(String::valueOf)
+                .map(Long::valueOf)
+                .orElse(0L);
 
         Long relId = RowUtils.getRowValue(relRow, "id")
-            .map(String::valueOf)
-            .map(Long::valueOf)
-            .orElse(0L);
+                .map(String::valueOf)
+                .map(Long::valueOf)
+                .orElse(0L);
 
         return findOneById("bos", boId).map(row -> {
             Optional<IEntityClass> parentEntityClass = RowUtils
-                .getRowValue(row, "parentId")
-                .map(String::valueOf)
-                .flatMap(this::loadParentEntityClass);
+                    .getRowValue(row, "parentId")
+                    .map(String::valueOf)
+                    .flatMap(this::loadParentEntityClass);
 
-            String subCode = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
+            String subCode = RowUtils.getRowValue(row, "code")
+                            .map(String::valueOf).orElse("");
 
             List<IEntityField> listFields = new LinkedList<>();
 
@@ -321,29 +336,14 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 }
             });
 
-//            if (relationType.equalsIgnoreCase("onetoone")
-//                    || relationType.equalsIgnoreCase("manytoone")) {
-//                //Field is from main id
-//                field = toEntityClassFieldFromRel(relRow, subCode);
-//                relation = new Relation(subCode, joinBoId, relationType, true, field);
-//
-//            } else if (relationType.equalsIgnoreCase(MultiValues)){
-//                //relation is onetomany
-//                field = toEntityClassFieldFromRel(relRow, mainBoCode);
-//                relation = new Relation(mainBoCode, joinBoId, relationType, true, field);
-//                listFields.add(field);
-//            } else if (relationType.equalsIgnoreCase(MultiValues)) {
-//
-//            }
-
             listFields.addAll(loadFields(boId));
             //assemble entity class
             IEntityClass entityClass = new EntityClass(Long.valueOf(boId)
-                , subCode
-                , Collections.emptyList()
-                , Collections.emptyList()
-                , parentEntityClass.orElse(null)
-                , listFields);
+                    , subCode
+                    , Collections.emptyList()
+                    , Collections.emptyList()
+                    , parentEntityClass.orElse(null)
+                    , listFields);
 
             return Tuple.of(relation, entityClass);
         });
@@ -353,10 +353,10 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     public synchronized Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode) {
 
         DataSet boDs = dc.query()
-            .from("bos")
-            .selectAll()
-            .where("code").eq(boCode)
-            .execute();
+                .from("bos")
+                .selectAll()
+                .where("code").eq(boCode)
+                .execute();
 
         if (boDs.next()) {
             return toEntityClass(boDs.getRow());
@@ -369,17 +369,17 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     public synchronized List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId) {
 
         DataSet boDs = dc.query()
-            .from("bos")
-            .selectAll()
-            .where("parentId")
-            .eq(parentId)
-            .execute();
+                .from("bos")
+                .selectAll()
+                .where("parentId")
+                .eq(parentId)
+                .execute();
 
         List<Row> rows = boDs.toRows();
 
         return rows.stream().map(this::toEntityClass)
-            .filter(Optional::isPresent)
-            .map(Optional::get).collect(Collectors.toList());
+                .filter(Optional::isPresent)
+                .map(Optional::get).collect(Collectors.toList());
     }
 
 
@@ -387,11 +387,11 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     public synchronized List<EntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode) {
 
         DataSet boDs = dc.query()
-            .from("bos")
-            .selectAll()
-            .where("code")
-            .eq(parentCode)
-            .execute();
+                .from("bos")
+                .selectAll()
+                .where("code")
+                .eq(parentCode)
+                .execute();
 
         if (boDs.next()) {
             String id = RowUtils.getRowValue(boDs.getRow(), "id").map(String::valueOf).orElse("");
@@ -413,9 +413,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     public synchronized Optional<EntityClass> load(String tenantId, String appCode, String boId) {
 
         DataSet boDs = dc.query()
-            .from("bos")
-            .selectAll().where("id").eq(boId)
-            .execute();
+                .from("bos")
+                .selectAll().where("id").eq(boId)
+                .execute();
         if (boDs.next()) {
             return toEntityClass(boDs.getRow());
         } else {
@@ -448,10 +448,10 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         //deal relation Classes
         DataSet relDs = dc.query()
-            .from("rels")
-            .selectAll().where("boId")
-            .eq(boId)
-            .execute();
+                .from("rels")
+                .selectAll().where("boId")
+                .eq(boId)
+                .execute();
 
         List<Row> relsRows = relDs.toRows();
 
@@ -477,13 +477,13 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         //append all rel fields to fields
         relationList.stream().filter(x -> {
             return FieldLikeRelationType.from(x.getRelationType())
-                .map(FieldLikeRelationType::isOwnerSide)
-                .orElse(false);
+                    .map(FieldLikeRelationType::isOwnerSide)
+                    .orElse(false);
         }).forEach(x -> allFields.add(x.getEntityField()));
 
         EntityClass entityClass = new EntityClass(Long.valueOf(boId)
-            , code, name, relationList, entityClassList
-            , parentEntityClassOp.orElse(null), allFields);
+                , code, name, relationList, entityClassList
+                , parentEntityClassOp.orElse(null), allFields);
         return Optional.of(entityClass);
     }
 
@@ -496,8 +496,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     private List<IEntityField> loadRelationField(String id) {
         //load onetoone and many to one
         DataSet relDs = dc.query().from("rels")
-            .selectAll().where("boId").eq(id)
-            .execute();
+                .selectAll().where("boId").eq(id)
+                .execute();
         return loadRelationField(relDs.toRows());
     }
 
@@ -505,32 +505,13 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     private <U> List<U> loadRelationField(List<Row> relations, Function<Row, U> mapper) {
         return relations.stream().filter(row -> {
             return RowUtils.getRowValue(row, "relType")
-                .map(String::valueOf)
-                .filter(type -> type.equalsIgnoreCase("onetoone")
-                    || type.equalsIgnoreCase("manytoone"))
-                .isPresent();
+                    .map(String::valueOf)
+                    .filter(type -> type.equalsIgnoreCase("onetoone")
+                            || type.equalsIgnoreCase("manytoone"))
+                    .isPresent();
         }).map(mapper).filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
-
-    //maybe useless
-//    private List<com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field> loadRelationFieldForSub(String id
-//            , String subId, String code) {
-//        //load onetoone and many to one
-//        DataSet relDs = dc.query().from("rels")
-//                .selectAll()
-//                .where("joinBoId").eq(id)
-//                .and("boId").eq(subId)
-//                .and("relType").eq("OneToMany")
-//                .execute();
-//
-//        //to relDs
-//        return relDs.toRows().stream()
-//                .map(row -> {
-//                    return toEntityClassFieldFromRel(row, code);
-//                }).collect(Collectors.toList());
-//    }
-
 
     private Table getTable(String tableName) {
         return dc.getTableByQualifiedLabel("metadata." + tableName);
@@ -538,9 +519,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     private synchronized Optional<Row> findOneById(String tableName, String id) {
         DataSet ds = dc.query().from(tableName)
-            .selectAll()
-            .where("id").eq(id)
-            .execute();
+                .selectAll()
+                .where("id").eq(id)
+                .execute();
 
         if (ds.next()) {
             return Optional.ofNullable(ds.getRow());
@@ -568,9 +549,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     @Override
     public synchronized SimpleBoItem findOneById(String boId) {
         DataSet boDs = dc.query()
-            .from("bos")
-            .selectAll().where("id").eq(boId)
-            .execute();
+                .from("bos")
+                .selectAll().where("id").eq(boId)
+                .execute();
         if (boDs.next()) {
             SimpleBoItem simpleBoItem = new SimpleBoItem();
             Row row = boDs.getRow();
@@ -586,31 +567,53 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     @Override
     public synchronized List<EntityClass> findAllEntities() {
         DataSet boDs = dc.query()
-            .from("bos")
-            .selectAll()
-            .execute();
+                .from("bos")
+                .selectAll()
+                .execute();
 
         List<Row> rows = boDs.toRows();
 
         return rows.stream().map(this::toEntityClass)
-            .filter(Optional::isPresent)
-            .map(Optional::get).collect(Collectors.toList());
+                .filter(Optional::isPresent)
+                .map(Optional::get).collect(Collectors.toList());
+    }
+
+    @Override
+    public CurrentVersion currentVersion() {
+
+        DataSet moduleDs = dc.query()
+                .from(ModuleTable.TABLE_MODULE)
+                .selectAll()
+                .execute();
+
+        List<Row> rows = moduleDs.toRows();
+
+        Map<String, String> versions = rows.stream()
+                .map(row ->  {
+            String code = RowUtils.getRowValue(row, ModuleTable.CODE).map(String::valueOf).orElse("UNKNOWN");
+            String version = RowUtils.getRowValue(row, ModuleTable.VERSION).map(String::valueOf).orElse("UNKNOWN");
+            return Tuple.of(code, version);
+        }).collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
+
+        CurrentVersion currentVersion = new CurrentVersion();
+        currentVersion.setVersionMapping(versions);
+        return currentVersion;
     }
 
     private synchronized void insertBoTable(String id, String code, String parentId) {
         InsertInto insert = new InsertInto(getTable("bos"))
-            .value("id", id)
-            .value("code", code)
-            .value("parentId", parentId);
+                .value("id", id)
+                .value("code", code)
+                .value("parentId", parentId);
         dc.executeUpdate(insert);
     }
 
     private synchronized void insertBoTable(String id, String code, String parentId, String name) {
         InsertInto insert = new InsertInto(getTable("bos"))
-            .value("id", id)
-            .value("code", code)
-            .value("parentId", parentId)
-            .value("name", name);
+                .value("id", id)
+                .value("code", code)
+                .value("parentId", parentId)
+                .value("name", name);
         dc.executeUpdate(insert);
     }
 
@@ -626,11 +629,12 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         //save relations
         boUp.getRelationsList().forEach(rel -> {
             InsertInto insertRel = new InsertInto(getTable("rels"))
-                .value("id", rel.getId())
-                .value("boId", rel.getBoId())
-                .value("joinBoId", rel.getJoinBoId())
-                .value("identity", rel.getIdentity())
-                .value("relType", rel.getRelationType());
+                    .value("id", rel.getId())
+                    .value("boId", rel.getBoId())
+                    .value("joinBoId", rel.getJoinBoId())
+                    .value("identity", rel.getIdentity())
+                    .value("relType", rel.getRelationType())
+                    .value("relName", rel.getRelName());
             dc.executeUpdate(insertRel);
         });
 
@@ -648,21 +652,21 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         //insert sub bo
         //save if not exist
         boUp.getBoUpsList().stream()
-            .filter(relatedBo -> !findOneById("bos", relatedBo.getId()).isPresent())
-            .forEach(relatedBo -> {
-                insertBoTable(relatedBo.getId(), relatedBo.getCode(), relatedBo.getParentBoId(), relatedBo.getName());
+                .filter(relatedBo -> !findOneById("bos", relatedBo.getId()).isPresent())
+                .forEach(relatedBo -> {
+                    insertBoTable(relatedBo.getId(), relatedBo.getCode(), relatedBo.getParentBoId(), relatedBo.getName());
 
-                //save fields
-                //insert apis
-                relatedBo.getApisList().forEach(api -> {
-                    insertApi(api, relatedBo.getId());
-                });
+                    //save fields
+                    //insert apis
+                    relatedBo.getApisList().forEach(api -> {
+                        insertApi(api, relatedBo.getId());
+                    });
 
-                //insert fields
-                relatedBo.getFieldsList().forEach(field -> {
-                    insertField(field, relatedBo.getId());
+                    //insert fields
+                    relatedBo.getFieldsList().forEach(field -> {
+                        insertField(field, relatedBo.getId());
+                    });
                 });
-            });
     }
 
     private synchronized void insertField(Field field, String boId) {
@@ -686,31 +690,31 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
 
         InsertInto insert = new InsertInto(getTable("fields"))
-            .value("boId", boId)
-            .value("id", field.getId())
-            .value("code", field.getCode())
-            .value("displayType", field.getDisplayType())
-            .value("editable", editable)
-            .value("enumCode", field.getEnumCode())
-            .value("maxLength", field.getMaxLength())
-            .value("name", field.getName())
-            .value("required", field.getRequired())
-            .value("fieldType", field.getFieldType())
-            .value("searchable", searchable)
-            .value("dictId", field.getDictId())
-            .value("defaultValue", field.getDefaultValue())
-            .value("precision", String.valueOf(field.getPrecision()))
-            .value("identifier", identifier)
-            .value("validateRule", field.getValidateRule());
+                .value("boId", boId)
+                .value("id", field.getId())
+                .value("code", field.getCode())
+                .value("displayType", field.getDisplayType())
+                .value("editable", editable)
+                .value("enumCode", field.getEnumCode())
+                .value("maxLength", field.getMaxLength())
+                .value("name", field.getName())
+                .value("required", field.getRequired())
+                .value("fieldType", field.getFieldType())
+                .value("searchable", searchable)
+                .value("dictId", field.getDictId())
+                .value("defaultValue", field.getDefaultValue())
+                .value("precision", String.valueOf(field.getPrecision()))
+                .value("identifier", identifier)
+                .value("validateRule", field.getValidateRule());
         dc.executeUpdate(insert);
     }
 
     private synchronized void insertApi(Api api, String boId) {
         InsertInto insert = new InsertInto(getTable("apis"))
-            .value("boId", boId)
-            .value("url", api.getUrl())
-            .value("code", api.getCode())
-            .value("method", api.getMethod());
+                .value("boId", boId)
+                .value("url", api.getUrl())
+                .value("code", api.getCode())
+                .value("method", api.getMethod());
         dc.executeUpdate(insert);
     }
 
@@ -778,10 +782,10 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 //
     private synchronized List<IEntityField> loadFields(String id) {
         DataSet fieldDs = dc.query().from("fields")
-            .selectAll().where("boId").eq(id).execute();
+                .selectAll().where("boId").eq(id).execute();
         return fieldDs.toRows().stream()
-            .map(FieldHelper::toEntityClassField)
-            .collect(Collectors.toList());
+                .map(FieldHelper::toEntityClassField)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -794,22 +798,22 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         //relation to field
         return relations.stream().filter(row -> {
             return RowUtils.getRowValue(row, "relType")
-                .map(String::valueOf)
-                .flatMap(FieldLikeRelationType::from)
-                .isPresent();
+                    .map(String::valueOf)
+                    .flatMap(FieldLikeRelationType::from)
+                    .isPresent();
         }).map(row -> {
             //get joinBoId
             Optional<Row> joinBoOp = findOneById("bos",
-                RowUtils.getRowValue(row, "joinBoId").map(String::valueOf).orElse(""));
+                    RowUtils.getRowValue(row, "joinBoId").map(String::valueOf).orElse(""));
             if (joinBoOp.isPresent()) {
                 String code = joinBoOp
-                    .flatMap(x -> RowUtils.getRowValue(x, "code")
-                        .map(String::valueOf)).orElse("");
+                        .flatMap(x -> RowUtils.getRowValue(x, "code")
+                                .map(String::valueOf)).orElse("");
                 return toEntityClassFieldFromRel(row, code);
             } else {
                 return null;
             }
         }).filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 }

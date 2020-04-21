@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.boot.grpc.service;
+package com.xforceplus.ultraman.oqsengine.pojo.utils;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 

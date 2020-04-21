@@ -53,6 +53,11 @@ public class Entity implements IEntity, Serializable {
     }
 
     @Override
+    public void resetEntityValue(IEntityValue iEntityValue) {
+        this.entityValue = iEntityValue;
+    }
+
+    @Override
     public IEntityFamily family() {
         return family;
     }
