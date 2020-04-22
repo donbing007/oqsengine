@@ -28,7 +28,7 @@ public class BoTable implements TableLike {
 
     private List<Map<String, ?>> store = new ArrayList<>();
 
-    private static final String[] columns = new String[]{ID, CODE, VERSION, NAME, PARENT_ID, MODULE_ID};
+    public static final String[] COLUMNS = new String[]{ID, CODE, VERSION, NAME, PARENT_ID, MODULE_ID};
 
     @Override
     public String name() {
@@ -37,7 +37,7 @@ public class BoTable implements TableLike {
 
     @Override
     public String[] columns() {
-        return columns;
+        return COLUMNS;
     }
 
     @Override

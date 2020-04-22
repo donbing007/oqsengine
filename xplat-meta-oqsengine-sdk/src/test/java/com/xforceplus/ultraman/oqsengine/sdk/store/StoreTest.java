@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.store;
 
 import com.xforceplus.ultraman.metadata.grpc.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
@@ -10,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.sdk.service.impl.DefaultHandleValueServ
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.EntityServiceImpl;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.MetadataRepositoryInMemoryImpl;
-import com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.BoItem;
 import org.junit.Test;
 
@@ -28,16 +28,15 @@ import static org.springframework.test.util.AssertionErrors.assertTrue;
 public class StoreTest {
 
     /**
-     *
      * @return
      */
-    private ModuleUpResult mockModuleUpResult(){
+    private ModuleUpResult mockModuleUpResult() {
         return ModuleUpResult.newBuilder()
                 .addBoUps(boupA())
                 .build();
     }
 
-    private BoUp boupA(){
+    private BoUp boupA() {
         return BoUp.newBuilder()
                 .setId("111111")
                 .setCode("boupA")
@@ -51,7 +50,7 @@ public class StoreTest {
                 .build();
     }
 
-    private BoUp boupANew(){
+    private BoUp boupANew() {
         return BoUp.newBuilder()
                 .setId("111111")
                 .setCode("boupANew")
@@ -65,7 +64,7 @@ public class StoreTest {
                 .build();
     }
 
-    private BoUp boupSub(){
+    private BoUp boupSub() {
         return BoUp.newBuilder()
                 .setId("111111")
                 .setCode("sub")
@@ -81,7 +80,7 @@ public class StoreTest {
                 .build();
     }
 
-    private BoUp boupParent(){
+    private BoUp boupParent() {
         return BoUp.newBuilder()
                 .setId("1111")
                 .setCode("parent")
@@ -95,7 +94,7 @@ public class StoreTest {
                 .build();
     }
 
-    private BoUp boupMultiRelation(){
+    private BoUp boupMultiRelation() {
         return BoUp.newBuilder()
                 .setId("1111")
                 .setCode("main")
@@ -130,8 +129,7 @@ public class StoreTest {
                 .build();
     }
 
-
-    private BoUp boupMultiExtendRelation(){
+    private BoUp boupMultiExtendRelation() {
         return BoUp.newBuilder()
                 .setId("11112")
                 .setCode("main")
@@ -152,7 +150,7 @@ public class StoreTest {
                 .build();
     }
 
-    private BoUp boupRelation(){
+    private BoUp boupRelation() {
         return BoUp.newBuilder()
                 .setId("1111")
                 .addApis(Api.newBuilder().setCode("a").setMethod("b").build())
@@ -172,7 +170,7 @@ public class StoreTest {
                 .build();
     }
 
-    private BoUp relationBo(){
+    private BoUp relationBo() {
         return BoUp.newBuilder()
                 .setId("2222")
                 .setCode("sub")
@@ -186,7 +184,7 @@ public class StoreTest {
                 .build();
     }
 
-    private BoUp relationBo1(){
+    private BoUp relationBo1() {
         return BoUp.newBuilder()
                 .setId("22221")
                 .setCode("sub1")
@@ -200,7 +198,7 @@ public class StoreTest {
                 .build();
     }
 
-    private BoUp relationBo2(){
+    private BoUp relationBo2() {
         return BoUp.newBuilder()
                 .setId("22222")
                 .setCode("sub2")
@@ -218,7 +216,7 @@ public class StoreTest {
      * save bo test
      */
     @Test
-    public void simpleSaveAndLoad(){
+    public void simpleSaveAndLoad() {
         MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
         repository.save(mockModuleUpResult(), "1", "1");
         Optional<EntityClass> entityclass = repository.load("1", "1", "111111");
@@ -227,7 +225,7 @@ public class StoreTest {
 
 
     @Test
-    public void doubleSaveAndLoad(){
+    public void doubleSaveAndLoad() {
         MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
         /**
          * 相同记录插入
@@ -246,7 +244,7 @@ public class StoreTest {
     }
 
     @Test
-    public void updateSaveAndLoad(){
+    public void updateSaveAndLoad() {
         MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
         /**
          * 相同记录插入
@@ -287,15 +285,15 @@ public class StoreTest {
 
         //repository.clearAllBoIdRelated("1111");
 
-        Optional<EntityClass> parent2 = repository.loadByCode("1", "1", "child");
-        System.out.println(parent2);
+        Optional<EntityClass> sub = repository.loadByCode("1", "1", "sub");
+        assertTrue("sub is present", sub.isPresent());
 
         CountDownLatch latch = new CountDownLatch(1000);
         IntStream.range(0, 1000)
                 .mapToObj(x -> new Thread(() -> {
                     System.out.println(x);
                     Optional<EntityClass> parent = repository.loadByCode("1", "1", "parent");
-                    System.out.println(parent);
+                    assertTrue("parent is here", parent.isPresent());
                     latch.countDown();
                 })).collect(Collectors.toList()).forEach(Thread::start);
 
@@ -303,7 +301,7 @@ public class StoreTest {
     }
 
     @Test
-    public void saveSingleExtendedLoad(){
+    public void saveSingleExtendedLoad() {
         MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
         /**
          * 相同记录插入
@@ -344,7 +342,7 @@ public class StoreTest {
     }
 
     @Test
-    public void saveRelationAndLoad(){
+    public void saveRelationAndLoad() {
         MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
 
         ModuleUpResult result = ModuleUpResult.newBuilder()
@@ -359,7 +357,7 @@ public class StoreTest {
     }
 
     @Test
-    public void saveMultiRelationAndLoad(){
+    public void saveMultiRelationAndLoad() {
         MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
 
         ModuleUpResult result = ModuleUpResult.newBuilder()
@@ -373,7 +371,7 @@ public class StoreTest {
     }
 
     @Test
-    public void saveMultiRelationWithExtendLoad(){
+    public void saveMultiRelationWithExtendLoad() {
         MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
 
         ModuleUpResult result = ModuleUpResult.newBuilder()
@@ -393,7 +391,7 @@ public class StoreTest {
     }
 
     @Test
-    public void loadDetailsFor(){
+    public void loadDetailsFor() {
         MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
 
         ModuleUpResult result = ModuleUpResult.newBuilder()
@@ -414,7 +412,7 @@ public class StoreTest {
 
 
     @Test
-    public void testCreate(){
+    public void testCreate() {
         MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
 
         ModuleUpResult result = ModuleUpResult.newBuilder()
@@ -433,11 +431,109 @@ public class StoreTest {
 
         data.put("", "");
 
-        DefaultHandleValueService handleValueService = new DefaultHandleValueService(Collections.emptyList(), Collections.emptyList());
+        DefaultHandleValueService handleValueService =
+                new DefaultHandleValueService(Collections.emptyList()
+                        , Collections.emptyList());
 
         List<ValueUp> valueUps = handleValueService.handlerValue(entityclassA.get(), data, OperationType.CREATE);
         EntityUp entity = toEntityUp(entityclassA.get(), null, valueUps);
 
         System.out.println(entity);
+    }
+
+    @Test
+    public void testMultiVersion() {
+
+        ModuleUpResult version1 =
+                ModuleUpResult.newBuilder()
+                        .setVersion("0.0.1")
+                        .setId(1)
+                        .addBoUps(boupA())
+                        .build();
+
+        ModuleUpResult version2 =
+                ModuleUpResult.newBuilder()
+                        .setVersion("0.0.2")
+                        .setId(1)
+                        .addBoUps(boupANew())
+                        .build();
+
+        ModuleUpResult version3 =
+                ModuleUpResult.newBuilder()
+                        .setVersion("0.0.3")
+                        .setId(1)
+                        .addBoUps(boupA())
+                        .build();
+
+
+        ModuleUpResult version4 =
+                ModuleUpResult.newBuilder()
+                        .setVersion("0.0.4")
+                        .setId(1)
+                        .addBoUps(boupANew())
+                        .build();
+
+        MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
+        repository.save(version1, "1", "1");
+
+        List<IEntityField> fields = repository.load("1", "1", "111111")
+                .get()
+                .fields();
+
+        System.out.println(fields.get(0).name());
+
+        repository.save(version2, "1", "1");
+
+        List<IEntityField> fields2 = repository.load("1", "1", "111111")
+                .get().fields();
+
+        System.out.println(fields2.get(0).name());
+
+        repository.save(version3, "1", "1");
+
+        List<IEntityField> fields3 = repository.load("1", "1", "111111")
+                .get().fields();
+
+        List<IEntityField> fields4 = repository.load("1", "1", "111111", "0.0.2")
+                .get().fields();
+
+        List<IEntityField> fields5 = repository.load("1", "1", "111111", "0.0.1")
+                .get().fields();
+
+       assertTrue("is old", "abcOld".equals(fields3.get(0).name()));
+        System.out.println(fields4.get(0).name());
+        System.out.println(fields5.get(0).name());
+
+        repository.save(version4, "1", "1");
+
+        List<IEntityField> fields6 = repository.load("1", "1", "111111")
+                .get().fields();
+
+        System.out.println(fields6.get(0).name());
+
+        List<IEntityField> fields7 = repository.load("1", "1", "111111", "0.0.2")
+                .get().fields();
+
+
+
+
+        List<IEntityField> fields8 = repository.load("1", "1", "111111", "0.0.3")
+                .get().fields();
+
+
+
+        List<IEntityField> fields9 = repository.load("1", "1", "111111", "0.0.4")
+                .get().fields();
+
+        System.out.println(fields7.get(0).name());
+        System.out.println(fields8.get(0).name());
+        System.out.println(fields9.get(0).name());
+
+
+        assertTrue("is empty", !repository.load("1", "1", "111111", "0.0.1").isPresent());
+
+
+        System.out.println(repository.currentVersion().getVersionMapping());
+
     }
 }

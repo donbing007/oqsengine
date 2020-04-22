@@ -21,7 +21,7 @@ public class ModuleTable implements TableLike {
 
     public static final String NAME = "name";
 
-    private static final String[] columns = new String[]{ID, CODE, VERSION, NAME};
+    private static final String[] COLUMNS = new String[]{ID, CODE, VERSION, NAME};
 
     private List<Map<String, ?>> store = new ArrayList<>();
 
@@ -32,7 +32,7 @@ public class ModuleTable implements TableLike {
 
     @Override
     public String[] columns() {
-       return columns;
+       return COLUMNS;
     }
 
     @Override
