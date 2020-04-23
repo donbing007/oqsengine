@@ -195,9 +195,7 @@ public class MultiLocalTransaction implements Transaction {
     private void doEndWithUndo(boolean commit) throws SQLException {
         List<SQLException> exHolder = new LinkedList<>();
         try {
-            for (TransactionResource transactionResource : transactionResourceHolder) {
-                undoExecutor.saveUndoLog(id, transactionResource);
-            }
+            saveTransactionResourcesUndoLog(transactionResourceHolder);
 
             for (TransactionResource transactionResource : transactionResourceHolder) {
                 if (commit) {
@@ -207,37 +205,14 @@ public class MultiLocalTransaction implements Transaction {
                     transactionResource.rollback();
                 }
             }
+
             undoExecutor.mock();
         } catch (SQLException ex) {
             exHolder.add(0, ex);
-            logger.debug("start to rollback or undo commit");
-            for (TransactionResource transactionResource : transactionResourceHolder) {
-                if(commit) {
-                    if (((UndoTransactionResource) transactionResource).isCommitted()) {
-                        logger.debug("transacitonResource {} undo", transactionResource.key());
-                        undoExecutor.undo(transactionResource);
-                    } else {
-                        logger.debug("transacitonResource {} rollback", transactionResource.key());
-                        transactionResource.rollback();
-                    }
-                } else {
-                    logger.debug("transacitonResource {} rollback", transactionResource.key());
-                    transactionResource.rollback();
-                }
-            }
 
-            logger.debug("[UNDO] finish to rollback or undo commit");
+            undoTransactionResources(transactionResourceHolder, commit);
         } finally {
-            logger.debug("clear transactionResource");
-            for (TransactionResource transactionResource : transactionResourceHolder) {
-                try {
-                    if (!transactionResource.isDestroyed()) {
-                        transactionResource.destroy();
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
+            destroyTransactionResources(transactionResourceHolder);
         }
 
         throwSQLExceptionIfNecessary(exHolder);
@@ -250,6 +225,45 @@ public class MultiLocalTransaction implements Transaction {
 
             rollback = true;
 
+        }
+    }
+
+    void saveTransactionResourcesUndoLog(List<TransactionResource> transactionResourceHolder){
+        for (TransactionResource transactionResource : transactionResourceHolder) {
+            undoExecutor.saveUndoLog(id, transactionResource);
+        }
+    }
+
+    void undoTransactionResources(List<TransactionResource> transactionResourceHolder, boolean commit) throws SQLException {
+        logger.debug("start to rollback or undo commit");
+        for (TransactionResource transactionResource : transactionResourceHolder) {
+            if(commit) {
+                if (((UndoTransactionResource) transactionResource).isCommitted()) {
+                    logger.debug("transacitonResource {} undo", transactionResource.key());
+                    undoExecutor.undo(transactionResource);
+                } else {
+                    logger.debug("transacitonResource {} rollback", transactionResource.key());
+                    transactionResource.rollback();
+                }
+            } else {
+                logger.debug("transacitonResource {} rollback", transactionResource.key());
+                transactionResource.rollback();
+            }
+        }
+
+        logger.debug("[UNDO] finish to rollback or undo commit");
+    }
+
+    void destroyTransactionResources(List<TransactionResource> transactionResourceHolder){
+        logger.debug("clear transactionResource");
+        for (TransactionResource transactionResource : transactionResourceHolder) {
+            try {
+                if (!transactionResource.isDestroyed()) {
+                    transactionResource.destroy();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 

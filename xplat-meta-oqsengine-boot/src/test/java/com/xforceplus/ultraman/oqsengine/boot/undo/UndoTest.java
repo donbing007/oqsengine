@@ -60,12 +60,6 @@ public class UndoTest {
     @Autowired
     private EntitySearchService entitySearchService;
 
-    @Autowired
-    private Selector<String> tableNameSelector;
-
-    @Resource
-    private DataSourcePackage dataSourcePackage;
-
     private IEntityClass fatherEntityClass;
 
     @Before
@@ -78,13 +72,20 @@ public class UndoTest {
     }
 
     @Test
+    public void testStorage() {
+
+    }
+
+    @Test
     public void testBuild() throws SQLException {
 
         Transaction tx = transactionManager.create();
 
-        tx.getUndoExecutor().setMockError(true);
+//        tx.getUndoExecutor().setMockError(true);
 
         IEntity entity = buildEntity(fatherEntityClass, false);
+
+        entityManagementService.build(entity);
 
         entityManagementService.build(entity);
 
