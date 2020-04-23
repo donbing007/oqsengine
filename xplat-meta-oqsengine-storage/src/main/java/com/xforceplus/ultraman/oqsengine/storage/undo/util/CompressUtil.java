@@ -15,7 +15,6 @@ import java.util.zip.GZIPOutputStream;
  * 修改历史:
  */
 public class CompressUtil {
-
     final static Logger logger = LoggerFactory.getLogger(CompressUtil.class);
 
     public static final int BUFFER = 1024;
@@ -188,15 +187,4 @@ public class CompressUtil {
     public static Object decompressToObj(byte[] data) {
         return toObj(decompress(data));
     }
-
-//    public static void main(String[] args) {
-//        Map n = new HashMap();
-//        n.put("xxxxxxx", "fffffffffffffffffff");
-//        byte[] s1 = CompressUtil.toByte(n);
-//        byte[] s2 = CompressUtil.compress(s1);
-//        byte[] s3 = CompressUtil.decompress(s2);
-//        Map s4 = (Map)CompressUtil.toObj(s3);
-//
-//        System.out.println("ori = " + s1 + "cp = " + s2 + "dcp = " + s3 + "map = " + s4);
-//    }
 }

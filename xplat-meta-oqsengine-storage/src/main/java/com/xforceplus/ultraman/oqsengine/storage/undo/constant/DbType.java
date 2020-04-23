@@ -3,17 +3,16 @@ package com.xforceplus.ultraman.oqsengine.storage.undo.constant;
 /**
  * 版权：    上海云砺信息科技有限公司
  * 创建者:   youyifan
- * 创建时间: 3/23/2020 12:04 PM
+ * 创建时间: 3/25/2020 12:29 AM
  * 功能描述:
  * 修改历史:
  */
-public enum OpTypeEnum {
-
-    BUILD("1"), REPLACE("2"), REPLACE_ATTRIBUTE("3"), DELETE("4");
+public enum DbType {
+    MASTOR("1"), INDEX("2");
 
     String value;
 
-    OpTypeEnum(String value) {
+    DbType(String value) {
         this.value = value;
     }
 

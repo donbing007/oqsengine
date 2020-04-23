@@ -1,10 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.store;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpType;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.UndoLogStatus;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 
 import java.util.List;
+import java.util.Queue;
 
 /**
  * 版权：    上海云砺信息科技有限公司
@@ -15,17 +17,19 @@ import java.util.List;
  */
 public interface UndoLogStore {
 
-    UndoLog get(Long txId, DbTypeEnum dbType, OpTypeEnum opType);
+    UndoLog get(Long txId, DbType dbType, String shardKey);
 
-    void save(Long txId, String dbKey, DbTypeEnum dbType, OpTypeEnum opType, Object data);
+    boolean save(Long txId, DbType dbType, String shardKey, UndoLog undoLog);
 
     boolean isExist(Long txId);
 
-    boolean isExist(Long txId, DbTypeEnum dbType, OpTypeEnum opType);
+    boolean tryRemove(Long txId);
 
-    void remove(Long txId, DbTypeEnum dbType, OpTypeEnum opType);
+    boolean remove(Long txId, DbType dbType, String shardKey);
 
-    void remove(Long txId);
+    boolean removeItem(Long txId, DbType dbType, String shardKey, int index);
 
-    List<UndoLog> loadAllUndoInfo();
+    boolean updateStatus(Long txId, DbType dbType, String shardKey, UndoLogStatus status);
+
+    Queue<UndoLog> getUndoLogQueue(List<Integer> statuss);
 }

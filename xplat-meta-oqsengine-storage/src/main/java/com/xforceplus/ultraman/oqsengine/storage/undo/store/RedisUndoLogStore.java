@@ -1,18 +1,20 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.store;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.LogStoreConstant;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpType;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.UndoLogStatus;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
+import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLogItem;
 import com.xforceplus.ultraman.oqsengine.storage.undo.util.CompressUtil;
+import org.redisson.api.RLock;
 import org.redisson.api.RMap;
+import org.redisson.api.RQueue;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 版权：    上海云砺信息科技有限公司
@@ -23,7 +25,9 @@ import java.util.Set;
  */
 public class RedisUndoLogStore implements UndoLogStore {
 
-    final Logger logger = LoggerFactory.getLogger(RedisUndoLogStore.class);
+    private static final String UNDO_LOG = "OQSENGINE_UNDO_LOG";
+
+    private static final String UNDO_LOG_Q = "OQSENGINE_UNDO_LOG_Q";
 
     private RedissonClient redissonClient;
 
@@ -32,83 +36,154 @@ public class RedisUndoLogStore implements UndoLogStore {
     }
 
     @Override
-    public UndoLog get(Long txId, DbTypeEnum dbType, OpTypeEnum opType) {
-        String key = LogStoreConstant.getLogKey(txId, dbType, opType);
-        return getUndoLog().containsKey(key) ?
-                (UndoLog) CompressUtil.decompressToObj((byte[]) getUndoLog().get(key)) : null;
+    public UndoLog get(Long txId, DbType dbType, String shardKey) {
+        return getUndoLog(txId, dbType, shardKey);
     }
 
     @Override
-    public void save(Long txId, String dbKey, DbTypeEnum dbType, OpTypeEnum opType, Object data) {
-        String key = LogStoreConstant.getLogKey(txId, dbType, opType);
-        UndoLog undoLog = new UndoLog(txId, dbKey, dbType, opType, data);
-        getUndoLog().put(key,
-                CompressUtil.compress(undoLog));
+    public boolean save(Long txId, DbType dbType, String shardKey, UndoLog undoLog) {
+        undoLog.setTxId(txId);
+        undoLog.setDbType(dbType);
+        undoLog.setShardKey(shardKey);
+        undoLog.setTime(System.currentTimeMillis());
+        return saveUndoLog(txId, dbType, shardKey, undoLog);
     }
 
     @Override
     public boolean isExist(Long txId) {
-        boolean isExist = false;
-        DbTypeEnum[] dbTypeEnums = DbTypeEnum.values();
-        OpTypeEnum[] opTypeEnums = OpTypeEnum.values();
-        for(DbTypeEnum dbType:dbTypeEnums) {
-            for(OpTypeEnum opType:opTypeEnums) {
-                isExist = isExist(txId, dbType, opType);
+        return getUndoLog().containsKey(txId);
+    }
+
+    @Override
+    public boolean remove(Long txId, DbType dbType, String shardKey) {
+        Map<String, byte[]> txUndoMap = (Map) getUndoLog().get(txId);
+        if (txUndoMap != null) {
+            txUndoMap.remove(dbKey(dbType, shardKey));
+        }
+
+        if(txUndoMap.isEmpty()) {
+            getUndoLog().remove(txId);
+            return true;
+        } else {
+            return lockPut(txId, dbType, shardKey, txUndoMap);
+        }
+    }
+
+    @Override
+    public boolean removeItem(Long txId, DbType dbType, String shardKey, int index) {
+        Map<String, byte[]> txUndoMap = (Map) getUndoLog().get(txId);
+        UndoLog undoLog = (UndoLog) CompressUtil.decompressToObj(txUndoMap.get(dbKey(dbType, shardKey)));
+        undoLog.getItems().set(index, null);
+
+        txUndoMap.put(dbKey(dbType, shardKey), CompressUtil.compress(undoLog));
+
+        return lockPut(txId, dbType, shardKey, txUndoMap);
+    }
+
+    @Override
+    public boolean tryRemove(Long txId) {
+        if (isExist(txId)) {
+            RLock lock = redissonClient.getLock(txId + "");
+            if (lock != null) {
+                try {
+                    lock.tryLock(10, 10, TimeUnit.SECONDS);
+
+                    Map<String, byte[]> txUndoMap = (Map<String, byte[]>) getUndoLog().get(txId);
+
+                    if(txUndoMap.isEmpty()) {
+                        getUndoLog().remove(txId);
+                    }
+
+                    return true;
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    lock.unlock();
+                }
             }
+            return false;
         }
-        return isExist;
+        return true;
     }
 
     @Override
-    public boolean isExist(Long txId, DbTypeEnum dbType, OpTypeEnum opType) {
-        String key = LogStoreConstant.getLogKey(txId, dbType, opType);
-        return getUndoLog().containsKey(key);
+    public Queue<UndoLog> getUndoLogQueue(List<Integer> statuss) {
+        List<UndoLog> undoLogs = new ArrayList<>();
+
+        getUndoLog().readAllValues().stream()
+                .filter(Objects::nonNull)
+                .flatMap(obj -> ((Map)obj).values().stream())
+                .sorted(Comparator.comparingLong(UndoLog::getTime))
+                .forEach(v -> {
+                    UndoLog undoLog = (UndoLog) CompressUtil.decompressToObj((byte[])v);
+                    if(statuss != null && statuss.contains(undoLog.getStatus())) {
+                        undoLogs.add(undoLog);
+                    }
+        });
+
+        RQueue<UndoLog> queue = redissonClient.getQueue(UNDO_LOG_Q);
+        queue.addAll(undoLogs);
+
+        return queue;
     }
 
     @Override
-    public void remove(Long txId, DbTypeEnum dbType, OpTypeEnum opType) {
-        String key = LogStoreConstant.getLogKey(txId, dbType, opType);
-        getUndoLog().remove(key);
-    }
+    public boolean updateStatus(Long txId, DbType dbType, String shardKey, UndoLogStatus status) {
+        UndoLog undoLog = getUndoLog(txId, dbType, shardKey);
+        if(undoLog == null) { return false; }
 
-    @Override
-    public void remove(Long txId) {
-        DbTypeEnum[] dbTypeEnums = DbTypeEnum.values();
-        OpTypeEnum[] opTypeEnums = OpTypeEnum.values();
-        for(DbTypeEnum dbType:dbTypeEnums) {
-            for(OpTypeEnum opType:opTypeEnums) {
-                remove(txId, dbType, opType);
-            }
-        }
-    }
+        undoLog.setStatus(status.value());
 
-    @Override
-    public List<UndoLog> loadAllUndoInfo() {
-        RMap undoLogs = getUndoLog();
+        return saveUndoLog(txId, dbType, shardKey, undoLog);
 
-        Set<String> keySet = undoLogs.keySet();
-        List<UndoLog> undoInfos = new ArrayList<>();
-        for(String key:keySet) {
-            UndoLog undoLog = get(key);
-
-            Long txId = LogStoreConstant.getTxIdByKey(key);
-
-            UndoLog undoInfo = new UndoLog(
-                    txId, undoLog.getShardKey(), undoLog.getDbType(),
-                    undoLog.getOpType(), undoLog.getData());
-
-            undoInfos.add(undoInfo);
-        }
-        logger.debug("Loading undo info size {} from redis", undoInfos.size());
-        return undoInfos;
     }
 
     RMap getUndoLog() {
-        return redissonClient.getMap(LogStoreConstant.UNDO_LOG);
+        return redissonClient.getMap(UNDO_LOG);
     }
 
-    UndoLog get(String key){
-        return getUndoLog().containsKey(key) ?
-                (UndoLog) CompressUtil.decompressToObj((byte[]) getUndoLog().get(key)) : null;
+    UndoLog getUndoLog(Long txId, DbType dbType, String shardKey) {
+        getUndoLog().putIfAbsent(txId, new HashMap<>());
+
+        Map<String, byte[]> txUndoMap = (Map<String, byte[]>) getUndoLog().get(txId);
+
+        return txUndoMap.containsKey(dbKey(dbType, shardKey)) ?
+                (UndoLog) CompressUtil.decompressToObj(txUndoMap.get(dbKey(dbType, shardKey))) : null;
+    }
+
+    boolean saveUndoLog(Long txId, DbType dbType, String shardKey, UndoLog undoLog) {
+        getUndoLog().putIfAbsent(txId, new HashMap<>());
+
+        Map<String, byte[]> txUndoMap = (Map<String, byte[]>) getUndoLog().get(txId);
+
+        txUndoMap.put(dbKey(dbType, shardKey), CompressUtil.compress(undoLog));
+
+        return lockPut(txId, dbType, shardKey, txUndoMap);
+    }
+
+    boolean lockPut(Long txId, DbType dbType, String shardKey, Map<String, byte[]> txUndoMap) {
+        RLock lock = redissonClient.getLock(lockKey(txId, dbType, shardKey));
+        if (lock != null) {
+            try {
+                lock.tryLock(10, 10, TimeUnit.SECONDS);
+
+                getUndoLog().put(txId, txUndoMap);
+
+                return true;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                lock.unlock();
+            }
+        }
+        return false;
+    }
+
+    String dbKey(DbType dbType, String shardKey) {
+        return dbType.name() + "-" + shardKey;
+    }
+
+    String lockKey(Long txId, DbType dbType, String shardKey) {
+        return "undolog-" + txId + "-" + dbType.name() + "-" + shardKey;
     }
 }

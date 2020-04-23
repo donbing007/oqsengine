@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
 
 import java.sql.SQLException;
 
@@ -18,7 +18,7 @@ public interface TransactionResource<V> {
      * 资源类型的标记
      * @return
      */
-    DbTypeEnum dbType();
+    DbType dbType();
 
     /**
      * 资源的标识.

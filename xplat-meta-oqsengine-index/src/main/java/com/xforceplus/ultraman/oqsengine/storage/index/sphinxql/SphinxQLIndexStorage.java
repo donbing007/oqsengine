@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.*;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
@@ -27,7 +28,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -35,7 +35,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 基于 SphinxQL 的索引储存实现.
@@ -54,17 +53,11 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     final Logger logger = LoggerFactory.getLogger(SphinxQLIndexStorage.class);
 
-    private static final String WRITER_SQL = "%s into %s (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)";
-    private static final String DELETE_SQL = "delete from %s where id = ?";
     /**
      * %s 顺序为 where 条件, 排序.
      */
     private static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? %s %s limit ?,?";
     private static final String SELECT_COUNT_SQL = "select count(*) as count from %s where entity = ? %s";
-    private static final String SELECT_FROM_ID_SQL = "select id, pref, cref, entity, jsonfields from %s where id = ?";
-
-    private String buildSql;
-    private String replaceSql;
 
     @Resource(name = "indexQueryOptimizer")
     private QueryOptimizer<String> queryOptimizer;
@@ -85,20 +78,6 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     public void setIndexTableName(String indexTableName) {
         this.indexTableName = indexTableName;
-    }
-
-    @PostConstruct
-    public void init() {
-        buildSql =
-            String.format(WRITER_SQL,
-                "insert", indexTableName,
-                FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
-                FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
-        replaceSql =
-            String.format(WRITER_SQL,
-                "replace", indexTableName,
-                FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
-                FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
     }
 
     @Override
@@ -222,7 +201,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         checkId(attribute.id());
 
         transactionExecutor.execute(
-            new DataSourceShardingTask(searchDataSourceSelector, Long.toString(attribute.id())) {
+            new DataSourceShardingTask(writerDataSourceSelector, Long.toString(attribute.id())) {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
@@ -243,7 +222,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         storageEntity.setJsonFields(completeAttribues);
                         storageEntity.setFullFields(convertJsonToFull(completeAttribues));
 
-                        doBuildReplaceStorageEntity(storageEntity, true);
+                        new ReplaceStorageCommand(indexTableName).execute(resource, storageEntity);
 
                     } else {
 
@@ -260,9 +239,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     @Override
     public void build(IEntity entity) throws SQLException {
-        if (!doBuildOrReplace(entity, false)) {
-            throw new SQLException(String.format("Entity{%s} could not be created successfully.", entity.toString()));
-        }
+        doBuildOrReplace(entity, false);
     }
 
     @Override
@@ -276,56 +253,31 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         checkId(entity.id());
 
         transactionExecutor.execute(new DataSourceShardingTask(writerDataSourceSelector, Long.toString(entity.id())) {
-
             @Override
             public Object run(TransactionResource resource) throws SQLException {
-
-                String sql = String.format(DELETE_SQL, indexTableName);
-                PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-                st.setLong(1, entity.id()); // id
-
-                if (logger.isDebugEnabled()) {
-                    logger.debug(st.toString());
-                }
-
-                // 在事务状态,返回值恒等于0.
-                st.executeUpdate();
-
-                try {
-                    return null;
-                } finally {
-                    if (st != null) {
-                        st.close();
-                    }
-                }
+                StorageEntity storageEntity = new StorageEntity(
+                        entity.id(),
+                        entity.entityClass().id(),
+                        entity.family().parent(),
+                        entity.family().child(),
+                        serializeToMap(entity.entityValue(), true),
+                        serializeSetFull(entity.entityValue())
+                );
+                return new DeleteStorageCommand(indexTableName).execute(resource, storageEntity);
             }
         });
 
     }
-
 
     @Override
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
     }
 
-    private Set<String> setGlobalFlag(Set<String> fullfields) {
-        if (fullfields == null) {
-            return fullfields;
-        }
-        /**
-         * 增加一个系统字段,当在查询所有数据的时候利用全文搜索引擎可以使用.
-         */
-        return new HashSet<String>(fullfields) {{
-            add(SphinxQLHelper.ALL_DATA_FULL_TEXT);
-        }};
-    }
-
-
-    private boolean doBuildOrReplace(IEntity entity, boolean replacement) throws SQLException {
+    private void doBuildOrReplace(IEntity entity, boolean replacement) throws SQLException {
         checkId(entity.id());
 
-        return doBuildReplaceStorageEntity(
+        doBuildReplaceStorageEntity(
             new StorageEntity(
                 entity.id(),
                 entity.entityClass().id(),
@@ -397,11 +349,6 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         return data;
     }
 
-    // 格式化全文属性为字符串.
-    private String toFullString(Set<String> fullFields) {
-        return fullFields.stream().collect(Collectors.joining(""));
-    }
-
     // 转换 json 字段为全文搜索字段.
     private Set<String> convertJsonToFull(Map<String, Object> attributes) {
         Set<String> fullfileds = new HashSet<>();
@@ -439,147 +386,28 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
+                    StorageEntity input = new StorageEntity();
+                    input.setId(id);
+                    StorageEntity storageEntity = new SelectByIdStorageCommand(indexTableName).execute(resource, input);
 
-                    PreparedStatement st = null;
-                    ResultSet rs = null;
-                    try {
-                        String sql = String.format(SELECT_FROM_ID_SQL, indexTableName);
-                        st = ((Connection) resource.value()).prepareStatement(sql);
-                        st.setLong(1, id);
-
-                        rs = st.executeQuery();
-                        StorageEntity storageEntity = null;
-                        if (rs.next()) {
-                            storageEntity = new StorageEntity(
-                                id,
-                                rs.getLong(FieldDefine.ENTITY),
-                                rs.getLong(FieldDefine.PREF),
-                                rs.getLong(FieldDefine.CREF),
-                                SphinxQLHelper.deserializeJson(rs.getString(FieldDefine.JSON_FIELDS)),
-                                null
-                            );
-                        }
-
-
-                        return Optional.ofNullable(storageEntity);
-                    } finally {
-                        if (rs != null) {
-                            rs.close();
-                        }
-
-                        if (st != null) {
-                            st.close();
-                        }
-                    }
-
+                    return Optional.ofNullable(storageEntity);
                 }
             });
     }
 
     // 更新原始数据.
-    private boolean doBuildReplaceStorageEntity(StorageEntity storageEntity, boolean replacement) throws SQLException {
-
-        final String sql = String.format(replacement ? replaceSql : buildSql, indexTableName);
-
-        return (boolean) transactionExecutor.execute(
+    private void doBuildReplaceStorageEntity(StorageEntity storageEntity, boolean replacement) throws SQLException {
+        transactionExecutor.execute(
             new DataSourceShardingTask(writerDataSourceSelector, Long.toString(storageEntity.getId())) {
-
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-
-                    // id, entity, pref, cref, jsonfileds, fullfileds
-                    st.setLong(1, storageEntity.getId()); // id
-                    st.setLong(2, storageEntity.getEntity()); // entity
-                    st.setLong(3, storageEntity.getPref()); // pref
-                    st.setLong(4, storageEntity.getCref()); // cref
-                    // jsonfileds
-                    st.setString(5, SphinxQLHelper.serializableJson(storageEntity.getJsonFields()));
-                    // fullfileds
-                    st.setString(6, toFullString(storageEntity.getFullFields()));
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(st.toString());
-                    }
-
-                    int size = st.executeUpdate();
-
-                    try {
-                        // 成功只应该有一条语句影响
-                        final int onlyOne = 1;
-                        return size == onlyOne;
-
-                    } finally {
-                        st.close();
+                    if(replacement) {
+                        return new ReplaceStorageCommand(indexTableName).execute(resource, storageEntity);
+                    } else {
+                        return new BuildStorageCommand(indexTableName).execute(resource, storageEntity);
                     }
                 }
             });
     }
 
-    // 原始储存格式.
-    private class StorageEntity {
-        private long id;
-        private long entity;
-        private long pref;
-        private long cref;
-        private Map<String, Object> jsonFields;
-        private Set<String> fullFields;
-
-        public StorageEntity(long id, long entity, long pref, long cref, Map<String, Object> jsonFields, Set<String> fullFields) {
-            this.id = id;
-            this.entity = entity;
-            this.pref = pref;
-            this.cref = cref;
-            this.jsonFields = jsonFields;
-            this.fullFields = setGlobalFlag(fullFields);
-        }
-
-        public long getId() {
-            return id;
-        }
-
-        public long getEntity() {
-            return entity;
-        }
-
-        public long getPref() {
-            return pref;
-        }
-
-        public long getCref() {
-            return cref;
-        }
-
-        public Map<String, Object> getJsonFields() {
-            return jsonFields;
-        }
-
-        public Set<String> getFullFields() {
-            return fullFields;
-        }
-
-        public void setId(long id) {
-            this.id = id;
-        }
-
-        public void setEntity(long entity) {
-            this.entity = entity;
-        }
-
-        public void setPref(long pref) {
-            this.pref = pref;
-        }
-
-        public void setCref(long cref) {
-            this.cref = cref;
-        }
-
-        public void setJsonFields(Map<String, Object> jsonFields) {
-            this.jsonFields = jsonFields;
-        }
-
-        public void setFullFields(Set<String> fullFields) {
-            this.fullFields = setGlobalFlag(fullFields);
-        }
-    }
 }

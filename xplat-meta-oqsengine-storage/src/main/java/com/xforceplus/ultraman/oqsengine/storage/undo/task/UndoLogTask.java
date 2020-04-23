@@ -4,23 +4,22 @@ import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.UndoLogStatus;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 import com.xforceplus.ultraman.oqsengine.storage.undo.store.UndoLogStore;
-import com.xforceplus.ultraman.oqsengine.storage.undo.util.UndoUtil;
+import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Constructor;
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
+import java.util.Queue;
 
 /**
  * 版权：    上海云砺信息科技有限公司
@@ -35,101 +34,98 @@ public class UndoLogTask extends Thread {
 
     private volatile boolean closed;
 
-    private BlockingQueue<UndoLog> undoLogQ;
+    private Queue<UndoLog> undoLogQ;
 
     private UndoLogStore undoLogStore;
 
-    private Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers;
+    private UndoExecutor undoExecutor;
 
-    private Map<DbTypeEnum, Selector<DataSource>> dataSourceSelectors;
+    private Map<DbType, Selector<DataSource>> dataSourceSelectors;
 
-    public UndoLogTask(BlockingQueue<UndoLog> undoLogQ,
-                       UndoLogStore undoLogStore,
-                       Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers,
-                       Map<DbTypeEnum, Selector<DataSource>> dataSourceSelectors
+    public UndoLogTask(
+            UndoExecutor undoExecutor,
+            UndoLogStore undoLogStore,
+            Selector<DataSource> indexWriteDataSourceSelector,
+            Selector<DataSource> masterDataSourceSelector
     ) {
         this.closed = false;
-        this.undoLogQ = undoLogQ;
         this.undoLogStore = undoLogStore;
-        this.storageCommandInvokers = storageCommandInvokers;
-        this.dataSourceSelectors = dataSourceSelectors;
+        this.undoLogQ = undoLogStore.getUndoLogQueue(
+                Arrays.asList(
+                        UndoLogStatus.UNCOMMITTED.value(),
+                        UndoLogStatus.COMMITED.value(),
+                        UndoLogStatus.ERROR.value())
+        );
+
+        this.undoExecutor = undoExecutor;
+        this.dataSourceSelectors = new HashMap();
+        this.dataSourceSelectors.put(DbType.INDEX, indexWriteDataSourceSelector);
+        this.dataSourceSelectors.put(DbType.MASTOR, masterDataSourceSelector);
+
     }
 
     @Override
     public void run() {
         loopHandleUndoLog();
-        handleRemainingUndoLog();
     }
 
     void loopHandleUndoLog() {
-        while(!closed) {
-            try {
-                handle(undoLogQ.take());
-            } catch (InterruptedException e) {
-                logger.info("The batch handler has been interrupted");
+        while (!closed) {
+            if (undoLogQ.isEmpty()) {
+                try {
+                    Thread.sleep(30000);
+                } catch (InterruptedException e) {
+                    logger.error("Thread sleep interrupted");
+                }
+                undoLogQ = undoLogStore.getUndoLogQueue(
+                        Arrays.asList(
+                                UndoLogStatus.ERROR.value()
+                        ));
             }
+            handle(undoLogQ.poll());
         }
     }
 
-    void handleRemainingUndoLog() {
-        List<UndoLog> undoInfos = new ArrayList<>();
-        undoLogQ.drainTo(undoInfos);
-        for(UndoLog undoInfo:undoInfos) {
-            handle(undoInfo);
+    void handle(UndoLog undoLog) {
+        if (undoLog == null) {
+            return;
         }
-    }
 
-    void handle(UndoLog undoInfo) {
+        if(undoLog.getStatus() == UndoLogStatus.UNCOMMITTED.value()) {
+            undoLogStore.remove(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey());
+        } else if(undoLog.getStatus() == UndoLogStatus.COMMITED.value()) {
+            undoLogStore.updateStatus(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey(), UndoLogStatus.ERROR);
+        }
+
         DataSource dataSource;
 
-        if(undoInfo.getDbType() == null ||
-                !this.dataSourceSelectors.containsKey(undoInfo.getDbType())) {
-            String dbType = undoInfo.getDbType() == null ? null:undoInfo.getDbType().name();
+        if (undoLog.getDbType() == null ||
+                !this.dataSourceSelectors.containsKey(undoLog.getDbType())) {
+            String dbType = undoLog.getDbType() == null ? null : undoLog.getDbType().name();
             logger.error("can't find datasource select by dbType-{}", dbType);
-            undoLogQ.add(undoInfo);
-            return ;
+            return;
         }
 
         dataSource = this.dataSourceSelectors
-                .get(undoInfo.getDbType())
-                .select(undoInfo.getShardKey());
+                .get(undoLog.getDbType())
+                .select(undoLog.getShardKey());
 
-        if(dataSource == null) {
-            logger.error("can't find datasource by dbKey-{}", undoInfo.getShardKey());
-            undoLogQ.add(undoInfo);
-            return ;
-        }
-
-        StorageCommand cmd = UndoUtil.selectUndoStorageCommand(
-                storageCommandInvokers, undoInfo.getDbType(), undoInfo.getOpType());
-
-        if(cmd == null) {
-            logger.error("can't find storage command by dbType-{}, opType-{}", undoInfo.getDbType(), undoInfo.getOpType());
-            undoLogQ.add(undoInfo);
-            return ;
+        if (dataSource == null) {
+            logger.error("can't find datasource by dbKey-{}", undoLog.getShardKey());
+            return;
         }
 
         TransactionResource resource;
         try {
-            resource = buildResource(undoInfo.getDbType(), undoInfo.getShardKey(), dataSource.getConnection(), true);
+            resource = buildResource(undoLog.getDbType(), undoLog.getShardKey(), dataSource.getConnection(), true);
         } catch (Exception e) {
-            undoLogQ.add(undoInfo);
+            logger.error("failed to build resource dbtype-{}, shardKey-{} ", undoLog.getDbType(), undoLog.getShardKey());
             return;
         }
 
-        try {
-            cmd.execute(resource, undoInfo.getData());
-        } catch (SQLException e) {
-            e.printStackTrace();
-            undoLogQ.add(undoInfo);
-            return;
-        }
+        ((UndoTransactionResource)resource).setUndoLog(undoLog);
 
-        undoLogStore.remove(undoInfo.getTxId(), undoInfo.getDbType(), undoInfo.getOpType());
-    }
-
-    public boolean isClosed() {
-        return closed;
+        undoExecutor.undo(resource);
     }
 
     public void close() {
@@ -137,11 +133,11 @@ public class UndoLogTask extends Thread {
         interrupt();
     }
 
-    private TransactionResource buildResource(DbTypeEnum dbType, String key, Connection value, boolean autocommit)
+    private TransactionResource buildResource(DbType dbType, String key, Connection value, boolean autocommit)
             throws Exception {
 
-        Class resourceClass = DbTypeEnum.INDEX.equals(dbType) ? SphinxQLTransactionResource.class :
-                (DbTypeEnum.MASTOR.equals(dbType) ? ConnectionTransactionResource.class:null);
+        Class resourceClass = DbType.INDEX.equals(dbType) ? SphinxQLTransactionResource.class :
+                (DbType.MASTOR.equals(dbType) ? ConnectionTransactionResource.class : null);
 
         Constructor<TransactionResource> constructor =
                 resourceClass.getConstructor(String.class, Connection.class, Boolean.TYPE);

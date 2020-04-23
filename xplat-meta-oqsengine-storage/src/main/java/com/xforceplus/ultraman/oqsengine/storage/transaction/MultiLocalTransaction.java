@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.UndoLogStatus;
+import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +55,12 @@ public class MultiLocalTransaction implements Transaction {
     @Override
     public synchronized void commit() throws SQLException {
         check();
-        doEndNew(true);
+
+        if(this.undoExecutor == null) {
+            doEnd(true);
+        } else {
+            doEndWithUndo(true);
+        }
 
         if (logger.isDebugEnabled()) {
             logger.debug("Transaction ({}), commit.", id);
@@ -63,7 +70,12 @@ public class MultiLocalTransaction implements Transaction {
     @Override
     public synchronized void rollback() throws SQLException {
         check();
-        doEndNew(false);
+
+        if(this.undoExecutor == null) {
+            doEnd(false);
+        } else {
+            doEndWithUndo(false);
+        }
 
         if (logger.isDebugEnabled()) {
             logger.debug("Transaction ({}), rollback.", id);
@@ -180,33 +192,40 @@ public class MultiLocalTransaction implements Transaction {
         }
     }
 
-    private void doEndNew(boolean commit) throws SQLException {
+    private void doEndWithUndo(boolean commit) throws SQLException {
         List<SQLException> exHolder = new LinkedList<>();
         try {
             for (TransactionResource transactionResource : transactionResourceHolder) {
+                undoExecutor.saveUndoLog(id, transactionResource);
+            }
+
+            for (TransactionResource transactionResource : transactionResourceHolder) {
                 if (commit) {
                     transactionResource.commit();
-                    undoExecutor.saveUndoLog(id, transactionResource);
+                    saveCommitStatus(transactionResource);
                 } else {
                     transactionResource.rollback();
                 }
-//                transactionResource.destroy();
             }
             undoExecutor.mock();
         } catch (SQLException ex) {
             exHolder.add(0, ex);
-            logger.debug("[UNDO] start to rollback or undo commit");
+            logger.debug("start to rollback or undo commit");
             for (TransactionResource transactionResource : transactionResourceHolder) {
-                if (!transactionResource.isDestroyed()) {
-                    logger.debug("[UNDO] transacitonResource {} rollback", transactionResource.key());
-                    transactionResource.rollback();
-                } else {
-                    if (commit) {
-                        logger.debug("[UNDO] transacitonResource {} rollback", transactionResource.key());
+                if(commit) {
+                    if (((UndoTransactionResource) transactionResource).isCommitted()) {
+                        logger.debug("transacitonResource {} undo", transactionResource.key());
                         undoExecutor.undo(transactionResource);
+                    } else {
+                        logger.debug("transacitonResource {} rollback", transactionResource.key());
+                        transactionResource.rollback();
                     }
+                } else {
+                    logger.debug("transacitonResource {} rollback", transactionResource.key());
+                    transactionResource.rollback();
                 }
             }
+
             logger.debug("[UNDO] finish to rollback or undo commit");
         } finally {
             logger.debug("clear transactionResource");
@@ -221,10 +240,6 @@ public class MultiLocalTransaction implements Transaction {
             }
         }
 
-        if(!exHolder.isEmpty()) {
-            undoExecutor.removeTxUndoLog(id);
-        }
-
         throwSQLExceptionIfNecessary(exHolder);
 
         if (commit) {
@@ -236,6 +251,10 @@ public class MultiLocalTransaction implements Transaction {
             rollback = true;
 
         }
+    }
 
+    void saveCommitStatus(TransactionResource resource){
+        ((UndoTransactionResource)resource).committed();
+        undoExecutor.updateUndoLogStatus(id, resource, UndoLogStatus.COMMITED);
     }
 }

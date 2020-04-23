@@ -1,9 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.pojo;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 版权：    上海云砺信息科技有限公司
@@ -14,17 +15,20 @@ import java.io.Serializable;
  */
 public class UndoLog implements Serializable {
     Long txId;
+    DbType dbType;
     String shardKey;
-    DbTypeEnum dbType;
-    OpTypeEnum opType;
-    Object data;
+    int status = 0;
+    long time;
+    List<UndoLogItem>  items = new ArrayList<>();
 
-    public UndoLog(Long txId, String dbKey, DbTypeEnum dbType, OpTypeEnum opType, Object data) {
+    public UndoLog() {
+
+    }
+
+    public UndoLog(Long txId, DbType dbType, String shardKey) {
         this.txId = txId;
-        this.shardKey = dbKey;
+        this.shardKey = shardKey;
         this.dbType = dbType;
-        this.opType = opType;
-        this.data = data;
     }
 
     public Long getTxId() {
@@ -43,27 +47,36 @@ public class UndoLog implements Serializable {
         this.shardKey = shardKey;
     }
 
-    public DbTypeEnum getDbType() {
+    public DbType getDbType() {
         return dbType;
     }
 
-    public void setDbType(DbTypeEnum dbType) {
+    public void setDbType(DbType dbType) {
         this.dbType = dbType;
     }
 
-    public OpTypeEnum getOpType() {
-        return opType;
+    public int getStatus() {
+        return status;
     }
 
-    public void setOpType(OpTypeEnum opType) {
-        this.opType = opType;
+    public void setStatus(int status) {
+        this.status = status;
     }
 
-    public Object getData() {
-        return data;
+    public long getTime() {
+        return time;
     }
 
-    public void setData(Object data) {
-        this.data = data;
+    public void setTime(long time) {
+        this.time = time;
     }
+
+    public List<UndoLogItem> getItems() {
+        return items;
+    }
+
+    public void setItems(List<UndoLogItem> items) {
+        this.items = items;
+    }
+
 }

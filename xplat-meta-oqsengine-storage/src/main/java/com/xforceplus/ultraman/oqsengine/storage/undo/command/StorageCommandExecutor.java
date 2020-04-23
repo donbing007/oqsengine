@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.command;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpType;
 
 import java.sql.SQLException;
 
@@ -12,10 +12,10 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public interface StorageCommandInvoker {
+public interface StorageCommandExecutor {
 
-    Object execute(TransactionResource resource, OpTypeEnum opType, Object data) throws SQLException;
+    Object execute(TransactionResource resource, OpType opType, Object data) throws SQLException;
 
-    StorageCommand selectCommand(OpTypeEnum typeEnum);
+    Object executeUndo(TransactionResource resource, OpType opType, Object data) throws SQLException;
 
 }

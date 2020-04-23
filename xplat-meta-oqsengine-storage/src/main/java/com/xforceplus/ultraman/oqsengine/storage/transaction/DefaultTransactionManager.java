@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.storage.undo.UndoFactory;
+import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
 
 /**
  * 默认的事务管理器.
@@ -14,16 +14,16 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
 
     private LongIdGenerator idGenerator;
 
-    private UndoFactory undoFactory;
+    private UndoExecutor undoExecutor;
 
     public DefaultTransactionManager(LongIdGenerator idGenerator) {
         this.idGenerator = idGenerator;
     }
 
-    public DefaultTransactionManager(int survivalTimeMs, LongIdGenerator idGenerator, UndoFactory undoFactory) {
+    public DefaultTransactionManager(int survivalTimeMs, LongIdGenerator idGenerator, UndoExecutor undoExecutor) {
         super(survivalTimeMs);
         this.idGenerator = idGenerator;
-        this.undoFactory = undoFactory;
+        this.undoExecutor = undoExecutor;
     }
 
     @Override
@@ -32,7 +32,7 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
 
         Transaction tx = new MultiLocalTransaction(id);
 
-        tx.setUndoExecutor(undoFactory.getUndoExecutor());
+        tx.setUndoExecutor(undoExecutor);
 
         return tx;
     }

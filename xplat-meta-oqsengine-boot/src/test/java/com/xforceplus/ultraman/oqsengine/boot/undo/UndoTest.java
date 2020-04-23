@@ -2,8 +2,10 @@ package com.xforceplus.ultraman.oqsengine.boot.undo;
 
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootTestApplication;
 import com.xforceplus.ultraman.oqsengine.boot.config.UndoConfiguration;
+import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
+import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
@@ -13,8 +15,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,10 +27,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -51,11 +57,19 @@ public class UndoTest {
     @Autowired
     private EntityManagementService entityManagementService;
 
+    @Autowired
+    private EntitySearchService entitySearchService;
+
+    @Autowired
+    private Selector<String> tableNameSelector;
+
+    @Resource
+    private DataSourcePackage dataSourcePackage;
+
     private IEntityClass fatherEntityClass;
 
     @Before
     public void before() {
-
         fatherEntityClass = new EntityClass(longIdGenerator.next(), "father", Arrays.asList(
                 new Field(longIdGenerator.next(), "f1", FieldType.LONG, FieldConfig.build().searchable(true)),
                 new Field(longIdGenerator.next(), "f2", FieldType.STRING, FieldConfig.build().searchable(false)),
@@ -66,7 +80,6 @@ public class UndoTest {
     @Test
     public void testBuild() throws SQLException {
 
-
         Transaction tx = transactionManager.create();
 
         tx.getUndoExecutor().setMockError(true);
@@ -75,11 +88,87 @@ public class UndoTest {
 
         entityManagementService.build(entity);
 
-        tx.commit();
+        try {
+            tx.commit();
+        } catch (SQLException e) {
 
+        }
+
+        Optional<IEntity> entityOptional = null;
+        try {
+            transactionManager.create();
+            entityOptional = entitySearchService.selectOne(entity.id(), entity.entityClass());
+        } catch (Exception e) {
+
+        }
+
+        Assert.assertNull(entityOptional);
+
+        tx.getUndoExecutor().setMockError(false);
     }
 
+    @Test
+    public void testReplace() throws SQLException {
+        Transaction tx = transactionManager.create();
 
+        IEntity entity = buildEntity(fatherEntityClass, false);
+
+        entityManagementService.build(entity);
+
+        tx.commit();
+
+        tx = transactionManager.create();
+
+        tx.getUndoExecutor().setMockError(true);
+
+        entity.entityValue().values().clear();
+
+        entityManagementService.replace(entity);
+
+        try {
+            tx.commit();
+        } catch (SQLException e) {
+
+        }
+
+        transactionManager.create();
+        Optional<IEntity> entityOptional = entitySearchService.selectOne(entity.id(), entity.entityClass());
+
+        Assert.assertTrue(entityOptional.isPresent());
+        Assert.assertFalse(entityOptional.get().entityValue().values().isEmpty());
+
+        tx.getUndoExecutor().setMockError(false);
+    }
+
+    @Test
+    public void testDelete() throws SQLException {
+        Transaction tx = transactionManager.create();
+
+        IEntity entity = buildEntity(fatherEntityClass, false);
+
+        entityManagementService.build(entity);
+
+        tx.commit();
+
+        tx = transactionManager.create();
+
+        tx.getUndoExecutor().setMockError(true);
+
+        entityManagementService.delete(entity);
+
+        try {
+            tx.commit();
+        } catch (SQLException e) {
+
+        }
+
+        transactionManager.create();
+        Optional<IEntity> entityOptional = entitySearchService.selectOne(entity.id(), entity.entityClass());
+
+        Assert.assertTrue(entityOptional.isPresent());
+
+        tx.getUndoExecutor().setMockError(false);
+    }
 
     private IEntity buildEntity(IEntityClass entityClass, boolean buildId) {
         long entityId = 0;

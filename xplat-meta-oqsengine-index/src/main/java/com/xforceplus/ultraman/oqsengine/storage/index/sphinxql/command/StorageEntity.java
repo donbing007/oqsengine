@@ -1,9 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 
+import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -13,15 +15,19 @@ import java.util.Set;
  * 功能描述:
  * 修改历史:
  */
-public class StorageEntity {
+public class StorageEntity implements Serializable {
     private long id;
     private long entity;
     private long pref;
     private long cref;
-    private JSONObject jsonFields;
+    private Map<String, Object> jsonFields;
     private Set<String> fullFields;
 
-    public StorageEntity(long id, long entity, long pref, long cref, JSONObject jsonFields, Set<String> fullFields) {
+    public StorageEntity() {
+
+    }
+
+    public StorageEntity(long id, long entity, long pref, long cref, Map<String, Object> jsonFields, Set<String> fullFields) {
         this.id = id;
         this.entity = entity;
         this.pref = pref;
@@ -46,7 +52,7 @@ public class StorageEntity {
         return cref;
     }
 
-    public JSONObject getJsonFields() {
+    public Map<String, Object> getJsonFields() {
         return jsonFields;
     }
 
@@ -70,7 +76,7 @@ public class StorageEntity {
         this.cref = cref;
     }
 
-    public void setJsonFields(JSONObject jsonFields) {
+    public void setJsonFields(Map<String, Object> jsonFields) {
         this.jsonFields = jsonFields;
     }
 
@@ -88,5 +94,17 @@ public class StorageEntity {
         return new HashSet<String>(fullfields) {{
             add(SphinxQLHelper.ALL_DATA_FULL_TEXT);
         }};
+    }
+
+    @Override
+    public String toString() {
+        return "StorageEntity{" +
+                "id=" + id +
+                ", entity=" + entity +
+                ", pref=" + pref +
+                ", cref=" + cref +
+                ", jsonFields=" + JSON.toJSONString(jsonFields) +
+                ", fullFields=" + JSON.toJSONString(fullFields) +
+                '}';
     }
 }

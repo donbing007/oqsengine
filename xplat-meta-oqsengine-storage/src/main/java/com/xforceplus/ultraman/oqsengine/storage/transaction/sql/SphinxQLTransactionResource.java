@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.sql;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.AbstractTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -14,7 +14,7 @@ import java.sql.Statement;
  * @version 0.1 2020/2/28 17:25
  * @since 1.8
  */
-public class SphinxQLTransactionResource extends AbstractTransactionResource<Connection> {
+public class SphinxQLTransactionResource extends UndoTransactionResource<Connection> {
 
     private Object key;
     private Connection conn;
@@ -42,8 +42,8 @@ public class SphinxQLTransactionResource extends AbstractTransactionResource<Con
     }
 
     @Override
-    public DbTypeEnum dbType() {
-        return DbTypeEnum.INDEX;
+    public DbType dbType() {
+        return DbType.INDEX;
     }
 
     @Override

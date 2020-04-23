@@ -1,11 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.command.AbstractStorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.UndoStorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +18,7 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class DeleteStorageCommand extends AbstractStorageCommand<StorageEntity> {
+public class DeleteStorageCommand extends UndoStorageCommand<StorageEntity> {
 
     final Logger logger = LoggerFactory.getLogger(DeleteStorageCommand.class);
 
@@ -32,13 +30,13 @@ public class DeleteStorageCommand extends AbstractStorageCommand<StorageEntity> 
 
     @Override
     public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
-        super.recordOriginalData(resource, OpTypeEnum.DELETE, storageEntity);
+        super.prepareUndoLog(resource, OpType.DELETE, storageEntity);
         return this.doExecute(resource, storageEntity);
     }
 
     StorageEntity doExecute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
         String sql = String.format(SQLConstant.DELETE_SQL, indexTableName);
-        PreparedStatement st = ((Connection)resource.value()).prepareStatement(sql);
+        PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
         st.setLong(1, storageEntity.getId()); // id
 
         if (logger.isDebugEnabled()) {
@@ -49,7 +47,7 @@ public class DeleteStorageCommand extends AbstractStorageCommand<StorageEntity> 
         st.executeUpdate();
 
         try {
-            return storageEntity;
+            return null;
         } finally {
             if (st != null) {
                 st.close();
@@ -57,4 +55,8 @@ public class DeleteStorageCommand extends AbstractStorageCommand<StorageEntity> 
         }
     }
 
+    @Override
+    public StorageEntity executeUndo(TransactionResource resource, StorageEntity data) throws SQLException {
+        return new BuildStorageCommand(indexTableName).executeUndo(resource, data);
+    }
 }

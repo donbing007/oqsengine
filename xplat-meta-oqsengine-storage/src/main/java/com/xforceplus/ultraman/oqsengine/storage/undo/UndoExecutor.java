@@ -1,24 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.AbstractTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandInvoker;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.UndoLogStatus;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
+import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLogItem;
 import com.xforceplus.ultraman.oqsengine.storage.undo.store.UndoLogStore;
-import com.xforceplus.ultraman.oqsengine.storage.undo.util.UndoUtil;
+import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-
-import static com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpTypeEnum.REPLACE_ATTRIBUTE;
 
 /**
  * 版权：    上海云砺信息科技有限公司
@@ -31,107 +23,56 @@ public class UndoExecutor {
 
     final Logger logger = LoggerFactory.getLogger(UndoExecutor.class);
 
-    private BlockingQueue<UndoLog> undoLogQ;
     private UndoLogStore undoLogStore;
-    private Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers;
+    private StorageCommandExecutor storageCommandExecutor;
     private boolean mockError;
 
     public UndoExecutor(
-            BlockingQueue<UndoLog> undoLogQ,
             UndoLogStore undoLogStore,
-            Map<DbTypeEnum, StorageCommandInvoker> storageCommandInvokers) {
-        this.undoLogQ = undoLogQ;
+            StorageCommandExecutor storageCommandExecutor) {
         this.undoLogStore = undoLogStore;
         if(undoLogStore == null) {
-            logger.debug("UndoExecutor set UndoLogStore to null");
+            logger.error("UndoExecutor set UndoLogStore to null");
         }
-        this.storageCommandInvokers = storageCommandInvokers;
+        this.storageCommandExecutor = storageCommandExecutor;
         this.mockError = false;
     }
 
-    public void undo(TransactionResource res) {
-        AbstractTransactionResource resource = (AbstractTransactionResource) res;
+    public void undo(TransactionResource resource) {
+        UndoLog undoLog = getUndoLog(resource);
 
-        List<UndoLog> undoInfos = resource.undoInfos();
+        logger.debug("start undo {} items", undoLog.getItems().size());
+        boolean isComplete = true;
+        for (int i = undoLog.getItems().size()-1; i >= 0; i--) {
+            UndoLogItem item = undoLog.getItems().get(i);
 
-        logger.debug("[UndoExecutor UNDO] start undo {} items", undoInfos.size());
-        for(UndoLog undoInfo:undoInfos) {
-            OpTypeEnum undoOpType = null;
-            switch (undoInfo.getOpType()) {
-                case BUILD:
-                    undoOpType = OpTypeEnum.DELETE;
-                    break;
-                case DELETE:
-                    undoOpType = OpTypeEnum.BUILD;
-                    break;
-                case REPLACE:
-                    undoOpType = OpTypeEnum.REPLACE;
-                    break;
-                case REPLACE_ATTRIBUTE:
-                    undoOpType = REPLACE_ATTRIBUTE;
-                    break;
-                default:
-            }
-
-            if (undoOpType == null) {
-                String errMsg = String.format("Can't find undo OpType by %s", undoInfo.getOpType().name());
-                logger.error(errMsg);
-                throw new RuntimeException(errMsg);
-            }
-
-            StorageCommand undoCmd = UndoUtil.selectUndoStorageCommand(
-                    storageCommandInvokers, undoInfo.getDbType(), undoInfo.getOpType());
-
-            if (undoCmd == null) {
-                String errMsg = String.format("Can't find undo Storage Command by dbType-{} opType-{}", undoInfo.getDbType().name(), undoInfo.getOpType().name());
-                logger.error(errMsg);
-                throw new RuntimeException(errMsg);
-            }
-
-            logger.debug("[UndoExecutor UNDO] undo operate {} ", undoOpType.name());
             try {
-                undoCmd.execute(resource, undoInfo.getData());
-
-                removeUndoLog(undoInfo);
-            } catch (Exception e) {
-                logger.debug("[UndoExecutor UNDO] undo failed, add into Queue ", undoOpType.name());
-                if (undoLogQ != null) {
-                    undoLogQ.add(undoInfo);
-                }
-
-                e.printStackTrace();
+                storageCommandExecutor.executeUndo(resource, item.getOpType(), item.getData());
+                resource.commit();
+                removeUndoLogItem(i, undoLog);
+            } catch (SQLException e) {
+                logger.error("undo failed ", item.getOpType().name());
+                isComplete = false;
             }
         }
 
-        logger.debug("[UndoExecutor UNDO] finish undo {} items", undoInfos.size());
+        if(isComplete) {
+            removeUndoLog(undoLog);
+        }
+
+        logger.debug("finish undo {} items");
     }
 
     public void saveUndoLog(Long txId, TransactionResource res){
-        AbstractTransactionResource resource = (AbstractTransactionResource) res;
-        if (this.undoLogStore != null) {
-            List<UndoLog> undoInfos = resource.undoInfos();
-            logger.debug("[UndoExecutor UNDO] save undo infos {} items in store ", undoInfos.size());
-            for(UndoLog undoInfo:undoInfos) {
-                this.undoLogStore.save(txId, undoInfo.getShardKey(),
-                        undoInfo.getDbType(), undoInfo.getOpType(), undoInfo.getData());
-            }
-        }
+        UndoLog undoLog = getUndoLog(res);
+        logger.debug("save undo infos {} items in store ", undoLog.getItems().size());
+        this.undoLogStore.save(txId, undoLog.getDbType(), undoLog.getShardKey(), undoLog);
     }
 
-    public void removeUndoLog(UndoLog undoInfo){
-        if (this.undoLogStore != null) {
-            this.undoLogStore.remove(undoInfo.getTxId(), undoInfo.getDbType(), undoInfo.getOpType());
-            logger.debug("[UndoExecutor UNDO] success to clear undo log in store");
-        }
-    }
-
-    public void removeTxUndoLog(Long txId){
-        if(this.undoLogStore != null) {
-            if(!this.undoLogStore.isExist(txId)) {
-                logger.debug("[removeTxUndoLog] tx {} has no undo log", txId);
-            }
-            this.undoLogStore.remove(txId);
-        }
+    public void updateUndoLogStatus(Long txId, TransactionResource res, UndoLogStatus status){
+        UndoLog undoLog = getUndoLog(res);
+        this.undoLogStore.updateStatus(txId, undoLog.getDbType(), undoLog.getShardKey(), status);
+        logger.debug("[UndoExecutor UNDO] success to clear undo log in store");
     }
 
     public void mock() throws SQLException {
@@ -142,5 +83,20 @@ public class UndoExecutor {
 
     public void setMockError(boolean mockError) {
         this.mockError = mockError;
+    }
+
+    private void removeUndoLogItem(int index, UndoLog undoLog){
+        this.undoLogStore.removeItem(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey(), index);
+        logger.debug("success to clear undo log in store");
+    }
+
+    private void removeUndoLog(UndoLog undoLog){
+        this.undoLogStore.remove(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey());
+        this.undoLogStore.tryRemove(undoLog.getTxId());
+        logger.debug("success to clear undo log in store");
+    }
+
+    private UndoLog getUndoLog(TransactionResource res){
+        return ((UndoTransactionResource) res).undoLog();
     }
 }

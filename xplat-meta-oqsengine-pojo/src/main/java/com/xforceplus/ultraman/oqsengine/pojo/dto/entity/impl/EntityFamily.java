@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityFamily;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -12,7 +11,7 @@ import java.util.Objects;
  * @version 0.1 2020/2/19 18:04
  * @since 1.8
  */
-public class EntityFamily implements IEntityFamily, Serializable {
+public class EntityFamily implements IEntityFamily {
     /**
      * 父id
      */

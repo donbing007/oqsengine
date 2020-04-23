@@ -9,7 +9,7 @@ server:
 
 logging:
   level:
-    root: debug
+    root: info
 
 transaction:
   timeoutms: 3000
@@ -39,3 +39,9 @@ management:
       exposure:
         include: "*"
       base-path: "/"
+
+store:
+  simple:
+    enabled: true
+  redis:
+    enabled: false

@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbTypeEnum;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -193,7 +193,7 @@ public class MultiLocalTransactionTest {
         }
 
         @Override
-        public DbTypeEnum dbType() {
+        public DbType dbType() {
             return null;
         }
 

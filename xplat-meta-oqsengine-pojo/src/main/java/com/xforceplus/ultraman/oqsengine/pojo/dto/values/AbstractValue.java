@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -13,7 +12,7 @@ import java.util.Objects;
  * @since 1.8
  * @param <V>
  */
-public abstract class AbstractValue<V> implements IValue<V>, Serializable {
+public abstract class AbstractValue<V> implements IValue<V> {
 
     private IEntityField field;
     private V value;

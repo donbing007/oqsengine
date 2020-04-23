@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
-import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -15,7 +14,7 @@ import java.util.*;
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
  */
-public class EntityClass implements IEntityClass, Serializable {
+public class EntityClass implements IEntityClass {
 
     /**
      * 元数据boId
