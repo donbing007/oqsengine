@@ -424,6 +424,13 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 .orElseGet(Collections::emptyList);
     }
 
+    @Override
+    public List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId, String version) {
+        return Optional.ofNullable(versionService.getVersionedDCForBoById(Long.parseLong(parentId), version))
+                .map(x -> this.findSubEntitiesById(tenantId, appId, parentId, x))
+                .orElseGet(Collections::emptyList);
+    }
+
     private List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId, UpdateableDataContext contextDC) {
         return read(() -> {
             DataSet boDs = contextDC.query()
@@ -466,7 +473,20 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     public List<EntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode) {
 
         UpdateableDataContext contextDC = versionService.getCurrentVersionDCForBoByCode(parentCode);
-        return findSubEntitiesByCode(tenantId, appId, parentCode, contextDC);
+
+        return  Optional.ofNullable(contextDC)
+                .map(x -> findSubEntitiesByCode(tenantId, appId, parentCode, x))
+                .orElseGet(Collections::emptyList);
+    }
+
+    @Override
+    public List<EntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode, String version) {
+
+        UpdateableDataContext contextDC = versionService.getVersionedDCForBoByCode(parentCode, version);
+
+        return  Optional.ofNullable(contextDC)
+                .map(x -> findSubEntitiesByCode(tenantId, appId, parentCode, x))
+                .orElseGet(Collections::emptyList);
     }
 
     /**
@@ -673,11 +693,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                     UpdateableDataContext versionedDCForModule = versionService.getVersionedDCForModule(moduleId, version);
                     return findAllEntities(versionedDCForModule).stream();
                 }).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<EntityClass> findAllEntities(String version) {
-        return null;
     }
 
     private List<EntityClass> findAllEntities(UpdateableDataContext contextDC) {

@@ -33,7 +33,11 @@ public interface MetadataRepository {
 
     List<EntityClass> findSubEntitiesById(String tenantId, String appCode, String boId);
 
+    List<EntityClass> findSubEntitiesById(String tenantId, String appCode, String boId, String version);
+
     List<EntityClass> findSubEntitiesByCode(String tenantId, String appCode, String boCode);
+
+    List<EntityClass> findSubEntitiesByCode(String tenantId, String appCode, String boCode, String version);
 
     void clearAllBoIdRelated(String boId, Long moduleId, UpdateableDataContext dc);
 
@@ -42,8 +46,6 @@ public interface MetadataRepository {
     SimpleBoItem findOneById(String boId, String version);
 
     List<EntityClass> findAllEntities();
-
-    List<EntityClass> findAllEntities(String version);
 
     CurrentVersion currentVersion();
 }

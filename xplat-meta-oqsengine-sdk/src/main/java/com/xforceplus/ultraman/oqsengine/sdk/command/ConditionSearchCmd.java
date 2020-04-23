@@ -9,15 +9,24 @@ public class ConditionSearchCmd implements MetaDataLikeCmd{
 
     private String boId;
 
+    private String version;
+
     private ConditionQueryRequest conditionQueryRequest;
 
-    public ConditionSearchCmd(String boId, ConditionQueryRequest conditionQueryRequest) {
+    public ConditionSearchCmd(String boId, ConditionQueryRequest conditionQueryRequest, String version) {
         this.boId = boId;
         this.conditionQueryRequest = conditionQueryRequest;
+        this.version = version;
     }
 
+    @Override
     public String getBoId() {
         return boId;
+    }
+
+    @Override
+    public String version() {
+        return version;
     }
 
     public ConditionQueryRequest getConditionQueryRequest() {

@@ -10,14 +10,22 @@ public class SingleCreateCmd implements MetaDataLikeCmd{
 
     private String boId;
     private Map<String, Object> body;
+    private String version;
 
-    public SingleCreateCmd(String boId, Map<String, Object> body) {
+    public SingleCreateCmd(String boId, Map<String, Object> body, String version) {
         this.boId = boId;
         this.body = body;
+        this.version = version;
     }
 
+    @Override
     public String getBoId() {
         return boId;
+    }
+
+    @Override
+    public String version() {
+        return version;
     }
 
     public Map<String, Object> getBody() {

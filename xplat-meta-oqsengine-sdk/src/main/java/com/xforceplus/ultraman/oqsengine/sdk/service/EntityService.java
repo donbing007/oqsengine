@@ -17,7 +17,11 @@ public interface EntityService {
 
     Optional<EntityClass> load(String boId);
 
+    Optional<EntityClass> load(String boId, String version);
+
     Optional<EntityClass> loadByCode(String bocode);
+
+    Optional<EntityClass> loadByCode(String bocode, String version);
 
     <T> Either<String, T> transactionalExecute(Callable<T> supplier);
 
@@ -38,6 +42,8 @@ public interface EntityService {
     Integer count(EntityClass entityClass, ConditionQueryRequest condition);
 
     List<EntityClass> loadSonByCode(String bocode, String tenantId);
+
+    List<EntityClass> loadSonByCode(String bocode, String tenantId, String version);
 
     List<EntityClass> getEntityClasss();
 }

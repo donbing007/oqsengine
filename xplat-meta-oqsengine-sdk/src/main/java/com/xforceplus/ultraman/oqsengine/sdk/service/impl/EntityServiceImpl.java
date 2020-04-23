@@ -66,11 +66,30 @@ public class EntityServiceImpl implements EntityService {
     }
 
     @Override
+    public Optional<EntityClass> load(String boId, String version) {
+
+        String tenantId = contextService.get(TENANTID_KEY);
+        String appCode = contextService.get(APPCODE);
+
+        return metadataRepository.load(tenantId, appCode, boId, version);
+    }
+
+    @Override
     public Optional<EntityClass> loadByCode(String bocode) {
+
         String tenantId = contextService.get(TENANTID_KEY);
         String appCode = contextService.get(APPCODE);
 
         return metadataRepository.loadByCode(tenantId, appCode, bocode);
+    }
+
+    @Override
+    public Optional<EntityClass> loadByCode(String bocode, String version) {
+
+        String tenantId = contextService.get(TENANTID_KEY);
+        String appCode = contextService.get(APPCODE);
+
+        return metadataRepository.loadByCode(tenantId, appCode, bocode, version);
     }
 
     @Override
@@ -358,13 +377,22 @@ public class EntityServiceImpl implements EntityService {
 
     @Override
     public List<EntityClass> loadSonByCode(String bocode, String tenantId) {
+        return this.loadSonByCode(bocode, tenantId, null);
+    }
+
+    @Override
+    public List<EntityClass> loadSonByCode(String bocode, String tenantId, String version) {
 
         if (StringUtils.isEmpty(tenantId)) {
             tenantId = contextService.get(TENANTID_KEY);
         }
         String appCode = contextService.get(APPCODE);
 
-        return metadataRepository.findSubEntitiesByCode(tenantId, appCode, bocode);
+        if( version == null ){
+            return metadataRepository.findSubEntitiesByCode(tenantId, appCode, bocode);
+        } else {
+            return metadataRepository.findSubEntitiesByCode(tenantId, appCode, bocode, version);
+        }
     }
 
     @Override

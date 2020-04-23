@@ -23,10 +23,19 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
 
     private static final String MISSING_ENTITES = "查询记录不存在";
 
+    private Optional<EntityClass> getEntityClass(MetaDataLikeCmd cmd) {
+        return
+                Optional
+                        .ofNullable(cmd.version()).map(x -> {
+                    return entityService.load(cmd.getBoId(), cmd.version());
+                }).orElseGet(() -> entityService.load(cmd.getBoId()));
+    }
+
     @QueryHandler(isDefault = true)
     @Override
     public Either<String, Map<String, Object>> singleQuery(SingleQueryCmd cmd) {
-        Optional<EntityClass> entityClassOp = entityService.load(cmd.getBoId());
+
+        Optional<EntityClass> entityClassOp = getEntityClass(cmd);
 
         if (entityClassOp.isPresent()) {
             return entityService.findOne(entityClassOp.get(), Long.parseLong(cmd.getId()));
@@ -38,7 +47,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
     @QueryHandler(isDefault = true)
     @Override
     public Either<String, Integer> singleDelete(SingleDeleteCmd cmd) {
-        Optional<EntityClass> entityClassOp = entityService.load(cmd.getBoId());
+        Optional<EntityClass> entityClassOp = getEntityClass(cmd);
 
         if (entityClassOp.isPresent()) {
             return entityService.deleteOne(entityClassOp.get(), Long.valueOf(cmd.getId()));
@@ -50,7 +59,8 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
     @QueryHandler(isDefault = true)
     @Override
     public Either<String, Long> singleCreate(SingleCreateCmd cmd) {
-        Optional<EntityClass> entityClassOp = entityService.load(cmd.getBoId());
+
+        Optional<EntityClass> entityClassOp = getEntityClass(cmd);
 
         if (entityClassOp.isPresent()) {
             return entityService.create(entityClassOp.get(), cmd.getBody());
@@ -63,7 +73,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
     @Override
     public Either<String, Integer> singleUpdate(SingleUpdateCmd cmd) {
 
-        Optional<EntityClass> entityClassOp = entityService.load(cmd.getBoId());
+        Optional<EntityClass> entityClassOp = getEntityClass(cmd);
 
         if (entityClassOp.isPresent()) {
             return entityService.updateById(entityClassOp.get(), cmd.getId(), cmd.getBody());
@@ -76,7 +86,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
     @Override
     public Either<String, Tuple2<Integer, List<Map<String, Object>>>> conditionSearch(ConditionSearchCmd cmd) {
 
-        Optional<EntityClass> entityClassOp = entityService.load(cmd.getBoId());
+        Optional<EntityClass> entityClassOp = getEntityClass(cmd);
 
         if (entityClassOp.isPresent()) {
             return entityService.findByCondition(entityClassOp.get(), cmd.getConditionQueryRequest());

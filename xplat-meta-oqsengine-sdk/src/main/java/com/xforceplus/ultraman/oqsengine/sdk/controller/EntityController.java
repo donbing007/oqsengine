@@ -36,7 +36,9 @@ public class EntityController {
     @ResponseBody
     public ResponseEntity<Response<Map<String, Object>>> singleQuery(
             @PathVariable String boId,
-            @PathVariable String id) {
+            @PathVariable String id,
+            @RequestParam(required = false, value = "v") String version
+    ) {
 
         Either<String, Map<String, Object>> result = dispatcher.querySync(new SingleQueryCmd(boId, id)
                 , DefaultUiService.class, "singleQuery");

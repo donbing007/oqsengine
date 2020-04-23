@@ -13,14 +13,23 @@ public class SingleUpdateCmd implements MetaDataLikeCmd{
 
     private Map<String, Object> body;
 
-    public SingleUpdateCmd(String boId, Long id, Map<String, Object> body) {
+    private String version;
+
+    public SingleUpdateCmd(String boId, Long id, Map<String, Object> body, String version) {
         this.boId = boId;
         this.id = id;
         this.body = body;
+        this.version = version;
     }
 
+    @Override
     public String getBoId() {
         return boId;
+    }
+
+    @Override
+    public String version() {
+        return version;
     }
 
     public Long getId() {
