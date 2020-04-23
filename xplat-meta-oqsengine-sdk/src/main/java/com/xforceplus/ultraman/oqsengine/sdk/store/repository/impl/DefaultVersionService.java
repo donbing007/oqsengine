@@ -1,11 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl;
 
-import com.xforceplus.ultraman.oqsengine.sdk.event.MetadataModuleMissingEvent;
+import com.xforceplus.ultraman.oqsengine.sdk.event.MetadataModuleVersionMissingEvent;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.VersionService;
-import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.BoNode;
-import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.RingDC;
-import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.RingDCHolder;
-import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.VersionedModule;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.apache.metamodel.UpdateableDataContext;
@@ -24,6 +20,9 @@ public class DefaultVersionService implements VersionService {
 
     private Map<Long, String> currentModuleVersionMap = new HashMap<>();
 
+    /**
+     * boNode  --> [moduleId:Long - version:String]
+     */
     private Map<BoNode, LinkedList<Tuple2<Long, String>>> boModuleMapping = new HashMap<>();
 
     private RingDCHolder dc;
@@ -32,13 +31,14 @@ public class DefaultVersionService implements VersionService {
 
     private ApplicationEventPublisher publisher;
 
-    public DefaultVersionService(int versionSize, ApplicationEventPublisher eventPublisher){
+    public DefaultVersionService(int versionSize, ApplicationEventPublisher eventPublisher) {
         this.versionSize = versionSize;
         this.publisher = eventPublisher;
     }
 
     /**
      * synchronized to prevent concurrent init
+     *
      * @param id
      * @param version
      * @return
@@ -46,9 +46,9 @@ public class DefaultVersionService implements VersionService {
     @Override
     public synchronized UpdateableDataContext getVersionedDCForBoById(long id, String version) {
 
-        List<Tuple2<Long, String>>  versionedList = findById(id);
+        List<Tuple2<Long, String>> versionedList = findById(id);
 
-        if(versionedList == null){
+        if (versionedList == null) {
             /**
              * not init
              */
@@ -58,13 +58,17 @@ public class DefaultVersionService implements VersionService {
         Optional<Tuple2<Long, String>> first = versionedList
                 .stream().filter(x -> x._2().equals(version)).findFirst();
 
-        if(first.isPresent()){
+        if (first.isPresent()) {
             return this.getVersionedDCForModule(first.get()._1(), version);
-        }else{
-            if(versionedList.size() < versionSize && publisher != null){
+        } else {
+            if (versionedList.size() < versionSize && publisher != null) {
                 //maybe the new or old one is not arrived try to fetch one
                 //TODO
-                publisher.publishEvent(new MetadataModuleMissingEvent());
+
+                Long relatedModuleId = versionedList.get(0)._1();
+                publisher.publishEvent(
+                        new MetadataModuleVersionMissingEvent(relatedModuleId, version)
+                );
 
                 return getVersionedDCForBoInner(id, version);
             }
@@ -74,9 +78,9 @@ public class DefaultVersionService implements VersionService {
 
     @Override
     public UpdateableDataContext getVersionedDCForBoByCode(String code, String version) {
-        List<Tuple2<Long, String>>  versionedList = findByCode(code);
+        List<Tuple2<Long, String>> versionedList = findByCode(code);
 
-        if(versionedList == null){
+        if (versionedList == null) {
             /**
              * not init
              */
@@ -86,13 +90,13 @@ public class DefaultVersionService implements VersionService {
         Optional<Tuple2<Long, String>> first = versionedList
                 .stream().filter(x -> x._2().equals(version)).findFirst();
 
-        if(first.isPresent()){
+        if (first.isPresent()) {
             return this.getVersionedDCForModule(first.get()._1(), version);
-        }else{
-            if(versionedList.size() < versionSize && publisher != null){
-                //maybe the new or old one is not arrived try to fetch one
-                //TODO
-                publisher.publishEvent(new MetadataModuleMissingEvent());
+        } else {
+            if (versionedList.size() < versionSize && publisher != null) {
+
+                Long relatedModuleId = versionedList.get(0)._1();
+                publisher.publishEvent(new MetadataModuleVersionMissingEvent(relatedModuleId, version));
 
                 return getVersionedDCForBoInner(code, version);
             }
@@ -100,11 +104,11 @@ public class DefaultVersionService implements VersionService {
         return null;
     }
 
-    private UpdateableDataContext getVersionedDCForBoInner(long id, String version){
+    private UpdateableDataContext getVersionedDCForBoInner(long id, String version) {
 
-        List<Tuple2<Long, String>>  versionedList = findById(id);
+        List<Tuple2<Long, String>> versionedList = findById(id);
 
-        if(versionedList == null){
+        if (versionedList == null) {
             return null;
         }
 
@@ -114,11 +118,11 @@ public class DefaultVersionService implements VersionService {
         return first.map(longStringTuple2 -> this.getVersionedDCForModule(longStringTuple2._1(), version)).orElse(null);
     }
 
-    private UpdateableDataContext getVersionedDCForBoInner(String code, String version){
+    private UpdateableDataContext getVersionedDCForBoInner(String code, String version) {
 
-        List<Tuple2<Long, String>>  versionedList = findByCode(code);
+        List<Tuple2<Long, String>> versionedList = findByCode(code);
 
-        if(versionedList == null){
+        if (versionedList == null) {
             return null;
         }
 
@@ -130,10 +134,10 @@ public class DefaultVersionService implements VersionService {
 
     @Override
     public UpdateableDataContext getCurrentVersionDCForBoById(Long id) {
-        LinkedList<Tuple2<Long, String>>  versionedList = findById(id);
+        LinkedList<Tuple2<Long, String>> versionedList = findById(id);
 
 
-        if(versionedList == null){
+        if (versionedList == null) {
             /**
              * not init
              */
@@ -142,7 +146,7 @@ public class DefaultVersionService implements VersionService {
 
         Tuple2<Long, String> last = versionedList.getLast();
 
-        if(last != null){
+        if (last != null) {
             return this.getVersionedDCForModule(last._1(), last._2());
         }
 
@@ -152,8 +156,8 @@ public class DefaultVersionService implements VersionService {
     @Override
     public UpdateableDataContext getCurrentVersionDCForBoByCode(String code) {
 
-        LinkedList<Tuple2<Long, String>>  versionedList = findByCode(code);
-        if(versionedList == null){
+        LinkedList<Tuple2<Long, String>> versionedList = findByCode(code);
+        if (versionedList == null) {
             /**
              * not init
              */
@@ -162,7 +166,7 @@ public class DefaultVersionService implements VersionService {
 
         Tuple2<Long, String> last = versionedList.getLast();
 
-        if(last != null){
+        if (last != null) {
             return this.getVersionedDCForModule(last._1(), last._2());
         }
 
@@ -178,6 +182,7 @@ public class DefaultVersionService implements VersionService {
 
     /**
      * save module to the current version
+     *
      * @param id
      * @param version
      * @param boIds
@@ -187,7 +192,7 @@ public class DefaultVersionService implements VersionService {
 
         String currentVersion = currentModuleVersionMap.get(id);
 
-        if(currentVersion == null){
+        if (currentVersion == null) {
             LinkedList<VersionedModule> list = new LinkedList<>();
             list.addLast(new VersionedModule(version, boIds, dc.getRoot(), System.currentTimeMillis()));
             currentVersionForModule.put(id, list);
@@ -198,21 +203,29 @@ public class DefaultVersionService implements VersionService {
                 boModuleMapping.put(boNode, boList);
             });
 
-        } else if(! currentVersion.equals(version) ){
+        } else if (!currentVersion.equals(version)) {
             LinkedList<VersionedModule> list = currentVersionForModule.get(id);
-            if(list.size() + 1 > versionSize){
+            if (list.size() + 1 > versionSize) {
                 list.removeFirst();
             }
 
             RingDC last = list.getLast().getRingDC();
             list.addLast(new VersionedModule(version, boIds, last.next(), System.currentTimeMillis()));
 
-            boIds.forEach(boId -> {
+            boIds.forEach(boNode -> {
 
-                LinkedList<Tuple2<Long, String>> boList = findById(boId.getId());
+                //this bo may not exists in preview module
+                //add new Bo
+                LinkedList<Tuple2<Long, String>> boList = findById(boNode.getId());
 
-                if(boList.size() + 1 > versionSize){
-                    boList.removeFirst();
+                if (boList != null) {
+                    if (boList.size() + 1 > versionSize) {
+                        boList.removeFirst();
+                    }
+                } else {
+                    //init new bo here
+                    boList = new LinkedList<>();
+                    boModuleMapping.put(boNode, boList);
                 }
 
                 boList.addLast(Tuple.of(id, version));
@@ -224,14 +237,14 @@ public class DefaultVersionService implements VersionService {
 
     @Override
     public void initVersionedDC(int versionSize, Supplier<UpdateableDataContext> dcSupplier) {
-        if(versionSize < 0 ){
+        if (versionSize < 0) {
             versionSize = 1;
         }
 
-        if(versionSize == 1){
+        if (versionSize == 1) {
             UpdateableDataContext root = dcSupplier.get();
             dc = new RingDCHolder(new RingDC(root));
-        }else{
+        } else {
             UpdateableDataContext root = dcSupplier.get();
             dc = new RingDCHolder(new RingDC(root));
 
@@ -246,14 +259,14 @@ public class DefaultVersionService implements VersionService {
         return Collections.unmodifiableMap(this.currentModuleVersionMap);
     }
 
-    private LinkedList<Tuple2<Long, String>> findById(long id){
+    private LinkedList<Tuple2<Long, String>> findById(long id) {
         return boModuleMapping.entrySet()
                 .stream()
                 .filter(x -> x.getKey().getId().equals(id))
                 .findFirst().map(Map.Entry::getValue).orElse(null);
     }
 
-    private LinkedList<Tuple2<Long, String>> findByCode(String code){
+    private LinkedList<Tuple2<Long, String>> findByCode(String code) {
         return boModuleMapping.entrySet()
                 .stream()
                 .filter(x -> x.getKey().getCode().equals(code))

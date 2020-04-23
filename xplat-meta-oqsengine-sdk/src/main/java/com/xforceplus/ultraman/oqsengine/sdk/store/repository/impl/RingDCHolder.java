@@ -11,7 +11,7 @@ public class RingDCHolder {
 
     private RingDC current;
 
-    public RingDCHolder(RingDC root){
+    public RingDCHolder(RingDC root) {
         this.root = root;
         this.current = this.root;
         this.current.setNext(root);
@@ -20,9 +20,10 @@ public class RingDCHolder {
 
     /**
      * make this a circle
+     *
      * @param node
      */
-    public void addNode(RingDC node){
+    public void addNode(RingDC node) {
         this.current.setNext(node);
         node.setNext(root);
         this.current = node;

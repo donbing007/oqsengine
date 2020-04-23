@@ -529,11 +529,10 @@ public class StoreTest {
         System.out.println(fields8.get(0).name());
         System.out.println(fields9.get(0).name());
 
-
-        assertTrue("is empty", !repository.load("1", "1", "111111", "0.0.1").isPresent());
-
+        assertTrue("is empty"
+                , !repository.load("1", "1", "111111", "0.0.1")
+                        .isPresent());
 
         System.out.println(repository.currentVersion().getVersionMapping());
-
     }
 }

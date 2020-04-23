@@ -54,18 +54,18 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     private ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-    private VersionService versionService ;
+    private VersionService versionService;
 
     private int maxVersion = 3;
 
 
-    public MetadataRepositoryInMemoryImpl(){
+    public MetadataRepositoryInMemoryImpl() {
         this(-1, null);
     }
 
     public MetadataRepositoryInMemoryImpl(int maxVersion, ApplicationEventPublisher publisher) {
 
-        if(maxVersion > 0) {
+        if (maxVersion > 0) {
             this.maxVersion = maxVersion;
         }
 
@@ -157,9 +157,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         return read(() -> {
 
-            UpdateableDataContext dc =  versionService.getCurrentVersionDCForBoById(Long.parseLong(id));
+            UpdateableDataContext dc = versionService.getCurrentVersionDCForBoById(Long.parseLong(id));
 
-            if(dc == null) return null;
+            if (dc == null) return null;
 
             DataSet boDetails = dc.query().from(BoTable.TABLE_NAME)
                     .selectAll()
@@ -255,7 +255,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     /**
-     *
      * @param moduleUpResult
      * @param tenantId
      * @param appId
@@ -619,7 +618,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * @param boId
      */
     @Override
-    public void clearAllBoIdRelated(String boId, Long moduleId,  UpdateableDataContext dc) {
+    public void clearAllBoIdRelated(String boId, Long moduleId, UpdateableDataContext dc) {
         write(() -> {
             UpdateSummary updateSummary = dc.executeUpdate(callback -> {
                 callback.deleteFrom(getTable(BoTable.TABLE_NAME, dc)).where(BoTable.ID).eq(boId).execute();
@@ -669,11 +668,11 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     public List<EntityClass> findAllEntities() {
         return versionService.getCurrentVersion().entrySet().stream()
                 .flatMap(entry -> {
-            Long moduleId = entry.getKey();
-            String version = entry.getValue();
-            UpdateableDataContext versionedDCForModule = versionService.getVersionedDCForModule(moduleId, version);
-            return findAllEntities(versionedDCForModule).stream();
-        }).collect(Collectors.toList());
+                    Long moduleId = entry.getKey();
+                    String version = entry.getValue();
+                    UpdateableDataContext versionedDCForModule = versionService.getVersionedDCForModule(moduleId, version);
+                    return findAllEntities(versionedDCForModule).stream();
+                }).collect(Collectors.toList());
     }
 
     @Override
@@ -842,7 +841,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
 //------------------------------------------------------------------------------------------------------------
 
-    private  List<IEntityField> loadFields(String id, UpdateableDataContext dc) {
+    private List<IEntityField> loadFields(String id, UpdateableDataContext dc) {
         return read(() -> {
             DataSet fieldDs = dc.query().from(FieldTable.TABLE_NAME)
                     .selectAll().where(FieldTable.BO_ID).eq(id).execute();

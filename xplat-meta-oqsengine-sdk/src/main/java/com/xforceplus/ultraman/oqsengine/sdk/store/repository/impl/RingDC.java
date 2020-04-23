@@ -15,7 +15,7 @@ public class RingDC {
         this.dc = dc;
     }
 
-    public void setNext(RingDC ringDC){
+    public void setNext(RingDC ringDC) {
         this.next = ringDC;
     }
 

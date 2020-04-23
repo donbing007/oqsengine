@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.CodeExtendedInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.DefaultSearchInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.MatchRouter;
+import com.xforceplus.ultraman.oqsengine.sdk.listener.ModuleEventListener;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.*;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.*;
@@ -35,6 +36,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -112,8 +114,8 @@ public class InitServiceAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(MetadataRepository.class)
-    public MetadataRepository metadataRepository(){
-        return new MetadataRepositoryInMemoryImpl();
+    public MetadataRepository metadataRepository(ApplicationEventPublisher publisher){
+        return new MetadataRepositoryInMemoryImpl(3, publisher);
     }
 
     //service
@@ -123,7 +125,6 @@ public class InitServiceAutoConfiguration {
                                     , ContextService contextService){
         return new EntityServiceImpl(metadataRepository, entityServiceClient, contextService);
     }
-
 
     @Bean
     public EntityServiceEx entityServiceEx(MetadataRepository metadataRepository
@@ -256,5 +257,11 @@ public class InitServiceAutoConfiguration {
     @Bean
     public UltPageInitService ultPageInitService(){
         return new UltPageInitService();
+    }
+
+
+    @Bean
+    public ModuleEventListener listener(){
+        return new ModuleEventListener();
     }
 }

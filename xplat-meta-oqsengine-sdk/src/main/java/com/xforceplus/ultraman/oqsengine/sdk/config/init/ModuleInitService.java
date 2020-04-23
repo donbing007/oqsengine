@@ -4,8 +4,7 @@ import akka.stream.ActorMaterializer;
 import akka.stream.javadsl.Sink;
 import com.xforceplus.ultraman.metadata.grpc.CheckServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
-import com.xforceplus.ultraman.oqsengine.sdk.event.MetadataModuleGetEvent;
-import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.event.MetadataModuleGotEvent;
 import com.xforceplus.xplat.galaxy.grpc.client.LongConnect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +45,7 @@ public class ModuleInitService implements InitializingBean {
                 , () -> checkServiceClient.checkStreaming(request))
                 .runWith(Sink.foreach(x -> {
                     logger.debug("Got module {}", x);
-                    publisher.publishEvent(new MetadataModuleGetEvent(request, x));
+                    publisher.publishEvent(new MetadataModuleGotEvent(request, x));
                 }), mat);
     }
 }

@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl;
 
 import java.util.Objects;
 
+/**
+ * Bo Class hold id and name
+ */
 public class BoNode {
 
     private String code;
