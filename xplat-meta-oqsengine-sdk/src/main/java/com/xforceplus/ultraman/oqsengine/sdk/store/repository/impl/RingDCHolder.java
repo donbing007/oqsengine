@@ -3,6 +3,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Ring DC holder
+ */
 public class RingDCHolder {
 
     List<RingDC> ringDCList = new LinkedList<>();

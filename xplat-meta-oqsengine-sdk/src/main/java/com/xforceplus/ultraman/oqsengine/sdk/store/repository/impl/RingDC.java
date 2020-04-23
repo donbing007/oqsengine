@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl;
 
 import org.apache.metamodel.UpdateableDataContext;
 
+/**
+ * ring data-context data struct
+ */
 public class RingDC {
 
     /**

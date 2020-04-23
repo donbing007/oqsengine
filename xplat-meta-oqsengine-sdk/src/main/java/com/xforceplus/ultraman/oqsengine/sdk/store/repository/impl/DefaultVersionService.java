@@ -11,6 +11,9 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
+/**
+ * default version service
+ */
 public class DefaultVersionService implements VersionService {
 
     /**
