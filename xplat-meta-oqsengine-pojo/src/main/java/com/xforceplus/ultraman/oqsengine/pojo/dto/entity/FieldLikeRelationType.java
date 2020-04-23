@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 
 import java.util.Optional;
@@ -94,7 +94,7 @@ public enum FieldLikeRelationType {
                 .searchable(searchable)
                 .identifie(isIdentifier);
 
-        return new Field(fieldId, fieldName, fieldType, fieldConfig);
+        return new EntityField(fieldId, fieldName, fieldType, fieldConfig);
     }
 
     public static Optional<FieldLikeRelationType> from(String name) {

@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -33,7 +33,7 @@ public class HealthCheck implements HealthIndicator {
     @Resource
     private EntitySearchService entitySearchService;
 
-    private IEntityField notExistField = new Field(1, "test", FieldType.STRING);
+    private IEntityField notExistField = new EntityField(1, "test", FieldType.STRING);
     private IEntityClass notExistClass = new EntityClass(1, "test", Arrays.asList(notExistField));
     private IValue notExistValue = new StringValue(notExistField, "test");
 

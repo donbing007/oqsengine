@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.contract.meta;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.Result;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.Api;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -20,7 +20,7 @@ public class BoResult extends Result implements Serializable {
     private Long id;
     private String code;
     private EntityClass entityClass;
-    private List<Field> fields;
+    private List<EntityField> fields;
     private List<Api> apis;
 
     public BoResult(Object status) {
@@ -59,11 +59,11 @@ public class BoResult extends Result implements Serializable {
         this.entityClass = entityClass;
     }
 
-    public List<Field> getFields() {
+    public List<EntityField> getFields() {
         return fields;
     }
 
-    public void setFields(List<Field> fields) {
+    public void setFields(List<EntityField> fields) {
         this.fields = fields;
     }
 

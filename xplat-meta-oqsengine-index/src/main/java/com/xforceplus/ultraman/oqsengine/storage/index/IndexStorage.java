@@ -1,11 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.index;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
 
@@ -22,10 +21,15 @@ import java.util.Collection;
 public interface IndexStorage extends Storage {
 
     /**
-     * 条件搜索Entity指针.
+     * 条件搜索 entity 的指针信息.
+     * 如果没有某个条件没有指定 entityClass,那么将假定为和返回 entityClass 一致.
      *
      * @param conditions 搜索条件.
-     * @return
+     * @param entityClass 搜索目标的 entityClass.
+     * @param sort 搜索结果排序.
+     * @param page 搜索结果分页信息.
+     * @return 搜索结果列表.
+     * @throws SQLException
      */
     Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
         throws SQLException;

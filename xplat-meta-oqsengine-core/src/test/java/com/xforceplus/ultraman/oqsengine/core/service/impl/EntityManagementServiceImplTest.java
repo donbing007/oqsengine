@@ -53,9 +53,9 @@ public class EntityManagementServiceImplTest {
         idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0));
 
         fatherEntityClass = new EntityClass(idGenerator.next(), "father", Arrays.asList(
-            new Field(idGenerator.next(), "f1", FieldType.LONG, FieldConfig.build().searchable(true)),
-            new Field(idGenerator.next(), "f2", FieldType.STRING, FieldConfig.build().searchable(false)),
-            new Field(idGenerator.next(), "f3", FieldType.DECIMAL, FieldConfig.build().searchable(true))
+            new EntityField(idGenerator.next(), "f1", FieldType.LONG, FieldConfig.build().searchable(true)),
+            new EntityField(idGenerator.next(), "f2", FieldType.STRING, FieldConfig.build().searchable(false)),
+            new EntityField(idGenerator.next(), "f3", FieldType.DECIMAL, FieldConfig.build().searchable(true))
         ));
 
         childEntityClass = new EntityClass(
@@ -65,7 +65,7 @@ public class EntityManagementServiceImplTest {
             null,
             fatherEntityClass,
             Arrays.asList(
-                new Field(idGenerator.next(), "c1", FieldType.LONG, FieldConfig.build().searchable(true))
+                new EntityField(idGenerator.next(), "c1", FieldType.LONG, FieldConfig.build().searchable(true))
             )
         );
 

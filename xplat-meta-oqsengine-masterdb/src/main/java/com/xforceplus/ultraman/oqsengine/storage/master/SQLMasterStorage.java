@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
@@ -22,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -72,44 +70,22 @@ public class SQLMasterStorage implements MasterStorage {
     @Resource(name = "masterStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
 
-    private long queryTimeout;
+    @Resource
+    private ExecutorService threadPool;
 
-    private int workerSize;
+    private long queryTimeout;
 
     public void setQueryTimeout(long queryTimeout) {
         this.queryTimeout = queryTimeout;
     }
 
-    public void setWorkerSize(int workerSize) {
-        this.workerSize = workerSize;
-    }
-
-    /**
-     * 工作者线程.
-     */
-    private ExecutorService worker;
-
     @PostConstruct
     public void init() {
-        if (workerSize <= 0) {
-            setWorkerSize(Runtime.getRuntime().availableProcessors());
-        }
 
         if (queryTimeout <= 0) {
             setQueryTimeout(3000L);
         }
-
-        worker = new ThreadPoolExecutor(workerSize, workerSize,
-            0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(500),
-            ExecutorHelper.buildNameThreadFactory("Master-worker", false));
     }
-
-    @PreDestroy
-    public void destroy() {
-        ExecutorHelper.shutdownAndAwaitTermination(worker);
-    }
-
 
     @Override
     public Optional<IEntity> select(long id, IEntityClass entityClass) throws SQLException {
@@ -161,7 +137,7 @@ public class SQLMasterStorage implements MasterStorage {
         List<Future> futures = new ArrayList(groupedMap.keySet().size());
 
         for (List<Long> groupedIds : groupedMap.values()) {
-            futures.add(worker.submit(new MultipleSelectCallable(latch, groupedIds, ids)));
+            futures.add(threadPool.submit(new MultipleSelectCallable(latch, groupedIds, ids)));
         }
 
         try {

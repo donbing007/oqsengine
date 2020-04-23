@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import org.junit.After;
@@ -37,7 +37,7 @@ public class ConditionsTest {
         Assert.assertEquals(false, conditions.haveOrLink());
         Assert.assertEquals(false, conditions.haveRangeCondition());
 
-        IEntityField field = new Field(1, "test", FieldType.STRING);
+        IEntityField field = new EntityField(1, "test", FieldType.STRING);
         conditions.addAnd(
             new Condition(field, ConditionOperator.EQUALS, new StringValue(field, "test")));
 
@@ -56,9 +56,9 @@ public class ConditionsTest {
     @Test
     public void testValidation() throws Exception {
         Condition wrongCondition = new Condition(
-            new Field(1, "test", FieldType.STRING),
+            new EntityField(1, "test", FieldType.STRING),
             ConditionOperator.GREATER_THAN,
-            new StringValue(new Field(1, "test", FieldType.STRING), "test.value"));
+            new StringValue(new EntityField(1, "test", FieldType.STRING), "test.value"));
 
         try {
             new Conditions(wrongCondition);
@@ -67,9 +67,9 @@ public class ConditionsTest {
         }
 
         Condition correctCondition = new Condition(
-            new Field(1, "test", FieldType.STRING),
+            new EntityField(1, "test", FieldType.STRING),
             ConditionOperator.LIKE,
-            new StringValue(new Field(1, "test", FieldType.STRING), "test.value")
+            new StringValue(new EntityField(1, "test", FieldType.STRING), "test.value")
         );
         Conditions conditions = new Conditions(correctCondition);
         Assert.assertEquals(1, conditions.size());
@@ -92,7 +92,7 @@ public class ConditionsTest {
                     ValueConditionNode current = (ValueConditionNode) cn;
                     buff.append(current.getCondition().getField().name())
                         .append(current.getCondition().getOperator().getSymbol())
-                        .append(current.getCondition().getValue().getValue());
+                        .append(current.getCondition().getFirstValue().getValue());
                 } else {
                     LinkConditionNode current = (LinkConditionNode) cn;
                     buff.append(" ").append(current.getLink().toString()).append(" ");
@@ -110,22 +110,22 @@ public class ConditionsTest {
             new Case(
                 new Conditions(
                     new Condition(
-                        new Field(1, "c1", FieldType.LONG),
+                        new EntityField(1, "c1", FieldType.LONG),
                         ConditionOperator.EQUALS,
-                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L))),
+                        new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L))),
                 "c1=100"
             )
             ,
             new Case(
                 new Conditions(
                     new Condition(
-                        new Field(1, "c1", FieldType.LONG),
+                        new EntityField(1, "c1", FieldType.LONG),
                         ConditionOperator.EQUALS,
-                        new LongValue(new Field(1, "c1", FieldType.LONG), 100L)))
+                        new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)))
                     .addAnd(new Condition(
-                        new Field(1, "c2", FieldType.LONG),
+                        new EntityField(1, "c2", FieldType.LONG),
                         ConditionOperator.EQUALS,
-                        new LongValue(new Field(1, "c2", FieldType.LONG), 100L))),
+                        new LongValue(new EntityField(1, "c2", FieldType.LONG), 100L))),
                 "c1=100 AND c2=100"
             )
             ,
@@ -133,9 +133,9 @@ public class ConditionsTest {
                 Conditions.buildEmtpyConditions().addAnd(
                     Conditions.buildEmtpyConditions().addAnd(
                         new Condition(
-                            new Field(1, "c1", FieldType.LONG),
+                            new EntityField(1, "c1", FieldType.LONG),
                             ConditionOperator.EQUALS,
-                            new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
+                            new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                         )
                     )
                     , false
@@ -146,16 +146,16 @@ public class ConditionsTest {
                 Conditions.buildEmtpyConditions()
                     .addAnd(
                         new Condition(
-                            new Field(1, "c2", FieldType.LONG),
+                            new EntityField(1, "c2", FieldType.LONG),
                             ConditionOperator.EQUALS,
-                            new LongValue(new Field(1, "c2", FieldType.LONG), 100L))
+                            new LongValue(new EntityField(1, "c2", FieldType.LONG), 100L))
                     )
                     .addAnd(
                         Conditions.buildEmtpyConditions().addAnd(
                             new Condition(
-                                new Field(1, "c1", FieldType.LONG),
+                                new EntityField(1, "c1", FieldType.LONG),
                                 ConditionOperator.EQUALS,
-                                new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
+                                new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                             )
                         )
                         , false
@@ -167,25 +167,25 @@ public class ConditionsTest {
                 Conditions.buildEmtpyConditions()
                     .addAnd(
                         new Condition(
-                            new Field(2, "c2", FieldType.LONG),
+                            new EntityField(2, "c2", FieldType.LONG),
                             ConditionOperator.EQUALS,
-                            new LongValue(new Field(2, "c2", FieldType.LONG), 100L))
+                            new LongValue(new EntityField(2, "c2", FieldType.LONG), 100L))
                     )
                     .addAnd(
                         Conditions.buildEmtpyConditions().addAnd(
                             new Condition(
-                                new Field(1, "c1", FieldType.LONG),
+                                new EntityField(1, "c1", FieldType.LONG),
                                 ConditionOperator.EQUALS,
-                                new LongValue(new Field(1, "c1", FieldType.LONG), 100L)
+                                new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                             )
                         )
                         , false
                     ).addAnd(
                     Conditions.buildEmtpyConditions().addAnd(
                         new Condition(
-                            new Field(3, "c3", FieldType.LONG),
+                            new EntityField(3, "c3", FieldType.LONG),
                             ConditionOperator.EQUALS,
-                            new LongValue(new Field(3, "c3", FieldType.LONG), 100L)
+                            new LongValue(new EntityField(3, "c3", FieldType.LONG), 100L)
                         )
                     )
                     , false

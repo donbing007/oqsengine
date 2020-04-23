@@ -7,7 +7,7 @@
     <groupId>com.xforceplus.ultraman</groupId>
     <artifactId>xplat-meta-oqsengine</artifactId>
     <packaging>pom</packaging>
-    <version>0.1.1-SNAPSHOT</version>
+    <version>0.1.2-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -169,11 +169,10 @@
                 <version>1.2.62</version>
             </dependency>
 
-
             <dependency>
-                <groupId>org.postgresql</groupId>
-                <artifactId>postgresql</artifactId>
-                <version>42.2.10</version>
+                <groupId>io.vavr</groupId>
+                <artifactId>vavr</artifactId>
+                <version>0.9.3</version>
             </dependency>
 
             <dependency>

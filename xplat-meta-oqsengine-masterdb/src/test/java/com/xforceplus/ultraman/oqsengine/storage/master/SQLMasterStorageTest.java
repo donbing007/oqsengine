@@ -3,12 +3,16 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoShardTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
@@ -28,6 +32,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -48,7 +54,7 @@ public class SQLMasterStorageTest {
     private DataSourcePackage dataSourcePackage;
     private SQLMasterStorage storage;
     private List<IEntity> expectedEntitys;
-    private IEntityField fixStringsField = new Field(100000, "strings", FieldType.STRINGS);
+    private IEntityField fixStringsField = new EntityField(100000, "strings", FieldType.STRINGS);
     private StringsValue fixStringsValue = new StringsValue(fixStringsField, "1,2,3,500002,测试".split(","));
 
     @Before
@@ -67,11 +73,19 @@ public class SQLMasterStorageTest {
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
 
+        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(1, 1,
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(500),
+            ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
+            new ThreadPoolExecutor.AbortPolicy()
+        );
+
         storage = new SQLMasterStorage();
         ReflectionTestUtils.setField(storage, "dataSourceSelector", dataSourceSelector);
         ReflectionTestUtils.setField(storage, "tableNameSelector", tableNameSelector);
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
+        ReflectionTestUtils.setField(storage, "threadPool", threadPool);
         storage.init();
 
         transactionManager.create();
@@ -82,8 +96,6 @@ public class SQLMasterStorageTest {
     public void after() throws Exception {
 
         transactionManager.finish();
-
-        storage.destroy();
 
         dataSourcePackage.close();
 
@@ -251,7 +263,7 @@ public class SQLMasterStorageTest {
         List<IEntityField> fields = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             long fieldId = baseId + i;
-            fields.add(new Field(fieldId, "c" + fieldId,
+            fields.add(new EntityField(fieldId, "c" + fieldId,
                 ("c" + fieldId).hashCode() % 2 == 1 ? FieldType.LONG : FieldType.STRING));
         }
 

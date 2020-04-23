@@ -17,7 +17,6 @@ import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 
 /**
  * entity 搜索服务.
@@ -84,11 +83,39 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     @Override
-    public Collection<IEntity> selectMultiple(Long[] ids, IEntityClass entityClass) throws SQLException {
-        Map<Long, IEntityClass> request = Arrays.stream(ids).collect(
-            Collectors.toMap(i -> i, i -> entityClass, (i0, i1) -> i0));
+    public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
+        Map<Long, IEntityClass> request = new HashMap<>(ids.length);
+        for (long id : ids) {
+            request.put(id, entityClass);
+        }
 
-        return masterStorage.selectMultiple(request);
+        Collection<IEntity> entities = masterStorage.selectMultiple(request);
+
+        // 如果有继承关系.
+        if (entityClass.extendEntityClass() != null) {
+            request = entities.stream().collect(
+                Collectors.toMap(c -> c.family().parent(), c -> c.entityClass().extendEntityClass(), (c0, c1) -> c0)
+            );
+
+            Collection<IEntity> parentEntities = masterStorage.selectMultiple(request);
+            Map<Long, IEntity> parentEntityMap =
+                parentEntities.stream().collect(Collectors.toMap(p -> p.id(), p -> p, (p0, p1) -> p0));
+
+
+            IEntity parent;
+            for (IEntity child : entities) {
+                parent = parentEntityMap.get(child.family().parent());
+                if (parent == null) {
+                    throw new SQLException(
+                        String.format("A fatal error, unable to find parent data (%d) for data (%d).",
+                            child.family().parent(), child.id()));
+                }
+
+                this.merageChildAndParent(child, parent);
+            }
+        }
+
+        return entities;
     }
 
     @Override

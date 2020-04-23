@@ -130,8 +130,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
             return false;
         }
         EntityValue that = (EntityValue) o;
-        return id == that.id &&
-            Objects.equals(values, that.values);
+        return id == that.id && equalsValues(that);
     }
 
     @Override
@@ -145,5 +144,30 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
             "id=" + id +
             ", values=" + (values != null ? values.toString() : "NULL") +
             '}';
+    }
+
+    // 比较两个 map.
+    private boolean equalsValues(EntityValue that) {
+        Map<Long, IValue> thatValues = that.values;
+        if (this.values == thatValues) {
+            return true;
+        }
+
+        if (thatValues.size() != this.values.size()) {
+            return false;
+        }
+
+        IValue thisValue;
+        IValue thatValue;
+        for (Long id : this.values.keySet()) {
+            thisValue = this.values.get(id);
+            thatValue = thatValues.get(id);
+
+            if (!thisValue.equals(thatValue)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

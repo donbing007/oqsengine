@@ -396,7 +396,7 @@ public class EntityClassToGrpcConverter {
     private static Optional<FieldConditionUp> toFieldCondition(Condition condition) {
 
         IEntityField field = condition.getField();
-        IValue value = condition.getValue();
+        IValue value = condition.getFirstValue();
         ConditionOperator operator = condition.getOperator();
         //check
         if (value == null || field == null || operator == null) {

@@ -18,10 +18,8 @@ public class StorageConfiguration {
 
     @Bean
     public MasterStorage masterStorage(
-        @Value("${storage.master.query.worker:0}") int masterWorkerSize,
         @Value("${storage.master.query.timeout:3000}") long masterQueryTimeout) {
         SQLMasterStorage storage = new SQLMasterStorage();
-        storage.setWorkerSize(masterWorkerSize);
         storage.setQueryTimeout(masterQueryTimeout);
         return storage;
     }
