@@ -354,7 +354,7 @@ public class EntityClassToGrpcConverter {
     private static ConditionsUp toConditionsUp(com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions conditions) {
 
         ConditionsUp.Builder conditionsUpBuilder = ConditionsUp.newBuilder();
-        conditionsUpBuilder.addAllFields(conditions.collection().stream().filter(com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions::isValueNode)
+        conditionsUpBuilder.addAllFields(conditions.collect().stream().filter(com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions::isValueNode)
             .map(x -> ((ValueConditionNode) x).getCondition())
             .map(EntityClassToGrpcConverter::toFieldCondition)
             .filter(Optional::isPresent)

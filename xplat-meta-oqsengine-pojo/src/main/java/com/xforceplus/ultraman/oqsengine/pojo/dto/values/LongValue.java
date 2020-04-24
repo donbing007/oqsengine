@@ -12,7 +12,11 @@ import java.util.Objects;
  */
 public class LongValue extends AbstractValue<Long> {
 
-    public LongValue(IEntityField field, Long value) {
+    public LongValue(IEntityField field, int value) {
+        super(field, (long) value);
+    }
+
+    public LongValue(IEntityField field, long value) {
         super(field, value);
     }
 

@@ -38,4 +38,9 @@ public class FieldDefine {
      * 属性全文储存.
      */
     public static final String FULL_FIELDS = "fullfields";
+
+    /**
+     * 统计行数字段.
+     */
+    public static final String COUNT = "count";
 }

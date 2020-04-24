@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
+import java.util.Objects;
+
 /**
  * 表示实际条件结点.
  * @author dongbin
@@ -43,5 +45,23 @@ public class ValueConditionNode extends ConditionNode {
         } else {
             return condition.toString();
         }
+    }
+
+    @Override
+    public String toPrefixExpression() {
+        return toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ValueConditionNode)) {
+            return false;
+        }
+
+        ValueConditionNode that = (ValueConditionNode) o;
+        return Objects.equals(getCondition(), that.getCondition());
     }
 }

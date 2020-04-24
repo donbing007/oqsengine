@@ -31,6 +31,10 @@ public class Page implements Externalizable, Cloneable {
      */
     private boolean singlePage = false;
     /**
+     * 表示是否为空页.
+     */
+    private boolean emptyPage = false;
+    /**
      * 页面大小
      */
     private long pageSize;
@@ -85,6 +89,19 @@ public class Page implements Externalizable, Cloneable {
             this.pageSize = Page.DEFAULT_PAGE_SIZE;
         }
 
+    }
+
+    /**
+     * 构造一个实际不要求任何页面的分页信息.
+     * 表示实际不需要任何数据.
+     * 但是数据总量等行为还是必须的.
+     *
+     * @return 分页实例.
+     */
+    public static Page emptyPage() {
+        Page page = new Page();
+        page.setEmptyPage(true);
+        return page;
     }
 
     /**
@@ -315,6 +332,7 @@ public class Page implements Externalizable, Cloneable {
         hash = 89 * hash + (int) (this.pageCount ^ (this.pageCount >>> 32));
         hash = 89 * hash + (this.ready ? 1 : 0);
         hash = 89 * hash + (this.lastPage ? 1 : 0);
+        hash = 89 * hash + (this.emptyPage ? 1 : 0);
         return hash;
     }
 
@@ -341,6 +359,10 @@ public class Page implements Externalizable, Cloneable {
         }
         //是否为单页
         if (isSinglePage() != other.isSinglePage()) {
+            return false;
+        }
+        //是否为单页
+        if (isEmptyPage() != other.isEmptyPage()) {
             return false;
         }
         //分页大小
@@ -429,6 +451,22 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
+     * 判断当前实例是否为空页.
+     * @return true 空页.false 非空页.
+     */
+    public boolean isEmptyPage() {
+        return emptyPage;
+    }
+
+    /**
+     * 设置当前 page 是否为空页.
+     * @param emptyPage true空页,false 非空页.
+     */
+    public void setEmptyPage(boolean emptyPage) {
+        this.emptyPage = emptyPage;
+    }
+
+    /**
      * 序列化写入方法.
      *
      * @param out 写入流.
@@ -444,6 +482,7 @@ public class Page implements Externalizable, Cloneable {
         out.writeLong(pageCount);
         out.writeBoolean(ready);
         out.writeBoolean(lastPage);
+        out.writeBoolean(emptyPage);
     }
 
     /**
@@ -464,6 +503,7 @@ public class Page implements Externalizable, Cloneable {
         pageCount = in.readLong();
         ready = in.readBoolean();
         lastPage = in.readBoolean();
+        emptyPage = in.readBoolean();
     }
 
 }

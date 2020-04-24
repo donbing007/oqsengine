@@ -60,7 +60,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
      * %s 顺序为 where 条件, 排序.
      */
     private static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? %s %s limit ?,?";
-    private static final String SELECT_COUNT_SQL = "select count(*) as count from %s where entity = ? %s";
+    private static final String SELECT_COUNT_SQL = "select count(*) as "+ FieldDefine.COUNT +" from %s where entity = ? %s";
     private static final String SELECT_FROM_ID_SQL = "select id, pref, cref, entity, jsonfields from %s where id = ?";
 
     private String buildSql;
@@ -113,29 +113,14 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
                     }
 
-                    PreparedStatement st = null;
-                    ResultSet rs = null;
                     if (!page.isSinglePage()) {
-                        String countSql = String.format(SELECT_COUNT_SQL, indexTableName, whereCondition);
-                        long count = 0;
-
-                        st = ((Connection) resource.value()).prepareStatement(countSql);
-                        st.setLong(1, entityClass.id());
-
-                        if (logger.isDebugEnabled()) {
-                            logger.debug(st.toString());
-                        }
-
-                        rs = st.executeQuery();
-
-                        while (rs.next()) {
-                            count = rs.getLong("count");
-                            break;
-                        }
-
-                        rs.close();
-                        st.close();
+                        long count = count(resource, entityClass, whereCondition);
                         page.setTotalCount(count);
+                    }
+
+                    // 空页,空结果返回.
+                    if (page.isEmptyPage()) {
+                        return Collections.emptyList();
                     }
 
                     PageScope scope = page.getNextPage();
@@ -147,28 +132,32 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                     String orderBy = buildOrderBy(sort);
 
                     String sql = String.format(SELECT_SQL, indexTableName, whereCondition, orderBy);
-                    st = ((Connection) resource.value()).prepareStatement(sql);
-                    st.setLong(1, entityClass.id());
-                    st.setLong(2, scope.getStartLine());
-                    st.setLong(3, page.getPageSize());
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(st.toString());
-                    }
-
-                    rs = st.executeQuery();
-
-                    List<EntityRef> refs = new ArrayList((int) page.getPageSize());
-                    while (rs.next()) {
-                        refs.add(new EntityRef(
-                            rs.getLong(FieldDefine.ID),
-                            rs.getLong(FieldDefine.PREF),
-                            rs.getLong(FieldDefine.CREF)
-                        ));
-                    }
-
+                    PreparedStatement st = null;
+                    ResultSet rs = null;
                     try {
+                        st = ((Connection) resource.value()).prepareStatement(sql);
+                        st.setLong(1, entityClass.id());
+                        st.setLong(2, scope.getStartLine());
+                        st.setLong(3, page.getPageSize());
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(st.toString());
+                        }
+
+                        rs = st.executeQuery();
+
+                        List<EntityRef> refs = new ArrayList((int) page.getPageSize());
+                        while (rs.next()) {
+                            refs.add(new EntityRef(
+                                rs.getLong(FieldDefine.ID),
+                                rs.getLong(FieldDefine.PREF),
+                                rs.getLong(FieldDefine.CREF)
+                            ));
+                        }
+
+
                         return refs;
+
                     } finally {
                         if (rs != null) {
                             rs.close();
@@ -182,46 +171,12 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             });
     }
 
-    // 构造排序.
-    private String buildOrderBy(Sort sort) {
-        StringBuilder buff = new StringBuilder(SqlKeywordDefine.ORDER).append(" ");
-        if (sort != null) {
-            StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
-            Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField());
-
-            for (String storageName : storageNames) {
-                if (storageStrategy.storageType() == StorageType.LONG) {
-                    buff.append("bigint(")
-                        .append(FieldDefine.JSON_FIELDS)
-                        .append(".")
-                        .append(storageName)
-                        .append(")");
-                } else {
-                    buff.append(FieldDefine.JSON_FIELDS)
-                        .append(".")
-                        .append(storageName);
-                }
-
-                if (sort.isAsc()) {
-                    buff.append(" ").append(SqlKeywordDefine.ORDER_TYPE_ASC);
-                } else {
-                    buff.append(" ").append(SqlKeywordDefine.ORDER_TYPE_DESC);
-                }
-            }
-
-
-        } else {
-            buff.append("id ").append(SqlKeywordDefine.ORDER_TYPE_ASC);
-        }
-        return buff.toString();
-    }
-
     @Override
     public void replaceAttribute(IEntityValue attribute) throws SQLException {
         checkId(attribute.id());
 
         transactionExecutor.execute(
-            new DataSourceShardingTask(searchDataSourceSelector, Long.toString(attribute.id())) {
+            new DataSourceShardingTask(writerDataSourceSelector, Long.toString(attribute.id())) {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
@@ -306,6 +261,76 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     @Override
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
+    }
+
+    // 搜索数量
+    private long count(TransactionResource resource, IEntityClass entityClass, String whereCondition) throws SQLException {
+        String countSql = String.format(SELECT_COUNT_SQL, indexTableName, whereCondition);
+        long count = 0;
+
+        PreparedStatement st = null;
+        ResultSet rs = null;
+        try {
+            st = ((Connection) resource.value()).prepareStatement(countSql);
+            st.setLong(1, entityClass.id());
+
+            if (logger.isDebugEnabled()) {
+                logger.debug(st.toString());
+            }
+
+
+            rs = st.executeQuery();
+
+            while (rs.next()) {
+                count = rs.getLong(FieldDefine.COUNT);
+                break;
+            }
+        } finally {
+
+            if (rs != null) {
+                rs.close();
+            }
+
+            if (st != null) {
+                st.close();
+            }
+        }
+
+        return count;
+    }
+
+    // 构造排序.
+    private String buildOrderBy(Sort sort) {
+        StringBuilder buff = new StringBuilder(SqlKeywordDefine.ORDER).append(" ");
+        if (sort != null) {
+            StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
+            Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField());
+
+            for (String storageName : storageNames) {
+                if (storageStrategy.storageType() == StorageType.LONG) {
+                    buff.append("bigint(")
+                        .append(FieldDefine.JSON_FIELDS)
+                        .append(".")
+                        .append(storageName)
+                        .append(")");
+                } else {
+                    buff.append(FieldDefine.JSON_FIELDS)
+                        .append(".")
+                        .append(storageName);
+                }
+
+                if (sort.isAsc()) {
+                    buff.append(" ").append(SqlKeywordDefine.ORDER_TYPE_ASC);
+                } else {
+                    buff.append(" ").append(SqlKeywordDefine.ORDER_TYPE_DESC);
+                }
+            }
+
+
+        } else {
+            buff.append("id ").append(SqlKeywordDefine.ORDER_TYPE_ASC);
+        }
+        return buff.toString();
     }
 
     private Set<String> setGlobalFlag(Set<String> fullfields) {
@@ -485,31 +510,35 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-
-                    // id, entity, pref, cref, jsonfileds, fullfileds
-                    st.setLong(1, storageEntity.getId()); // id
-                    st.setLong(2, storageEntity.getEntity()); // entity
-                    st.setLong(3, storageEntity.getPref()); // pref
-                    st.setLong(4, storageEntity.getCref()); // cref
-                    // jsonfileds
-                    st.setString(5, SphinxQLHelper.serializableJson(storageEntity.getJsonFields()));
-                    // fullfileds
-                    st.setString(6, toFullString(storageEntity.getFullFields()));
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(st.toString());
-                    }
-
-                    int size = st.executeUpdate();
-
+                    PreparedStatement st = null;
                     try {
+                        st = ((Connection) resource.value()).prepareStatement(sql);
+
+                        // id, entity, pref, cref, jsonfileds, fullfileds
+                        st.setLong(1, storageEntity.getId()); // id
+                        st.setLong(2, storageEntity.getEntity()); // entity
+                        st.setLong(3, storageEntity.getPref()); // pref
+                        st.setLong(4, storageEntity.getCref()); // cref
+                        // jsonfileds
+                        st.setString(5, SphinxQLHelper.serializableJson(storageEntity.getJsonFields()));
+                        // fullfileds
+                        st.setString(6, toFullString(storageEntity.getFullFields()));
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(st.toString());
+                        }
+
+                        int size = st.executeUpdate();
+
+
                         // 成功只应该有一条语句影响
                         final int onlyOne = 1;
                         return size == onlyOne;
 
                     } finally {
-                        st.close();
+                        if (st != null) {
+                            st.close();
+                        }
                     }
                 }
             });

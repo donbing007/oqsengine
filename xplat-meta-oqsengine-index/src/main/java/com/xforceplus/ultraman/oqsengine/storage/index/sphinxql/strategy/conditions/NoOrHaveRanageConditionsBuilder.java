@@ -22,7 +22,7 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
 
         // 非范围的,将交由父类处理.
         Conditions eqConditions = Conditions.buildEmtpyConditions();
-        conditions.collection().stream().forEach(cn -> {
+        conditions.collect().stream().forEach(cn -> {
 
             if (Conditions.isValueNode(cn)) {
                 Condition condition = ((ValueConditionNode) cn).getCondition();

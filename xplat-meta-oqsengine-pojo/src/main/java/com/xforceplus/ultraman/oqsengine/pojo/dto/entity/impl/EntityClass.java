@@ -59,6 +59,10 @@ public class EntityClass implements IEntityClass {
         this(id, code, null, null, null, fields);
     }
 
+    public EntityClass(long id, String code, IEntityField... fields) {
+        this(id, code, null, null, null, Arrays.asList(fields));
+    }
+
     /**
      * 构造一个新的entity 类型信息.
      *
@@ -69,7 +73,7 @@ public class EntityClass implements IEntityClass {
      * @param extendEntityClass 继承对象信息.
      * @param fields            属性列表.
      */
-    public EntityClass(Long id,
+    public EntityClass(long id,
                        String code,
                        Collection<Relation> relations,
                        Collection<IEntityClass> entityClasses,

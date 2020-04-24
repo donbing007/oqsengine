@@ -4,11 +4,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.Conditio
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.validation.fieldtype.ConditionOperatorFieldValidationFactory;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * 表示一系列条件组合.只支持以 And 方式进行组合.
@@ -40,21 +38,39 @@ public class Conditions implements Serializable {
      */
     private ConditionNode head;
 
+    public static Conditions buildEmtpyConditions() {
+        return new Conditions();
+    }
+
+    /**
+     * 构造一个空条件.
+     */
     private Conditions() {
         size = 0;
         range = false;
         or = false;
     }
 
-    public static Conditions buildEmtpyConditions() {
-        return new Conditions();
-    }
-
+    /**
+     * 构造一个唯一条件.
+     * @param condition 新条件.
+     */
     public Conditions(Condition condition) {
         validate(condition);
         head = new ValueConditionNode(condition);
         range = condition.isRange();
         size = 1;
+    }
+
+    /**
+     * 使用结点树构造一个新的条件.
+     * @param head 条件树.
+     */
+    public Conditions(ConditionNode head) {
+        this.head = head;
+        Collection<Condition> conditionCollection = collectCondition();
+        this.size = conditionCollection.size();
+        this.range = conditionCollection.stream().mapToInt(c -> c.isRange() ? 1 : 0).sum() > 0 ? true : false;
     }
 
     /**
@@ -117,16 +133,12 @@ public class Conditions implements Serializable {
     }
 
     /**
-     * 返回顺序的集合.
-     * c1 = 1 and c2 =2 or c3 = 3
-     * 将会如下顺序
-     * c1=1 -> and -> c2=2 -> or -> c3=3.
-     *
+     * 迭代
      * @return 集合.
      */
-    public Collection<ConditionNode> collection() {
+    public Collection<ConditionNode> collect() {
         List<ConditionNode> nodes = new ArrayList(size);
-        load(head, nodes, c -> true);
+        iterTree(c -> true, c -> nodes.add(c), false);
         return nodes;
     }
 
@@ -135,42 +147,66 @@ public class Conditions implements Serializable {
      *
      * @return 所有条件平面返回.
      */
-    public Collection<Condition> collectionCondition() {
-        List<ConditionNode> nodes = new ArrayList(size);
-        load(head, nodes, c -> Conditions.isValueNode(c));
-        return nodes.stream().map(n -> ((ValueConditionNode) n).getCondition()).collect(Collectors.toList());
+    public Collection<Condition> collectCondition() {
+        List<Condition> conditionList = new ArrayList(size);
+        iterTree(c -> isValueNode(c), c -> conditionList.add(((ValueConditionNode)c).getCondition()), false);
+        return conditionList;
     }
 
-    private void load(ConditionNode point, List<ConditionNode> nodes, Predicate<? super ConditionNode> predicate) {
-        if (Conditions.isValueNode(point)) {
+    /**
+     * 查找符合条件的子树.
+     *
+     * 假如这样的一个条件树.
+     *     and(red)               //1
+     * c1        or(red)            //2
+     *       c2      and(green)        //3
+     *            c4     c5
+     *
+     *  给出条件 c -> !c.isRed()
+     *  表示所有红色结点的开始的子树
+     *  那么将返回 //3 处的那个结点开始的树.
+     * @param predicate 断言.匹配需要的结点.
+     * @param brake 是否匹配首个后当前结点后的所有不再匹配.
+     * @return 收集结果.
+     */
+    public Collection<ConditionNode> collectSubTree(Predicate<? super ConditionNode> predicate, boolean brake) {
+        List<ConditionNode> nodes = new ArrayList<>(size);
+        iterTree(predicate, c -> nodes.add(c), brake);
+        return nodes;
+    }
 
-            if (predicate.test(point)) {
-                nodes.add(point);
-            }
-
-        } else {
-
-            LinkConditionNode link = (LinkConditionNode) point;
-            load(link.getLeft(), nodes, predicate);
-            if (predicate.test(point)) {
-                nodes.add(point);
-            }
-            load(link.getRight(), nodes, predicate);
-        }
+    /**
+     * 得到原始条件树.
+     *
+     * @return 条件树.
+     */
+    public ConditionNode collectConditionTree() {
+        return head;
     }
 
     /**
      * 封闭已有条件.
      */
-    public void insulate() {
+    public Conditions insulate() {
         if (head != null) {
             head.setClosed(true);
         }
+        return this;
     }
 
     @Override
     public String toString() {
         return head.toString();
+    }
+
+    /**
+     * 前辍表达式.
+     *
+     * @return 表达式.
+     * @see ConditionNode
+     */
+    public String toPrefixExpression() {
+        return head.toPrefixExpression();
     }
 
     /**
@@ -219,15 +255,7 @@ public class Conditions implements Serializable {
         validate(condition);
 
         ConditionNode newValueNode = new ValueConditionNode(condition);
-        if (size == 0) {
-            head = newValueNode;
-
-        } else {
-
-            ConditionNode newLinkNode = new LinkConditionNode(head, newValueNode, link);
-            head = newLinkNode;
-
-        }
+        doAddNode(newValueNode, link, false);
         size++;
 
         if (link == ConditionLink.OR) {
@@ -252,20 +280,7 @@ public class Conditions implements Serializable {
 
     private Conditions doAdd(ConditionLink link, Conditions conditions, boolean isolation) {
 
-        if (size == 0) {
-
-            head = conditions.head;
-
-        } else {
-
-            if (isolation) {
-                conditions.insulate();
-            }
-
-            ConditionNode newNode = new LinkConditionNode(head, conditions.head, link);
-            head = newNode;
-
-        }
+        doAddNode(conditions.head, link, isolation);
 
         if (ConditionLink.OR == link) {
             or = true;
@@ -280,5 +295,100 @@ public class Conditions implements Serializable {
 
         size += conditions.size();
         return this;
+    }
+
+    /**
+     * 增加新的结点.
+     */
+    private void doAddNode(ConditionNode newNode, ConditionLink link, boolean isolation) {
+        if (size == 0) {
+            head = newNode;
+        } else {
+
+            if (isolation) {
+                if (isLinkNode(newNode)) {
+                    newNode.setClosed(true);
+                }
+            }
+
+            final int onlyOneCondition = 1;
+            if (size == onlyOneCondition) {
+
+                /**
+                 * 目标为只有一个条件的树.
+                 *    c1
+                 *
+                 *  and 方式增加新的条件c2
+                 *
+                 *     and
+                 *  c1     c2
+                 */
+                ConditionNode newLinkNode = new LinkConditionNode(head, newNode, link);
+                if (ConditionLink.OR == link) {
+                    // 设置为红色结点,因为是 or.
+                    newLinkNode.setRed(true);
+                }
+                head = newLinkNode;
+            } else {
+
+                /**
+                 * 目标为这样的结构类型.
+                 *       or
+                 * c1        and
+                 *       c2       c3
+                 *
+                 * 增加新的结点 and c4
+                 *
+                 *         or
+                 *  c1         and
+                 *        and        c4
+                 *     c2      c3
+                 * 追加在 or 下方.
+                 */
+                LinkConditionNode linkHead = (LinkConditionNode) head;
+                if (!linkHead.isClosed() && linkHead.getLink() == ConditionLink.OR && ConditionLink.AND == link) {
+
+                    ConditionNode newLinkNode =
+                        new LinkConditionNode(linkHead.getRight(), newNode, ConditionLink.AND);
+                    linkHead.setRight(newLinkNode);
+
+                } else {
+
+                    ConditionNode newLinkNode = new LinkConditionNode(head, newNode, link);
+                    head = newLinkNode;
+
+                }
+            }
+        }
+    }
+
+    /**
+     * 迭代条件树.
+     * brake true 时表示是否匹配某个结点就直接停止迭代.
+     */
+    private void iterTree(Predicate<? super ConditionNode> predicate, Consumer<? super ConditionNode> consumer, boolean brake) {
+        if (head == null) {
+            return;
+        }
+        Deque<ConditionNode> stack = new ArrayDeque<>(size());
+        stack.push(head);
+        ConditionNode node;
+        while(!stack.isEmpty()) {
+            node = stack.pop();
+
+            if (predicate.test(node)) {
+                consumer.accept(node);
+                if (brake) {
+                    continue;
+                }
+            }
+
+            if (node.getLeft() != null) {
+                stack.push(node.getLeft());
+            }
+            if (node.getRight() != null) {
+                stack.push(node.getRight());
+            }
+        }
     }
 }
