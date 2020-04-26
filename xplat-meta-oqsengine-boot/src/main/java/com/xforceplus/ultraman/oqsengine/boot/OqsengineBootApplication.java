@@ -23,7 +23,6 @@ public class OqsengineBootApplication {
     public static void main(String[] args) throws Exception {
 
         Kamon.init();
-        SpringApplication.run(OqsengineBootApplication.class, args);
         ConfigurableApplicationContext context = SpringApplication.run(OqsengineBootApplication.class, args);
 
         EntitySearchService service = context.getBean(EntitySearchService.class);

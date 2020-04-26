@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.reader;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.ColumnField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
@@ -116,5 +118,13 @@ public class EntityHelperTest {
 
         new IEntityClassReader(entityClass)
                 .zipValue(map).forEach(System.out::println);
+    }
+
+    @Test
+    public void testRelated(){
+        IEntityClassReader reader = new IEntityClassReader(entityClass);
+        IEntityField entityField = new EntityField(2002L, "fieldA2", FieldType.STRING);
+        IEntityField field = new ColumnField("rel1.fieldA2", entityField);
+        assertTrue("got related field", reader.getRelatedOriginalField(field).isPresent());
     }
 }

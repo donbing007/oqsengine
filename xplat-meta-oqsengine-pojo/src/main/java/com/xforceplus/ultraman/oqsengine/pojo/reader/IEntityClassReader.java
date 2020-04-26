@@ -376,4 +376,21 @@ public class IEntityClassReader {
                 .map(x -> relatedEntities.get(x.getEntityClassId()))
                 .findFirst();
     }
+
+    /**
+     * get relation field as origin field
+     *
+     * @param entityField
+     * @return
+     */
+    public Optional<IEntityField> getRelatedOriginalField(IEntityField entityField){
+        String fieldName = entityField.name();
+        String[] fields = fieldName.split("\\.");
+        if(fields.length > 1){
+            String relName = fields[0];
+            return column(relName + ".id").map(ColumnField::originField);
+        }else{
+            return Optional.empty();
+        }
+    }
 }
