@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot;
 
+import kamon.Kamon;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -10,6 +11,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class OqsengineBootApplication {
 
     public static void main(String[] args) throws Exception {
+
+        Kamon.init();
         SpringApplication.run(OqsengineBootApplication.class, args);
     }
 }

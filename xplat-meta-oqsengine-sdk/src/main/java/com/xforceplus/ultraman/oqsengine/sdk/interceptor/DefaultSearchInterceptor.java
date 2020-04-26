@@ -25,7 +25,7 @@ public class DefaultSearchInterceptor<R> implements MessageDispatcherInterceptor
 
     private QueryMessage<com.xforceplus.ultraman.oqsengine.sdk.command.ConditionSearchCmd, R> withNewPayload(QueryMessage oldMsg
             , ConditionSearchCmd oldCmd, ConditionQueryRequest request) {
-        return new GenericQueryMessage<>(new ConditionSearchCmd(oldCmd.getBoId(), request), oldMsg.getQueryName(), oldMsg.getResponseType(), oldMsg.getMetaData());
+        return new GenericQueryMessage<>(new ConditionSearchCmd(oldCmd.getBoId(), request, oldCmd.version()), oldMsg.getQueryName(), oldMsg.getResponseType(), oldMsg.getMetaData());
     }
 
     private boolean isEmptyCondition(ConditionQueryRequest request) {

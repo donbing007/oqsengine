@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- *
  * @author admin
  */
 @RequestMapping
@@ -40,7 +39,7 @@ public class EntityController {
             @RequestParam(required = false, value = "v") String version
     ) {
 
-        Either<String, Map<String, Object>> result = dispatcher.querySync(new SingleQueryCmd(boId, id)
+        Either<String, Map<String, Object>> result = dispatcher.querySync(new SingleQueryCmd(boId, id, version)
                 , DefaultUiService.class, "singleQuery");
 
         return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
@@ -61,10 +60,11 @@ public class EntityController {
     @ResponseBody
     public ResponseEntity<Response<String>> singleDelete(
             @PathVariable String boId,
-            @PathVariable String id
+            @PathVariable String id,
+            @RequestParam(required = false, value = "v") String version
     ) {
 
-        Either<String, Integer> result = dispatcher.querySync(new SingleDeleteCmd(boId, id)
+        Either<String, Integer> result = dispatcher.querySync(new SingleDeleteCmd(boId, id, version)
                 , ResolvableType.forClassWithGenerics(Either.class, String.class, Integer.class));
 
         return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
@@ -96,11 +96,12 @@ public class EntityController {
     @PostMapping("/bos/{boId}/entities")
     @ResponseBody
     public ResponseEntity<Response<String>> singleCreate(@PathVariable String boId,
-                                         @RequestBody Map<String, Object> body
+                                                         @RequestParam(required = false, value = "v") String version,
+                                                         @RequestBody Map<String, Object> body
     ) {
 
         Either<String, Long> result = dispatcher
-                .querySync(new SingleCreateCmd(boId, body)
+                .querySync(new SingleCreateCmd(boId, body, version)
                         , DefaultUiService.class, "singleCreate");
 
         return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
@@ -130,11 +131,12 @@ public class EntityController {
     @PutMapping("/bos/{boId}/entities/{id}")
     @ResponseBody
     public ResponseEntity<Response<String>> singleModify(@PathVariable String boId,
-                                         @PathVariable Long id,
-                                         @RequestBody Map<String, Object> body
+                                                         @PathVariable Long id,
+                                                         @RequestParam(required = false, value = "v") String version,
+                                                         @RequestBody Map<String, Object> body
     ) {
 
-        Either<String, Integer> result = dispatcher.querySync(new SingleUpdateCmd(boId, id, body)
+        Either<String, Integer> result = dispatcher.querySync(new SingleUpdateCmd(boId, id, body, version)
                 , ResolvableType.forClassWithGenerics(Either.class, String.class, Integer.class));
 
         return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
@@ -218,11 +220,13 @@ public class EntityController {
 
     @PostMapping("/bos/{boId}/entities/query")
     @ResponseBody
-    public ResponseEntity<Response<RowItem<Map<String, Object>>>> conditionQuery(@PathVariable String boId,
-                                                                 @RequestBody ConditionQueryRequest condition) {
+    public ResponseEntity<Response<RowItem<Map<String, Object>>>> conditionQuery(
+            @PathVariable String boId,
+            @RequestParam(required = false, value = "v") String version,
+            @RequestBody ConditionQueryRequest condition) {
 
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> result =
-                dispatcher.querySync(new ConditionSearchCmd(boId, condition)
+                dispatcher.querySync(new ConditionSearchCmd(boId, condition, version)
                         , DefaultUiService.class, "conditionSearch");
         return extractRepList(Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")));
     }
