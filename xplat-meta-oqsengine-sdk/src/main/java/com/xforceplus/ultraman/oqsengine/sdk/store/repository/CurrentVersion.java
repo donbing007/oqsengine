@@ -7,13 +7,17 @@ import java.util.Map;
  */
 public class CurrentVersion {
 
-    Map<String, String> versionMapping;
+    Map<Long, String> versionMapping;
 
-    public Map<String, String> getVersionMapping() {
+    public CurrentVersion(Map<Long, String> versionMapping) {
+        this.versionMapping = versionMapping;
+    }
+
+    public Map<Long, String> getVersionMapping() {
         return versionMapping;
     }
 
-    public void setVersionMapping(Map<String, String> versionMapping) {
+    public void setVersionMapping(Map<Long, String> versionMapping) {
         this.versionMapping = versionMapping;
     }
 }

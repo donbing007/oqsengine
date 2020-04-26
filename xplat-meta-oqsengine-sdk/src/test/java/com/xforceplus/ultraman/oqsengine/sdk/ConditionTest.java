@@ -22,11 +22,11 @@ import java.util.Map;
 public class ConditionTest {
 
     @Test
-    public void testQueryNull(){
+    public void testQueryNull() {
         String x = null;
         ConditionQueryRequest abc = new RequestBuilder()
-            .field("abc", ConditionOp.eq, x)
-            .build();
+                .field("abc", ConditionOp.eq, x)
+                .build();
 
         //long id, String code, Collection<IEntityField> fields
         //long id, String name, FieldType fieldType
@@ -36,7 +36,7 @@ public class ConditionTest {
     }
 
     @Test
-    public void testCreateNull(){
+    public void testCreateNull() {
         String x = null;
 
         Map<String, Object> create = new HashMap<>();

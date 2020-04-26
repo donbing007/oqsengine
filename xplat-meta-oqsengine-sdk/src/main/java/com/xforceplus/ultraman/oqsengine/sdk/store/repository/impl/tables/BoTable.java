@@ -7,11 +7,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Module Table
+ * SimpleTableDef boTableDef = new SimpleTableDef("bos", new String[]{"id", "code", "parentId", "name"});
+ *         TableDataProvider boTableDataProvider = new MapTableDataProvider(boTableDef, boStore);
  */
-public class ModuleTable implements TableLike {
+public class BoTable implements TableLike {
 
-    public static final String TABLE_MODULE = "modules";
+    public static final String TABLE_NAME = "bos";
 
     public static final String ID = "id";
 
@@ -19,20 +20,24 @@ public class ModuleTable implements TableLike {
 
     public static final String VERSION = "version";
 
+    public static final String PARENT_ID = "parentId";
+
     public static final String NAME = "name";
 
-    private static final String[] COLUMNS = new String[]{ID, CODE, VERSION, NAME};
+    public static final String MODULE_ID = "moduleId";
 
     private List<Map<String, ?>> store = new ArrayList<>();
 
+    public static final String[] COLUMNS = new String[]{ID, CODE, VERSION, NAME, PARENT_ID, MODULE_ID};
+
     @Override
     public String name() {
-        return TABLE_MODULE;
+        return TABLE_NAME;
     }
 
     @Override
     public String[] columns() {
-       return COLUMNS;
+        return COLUMNS;
     }
 
     @Override

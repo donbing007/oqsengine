@@ -21,6 +21,8 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
     private short sequence;
     private long referenceTime;
 
+    private long twepoch = 1288834974657L;
+
     private int node;
 
     public SnowflakeLongIdGenerator(NodeIdGenerator nodeIdGenerator) {
@@ -37,24 +39,52 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
         long counter;
 
         synchronized (this) {
-
             currentTime = System.currentTimeMillis();
-
             if (currentTime < referenceTime) {
-                throw new RuntimeException(String.format("Last referenceTime %s is after reference time %s", referenceTime, currentTime));
-            } else if (currentTime > referenceTime) {
+                long offset = referenceTime - currentTime;
+                if (offset <= 5) {
+                    try {
+                        wait(offset << 1);
+                        currentTime = timeGen();
+                        if (currentTime < referenceTime) {
+                            throw new ClockBackwardsException(referenceTime, currentTime);
+                        }
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    //throw
+                    throw new ClockBackwardsException(referenceTime, currentTime);
+                }
+            }
+
+            if (currentTime > referenceTime) {
                 this.sequence = 0;
             } else {
+                //time is equals
                 if (this.sequence < MAX_SEQUENCE) {
                     this.sequence++;
                 } else {
-                    throw new RuntimeException("Sequence exhausted at " + this.sequence);
+                    currentTime = tilNextMillis(referenceTime);
                 }
             }
+
             counter = this.sequence;
             referenceTime = currentTime;
         }
 
-        return currentTime << NODE_SHIFT << SEQ_SHIFT | node << SEQ_SHIFT | counter;
+        return (currentTime - twepoch ) << NODE_SHIFT << SEQ_SHIFT | node << SEQ_SHIFT | counter;
+    }
+
+    private Long timeGen(){
+        return System.currentTimeMillis();
+    }
+
+    private long tilNextMillis(long lastTimestamp) {
+        long timestamp = timeGen();
+        while (timestamp <= lastTimestamp) {
+            timestamp = timeGen();
+        }
+        return timestamp;
     }
 }

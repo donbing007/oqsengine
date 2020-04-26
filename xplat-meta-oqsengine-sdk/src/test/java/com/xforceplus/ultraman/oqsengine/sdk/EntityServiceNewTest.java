@@ -164,6 +164,7 @@ public class EntityServiceNewTest {
     private ModuleUpResult manyToOneNew() {
         return ModuleUpResult
                 .newBuilder()
+                .setVersion("0.0.1")
                 .addBoUps(BoUp
                         .newBuilder()
                         .setId("1")
@@ -508,9 +509,12 @@ public class EntityServiceNewTest {
         entityService.deleteOne(entityClass, id);
     }
 
+    @Test
+    public void testLoadNoExist(){
 
-//    @Test
-//    public void testNodeReport() throws InterruptedException {
-//        Thread.sleep(Long.MAX_VALUE);
-//    }
+        metadataRepository.save(manyToOneNew(), "1", "1");
+        System.out.println(metadataRepository.load("1", "2", "10001"));
+
+        System.out.println(metadataRepository.load("1", "2", "1", "0.0.5"));
+    }
 }
