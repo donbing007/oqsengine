@@ -23,11 +23,11 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ResponseList;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.UltPageBoItem;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.control.Either;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.metamodel.data.DataSet;
 import org.apache.metamodel.data.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -298,7 +298,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
         if (dictItems.size() > 0){
             String maxVersion = dictItems.get(0).getVersion();
             for (int i = 0; i < dictItems.size(); i++) {
-                if (maxVersion.compareTo(dictItems.get(i).getVersion()) < 0){
+                if (compare(maxVersion,dictItems.get(i).getVersion()) < 0) {
                     dictItemList.clear();
                     dictItemList.add(dictItems.get(i));
                     maxVersion = dictItems.get(i).getVersion();
@@ -308,5 +308,57 @@ public class EntityServiceExImpl implements EntityServiceEx {
             }
         }
         return dictItemList;
+    }
+
+    /**
+     * 版本对比方法
+     * @param v1
+     * @param v2
+     * @return
+     */
+    public int compare(String v1, String v2) {
+        if(StringUtils.isEmpty(v1) && StringUtils.isEmpty(v2)) {
+            return 0;
+        } else if(StringUtils.isEmpty(v1)) {
+            return -1;
+        } else if(StringUtils.isEmpty(v2)) {
+            return 1;
+        }
+
+        int [] varr1 = getVersionArray(v1);
+
+        int [] varr2 = getVersionArray(v2);
+
+        int lim = Math.min(varr1.length, varr2.length);
+
+        int k = 0;
+        while(k < lim) {
+            if(varr1[k] == varr2[k]) {
+                k ++;
+                continue;
+            }
+            return varr1[k] > varr2[k] ? 1 : -1;
+        }
+
+        if(varr1.length == varr2.length) {
+            return 0;
+        }
+
+        return varr1.length > varr2.length ? 1 : -1;
+    }
+
+    public int [] getVersionArray(String v) {
+        String [] sarray = StringUtils.split(v, ".");
+
+        int [] varray = new int[sarray.length];
+
+        int k = 0;
+
+        while (k < sarray.length) {
+            varray[k] = Integer.parseInt(sarray[k]);
+            k ++;
+        }
+
+        return varray;
     }
 }

@@ -149,7 +149,7 @@ public class Conditions implements Serializable {
      */
     public Collection<Condition> collectCondition() {
         List<Condition> conditionList = new ArrayList(size);
-        iterTree(c -> isValueNode(c), c -> conditionList.add(((ValueConditionNode)c).getCondition()), false);
+        iterTree(c -> isValueNode(c), c -> conditionList.add(((ValueConditionNode) c).getCondition()), false);
         return conditionList;
     }
 
@@ -373,7 +373,7 @@ public class Conditions implements Serializable {
         Deque<ConditionNode> stack = new ArrayDeque<>(size());
         stack.push(head);
         ConditionNode node;
-        while(!stack.isEmpty()) {
+        while (!stack.isEmpty()) {
             node = stack.pop();
 
             if (predicate.test(node)) {
