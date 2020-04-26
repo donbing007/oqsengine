@@ -60,8 +60,9 @@ public class CommonConfiguration {
 
     @ConditionalOnExpression("${storage.master.shard.table.enabled} == false")
     @Bean("tableNameSelector")
-    public Selector<String> noShardTableNameSelector() {
-        return new NoSelector<>();
+    public Selector<String> noShardTableNameSelector(
+        @Value("${storage.master.name:oqsbigentity}") String masterTableName) {
+        return new NoSelector(masterTableName);
     }
 
     @Bean

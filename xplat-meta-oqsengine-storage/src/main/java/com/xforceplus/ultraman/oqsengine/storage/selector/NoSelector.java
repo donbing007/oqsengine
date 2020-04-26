@@ -11,8 +11,14 @@ package com.xforceplus.ultraman.oqsengine.storage.selector;
  */
 public class NoSelector<V> implements Selector<V> {
 
+    private V fixed;
+
+    public NoSelector(V fixed) {
+        this.fixed = fixed;
+    }
+
     @Override
     public V select(String key) {
-        return (V) key;
+        return fixed;
     }
 }

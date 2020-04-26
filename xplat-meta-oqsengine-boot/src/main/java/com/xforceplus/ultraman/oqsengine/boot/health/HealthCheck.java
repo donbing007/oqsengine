@@ -12,6 +12,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.core.annotation.Order;
@@ -30,6 +32,8 @@ import java.util.Arrays;
 @Component
 public class HealthCheck implements HealthIndicator {
 
+    final Logger logger = LoggerFactory.getLogger(HealthCheck.class);
+
     @Resource
     private EntitySearchService entitySearchService;
 
@@ -43,6 +47,7 @@ public class HealthCheck implements HealthIndicator {
         try {
             entitySearchService.selectOne(1, notExistClass);
         } catch (SQLException e) {
+            logger.error(e.getMessage(), e);
             return Health.down(e).build();
         }
 
@@ -58,6 +63,7 @@ public class HealthCheck implements HealthIndicator {
         try {
             entitySearchService.selectByConditions(conditions, notExistClass, Page.newSinglePage(100));
         } catch (SQLException e) {
+            logger.error(e.getMessage(), e);
             return Health.down(e).build();
         }
 

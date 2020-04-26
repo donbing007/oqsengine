@@ -302,7 +302,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     // 构造排序.
     private String buildOrderBy(Sort sort) {
         StringBuilder buff = new StringBuilder(SqlKeywordDefine.ORDER).append(" ");
-        if (sort != null) {
+        if (!sort.isOutOfOrder()) {
             StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
             Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField());
 

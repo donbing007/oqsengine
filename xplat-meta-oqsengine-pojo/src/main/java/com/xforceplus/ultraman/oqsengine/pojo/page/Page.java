@@ -99,7 +99,11 @@ public class Page implements Externalizable, Cloneable {
      * @return 分页实例.
      */
     public static Page emptyPage() {
-        Page page = new Page();
+        /**
+         * 因定取第1页的第一条,实际这些值没有意义.
+         */
+        final long fixOne = 1;
+        Page page = new Page(fixOne, fixOne);
         page.setEmptyPage(true);
         return page;
     }

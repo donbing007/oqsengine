@@ -26,6 +26,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toMap;
+
 /**
  * entity 搜索服务.
  *
@@ -146,12 +148,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             // 如果有继承关系.
             if (entityClass.extendEntityClass() != null) {
                 request = entities.stream().collect(
-                    Collectors.toMap(c -> c.family().parent(), c -> c.entityClass().extendEntityClass(), (c0, c1) -> c0)
+                    toMap(c -> c.family().parent(), c -> c.entityClass().extendEntityClass(), (c0, c1) -> c0)
                 );
 
                 Collection<IEntity> parentEntities = masterStorage.selectMultiple(request);
                 Map<Long, IEntity> parentEntityMap =
-                    parentEntities.stream().collect(Collectors.toMap(p -> p.id(), p -> p, (p0, p1) -> p0));
+                    parentEntities.stream().collect(toMap(p -> p.id(), p -> p, (p0, p1) -> p0));
 
 
                 IEntity parent;
@@ -179,50 +181,86 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "condition"})
     @Override
     public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Page page) throws SQLException {
-        return selectByConditions(conditions, entityClass, null, page);
+        return selectByConditions(conditions, entityClass, Sort.buildOutOfSort(), page);
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "condition"})
     @Override
     public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
         throws SQLException {
+
+        if (conditions == null) {
+            throw new SQLException("Incorrect query condition.");
+        }
+
+        if (entityClass == null) {
+            throw new SQLException("Invalid entityClass.");
+        }
+
+        Conditions useConditions = conditions;
+        Sort useSort = sort;
+        Page usePage = page;
+        if (useSort == null) {
+            useSort = Sort.buildOutOfSort();
+        }
+        if (usePage == null) {
+            usePage = new Page();
+        }
+
         try {
+            // join
             Collection<IEntityClass> entityClassCollection = collectEntityClass(conditions, entityClass);
 
             final int onlyOneEntityClass = 1;
             if (entityClassCollection.size() > onlyOneEntityClass) {
 
-                if (entityClassCollection.size() > maxJoinDriverLineNumber) {
+                if (entityClassCollection.size() > maxJoinEntityNumber) {
                     throw new SQLException(
                         String.format("Join queries can be associated with at most %d entities.", maxJoinEntityNumber));
                 }
 
                 /**
-                 * 得到了所有非红色开始的子树.即所有子孙结点没有一个是 OR 关联的子树根结点.
+                 * 得到了所有非OR开始及其子孙结点没有 OR 的子树.即所有子孙结点没有一个是 OR 关联的子树根结点.
                  * 每一个子树都是 AND 的组合,或者只有一个值结点.
                  *
-                 *            and
-                 *     or            and
-                 * c1     c2    c3         c4
+                 *            and(0)
+                 *     or(1)           and(2)
+                 * c1       c2    c3         c4
+                 *
                  * 目标为得到
-                 *   c1
-                 *   c2
-                 *    and
-                 * c3      c4
+                 *   c1   值结点恒为非 OR.
+                 *   c2   值结点恒为非 OR.
+                 *   and(2) 本身和子孙结点,没有任何 or 结点.
+                 *
                  * 三个结点.
                  */
-                Collection<ConditionNode> greenConditionNode = conditions.collectSubTree(c -> !c.isRed(), true);
+                Collection<ConditionNode> safeNodes = conditions.collectSubTree(c -> !c.isRed(), true);
 
-                for (ConditionNode greenNode : greenConditionNode) {
+                /**
+                 * 所有的安全结点组成的 Conditions 集合.最终这些条件将会以 OR 连接起来做为最终查询.
+                 * 这些条件中的关联 entity 已经被替换成了合式的条件.
+                 */
+                Collection<Conditions> subConditions = new ArrayList(safeNodes.size());
+
+                for (ConditionNode safeNode : safeNodes) {
+
+                    subConditions.add(buildSafeNode(safeNode, entityClass));
 
                 }
 
-            } else {
+                useConditions = Conditions.buildEmtpyConditions();
+                for (Conditions cs : subConditions) {
+                    useConditions.addOr(cs, false);
+                }
 
-                Collection<EntityRef> refs = indexStorage.select(conditions, entityClass, sort, page);
-
-                return buildEntities(refs, entityClass);
             }
+
+            // no join
+            Collection<EntityRef> refs = indexStorage.select(useConditions, entityClass, useSort, usePage);
+
+            return buildEntities(refs, entityClass);
+
+
         } catch (Exception ex) {
             failCountTotal.increment();
             throw ex;
@@ -248,20 +286,20 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     private Collection<IEntity> buildEntities(Collection<EntityRef> refs, IEntityClass entityClass) throws SQLException {
         Map<Long, IEntityClass> batchSelect =
             refs.parallelStream().filter(e -> e.getId() > 0)
-                .collect(Collectors.toMap(EntityRef::getId, e -> entityClass, (e0, e1) -> e0));
+                .collect(toMap(EntityRef::getId, e -> entityClass, (e0, e1) -> e0));
 
         // 有继承
         if (entityClass.extendEntityClass() != null) {
             batchSelect.putAll(
                 refs.parallelStream().filter(e -> e.getPref() > 0)
-                    .collect(Collectors.toMap(EntityRef::getPref, e -> entityClass.extendEntityClass(), (e0, e1) -> e0)));
+                    .collect(toMap(EntityRef::getPref, e -> entityClass.extendEntityClass(), (e0, e1) -> e0)));
         }
 
         Collection<IEntity> entities = masterStorage.selectMultiple(batchSelect);
 
         //生成 entity 速查表
         Map<Long, IEntity> entityTable =
-            entities.stream().collect(Collectors.toMap(IEntity::id, e -> e, (e0, e1) -> e0));
+            entities.stream().collect(toMap(IEntity::id, e -> e, (e0, e1) -> e0));
 
         List<IEntity> resultEntities = new ArrayList<>(refs.size());
         IEntity resultEntity = null;
@@ -325,36 +363,68 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         child.entityValue().addValues(parent.entityValue().values());
     }
 
+    /**
+     * 将安全条件结点处理成可查询的 Conditions 实例.
+     * ignoreEntityClass 表示不需要处理的条件.
+     */
+    private Conditions buildSafeNode(ConditionNode safeNode, IEntityClass ignoreEntityClass) {
+        Map<IEntityClass, Collection<Condition>> entityClassGroup = splitEntityClassCondition(safeNode, ignoreEntityClass);
+
+        List<DriverEntityTask> tasks = new ArrayList(entityClassGroup.size());
+//        entityClassGroup.keySet().stream().filter(e -> !e.equals(ignoreEntityClass)).map(e -> )
+        return null;
+    }
+
+    // 将给定结点下的所有条件按目录 entityClass 进行分组.
     private Map<IEntityClass, Collection<Condition>> splitEntityClassCondition(
         ConditionNode conditionNode, IEntityClass defaultEntityClass) {
 
         Conditions conditions = new Conditions(conditionNode);
 
-        return conditions.collectCondition().stream().collect(Collectors.groupingBy(condition -> {
-                Optional<IEntityClass> entityClassOptional = condition.getEntityClass();
-                if (entityClassOptional.isPresent()) {
-                    return entityClassOptional.get();
+        return conditions.collectCondition().stream().collect(Collectors.groupingBy(c -> {
+                if (c.getEntityClass().isPresent()) {
+                    return c.getEntityClass().get();
                 } else {
                     return defaultEntityClass;
                 }
-            })
-        );
+            },
+            Collectors.toCollection(ArrayList::new)
+        ));
     }
 
     /**
-     * 驱动 entity 的id 构造任务.
+     * 驱动 entity 的 条件id列表 构造任务.
      */
     private class DriverEntityTask implements Callable<Collection<EntityRef>> {
 
+        private IEntityClass entityClass;
         private Conditions conditions;
 
-        public DriverEntityTask(ConditionNode conditionNode) {
-            conditions = new Conditions(conditionNode);
+        public DriverEntityTask(Collection<Condition> conditionCollection, IEntityClass entityClass) {
+            this.entityClass = entityClass;
+            this.conditions = Conditions.buildEmtpyConditions();
+            for (Condition condition : conditionCollection) {
+                this.conditions.addAnd(condition);
+            }
         }
 
         @Override
         public Collection<EntityRef> call() throws Exception {
+            checkLineNumber();
 
+            return indexStorage.select(
+                conditions, entityClass, Sort.buildOutOfSort(), Page.newSinglePage(maxJoinDriverLineNumber));
+
+
+        }
+
+        // 检查命中数据集大小.
+        private void checkLineNumber() throws SQLException {
+            Page emptyPage = Page.emptyPage();
+            indexStorage.select(conditions, entityClass, Sort.buildOutOfSort(), emptyPage);
+            if (emptyPage.getTotalCount() > maxJoinDriverLineNumber) {
+                throw new SQLException(String.format("Drives entity data exceeding %d.", maxJoinDriverLineNumber));
+            }
         }
     }
 
