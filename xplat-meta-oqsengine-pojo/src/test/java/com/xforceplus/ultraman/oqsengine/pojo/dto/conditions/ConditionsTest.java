@@ -82,25 +82,48 @@ public class ConditionsTest {
     }
 
     @Test
+    public void testIteratorSubStree() throws Exception {
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    new EntityField(1, "c1", FieldType.LONG),
+                    ConditionOperator.EQUALS,
+                    new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L))
+            )
+            .addOr(
+                new Condition(
+                    new EntityField(2, "c2", FieldType.LONG),
+                    ConditionOperator.EQUALS,
+                    new LongValue(new EntityField(2, "c2", FieldType.LONG), 100L))
+            )
+            .addAnd(
+                new Condition(
+                    new EntityField(3, "c3", FieldType.LONG),
+                    ConditionOperator.EQUALS,
+                    new LongValue(new EntityField(3, "c3", FieldType.LONG), 100L)
+                )
+            );
+
+        Collection<ConditionNode> nodes = conditions.collectSubTree(c -> !c.isRed(), true);
+        Assert.assertEquals(2, nodes.size());
+
+        Condition expectedCondtiton = new Condition(
+            new EntityField(1, "c1", FieldType.LONG),
+            ConditionOperator.EQUALS,
+            new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L));
+        Assert.assertEquals(expectedCondtiton,
+            ((ValueConditionNode) nodes.stream().filter(c -> Conditions.isValueNode(c)).findFirst().get()).getCondition());
+        Assert.assertEquals(ConditionLink.AND,
+            ((LinkConditionNode) nodes.stream().filter(c -> Conditions.isLinkNode(c)).findFirst().get()).getLink());
+
+    }
+
+    @Test
     public void testIterator() throws Exception {
 
-        StringBuilder buff = new StringBuilder();
         buildIteratorCase().stream().forEach(c -> {
 
-            c.conditions.collection().stream().forEach(cn -> {
-                if (Conditions.isValueNode(cn)) {
-                    ValueConditionNode current = (ValueConditionNode) cn;
-                    buff.append(current.getCondition().getField().name())
-                        .append(current.getCondition().getOperator().getSymbol())
-                        .append(current.getCondition().getFirstValue().getValue());
-                } else {
-                    LinkConditionNode current = (LinkConditionNode) cn;
-                    buff.append(" ").append(current.getLink().toString()).append(" ");
-                }
-            });
-
-            Assert.assertEquals(c.expected, buff.toString());
-            buff.delete(0, buff.length());
+            Assert.assertEquals(c.expected, c.conditions.toPrefixExpression());
 
         });
     }
@@ -113,7 +136,7 @@ public class ConditionsTest {
                         new EntityField(1, "c1", FieldType.LONG),
                         ConditionOperator.EQUALS,
                         new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L))),
-                "c1=100"
+                "c1 = 100"
             )
             ,
             new Case(
@@ -126,7 +149,7 @@ public class ConditionsTest {
                         new EntityField(1, "c2", FieldType.LONG),
                         ConditionOperator.EQUALS,
                         new LongValue(new EntityField(1, "c2", FieldType.LONG), 100L))),
-                "c1=100 AND c2=100"
+                "AND c1 = 100 c2 = 100"
             )
             ,
             new Case(
@@ -140,8 +163,9 @@ public class ConditionsTest {
                     )
                     , false
                 ),
-                "c1=100"
-            ),
+                "c1 = 100"
+            )
+            ,
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(
@@ -160,7 +184,7 @@ public class ConditionsTest {
                         )
                         , false
                     ),
-                "c2=100 AND c1=100"
+                "AND c2 = 100 c1 = 100"
             )
             ,
             new Case(
@@ -171,7 +195,7 @@ public class ConditionsTest {
                             ConditionOperator.EQUALS,
                             new LongValue(new EntityField(2, "c2", FieldType.LONG), 100L))
                     )
-                    .addAnd(
+                    .addOr(
                         Conditions.buildEmtpyConditions().addAnd(
                             new Condition(
                                 new EntityField(1, "c1", FieldType.LONG),
@@ -190,7 +214,77 @@ public class ConditionsTest {
                     )
                     , false
                 ),
-                "c2=100 AND c1=100 AND c3=100"
+                "OR(r) c2 = 100 AND c1 = 100 c3 = 100"
+            )
+            ,
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            new EntityField(2, "c2", FieldType.LONG),
+                            ConditionOperator.EQUALS,
+                            new LongValue(new EntityField(2, "c2", FieldType.LONG), 100L))
+                    )
+                    .addOr(
+                        Conditions.buildEmtpyConditions().addAnd(
+                            new Condition(
+                                new EntityField(1, "c1", FieldType.LONG),
+                                ConditionOperator.EQUALS,
+                                new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
+                            )
+                        )
+                        , false
+                    ).addAnd(
+                    Conditions.buildEmtpyConditions().addAnd(
+                        new Condition(
+                            new EntityField(3, "c3", FieldType.LONG),
+                            ConditionOperator.EQUALS,
+                            new LongValue(new EntityField(3, "c3", FieldType.LONG), 100L)
+                        )
+                    ).addAnd(
+                        new Condition(
+                            new EntityField(3, "c3", FieldType.LONG),
+                            ConditionOperator.EQUALS,
+                            new LongValue(new EntityField(3, "c3", FieldType.LONG), 200L))
+                    )
+                    , true
+                ),
+                "OR(r) c2 = 100 AND c1 = 100 (AND c3 = 100 c3 = 200)"
+            )
+            ,
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            new EntityField(2, "c2", FieldType.LONG),
+                            ConditionOperator.EQUALS,
+                            new LongValue(new EntityField(2, "c2", FieldType.LONG), 100L))
+                    )
+                    .addOr(
+                        Conditions.buildEmtpyConditions().addAnd(
+                            new Condition(
+                                new EntityField(1, "c1", FieldType.LONG),
+                                ConditionOperator.EQUALS,
+                                new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
+                            )
+                        )
+                        , false
+                    ).insulate().addAnd(
+                    Conditions.buildEmtpyConditions().addAnd(
+                        new Condition(
+                            new EntityField(3, "c3", FieldType.LONG),
+                            ConditionOperator.EQUALS,
+                            new LongValue(new EntityField(3, "c3", FieldType.LONG), 100L)
+                        )
+                    ).addAnd(
+                        new Condition(
+                            new EntityField(3, "c3", FieldType.LONG),
+                            ConditionOperator.EQUALS,
+                            new LongValue(new EntityField(3, "c3", FieldType.LONG), 200L))
+                    )
+                    , true
+                ),
+                "AND(r) (OR(r) c2 = 100 c1 = 100) (AND c3 = 100 c3 = 200)"
             )
         );
     }

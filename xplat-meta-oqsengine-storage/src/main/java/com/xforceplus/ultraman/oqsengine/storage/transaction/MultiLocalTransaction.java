@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +15,7 @@ import java.util.Optional;
  * Simple multi-local transaction implementation ensures atomicity before the commit,
  * but there is no guarantee of atomicity in the event that a commit produces an error.
  * Thread safety.
+ *
  * @author dongbin
  * @version 0.1 2020/2/13 20:47
  * @since 1.8
@@ -19,6 +23,8 @@ import java.util.Optional;
 public class MultiLocalTransaction implements Transaction {
 
     final Logger logger = LoggerFactory.getLogger(MultiLocalTransaction.class);
+
+    private Timer.Sample timerSample;
 
     private long id;
     private long attachment;
@@ -31,6 +37,8 @@ public class MultiLocalTransaction implements Transaction {
         committed = false;
         rollback = false;
         this.id = id;
+
+        timerSample = Timer.start(Metrics.globalRegistry);
     }
 
     @Override
@@ -111,35 +119,39 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     private void doEnd(boolean commit) throws SQLException {
-        List<SQLException> exHolder = new LinkedList<>();
-        for (TransactionResource transactionResource : transactionResourceHolder) {
-            try {
-                if (commit) {
-                    transactionResource.commit();
-                } else {
-                    transactionResource.rollback();
+        try {
+            List<SQLException> exHolder = new LinkedList<>();
+            for (TransactionResource transactionResource : transactionResourceHolder) {
+                try {
+                    if (commit) {
+                        transactionResource.commit();
+                    } else {
+                        transactionResource.rollback();
+                    }
+
+                    transactionResource.destroy();
+                } catch (SQLException ex) {
+                    exHolder.add(0, ex);
+
+                    //TODO: 发生了异常,需要 rollback, 这里需要 undo 日志.by dongbin 2020/02/17
+
                 }
-
-                transactionResource.destroy();
-            } catch (SQLException ex) {
-                exHolder.add(0, ex);
-
-                //TODO: 发生了异常,需要 rollback, 这里需要 undo 日志.by dongbin 2020/02/17
 
             }
 
-        }
+            throwSQLExceptionIfNecessary(exHolder);
 
-        throwSQLExceptionIfNecessary(exHolder);
+            if (commit) {
 
-        if (commit) {
+                committed = true;
 
-            committed = true;
+            } else {
 
-        } else {
+                rollback = true;
 
-            rollback = true;
-
+            }
+        } finally {
+            timerSample.stop(Metrics.globalRegistry.timer(MetricsDefine.TRANSACTION_DURATION_SECONDS));
         }
 
     }

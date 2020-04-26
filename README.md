@@ -146,9 +146,9 @@ ngram_len = 1                 # 非英文字符的分词最小单位.
 # 监控
 oqsengine 会在 /actuator/prometheus 公开一系列指标来输出当前系统状态.如下.
 
-* oqsengine.insert.number.second 每秒创建的 entity 数量.
-* oqsengine.replace.number.second 每秒更新的 entity 数量.
-* oqsengine.delete.number.second 每秒更新的数量.
-* oqsengine.select.number.second 每秒查询数量.
-* oqsengine.query.avg.second 平均查询时间.
-* oqsengine.update.avg.second 平均更新时间.
+* oqs_write_count_total 写入操作总量
+* oqs_read_count_total 读取操作总量
+* oqs_fail_count_total 错误数量
+* oqs_process_delay_latency_seconds_max 操作最大延时
+* oqs_process_delay_latency_seconds_count 操作数量
+* oqs_process_delay_latency_seconds_sum 总耗时

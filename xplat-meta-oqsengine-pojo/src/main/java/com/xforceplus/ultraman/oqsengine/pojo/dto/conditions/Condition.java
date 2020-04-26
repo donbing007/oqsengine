@@ -43,9 +43,10 @@ public class Condition implements Serializable {
 
     /**
      * 不指定 entityClass 来构造一个条件.实际的 entityClass 将由搜索执行器来假定.
-     * @param field 字段信息.
+     *
+     * @param field    字段信息.
      * @param operator 条件操作符.
-     * @param values 条件比较值列表.
+     * @param values   条件比较值列表.
      */
     public Condition(IEntityField field, ConditionOperator operator, IValue... values) {
         this(null, field, operator, values);
@@ -53,10 +54,11 @@ public class Condition implements Serializable {
 
     /**
      * 构造一个新的查询条件.
+     *
      * @param entityClass 字段所属于的 entity 类型信息.
-     * @param field 字段.
-     * @param operator 比较符号.
-     * @param values 条件比较值列表.
+     * @param field       字段.
+     * @param operator    比较符号.
+     * @param values      条件比较值列表.
      */
     public Condition(IEntityClass entityClass, IEntityField field, ConditionOperator operator, IValue... values) {
         this.entityClass = entityClass;
@@ -72,6 +74,7 @@ public class Condition implements Serializable {
 
     /**
      * 昨到 entity class 信息.
+     *
      * @return entityClass 实例.
      */
     public Optional<IEntityClass> getEntityClass() {
@@ -80,6 +83,7 @@ public class Condition implements Serializable {
 
     /**
      * 条件字段信息.
+     *
      * @return 条件字段.
      */
     public IEntityField getField() {
@@ -88,6 +92,7 @@ public class Condition implements Serializable {
 
     /**
      * 条件的首个值.所有条件都至少有一个值.
+     *
      * @return 首个值.
      */
     public IValue getFirstValue() {
@@ -96,6 +101,7 @@ public class Condition implements Serializable {
 
     /**
      * 返回所有条件值.
+     *
      * @return 条件值列表.
      */
     public IValue[] getValues() {
@@ -104,6 +110,7 @@ public class Condition implements Serializable {
 
     /**
      * 返回条件比较操作符.
+     *
      * @return 操作符.
      */
     public ConditionOperator getOperator() {
@@ -112,6 +119,7 @@ public class Condition implements Serializable {
 
     /**
      * 条件查询是否为范围查询.
+     *
      * @return true 是, false 不是.
      */
     public boolean isRange() {
@@ -143,21 +151,43 @@ public class Condition implements Serializable {
 
     @Override
     public String toString() {
-        if (entityClass != null) {
-            return "Condition{" +
-                "entityClass=" + entityClass +
-                ", field=" + field +
-                ", values=" + Arrays.toString(values) +
-                ", operator=" + operator +
-                ", range=" + range +
-                '}';
-        } else {
-            return "Condition{" +
-                ", field=" + field +
-                ", values=" + Arrays.toString(values) +
-                ", operator=" + operator +
-                ", range=" + range +
-                '}';
+        String code = entityClass != null ? entityClass.code() : "";
+        StringBuilder buff = new StringBuilder();
+        if (code.length() > 0) {
+            buff.append(code).append(".");
+        }
+        buff.append(field.name())
+            .append(" ")
+            .append(getOperator().getSymbol())
+            .append(" ");
+        switch (getOperator()) {
+            case MULTIPLE_EQUALS:
+                buff.append("(");
+                int emptyLen = buff.length();
+                for (IValue v : values) {
+                    if (buff.length() > emptyLen) {
+                        buff.append(", ");
+                    }
+                    appendValue(buff, v);
+                }
+                buff.append(")");
+                break;
+            default:
+                appendValue(buff, getFirstValue());
+        }
+        return buff.toString();
+    }
+
+    private void appendValue(StringBuilder buff, IValue value) {
+        switch (value.getField().type()) {
+            case STRING:
+            case ENUM:
+                buff.append("\"")
+                    .append(value.valueToString())
+                    .append("\"");
+                break;
+            default:
+                buff.append(value.valueToString());
         }
     }
 

@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.timerwheel.TimeoutNotification;
 import com.xforceplus.ultraman.oqsengine.common.timerwheel.TimerWheel;
+import io.micrometer.core.instrument.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The main responsibilities are as follows.
@@ -27,6 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class AbstractTransactionManager implements TransactionManager {
 
     final Logger logger = LoggerFactory.getLogger(AbstractTransactionManager.class);
+
+    private AtomicLong transactionNumber = Metrics.gauge(MetricsDefine.TRANSACTION_COUNT, new AtomicLong(0));
 
     /**
      * 当前是否处于冻结状态.true 是, false 不是.
@@ -101,6 +106,8 @@ public abstract class AbstractTransactionManager implements TransactionManager {
             survival.put(transaction.id(), transaction);
 
             timerWheel.add(transaction.id(), timeoutMs);
+
+            transactionNumber.incrementAndGet();
 
             if (logger.isDebugEnabled()) {
                 logger.debug("Start new Transaction({}),timeout will occur in {} milliseconds.", transaction.id(), timeoutMs);
@@ -207,6 +214,8 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         tx.attach(Transaction.NOT_ATTACHMENT);
 
         timerWheel.remove(tx.id());
+
+        transactionNumber.decrementAndGet();
 
         if (logger.isDebugEnabled()) {
             logger.debug("End of transaction({}) and unbound.", tx.id());

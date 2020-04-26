@@ -10,8 +10,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
  */
 public class Sort {
 
+    private static final Sort NO_SORT = new Sort(true);
+
     private IEntityField field;
     private boolean asc;
+    private boolean outOfOrder;
 
     /**
      * 构造一个降序排序实例.
@@ -32,6 +35,21 @@ public class Sort {
     }
 
     /**
+     * 构造一个不需要排序的实例.实际的顺序将由实现决定.
+     * @return 排序实例.
+     */
+    public static Sort buildOutOfSort() {
+        return NO_SORT;
+    }
+
+    /**
+     * 不允许实例.
+     */
+    private Sort(boolean outOfOrder) {
+        this.outOfOrder = outOfOrder;
+    }
+
+    /**
      * 不允许外部实例化.
      */
     private Sort(IEntityField field, boolean asc) {
@@ -48,10 +66,26 @@ public class Sort {
     }
 
     /**
-     * 是否升序.否则为降序.
-     * @return true 升序, false 降序.
+     * 是否升序.
+     * @return true 升序, false 不是升序.
      */
     public boolean isAsc() {
         return asc;
+    }
+
+    /**
+     * 是否降序.
+     * @return true 升序, false 不是降序.
+     */
+    public boolean isDes() {
+        return !asc;
+    }
+
+    /**
+     * 是否不须排序.
+     * @return true 不需要排序,false 需要排序.
+     */
+    public boolean isOutOfOrder() {
+        return outOfOrder;
     }
 }

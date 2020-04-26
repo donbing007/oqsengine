@@ -709,6 +709,24 @@ public class SphinxQLIndexStorageTest {
                     return true;
                 }
             )
+            ,
+            // empty
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        stringsField,
+                        ConditionOperator.MULTIPLE_EQUALS,
+                        new StringsValue(stringsField, "UNKNOWN"),
+                        new StringsValue(stringsField, "value3")
+                    )
+                ),
+                entityClass,
+                Page.emptyPage(),
+                refs -> {
+                    Assert.assertEquals(0, refs.size());
+                    return true;
+                }
+            )
         );
     }
 

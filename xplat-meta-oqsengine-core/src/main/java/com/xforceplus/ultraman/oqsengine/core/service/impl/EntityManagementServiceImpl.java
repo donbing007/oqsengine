@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
@@ -10,6 +11,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +45,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private IndexStorage indexStorage;
 
+    private Counter inserCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action","build");
+    private Counter replaceCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action","replace");
+    private Counter deleteCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action","delete");
+    private Counter failCountTotal = Metrics.counter(MetricsDefine.FAIL_COUNT_TOTAL);
 
+
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "build"})
     @Override
     public IEntity build(IEntity entity) throws SQLException {
 
@@ -50,67 +60,82 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         try {
             entityClone = (IEntity) entity.clone();
         } catch (CloneNotSupportedException e) {
+            failCountTotal.increment();
             throw new SQLException(e.getMessage(), e);
         }
 
-        return (IEntity) transactionExecutor.execute(r -> {
+        try {
 
-            if (isSub(entityClone)) {
-                // 处理父类
-                long fatherId = idGenerator.next();
-                long childId = idGenerator.next();
+            return (IEntity) transactionExecutor.execute(r -> {
 
-                IEntity fathcerEntity = buildFatherEntity(entityClone, childId);
-                fathcerEntity.resetId(fatherId);
+                if (isSub(entityClone)) {
+                    // 处理父类
+                    long fatherId = idGenerator.next();
+                    long childId = idGenerator.next();
 
-                IEntity childEntity = buildChildEntity(entityClone, fatherId);
-                childEntity.resetId(childId);
+                    IEntity fathcerEntity = buildFatherEntity(entityClone, childId);
+                    fathcerEntity.resetId(fatherId);
 
-                // master
-                masterStorage.build(fathcerEntity); // father
-                masterStorage.build(childEntity); // child
+                    IEntity childEntity = buildChildEntity(entityClone, fatherId);
+                    childEntity.resetId(childId);
+
+                    // master
+                    masterStorage.build(fathcerEntity); // father
+                    masterStorage.build(childEntity); // child
 
 
-                indexStorage.build(buildIndexEntity(fathcerEntity)); // fatcher
+                    indexStorage.build(buildIndexEntity(fathcerEntity)); // fatcher
 
-                /**
-                 * 索引中子类包含父类所有属性,保证可以使用父类属性查询子类.
-                 * 这里直接使用外界传入的 entity 实例,重置 id 为新的子类 id.
-                 * entity 设置为了传入 entity 可以有新的 id.
-                 */
-                entity.resetId(childId);
-                entityClone.resetId(childId);
-                /**
-                 * 索引中只存放可搜索字段,子类包含父类和本身的所有可搜索字段.
-                 * 这里先将父的属性合并进来过滤再储存.
-                 */
-                IEntity indexEntity = buildIndexEntity(entityClone);
-                // 来源于外部 entity,所以这里需要调整继承家族信息.
-                indexEntity.resetFamily(new EntityFamily(fatherId, 0));
-                indexStorage.build(indexEntity); // child
+                    /**
+                     * 索引中子类包含父类所有属性,保证可以使用父类属性查询子类.
+                     * 这里直接使用外界传入的 entity 实例,重置 id 为新的子类 id.
+                     * entity 设置为了传入 entity 可以有新的 id.
+                     */
+                    entity.resetId(childId);
+                    entityClone.resetId(childId);
+                    /**
+                     * 索引中只存放可搜索字段,子类包含父类和本身的所有可搜索字段.
+                     * 这里先将父的属性合并进来过滤再储存.
+                     */
+                    IEntity indexEntity = buildIndexEntity(entityClone);
+                    // 来源于外部 entity,所以这里需要调整继承家族信息.
+                    indexEntity.resetFamily(new EntityFamily(fatherId, 0));
+                    indexStorage.build(indexEntity); // child
 
-                
-                entity.resetFamily(childEntity.family());
-                return entity;
 
-            } else {
+                    entity.resetFamily(childEntity.family());
+                    return entity;
 
-                entity.resetId(idGenerator.next());
-                entityClone.resetId(entity.id());
+                } else {
 
-                masterStorage.build(entityClone);
-                indexStorage.build(buildIndexEntity(entityClone));
+                    entity.resetId(idGenerator.next());
+                    entityClone.resetId(entity.id());
 
-                return entity;
-            }
+                    masterStorage.build(entityClone);
+                    indexStorage.build(buildIndexEntity(entityClone));
 
-        });
+                    return entity;
+                }
+
+            });
+        } catch(Exception ex) {
+
+            failCountTotal.increment();
+            throw ex;
+
+        } finally {
+
+            inserCountTotal.increment();
+
+        }
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "replace"})
     @Override
     public void replace(IEntity entity) throws SQLException {
 
         if (!masterStorage.select(entity.id(), entity.entityClass()).isPresent()) {
+            failCountTotal.increment();
             throw new SQLException(String.format("An Entity that does not exist cannot be updated (%d).", entity.id()));
         }
 
@@ -119,91 +144,107 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         try {
             target = (IEntity) entity.clone();
         } catch (CloneNotSupportedException e) {
+            replaceCountTotal.increment();
             throw new SQLException(e.getMessage(), e);
         }
 
-        transactionExecutor.execute(r -> {
+        try {
+            transactionExecutor.execute(r -> {
 
-            if (isSub(entity)) {
+                if (isSub(entity)) {
 
-                /**
-                 * 拆分为父与子.
-                 */
-                IEntity fatherEntity = buildFatherEntity(target, target.id());
-                fatherEntity.resetId(entity.family().parent());
+                    /**
+                     * 拆分为父与子.
+                     */
+                    IEntity fatherEntity = buildFatherEntity(target, target.id());
+                    fatherEntity.resetId(entity.family().parent());
 
-                IEntity childEntity = buildChildEntity(target, target.family().parent());
+                    IEntity childEntity = buildChildEntity(target, target.family().parent());
 
-                masterStorage.replace(fatherEntity);
-                masterStorage.replace(childEntity);
+                    masterStorage.replace(fatherEntity);
+                    masterStorage.replace(childEntity);
 
-                // 子类的索引需要父和子所有属性.
-                indexStorage.replace(buildIndexEntity(fatherEntity));
+                    // 子类的索引需要父和子所有属性.
+                    indexStorage.replace(buildIndexEntity(fatherEntity));
 
-                indexStorage.replace(buildIndexEntity(target));
+                    indexStorage.replace(buildIndexEntity(target));
 
-            } else {
+                } else {
 
-                masterStorage.replace(target);
+                    masterStorage.replace(target);
 
-                IEntity indexEntity = buildIndexEntity(target);
-                indexStorage.replace(indexEntity);
+                    IEntity indexEntity = buildIndexEntity(target);
+                    indexStorage.replace(indexEntity);
 
-                // 有子类
-                if (target.family().child() > 0) {
-                    // 父子同步
-                    masterStorage.synchronize(target.id(), target.family().child());
+                    // 有子类
+                    if (target.family().child() > 0) {
+                        // 父子同步
+                        masterStorage.synchronize(target.id(), target.family().child());
 
-                    // 同步子类索引信息.
-                    IEntityValue childIndexValue = new EntityValue(target.family().child());
-                    childIndexValue.addValues(indexEntity.entityValue().values());
-                    indexStorage.replaceAttribute(childIndexValue);
+                        // 同步子类索引信息.
+                        IEntityValue childIndexValue = new EntityValue(target.family().child());
+                        childIndexValue.addValues(indexEntity.entityValue().values());
+                        indexStorage.replaceAttribute(childIndexValue);
+                    }
                 }
-            }
 
-            return null;
-        });
+                return null;
+            });
+        } catch (Exception ex) {
+            failCountTotal.increment();
+            throw ex;
+        } finally {
+            replaceCountTotal.increment();
+        }
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "delete"})
     @Override
     public void delete(IEntity entity) throws SQLException {
 
-        transactionExecutor.execute(r -> {
+        try {
+            transactionExecutor.execute(r -> {
 
-            if (isSub(entity)) {
+                if (isSub(entity)) {
 
-                IEntity fatherEntity = buildFatherEntity(entity, entity.id());
-                fatherEntity.resetId(entity.family().parent());
+                    IEntity fatherEntity = buildFatherEntity(entity, entity.id());
+                    fatherEntity.resetId(entity.family().parent());
 
-                IEntity childEntity = buildChildEntity(entity, entity.family().parent());
+                    IEntity childEntity = buildChildEntity(entity, entity.family().parent());
 
-                masterStorage.delete(fatherEntity);
-                masterStorage.delete(childEntity);
+                    masterStorage.delete(fatherEntity);
+                    masterStorage.delete(childEntity);
 
-                indexStorage.delete(fatherEntity);
-                indexStorage.delete(entity);
+                    indexStorage.delete(fatherEntity);
+                    indexStorage.delete(entity);
 
-            } else {
+                } else {
 
-                masterStorage.delete(entity);
-                indexStorage.delete(entity);
+                    masterStorage.delete(entity);
+                    indexStorage.delete(entity);
 
-                // 有子类需要删除.
-                if (entity.family().child() > 0) {
+                    // 有子类需要删除.
+                    if (entity.family().child() > 0) {
 
-                    IEntity chlidEntity = new Entity(
-                        entity.family().child(),
-                        AnyEntityClass.getInstance(),
-                        new EntityValue(entity.family().child()),
-                        entity.version()
-                    );
+                        IEntity chlidEntity = new Entity(
+                            entity.family().child(),
+                            AnyEntityClass.getInstance(),
+                            new EntityValue(entity.family().child()),
+                            entity.version()
+                        );
 
-                    masterStorage.delete(chlidEntity);
-                    indexStorage.delete(chlidEntity);
+                        masterStorage.delete(chlidEntity);
+                        indexStorage.delete(chlidEntity);
+                    }
                 }
-            }
-            return null;
-        });
+                return null;
+            });
+        } catch (Exception ex) {
+            failCountTotal.increment();
+            throw ex;
+        } finally {
+            deleteCountTotal.increment();
+        }
     }
 
     // 构造一个适合索引的 IEntity 实例.

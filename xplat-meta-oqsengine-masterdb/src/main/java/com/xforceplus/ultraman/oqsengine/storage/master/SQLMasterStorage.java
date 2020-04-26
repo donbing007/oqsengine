@@ -97,17 +97,20 @@ public class SQLMasterStorage implements MasterStorage {
                     String tableName = tableNameSelector.select(Long.toString(id));
                     String sql = String.format(SELECT_SQL, tableName);
 
-                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-                    st.setLong(1, id); // id
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(st.toString());
-                    }
-
-                    ResultSet rs = st.executeQuery();
-                    // entity, version, time, pref, cref, deleted, attribute, refs
-
+                    PreparedStatement st = null;
+                    ResultSet rs = null;
                     try {
+                        st = ((Connection) resource.value()).prepareStatement(sql);
+                        st.setLong(1, id); // id
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(st.toString());
+                        }
+
+                        rs = st.executeQuery();
+                        // entity, version, time, pref, cref, deleted, attribute, refs
+
+
                         if (rs.next()) {
 
                             return buildEntityFromResultSet(rs, entityClass);
@@ -253,33 +256,33 @@ public class SQLMasterStorage implements MasterStorage {
                     String tableName = tableNameSelector.select(Long.toString(entity.id()));
                     String sql = String.format(BUILD_SQL, tableName);
 
-                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-                    // id, entity, version, time, pref, cref, deleted, attribute,refs
-                    st.setLong(1, entity.id()); // id
-                    st.setLong(2, entity.entityClass().id()); // entity
-                    st.setInt(3, 0); // version
-                    st.setLong(4, System.currentTimeMillis()); // time
-                    st.setLong(5, entity.family().parent()); // pref
-                    st.setLong(6, entity.family().child()); // cref
-                    st.setBoolean(7, false); // deleted
-                    st.setString(8, toJson(entity.entityValue())); // attribute
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(st.toString());
-                    }
-
-                    int size = st.executeUpdate();
-
-                    /**
-                     * 插入影响条件恒定为1.
-                     */
-                    final int onlyOne = 1;
-                    if (size != onlyOne) {
-                        throw new SQLException(
-                            String.format("Entity{%s} could not be created successfully.", entity.toString()));
-                    }
-
+                    PreparedStatement st = null;
                     try {
+                        st = ((Connection) resource.value()).prepareStatement(sql);
+                        // id, entity, version, time, pref, cref, deleted, attribute,refs
+                        st.setLong(1, entity.id()); // id
+                        st.setLong(2, entity.entityClass().id()); // entity
+                        st.setInt(3, 0); // version
+                        st.setLong(4, System.currentTimeMillis()); // time
+                        st.setLong(5, entity.family().parent()); // pref
+                        st.setLong(6, entity.family().child()); // cref
+                        st.setBoolean(7, false); // deleted
+                        st.setString(8, toJson(entity.entityValue())); // attribute
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(st.toString());
+                        }
+
+                        int size = st.executeUpdate();
+
+                        /**
+                         * 插入影响条件恒定为1.
+                         */
+                        final int onlyOne = 1;
+                        if (size != onlyOne) {
+                            throw new SQLException(
+                                String.format("Entity{%s} could not be created successfully.", entity.toString()));
+                        }
                         return null;
                     } finally {
                         if (st != null) {
@@ -302,26 +305,29 @@ public class SQLMasterStorage implements MasterStorage {
                 public Object run(TransactionResource resource) throws SQLException {
                     String tableName = tableNameSelector.select(Long.toString(entity.id()));
                     String sql = String.format(REPLACE_SQL, tableName);
-                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
 
-                    // update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
-                    st.setLong(1, System.currentTimeMillis()); // time
-                    st.setString(2, toJson(entity.entityValue())); // attribute
-                    st.setLong(3, entity.id()); // id
-                    st.setInt(4, entity.version()); // version
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(st.toString());
-                    }
-
-                    int size = st.executeUpdate();
-
-                    final int onlyOne = 1;
-                    if (size != onlyOne) {
-                        throw new SQLException(String.format("Entity{%s} could not be replace successfully.", entity.toString()));
-                    }
-
+                    PreparedStatement st = null;
                     try {
+                        st = ((Connection) resource.value()).prepareStatement(sql);
+
+                        // update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
+                        st.setLong(1, System.currentTimeMillis()); // time
+                        st.setString(2, toJson(entity.entityValue())); // attribute
+                        st.setLong(3, entity.id()); // id
+                        st.setInt(4, entity.version()); // version
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(st.toString());
+                        }
+
+                        int size = st.executeUpdate();
+
+                        final int onlyOne = 1;
+                        if (size != onlyOne) {
+                            throw new SQLException(String.format("Entity{%s} could not be replace successfully.", entity.toString()));
+                        }
+
+
                         return null;
                     } finally {
                         if (st != null) {
@@ -344,26 +350,28 @@ public class SQLMasterStorage implements MasterStorage {
                 public Object run(TransactionResource resource) throws SQLException {
                     String tableName = tableNameSelector.select(Long.toString(entity.id()));
                     String sql = String.format(DELETE_SQL, tableName);
-                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
 
-                    // deleted time id version;
-                    st.setBoolean(1, true); // deleted
-                    st.setLong(2, System.currentTimeMillis()); // time
-                    st.setLong(3, entity.id()); // id
-                    st.setInt(4, entity.version()); // version
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(st.toString());
-                    }
-
-                    int size = st.executeUpdate();
-                    final int onlyOne = 1;
-                    if (size != onlyOne) {
-                        throw new SQLException(String.format("Entity{%s} could not be delete successfully.", entity.toString()));
-                    }
-
+                    PreparedStatement st = null;
                     try {
+                        st = ((Connection) resource.value()).prepareStatement(sql);
+
+                        // deleted time id version;
+                        st.setBoolean(1, true); // deleted
+                        st.setLong(2, System.currentTimeMillis()); // time
+                        st.setLong(3, entity.id()); // id
+                        st.setInt(4, entity.version()); // version
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(st.toString());
+                        }
+
+                        int size = st.executeUpdate();
+                        final int onlyOne = 1;
+                        if (size != onlyOne) {
+                            throw new SQLException(String.format("Entity{%s} could not be delete successfully.", entity.toString()));
+                        }
                         return null;
+
                     } finally {
                         if (st != null) {
                             st.close();

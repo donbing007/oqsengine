@@ -41,7 +41,7 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
         boolean allNegative = true;
         SphinxQLConditionBuilder conditionQueryBuilder;
 
-        for (ConditionNode node : conditions.collection()) {
+        for (ConditionNode node : conditions.collect()) {
             if (Conditions.isValueNode(node)) {
                 Condition condition = ((ValueConditionNode) node).getCondition();
 
