@@ -60,7 +60,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
      * %s 顺序为 where 条件, 排序.
      */
     private static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? %s %s limit ?,?";
-    private static final String SELECT_COUNT_SQL = "select count(*) as "+ FieldDefine.COUNT +" from %s where entity = ? %s";
+    private static final String SELECT_COUNT_SQL = "select count(*) as " + FieldDefine.COUNT + " from %s where entity = ? %s";
     private static final String SELECT_FROM_ID_SQL = "select id, pref, cref, entity, jsonfields from %s where id = ?";
 
     private String buildSql;
