@@ -40,7 +40,7 @@ public class ConnectionTransactionResource extends UndoTransactionResource<Conne
 
     @Override
     public DbType dbType() {
-        return DbType.MASTOR;
+        return DbType.MASTER;
     }
 
     @Override

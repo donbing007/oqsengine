@@ -9,7 +9,7 @@ package com.xforceplus.ultraman.oqsengine.storage.undo.constant;
  */
 public enum OpType {
 
-    BUILD("1"), REPLACE("2"), REPLACE_ATTRIBUTE("3"), DELETE("4");
+    BUILD("1"), REPLACE("2"), REPLACE_ATTRIBUTE("3"), REPLACE_VERSION("4"), DELETE("5");
 
     String value;
 

@@ -205,38 +205,42 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     private void doEndWithUndo(boolean commit) throws SQLException {
-        List<SQLException> exHolder = new LinkedList<>();
         try {
-            saveTransactionResourcesUndoLog(transactionResourceHolder);
+            List<SQLException> exHolder = new LinkedList<>();
+            try {
+                saveTransactionResourcesUndoLog(transactionResourceHolder);
 
-            for (TransactionResource transactionResource : transactionResourceHolder) {
-                if (commit) {
-                    transactionResource.commit();
-                    saveCommitStatus(transactionResource);
-                } else {
-                    transactionResource.rollback();
+                for (TransactionResource transactionResource : transactionResourceHolder) {
+                    if (commit) {
+                        transactionResource.commit();
+                        saveCommitStatus(transactionResource);
+                    } else {
+                        transactionResource.rollback();
+                    }
                 }
+
+                undoExecutor.mock();
+            } catch (SQLException ex) {
+                exHolder.add(0, ex);
+
+                undoTransactionResources(transactionResourceHolder, commit);
+            } finally {
+                destroyTransactionResources(transactionResourceHolder);
             }
 
-            undoExecutor.mock();
-        } catch (SQLException ex) {
-            exHolder.add(0, ex);
+            throwSQLExceptionIfNecessary(exHolder);
 
-            undoTransactionResources(transactionResourceHolder, commit);
+            if (commit) {
+
+                committed = true;
+
+            } else {
+
+                rollback = true;
+
+            }
         } finally {
-            destroyTransactionResources(transactionResourceHolder);
-        }
-
-        throwSQLExceptionIfNecessary(exHolder);
-
-        if (commit) {
-
-            committed = true;
-
-        } else {
-
-            rollback = true;
-
+            timerSample.stop(Metrics.globalRegistry.timer(MetricsDefine.TRANSACTION_DURATION_SECONDS));
         }
     }
 

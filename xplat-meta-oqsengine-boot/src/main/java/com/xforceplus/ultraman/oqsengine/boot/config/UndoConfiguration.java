@@ -50,9 +50,9 @@ public class UndoConfiguration {
         storageCommandInvoker.register(DbType.INDEX, OpType.REPLACE, new ReplaceStorageCommand(indexTableName));
         storageCommandInvoker.register(DbType.INDEX, OpType.DELETE, new DeleteStorageCommand(indexTableName));
 
-        storageCommandInvoker.register(DbType.MASTOR, OpType.BUILD, new com.xforceplus.ultraman.oqsengine.storage.master.command.BuildStorageCommand(tableNameSelector));
-        storageCommandInvoker.register(DbType.MASTOR, OpType.REPLACE, new com.xforceplus.ultraman.oqsengine.storage.master.command.ReplaceStorageCommand(tableNameSelector));
-        storageCommandInvoker.register(DbType.MASTOR, OpType.DELETE, new com.xforceplus.ultraman.oqsengine.storage.master.command.DeleteStorageCommand(tableNameSelector));
+        storageCommandInvoker.register(DbType.MASTER, OpType.BUILD, new com.xforceplus.ultraman.oqsengine.storage.master.command.BuildStorageCommand(tableNameSelector));
+        storageCommandInvoker.register(DbType.MASTER, OpType.REPLACE, new com.xforceplus.ultraman.oqsengine.storage.master.command.ReplaceStorageCommand(tableNameSelector));
+        storageCommandInvoker.register(DbType.MASTER, OpType.DELETE, new com.xforceplus.ultraman.oqsengine.storage.master.command.DeleteStorageCommand(tableNameSelector));
 
         return storageCommandInvoker;
     }

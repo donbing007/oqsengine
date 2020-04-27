@@ -2,32 +2,32 @@ package com.xforceplus.ultraman.oqsengine.boot.undo;
 
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootTestApplication;
 import com.xforceplus.ultraman.oqsengine.boot.config.UndoConfiguration;
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 @SpringBootTest(classes = {OqsengineBootTestApplication.class})
 @Import(UndoConfiguration.class)
 public class UndoTest {
+    final Logger logger = LoggerFactory.getLogger(UndoTest.class);
 
     @Autowired
     private LongIdGenerator longIdGenerator;
@@ -65,9 +66,9 @@ public class UndoTest {
     @Before
     public void before() {
         fatherEntityClass = new EntityClass(longIdGenerator.next(), "father", Arrays.asList(
-                new Field(longIdGenerator.next(), "f1", FieldType.LONG, FieldConfig.build().searchable(true)),
-                new Field(longIdGenerator.next(), "f2", FieldType.STRING, FieldConfig.build().searchable(false)),
-                new Field(longIdGenerator.next(), "f2", FieldType.DECIMAL, FieldConfig.build().searchable(true))
+                new EntityField(longIdGenerator.next(), "f1", FieldType.LONG, FieldConfig.build().searchable(true)),
+                new EntityField(longIdGenerator.next(), "f2", FieldType.STRING, FieldConfig.build().searchable(false)),
+                new EntityField(longIdGenerator.next(), "f2", FieldType.DECIMAL, FieldConfig.build().searchable(true))
         ));
     }
 
@@ -81,13 +82,11 @@ public class UndoTest {
 
         Transaction tx = transactionManager.create();
 
-//        tx.getUndoExecutor().setMockError(true);
-
         IEntity entity = buildEntity(fatherEntityClass, false);
 
         entityManagementService.build(entity);
 
-        entityManagementService.build(entity);
+        tx.getUndoExecutor().setMockError(true);
 
         try {
             tx.commit();
@@ -100,10 +99,10 @@ public class UndoTest {
             transactionManager.create();
             entityOptional = entitySearchService.selectOne(entity.id(), entity.entityClass());
         } catch (Exception e) {
-
+            logger.warn("entity has been already deleted");
         }
 
-        Assert.assertNull(entityOptional);
+        Assert.assertFalse(entityOptional.isPresent());
 
         tx.getUndoExecutor().setMockError(false);
     }

@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant;
 
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+
 /**
  * 版权：    上海云砺信息科技有限公司
  * 创建者:   youyifan
@@ -15,7 +17,7 @@ public class SQLConstant {
      * %s 顺序为 where 条件, 排序.
      */
     public static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? %s %s limit ?,?";
-    public static final String SELECT_COUNT_SQL = "select count(*) as count from %s where entity = ? %s";
+    public static final String SELECT_COUNT_SQL = "select count(*) as " + FieldDefine.COUNT + " from %s where entity = ? %s";
     public static final String SELECT_FROM_ID_SQL = "select id, pref, cref, entity, jsonfields from %s where id = ?";
 
 }

@@ -5,8 +5,8 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Field;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
@@ -40,13 +40,13 @@ public class StorageCommandTest {
 
     private StorageStrategyFactory storageStrategyFactory;
 
-    private static IEntityField longField = new Field(Long.MAX_VALUE, "long", FieldType.LONG);
-    private static IEntityField stringField = new Field(Long.MAX_VALUE - 1, "string", FieldType.STRING);
-    private static IEntityField boolField = new Field(Long.MAX_VALUE - 2, "bool", FieldType.BOOLEAN);
-    private static IEntityField dateTimeField = new Field(Long.MAX_VALUE - 3, "datetime", FieldType.DATETIME);
-    private static IEntityField decimalField = new Field(Long.MAX_VALUE - 4, "decimal", FieldType.DECIMAL);
-    private static IEntityField enumField = new Field(Long.MAX_VALUE - 5, "enum", FieldType.ENUM);
-    private static IEntityField stringsField = new Field(Long.MAX_VALUE - 6, "strings", FieldType.STRINGS);
+    private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
+    private static IEntityField stringField = new EntityField(Long.MAX_VALUE - 1, "string", FieldType.STRING);
+    private static IEntityField boolField = new EntityField(Long.MAX_VALUE - 2, "bool", FieldType.BOOLEAN);
+    private static IEntityField dateTimeField = new EntityField(Long.MAX_VALUE - 3, "datetime", FieldType.DATETIME);
+    private static IEntityField decimalField = new EntityField(Long.MAX_VALUE - 4, "decimal", FieldType.DECIMAL);
+    private static IEntityField enumField = new EntityField(Long.MAX_VALUE - 5, "enum", FieldType.ENUM);
+    private static IEntityField stringsField = new EntityField(Long.MAX_VALUE - 6, "strings", FieldType.STRINGS);
 
     private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "test", Arrays.asList(
             longField,

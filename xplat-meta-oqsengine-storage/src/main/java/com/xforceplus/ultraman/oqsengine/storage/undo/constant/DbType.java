@@ -8,7 +8,7 @@ package com.xforceplus.ultraman.oqsengine.storage.undo.constant;
  * 修改历史:
  */
 public enum DbType {
-    MASTOR("1"), INDEX("2");
+    MASTER("1"), INDEX("2");
 
     String value;
 

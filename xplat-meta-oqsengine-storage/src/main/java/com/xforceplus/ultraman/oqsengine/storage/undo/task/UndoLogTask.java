@@ -60,7 +60,7 @@ public class UndoLogTask extends Thread {
         this.undoExecutor = undoExecutor;
         this.dataSourceSelectors = new HashMap();
         this.dataSourceSelectors.put(DbType.INDEX, indexWriteDataSourceSelector);
-        this.dataSourceSelectors.put(DbType.MASTOR, masterDataSourceSelector);
+        this.dataSourceSelectors.put(DbType.MASTER, masterDataSourceSelector);
 
     }
 
@@ -137,7 +137,7 @@ public class UndoLogTask extends Thread {
             throws Exception {
 
         Class resourceClass = DbType.INDEX.equals(dbType) ? SphinxQLTransactionResource.class :
-                (DbType.MASTOR.equals(dbType) ? ConnectionTransactionResource.class : null);
+                (DbType.MASTER.equals(dbType) ? ConnectionTransactionResource.class : null);
 
         Constructor<TransactionResource> constructor =
                 resourceClass.getConstructor(String.class, Connection.class, Boolean.TYPE);
