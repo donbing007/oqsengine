@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.sql;
 
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -13,9 +14,9 @@ import java.sql.Statement;
  * @version 0.1 2020/2/28 17:25
  * @since 1.8
  */
-public class SphinxQLTransactionResource implements TransactionResource<Connection> {
+public class SphinxQLTransactionResource extends UndoTransactionResource<Connection> {
 
-    private DataSource key;
+    private Object key;
     private Connection conn;
 
     public SphinxQLTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
@@ -27,6 +28,22 @@ public class SphinxQLTransactionResource implements TransactionResource<Connecti
         if (!autocommit) {
             execute("begin");
         }
+    }
+
+    public SphinxQLTransactionResource(String key, Connection conn, boolean autocommit) throws SQLException {
+        this.key = key;
+        this.conn = conn;
+        // SphinxQL 只有在 autocommit = true 情况下才工作.
+        this.conn.setAutoCommit(true);
+
+        if (!autocommit) {
+            execute("begin");
+        }
+    }
+
+    @Override
+    public DbType dbType() {
+        return DbType.INDEX;
     }
 
     @Override
@@ -51,8 +68,12 @@ public class SphinxQLTransactionResource implements TransactionResource<Connecti
 
     @Override
     public void destroy() throws SQLException {
-
         conn.close();
+    }
+
+    @Override
+    public boolean isDestroyed() throws SQLException {
+        return conn.isClosed();
     }
 
     private void execute(String command) throws SQLException {
