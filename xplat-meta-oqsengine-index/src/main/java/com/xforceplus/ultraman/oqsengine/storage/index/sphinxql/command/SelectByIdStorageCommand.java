@@ -59,7 +59,7 @@ public class SelectByIdStorageCommand implements StorageCommand<StorageEntity> {
                 );
             }
 
-            if(storageEntity == null) {
+            if (storageEntity == null) {
                 throw new SQLException(
                         String.format("Attempt to update a property on a data that does not exist.[%d]", id)
                 );

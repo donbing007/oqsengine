@@ -71,7 +71,7 @@ public class BuildStorageCommand extends UndoStorageCommand<StorageEntity> {
         try {
             // 成功只应该有一条语句影响
             final int onlyOne = 1;
-            if(size != onlyOne) {
+            if (size != onlyOne) {
                 throw new SQLException(String.format("Entity{%s} could not be created successfully.", storageEntity.toString()));
             }
 
