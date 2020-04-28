@@ -23,10 +23,10 @@ import java.util.Queue;
 
 /**
  * 版权：    上海云砺信息科技有限公司
- * 创建者:   youyifan
  * 创建时间: 3/30/2020 5:26 PM
  * 功能描述:
  * 修改历史:
+ * @author youyifan
  */
 public class UndoLogTask extends Thread {
 

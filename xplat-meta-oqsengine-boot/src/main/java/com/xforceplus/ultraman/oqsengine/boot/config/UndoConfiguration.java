@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.BuildSto
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.DeleteStorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.ReplaceStorageCommand;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.undo.UndoFactory;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.DefaultStorageCommandExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommandExecutor;
@@ -55,6 +56,11 @@ public class UndoConfiguration {
         storageCommandInvoker.register(DbType.MASTER, OpType.DELETE, new com.xforceplus.ultraman.oqsengine.storage.master.command.DeleteStorageCommand(tableNameSelector));
 
         return storageCommandInvoker;
+    }
+
+    @Bean
+    public UndoExecutor undoExecutor(UndoLogStore undoLogStore, StorageCommandExecutor storageCommandInvoker){
+        return new UndoExecutor(undoLogStore, storageCommandInvoker);
     }
 
     @Bean

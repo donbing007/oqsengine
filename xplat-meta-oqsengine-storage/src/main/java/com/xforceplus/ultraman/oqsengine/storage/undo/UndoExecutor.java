@@ -25,7 +25,6 @@ public class UndoExecutor {
 
     private UndoLogStore undoLogStore;
     private StorageCommandExecutor storageCommandExecutor;
-    private boolean mockError;
 
     public UndoExecutor(
             UndoLogStore undoLogStore,
@@ -35,7 +34,6 @@ public class UndoExecutor {
             logger.error("UndoExecutor set UndoLogStore to null");
         }
         this.storageCommandExecutor = storageCommandExecutor;
-        this.mockError = false;
     }
 
     public void undo(TransactionResource resource) {
@@ -63,26 +61,14 @@ public class UndoExecutor {
         logger.debug("finish undo {} items");
     }
 
-    public void saveUndoLog(Long txId, TransactionResource res) {
-        UndoLog undoLog = getUndoLog(res);
+    public void saveUndoLog(UndoLog undoLog) {
         logger.debug("save undo infos {} items in store ", undoLog.getItems().size());
-        this.undoLogStore.save(txId, undoLog.getDbType(), undoLog.getShardKey(), undoLog);
+        this.undoLogStore.save(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey(), undoLog);
     }
 
-    public void updateUndoLogStatus(Long txId, TransactionResource res, UndoLogStatus status) {
-        UndoLog undoLog = getUndoLog(res);
-        this.undoLogStore.updateStatus(txId, undoLog.getDbType(), undoLog.getShardKey(), status);
+    public void updateUndoLogStatus(UndoLog undoLog, UndoLogStatus status) {
+        this.undoLogStore.updateStatus(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey(), status);
         logger.debug("[UndoExecutor UNDO] success to clear undo log in store");
-    }
-
-    public void mock() throws SQLException {
-        if (mockError) {
-            throw new SQLException("mock throws SQLException when commits finished");
-        }
-    }
-
-    public void setMockError(boolean mockError) {
-        this.mockError = mockError;
     }
 
     private void removeUndoLogItem(int index, UndoLog undoLog) {

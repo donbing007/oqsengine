@@ -14,16 +14,13 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
 
     private LongIdGenerator idGenerator;
 
-    private UndoExecutor undoExecutor;
-
     public DefaultTransactionManager(LongIdGenerator idGenerator) {
         this.idGenerator = idGenerator;
     }
 
-    public DefaultTransactionManager(int survivalTimeMs, LongIdGenerator idGenerator, UndoExecutor undoExecutor) {
+    public DefaultTransactionManager(int survivalTimeMs, LongIdGenerator idGenerator) {
         super(survivalTimeMs);
         this.idGenerator = idGenerator;
-        this.undoExecutor = undoExecutor;
     }
 
     @Override
@@ -31,8 +28,6 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
         long id = idGenerator.next();
 
         Transaction tx = new MultiLocalTransaction(id);
-
-        tx.setUndoExecutor(undoExecutor);
 
         return tx;
     }
