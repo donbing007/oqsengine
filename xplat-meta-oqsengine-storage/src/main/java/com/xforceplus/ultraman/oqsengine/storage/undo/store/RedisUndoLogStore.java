@@ -1,17 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.store;
 
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpType;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.UndoLogStatus;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
-import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLogItem;
 import com.xforceplus.ultraman.oqsengine.storage.undo.util.CompressUtil;
 import org.redisson.api.RLock;
 import org.redisson.api.RMap;
 import org.redisson.api.RQueue;
 import org.redisson.api.RedissonClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +57,7 @@ public class RedisUndoLogStore implements UndoLogStore {
             txUndoMap.remove(dbKey(dbType, shardKey));
         }
 
-        if(txUndoMap.isEmpty()) {
+        if (txUndoMap.isEmpty()) {
             getUndoLog().remove(txId);
             return true;
         } else {
@@ -90,7 +86,7 @@ public class RedisUndoLogStore implements UndoLogStore {
 
                     Map<String, byte[]> txUndoMap = (Map<String, byte[]>) getUndoLog().get(txId);
 
-                    if(txUndoMap.isEmpty()) {
+                    if (txUndoMap.isEmpty()) {
                         getUndoLog().remove(txId);
                     }
 
@@ -112,14 +108,14 @@ public class RedisUndoLogStore implements UndoLogStore {
 
         getUndoLog().readAllValues().stream()
                 .filter(Objects::nonNull)
-                .flatMap(obj -> ((Map)obj).values().stream())
+                .flatMap(obj -> ((Map) obj).values().stream())
                 .sorted(Comparator.comparingLong(UndoLog::getTime))
                 .forEach(v -> {
-                    UndoLog undoLog = (UndoLog) CompressUtil.decompressToObj((byte[])v);
-                    if(statuss != null && statuss.contains(undoLog.getStatus())) {
+                    UndoLog undoLog = (UndoLog) CompressUtil.decompressToObj((byte[]) v);
+                    if (statuss != null && statuss.contains(undoLog.getStatus())) {
                         undoLogs.add(undoLog);
                     }
-        });
+                });
 
         RQueue<UndoLog> queue = redissonClient.getQueue(UNDO_LOG_Q);
         queue.addAll(undoLogs);
@@ -130,7 +126,9 @@ public class RedisUndoLogStore implements UndoLogStore {
     @Override
     public boolean updateStatus(Long txId, DbType dbType, String shardKey, UndoLogStatus status) {
         UndoLog undoLog = getUndoLog(txId, dbType, shardKey);
-        if(undoLog == null) { return false; }
+        if (undoLog == null) {
+            return false;
+        }
 
         undoLog.setStatus(status.value());
 

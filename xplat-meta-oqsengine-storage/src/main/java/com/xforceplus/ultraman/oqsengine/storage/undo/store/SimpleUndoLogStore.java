@@ -24,7 +24,7 @@ public class SimpleUndoLogStore implements UndoLogStore {
 
     @Override
     public UndoLog get(Long txId, DbType dbType, String shardKey) {
-        return store.containsKey(txId) ? store.get(txId).get(dbKey(dbType, shardKey)):null;
+        return store.containsKey(txId) ? store.get(txId).get(dbKey(dbType, shardKey)) : null;
     }
 
     @Override
@@ -47,10 +47,10 @@ public class SimpleUndoLogStore implements UndoLogStore {
 
     @Override
     public synchronized boolean tryRemove(Long txId) {
-        if(isExist(txId)) {
+        if (isExist(txId)) {
             Map txMap = store.get(txId);
-            if(txMap.isEmpty()) {
-               store.remove(txId);
+            if (txMap.isEmpty()) {
+                store.remove(txId);
             }
         }
         return true;
@@ -58,15 +58,15 @@ public class SimpleUndoLogStore implements UndoLogStore {
 
     @Override
     public synchronized boolean remove(Long txId, DbType dbType, String shardKey) {
-        if(isExist(txId)) {
-            ((Map)store.get(txId)).remove(dbKey(dbType, shardKey));
+        if (isExist(txId)) {
+            ((Map) store.get(txId)).remove(dbKey(dbType, shardKey));
         }
         return true;
     }
 
     @Override
     public synchronized boolean removeItem(Long txId, DbType dbType, String shardKey, int index) {
-        if(isExist(txId) && store.get(txId).containsKey(dbKey(dbType, shardKey))) {
+        if (isExist(txId) && store.get(txId).containsKey(dbKey(dbType, shardKey))) {
             Map<String, UndoLog> txMap = store.get(txId);
             UndoLog undoLog = txMap.get(dbKey(dbType, shardKey));
             undoLog.getItems().remove(index);
@@ -78,7 +78,7 @@ public class SimpleUndoLogStore implements UndoLogStore {
 
     @Override
     public synchronized boolean updateStatus(Long txId, DbType dbType, String shardKey, UndoLogStatus status) {
-        if(isExist(txId) && store.get(txId).containsKey(dbKey(dbType, shardKey))) {
+        if (isExist(txId) && store.get(txId).containsKey(dbKey(dbType, shardKey))) {
             Map<String, UndoLog> txMap = store.get(txId);
             UndoLog undoLog = txMap.get(dbKey(dbType, shardKey));
             undoLog.setStatus(status.value());
@@ -90,13 +90,13 @@ public class SimpleUndoLogStore implements UndoLogStore {
 
     @Override
     public synchronized Queue<UndoLog> getUndoLogQueue(List<Integer> statuss) {
-        if(queue.isEmpty()) {
+        if (queue.isEmpty()) {
             store.values().stream()
                     .filter(Objects::nonNull)
                     .flatMap(v -> v.values().stream())
                     .sorted(Comparator.comparingLong(UndoLog::getTime))
                     .forEach(undoLog -> {
-                        if(statuss.contains(undoLog.getStatus())) {
+                        if (statuss.contains(undoLog.getStatus())) {
                             queue.add(undoLog);
                         }
                     });

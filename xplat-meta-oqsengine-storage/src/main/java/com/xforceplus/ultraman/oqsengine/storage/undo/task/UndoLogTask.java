@@ -91,9 +91,9 @@ public class UndoLogTask extends Thread {
             return;
         }
 
-        if(undoLog.getStatus() == UndoLogStatus.UNCOMMITTED.value()) {
+        if (undoLog.getStatus() == UndoLogStatus.UNCOMMITTED.value()) {
             undoLogStore.remove(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey());
-        } else if(undoLog.getStatus() == UndoLogStatus.COMMITED.value()) {
+        } else if (undoLog.getStatus() == UndoLogStatus.COMMITED.value()) {
             undoLogStore.updateStatus(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey(), UndoLogStatus.ERROR);
         }
 
@@ -123,7 +123,7 @@ public class UndoLogTask extends Thread {
             return;
         }
 
-        ((UndoTransactionResource)resource).setUndoLog(undoLog);
+        ((UndoTransactionResource) resource).setUndoLog(undoLog);
 
         undoExecutor.undo(resource);
     }

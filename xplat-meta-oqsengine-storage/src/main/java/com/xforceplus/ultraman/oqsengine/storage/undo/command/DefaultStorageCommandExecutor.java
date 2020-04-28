@@ -23,11 +23,11 @@ public class DefaultStorageCommandExecutor implements StorageCommandExecutor {
 
     protected Map<DbType, Map<OpType, StorageCommand>> storageCommands = new HashMap<>();
 
-    public void register(DbType dbType, OpType opType, StorageCommand cmd){
-        if(dbType == null || opType == null || cmd == null) {
+    public void register(DbType dbType, OpType opType, StorageCommand cmd) {
+        if (dbType == null || opType == null || cmd == null) {
             return;
         }
-        if(!storageCommands.containsKey(dbType)) {
+        if (!storageCommands.containsKey(dbType)) {
             storageCommands.put(dbType, new HashMap());
         }
         storageCommands.get(dbType).put(opType, cmd);
@@ -40,11 +40,11 @@ public class DefaultStorageCommandExecutor implements StorageCommandExecutor {
 
     @Override
     public Object executeUndo(TransactionResource res, OpType opType, Object data) throws SQLException {
-        return ((UndoStorageCommand)selectCommand(res.dbType(), opType)).executeUndo(res, data);
+        return ((UndoStorageCommand) selectCommand(res.dbType(), opType)).executeUndo(res, data);
     }
 
-    private StorageCommand selectCommand(DbType dbType, OpType opType) throws SQLException{
-        if(dbType == null || opType == null
+    private StorageCommand selectCommand(DbType dbType, OpType opType) throws SQLException {
+        if (dbType == null || opType == null
                 || !storageCommands.containsKey(dbType)
                 || storageCommands.get(dbType) == null
                 || !storageCommands.get(dbType).containsKey(opType)

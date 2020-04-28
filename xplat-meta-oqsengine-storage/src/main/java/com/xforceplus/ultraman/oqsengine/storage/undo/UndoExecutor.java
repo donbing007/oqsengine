@@ -31,7 +31,7 @@ public class UndoExecutor {
             UndoLogStore undoLogStore,
             StorageCommandExecutor storageCommandExecutor) {
         this.undoLogStore = undoLogStore;
-        if(undoLogStore == null) {
+        if (undoLogStore == null) {
             logger.error("UndoExecutor set UndoLogStore to null");
         }
         this.storageCommandExecutor = storageCommandExecutor;
@@ -43,7 +43,7 @@ public class UndoExecutor {
 
         logger.debug("start undo {} items", undoLog.getItems().size());
         boolean isComplete = true;
-        for (int i = undoLog.getItems().size()-1; i >= 0; i--) {
+        for (int i = undoLog.getItems().size() - 1; i >= 0; i--) {
             UndoLogItem item = undoLog.getItems().get(i);
 
             try {
@@ -56,27 +56,27 @@ public class UndoExecutor {
             }
         }
 
-        if(isComplete) {
+        if (isComplete) {
             removeUndoLog(undoLog);
         }
 
         logger.debug("finish undo {} items");
     }
 
-    public void saveUndoLog(Long txId, TransactionResource res){
+    public void saveUndoLog(Long txId, TransactionResource res) {
         UndoLog undoLog = getUndoLog(res);
         logger.debug("save undo infos {} items in store ", undoLog.getItems().size());
         this.undoLogStore.save(txId, undoLog.getDbType(), undoLog.getShardKey(), undoLog);
     }
 
-    public void updateUndoLogStatus(Long txId, TransactionResource res, UndoLogStatus status){
+    public void updateUndoLogStatus(Long txId, TransactionResource res, UndoLogStatus status) {
         UndoLog undoLog = getUndoLog(res);
         this.undoLogStore.updateStatus(txId, undoLog.getDbType(), undoLog.getShardKey(), status);
         logger.debug("[UndoExecutor UNDO] success to clear undo log in store");
     }
 
     public void mock() throws SQLException {
-        if(mockError) {
+        if (mockError) {
             throw new SQLException("mock throws SQLException when commits finished");
         }
     }
@@ -85,18 +85,18 @@ public class UndoExecutor {
         this.mockError = mockError;
     }
 
-    private void removeUndoLogItem(int index, UndoLog undoLog){
+    private void removeUndoLogItem(int index, UndoLog undoLog) {
         this.undoLogStore.removeItem(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey(), index);
         logger.debug("success to clear undo log in store");
     }
 
-    private void removeUndoLog(UndoLog undoLog){
+    private void removeUndoLog(UndoLog undoLog) {
         this.undoLogStore.remove(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey());
         this.undoLogStore.tryRemove(undoLog.getTxId());
         logger.debug("success to clear undo log in store");
     }
 
-    private UndoLog getUndoLog(TransactionResource res){
+    private UndoLog getUndoLog(TransactionResource res) {
         return ((UndoTransactionResource) res).undoLog();
     }
 }

@@ -7,10 +7,11 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLogItem;
 
 /**
  * 版权：    上海云砺信息科技有限公司
- * 创建者:   youyifan
  * 创建时间: 4/8/2020 11:00 AM
  * 功能描述:
  * 修改历史:
+ * @author youyifan
+ * @param <V>
  */
 public abstract class UndoTransactionResource<V> implements TransactionResource<V> {
 
@@ -18,7 +19,7 @@ public abstract class UndoTransactionResource<V> implements TransactionResource<
 
     protected UndoLog undoLog = new UndoLog();
 
-    public UndoTransactionResource(){
+    public UndoTransactionResource() {
         undoLog.setDbType(this.dbType());
     }
 
@@ -31,15 +32,15 @@ public abstract class UndoTransactionResource<V> implements TransactionResource<
         return undoLog;
     }
 
-    public void committed(){
+    public void committed() {
         committed = true;
     }
 
-    public boolean isCommitted(){
+    public boolean isCommitted() {
         return this.committed;
     }
 
-    public void setUndoLog(UndoLog undoLog){
+    public void setUndoLog(UndoLog undoLog) {
         this.undoLog = undoLog;
     }
 }

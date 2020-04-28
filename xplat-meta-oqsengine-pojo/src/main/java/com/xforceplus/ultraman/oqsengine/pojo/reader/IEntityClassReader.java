@@ -383,13 +383,13 @@ public class IEntityClassReader {
      * @param entityField
      * @return
      */
-    public Optional<IEntityField> getRelatedOriginalField(IEntityField entityField){
+    public Optional<IEntityField> getRelatedOriginalField(IEntityField entityField) {
         String fieldName = entityField.name();
         String[] fields = fieldName.split("\\.");
-        if(fields.length > 1){
+        if (fields.length > 1) {
             String relName = fields[0];
             return column(relName + ".id").map(ColumnField::originField);
-        }else{
+        } else {
             return Optional.empty();
         }
     }

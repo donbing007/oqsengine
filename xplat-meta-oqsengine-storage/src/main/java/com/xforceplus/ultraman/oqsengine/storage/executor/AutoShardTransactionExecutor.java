@@ -109,8 +109,8 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
         return resource;
     }
 
-    private String createDbKey(DataSource dataSource){
-        return dataSource == null ? null:dataSource.toString();
+    private String createDbKey(DataSource dataSource) {
+        return dataSource == null ? null : dataSource.toString();
     }
 
 }

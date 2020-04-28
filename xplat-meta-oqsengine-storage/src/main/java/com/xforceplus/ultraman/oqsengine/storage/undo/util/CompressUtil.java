@@ -15,12 +15,13 @@ import java.util.zip.GZIPOutputStream;
  * 修改历史:
  */
 public class CompressUtil {
-    final static Logger logger = LoggerFactory.getLogger(CompressUtil.class);
+    static final Logger logger = LoggerFactory.getLogger(CompressUtil.class);
 
     public static final int BUFFER = 1024;
 
     /**
      * 把对象转变成二进制
+     *
      * @param obj 待转换的对象
      * @return 返回二进制数组
      */
@@ -37,14 +38,14 @@ public class CompressUtil {
             logger.error("convert object to byte[] failed");
             e.printStackTrace();
         } finally {
-            if(oos != null) {
+            if (oos != null) {
                 try {
                     oos.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            if(bos != null) {
+            if (bos != null) {
                 try {
                     bos.close();
                 } catch (IOException e) {
@@ -57,6 +58,7 @@ public class CompressUtil {
 
     /**
      * 把二进制数组的数据转回对象
+     *
      * @param b
      * @return
      */
@@ -72,14 +74,14 @@ public class CompressUtil {
             logger.error("convert byte[] back to object failed");
             e.printStackTrace();
         } finally {
-            if(ois != null) {
+            if (ois != null) {
                 try {
                     ois.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            if(bis != null) {
+            if (bis != null) {
                 try {
                     bis.close();
                 } catch (IOException e) {
@@ -119,7 +121,7 @@ public class CompressUtil {
             logger.error("compress bytes[] failed");
             e.printStackTrace();
         } finally {
-            if(gos != null) {
+            if (gos != null) {
                 try {
                     gos.close();
                 } catch (IOException e) {
