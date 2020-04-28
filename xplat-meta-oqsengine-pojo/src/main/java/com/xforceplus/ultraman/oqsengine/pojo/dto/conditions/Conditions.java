@@ -383,11 +383,11 @@ public class Conditions implements Serializable {
                 }
             }
 
-            if (node.getLeft() != null) {
-                stack.push(node.getLeft());
-            }
             if (node.getRight() != null) {
                 stack.push(node.getRight());
+            }
+            if (node.getLeft() != null) {
+                stack.push(node.getLeft());
             }
         }
     }

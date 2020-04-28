@@ -193,8 +193,6 @@ public class SphinxQLIndexStorageTest {
         ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         storage.setIndexTableName("oqsindextest");
-        storage.init();
-
 
         transactionManager.create();
 
@@ -794,4 +792,4 @@ public class SphinxQLIndexStorageTest {
             this.sort = sort;
         }
     }
-} 
+}

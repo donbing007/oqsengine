@@ -45,9 +45,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private IndexStorage indexStorage;
 
-    private Counter inserCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action","build");
-    private Counter replaceCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action","replace");
-    private Counter deleteCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action","delete");
+    private Counter inserCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "build");
+    private Counter replaceCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "replace");
+    private Counter deleteCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "delete");
     private Counter failCountTotal = Metrics.counter(MetricsDefine.FAIL_COUNT_TOTAL);
 
 
@@ -118,7 +118,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 }
 
             });
-        } catch(Exception ex) {
+        } catch (Exception ex) {
 
             failCountTotal.increment();
             throw ex;

@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.boot;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import kamon.Kamon;
+import org.redisson.spring.starter.RedissonAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -15,9 +16,10 @@ import org.springframework.context.ConfigurableApplicationContext;
  * 不需要 spring 管理数据源.
  */
 @SpringBootApplication(exclude = {
-    DataSourceAutoConfiguration.class,
-    DataSourceTransactionManagerAutoConfiguration.class,
-    HibernateJpaAutoConfiguration.class})
+        DataSourceAutoConfiguration.class,
+        DataSourceTransactionManagerAutoConfiguration.class,
+        HibernateJpaAutoConfiguration.class,
+        RedissonAutoConfiguration.class})
 public class OqsengineBootApplication {
 
     public static void main(String[] args) throws Exception {

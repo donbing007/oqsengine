@@ -142,4 +142,4 @@ public class AutoShardTransactionExecutorTest {
         Assert.assertEquals(expectedConn, resource.get().value());
 
     }
-} 
+}
