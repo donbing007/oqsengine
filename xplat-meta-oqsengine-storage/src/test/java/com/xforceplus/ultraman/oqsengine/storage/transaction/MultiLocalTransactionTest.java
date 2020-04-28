@@ -1,10 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -190,6 +190,16 @@ public class MultiLocalTransactionTest {
 
         public boolean isRollback() {
             return rollback;
+        }
+
+        @Override
+        public DbType dbType() {
+            return null;
+        }
+
+        @Override
+        public boolean isDestroyed() throws SQLException {
+            return false;
         }
     }
 

@@ -298,7 +298,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
         if (dictItems.size() > 0){
             String maxVersion = dictItems.get(0).getVersion();
             for (int i = 0; i < dictItems.size(); i++) {
-                if (compare(maxVersion,dictItems.get(i).getVersion()) < 0) {
+                if (compare(maxVersion, dictItems.get(i).getVersion()) < 0) {
                     dictItemList.clear();
                     dictItemList.add(dictItems.get(i));
                     maxVersion = dictItems.get(i).getVersion();
@@ -317,11 +317,11 @@ public class EntityServiceExImpl implements EntityServiceEx {
      * @return
      */
     public int compare(String v1, String v2) {
-        if(StringUtils.isEmpty(v1) && StringUtils.isEmpty(v2)) {
+        if (org.apache.commons.lang3.StringUtils.isEmpty(v1) && org.apache.commons.lang3.StringUtils.isEmpty(v2)) {
             return 0;
-        } else if(StringUtils.isEmpty(v1)) {
+        } else if (org.apache.commons.lang3.StringUtils.isEmpty(v1)) {
             return -1;
-        } else if(StringUtils.isEmpty(v2)) {
+        } else if (org.apache.commons.lang3.StringUtils.isEmpty(v2)) {
             return 1;
         }
 
@@ -332,15 +332,15 @@ public class EntityServiceExImpl implements EntityServiceEx {
         int lim = Math.min(varr1.length, varr2.length);
 
         int k = 0;
-        while(k < lim) {
-            if(varr1[k] == varr2[k]) {
-                k ++;
+        while (k < lim) {
+            if (varr1[k] == varr2[k]) {
+                k++;
                 continue;
             }
             return varr1[k] > varr2[k] ? 1 : -1;
         }
 
-        if(varr1.length == varr2.length) {
+        if (varr1.length == varr2.length) {
             return 0;
         }
 
@@ -348,7 +348,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
     }
 
     public int [] getVersionArray(String v) {
-        String [] sarray = StringUtils.split(v, ".");
+        String [] sarray = org.apache.commons.lang3.StringUtils.split(v, ".");
 
         int [] varray = new int[sarray.length];
 
@@ -356,7 +356,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
 
         while (k < sarray.length) {
             varray[k] = Integer.parseInt(sarray[k]);
-            k ++;
+            k++;
         }
 
         return varray;

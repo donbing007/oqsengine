@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.command.*;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -31,6 +32,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static com.xforceplus.ultraman.oqsengine.storage.master.constant.SQLConstant.*;
+
 /**
  * 主要储存实现.
  *
@@ -41,22 +44,6 @@ import java.util.stream.Collectors;
 public class SQLMasterStorage implements MasterStorage {
 
     final Logger logger = LoggerFactory.getLogger(SQLMasterStorage.class);
-
-
-    private static final String BUILD_SQL =
-        "insert into %s (id, entity, version, time, pref, cref, deleted, attribute) values(?,?,?,?,?,?,?,?)";
-    private static final String REPLACE_SQL =
-        "update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
-    private static final String REPLACE_VERSION_TIME_SQL =
-        "update %s set version = ?, time = ? where id = ?";
-    private static final String DELETE_SQL =
-        "update %s set version = version + 1, deleted = ?, time = ? where id = ? and version = ?";
-    private static final String SELECT_SQL =
-        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id = ? and deleted = false";
-    private static final String SELECT_IN_SQL =
-        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id in (%s) and deleted = false";
-    private static final String SELECT_VERSION_TIME_SQL =
-        "select version, time from %s where id = ?";
 
     @Resource(name = "masterDataSourceSelector")
     private Selector<DataSource> dataSourceSelector;
@@ -209,31 +196,12 @@ public class SQLMasterStorage implements MasterStorage {
             new DataSourceShardingTask(dataSourceSelector, Long.toString(targetId)) {
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    String tableName = tableNameSelector.select(Long.toString(targetId));
-                    String sql = String.format(REPLACE_VERSION_TIME_SQL, tableName);
+                    StorageEntity input = new StorageEntity();
+                    input.setId(targetId);
+                    input.setVersion(newVersion[0]);
+                    input.setTime(newTime[0]);
 
-
-                    PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-                    st.setInt(1, newVersion[0]);
-                    st.setLong(2, newTime[0]);
-                    st.setLong(3, targetId);
-
-                    int size = st.executeUpdate();
-
-                    final int onlyOne = 1;
-                    if (size != onlyOne) {
-                        throw new SQLException(
-                            String.format("Unable to synchronize information from %d to %d.", sourceId, targetId));
-                    }
-
-                    try {
-                        return null;
-                    } finally {
-                        if (st != null) {
-                            st.close();
-                        }
-                    }
-
+                    return new ReplaceVersionStorageCommand(tableNameSelector).execute(resource, input);
                 }
             }
 
@@ -241,7 +209,6 @@ public class SQLMasterStorage implements MasterStorage {
 
 
     }
-
 
     @Override
     public void build(IEntity entity) throws SQLException {
@@ -253,42 +220,14 @@ public class SQLMasterStorage implements MasterStorage {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    String tableName = tableNameSelector.select(Long.toString(entity.id()));
-                    String sql = String.format(BUILD_SQL, tableName);
+                    StorageEntity storageEntity = new StorageEntity();
+                    storageEntity.setId(entity.id());
+                    storageEntity.setEntity(entity.entityClass().id());
+                    storageEntity.setCref(entity.family().parent());
+                    storageEntity.setPref(entity.family().child());
+                    storageEntity.setAttribute(toJson(entity.entityValue()));
 
-                    PreparedStatement st = null;
-                    try {
-                        st = ((Connection) resource.value()).prepareStatement(sql);
-                        // id, entity, version, time, pref, cref, deleted, attribute,refs
-                        st.setLong(1, entity.id()); // id
-                        st.setLong(2, entity.entityClass().id()); // entity
-                        st.setInt(3, 0); // version
-                        st.setLong(4, System.currentTimeMillis()); // time
-                        st.setLong(5, entity.family().parent()); // pref
-                        st.setLong(6, entity.family().child()); // cref
-                        st.setBoolean(7, false); // deleted
-                        st.setString(8, toJson(entity.entityValue())); // attribute
-
-                        if (logger.isDebugEnabled()) {
-                            logger.debug(st.toString());
-                        }
-
-                        int size = st.executeUpdate();
-
-                        /**
-                         * 插入影响条件恒定为1.
-                         */
-                        final int onlyOne = 1;
-                        if (size != onlyOne) {
-                            throw new SQLException(
-                                String.format("Entity{%s} could not be created successfully.", entity.toString()));
-                        }
-                        return null;
-                    } finally {
-                        if (st != null) {
-                            st.close();
-                        }
-                    }
+                    return new BuildStorageCommand(tableNameSelector).execute(resource, storageEntity);
                 }
             });
     }
@@ -303,37 +242,12 @@ public class SQLMasterStorage implements MasterStorage {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    String tableName = tableNameSelector.select(Long.toString(entity.id()));
-                    String sql = String.format(REPLACE_SQL, tableName);
+                    StorageEntity storageEntity = new StorageEntity();
+                    storageEntity.setId(entity.id());
+                    storageEntity.setVersion(entity.version());
+                    storageEntity.setAttribute(toJson(entity.entityValue()));
 
-                    PreparedStatement st = null;
-                    try {
-                        st = ((Connection) resource.value()).prepareStatement(sql);
-
-                        // update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
-                        st.setLong(1, System.currentTimeMillis()); // time
-                        st.setString(2, toJson(entity.entityValue())); // attribute
-                        st.setLong(3, entity.id()); // id
-                        st.setInt(4, entity.version()); // version
-
-                        if (logger.isDebugEnabled()) {
-                            logger.debug(st.toString());
-                        }
-
-                        int size = st.executeUpdate();
-
-                        final int onlyOne = 1;
-                        if (size != onlyOne) {
-                            throw new SQLException(String.format("Entity{%s} could not be replace successfully.", entity.toString()));
-                        }
-
-
-                        return null;
-                    } finally {
-                        if (st != null) {
-                            st.close();
-                        }
-                    }
+                    return new ReplaceStorageCommand(tableNameSelector).execute(resource, storageEntity);
                 }
             });
     }
@@ -348,35 +262,11 @@ public class SQLMasterStorage implements MasterStorage {
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    String tableName = tableNameSelector.select(Long.toString(entity.id()));
-                    String sql = String.format(DELETE_SQL, tableName);
+                    StorageEntity storageEntity = new StorageEntity();
+                    storageEntity.setId(entity.id());
+                    storageEntity.setVersion(entity.version());
 
-                    PreparedStatement st = null;
-                    try {
-                        st = ((Connection) resource.value()).prepareStatement(sql);
-
-                        // deleted time id version;
-                        st.setBoolean(1, true); // deleted
-                        st.setLong(2, System.currentTimeMillis()); // time
-                        st.setLong(3, entity.id()); // id
-                        st.setInt(4, entity.version()); // version
-
-                        if (logger.isDebugEnabled()) {
-                            logger.debug(st.toString());
-                        }
-
-                        int size = st.executeUpdate();
-                        final int onlyOne = 1;
-                        if (size != onlyOne) {
-                            throw new SQLException(String.format("Entity{%s} could not be delete successfully.", entity.toString()));
-                        }
-                        return null;
-
-                    } finally {
-                        if (st != null) {
-                            st.close();
-                        }
-                    }
+                    return new DeleteStorageCommand(tableNameSelector).execute(resource, storageEntity);
                 }
             });
     }
