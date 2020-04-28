@@ -35,7 +35,6 @@ import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.storage.selector.TakeTurnsSelector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.MultiLocalTransaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
@@ -102,8 +101,6 @@ public class UndoTest {
     private UndoFactory undoFactory;
     private UndoExecutor undoExecutor;
 
-    private static IEntity[] entityes;
-    private List<IEntity> expectedEntitys;
     private IEntityField fixStringsField = new EntityField(100000, "strings", FieldType.STRINGS);
     private StringsValue fixStringsValue = new StringsValue(fixStringsField, "1,2,3,500002,测试".split(","));
 
@@ -126,10 +123,11 @@ public class UndoTest {
 
     @Test
     public void testBuild() throws SQLException {
+        setExecutorError(true);
 
         Transaction tx = transactionManager.create();
 
-        IEntity entity = buildEntity(1);
+        IEntity entity = buildEntity(Long.MAX_VALUE - 1000);
 
         manageService.build(entity);
 
@@ -150,6 +148,69 @@ public class UndoTest {
         Assert.assertFalse(entityOptional.isPresent());
     }
 
+    @Test
+    public void testReplace() throws SQLException {
+        setExecutorError(false);
+
+        Transaction tx = transactionManager.create();
+
+        IEntity entity = buildEntity(Long.MAX_VALUE - 1000);
+
+        manageService.build(entity);
+
+        tx.commit();
+
+        setExecutorError(true);
+
+        tx = transactionManager.create();
+
+        entity.entityValue().values().clear();
+
+        manageService.replace(entity);
+
+        try {
+            tx.commit();
+        } catch (SQLException e) {
+
+        }
+
+        transactionManager.create();
+        Optional<IEntity> entityOptional = searchService.selectOne(entity.id(), entity.entityClass());
+
+        Assert.assertTrue(entityOptional.isPresent());
+        Assert.assertFalse(entityOptional.get().entityValue().values().isEmpty());
+    }
+
+    @Test
+    public void testDelete() throws SQLException {
+        setExecutorError(false);
+
+        Transaction tx = transactionManager.create();
+
+        IEntity entity = buildEntity(Long.MAX_VALUE - 1000);
+
+        manageService.build(entity);
+
+        tx.commit();
+
+        setExecutorError(true);
+
+        tx = transactionManager.create();
+
+        manageService.delete(entity);
+
+        try {
+            tx.commit();
+        } catch (SQLException e) {
+
+        }
+
+        transactionManager.create();
+        Optional<IEntity> entityOptional = searchService.selectOne(entity.id(), entity.entityClass());
+
+        Assert.assertTrue(entityOptional.isPresent());
+    }
+
     void initSphinxQLIndexStorage() throws Exception{
         Selector<DataSource> searchDataSourceSelector = buildSearchDataSourceSelector("./src/test/resources/sql_index_storage.conf");
 
@@ -159,7 +220,7 @@ public class UndoTest {
         TimeUnit.SECONDS.sleep(1L);
 
         TransactionExecutor executor = new AutoShardTransactionExecutor(
-                transactionManager, MockSphinxQLTransactionResource.class, undoExecutor);
+                transactionManager, SphinxQLTransactionResource.class, undoExecutor);
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
@@ -175,13 +236,6 @@ public class UndoTest {
         ReflectionTestUtils.setField(indexStorage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(indexStorage, "storageStrategyFactory", storageStrategyFactory);
         indexStorage.setIndexTableName(indexTableName);
-
-//        transactionManager.create();
-
-//        initData(indexStorage);
-
-        // 确认没有事务.
-//        Assert.assertFalse(transactionManager.getCurrent().isPresent());
     }
 
     void initSQLMasterStorage() throws Exception {
@@ -189,7 +243,7 @@ public class UndoTest {
         TimeUnit.SECONDS.sleep(1L);
 
         TransactionExecutor executor = new AutoShardTransactionExecutor(
-                transactionManager, MockConnectionTransactionResource.class, undoExecutor);
+                transactionManager, ConnectionTransactionResource.class, undoExecutor);
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
@@ -250,25 +304,23 @@ public class UndoTest {
 
     }
 
-    // 初始化数据
-    private void initData(SphinxQLIndexStorage storage) throws Exception {
-        try {
-            Arrays.stream(entityes).forEach(e -> {
-                try {
-                    storage.build(e);
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex.getMessage(), ex);
-                }
-            });
-        } catch (Exception ex) {
-            transactionManager.getCurrent().get().rollback();
-            throw ex;
-        }
+    void setExecutorError(boolean error){
+        if(error) {
+            TransactionExecutor executor = new AutoShardTransactionExecutor(
+                    transactionManager, MockSphinxQLTransactionResource.class, undoExecutor);
+            ReflectionTestUtils.setField(indexStorage, "transactionExecutor", executor);
+            executor = new AutoShardTransactionExecutor(
+                    transactionManager, MockConnectionTransactionResource.class, undoExecutor);
+            ReflectionTestUtils.setField(masterStorage, "transactionExecutor", executor);
+        } else {
+            TransactionExecutor executor = new AutoShardTransactionExecutor(
+                    transactionManager, SphinxQLTransactionResource.class, undoExecutor);
+            ReflectionTestUtils.setField(indexStorage, "transactionExecutor", executor);
+            executor = new AutoShardTransactionExecutor(
+                    transactionManager, ConnectionTransactionResource.class, undoExecutor);
+            ReflectionTestUtils.setField(masterStorage, "transactionExecutor", executor);
 
-        //将事务正常提交,并从事务管理器中销毁事务.
-        Transaction tx = transactionManager.getCurrent().get();
-        tx.commit();
-        transactionManager.finish();
+        }
     }
 
     private Selector<DataSource> buildWriteDataSourceSelector(String file) {
@@ -302,7 +354,7 @@ public class UndoTest {
                 conn.setAutoCommit(true);
 
                 Statement st = conn.createStatement();
-                st.executeUpdate("TRUNCATE RTINDEX oqsindextest");
+                st.executeUpdate("TRUNCATE RTINDEX " + indexTableName);
 
                 st.close();
 
@@ -315,33 +367,6 @@ public class UndoTest {
             }
 
         });
-    }
-
-    private List<IEntity> initData(SQLMasterStorage storage, int size) throws Exception {
-        List<IEntity> expectedEntitys = new ArrayList<>(size);
-        for (int i = 1; i <= size; i++) {
-            expectedEntitys.add(buildEntity(i * size));
-        }
-
-        try {
-            expectedEntitys.stream().forEach(e -> {
-                try {
-                    storage.build(e);
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex.getMessage(), ex);
-                }
-            });
-        } catch (Exception ex) {
-            transactionManager.getCurrent().get().rollback();
-            throw ex;
-        }
-
-        //将事务正常提交,并从事务管理器中销毁事务.
-        Transaction tx = transactionManager.getCurrent().get();
-        tx.commit();
-        transactionManager.finish();
-
-        return expectedEntitys;
     }
 
     private IEntity buildEntity(long baseId) {
@@ -366,34 +391,6 @@ public class UndoTest {
 
     private Selector<String> buildTableNameSelector(String base, int size) {
         return new SuffixNumberHashSelector(base, size);
-    }
-
-    // 初始化数据
-    private List<IEntity> initDataForSqlMaster(SQLMasterStorage storage, int size) throws Exception {
-        List<IEntity> expectedEntitys = new ArrayList<>(size);
-        for (int i = 1; i <= size; i++) {
-            expectedEntitys.add(buildEntity(i * size));
-        }
-
-        try {
-            expectedEntitys.stream().forEach(e -> {
-                try {
-                    storage.build(e);
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex.getMessage(), ex);
-                }
-            });
-        } catch (Exception ex) {
-            transactionManager.getCurrent().get().rollback();
-            throw ex;
-        }
-
-        //将事务正常提交,并从事务管理器中销毁事务.
-        Transaction tx = transactionManager.getCurrent().get();
-        tx.commit();
-        transactionManager.finish();
-
-        return expectedEntitys;
     }
 
     private Collection<IEntityField> buildRandomFields(long baseId, int size) {
