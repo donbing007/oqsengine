@@ -388,7 +388,7 @@ public class EntityServiceImpl implements EntityService {
         }
         String appCode = contextService.get(APPCODE);
 
-        if( version == null ){
+        if ( version == null ){
             return metadataRepository.findSubEntitiesByCode(tenantId, appCode, bocode);
         } else {
             return metadataRepository.findSubEntitiesByCode(tenantId, appCode, bocode, version);

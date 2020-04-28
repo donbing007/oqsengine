@@ -416,7 +416,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    if(replacement) {
+                    if (replacement) {
                         return new ReplaceStorageCommand(indexTableName).execute(resource, storageEntity);
                     } else {
                         return new BuildStorageCommand(indexTableName).execute(resource, storageEntity);

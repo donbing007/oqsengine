@@ -50,7 +50,7 @@ public class ReplaceStorageCommand extends UndoStorageCommand<StorageEntity> {
 
     @Override
     public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
-        if(!((UndoTransactionResource)resource).isCommitted()) {
+        if (!((UndoTransactionResource) resource).isCommitted()) {
             StorageEntity oriStorageEntity = new SelectByIdStorageCommand(indexTableName).execute(resource, storageEntity);
             oriStorageEntity.setFullFields(convertJsonToFull(oriStorageEntity.getJsonFields()));
             super.prepareUndoLog(resource, OpType.REPLACE, oriStorageEntity);
