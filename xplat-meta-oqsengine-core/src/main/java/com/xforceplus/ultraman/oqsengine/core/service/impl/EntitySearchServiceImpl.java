@@ -5,11 +5,15 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import io.micrometer.core.annotation.Timed;
@@ -24,8 +28,10 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -76,6 +82,22 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         if (maxJoinDriverLineNumber <= 0) {
             maxJoinDriverLineNumber = DEFAULT_MAX_JOIN_DRIVER_LINE_NUMBER;
         }
+    }
+
+    public int getMaxJoinEntityNumber() {
+        return maxJoinEntityNumber;
+    }
+
+    public void setMaxJoinEntityNumber(int maxJoinEntityNumber) {
+        this.maxJoinEntityNumber = maxJoinEntityNumber;
+    }
+
+    public int getMaxJoinDriverLineNumber() {
+        return maxJoinDriverLineNumber;
+    }
+
+    public void setMaxJoinDriverLineNumber(int maxJoinDriverLineNumber) {
+        this.maxJoinDriverLineNumber = maxJoinDriverLineNumber;
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "one"})
@@ -241,10 +263,11 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                  * 这些条件中的关联 entity 已经被替换成了合式的条件.
                  */
                 Collection<Conditions> subConditions = new ArrayList(safeNodes.size());
+                IEntityClassReader entityClassReader = new IEntityClassReader(entityClass);
 
                 for (ConditionNode safeNode : safeNodes) {
 
-                    subConditions.add(buildSafeNode(safeNode, entityClass));
+                    subConditions.add(buildSafeNodeConditions(safeNode, entityClassReader));
 
                 }
 
@@ -255,7 +278,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             }
 
-            // no join
             Collection<EntityRef> refs = indexStorage.select(useConditions, entityClass, useSort, usePage);
 
             return buildEntities(refs, entityClass);
@@ -273,13 +295,18 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      * 收集条件中的 entityClass
      */
     private Collection<IEntityClass> collectEntityClass(Conditions conditions, IEntityClass mainEntityClass) {
-        return conditions.collectCondition().stream().map(c -> {
+        Set<IEntityClass> entityClasses = conditions.collectCondition().stream().map(c -> {
             if (c.getEntityClass().isPresent()) {
                 return c.getEntityClass().get();
             } else {
                 return mainEntityClass;
             }
         }).collect(Collectors.toSet());
+
+        // 防止条件中没有出现非驱动 entity 的字段条件.
+        entityClasses.add(mainEntityClass);
+
+        return entityClasses;
     }
 
 
@@ -301,7 +328,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         Map<Long, IEntity> entityTable =
             entities.stream().collect(toMap(IEntity::id, e -> e, (e0, e1) -> e0));
 
-        List<IEntity> resultEntities = new ArrayList<>(refs.size());
+        Collection<IEntity> resultEntities = new ArrayList<>(refs.size());
         IEntity resultEntity = null;
         for (EntityRef ref : refs) {
             resultEntity = buildEntity(ref, entityClass, entityTable);
@@ -367,61 +394,172 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      * 将安全条件结点处理成可查询的 Conditions 实例.
      * ignoreEntityClass 表示不需要处理的条件.
      */
-    private Conditions buildSafeNode(ConditionNode safeNode, IEntityClass ignoreEntityClass) {
-        Map<IEntityClass, Collection<Condition>> entityClassGroup = splitEntityClassCondition(safeNode, ignoreEntityClass);
+    private Conditions buildSafeNodeConditions(ConditionNode safeNode, IEntityClassReader entityClassReader)
+        throws SQLException {
 
-        List<DriverEntityTask> tasks = new ArrayList(entityClassGroup.size());
-//        entityClassGroup.keySet().stream().filter(e -> !e.equals(ignoreEntityClass)).map(e -> )
-        return null;
+        Conditions processConditions = new Conditions(safeNode);
+
+        // 只包含驱动 entity 条件的集合.
+        Collection<Condition> driverConditionCollection = processConditions.collectCondition().stream()
+            .filter(c -> c.getEntityClass().isPresent())
+            .collect(toList());
+
+        // 按照驱动 entity 的 entityClass 和关联字段来分组条件.
+        Map<DriverEntityKey, Conditions> driverEntityConditionsGroup = splitEntityClassCondition(
+            driverConditionCollection,
+            entityClassReader);
+
+        // driver 数据收集 future.
+        List<Future<Map.Entry<DriverEntityKey, Collection<EntityRef>>>> futures =
+            new ArrayList<>(driverEntityConditionsGroup.size());
+        /**
+         * 过滤掉所有 entityClass 等于 ignoreEntityClass
+         * 并将剩余的构造成 DriverEntityTask 实例交由线程池执行.
+         */
+        driverEntityConditionsGroup.entrySet().stream()
+            .map(entry -> new DriverEntityTask(entry.getKey(), entry.getValue()))
+            .forEach(driverEntityTask -> futures.add(threadPool.submit(driverEntityTask)));
+
+        Conditions conditions = Conditions.buildEmtpyConditions();
+        for (Future<Map.Entry<DriverEntityKey, Collection<EntityRef>>> future : futures) {
+
+            try {
+                Map.Entry<DriverEntityKey, Collection<EntityRef>> driverQueryResult = future.get();
+                conditions.addAnd(
+                    new Condition(
+                        driverQueryResult.getKey().relationshipField,
+                        ConditionOperator.MULTIPLE_EQUALS,
+                        driverQueryResult.getValue().stream()
+                            .map(ref -> new LongValue(driverQueryResult.getKey().relationshipField, ref.getId()))
+                            .toArray(LongValue[]::new)
+                    ));
+            } catch (Exception e) {
+
+                throw new SQLException(e.getMessage(), e);
+            }
+        }
+
+
+        // 之前过滤掉了非 driver 的条件,这里需要加入.
+        processConditions.collectCondition().stream().filter(c -> !c.getEntityClass().isPresent()).forEach(c -> {
+                conditions.addAnd(c);
+            }
+        );
+
+        return conditions;
     }
 
-    // 将给定结点下的所有条件按目录 entityClass 进行分组.
-    private Map<IEntityClass, Collection<Condition>> splitEntityClassCondition(
-        ConditionNode conditionNode, IEntityClass defaultEntityClass) {
+    /**
+     * 将不同的 entityClass 的条件进行分组.
+     * 不同的 entityClass 关联不同的 Field 将认为是不同的组.
+     * 不能处理非 driver 的 entity 查询条件.
+     */
+    private Map<DriverEntityKey, Conditions> splitEntityClassCondition(
+        Collection<Condition> conditionCollection, IEntityClassReader reader) throws SQLException {
 
-        Conditions conditions = new Conditions(conditionNode);
 
-        return conditions.collectCondition().stream().collect(Collectors.groupingBy(c -> {
-                if (c.getEntityClass().isPresent()) {
-                    return c.getEntityClass().get();
-                } else {
-                    return defaultEntityClass;
+        Map<DriverEntityKey, Conditions> result = new HashMap(conditionCollection.size());
+
+        Optional<IEntityClass> entityClassOptional = null;
+        Optional<IEntityField> relationshipFieldOptional = null;
+        IEntityClass entityClass;
+        DriverEntityKey key;
+        Conditions driverConditions;
+        for (Condition c : conditionCollection) {
+            entityClassOptional = c.getEntityClass();
+            if (entityClassOptional.isPresent()) {
+                entityClass = entityClassOptional.get();
+            } else {
+                throw new SQLException("An attempt was made to correlate the query, but the entityClass for the driver table was not set!");
+            }
+
+            relationshipFieldOptional = reader.getRelatedOriginalField(c.getField());
+            if (relationshipFieldOptional.isPresent()) {
+                key = new DriverEntityKey(entityClass, relationshipFieldOptional.get());
+                driverConditions = result.get(key);
+                if (driverConditions == null) {
+                    driverConditions = Conditions.buildEmtpyConditions();
+                    result.put(key, driverConditions);
                 }
-            },
-            Collectors.toCollection(ArrayList::new)
-        ));
+
+                driverConditions.addAnd(c);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * 驱动 entity 的条件分组 key.
+     * 以 entityClass 和其关联的主 entityClass 中字段为区分.
+     */
+    private class DriverEntityKey {
+        private IEntityClass entityClass;
+        private IEntityField relationshipField;
+
+        public DriverEntityKey(IEntityClass entityClass, IEntityField relationshipField) {
+            this.entityClass = entityClass;
+            this.relationshipField = relationshipField;
+        }
+
+        public IEntityClass getEntityClass() {
+            return entityClass;
+        }
+
+        public IEntityField getRelationshipField() {
+            return relationshipField;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof DriverEntityKey)) {
+                return false;
+            }
+            DriverEntityKey that = (DriverEntityKey) o;
+            if (entityClass.id() != that.entityClass.id()) {
+                return false;
+            }
+            if (relationshipField.id() != that.relationshipField.id()) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(entityClass.id(), relationshipField.id());
+        }
     }
 
     /**
      * 驱动 entity 的 条件id列表 构造任务.
      */
-    private class DriverEntityTask implements Callable<Collection<EntityRef>> {
+    private class DriverEntityTask implements Callable<Map.Entry<DriverEntityKey, Collection<EntityRef>>> {
 
-        private IEntityClass entityClass;
+        private DriverEntityKey key;
         private Conditions conditions;
 
-        public DriverEntityTask(Collection<Condition> conditionCollection, IEntityClass entityClass) {
-            this.entityClass = entityClass;
-            this.conditions = Conditions.buildEmtpyConditions();
-            for (Condition condition : conditionCollection) {
-                this.conditions.addAnd(condition);
-            }
+        public DriverEntityTask(DriverEntityKey key,Conditions conditions) {
+            this.key = key;
+            this.conditions = conditions;
         }
 
         @Override
-        public Collection<EntityRef> call() throws Exception {
+        public Map.Entry<DriverEntityKey, Collection<EntityRef>> call() throws Exception {
             checkLineNumber();
 
-            return indexStorage.select(
-                conditions, entityClass, Sort.buildOutOfSort(), Page.newSinglePage(maxJoinDriverLineNumber));
-
-
+            Collection<EntityRef> refs = indexStorage.select(
+                conditions, key.getEntityClass(), Sort.buildOutOfSort(), Page.newSinglePage(maxJoinDriverLineNumber));
+            return new AbstractMap.SimpleEntry<>(key,refs);
         }
 
         // 检查命中数据集大小.
         private void checkLineNumber() throws SQLException {
             Page emptyPage = Page.emptyPage();
-            indexStorage.select(conditions, entityClass, Sort.buildOutOfSort(), emptyPage);
+            indexStorage.select(conditions, key.getEntityClass(), Sort.buildOutOfSort(), emptyPage);
             if (emptyPage.getTotalCount() > maxJoinDriverLineNumber) {
                 throw new SQLException(String.format("Drives entity data exceeding %d.", maxJoinDriverLineNumber));
             }

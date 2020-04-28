@@ -18,6 +18,7 @@ maven-test-build:
 tag-mvn-deploy:
   stage: tag-mvn-deploy
   script:
+    - update_pom_version
     - mvn clean deploy -s ./.mvn/wrapper/settings.xml -Dmaven.test.skip=true
 
 docker-build:

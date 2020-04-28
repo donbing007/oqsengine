@@ -10,8 +10,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Conditions Tester.
@@ -104,8 +106,16 @@ public class ConditionsTest {
                 )
             );
 
-        Collection<ConditionNode> nodes = conditions.collectSubTree(c -> !c.isRed(), true);
+        List<ConditionNode> nodes = new ArrayList(conditions.collectSubTree(c -> !c.isRed(), true));
         Assert.assertEquals(2, nodes.size());
+        String[] expectedStrings = new String[] {
+            "c1 = 100",
+            "c2 = 100 AND c3 = 100"
+        };
+        for (int i = 0; i < expectedStrings.length; i++) {
+            Assert.assertEquals(expectedStrings[i], nodes.get(i).toString());
+        }
+
 
         Condition expectedCondtiton = new Condition(
             new EntityField(1, "c1", FieldType.LONG),
@@ -116,6 +126,40 @@ public class ConditionsTest {
         Assert.assertEquals(ConditionLink.AND,
             ((LinkConditionNode) nodes.stream().filter(c -> Conditions.isLinkNode(c)).findFirst().get()).getLink());
 
+        conditions = Conditions.buildEmtpyConditions()
+            .addOr(
+                new Condition(
+                    new EntityField(1, "c1", FieldType.LONG),
+                    ConditionOperator.EQUALS,
+                    new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L))
+            ).addOr(
+                new Condition(
+                    new EntityField(2, "c2", FieldType.LONG),
+                    ConditionOperator.EQUALS,
+                    new LongValue(new EntityField(2, "c2", FieldType.LONG), 100L))
+            ).addOr(
+                new Condition(
+                    new EntityField(3, "c3", FieldType.LONG),
+                    ConditionOperator.EQUALS,
+                    new LongValue(new EntityField(3, "c3", FieldType.LONG), 100L)
+                )
+            ).addAnd(
+                new Condition(
+                    new EntityField(4, "c4", FieldType.LONG),
+                    ConditionOperator.EQUALS,
+                    new LongValue(new EntityField(4, "c4", FieldType.LONG), 100L))
+            );
+
+        nodes = new ArrayList(conditions.collectSubTree(c -> !c.isRed(), true));
+        Assert.assertEquals(3, nodes.size());
+        expectedStrings = new String[] {
+            "c1 = 100",
+            "c2 = 100",
+            "c3 = 100 AND c4 = 100"
+        };
+        for (int i = 0; i < expectedStrings.length; i++) {
+            Assert.assertEquals(expectedStrings[i], nodes.get(i).toString());
+        }
     }
 
     @Test
