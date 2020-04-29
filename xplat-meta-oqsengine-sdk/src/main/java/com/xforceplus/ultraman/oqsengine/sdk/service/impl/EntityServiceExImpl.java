@@ -210,12 +210,14 @@ public class EntityServiceExImpl implements EntityServiceEx {
         DataSet ds = null;
         List<Row> rows = new ArrayList<Row>();
         if (StringUtils.isEmpty(enumCode)) {
-            ds = dictMapLocalStore.query().selectAll()
-                    .where("publishDictId")
-                    .eq(enumId)
-                    .and("tenantId")
-                    .eq(tenantId)
-                    .execute();
+            if (!StringUtils.isEmpty(tenantId)) {
+                ds = dictMapLocalStore.query().selectAll()
+                        .where("publishDictId")
+                        .eq(enumId)
+                        .and("tenantId")
+                        .eq(tenantId)
+                        .execute();
+            }
             rows = ds.toRows();
 
             if (!(rows != null && rows.size() > 0)) {
@@ -228,14 +230,16 @@ public class EntityServiceExImpl implements EntityServiceEx {
                 rows = ds.toRows();
             }
         } else {
-            ds = dictMapLocalStore.query().selectAll()
-                    .where("publishDictId")
-                    .eq(enumId)
-                    .and("tenantId")
-                    .eq(tenantId)
-                    .and("code")
-                    .eq(enumCode)
-                    .execute();
+            if (!StringUtils.isEmpty(tenantId)) {
+                ds = dictMapLocalStore.query().selectAll()
+                        .where("publishDictId")
+                        .eq(enumId)
+                        .and("tenantId")
+                        .eq(tenantId)
+                        .and("code")
+                        .eq(enumCode)
+                        .execute();
+            }
             rows = ds.toRows();
 
             if (!(rows != null && rows.size() > 0)) {
@@ -256,21 +260,51 @@ public class EntityServiceExImpl implements EntityServiceEx {
 
     @Override
     public List<DictItem> findDictItemsByCode(String code, String enumCode) {
+        String tenantId = contextService.get(TENANTID_KEY);
         DataSet ds = null;
         List<Row> rows = new ArrayList<Row>();
         if (StringUtils.isEmpty(enumCode)) {
-            ds = dictMapLocalStore.query().selectAll()
-                    .where("dictCode")
-                    .eq(code)
-                    .execute();
+            if (!StringUtils.isEmpty(tenantId)){
+                ds = dictMapLocalStore.query().selectAll()
+                        .where("dictCode")
+                        .eq(code)
+                        .and("tenantId")
+                        .eq(tenantId)
+                        .execute();
+            }
             rows = ds.toRows();
+            if (!(rows != null && rows.size() > 0)) {
+                ds = dictMapLocalStore.query().selectAll()
+                        .where("dictCode")
+                        .eq(code)
+                        .and("tenantId")
+                        .isNull()
+                        .execute();
+                rows = ds.toRows();
+            }
         } else {
-            ds = dictMapLocalStore.query().selectAll()
-                    .where("dictCode")
-                    .eq(code)
-                    .and("code").eq(enumCode)
-                    .execute();
+            if (!StringUtils.isEmpty(tenantId)) {
+                ds = dictMapLocalStore.query().selectAll()
+                        .where("dictCode")
+                        .eq(code)
+                        .and("tenantId")
+                        .eq(tenantId)
+                        .and("code")
+                        .eq(enumCode)
+                        .execute();
+            }
             rows = ds.toRows();
+            if (!(rows != null && rows.size() > 0)) {
+                ds = dictMapLocalStore.query().selectAll()
+                        .where("dictCode")
+                        .eq(code)
+                        .and("tenantId")
+                        .isNull()
+                        .and("code")
+                        .eq(enumCode)
+                        .execute();
+                rows = ds.toRows();
+            }
         }
         List<DictItem> items = rows.stream().map(this::toDictItem).collect(Collectors.toCollection(ResponseList::new));
         return getMaxVersionList(items);
