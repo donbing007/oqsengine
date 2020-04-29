@@ -33,19 +33,15 @@ public class UndoFactory {
     private Selector<DataSource> masterDataSourceSelector;
 
     @Resource
-    private StorageCommandExecutor storageCommandInvoker;
+    private UndoLogStore undoLogStore;
 
     @Resource
-    private UndoLogStore undoLogStore;
+    private UndoExecutor undoExecutor;
 
     private UndoLogTask logUndoTask;
 
-    private UndoExecutor undoExecutor;
-
     @PostConstruct
     public void init() {
-        this.undoExecutor = new UndoExecutor(undoLogStore, storageCommandInvoker);
-
         this.logUndoTask = new UndoLogTask(
                 undoExecutor,
                 undoLogStore,
@@ -53,10 +49,6 @@ public class UndoFactory {
                 masterDataSourceSelector);
 
         logUndoTask.start();
-    }
-
-    public UndoExecutor getUndoExecutor() {
-        return this.undoExecutor;
     }
 
     @PreDestroy

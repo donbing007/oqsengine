@@ -8,9 +8,9 @@ package com.xforceplus.ultraman.oqsengine.storage.undo.constant;
  * 修改历史:
  */
 public enum UndoLogStatus {
-    UNCOMMITTED(0),
-    COMMITED(1),
-    ERROR(2);
+    UNCOMMITTED(0), //resource 未执行提交
+    COMMITED(1),    //resource 执行提交成功
+    ERROR(2);       //resource 执行提交失败
 
     Integer value;
 

@@ -55,4 +55,5 @@ public interface TransactionResource<V> {
      */
     boolean isDestroyed() throws SQLException;
 
+    void undo(boolean commit) throws SQLException;
 }

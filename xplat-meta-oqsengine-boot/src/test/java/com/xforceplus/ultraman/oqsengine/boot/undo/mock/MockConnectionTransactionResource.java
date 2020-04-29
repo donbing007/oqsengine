@@ -1,7 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.storage.transaction.sql;
+package com.xforceplus.ultraman.oqsengine.boot.undo.mock;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
+import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -13,12 +13,12 @@ import java.sql.SQLException;
  * @version 0.1 2020/2/15 21:57
  * @since 1.8
  */
-public class ConnectionTransactionResource extends UndoTransactionResource<Connection> {
+public class MockConnectionTransactionResource extends UndoTransactionResource<Connection> {
 
     private Object key;
     private Connection conn;
 
-    public ConnectionTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
+    public MockConnectionTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
         this.conn = conn;
         if (autocommit) {
@@ -28,7 +28,7 @@ public class ConnectionTransactionResource extends UndoTransactionResource<Conne
         }
     }
 
-    public ConnectionTransactionResource(String key, Connection conn, boolean autocommit) throws SQLException {
+    public MockConnectionTransactionResource(String key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
         this.conn = conn;
         if (autocommit) {
@@ -55,8 +55,14 @@ public class ConnectionTransactionResource extends UndoTransactionResource<Conne
 
     @Override
     public void commit() throws SQLException {
+        if(beforeCommitError) {
+            throw new SQLException("mock commit error, before commit");
+        }
         conn.commit();
         saveCommitStatus();
+        if(afterCommitError) {
+            throw new SQLException("mock commit error, after commit");
+        }
     }
 
     @Override
@@ -74,4 +80,15 @@ public class ConnectionTransactionResource extends UndoTransactionResource<Conne
         return conn.isClosed();
     }
 
+    private boolean beforeCommitError = false;
+
+    private boolean afterCommitError = true;
+
+    public void afterCommitError(){
+        afterCommitError = true;
+    }
+
+    public void beforeCommitError(){
+        beforeCommitError = true;
+    }
 }

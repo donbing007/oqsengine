@@ -8,7 +8,10 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.undo.UndoFactory;
+import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
+import com.xforceplus.ultraman.oqsengine.storage.undo.store.UndoLogStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -28,21 +31,24 @@ public class CustomTransactionConfiguration {
     @Autowired
     private TransactionManager tm;
 
+    @Autowired
+    private UndoExecutor undoExecutor;
+
 
     @Bean
-    public TransactionManager transactionManager(@Value("${transaction.timeoutms:3000}") int transactionTimeoutMs, UndoFactory undoFactory) {
-        return new DefaultTransactionManager(transactionTimeoutMs, longIdGenerator, undoFactory.getUndoExecutor());
+    public TransactionManager transactionManager(@Value("${transaction.timeoutms:3000}") int transactionTimeoutMs) {
+        return new DefaultTransactionManager(transactionTimeoutMs, longIdGenerator);
     }
 
 
     @Bean
     public TransactionExecutor storageSphinxQLTransactionExecutor() {
-        return new AutoShardTransactionExecutor(tm, SphinxQLTransactionResource.class);
+        return new AutoShardTransactionExecutor(tm, SphinxQLTransactionResource.class, undoExecutor);
     }
 
     @Bean
     public TransactionExecutor storageJDBCTransactionExecutor() {
-        return new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class);
+        return new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class, undoExecutor);
     }
 
     @Bean
