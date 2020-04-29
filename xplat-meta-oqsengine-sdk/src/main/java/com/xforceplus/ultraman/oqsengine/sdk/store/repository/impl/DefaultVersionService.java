@@ -275,4 +275,9 @@ public class DefaultVersionService implements VersionService {
                 .filter(x -> x.getKey().getCode().equals(code))
                 .findFirst().map(Map.Entry::getValue).orElse(null);
     }
+
+    @Override
+    public Map<BoNode, LinkedList<Tuple2<Long, String>>> getBoModuleMapping() {
+        return Collections.unmodifiableMap(boModuleMapping);
+    }
 }

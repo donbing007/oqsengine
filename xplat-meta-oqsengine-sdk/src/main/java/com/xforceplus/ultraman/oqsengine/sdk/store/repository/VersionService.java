@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.sdk.store.repository;
 
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.BoNode;
+import io.vavr.Tuple2;
 import org.apache.metamodel.UpdateableDataContext;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -29,4 +31,5 @@ public interface VersionService {
 
     Map<Long, String> getCurrentVersion();
 
+    Map<BoNode, LinkedList<Tuple2<Long, String>>> getBoModuleMapping();
 }
