@@ -225,7 +225,7 @@ public class MultiLocalTransaction implements Transaction {
 
     private void saveTransactionResourcesUndoLog(List<TransactionResource> transactionResourceHolder) {
         for (TransactionResource transactionResource : transactionResourceHolder) {
-            ((UndoTransactionResource)transactionResource).createUndoLog(id);
+            ((UndoTransactionResource) transactionResource).createUndoLog(id);
         }
     }
 
