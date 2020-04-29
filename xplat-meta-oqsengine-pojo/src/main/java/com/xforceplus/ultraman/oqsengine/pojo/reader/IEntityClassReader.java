@@ -93,8 +93,8 @@ public class IEntityClassReader {
                 .orElse(Collections.emptyList()).stream();
 
         //TODO narrow usage?'
-        List<IEntityClass> narrowedIEntityClasses = related == null ?
-                Collections.emptyList() : Arrays.asList(related);
+//        List<IEntityClass> narrowedIEntityClasses = related == null ?
+//                Collections.emptyList() : Arrays.asList(related);
 
         /**
          * this allow's duplicated

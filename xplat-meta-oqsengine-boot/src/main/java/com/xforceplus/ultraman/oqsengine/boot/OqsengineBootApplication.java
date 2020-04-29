@@ -29,5 +29,7 @@ public class OqsengineBootApplication {
 
         EntitySearchService service = context.getBean(EntitySearchService.class);
         service.selectOne(100L, new EntityClass(1, "test"));
+
+
     }
 }
