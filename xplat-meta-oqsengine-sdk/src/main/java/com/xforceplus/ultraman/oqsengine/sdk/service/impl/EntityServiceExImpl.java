@@ -211,43 +211,64 @@ public class EntityServiceExImpl implements EntityServiceEx {
         List<Row> rows = new ArrayList<Row>();
         if (StringUtils.isEmpty(enumCode)) {
             if (!StringUtils.isEmpty(tenantId)) {
+                //找到字典的code信息
                 ds = dictMapLocalStore.query().selectAll()
                         .where("publishDictId")
                         .eq(enumId)
-                        .and("tenantId")
-                        .eq(tenantId)
                         .execute();
+                rows = ds.toRows();
+                if (rows.size() > 0) {
+                    String dictCode = rows.get(0).getValue(3).toString();
+                    ds = dictMapLocalStore.query().selectAll()
+                            .where("dictCode")
+                            .eq(dictCode)
+                            .and("tenantId")
+                            .eq(tenantId)
+                            .execute();
+                }
             }
-            rows = ds.toRows();
+            if (ds != null) {
+                rows = ds.toRows();
+            }
 
             if (!(rows != null && rows.size() > 0)) {
                 ds = dictMapLocalStore.query().selectAll()
                         .where("publishDictId")
                         .eq(enumId)
-                        .and("tenantId")
-                        .isNull()
                         .execute();
                 rows = ds.toRows();
             }
         } else {
             if (!StringUtils.isEmpty(tenantId)) {
-                ds = dictMapLocalStore.query().selectAll()
-                        .where("publishDictId")
-                        .eq(enumId)
-                        .and("tenantId")
-                        .eq(tenantId)
-                        .and("code")
-                        .eq(enumCode)
-                        .execute();
+                if (!StringUtils.isEmpty(tenantId)) {
+                    //找到字典的code信息
+                    ds = dictMapLocalStore.query().selectAll()
+                            .where("publishDictId")
+                            .eq(enumId)
+                            .execute();
+                    rows = ds.toRows();
+                    if (rows.size() > 0) {
+                        String dictCode = rows.get(0).getValue(3).toString();
+                        ds = dictMapLocalStore.query().selectAll()
+                                .where("dictCode")
+                                .eq(dictCode)
+                                .and("tenantId")
+                                .eq(tenantId)
+                                .and("code")
+                                .eq(enumCode)
+                                .execute();
+                    }
+                }
             }
-            rows = ds.toRows();
+
+            if (ds != null) {
+                rows = ds.toRows();
+            }
 
             if (!(rows != null && rows.size() > 0)) {
                 ds = dictMapLocalStore.query().selectAll()
                         .where("publishDictId")
                         .eq(enumId)
-                        .and("tenantId")
-                        .isNull()
                         .and("code")
                         .eq(enumCode)
                         .execute();
@@ -272,13 +293,15 @@ public class EntityServiceExImpl implements EntityServiceEx {
                         .eq(tenantId)
                         .execute();
             }
-            rows = ds.toRows();
+
+            if (ds != null) {
+                rows = ds.toRows();
+            }
+
             if (!(rows != null && rows.size() > 0)) {
                 ds = dictMapLocalStore.query().selectAll()
                         .where("dictCode")
                         .eq(code)
-                        .and("tenantId")
-                        .isNull()
                         .execute();
                 rows = ds.toRows();
             }
@@ -293,13 +316,15 @@ public class EntityServiceExImpl implements EntityServiceEx {
                         .eq(enumCode)
                         .execute();
             }
-            rows = ds.toRows();
+
+            if (ds != null) {
+                rows = ds.toRows();
+            }
+
             if (!(rows != null && rows.size() > 0)) {
                 ds = dictMapLocalStore.query().selectAll()
                         .where("dictCode")
                         .eq(code)
-                        .and("tenantId")
-                        .isNull()
                         .and("code")
                         .eq(enumCode)
                         .execute();
