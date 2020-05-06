@@ -78,6 +78,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
         throws SQLException {
+
         return (Collection<EntityRef>) transactionExecutor.execute(
             new DataSourceShardingTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
                 @Override
@@ -103,7 +104,12 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         return Collections.emptyList();
                     }
 
-                    String orderBy = buildOrderBy(sort);
+                    Sort useSort = sort;
+                    if (useSort == null) {
+                        useSort = Sort.buildOutOfSort();
+                    }
+
+                    String orderBy = buildOrderBy(useSort);
 
                     String sql = String.format(SQLConstant.SELECT_SQL, indexTableName, whereCondition, orderBy);
                     PreparedStatement st = null;

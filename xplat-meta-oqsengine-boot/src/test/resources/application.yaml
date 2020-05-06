@@ -1,5 +1,6 @@
 instance:
-  id: 0
+  type: static
+  id: 500
 
 grpc:
   server:
@@ -9,10 +10,10 @@ server:
 
 logging:
   level:
-    root: info
+    root: debug
 
 transaction:
-  timeoutms: 3000
+  timeoutms: 60000000
 
 storage:
   master:
@@ -24,7 +25,7 @@ storage:
       timeout: 3000
     shard:
       table:
-        enabled: true
+        enabled: false
         size: 1
   index:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.

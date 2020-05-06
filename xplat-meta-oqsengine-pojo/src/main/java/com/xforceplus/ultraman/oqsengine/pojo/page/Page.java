@@ -94,7 +94,7 @@ public class Page implements Externalizable, Cloneable {
     /**
      * 构造一个实际不要求任何页面的分页信息.
      * 表示实际不需要任何数据.
-     * 但是数据总量等行为还是必须的.
+     * 返回的是一个没有准备好的实例.
      *
      * @return 分页实例.
      */
@@ -104,7 +104,7 @@ public class Page implements Externalizable, Cloneable {
          */
         final long fixOne = 1;
         Page page = new Page(fixOne, fixOne);
-        page.setEmptyPage(true);
+        page.emptyPage = true;
         return page;
     }
 
@@ -117,7 +117,7 @@ public class Page implements Externalizable, Cloneable {
      */
     public static Page newSinglePage(long pageSize) {
         Page page = new Page(1, pageSize);
-        page.setSinglePage(true);
+        page.singlePage = true;
         page.setTotalCount(pageSize);
         return page;
     }
@@ -130,7 +130,7 @@ public class Page implements Externalizable, Cloneable {
      */
     public static Page lastPage(long pageSize) {
         Page page = new Page(0, pageSize);
-        page.setLastPage(true);
+        page.lastPage = true;
         return page;
     }
 
@@ -183,6 +183,7 @@ public class Page implements Externalizable, Cloneable {
      * @return 当前数据总量，如果为-1代表没有设置真实数据总量。
      */
     public long getTotalCount() {
+        checkReady();
         return this.totalCount;
     }
 
@@ -193,9 +194,7 @@ public class Page implements Externalizable, Cloneable {
      * @throws IllegalStateException 没有设置数据总量。
      */
     public PageScope getNextPage() {
-        if (!ready) {
-            throw new IllegalStateException("Have not designated data amount!");
-        }
+        checkReady();
 
         if (!hasNextPage()) {
             return null;
@@ -231,9 +230,8 @@ public class Page implements Externalizable, Cloneable {
      * @throws IllegalStateException 没有设置数据总量。
      */
     public PageScope getAppointPage(long appointPageIndex) {
-        if (!ready) {
-            throw new IllegalStateException("Have not designated data amount!");
-        }
+        checkReady();
+
         long nowPointIndex = appointPageIndex;
         if (nowPointIndex <= 0) {
             return null;
@@ -261,6 +259,7 @@ public class Page implements Externalizable, Cloneable {
      * @return 是否还有下一页, <tt>true</tt>还有可用页,<tt>false</tt>已经没有可用页了.
      */
     public boolean hasNextPage() {
+        checkReady();
         return pageIndex <= pageCount;
     }
 
@@ -386,6 +385,32 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
+     * 获取当前页面大小
+     *
+     * @return 页面大小
+     */
+    public long getPageSize() {
+        return pageSize;
+    }
+
+    /**
+     * 返回当前分页建议。
+     *
+     * @return <true>当前是单页，只是当前一页。<false>需要进行正常分页。
+     */
+    public boolean isSinglePage() {
+        return singlePage;
+    }
+
+    /**
+     * 判断当前实例是否为空页.
+     * @return true 空页.false 非空页.
+     */
+    public boolean isEmptyPage() {
+        return emptyPage;
+    }
+
+    /**
      * 计算页面总数,总量除以单页量后根据是否整除来决定是否增加1.
      *
      * @param pageNumber  页面大小
@@ -409,65 +434,11 @@ public class Page implements Externalizable, Cloneable {
         return totalNumber - sizeNumber * (indexNumber - 1);
     }
 
-    /**
-     * 获取当前页面大小
-     *
-     * @return 页面大小
-     */
-    public long getPageSize() {
-        return pageSize;
-    }
-
-    /**
-     * 设置当前页面大小
-     *
-     * @param pageSize 页面大小。
-     */
-    public void setPageSize(long pageSize) {
-        this.pageSize = pageSize;
-    }
-
-    /**
-     * 返回当前分页建议。
-     *
-     * @return <true>当前是单页，只是当前一页。<false>需要进行正常分页。
-     */
-    public boolean isSinglePage() {
-        return singlePage;
-    }
-
-    /**
-     * 建议是否进行分页，此值只是建议。实现将由调用者决定。
-     *
-     * @param singlePage <true>当前是单页，只是当前一页。<false>需要进行正常分页。
-     */
-    public void setSinglePage(boolean singlePage) {
-        this.singlePage = singlePage;
-    }
-
-    /**
-     * 设置是否为最后一页.
-     *
-     * @param lastPage 最后一页.
-     */
-    public void setLastPage(boolean lastPage) {
-        this.lastPage = lastPage;
-    }
-
-    /**
-     * 判断当前实例是否为空页.
-     * @return true 空页.false 非空页.
-     */
-    public boolean isEmptyPage() {
-        return emptyPage;
-    }
-
-    /**
-     * 设置当前 page 是否为空页.
-     * @param emptyPage true空页,false 非空页.
-     */
-    public void setEmptyPage(boolean emptyPage) {
-        this.emptyPage = emptyPage;
+    // 检查当前 page 是否可以工作.
+    private void checkReady() {
+        if (!ready) {
+            throw new IllegalStateException("Have not designated data amount!");
+        }
     }
 
     /**

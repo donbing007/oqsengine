@@ -14,8 +14,9 @@ import java.sql.SQLException;
  * 创建时间: 4/8/2020 11:00 AM
  * 功能描述:
  * 修改历史:
- * @author youyifan
+ *
  * @param <V>
+ * @author youyifan
  */
 public abstract class UndoTransactionResource<V> implements TransactionResource<V> {
 
@@ -43,14 +44,14 @@ public abstract class UndoTransactionResource<V> implements TransactionResource<
     }
 
     public void createUndoLog(Long txId) {
-        if(undoExecutor != null) {
-           undoLog.setTxId(txId);
-           undoExecutor.saveUndoLog(undoLog);
+        if (undoExecutor != null) {
+            undoLog.setTxId(txId);
+            undoExecutor.saveUndoLog(undoLog);
         }
     }
 
     protected void saveCommitStatus() {
-        if(undoExecutor != null) {
+        if (undoExecutor != null) {
             committed = true;
             undoExecutor.updateUndoLogStatus(undoLog, UndoLogStatus.COMMITED);
         }
@@ -59,7 +60,7 @@ public abstract class UndoTransactionResource<V> implements TransactionResource<
     @Override
     public void undo(boolean commit) throws SQLException {
         if (commit && committed) {
-            if(undoExecutor != null) {
+            if (undoExecutor != null) {
                 undoExecutor.undo(this);
             }
         } else {

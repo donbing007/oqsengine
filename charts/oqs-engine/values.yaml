@@ -60,15 +60,16 @@ logger:
   level: INFO
 
 storage:
+  threadPool:
+    # 0 or not exist use cpu core + 1
+    size: 0
   transaction:
     # The transaction is valid for a period of time that will be rollback.
     timeoutMs: 3000
+  timeoutMs:
+    query: 3000
   master:
     name: "oqsbigentity"
-    query:
-      # Number of worker threads and query timeout when the main library loads an asynchronous query.
-      worker: 3
-      timeout: 3000
     shard:
       table:
         # Whether sub-tables are needed and the number of sub-tables.

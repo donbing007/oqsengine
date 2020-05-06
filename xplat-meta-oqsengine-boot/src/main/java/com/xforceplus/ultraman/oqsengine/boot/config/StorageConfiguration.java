@@ -18,7 +18,7 @@ public class StorageConfiguration {
 
     @Bean
     public MasterStorage masterStorage(
-        @Value("${storage.master.query.timeout:3000}") long masterQueryTimeout) {
+        @Value("${storage.timeoutMs.query:3000}") long masterQueryTimeout) {
         SQLMasterStorage storage = new SQLMasterStorage();
         storage.setQueryTimeout(masterQueryTimeout);
         return storage;

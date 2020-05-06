@@ -28,10 +28,6 @@ public class OqsengineBootApplication {
         DynamicInstrumentationLoader.waitForInitialized(); //dynamically attach java agent to jvm if not already present
         DynamicInstrumentationLoader.initLoadTimeWeavingContext(); //weave all classes before they are loaded as beans
 
-        ConfigurableApplicationContext context = SpringApplication.run(OqsengineBootApplication.class, args);
-
-        EntitySearchService service = context.getBean(EntitySearchService.class);
-        service.selectOne(100L, new EntityClass(1, "test"));
-
+        SpringApplication.run(OqsengineBootApplication.class, args);
     }
 }

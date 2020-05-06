@@ -66,6 +66,7 @@ public class SQLMasterStorage implements MasterStorage {
         this.queryTimeout = queryTimeout;
     }
 
+    @Override
     @PostConstruct
     public void init() {
 
@@ -132,6 +133,11 @@ public class SQLMasterStorage implements MasterStorage {
 
         try {
             if (!latch.await(queryTimeout, TimeUnit.MILLISECONDS)) {
+
+                for (Future f : futures) {
+                    f.cancel(true);
+                }
+
                 throw new SQLException("Query failed, timeout.");
             }
         } catch (InterruptedException e) {

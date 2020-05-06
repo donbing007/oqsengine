@@ -2,25 +2,33 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * EntitySearchServiceImpl Tester.
@@ -31,7 +39,9 @@ import static org.mockito.Mockito.mock;
  */
 public class EntitySearchServiceImplTest {
 
+    final Logger logger = LoggerFactory.getLogger(EntitySearchServiceImplTest.class);
     private LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator(1);
+    private ExecutorService threadPool;
 
     private final Collection<IEntityField> childFields = Arrays.asList(
         new EntityField(idGenerator.next(), "c4", FieldType.STRING),
@@ -42,47 +52,117 @@ public class EntitySearchServiceImplTest {
     private final Collection<IEntityField> parentFields = Arrays.asList(
         new EntityField(idGenerator.next(), "c1", FieldType.STRING),
         new EntityField(idGenerator.next(), "c2", FieldType.LONG),
-        new EntityField(idGenerator.next(), "c3", FieldType.BOOLEAN)
+        new EntityField(idGenerator.next(), "c3", FieldType.BOOLEAN),
+        new EntityField(idGenerator.next(), "rel0.id", FieldType.LONG)
+    );
+
+    private final Collection<IEntityField> driverFields0 = Arrays.asList(
+        new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING),
+        new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG)
+    );
+
+    private final Collection<IEntityField> driverFields1 = Arrays.asList(
+        new EntityField(idGenerator.next(), "rel1.name", FieldType.STRING),
+        new EntityField(idGenerator.next(), "rel1.age", FieldType.LONG)
     );
 
     private IEntityClass parentEntityClass;
     private IEntityClass childEntityClass;
+    private IEntityClass driverEntityClass0;
+    private IEntityClass driverEntityClass1;
+    private IEntityClass notExistDriverEntityClass;
 
-    private Map<Long, IEntity> expectedEntitys;
+    private Map<Long, IEntity> masterEntities;
+    private Map<IEntityClass, Collection<EntityRef>> indexEntities;
 
     private MasterStorage masterStorage;
-    private IndexStorage indexStorage;
+    private MockSelectHistoryIndexStorage indexStorage;
 
     private EntitySearchServiceImpl instance;
 
     @Before
     public void before() throws Exception {
 
-        parentEntityClass = buildIEntityClass(null);
-        childEntityClass = buildIEntityClass(parentEntityClass);
+        parentEntityClass = buildIEntityClass(null, parentFields);
+        childEntityClass = buildIEntityClass(parentEntityClass, childFields);
+        driverEntityClass0 = buildIEntityClass(null, driverFields0);
+        driverEntityClass1 = buildIEntityClass(null, driverFields1);
+        notExistDriverEntityClass = buildIEntityClass(null, driverFields0);
 
-        expectedEntitys = new HashMap();
+        masterEntities = buildMasterEntities();
+        indexEntities = buildIndexEntityes();
 
-        for (int i = 0; i < 3; i++) {
-            buildEntity(false);
-        }
+        masterStorage = new MockMasterStorage(masterEntities.values());
 
-        for (int i = 0; i < 3; i++) {
-            buildEntity(true);
-        }
+        indexStorage = new MockSelectHistoryIndexStorage(indexEntities);
 
-
-        masterStorage = new MockMasterStorage(expectedEntitys.values());
-
-        indexStorage = mock(IndexStorage.class);
+        threadPool = Executors.newFixedThreadPool(3);
 
         instance = new EntitySearchServiceImpl();
         ReflectionTestUtils.setField(instance, "masterStorage", masterStorage);
         ReflectionTestUtils.setField(instance, "indexStorage", indexStorage);
+        ReflectionTestUtils.setField(instance, "threadPool", threadPool);
+        instance.init();
+    }
+
+    private Map<IEntityClass, Collection<EntityRef>> buildIndexEntityes() {
+        Map<IEntityClass, Collection<EntityRef>> refs = new HashMap<>();
+        refs.put(
+            driverEntityClass0,
+            masterEntities.values().stream()
+                .filter(e -> e.entityClass().equals(driverEntityClass0))
+                .map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child()))
+                .collect(Collectors.toList())
+        );
+
+        refs.put(
+            driverEntityClass1,
+            masterEntities.values().stream()
+                .filter(e -> e.entityClass().equals(driverEntityClass1))
+                .map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child()))
+                .collect(Collectors.toList())
+        );
+
+        return refs;
+    }
+
+    private Map<Long, IEntity> buildMasterEntities() {
+        Map<Long, IEntity> entities = new HashMap();
+        IEntity[] newEntities;
+        for (int i = 0; i < 3; i++) {
+            newEntities = buildEntity(parentEntityClass);
+            for (IEntity e : newEntities) {
+                entities.put(e.id(), e);
+            }
+        }
+
+        for (int i = 0; i < 3; i++) {
+            newEntities = buildEntity(childEntityClass);
+            for (IEntity e : newEntities) {
+                entities.put(e.id(), e);
+            }
+        }
+
+        for (int i = 0; i < 3; i++) {
+            newEntities = buildEntity(driverEntityClass0);
+            for (IEntity e : newEntities) {
+                entities.put(e.id(), e);
+            }
+        }
+
+        for (int i = 0; i < 3; i++) {
+            newEntities = buildEntity(driverEntityClass1);
+            for (IEntity e : newEntities) {
+                entities.put(e.id(), e);
+            }
+        }
+
+        return entities;
     }
 
     @After
     public void after() throws Exception {
+        threadPool.shutdown();
     }
 
     /**
@@ -90,7 +170,7 @@ public class EntitySearchServiceImplTest {
      */
     @Test
     public void testSelectOne() throws Exception {
-        expectedEntitys.values().stream().forEach(e -> {
+        masterEntities.values().stream().forEach(e -> {
             Optional<IEntity> selectEntityOp;
             try {
                 selectEntityOp = instance.selectOne(e.id(), e.entityClass());
@@ -100,8 +180,8 @@ public class EntitySearchServiceImplTest {
                     Assert.assertEquals(e, selectEntityOp.get());
                 } else {
 
-                    IEntity child = expectedEntitys.get(e.id());
-                    IEntity parent = expectedEntitys.get(child.family().parent());
+                    IEntity child = masterEntities.get(e.id());
+                    IEntity parent = masterEntities.get(child.family().parent());
 
                     Collection<IValue> childValues = child.entityValue().values();
                     child.entityValue().clear()
@@ -119,7 +199,7 @@ public class EntitySearchServiceImplTest {
 
     @Test
     public void testSelectWrongParent() throws Exception {
-        IEntity useEntity = expectedEntitys.values().stream().filter(
+        IEntity useEntity = masterEntities.values().stream().filter(
             e -> e.entityClass().extendEntityClass() != null).findFirst().get();
         // 不存在的家族信息.
         useEntity.resetFamily(new EntityFamily(0, 0));
@@ -127,13 +207,13 @@ public class EntitySearchServiceImplTest {
         try {
             instance.selectOne(useEntity.id(), useEntity.entityClass()).get();
             Assert.fail("The SQLException was expected to be thrown, but it didn't.");
-        } catch(SQLException ex) {
+        } catch (SQLException ex) {
         }
     }
 
     @Test
     public void testSelectWrongParentQuery() throws Exception {
-        IEntity useEntity = expectedEntitys.values().stream().filter(
+        IEntity useEntity = masterEntities.values().stream().filter(
             e -> e.entityClass().extendEntityClass() != null).findFirst().get();
         // 不存在的家族信息.
         useEntity.resetFamily(new EntityFamily(Long.MAX_VALUE, 0));
@@ -141,22 +221,22 @@ public class EntitySearchServiceImplTest {
         try {
             instance.selectOne(useEntity.id(), useEntity.entityClass()).get();
             Assert.fail("The SQLException was expected to be thrown, but it didn't.");
-        } catch(SQLException ex) {
+        } catch (SQLException ex) {
         }
     }
 
     @Test
     public void testselectMultiple() throws Exception {
 
-        long[] requestIds = expectedEntitys.values().stream().filter(
+        long[] requestIds = masterEntities.values().stream().filter(
             e -> e.entityClass() == childEntityClass
         ).mapToLong(e -> e.id()).toArray();
         Collection<IEntity> entities = instance.selectMultiple(requestIds, childEntityClass);
 
         for (IEntity entity : entities) {
 
-            IEntity child = expectedEntitys.get(entity.id());
-            IEntity parent = expectedEntitys.get(child.family().parent());
+            IEntity child = masterEntities.get(entity.id());
+            IEntity parent = masterEntities.get(child.family().parent());
 
             Collection<IValue> childValues = child.entityValue().values();
             child.entityValue().clear()
@@ -167,40 +247,253 @@ public class EntitySearchServiceImplTest {
         }
     }
 
-    private IEntityClass buildIEntityClass(IEntityClass parentEntityClass) {
+    @Test
+    public void testJoinOverTheMaximumDriver() throws Exception {
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    new EntityField(idGenerator.next(), "c4", FieldType.STRING),
+                    ConditionOperator.EQUALS,
+                    new StringValue(new EntityField(idGenerator.next(), "c4", FieldType.STRING), "v1")
+                )
+            ).addAnd(
+                new Condition(
+                    driverEntityClass0,
+                    new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG),
+                    ConditionOperator.EQUALS,
+                    new LongValue(new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG), 100)
+                )
+            ).addOr(
+                new Condition(
+                    driverEntityClass1,
+                    new EntityField(idGenerator.next(), "rel1.name", FieldType.STRING),
+                    ConditionOperator.EQUALS,
+                    new StringValue(new EntityField(idGenerator.next(), "rel1.name", FieldType.STRING), "v2")
+                )
+            );
+
+        try {
+            instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100));
+            Assert.fail("An exception \"exceeding the maximum number of driver entities\" error was expected, but it did not.");
+        } catch (SQLException ex) {
+
+        }
+    }
+
+    @Test
+    public void testJoinOverTheMaximumDriverLen() throws Exception {
+        instance.setMaxJoinDriverLineNumber(2);
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    new EntityField(idGenerator.next(), "c4", FieldType.STRING),
+                    ConditionOperator.EQUALS,
+                    new StringValue(new EntityField(idGenerator.next(), "c4", FieldType.STRING), "v1")
+                )
+            ).addAnd(
+                new Condition(
+                    driverEntityClass0,
+                    new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG),
+                    ConditionOperator.EQUALS,
+                    new LongValue(new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG), 100)
+                )
+            );
+
+        try {
+            instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100));
+            Assert.fail("The driver entity exceeded the maximum expected to throw an exception, but did not.");
+        } catch (SQLException ex) {
+
+        }
+
+    }
+
+    @Test
+    public void testJoinSelect() throws Exception {
+        buildJoinCase().stream().forEach(j -> {
+            try {
+                instance.selectByConditions(j.conditions, j.reusltEntityClass, j.sort, j.page);
+            } catch (SQLException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+
+            List<SelectHistory> history = new ArrayList<>(indexStorage.getHistories());
+            List<String> expectedSelect = new ArrayList<>(j.expectedStrings);
+            Assert.assertEquals(expectedSelect.size(), history.size());
+            for (int i = 0; i < expectedSelect.size(); i++) {
+                logger.info(history.get(i).toString());
+                Assert.assertEquals(expectedSelect.get(i), history.get(i).toString());
+            }
+
+            indexStorage.reset();
+        });
+    }
+
+    /**
+     * 预期为查询条件的字符串表示.例如如下.
+     * class-13.rel0.name = "driver-v1".13.asc:false|des:true|outoforder:true.empty:true|single:false|ready:false
+     * 组成如下.
+     * {entityClassName}.{fieldName} = {conditionValue}.{entityClassId}.{sort:asc}|{sort:des}|{sort:outoforder}.{page:empty}|{page:single}|{page:ready}
+     */
+    private Collection<JoinCase> buildJoinCase() {
+        return Arrays.asList(
+            new JoinCase(
+                parentEntityClass,
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                            driverEntityClass0,
+                        new EntityField(driverFields0.stream().findFirst().get().id(), "rel0.name", FieldType.STRING),
+                            ConditionOperator.EQUALS,
+                            new StringValue(new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING), "driver-v1")
+                        )
+                    )
+                ,
+                Page.newSinglePage(100),
+                Sort.buildOutOfSort(),
+                Arrays.asList(
+                    driverEntityClass0.code()
+                        + ".rel0.name = \"driver-v1\"."
+                        + driverEntityClass0.id()
+                        + ".asc:false|des:true|outoforder:true.empty:true|single:false|ready:true",
+
+                    driverEntityClass0.code()
+                        + ".rel0.name = \"driver-v1\"."
+                        + driverEntityClass0.id()
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true",
+
+                    "rel0.id IN ("
+                        + masterEntities.values().stream()
+                        .filter(e -> e.entityClass().equals(driverEntityClass0))
+                        .map(e -> Long.toString(e.id()))
+                        .collect(Collectors.joining(", "))
+                        + ")."
+                        + parentEntityClass.id()
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true"
+                )
+            )
+            ,
+            new JoinCase(
+                parentEntityClass,
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                            driverEntityClass0,
+                        new EntityField(driverFields0.stream().findFirst().get().id(), "rel0.name", FieldType.STRING),
+                            ConditionOperator.EQUALS,
+                            new StringValue(new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING), "driver-v1")
+                        )
+                    )
+                    .addAnd(
+                        new Condition(
+                            driverEntityClass0,
+                            new EntityField(driverFields0.stream().skip(1).findFirst().get().id(), "rel0.age", FieldType.LONG),
+                            ConditionOperator.EQUALS,
+                            new LongValue(new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG), 100)
+                        )
+                    ),
+                Page.newSinglePage(100),
+                Sort.buildOutOfSort(),
+                Arrays.asList(
+                    driverEntityClass0.code()
+                        + ".rel0.name = \"driver-v1\" AND " + driverEntityClass0.code() + ".rel0.age = 100."
+                        + driverEntityClass0.id()
+                        + ".asc:false|des:true|outoforder:true.empty:true|single:false|ready:true",
+
+                    driverEntityClass0.code()
+                        + ".rel0.name = \"driver-v1\" AND " + driverEntityClass0.code() + ".rel0.age = 100."
+                        + driverEntityClass0.id()
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true",
+
+                    "rel0.id IN ("
+                        + masterEntities.values().stream()
+                        .filter(e -> e.entityClass().equals(driverEntityClass0))
+                        .map(e -> Long.toString(e.id()))
+                        .collect(Collectors.joining(", "))
+                        + ")."
+                        + parentEntityClass.id()
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true"
+                )
+            )
+            ,
+            // 驱动 entity 没有数据.
+            new JoinCase(
+                parentEntityClass,
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            notExistDriverEntityClass,
+                            new EntityField(driverFields0.stream().findFirst().get().id(), "rel0.name", FieldType.STRING),
+                            ConditionOperator.EQUALS,
+                            new StringValue(new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING), "driver-v1")
+                        )
+                    ),
+                Page.newSinglePage(100),
+                Sort.buildOutOfSort(),
+                Arrays.asList(
+                    notExistDriverEntityClass.code()
+                        + ".rel0.name = \"driver-v1\"."
+                        + notExistDriverEntityClass.id()
+                        + ".asc:false|des:true|outoforder:true.empty:true|single:false|ready:true"
+                )
+            )
+        );
+    }
+
+    private class JoinCase {
+        private IEntityClass reusltEntityClass;
+        private Conditions conditions;
+        private Page page;
+        private Sort sort;
+        private Collection<String> expectedStrings;
+
+        public JoinCase(
+            IEntityClass reusltEntityClass,
+            Conditions conditions,
+            Page page, Sort sort, Collection<String> expectedStrings) {
+            this.reusltEntityClass = reusltEntityClass;
+            this.conditions = conditions;
+            this.page = page;
+            this.sort = sort;
+            this.expectedStrings = expectedStrings;
+        }
+    }
+
+    private IEntityClass buildIEntityClass(IEntityClass parentEntityClass, Collection<IEntityField> fields) {
 
         long classId = idGenerator.next();
         if (parentEntityClass != null) {
             return new EntityClass(
-                classId, "class-" + classId, null, null, parentEntityClass, childFields);
+                classId, "class-" + classId, null, null, parentEntityClass, fields);
         } else {
-            return new EntityClass(classId, "class-" + classId, parentFields);
+            return new EntityClass(classId, "class-" + classId, fields);
         }
     }
 
-    private void buildEntity(boolean extend) {
-        if (extend) {
+    private IEntity[] buildEntity(IEntityClass entityClass) {
+        if (entityClass.extendEntityClass() != null) {
             long parentId = idGenerator.next();
             long childId = idGenerator.next();
-            expectedEntitys.put(parentId, new Entity(
-                parentId, parentEntityClass,
-                buildValues(parentEntityClass), new EntityFamily(0, childId), 0));
 
-            expectedEntitys.put(childId, new Entity(
-                childId, childEntityClass,
-                buildValues(childEntityClass), new EntityFamily(parentId, 0), 0));
-
+            return new Entity[]{
+                new Entity(
+                    childId,
+                    entityClass,
+                    buildValues(entityClass),
+                    new EntityFamily(parentId, 0),
+                    0)
+                ,
+                new Entity(
+                    parentId,
+                    entityClass.extendEntityClass(),
+                    buildValues(entityClass.extendEntityClass()),
+                    new EntityFamily(0, childId), 0)
+            };
 
         } else {
 
-            Entity entity = new Entity(
+            return new Entity[]{new Entity(
                 idGenerator.next(),
-                parentEntityClass,
-                buildValues(parentEntityClass)
-            );
-
-            expectedEntitys.put(entity.id(), entity);
-
+                entityClass,
+                buildValues(entityClass))};
         }
     }
 
@@ -235,7 +528,7 @@ public class EntitySearchServiceImplTest {
         return random.nextInt(max) % (max - min + 1) + min;
     }
 
-    private static class MockMasterStorage implements MasterStorage {
+    private class MockMasterStorage implements MasterStorage {
 
         private Collection<IEntity> entities;
 
@@ -277,6 +570,90 @@ public class EntitySearchServiceImplTest {
         @Override
         public void delete(IEntity entity) throws SQLException {
 
+        }
+    }
+
+    private class MockSelectHistoryIndexStorage implements IndexStorage {
+
+        private Collection<SelectHistory> histories = new ArrayList<>();
+
+        private Map<IEntityClass, Collection<EntityRef>> pool;
+
+        public MockSelectHistoryIndexStorage(Map<IEntityClass, Collection<EntityRef>> pool) {
+            this.pool = pool;
+        }
+
+        public Collection<SelectHistory> getHistories() {
+            return histories;
+        }
+
+        public void reset() {
+            histories.clear();
+        }
+
+        @Override
+        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
+            throws SQLException {
+            histories.add(new SelectHistory(conditions, entityClass, sort, page));
+
+            Collection<EntityRef> refs = pool.get(entityClass);
+            if (refs == null) {
+                page.setTotalCount(0);
+            } else {
+                page.setTotalCount(refs.size());
+            }
+            if (page.isEmptyPage()) {
+                refs = null;
+            }
+
+            return refs == null ? Collections.emptyList() : refs;
+        }
+
+        @Override
+        public void replaceAttribute(IEntityValue attribute) throws SQLException {
+
+        }
+
+        @Override
+        public void build(IEntity entity) throws SQLException {
+
+        }
+
+        @Override
+        public void replace(IEntity entity) throws SQLException {
+
+        }
+
+        @Override
+        public void delete(IEntity entity) throws SQLException {
+
+        }
+    }
+
+    private class SelectHistory {
+        private Conditions conditions;
+        private IEntityClass entityClass;
+        private Sort sort;
+        private Page page;
+
+        public SelectHistory(Conditions conditions, IEntityClass entityClass, Sort sort, Page page) {
+            this.conditions = conditions;
+            this.entityClass = entityClass;
+            this.sort = sort;
+            this.page = page;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder buff = new StringBuilder();
+            buff.append(conditions.toString())
+                .append(".")
+                .append(entityClass.id())
+                .append(".asc:")
+                .append(sort.isAsc()).append("|des:").append(sort.isDes()).append("|outoforder:").append(sort.isOutOfOrder())
+                .append(".empty:");
+            buff.append(page.isEmptyPage()).append("|single:").append(page.isSinglePage()).append("|ready:").append(page.isReady());
+            return buff.toString();
         }
     }
 } 

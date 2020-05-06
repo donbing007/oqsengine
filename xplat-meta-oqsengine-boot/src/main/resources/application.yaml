@@ -14,21 +14,20 @@ logging:
     root: debug
 
 transaction:
-  timeoutms: 3000
+  timeoutMs: 3000
 
 threadPool:
   # 0 or not exist use cpu core + 1
   size: 0
 
 storage:
+  timeoutMs:
+    query: 3000
   master:
     name: "oqsbigentity"
-    query:
-      # default 3 second
-      timeout: 3000
     shard:
       table:
-        enabled: true
+        enabled: false
         size: 1
   index:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.

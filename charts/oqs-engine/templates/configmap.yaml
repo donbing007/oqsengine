@@ -43,17 +43,18 @@ data:
           application:
             name: "oqsengine"
         transaction:
-            timeoutms: {{ .Values.storage.transaction.timeoutMs }}
+          timeoutms: {{ .Values.storage.transaction.timeoutMs | default "2000" }}
+        threadPool:
+          size: {{ .Values.storage.threadPool.size | default "0" }}
         storage:
+          timeoutMs:
+            query: {{ .Values.storage.timeoutMs.query | default "3000" }}
           master:
-            name: {{ .Values.storage.master.name }}
-            query:
-              worker: {{ .Values.storage.master.query.worker }}
-              timeout: {{ .Values.storage.master.query.timeout }}
+            name: {{ .Values.storage.master.name | default "oqsbigentity" }}
             shard:
               table:
-                enabled: {{ .Values.storage.master.shard.table.enabled }}
-                size: {{ .Values.storage.master.shard.table.size }}
+                enabled: {{ .Values.storage.master.shard.table.enabled | default "true" }}
+                size: {{ .Values.storage.master.shard.table.size | default "3" }}
           index:
             name: {{ .Values.storage.index.name }}
 

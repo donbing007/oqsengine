@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -35,16 +34,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
 /**
@@ -59,15 +54,6 @@ public class SphinxQLIndexStorageTest {
 
     private TransactionManager transactionManager = new DefaultTransactionManager(
         new IncreasingOrderLongIdGenerator(0));
-    private LongIdGenerator idGenerator = new LongIdGenerator() {
-
-        private AtomicLong id = new AtomicLong(Long.MAX_VALUE);
-
-        @Override
-        public Long next() {
-            return id.getAndDecrement();
-        }
-    };
     private SphinxQLIndexStorage storage;
     private DataSourcePackage dataSourcePackage;
 
@@ -171,8 +157,6 @@ public class SphinxQLIndexStorageTest {
         Selector<DataSource> searchDataSourceSelector = buildSearchDataSourceSelector("./src/test/resources/sql_index_storage.conf");
 
 
-        truncate();
-
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
@@ -193,6 +177,9 @@ public class SphinxQLIndexStorageTest {
         ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         storage.setIndexTableName("oqsindextest");
+        storage.init();
+
+        truncate();
 
         transactionManager.create();
 
@@ -203,28 +190,13 @@ public class SphinxQLIndexStorageTest {
 
     }
 
-    private void truncate() {
-        List<DataSource> ds = dataSourcePackage.getIndexWriter();
-        ds.stream().forEach(d -> {
-            try {
-                Connection conn = d.getConnection();
-                boolean autocommit = conn.getAutoCommit();
-                conn.setAutoCommit(true);
+    private void truncate() throws SQLException {
 
-                Statement st = conn.createStatement();
-                st.executeUpdate("TRUNCATE RTINDEX oqsindextest");
-
-                st.close();
-
-                conn.setAutoCommit(autocommit);
-
-                conn.close();
-
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
+        if (entityes != null) {
+            for (IEntity entity : entityes) {
+                storage.delete(entity);
             }
-
-        });
+        }
     }
 
     @After
@@ -792,4 +764,4 @@ public class SphinxQLIndexStorageTest {
             this.sort = sort;
         }
     }
-}
+} 

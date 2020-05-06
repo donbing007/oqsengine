@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 /**
+ * 事务管理.
+ *
  * @author dongbin
  * @version 0.1 2020/2/18 14:34
  * @since 1.8
@@ -26,6 +28,11 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
         transactionManager.unbind();
 
         return txId;
+    }
+
+    @Override
+    public void restore(long id) throws SQLException {
+        transactionManager.rebind(id);
     }
 
     @Override
