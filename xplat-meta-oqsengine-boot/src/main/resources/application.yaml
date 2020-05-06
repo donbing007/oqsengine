@@ -24,7 +24,7 @@ storage:
   timeoutMs:
     query: 3000
   master:
-    name: "oqsbigentity"
+    name: "oqsbigentity0"
     shard:
       table:
         enabled: false

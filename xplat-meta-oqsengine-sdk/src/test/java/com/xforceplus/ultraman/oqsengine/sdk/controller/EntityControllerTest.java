@@ -12,6 +12,7 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -32,7 +33,7 @@ public class EntityControllerTest extends ContextWareBaseTest {
     @Test
     public void testQuery() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                post("/bos/1257921699227975681/entities/query?v=0.0.2")
+                post("/bos/1257947147311431681/entities/query?v=0.0.3")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN)
                         .characterEncoding("utf-8")
@@ -41,6 +42,6 @@ public class EntityControllerTest extends ContextWareBaseTest {
 
         ).andDo(print()).andReturn();
 
-        System.out.println(mvcResult.getResponse().getContentAsString(Charset.forName("utf-8")));
+        System.out.println(mvcResult.getResponse().getContentAsString(StandardCharsets.UTF_8));
     }
 }

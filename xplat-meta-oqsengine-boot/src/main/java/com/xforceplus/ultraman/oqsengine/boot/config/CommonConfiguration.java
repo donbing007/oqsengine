@@ -91,10 +91,24 @@ public class CommonConfiguration {
         }
 
         return new ThreadPoolExecutor(size, size,
-            0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(500),
-            ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
-            new ThreadPoolExecutor.AbortPolicy()
+                0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(500),
+                ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
+    }
+
+    @Bean(name = "dispatcher")
+    public ExecutorService asyncDispatcher(@Value("${dispatcher.threadPool.size:10}") int size) {
+        if (size == 0) {
+            size = Runtime.getRuntime().availableProcessors() + 1;
+        }
+
+        return new ThreadPoolExecutor(size, size,
+                0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(500),
+                ExecutorHelper.buildNameThreadFactory("grpc-blocking", false),
+                new ThreadPoolExecutor.AbortPolicy()
         );
     }
 }
