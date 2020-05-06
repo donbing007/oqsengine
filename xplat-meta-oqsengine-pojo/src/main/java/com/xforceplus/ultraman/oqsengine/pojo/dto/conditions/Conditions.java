@@ -282,8 +282,10 @@ public class Conditions implements Serializable {
 
         doAddNode(conditions.head, link, isolation);
 
-        if (ConditionLink.OR == link) {
+        if (ConditionLink.OR == link && size > 0) {
+
             or = true;
+
         } else if (!or) {
 
             or = conditions.haveOrLink();

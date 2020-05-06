@@ -103,7 +103,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "one"})
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
-
         try {
             Optional<IEntity> entityOptional = masterStorage.select(id, entityClass);
 
@@ -273,7 +272,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
                 useConditions = Conditions.buildEmtpyConditions();
                 for (Conditions cs : subConditions) {
-                    useConditions.addOr(cs, false);
+                    if (cs.size() > 0) {
+                        useConditions.addOr(cs, false);
+                    }
+                }
+
+                if (useConditions.size() == 0) {
+                    return Collections.emptyList();
                 }
 
             }
@@ -311,6 +316,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
 
     private Collection<IEntity> buildEntities(Collection<EntityRef> refs, IEntityClass entityClass) throws SQLException {
+        if (refs.isEmpty()) {
+            return Collections.emptyList();
+        }
         Map<Long, IEntityClass> batchSelect =
             refs.parallelStream().filter(e -> e.getId() > 0)
                 .collect(toMap(EntityRef::getId, e -> entityClass, (e0, e1) -> e0));
@@ -421,10 +429,20 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             .forEach(driverEntityTask -> futures.add(threadPool.submit(driverEntityTask)));
 
         Conditions conditions = Conditions.buildEmtpyConditions();
+        // 是否应该提前结束.
+        boolean termination = false;
         for (Future<Map.Entry<DriverEntityKey, Collection<EntityRef>>> future : futures) {
 
             try {
                 Map.Entry<DriverEntityKey, Collection<EntityRef>> driverQueryResult = future.get();
+                /**
+                 * 由于所有安全结点都以 and 连接,所以当其中任意一个 driver 条件出现0匹配时安全结点都应该被修剪.
+                 */
+                if (driverQueryResult.getValue().isEmpty()) {
+                    termination = true;
+                    break;
+                }
+
                 conditions.addAnd(
                     new Condition(
                         driverQueryResult.getKey().relationshipField,
@@ -435,7 +453,16 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     ));
             } catch (Exception e) {
 
+                termination = true;
                 throw new SQLException(e.getMessage(), e);
+
+            } finally {
+
+                if (termination) {
+
+                    // 中止其他操作.
+                    futures.stream().forEach(f -> f.cancel(true));
+                }
             }
         }
 
@@ -542,28 +569,34 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         private DriverEntityKey key;
         private Conditions conditions;
 
-        public DriverEntityTask(DriverEntityKey key,Conditions conditions) {
+        public DriverEntityTask(DriverEntityKey key, Conditions conditions) {
             this.key = key;
             this.conditions = conditions;
         }
 
         @Override
         public Map.Entry<DriverEntityKey, Collection<EntityRef>> call() throws Exception {
-            checkLineNumber();
+            long count = checkLineNumber();
+            if (count == 0) {
+                return new AbstractMap.SimpleEntry<>(key, Collections.emptyList());
+            }
 
             Collection<EntityRef> refs = indexStorage.select(
                 conditions, key.getEntityClass(), Sort.buildOutOfSort(), Page.newSinglePage(maxJoinDriverLineNumber));
-            return new AbstractMap.SimpleEntry<>(key,refs);
+            return new AbstractMap.SimpleEntry<>(key, refs);
         }
 
         // 检查命中数据集大小.
-        private void checkLineNumber() throws SQLException {
+        private long checkLineNumber() throws SQLException {
             Page emptyPage = Page.emptyPage();
             indexStorage.select(conditions, key.getEntityClass(), Sort.buildOutOfSort(), emptyPage);
+
             if (emptyPage.getTotalCount() > maxJoinDriverLineNumber) {
-                throw new SQLException(String.format("Drives entity data exceeding %d.", maxJoinDriverLineNumber));
+                throw new SQLException(String.format("Drives entity(%s) data exceeding %d.",
+                    key.getEntityClass().code(), maxJoinDriverLineNumber));
             }
+
+            return emptyPage.getTotalCount();
         }
     }
-
 }

@@ -70,6 +70,7 @@ public class EntitySearchServiceImplTest {
     private IEntityClass childEntityClass;
     private IEntityClass driverEntityClass0;
     private IEntityClass driverEntityClass1;
+    private IEntityClass notExistDriverEntityClass;
 
     private Map<Long, IEntity> masterEntities;
     private Map<IEntityClass, Collection<EntityRef>> indexEntities;
@@ -86,6 +87,7 @@ public class EntitySearchServiceImplTest {
         childEntityClass = buildIEntityClass(parentEntityClass, childFields);
         driverEntityClass0 = buildIEntityClass(null, driverFields0);
         driverEntityClass1 = buildIEntityClass(null, driverFields1);
+        notExistDriverEntityClass = buildIEntityClass(null, driverFields0);
 
         masterEntities = buildMasterEntities();
         indexEntities = buildIndexEntityes();
@@ -340,7 +342,7 @@ public class EntitySearchServiceImplTest {
                 Conditions.buildEmtpyConditions()
                     .addAnd(new Condition(
                             driverEntityClass0,
-                            new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING),
+                        new EntityField(driverFields0.stream().findFirst().get().id(), "rel0.name", FieldType.STRING),
                             ConditionOperator.EQUALS,
                             new StringValue(new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING), "driver-v1")
                         )
@@ -375,7 +377,7 @@ public class EntitySearchServiceImplTest {
                 Conditions.buildEmtpyConditions()
                     .addAnd(new Condition(
                             driverEntityClass0,
-                            new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING),
+                        new EntityField(driverFields0.stream().findFirst().get().id(), "rel0.name", FieldType.STRING),
                             ConditionOperator.EQUALS,
                             new StringValue(new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING), "driver-v1")
                         )
@@ -383,12 +385,11 @@ public class EntitySearchServiceImplTest {
                     .addAnd(
                         new Condition(
                             driverEntityClass0,
-                            new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG),
+                            new EntityField(driverFields0.stream().skip(1).findFirst().get().id(), "rel0.age", FieldType.LONG),
                             ConditionOperator.EQUALS,
                             new LongValue(new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG), 100)
                         )
-                    )
-                ,
+                    ),
                 Page.newSinglePage(100),
                 Sort.buildOutOfSort(),
                 Arrays.asList(
@@ -410,6 +411,28 @@ public class EntitySearchServiceImplTest {
                         + ")."
                         + parentEntityClass.id()
                         + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true"
+                )
+            )
+            ,
+            // 驱动 entity 没有数据.
+            new JoinCase(
+                parentEntityClass,
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            notExistDriverEntityClass,
+                            new EntityField(driverFields0.stream().findFirst().get().id(), "rel0.name", FieldType.STRING),
+                            ConditionOperator.EQUALS,
+                            new StringValue(new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING), "driver-v1")
+                        )
+                    ),
+                Page.newSinglePage(100),
+                Sort.buildOutOfSort(),
+                Arrays.asList(
+                    notExistDriverEntityClass.code()
+                        + ".rel0.name = \"driver-v1\"."
+                        + notExistDriverEntityClass.id()
+                        + ".asc:false|des:true|outoforder:true.empty:true|single:false|ready:true"
                 )
             )
         );
