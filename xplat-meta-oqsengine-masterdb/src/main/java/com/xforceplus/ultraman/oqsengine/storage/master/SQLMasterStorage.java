@@ -66,6 +66,7 @@ public class SQLMasterStorage implements MasterStorage {
         this.queryTimeout = queryTimeout;
     }
 
+    @Override
     @PostConstruct
     public void init() {
 
