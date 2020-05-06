@@ -32,7 +32,7 @@ public class ReplaceStorageCommand extends UndoStorageCommand<StorageEntity> {
 
     @Override
     public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
-        if(!((UndoTransactionResource)resource).isCommitted()) {
+        if (!((UndoTransactionResource) resource).isCommitted()) {
             StorageEntity oriStorageEntity = new SelectByIdStorageCommand(tableNameSelector).execute(resource, storageEntity);
 
             super.prepareUndoLog(resource, OpType.REPLACE, oriStorageEntity);

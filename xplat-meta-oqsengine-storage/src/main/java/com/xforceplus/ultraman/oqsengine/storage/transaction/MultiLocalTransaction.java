@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
-import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.UndoLogStatus;
 import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
@@ -34,7 +32,6 @@ public class MultiLocalTransaction implements Transaction {
     private List<TransactionResource> transactionResourceHolder;
     private boolean committed;
     private boolean rollback;
-    private UndoExecutor undoExecutor;
 
     public MultiLocalTransaction(long id) {
         transactionResourceHolder = new LinkedList<>();
@@ -51,24 +48,12 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
-    public void setUndoExecutor(UndoExecutor undoExecutor) {
-        this.undoExecutor = undoExecutor;
-    }
-
-    @Override
-    public UndoExecutor getUndoExecutor() {
-        return undoExecutor;
-    }
-
-    @Override
     public synchronized void commit() throws SQLException {
         check();
 
-        if (this.undoExecutor == null) {
-            doEnd(true);
-        } else {
-            doEndWithUndo(true);
-        }
+//        doEnd(true);
+
+        doEndWithUndo(true);
 
         if (logger.isDebugEnabled()) {
             logger.debug("Transaction ({}), commit.", id);
@@ -79,11 +64,8 @@ public class MultiLocalTransaction implements Transaction {
     public synchronized void rollback() throws SQLException {
         check();
 
-        if (this.undoExecutor == null) {
-            doEnd(false);
-        } else {
-            doEndWithUndo(false);
-        }
+//            doEnd(false);
+        doEndWithUndo(false);
 
         if (logger.isDebugEnabled()) {
             logger.debug("Transaction ({}), rollback.", id);
@@ -213,13 +195,10 @@ public class MultiLocalTransaction implements Transaction {
                 for (TransactionResource transactionResource : transactionResourceHolder) {
                     if (commit) {
                         transactionResource.commit();
-                        saveCommitStatus(transactionResource);
                     } else {
                         transactionResource.rollback();
                     }
                 }
-
-                undoExecutor.mock();
             } catch (SQLException ex) {
                 exHolder.add(0, ex);
 
@@ -246,28 +225,17 @@ public class MultiLocalTransaction implements Transaction {
 
     private void saveTransactionResourcesUndoLog(List<TransactionResource> transactionResourceHolder) {
         for (TransactionResource transactionResource : transactionResourceHolder) {
-            undoExecutor.saveUndoLog(id, transactionResource);
+            ((UndoTransactionResource) transactionResource).createUndoLog(id);
         }
     }
 
     private void undoTransactionResources(List<TransactionResource> transactionResourceHolder, boolean commit) throws SQLException {
         logger.debug("start to rollback or undo commit");
         for (TransactionResource transactionResource : transactionResourceHolder) {
-            if (commit) {
-                if (((UndoTransactionResource) transactionResource).isCommitted()) {
-                    logger.debug("transacitonResource {} undo", transactionResource.key());
-                    undoExecutor.undo(transactionResource);
-                } else {
-                    logger.debug("transacitonResource {} rollback", transactionResource.key());
-                    transactionResource.rollback();
-                }
-            } else {
-                logger.debug("transacitonResource {} rollback", transactionResource.key());
-                transactionResource.rollback();
-            }
+            logger.debug("transacitonResource {} undo", transactionResource.key());
+            transactionResource.undo(commit);
         }
-
-        logger.debug("[UNDO] finish to rollback or undo commit");
+        logger.debug("finish to rollback or undo commit");
     }
 
     private void destroyTransactionResources(List<TransactionResource> transactionResourceHolder) {
@@ -281,10 +249,5 @@ public class MultiLocalTransaction implements Transaction {
                 e.printStackTrace();
             }
         }
-    }
-
-    private void saveCommitStatus(TransactionResource resource) {
-        ((UndoTransactionResource) resource).committed();
-        undoExecutor.updateUndoLogStatus(id, resource, UndoLogStatus.COMMITED);
     }
 }

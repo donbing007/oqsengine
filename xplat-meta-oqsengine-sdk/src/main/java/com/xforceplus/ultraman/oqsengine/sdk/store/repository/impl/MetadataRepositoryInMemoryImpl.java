@@ -474,7 +474,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         UpdateableDataContext contextDC = versionService.getCurrentVersionDCForBoByCode(parentCode);
 
-        return  Optional.ofNullable(contextDC)
+        return Optional.ofNullable(contextDC)
                 .map(x -> findSubEntitiesByCode(tenantId, appId, parentCode, x))
                 .orElseGet(Collections::emptyList);
     }
@@ -484,7 +484,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
         UpdateableDataContext contextDC = versionService.getVersionedDCForBoByCode(parentCode, version);
 
-        return  Optional.ofNullable(contextDC)
+        return Optional.ofNullable(contextDC)
                 .map(x -> findSubEntitiesByCode(tenantId, appId, parentCode, x))
                 .orElseGet(Collections::emptyList);
     }
@@ -686,13 +686,16 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     //TODO
     @Override
     public List<EntityClass> findAllEntities() {
-        return versionService.getCurrentVersion().entrySet().stream()
-                .flatMap(entry -> {
-                    Long moduleId = entry.getKey();
-                    String version = entry.getValue();
-                    UpdateableDataContext versionedDCForModule = versionService.getVersionedDCForModule(moduleId, version);
-                    return findAllEntities(versionedDCForModule).stream();
-                }).collect(Collectors.toList());
+
+        return versionService.getBoModuleMapping().entrySet().stream().map(x -> {
+            Long boId = x.getKey().getId();
+            LinkedList<Tuple2<Long, String>> value = x.getValue();
+            String version = value.getLast()._2();
+
+            UpdateableDataContext versionedDCForBoId = versionService.getVersionedDCForBoById(boId, version);
+            return load("", "", String.valueOf(boId), versionedDCForBoId);
+        }).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     private List<EntityClass> findAllEntities(UpdateableDataContext contextDC) {

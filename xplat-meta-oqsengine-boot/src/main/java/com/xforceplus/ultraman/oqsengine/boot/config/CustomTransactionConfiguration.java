@@ -30,7 +30,7 @@ public class CustomTransactionConfiguration {
 
 
     @Bean
-    public TransactionManager transactionManager(@Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs, UndoFactory undoFactory) {
+    public TransactionManager transactionManager(@Value("${transaction.timeoutms:3000}") int transactionTimeoutMs, UndoFactory undoFactory) {
         return new DefaultTransactionManager(transactionTimeoutMs, longIdGenerator, undoFactory.getUndoExecutor());
     }
 

@@ -586,4 +586,12 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
         entityService.deleteOne(entityOpt.get(), id);
     }
+
+    @Test
+    public void findAllEntities() throws InterruptedException {
+        Thread.sleep(10000);
+
+        entityService.getEntityClasss().forEach(System.out::println);
+
+    }
  }

@@ -1,7 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.storage.transaction.sql;
+package com.xforceplus.ultraman.oqsengine.boot.undo.mock;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
+import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -14,12 +14,12 @@ import java.sql.Statement;
  * @version 0.1 2020/2/28 17:25
  * @since 1.8
  */
-public class SphinxQLTransactionResource extends UndoTransactionResource<Connection> {
+public class MockSphinxQLTransactionResource extends UndoTransactionResource<Connection> {
 
     private Object key;
     private Connection conn;
 
-    public SphinxQLTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
+    public MockSphinxQLTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
         this.conn = conn;
         // SphinxQL 只有在 autocommit = true 情况下才工作.
@@ -30,7 +30,7 @@ public class SphinxQLTransactionResource extends UndoTransactionResource<Connect
         }
     }
 
-    public SphinxQLTransactionResource(String key, Connection conn, boolean autocommit) throws SQLException {
+    public MockSphinxQLTransactionResource(String key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
         this.conn = conn;
         // SphinxQL 只有在 autocommit = true 情况下才工作.
@@ -58,8 +58,14 @@ public class SphinxQLTransactionResource extends UndoTransactionResource<Connect
 
     @Override
     public void commit() throws SQLException {
+        if(beforeCommitError) {
+            throw new SQLException("mock commit error, before commit");
+        }
         execute("commit");
         saveCommitStatus();
+        if(afterCommitError) {
+            throw new SQLException("mock commit error, after commit");
+        }
     }
 
     @Override
@@ -84,5 +90,17 @@ public class SphinxQLTransactionResource extends UndoTransactionResource<Connect
         } finally {
             st.close();
         }
+    }
+
+    private boolean beforeCommitError = false;
+
+    private boolean afterCommitError = false;
+
+    public void afterCommitError(){
+        afterCommitError = true;
+    }
+
+    public void beforeCommitError(){
+        beforeCommitError = true;
     }
 }

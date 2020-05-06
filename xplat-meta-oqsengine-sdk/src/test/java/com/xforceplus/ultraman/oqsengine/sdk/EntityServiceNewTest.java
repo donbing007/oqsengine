@@ -43,13 +43,13 @@ import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKe
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ContextConfiguration(classes = {TestConfiguration.class
-    , InitServiceAutoConfiguration.class
-    , AuthSearcherConfig.class
-    , ServiceInvokerAutoConfiguration.class
-    , AsyncTaskExecutorAutoConfiguration.class
-    , ServiceDispatcherAutoConfiguration.class
-    , com.xforceplus.xplat.galaxy.framework.configuration.ContextConfiguration.class
-    , RestTemplateAutoConfiguration.class
+        , InitServiceAutoConfiguration.class
+        , AuthSearcherConfig.class
+        , ServiceInvokerAutoConfiguration.class
+        , AsyncTaskExecutorAutoConfiguration.class
+        , ServiceDispatcherAutoConfiguration.class
+        , com.xforceplus.xplat.galaxy.framework.configuration.ContextConfiguration.class
+        , RestTemplateAutoConfiguration.class
 })
 public class EntityServiceNewTest {
 
@@ -65,28 +65,27 @@ public class EntityServiceNewTest {
     @Autowired
     MetadataRepository metadataRepository;
 
-    private ModuleUpResult mockModuleUpResult() {
+    private ModuleUpResult mockModuleUpResult(){
         return ModuleUpResult
-            .newBuilder()
-            .setId(Long.MAX_VALUE)
-            .addBoUps(BoUp
                 .newBuilder()
-                .setId("1")
-                .setCode("main")
-                .addRelations(Relation.newBuilder()
-                    .setId("1001")
-                    .setRelationType("MultiValues")
-                    .setJoinBoId("2")
-                    .setBoId("1")
-                    .build())
-                .build())
-            .addBoUps(BoUp
-                .newBuilder()
-                .setParentBoId("1")
-                .setId("2")
-                .setCode("rel1")
-                .build())
-            .build();
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setId("1")
+                        .setCode("main")
+                        .addRelations(Relation.newBuilder()
+                                .setId("1001")
+                                .setRelationType("MultiValues")
+                                .setJoinBoId("2")
+                                .setBoId("1")
+                                .build())
+                        .build())
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setParentBoId("1")
+                        .setId("2")
+                        .setCode("rel1")
+                        .build())
+                .build();
     }
 
     /**
@@ -95,64 +94,62 @@ public class EntityServiceNewTest {
      * , String entityClassName
      * , String ownerClassName
      * , String relationType
-     *
      * @return
      */
     private ModuleUpResult manyToOne() {
         return ModuleUpResult
-            .newBuilder()
-            .setId(Long.MIN_VALUE)
-            .addBoUps(BoUp
                 .newBuilder()
-                .setId("1")
-                .setCode("main")
-                .addRelations(Relation.newBuilder()
-                    .setId("10001")
-                    .setRelationType("ManyToOne")
-                    .setRelName("rel1")
-                    .setJoinBoId("2")
-                    .setBoId("1")
-                    .build())
-                .addRelations(Relation.newBuilder()
-                    .setId("10002")
-                    .setRelationType("ManyToOne")
-                    .setRelName("rel2")
-                    .setJoinBoId("2")
-                    .setBoId("1")
-                    .build())
-                .addFields(com.xforceplus.ultraman.metadata.grpc.Field
-                    .newBuilder()
-                    .setCode("field1")
-                    .setSearchable("1")
-                    .setFieldType("String")
-                    .setId("1002")
-                    .build())
-                .addFields(com.xforceplus.ultraman.metadata.grpc.Field
-                    .newBuilder()
-                    .setCode("field2")
-                    .setSearchable("1")
-                    .setId("1003")
-                    .build())
-                .addFields(com.xforceplus.ultraman.metadata.grpc.Field
-                    .newBuilder()
-                    .setCode("field3")
-                    .setSearchable("0")
-                    .setId("1004")
-                    .build())
-                .build())
-            .addBoUps(BoUp
-                .newBuilder()
-                .setId("2")
-                .setCode("rel1")
-                .addFields(com.xforceplus.ultraman.metadata.grpc.Field
-                    .newBuilder()
-                    .setCode("field21")
-                    .setSearchable("1")
-                    .setFieldType("String")
-                    .setId("2001")
-                    .build())
-                .build())
-            .build();
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setId("1")
+                        .setCode("main")
+                        .addRelations(Relation.newBuilder()
+                                .setId("10001")
+                                .setRelationType("ManyToOne")
+                                .setRelName("rel1")
+                                .setJoinBoId("2")
+                                .setBoId("1")
+                                .build())
+                        .addRelations(Relation.newBuilder()
+                                .setId("10002")
+                                .setRelationType("ManyToOne")
+                                .setRelName("rel2")
+                                .setJoinBoId("2")
+                                .setBoId("1")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field1")
+                                .setSearchable("1")
+                                .setFieldType("String")
+                                .setId("1002")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field2")
+                                .setSearchable("1")
+                                .setId("1003")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field3")
+                                .setSearchable("0")
+                                .setId("1004")
+                                .build())
+                        .build())
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setId("2")
+                        .setCode("rel1")
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field21")
+                                .setSearchable("1")
+                                .setFieldType("String")
+                                .setId("2001")
+                                .build())
+                        .build())
+                .build();
     }
 
 
@@ -162,71 +159,70 @@ public class EntityServiceNewTest {
      * , String entityClassName
      * , String ownerClassName
      * , String relationType
-     *
      * @return
      */
     private ModuleUpResult manyToOneNew() {
         return ModuleUpResult
-            .newBuilder()
-            .setVersion("0.0.1")
-            .addBoUps(BoUp
                 .newBuilder()
-                .setId("1")
-                .setCode("main")
-                .addRelations(Relation.newBuilder()
-                    .setId("10001")
-                    .setRelationType("ManyToOne")
-                    .setRelName("rel1")
-                    .setJoinBoId("2")
-                    .setBoId("1")
-                    .build())
-                .addRelations(Relation.newBuilder()
-                    .setId("10002")
-                    .setRelationType("ManyToOne")
-                    .setRelName("rel2")
-                    .setJoinBoId("2")
-                    .setBoId("1")
-                    .build())
-                .addFields(com.xforceplus.ultraman.metadata.grpc.Field
-                    .newBuilder()
-                    .setCode("id")
-                    .setSearchable("1")
-                    .setId("1000001")
-                    .setFieldType("Long")
-                    .setIdentifier("1")
-                    .build())
-                .addFields(com.xforceplus.ultraman.metadata.grpc.Field
-                    .newBuilder()
-                    .setCode("field1")
-                    .setSearchable("1")
-                    .setId("1003")
-                    .build())
-                .addFields(com.xforceplus.ultraman.metadata.grpc.Field
-                    .newBuilder()
-                    .setCode("field2")
-                    .setSearchable("0")
-                    .setId("1004")
-                    .build())
-                .addFields(com.xforceplus.ultraman.metadata.grpc.Field
-                    .newBuilder()
-                    .setCode("field3")
-                    .setSearchable("0")
-                    .setId("1005")
-                    .build())
-                .build())
-            .addBoUps(BoUp
-                .newBuilder()
-                .setId("2")
-                .setCode("rel1")
-                .addFields(com.xforceplus.ultraman.metadata.grpc.Field
-                    .newBuilder()
-                    .setCode("field21")
-                    .setSearchable("1")
-                    .setFieldType("String")
-                    .setId("2001")
-                    .build())
-                .build())
-            .build();
+                .setVersion("0.0.1")
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setId("1")
+                        .setCode("main")
+                        .addRelations(Relation.newBuilder()
+                                .setId("10001")
+                                .setRelationType("ManyToOne")
+                                .setRelName("rel1")
+                                .setJoinBoId("2")
+                                .setBoId("1")
+                                .build())
+                        .addRelations(Relation.newBuilder()
+                                .setId("10002")
+                                .setRelationType("ManyToOne")
+                                .setRelName("rel2")
+                                .setJoinBoId("2")
+                                .setBoId("1")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("id")
+                                .setSearchable("1")
+                                .setId("1000001")
+                                .setFieldType("Long")
+                                .setIdentifier("1")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field1")
+                                .setSearchable("1")
+                                .setId("1003")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field2")
+                                .setSearchable("0")
+                                .setId("1004")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field3")
+                                .setSearchable("0")
+                                .setId("1005")
+                                .build())
+                        .build())
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setId("2")
+                        .setCode("rel1")
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("field21")
+                                .setSearchable("1")
+                                .setFieldType("String")
+                                .setId("2001")
+                                .build())
+                        .build())
+                .build();
     }
 
     private EntityClass enumEntity() {
@@ -234,8 +230,8 @@ public class EntityServiceNewTest {
 
         fieldConfig.required(true);
         EntityClass entityClass = new EntityClass(123L, "TestDefault"
-            , Arrays.asList(new EntityField(123L, "defaultfield"
-            , FieldType.ENUM, fieldConfig)));
+                , Arrays.asList(new EntityField(123L, "defaultfield"
+                , FieldType.ENUM, fieldConfig)));
 
         return entityClass;
     }
@@ -245,8 +241,8 @@ public class EntityServiceNewTest {
 
         fieldConfig.required(true);
         EntityClass entityClass = new EntityClass(123L, "TestDefault"
-            , Arrays.asList(new EntityField(123L, "defaultfield"
-            , FieldType.LONG, fieldConfig)));
+                , Arrays.asList(new EntityField(123L, "defaultfield"
+                , FieldType.LONG, fieldConfig)));
 
         return entityClass;
     }
@@ -256,25 +252,25 @@ public class EntityServiceNewTest {
 
         fieldConfig.required(true);
         EntityClass entityClass = new EntityClass(123L, "TestDefault"
-            , Arrays.asList(new EntityField(123L, "defaultfield"
-            , FieldType.STRING, fieldConfig)));
+                , Arrays.asList(new EntityField(123L, "defaultfield"
+                , FieldType.STRING, fieldConfig)));
 
         return entityClass;
     }
 
-    private EntityClass booleanEntity() {
+    private EntityClass booleanEntity(){
         FieldConfig fieldConfig = new FieldConfig().searchable(true);
         fieldConfig.required(true);
 
         EntityClass entityClass = new EntityClass(123L, "TestDefault"
-            , Arrays.asList(new EntityField(123L, "defaultfield"
-            , FieldType.BOOLEAN, fieldConfig)));
+                , Arrays.asList(new EntityField(123L, "defaultfield"
+                , FieldType.BOOLEAN, fieldConfig)));
 
         return entityClass;
     }
 
     @Test
-    public void testMultiValueService() {
+    public void testMultiValueService(){
 
         metadataRepository.save(mockModuleUpResult(), "1", "1");
 
@@ -292,13 +288,13 @@ public class EntityServiceNewTest {
         System.out.println(entityService.findOne(entityClassReal, id));
 
         System.out.println(entityService.findByCondition(entityClassReal
-            , new RequestBuilder()
-                .field("rel1.ids", ConditionOp.in, "1")
-                .build()));
+                , new RequestBuilder()
+                    .field("rel1.ids", ConditionOp.in, "1")
+                    .build()));
     }
 
     @Test
-    public void testEnumFieldIn() {
+    public void testEnumFieldIn(){
 
         Map<String, Object> maps = new HashMap<>();
         maps.put("defaultfield", "1");
@@ -308,19 +304,19 @@ public class EntityServiceNewTest {
         Long id = entityService.create(entityClass, maps).get();
 
         System.out.println(entityService.findByCondition(entityClass
-            , new RequestBuilder()
-                .field("defaultfield", ConditionOp.in, "1")
-                .build()));
+                , new RequestBuilder()
+                      .field("defaultfield", ConditionOp.in, "1")
+                      .build()));
 
         System.out.println(entityService.findByCondition(entityClass
-            , new RequestBuilder()
-                .field("defaultfield", ConditionOp.in, "2")
-                .build()));
+                , new RequestBuilder()
+                        .field("defaultfield", ConditionOp.in, "2")
+                        .build()));
     }
 
 
     @Test
-    public void testFieldLike() {
+    public void testFieldLike(){
 
         Map<String, Object> maps = new HashMap<>();
         maps.put("defaultfield", "helloworld");
@@ -330,13 +326,13 @@ public class EntityServiceNewTest {
         Long id = entityService.create(entityClass, maps).get();
 
         System.out.println(entityService.findByCondition(entityClass
-            , new RequestBuilder()
-                .field("defaultfield", ConditionOp.like, "low")
-                .build()));
+                , new RequestBuilder()
+                        .field("defaultfield", ConditionOp.like, "low")
+                        .build()));
     }
 
     @Test
-    public void testFieldTypeCheckWhenUpdate() {
+    public void testFieldTypeCheckWhenUpdate(){
 
         Map<String, Object> maps = new HashMap<>();
         maps.put("defaultfield", "123456");
@@ -346,16 +342,16 @@ public class EntityServiceNewTest {
         Long id = entityService.create(entityClass, maps).get();
 
         System.out.println(entityService.findByCondition(entityClass
-            , new RequestBuilder()
-                .field("defaultfield", ConditionOp.eq, "123456")
-                .build()));
+                , new RequestBuilder()
+                        .field("defaultfield", ConditionOp.eq, "123456")
+                        .build()));
 
         Map<String, Object> maps2 = new HashMap<>();
         maps2.put("defaultfield", "N345");
 
         try {
             entityService.updateById(entityClass, id, maps2);
-        } catch (Exception ex) {
+        }catch (Exception ex){
 
         }
     }
@@ -387,9 +383,9 @@ public class EntityServiceNewTest {
         System.out.println(entityService.findOne(entityClassReal, id));
 
         System.out.println(entityService.findByCondition(entityClassReal
-            , new RequestBuilder()
-                .field("rel1.id", ConditionOp.eq, "1235")
-                .build()));
+                , new RequestBuilder()
+                        .field("rel1.id", ConditionOp.eq, "1235")
+                        .build()));
     }
 
     private void setupContext() {
@@ -412,7 +408,7 @@ public class EntityServiceNewTest {
     }
 
     @Test
-    public void testQuery() {
+    public void testQuery(){
 
         setupContext();
 
@@ -425,7 +421,7 @@ public class EntityServiceNewTest {
 
 
         System.out.println(entityService.findByCondition(s,
-            new RequestBuilder().field("defaultfield", ConditionOp.eq, "{{tenant_id}}").build()));
+                new RequestBuilder().field("defaultfield", ConditionOp.eq, "{{tenant_id}}").build()));
 
         entityService.deleteOne(s, id);
     }
@@ -434,30 +430,30 @@ public class EntityServiceNewTest {
     public void testConcurrent() throws InterruptedException {
 
         ScheduledExecutorService scheduledExecutorService =
-            Executors.newScheduledThreadPool(1);
+                Executors.newScheduledThreadPool(1);
 
         ScheduledFuture scheduledFuture =
-            scheduledExecutorService.scheduleAtFixedRate(() -> {
-                metadataRepository.save(manyToOne(), "1", "1");
-            }, 5, 5, TimeUnit.SECONDS);
+                scheduledExecutorService.scheduleAtFixedRate(() -> {
+                    metadataRepository.save(manyToOne(), "1", "1");
+                },5, 5, TimeUnit.SECONDS);
 
         ScheduledFuture loadedFuture =
-            scheduledExecutorService.scheduleAtFixedRate(() -> {
-                System.out.println(metadataRepository.loadByCode("1", "1", "main"));
-            }, 5, 5, TimeUnit.SECONDS);
+                scheduledExecutorService.scheduleAtFixedRate(() -> {
+                    System.out.println(metadataRepository.loadByCode("1", "1", "main"));
+                },5, 5, TimeUnit.SECONDS);
 
 
         Thread.sleep(15000L);
     }
 
     @Test
-    public void testUpdate() {
+    public void testUpdate(){
         metadataRepository.save(manyToOne(), "1", "1");
         metadataRepository.save(manyToOneNew(), "1", "1");
     }
 
     @Test
-    public void returnBooleanTyped() {
+    public void returnBooleanTyped(){
 
         EntityClass boolEntity = booleanEntity();
 
@@ -466,15 +462,15 @@ public class EntityServiceNewTest {
 
         Long result = entityService.create(boolEntity, map).get();
 
-        boolean retValue = (boolean) entityService
-            .findOne(boolEntity, result)
-            .get().get("defaultfield");
+        boolean retValue = (boolean)entityService
+                .findOne(boolEntity, result)
+                .get().get("defaultfield");
 
         entityService.deleteOne(boolEntity, result);
     }
 
     @Test
-    public void testLeftJoinTest() {
+    public void testLeftJoinTest(){
         metadataRepository.save(manyToOneNew(), "1", "1");
 
         EntityClass entityClass = entityService.load("1").get();
@@ -500,13 +496,13 @@ public class EntityServiceNewTest {
         System.out.println("Id is " + id);
 
         entityService.findByCondition(entityClass
-            , new RequestBuilder()
-                .field("id", ConditionOp.eq, id)
-                .item("field1")
-                .subItem("rel1", "field21")
-                .subItem("rel2", "field21")
-                .build())
-            .forEach(System.out::println);
+                , new RequestBuilder()
+                        .field("id", ConditionOp.eq, id)
+                        .item("field1")
+                        .subItem("rel1", "field21")
+                        .subItem("rel2", "field21")
+                        .build())
+                .forEach(System.out::println);
 
         entityService.deleteOne(entityClass2, id1);
         entityService.deleteOne(entityClass2, id2);
@@ -514,7 +510,7 @@ public class EntityServiceNewTest {
     }
 
     @Test
-    public void testLoadNoExist() {
+    public void testLoadNoExist(){
 
         metadataRepository.save(manyToOneNew(), "1", "1");
         System.out.println(metadataRepository.load("1", "2", "10001"));

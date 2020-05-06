@@ -201,6 +201,13 @@ public class MultiLocalTransactionTest {
         public boolean isDestroyed() throws SQLException {
             return false;
         }
+
+        @Override
+        public void undo(boolean commit) throws SQLException {
+
+        }
+
+
     }
 
 }
