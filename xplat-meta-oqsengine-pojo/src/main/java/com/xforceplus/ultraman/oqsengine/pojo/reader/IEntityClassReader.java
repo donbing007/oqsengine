@@ -135,6 +135,7 @@ public class IEntityClassReader {
                             .map(field -> new ColumnField(
                                     rel.getName() + "." + field.name()
                                     , field
+                                    , relatedEntityClass
                             ));
 
                     Stream<ColumnField> parentStream = Optional
@@ -145,6 +146,7 @@ public class IEntityClassReader {
                             .map(field -> new ColumnField(
                                     rel.getName() + "." + field.name()
                                     , field
+                                    , relatedEntityClass.extendEntityClass()
                             ));
 
                     return Stream.concat(selfStream, parentStream);
@@ -158,7 +160,7 @@ public class IEntityClassReader {
                 , Optional.ofNullable(fieldLikeRelation.get(true))
                         .orElseGet(Collections::emptyList)
                         .stream().map(Relation::getEntityField)
-        ).map(x -> new ColumnField(x.name(), x))
+        ).map(x -> new ColumnField(x.name(), x, entityClass))
                 .distinct()
                 .peek(x -> x.setIndex(index.getAndIncrement()))
                 .collect(Collectors.toList());
@@ -168,8 +170,10 @@ public class IEntityClassReader {
                 , Optional.ofNullable(fieldLikeRelation.get(false))
                         .orElseGet(Collections::emptyList)
                         .stream()
-                        .map(Relation::getEntityField)
-                        .map(x -> new ColumnField(x.name(), x))
+                        .map(relation -> {
+                            IEntityField field = relation.getEntityField();
+                            return new ColumnField(field.name(), field, relatedEntities.get(relation.getEntityClassId()));
+                        })
         ).distinct()
                 .peek(x -> x.setIndex(index.getAndIncrement()))
                 .collect(Collectors.toList());

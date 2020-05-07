@@ -39,6 +39,10 @@ public class AliasField implements IEntityField, Wrapped<IEntityField>, Serializ
         return String.join(",", alias);
     }
 
+    public String firstName(){
+        return alias.stream().findFirst().orElse("");
+    }
+
     @Override
     public String cnName() {
         return originField.cnName();

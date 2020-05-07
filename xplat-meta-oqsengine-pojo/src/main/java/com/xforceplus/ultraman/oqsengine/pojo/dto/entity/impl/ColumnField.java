@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 import java.io.Serializable;
@@ -16,13 +17,19 @@ public class ColumnField implements IEntityField, Wrapped<IEntityField>, Seriali
 
     private final IEntityField originField;
 
+    private final IEntityClass originEntityClass;
+
     private final String name;
 
     private int index;
 
-    public ColumnField(String name, IEntityField originField){
-        Objects.requireNonNull(originField, "field should not be null");
+    public ColumnField(String name, IEntityField originField, IEntityClass originEntityClass){
+
+        Objects.requireNonNull(originField, "originField should not be null");
+        //Objects.requireNonNull(originEntityClass, "originEntityClass should not be null");
+
         this.originField = originField;
+        this.originEntityClass = originEntityClass;
         this.name = name;
     }
 
@@ -72,6 +79,8 @@ public class ColumnField implements IEntityField, Wrapped<IEntityField>, Seriali
     public IEntityField originField(){
         return originField;
     }
+
+    public IEntityClass originEntityClass(){return originEntityClass; }
 
 
     @Override

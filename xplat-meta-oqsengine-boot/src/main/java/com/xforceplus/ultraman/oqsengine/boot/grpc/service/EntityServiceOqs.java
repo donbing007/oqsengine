@@ -17,7 +17,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -328,7 +327,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             }
 
             if (!sortField.isPresent()) {
-                Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList());
+                Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
                 if (consOp.isPresent()) {
                     entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
                 } else {
@@ -343,7 +342,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     sortParam = Sort.buildDescSort(sortField.get());
                 }
 
-                Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList());
+                Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
                 if (consOp.isPresent()) {
                     entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
 
@@ -395,56 +394,58 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         return iEntity;
                     }).collect(Collectors.toList());
 
-            mappedQueryFields.entrySet().stream()
-                    .filter(x -> !StringUtils.isEmpty(x.getKey()))
-                    .forEach(entry -> {
-                        Optional<IEntityClass> searchableRelatedEntity = reader.getSearchableRelatedEntity(entry.getKey());
-                        String relatedField = entry.getKey() + ".id";
-                        Optional<? extends IEntityField> relationFieldOp = reader.column(relatedField);
+            if(!entities.isEmpty()) {
+                mappedQueryFields.entrySet().stream()
+                        .filter(x -> !StringUtils.isEmpty(x.getKey()))
+                        .forEach(entry -> {
+                            Optional<IEntityClass> searchableRelatedEntity = reader.getSearchableRelatedEntity(entry.getKey());
+                            String relatedField = entry.getKey() + ".id";
+                            Optional<? extends IEntityField> relationFieldOp = reader.column(relatedField);
 
-                        if (searchableRelatedEntity.isPresent() && relationFieldOp.isPresent()) {
+                            if (searchableRelatedEntity.isPresent() && relationFieldOp.isPresent()) {
 
-                            //always assume this is long
-                            List<Long> values = finalEntities
-                                    .stream()
-                                    .map(entity -> entity.entityValue()
-                                            .getValue(relatedField).map(IValue::valueToLong))
-                                    .filter(Optional::isPresent)
-                                    .map(Optional::get)
-                                    .collect(Collectors.toList());
+                                //always assume this is long
+                                List<Long> values = finalEntities
+                                        .stream()
+                                        .map(entity -> entity.entityValue()
+                                                .getValue(relatedField).map(IValue::valueToLong))
+                                        .filter(Optional::isPresent)
+                                        .map(Optional::get)
+                                        .collect(Collectors.toList());
 
-                            //in case idField is not absent build a dummy one;
-                            IEntityField idField = new EntityField(1, "dummy", FieldType.LONG, new FieldConfig().searchable(true).identifie(true));
-                            Conditions conditionsIds =
-                                    new Conditions(new Condition(idField
-                                            , ConditionOperator.MULTIPLE_EQUALS
-                                            , values.stream().map(x -> new LongValue(idField, x)).toArray(IValue[]::new)));
+                                //in case idField is not absent build a dummy one;
+                                IEntityField idField = new EntityField(1, "dummy", FieldType.LONG, new FieldConfig().searchable(true).identifie(true));
+                                Conditions conditionsIds =
+                                        new Conditions(new Condition(idField
+                                                , ConditionOperator.MULTIPLE_EQUALS
+                                                , values.stream().map(x -> new LongValue(idField, x)).toArray(IValue[]::new)));
 
-                            try {
-                                Collection<IEntity> iEntities = entitySearchService.selectByConditions(conditionsIds, searchableRelatedEntity.get(), new Page(0, values.size()));
+                                try {
+                                    Collection<IEntity> iEntities = entitySearchService.selectByConditions(conditionsIds, searchableRelatedEntity.get(), new Page(0, values.size()));
 
-                                //append value
+                                    //append value
 
-                                Map<Long, IEntity> leftEntities = iEntities.stream().collect(Collectors.toMap(IEntity::id, leftEntity -> leftEntity));
+                                    Map<Long, IEntity> leftEntities = iEntities.stream().collect(Collectors.toMap(IEntity::id, leftEntity -> leftEntity));
 
-                                finalEntities.stream().forEach(originEntity -> {
-                                    Long id = originEntity.entityValue()
-                                            .getValue(relatedField).map(IValue::valueToLong).orElse(0L);
+                                    finalEntities.stream().forEach(originEntity -> {
+                                        Long id = originEntity.entityValue()
+                                                .getValue(relatedField).map(IValue::valueToLong).orElse(0L);
 
-                                    if (leftEntities.get(id) != null && leftEntities.get(id).entityValue() != null) {
-                                        entry.getValue().forEach(queryFieldsUp -> {
-                                            leftEntities.get(id).entityValue().getValue(queryFieldsUp.getId()).ifPresent(value -> {
-                                                leftAppend(originEntity, entry.getKey(), value);
+                                        if (leftEntities.get(id) != null && leftEntities.get(id).entityValue() != null) {
+                                            entry.getValue().forEach(queryFieldsUp -> {
+                                                leftEntities.get(id).entityValue().getValue(queryFieldsUp.getId()).ifPresent(value -> {
+                                                    leftAppend(originEntity, entry.getKey(), value);
+                                                });
                                             });
-                                        });
-                                    }
-                                });
+                                        }
+                                    });
 
-                            } catch (SQLException ex) {
-                                ex.printStackTrace();
+                                } catch (SQLException ex) {
+                                    ex.printStackTrace();
+                                }
                             }
-                        }
-                    });
+                        });
+            }
 
 
             result = OperationResult.newBuilder()
@@ -481,7 +482,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private void leftAppend(IEntity entity, String relName, IValue iValue) {
 
         IEntityField originField = iValue.getField();
-        iValue.setField(new ColumnField(relName + "." + originField.name(), originField));
+        iValue.setField(new ColumnField(relName + "." + originField.name(), originField, null));
         entity.entityValue().addValue(iValue);
     }
 
@@ -590,17 +591,20 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return new Entity(in.getObjId(), entityClass, toEntityValue(entityClass, in));
     }
 
-    //To condition
-    private Optional<Conditions> toConditions(IEntityClass entityClass
-            , ConditionsUp conditionsUp, List<Long> ids) {
-
+    private  Optional<Conditions> toConditions(IEntityClass mainClass, IEntityClassReader reader
+            , ConditionsUp conditionsUp, List<Long> ids){
         Optional<Conditions> conditions = conditionsUp.getFieldsList().stream().map(x -> {
-            return toOneConditions(entityClass, x);
-        }).reduce((a, b) -> a.addAnd(b, true));
+            /**
+             * turn alias field to columnfield
+             */
+            Optional<AliasField> field = reader.field(x.getField().getId());
+            return toOneConditions( field.flatMap(f -> reader.column(f.firstName())), x, mainClass);
+        }).filter(Objects::nonNull).reduce((a, b) -> a.addAnd(b, true));
 
         if (ids != null && !ids.isEmpty()) {
 
-            Optional<IEntityField> idField = IEntityClassHelper.findFieldByCode(entityClass, "id");
+//            Optional<IEntityField> idField = IEntityClassHelper.findFieldByCode(entityClass, "id");
+            Optional<IEntityField> idField = reader.column("id").map(ColumnField::getOriginObject);
             Optional<Conditions> conditionsIds = idField.map(field -> {
                 return new Conditions(new Condition(field
                         , ConditionOperator.MULTIPLE_EQUALS
@@ -618,14 +622,26 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return conditions;
     }
 
-    //TODO error handler
-    private Conditions toOneConditions(IEntityClass entityClass, FieldConditionUp fieldCondition) {
+    private boolean isRelatedField(ColumnField columnField, IEntityClass mainClass){
+        IEntityClass entityClass = columnField.originEntityClass();
 
-        Optional<IEntityField> fieldOp = getFieldFromEntityClass(entityClass, fieldCondition.getField().getId());
+        if(mainClass.extendEntityClass() != null){
+            return  mainClass.id() != entityClass.id() && mainClass.extendEntityClass().id() != entityClass.id();
+        }else{
+            return entityClass.id() != mainClass.id();
+        }
+    }
+
+    //TODO error handler
+    private Conditions toOneConditions(Optional<ColumnField> fieldOp, FieldConditionUp fieldCondition, IEntityClass mainClass) {
+
         Conditions conditions = null;
 
         if (fieldOp.isPresent()) {
             FieldConditionUp.Op op = fieldCondition.getOperation();
+
+            ColumnField columnField = fieldOp.get();
+            IEntityField originField = columnField;
 
             //in order
             List<String> nonNullValueList = fieldCondition
@@ -642,37 +658,49 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             switch (op) {
                 case eq:
-                    conditions = new Conditions(new Condition(fieldOp.get()
+                    conditions = new Conditions(new Condition(
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
                             , ConditionOperator.EQUALS
                             , toTypedValue(fieldOp.get()
                             , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case ne:
-                    conditions = new Conditions(new Condition(fieldOp.get()
+                    conditions = new Conditions(new Condition(
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
                             , ConditionOperator.NOT_EQUALS
                             , toTypedValue(fieldOp.get()
                             , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case ge:
-                    conditions = new Conditions(new Condition(fieldOp.get()
+                    conditions = new Conditions(new Condition(
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
                             , ConditionOperator.GREATER_THAN_EQUALS
                             , toTypedValue(fieldOp.get()
                             , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case gt:
-                    conditions = new Conditions(new Condition(fieldOp.get()
+                    conditions = new Conditions(new Condition(
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
                             , ConditionOperator.GREATER_THAN
                             , toTypedValue(fieldOp.get()
                             , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case ge_le:
                     if (nonNullValueList.size() > 1) {
-                        Condition left = new Condition(fieldOp.get()
+                        Condition left = new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(0)).toArray(new IValue[]{}));
 
-                        Condition right = new Condition(fieldOp.get()
+                        Condition right = new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
                                 , ConditionOperator.LESS_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(1)).toArray(new IValue[]{}));
@@ -681,7 +709,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                     } else {
                         logger.warn("required value more then 2, fallback to ge");
-                        conditions = new Conditions(new Condition(fieldOp.get()
+                        conditions = new Conditions(new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(0)).toArray(new IValue[]{})));
@@ -689,12 +719,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     break;
                 case gt_le:
                     if (nonNullValueList.size() > 1) {
-                        Condition left = new Condition(fieldOp.get()
+                        Condition left = new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
                                 , ConditionOperator.GREATER_THAN
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(0)).toArray(new IValue[]{}));
 
-                        Condition right = new Condition(fieldOp.get()
+                        Condition right = new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
                                 , ConditionOperator.LESS_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(1)).toArray(new IValue[]{}));
@@ -704,7 +738,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                     } else {
                         logger.warn("required value more then 2, fallback to gt");
-                        conditions = new Conditions(new Condition(fieldOp.get()
+                        conditions = new Conditions(new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
                                 , ConditionOperator.GREATER_THAN
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(0)).toArray(new IValue[]{})));
@@ -712,12 +748,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     break;
                 case ge_lt:
                     if (nonNullValueList.size() > 1) {
-                        Condition left = new Condition(fieldOp.get()
+                        Condition left = new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(0)).toArray(new IValue[]{}));
 
-                        Condition right = new Condition(fieldOp.get()
+                        Condition right = new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
                                 , ConditionOperator.LESS_THAN
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(1)).toArray(new IValue[]{}));
@@ -727,27 +767,35 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                     } else {
                         logger.warn("required value more then 2, fallback to ge");
-                        conditions = new Conditions(new Condition(fieldOp.get()
+                        conditions = new Conditions(new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
                 case le:
-                    conditions = new Conditions(new Condition(fieldOp.get()
+                    conditions = new Conditions(new Condition(
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
                             , ConditionOperator.LESS_THAN_EQUALS
                             , toTypedValue(fieldOp.get()
                             , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case lt:
-                    conditions = new Conditions(new Condition(fieldOp.get()
+                    conditions = new Conditions(new Condition(
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
                             , ConditionOperator.LESS_THAN
                             , toTypedValue(fieldOp.get()
                             , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case in:
                     conditions = new Conditions(
-                            new Condition(fieldOp.get()
+                            new Condition(
+                                    isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                    , originField
                                     , ConditionOperator.MULTIPLE_EQUALS
                                     , nonNullValueList.stream().flatMap(x -> toTypedValue(fieldOp.get(), x).stream())
                                     .toArray(IValue[]::new)
@@ -756,19 +804,25 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     break;
                 case ni:
                     if (nonNullValueList.size() == 1) {
-                        conditions = new Conditions(new Condition(fieldOp.get()
+                        conditions = new Conditions(new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
                                 , ConditionOperator.NOT_EQUALS
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     } else {
-                        conditions = new Conditions(new Condition(fieldOp.get()
+                        conditions = new Conditions(new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
                                 , ConditionOperator.NOT_EQUALS
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(0)).toArray(new IValue[]{})));
 
                         Conditions finalConditions = conditions;
                         nonNullValueList.stream().skip(1).forEach(x -> {
-                            finalConditions.addAnd(new Conditions(new Condition(fieldOp.get()
+                            finalConditions.addAnd(new Conditions(new Condition(
+                                    isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                    , originField
                                     , ConditionOperator.NOT_EQUALS
                                     , toTypedValue(fieldOp.get()
                                     , x).toArray(new IValue[]{}))), false);
@@ -778,7 +832,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
                     break;
                 case like:
-                    conditions = new Conditions(new Condition(fieldOp.get()
+                    conditions = new Conditions(new Condition(
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
                             , ConditionOperator.LIKE
                             , toTypedValue(fieldOp.get()
                             , nonNullValueList.get(0)).toArray(new IValue[]{})));
@@ -789,11 +845,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         }
 
         return conditions;
-    }
-
-    //TODO currently only id
-    private Optional<IEntityField> getFieldFromEntityClass(IEntityClass entityClass, Long id) {
-        return IEntityClassHelper.findFieldById(entityClass, id);
     }
 
     private IEntityClass toRawEntityClass(EntityUp entityUp) {

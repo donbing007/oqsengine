@@ -148,7 +148,7 @@ public class EntityHelperTest {
         System.out.println(time6 - time5);
 
         IEntityField entityField = new EntityField(2002L, "fieldA2", FieldType.STRING);
-        IEntityField field = new ColumnField("rel1.fieldA2", entityField);
+        IEntityField field = new ColumnField("rel1.fieldA2", entityField, null);
         assertTrue("got related field", reader.getRelatedOriginalField(field).isPresent());
 
 
