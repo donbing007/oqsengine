@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 
 import java.sql.SQLException;
 
@@ -13,6 +12,24 @@ import java.sql.SQLException;
  * @since 1.8
  */
 public interface Storage {
+
+    /**
+     * 初始化.
+     *
+     * @throws SQLException 初始化失败.
+     */
+    default void init() throws SQLException {
+
+    }
+
+    /**
+     * 清理.
+     *
+     * @throws SQLException 清理失败.
+     */
+    default void destroy() throws SQLException {
+
+    }
 
     /**
      * Create a new Entity.
