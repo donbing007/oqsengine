@@ -229,8 +229,8 @@ public class SQLMasterStorage implements MasterStorage {
                     StorageEntity storageEntity = new StorageEntity();
                     storageEntity.setId(entity.id());
                     storageEntity.setEntity(entity.entityClass().id());
-                    storageEntity.setCref(entity.family().parent());
-                    storageEntity.setPref(entity.family().child());
+                    storageEntity.setPref(entity.family().parent());
+                    storageEntity.setCref(entity.family().child());
                     storageEntity.setAttribute(toJson(entity.entityValue()));
 
                     return new BuildStorageCommand(tableNameSelector).execute(resource, storageEntity);
