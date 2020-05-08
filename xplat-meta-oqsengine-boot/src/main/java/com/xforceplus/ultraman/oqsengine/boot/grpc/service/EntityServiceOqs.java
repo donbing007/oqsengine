@@ -15,7 +15,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -394,7 +393,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         return iEntity;
                     }).collect(Collectors.toList());
 
-            if(!entities.isEmpty()) {
+            if (!entities.isEmpty()) {
                 mappedQueryFields.entrySet().stream()
                         .filter(x -> !StringUtils.isEmpty(x.getKey()))
                         .forEach(entry -> {
@@ -591,14 +590,14 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return new Entity(in.getObjId(), entityClass, toEntityValue(entityClass, in));
     }
 
-    private  Optional<Conditions> toConditions(IEntityClass mainClass, IEntityClassReader reader
-            , ConditionsUp conditionsUp, List<Long> ids){
+    private Optional<Conditions> toConditions(IEntityClass mainClass, IEntityClassReader reader
+            , ConditionsUp conditionsUp, List<Long> ids) {
         Optional<Conditions> conditions = conditionsUp.getFieldsList().stream().map(x -> {
             /**
              * turn alias field to columnfield
              */
             Optional<AliasField> field = reader.field(x.getField().getId());
-            return toOneConditions( field.flatMap(f -> reader.column(f.firstName())), x, mainClass);
+            return toOneConditions(field.flatMap(f -> reader.column(f.firstName())), x, mainClass);
         }).filter(Objects::nonNull).reduce((a, b) -> a.addAnd(b, true));
 
         if (ids != null && !ids.isEmpty()) {
@@ -622,12 +621,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         return conditions;
     }
 
-    private boolean isRelatedField(ColumnField columnField, IEntityClass mainClass){
+    private boolean isRelatedField(ColumnField columnField, IEntityClass mainClass) {
         IEntityClass entityClass = columnField.originEntityClass();
 
-        if(mainClass.extendEntityClass() != null){
-            return  mainClass.id() != entityClass.id() && mainClass.extendEntityClass().id() != entityClass.id();
-        }else{
+        if (mainClass.extendEntityClass() != null) {
+            return mainClass.id() != entityClass.id() && mainClass.extendEntityClass().id() != entityClass.id();
+        } else {
             return entityClass.id() != mainClass.id();
         }
     }

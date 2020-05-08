@@ -70,7 +70,7 @@ public enum FieldType {
         } catch (Exception e) {
             return false;
         }
-    }, new String[]{"double"}
+    }, new String[]{"double", "decimal"}
             , (f, v) -> {
         int precision = Optional.ofNullable(f.config())
                 .map(FieldConfig::getPrecision)
