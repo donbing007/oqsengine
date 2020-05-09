@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.boot;
 
-import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import de.invesdwin.instrument.DynamicInstrumentationLoader;
 import org.redisson.spring.starter.RedissonAutoConfiguration;
 import org.springframework.boot.SpringApplication;
@@ -9,7 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.EnableLoadTimeWeaving;
 
 /**
