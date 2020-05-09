@@ -603,4 +603,20 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         entityService.getEntityClasss().forEach(System.out::println);
 
     }
+
+    @Test
+    public void searchLabel() throws InterruptedException{
+        Thread.sleep(10000);
+
+        Optional<EntityClass> label = entityService.loadByCode("ticketAttachment");
+
+        Map<String, Object> inputMap = new HashMap<>();
+        inputMap.put("label.ids", "1234");
+
+        Long id = entityService.create(label.get(), inputMap).get();
+
+        System.out.println(id);
+
+        System.out.println(entityService.findOne(label.get(), id));
+    }
 }
