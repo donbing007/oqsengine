@@ -77,6 +77,8 @@ storage:
         size: 1
   index:
     name: "oqsindex"
+  undo:
+    store: "simple"
 
 # datasource json config
 # Multiple data sources are separated by Numbers.

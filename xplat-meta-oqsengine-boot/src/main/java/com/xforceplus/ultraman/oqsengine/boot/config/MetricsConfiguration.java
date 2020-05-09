@@ -2,11 +2,9 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import io.micrometer.core.aop.TimedAspect;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
-import kamon.Kamon;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -33,9 +31,4 @@ public class MetricsConfiguration {
         return new TimedAspect(Metrics.globalRegistry, pjp -> Tags.empty());
     }
 
-    @Bean
-    public void setupRegistry(){
-        MeterRegistry meterRegistry = Metrics.globalRegistry;
-
-    }
 }

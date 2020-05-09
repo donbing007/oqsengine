@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.boot.undo.mock;
 
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
 import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
+import org.junit.Ignore;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -14,6 +15,7 @@ import java.sql.Statement;
  * @version 0.1 2020/2/28 17:25
  * @since 1.8
  */
+@Ignore
 public class MockSphinxQLTransactionResource extends UndoTransactionResource<Connection> {
 
     private Object key;

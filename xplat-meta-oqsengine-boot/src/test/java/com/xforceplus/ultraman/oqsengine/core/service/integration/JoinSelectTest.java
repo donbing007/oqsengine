@@ -21,6 +21,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -39,6 +41,8 @@ import java.util.*;
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class JoinSelectTest {
 
+    final Logger logger = LoggerFactory.getLogger(JoinSelectTest.class);
+
     @Resource
     private LongIdGenerator idGenerator;
 
@@ -49,6 +53,8 @@ public class JoinSelectTest {
 
     @Resource
     private TransactionManagementService transactionManagementService;
+
+    private boolean initialization;
 
 
     private Collection<IEntityField> mainFields;
@@ -61,6 +67,8 @@ public class JoinSelectTest {
 
     @Before
     public void before() throws Exception {
+
+        initialization = false;
 
         mainFields = Arrays.asList(
             new EntityField(idGenerator.next(), "c1", FieldType.STRING, FieldConfig.build().searchable(true)),
@@ -77,11 +85,16 @@ public class JoinSelectTest {
 
         initData();
 
+        initialization = true;
     }
 
     @After
     public void after() throws Exception {
-//        clear();
+        if (initialization) {
+            clear();
+        }
+
+        initialization = false;
     }
 
     @Test
@@ -157,20 +170,7 @@ public class JoinSelectTest {
             );
         }
 
-        long txId = transactionManagementService.begin();
-        transactionManagementService.restore(txId);
-        driverEntities.stream().forEach(e -> {
-            try {
-                if (entitySearchService.selectOne(e.id(), e.entityClass()).isPresent()) {
-                    managementService.delete(e);
-                }
-                managementService.build(e);
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
-            }
-        });
-        transactionManagementService.commit();
-
+        buildEntities(driverEntities);
 
         // main entity.
         long driverId = driverEntities.get(0).id();
@@ -202,19 +202,8 @@ public class JoinSelectTest {
             ))
         ));
 
-        txId = transactionManagementService.begin();
-        transactionManagementService.restore(txId);
-        entities.stream().forEach(e -> {
-            try {
-                if (entitySearchService.selectOne(e.id(), e.entityClass()).isPresent()) {
-                    managementService.delete(e);
-                }
-                managementService.build(e);
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
-            }
-        });
-        transactionManagementService.commit();
+        buildEntities(entities);
+
         bigDriverSelectEntityId = entities.get(entities.size() - 1).id();
     }
 
@@ -223,8 +212,6 @@ public class JoinSelectTest {
         buff.addAll(entities != null ? entities : Collections.emptyList());
         buff.addAll(driverEntities != null ? driverEntities : Collections.emptyList());
 
-        long txId = transactionManagementService.begin();
-        transactionManagementService.restore(txId);
         buff.stream().forEach(e -> {
             try {
                 managementService.delete(e);
@@ -232,7 +219,20 @@ public class JoinSelectTest {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
         });
-        transactionManagementService.commit();
+    }
+
+    private void buildEntities(List<IEntity> entities) throws SQLException {
+        long txId = transactionManagementService.begin();
+        transactionManagementService.restore(txId);
+        try {
+            for (IEntity e : entities) {
+                managementService.build(e);
+            }
+            transactionManagementService.commit();
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            transactionManagementService.rollback();
+        }
     }
 
 }

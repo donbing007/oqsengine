@@ -56,7 +56,9 @@ data:
                 enabled: {{ .Values.storage.master.shard.table.enabled | default "true" }}
                 size: {{ .Values.storage.master.shard.table.size | default "3" }}
           index:
-            name: {{ .Values.storage.index.name }}
+            name: {{ .Values.storage.index.name | quote }}
+          undo:
+            store: {{ .Values.storage.undo.store | quote }}
 
     oqsengine-ds.conf: |
         {

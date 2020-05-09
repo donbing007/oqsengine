@@ -32,6 +32,10 @@ storage:
   index:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
     name: "oqsindex"
+  undo:
+    # simple | redis
+    store: "simple"
+
 
 management:
   health:
@@ -52,9 +56,3 @@ management:
       enabled: true
     prometheus:
       enabled: true
-
-store:
-  simple:
-    enabled: true
-  redis:
-    enabled: false

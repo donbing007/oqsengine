@@ -15,7 +15,7 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.store.SimpleUndoLogStore;
 import com.xforceplus.ultraman.oqsengine.storage.undo.store.UndoLogStore;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,13 +29,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class UndoConfiguration {
 
-    @ConditionalOnExpression("${store.simple.enabled} == true")
+    @ConditionalOnProperty(name = "storage.undo.store", havingValue = "simple", matchIfMissing = true)
     @Bean("undoLogStore")
     public UndoLogStore simpleUndoLogStore(){
         return new SimpleUndoLogStore();
     }
 
-    @ConditionalOnExpression("${store.redis.enabled} == true")
+    @ConditionalOnProperty(name = "storage.undo.store", havingValue = "redis", matchIfMissing = false)
     @Bean("undoLogStore")
     public UndoLogStore redisUndoLogStore(RedissonClient redissonClient){
         return new RedisUndoLogStore(redissonClient);

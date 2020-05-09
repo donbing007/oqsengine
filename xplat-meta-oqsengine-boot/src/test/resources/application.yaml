@@ -13,7 +13,7 @@ logging:
     root: debug
 
 transaction:
-  timeoutms: 60000000
+  timeoutMs: 300000
 
 storage:
   master:
@@ -30,6 +30,9 @@ storage:
   index:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
     name: "oqsindex"
+  undo:
+    # simple | redis
+    store: "simple"
 
 management:
   endpoint:
@@ -41,8 +44,3 @@ management:
         include: "*"
       base-path: "/"
 
-store:
-  simple:
-    enabled: true
-  redis:
-    enabled: false

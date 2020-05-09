@@ -5,6 +5,7 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValue;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import io.micrometer.core.instrument.Metrics;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -123,13 +124,14 @@ public class DataSourceFactory {
         });
 
         hikariConfig.setPoolName(name);
+        hikariConfig.setMetricRegistry(Metrics.globalRegistry);
 
         return new HikariDataSource(hikariConfig);
     }
 
     private static void invokeMethod(HikariConfig hikariConfig, String attrName, ConfigValue value) throws Exception {
         Class clazz = hikariConfig.getClass();
-        String methodName = "set" + attrName.toUpperCase().substring(0, 1) + attrName.substring(1, attrName.length());
+        String methodName = "set" + attrName.toUpperCase().substring(0, 1) + attrName.substring(1);
         Method method = null;
         switch (value.valueType()) {
             case NUMBER: {

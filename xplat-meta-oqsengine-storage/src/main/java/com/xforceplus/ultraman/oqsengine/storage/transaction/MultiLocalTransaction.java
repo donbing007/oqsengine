@@ -51,8 +51,6 @@ public class MultiLocalTransaction implements Transaction {
     public synchronized void commit() throws SQLException {
         check();
 
-//        doEnd(true);
-
         doEndWithUndo(true);
 
         if (logger.isDebugEnabled()) {
@@ -64,7 +62,6 @@ public class MultiLocalTransaction implements Transaction {
     public synchronized void rollback() throws SQLException {
         check();
 
-//            doEnd(false);
         doEndWithUndo(false);
 
         if (logger.isDebugEnabled()) {
@@ -230,23 +227,33 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     private void undoTransactionResources(List<TransactionResource> transactionResourceHolder, boolean commit) throws SQLException {
-        logger.debug("start to rollback or undo commit");
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Start to rollback or undo commit");
+        }
+
         for (TransactionResource transactionResource : transactionResourceHolder) {
-            logger.debug("transacitonResource {} undo", transactionResource.key());
+            if (logger.isDebugEnabled()) {
+                logger.debug("transacitonResource {} undo", transactionResource.key());
+            }
             transactionResource.undo(commit);
         }
-        logger.debug("finish to rollback or undo commit");
+        if (logger.isDebugEnabled()) {
+            logger.debug("finish to rollback or undo commit");
+        }
     }
 
     private void destroyTransactionResources(List<TransactionResource> transactionResourceHolder) {
-        logger.debug("clear transactionResource");
+        if (logger.isDebugEnabled()) {
+            logger.debug("clear transactionResource");
+        }
         for (TransactionResource transactionResource : transactionResourceHolder) {
             try {
                 if (!transactionResource.isDestroyed()) {
                     transactionResource.destroy();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                logger.error(e.getMessage(), e);
             }
         }
     }

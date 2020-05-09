@@ -52,19 +52,21 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
         Optional<Transaction> tx = transactionManager.getCurrent();
         if (tx.isPresent()) {
 
-            if (!tx.get().isCompleted()) {
-                if (rollback) {
-                    tx.get().rollback();
+            try {
+                if (!tx.get().isCompleted()) {
+                    if (rollback) {
+                        tx.get().rollback();
+                    } else {
+                        tx.get().commit();
+                    }
                 } else {
-                    tx.get().commit();
+                    throw new SQLException(String.format("Transaction %d has completed.", tx.get().id()));
                 }
-            } else {
-                throw new SQLException(String.format("Transaction %d has completed.", tx.get().id()));
+            } finally {
+                transactionManager.finish(tx.get());
             }
         } else {
             throw new SQLException("There are no transactions currently.");
         }
-
-        transactionManager.finish(tx.get());
     }
 }

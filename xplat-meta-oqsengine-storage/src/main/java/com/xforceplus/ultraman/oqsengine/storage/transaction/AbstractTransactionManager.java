@@ -202,10 +202,6 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     @Override
     public void finish(Transaction tx) throws SQLException {
 
-        if (!tx.isCompleted()) {
-            tx.rollback();
-        }
-
         survival.remove(tx.id());
 
         size.decrementAndGet();
@@ -216,6 +212,10 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         timerWheel.remove(tx.id());
 
         transactionNumber.decrementAndGet();
+
+        if (!tx.isCompleted()) {
+            tx.rollback();
+        }
 
         if (logger.isDebugEnabled()) {
             logger.debug("End of transaction({}) and unbound.", tx.id());
@@ -253,9 +253,8 @@ public abstract class AbstractTransactionManager implements TransactionManager {
             Transaction transaction = survival.get(transactionId);
             if (transaction != null) {
 
-                if (logger.isDebugEnabled()) {
-                    logger.debug("The transaction ({}) timed out, so rollback.", transaction.id());
-                }
+
+                logger.warn("The transaction ({}) timed out({}), so rollback.", transaction.id(), survivalTimeMs);
 
                 try {
                     finish(transaction);
