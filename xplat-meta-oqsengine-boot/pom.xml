@@ -66,14 +66,9 @@
             <version>6.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>io.kamon</groupId>
-            <artifactId>kamon-bundle_2.12</artifactId>
-            <version>2.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.kamon</groupId>
-            <artifactId>kamon-prometheus_2.12</artifactId>
-            <version>2.1.0</version>
+            <groupId>com.xforceplus.galaxy</groupId>
+            <artifactId>micrometer-akka_2.12</artifactId>
+            <version>0.12.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

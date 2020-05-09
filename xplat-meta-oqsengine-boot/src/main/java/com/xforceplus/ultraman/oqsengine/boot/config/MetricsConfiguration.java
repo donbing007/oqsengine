@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
-import akka.monitor.instrumentation.ActorCellInstrumentation;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import io.kontainers.micrometer.akka.AkkaMetricRegistry;
 import io.micrometer.core.aop.TimedAspect;
@@ -14,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * 指标配置.
+ *
  * @author dongbin
  * @version 0.1 2020/4/22 15:01
  * @since 1.8
@@ -34,7 +34,7 @@ public class MetricsConfiguration {
     }
 
     @Bean
-    public void register(){
+    public void register() {
         AkkaMetricRegistry.setRegistry(Metrics.globalRegistry);
     }
 }

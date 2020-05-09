@@ -179,7 +179,7 @@ public class MultiLocalTransaction implements Transaction {
     private void check() throws SQLException {
         if (isCompleted()) {
             throw new SQLException(
-                    String.format("The transaction has completed.[commit=%b, rollback=%b]", isCommitted(), isRollback()));
+                String.format("The transaction has completed.[commit=%b, rollback=%b]", isCommitted(), isRollback()));
         }
     }
 

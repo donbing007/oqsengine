@@ -31,20 +31,20 @@ public class UndoConfiguration {
 
     @ConditionalOnProperty(name = "storage.undo.store", havingValue = "simple", matchIfMissing = true)
     @Bean("undoLogStore")
-    public UndoLogStore simpleUndoLogStore(){
+    public UndoLogStore simpleUndoLogStore() {
         return new SimpleUndoLogStore();
     }
 
     @ConditionalOnProperty(name = "storage.undo.store", havingValue = "redis", matchIfMissing = false)
     @Bean("undoLogStore")
-    public UndoLogStore redisUndoLogStore(RedissonClient redissonClient){
+    public UndoLogStore redisUndoLogStore(RedissonClient redissonClient) {
         return new RedisUndoLogStore(redissonClient);
     }
 
     @Bean
     public StorageCommandExecutor storageCommandInvoker(
-            @Value("${storage.index.name:oqsindex}") String indexTableName,
-            Selector<String> tableNameSelector
+        @Value("${storage.index.name:oqsindex}") String indexTableName,
+        Selector<String> tableNameSelector
     ) {
         DefaultStorageCommandExecutor storageCommandInvoker = new DefaultStorageCommandExecutor();
         storageCommandInvoker.register(DbType.INDEX, OpType.BUILD, new BuildStorageCommand(indexTableName));
@@ -59,12 +59,12 @@ public class UndoConfiguration {
     }
 
     @Bean
-    public UndoExecutor undoExecutor(UndoLogStore undoLogStore, StorageCommandExecutor storageCommandInvoker){
+    public UndoExecutor undoExecutor(UndoLogStore undoLogStore, StorageCommandExecutor storageCommandInvoker) {
         return new UndoExecutor(undoLogStore, storageCommandInvoker);
     }
 
     @Bean
-    public UndoFactory undoFactory(){
+    public UndoFactory undoFactory() {
         return new UndoFactory();
     }
 }

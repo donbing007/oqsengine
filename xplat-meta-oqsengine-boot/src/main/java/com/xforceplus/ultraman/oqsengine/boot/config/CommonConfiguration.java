@@ -91,10 +91,10 @@ public class CommonConfiguration {
         }
 
         return new ThreadPoolExecutor(size, size,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(500),
-                ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
-                new ThreadPoolExecutor.AbortPolicy()
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(500),
+            ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
+            new ThreadPoolExecutor.AbortPolicy()
         );
     }
 
@@ -105,10 +105,10 @@ public class CommonConfiguration {
         }
 
         return new ThreadPoolExecutor(size, size,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(500),
-                ExecutorHelper.buildNameThreadFactory("grpc-blocking", false),
-                new ThreadPoolExecutor.AbortPolicy()
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(500),
+            ExecutorHelper.buildNameThreadFactory("grpc-blocking", false),
+            new ThreadPoolExecutor.AbortPolicy()
         );
     }
 }
