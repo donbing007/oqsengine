@@ -127,10 +127,6 @@
             <id>xplat-thirdparty</id>
             <url>${repository.host}/content/repositories/thirdparty/</url>
         </repository>
-        <repository>
-            <id>invesdwin</id>
-            <url>https://invesdwin.de/artifactory/invesdwin-oss-remote</url>
-        </repository>
     </repositories>
 
     <dependencyManagement>

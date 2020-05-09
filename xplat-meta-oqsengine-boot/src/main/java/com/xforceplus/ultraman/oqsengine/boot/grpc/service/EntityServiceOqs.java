@@ -121,52 +121,53 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Override
     public CompletionStage<OperationResult> replace(EntityUp in, Metadata metadata) {
-
-        extractTransaction(metadata).ifPresent(id -> {
-            try {
-                transactionManagementService.restore(id);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        });
-
-        OperationResult result;
-        IEntityClass entityClass = toEntityClass(in);
-
-        try {
-
-            Optional<String> mode = metadata.getText("mode");
-            Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
-            if (ds.isPresent()) {
-                IEntity entity = null;
-                if (mode.filter("replace"::equals).isPresent()) {
-                    entity = toEntity(entityClass, in);
-                } else {
-                    entity = ds.get();
-                    updateEntity(entity, toEntity(entityClass, in));
+        return async(() -> {
+            extractTransaction(metadata).ifPresent(id -> {
+                try {
+                    transactionManagementService.restore(id);
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
-                //side effect
+            });
 
-                entityManagementService.replace(entity);
+            OperationResult result;
+            IEntityClass entityClass = toEntityClass(in);
+
+            try {
+
+                Optional<String> mode = metadata.getText("mode");
+                Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
+                if (ds.isPresent()) {
+                    IEntity entity = null;
+                    if (mode.filter("replace"::equals).isPresent()) {
+                        entity = toEntity(entityClass, in);
+                    } else {
+                        entity = ds.get();
+                        updateEntity(entity, toEntity(entityClass, in));
+                    }
+                    //side effect
+
+                    entityManagementService.replace(entity);
+                    result = OperationResult.newBuilder()
+                            .setAffectedRow(1)
+                            .setCode(OperationResult.Code.OK)
+                            .buildPartial();
+                } else {
+                    result = OperationResult.newBuilder()
+                            .setCode(OperationResult.Code.FAILED)
+                            .setMessage("没有找到该记录")
+                            .buildPartial();
+                }
+            } catch (Exception e) {
+                logger.error("{}", e);
                 result = OperationResult.newBuilder()
-                        .setAffectedRow(1)
-                        .setCode(OperationResult.Code.OK)
-                        .buildPartial();
-            } else {
-                result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.FAILED)
-                        .setMessage("没有找到该记录")
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                         .buildPartial();
             }
-        } catch (Exception e) {
-            logger.error("{}", e);
-            result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                    .buildPartial();
-        }
 
-        return CompletableFuture.completedFuture(result);
+            return result;
+        });
     }
 
     //TODO test
@@ -176,107 +177,108 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Override
     public CompletionStage<OperationResult> remove(EntityUp in, Metadata metadata) {
+        return async(() -> {
+            extractTransaction(metadata).ifPresent(id -> {
+                try {
+                    transactionManagementService.restore(id);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            });
 
-        extractTransaction(metadata).ifPresent(id -> {
+            OperationResult result;
+
             try {
-                transactionManagementService.restore(id);
-            } catch (SQLException e) {
-                e.printStackTrace();
+                IEntityClass entityClass = toEntityClass(in);
+
+                //find one
+                Optional<IEntity> op = entitySearchService.selectOne(in.getObjId(), entityClass);
+
+                if (op.isPresent()) {
+                    IEntity entity = op.get();
+                    entityManagementService.delete(entity);
+                    result = OperationResult.newBuilder()
+                            .setAffectedRow(1)
+                            .setCode(OperationResult.Code.OK)
+                            .buildPartial();
+                } else {
+                    result = OperationResult.newBuilder()
+                            .setAffectedRow(0)
+                            .setCode(OperationResult.Code.OK)
+                            .buildPartial();
+                }
+            } catch (Exception e) {
+                logger.error("{}", e);
+                result = OperationResult.newBuilder()
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
             }
+            return result;
         });
-
-        OperationResult result;
-
-        try {
-            IEntityClass entityClass = toEntityClass(in);
-
-            //find one
-            Optional<IEntity> op = entitySearchService.selectOne(in.getObjId(), entityClass);
-
-            if (op.isPresent()) {
-                IEntity entity = op.get();
-                entityManagementService.delete(entity);
-                result = OperationResult.newBuilder()
-                        .setAffectedRow(1)
-                        .setCode(OperationResult.Code.OK)
-                        .buildPartial();
-            } else {
-                result = OperationResult.newBuilder()
-                        .setAffectedRow(0)
-                        .setCode(OperationResult.Code.OK)
-                        .buildPartial();
-            }
-        } catch (Exception e) {
-            logger.error("{}", e);
-            result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                    .buildPartial();
-        }
-
-        return CompletableFuture.completedFuture(result);
     }
 
 
     @Override
     public CompletionStage<OperationResult> selectOne(EntityUp in, Metadata metadata) {
-
-        extractTransaction(metadata).ifPresent(id -> {
-            try {
-                transactionManagementService.restore(id);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        });
-
-        OperationResult result;
-
-        try {
-
-            IEntityClass entityClass = toEntityClass(in);
-
-            IEntityClass subEntityClass = getSubEntityClass(in);
-
-            Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
-
-            if (ds.isPresent()) {
-                if (ds.get().family() != null && ds.get().family().parent() > 0 && entityClass.extendEntityClass() != null) {
-                    Optional<IEntity> parentDS = entitySearchService
-                            .selectOne(ds.get().family().parent(), entityClass.extendEntityClass());
-
-                    Optional<IEntity> finalDs = ds;
-                    parentDS.ifPresent(x ->
-                            finalDs.ifPresent(y -> leftAppend(y, x)));
-                } else if (ds.get().family() != null && ds.get().family().child() > 0 && subEntityClass != null) {
-                    Optional<IEntity> childDs = entitySearchService
-                            .selectOne(ds.get().family().child(), subEntityClass);
-
-                    Optional<IEntity> finalDs = ds;
-                    childDs.ifPresent(x ->
-                            finalDs.ifPresent(y -> leftAppend(x, y)));
-                    ds = childDs;
+        return async(() -> {
+            extractTransaction(metadata).ifPresent(id -> {
+                try {
+                    transactionManagementService.restore(id);
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
+            });
+
+            OperationResult result;
+
+            try {
+
+                IEntityClass entityClass = toEntityClass(in);
+
+                IEntityClass subEntityClass = getSubEntityClass(in);
+
+                Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
+
+                if (ds.isPresent()) {
+                    if (ds.get().family() != null && ds.get().family().parent() > 0 && entityClass.extendEntityClass() != null) {
+                        Optional<IEntity> parentDS = entitySearchService
+                                .selectOne(ds.get().family().parent(), entityClass.extendEntityClass());
+
+                        Optional<IEntity> finalDs = ds;
+                        parentDS.ifPresent(x ->
+                                finalDs.ifPresent(y -> leftAppend(y, x)));
+                    } else if (ds.get().family() != null && ds.get().family().child() > 0 && subEntityClass != null) {
+                        Optional<IEntity> childDs = entitySearchService
+                                .selectOne(ds.get().family().child(), subEntityClass);
+
+                        Optional<IEntity> finalDs = ds;
+                        childDs.ifPresent(x ->
+                                finalDs.ifPresent(y -> leftAppend(x, y)));
+                        ds = childDs;
+                    }
+                }
+
+                result = ds.map(entity -> OperationResult
+                        .newBuilder()
+                        .setCode(OperationResult.Code.OK)
+                        .addQueryResult(toEntityUp(entity))
+                        .setTotalRow(1)
+                        .buildPartial()).orElseGet(() -> OperationResult
+                        .newBuilder()
+                        .setCode(OperationResult.Code.OK)
+                        .setTotalRow(0)
+                        .buildPartial());
+            } catch (Exception e) {
+                logger.error("{}", e);
+                result = OperationResult.newBuilder()
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
             }
 
-            result = ds.map(entity -> OperationResult
-                    .newBuilder()
-                    .setCode(OperationResult.Code.OK)
-                    .addQueryResult(toEntityUp(entity))
-                    .setTotalRow(1)
-                    .buildPartial()).orElseGet(() -> OperationResult
-                    .newBuilder()
-                    .setCode(OperationResult.Code.OK)
-                    .setTotalRow(0)
-                    .buildPartial());
-        } catch (Exception e) {
-            logger.error("{}", e);
-            result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                    .buildPartial();
-        }
-
-        return CompletableFuture.completedFuture(result);
+            return result;
+        });
     }
 
     /**
@@ -288,182 +290,184 @@ public class EntityServiceOqs implements EntityServicePowerApi {
      */
     @Override
     public CompletionStage<OperationResult> selectByConditions(SelectByCondition in, Metadata metadata) {
+        return async(() -> {
+            OperationResult result;
+            try {
 
-        OperationResult result;
-        try {
+                Collection<IEntity> entities = null;
 
-            Collection<IEntity> entities = null;
+                //check if has sub query for more details
+                List<QueryFieldsUp> queryField = in.getQueryFieldsList();
 
-            //check if has sub query for more details
-            List<QueryFieldsUp> queryField = in.getQueryFieldsList();
+                EntityUp entityUp = in.getEntity();
 
-            EntityUp entityUp = in.getEntity();
+                IEntityClass entityClass = toEntityClass(entityUp);
 
-            IEntityClass entityClass = toEntityClass(entityUp);
+                IEntityClassReader reader = new IEntityClassReader(entityClass);
 
-            IEntityClassReader reader = new IEntityClassReader(entityClass);
+                Long mainEntityId = entityClass.id();
 
-            Long mainEntityId = entityClass.id();
+                Page page = null;
 
-            Page page = null;
+                List<FieldSortUp> sort = in.getSortList();
 
-            List<FieldSortUp> sort = in.getSortList();
+                ConditionsUp conditions = in.getConditions();
 
-            ConditionsUp conditions = in.getConditions();
+                int pageNo = in.getPageNo();
+                int pageSize = in.getPageSize();
+                page = new Page(pageNo, pageSize);
 
-            int pageNo = in.getPageNo();
-            int pageSize = in.getPageSize();
-            page = new Page(pageNo, pageSize);
+                Optional<? extends IEntityField> sortField;
 
-            Optional<? extends IEntityField> sortField;
-
-            if (sort == null || sort.isEmpty()) {
-                sortField = Optional.empty();
-            } else {
-                FieldSortUp sortUp = sort.get(0);
-                //get related field
-                sortField = reader.column(sortUp.getCode());
-            }
-
-            if (!sortField.isPresent()) {
-                Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
-                if (consOp.isPresent()) {
-                    entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
+                if (sort == null || sort.isEmpty()) {
+                    sortField = Optional.empty();
                 } else {
-                    entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
-                }
-            } else {
-                FieldSortUp sortUp = sort.get(0);
-                Sort sortParam;
-                if (sortUp.getOrder() == FieldSortUp.Order.asc) {
-                    sortParam = Sort.buildAscSort(sortField.get());
-                } else {
-                    sortParam = Sort.buildDescSort(sortField.get());
+                    FieldSortUp sortUp = sort.get(0);
+                    //get related field
+                    sortField = reader.column(sortUp.getCode());
                 }
 
-                Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
-                if (consOp.isPresent()) {
-                    entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
-
+                if (!sortField.isPresent()) {
+                    Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
+                    if (consOp.isPresent()) {
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
+                    } else {
+                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                    }
                 } else {
-                    entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                    FieldSortUp sortUp = sort.get(0);
+                    Sort sortParam;
+                    if (sortUp.getOrder() == FieldSortUp.Order.asc) {
+                        sortParam = Sort.buildAscSort(sortField.get());
+                    } else {
+                        sortParam = Sort.buildDescSort(sortField.get());
+                    }
+
+                    Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
+                    if (consOp.isPresent()) {
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
+
+                    } else {
+                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                    }
                 }
-            }
 
 
-            /**
-             * find extends entity from field
-             * field a
-             * field b.a
-             * field b.b
-             *
-             *  --> "" -> a
-             *      "b" ->
-             */
+                /**
+                 * find extends entity from field
+                 * field a
+                 * field b.a
+                 * field b.b
+                 *
+                 *  --> "" -> a
+                 *      "b" ->
+                 */
 
-            /**
-             *  entities ->
-             */
+                /**
+                 *  entities ->
+                 */
 
-            //extend entities
-            Map<String, List<QueryFieldsUp>> mappedQueryFields = queryField.stream()
-                    .collect(Collectors.groupingBy(x -> {
-                        String code = x.getCode();
-                        String[] relCode = code.split("\\.");
-                        if (relCode.length > 1) {
-                            return relCode[0];
-                        } else {
-                            return "";
-                        }
-                    }));
-
-            /**
-             * find all related field and change all these IEntity to use mixed IValue
-             */
-            Collection<IEntity> finalEntities = entities
-                    .stream()
-                    .map(iEntity -> {
-                        //find fieldName from ientity;
-                        iEntity.entityValue().values().stream()
-                                .forEach(envValue -> {
-                                    IEntityField field = envValue.getField();
-                                    entityClass.field(field.id()).ifPresent(envValue::setField);
-                                });
-                        iEntity.resetEntityValue(new MixedEntityValue(iEntity.entityValue()));
-                        return iEntity;
-                    }).collect(Collectors.toList());
-
-            if (!entities.isEmpty()) {
-                mappedQueryFields.entrySet().stream()
-                        .filter(x -> !StringUtils.isEmpty(x.getKey()))
-                        .forEach(entry -> {
-                            Optional<IEntityClass> searchableRelatedEntity = reader.getSearchableRelatedEntity(entry.getKey());
-                            String relatedField = entry.getKey() + ".id";
-                            Optional<? extends IEntityField> relationFieldOp = reader.column(relatedField);
-
-                            if (searchableRelatedEntity.isPresent() && relationFieldOp.isPresent()) {
-
-                                //always assume this is long
-                                List<Long> values = finalEntities
-                                        .stream()
-                                        .map(entity -> entity.entityValue()
-                                                .getValue(relatedField).map(IValue::valueToLong))
-                                        .filter(Optional::isPresent)
-                                        .map(Optional::get)
-                                        .collect(Collectors.toList());
-
-                                //in case idField is not absent build a dummy one;
-                                IEntityField idField = new EntityField(1, "dummy", FieldType.LONG, new FieldConfig().searchable(true).identifie(true));
-                                Conditions conditionsIds =
-                                        new Conditions(new Condition(idField
-                                                , ConditionOperator.MULTIPLE_EQUALS
-                                                , values.stream().map(x -> new LongValue(idField, x)).toArray(IValue[]::new)));
-
-                                try {
-                                    Collection<IEntity> iEntities = entitySearchService.selectByConditions(conditionsIds, searchableRelatedEntity.get(), new Page(0, values.size()));
-
-                                    //append value
-
-                                    Map<Long, IEntity> leftEntities = iEntities.stream().collect(Collectors.toMap(IEntity::id, leftEntity -> leftEntity));
-
-                                    finalEntities.stream().forEach(originEntity -> {
-                                        Long id = originEntity.entityValue()
-                                                .getValue(relatedField).map(IValue::valueToLong).orElse(0L);
-
-                                        if (leftEntities.get(id) != null && leftEntities.get(id).entityValue() != null) {
-                                            entry.getValue().forEach(queryFieldsUp -> {
-                                                leftEntities.get(id).entityValue().getValue(queryFieldsUp.getId()).ifPresent(value -> {
-                                                    leftAppend(originEntity, entry.getKey(), value);
-                                                });
-                                            });
-                                        }
-                                    });
-
-                                } catch (SQLException ex) {
-                                    ex.printStackTrace();
-                                }
+                //extend entities
+                Map<String, List<QueryFieldsUp>> mappedQueryFields = queryField.stream()
+                        .collect(Collectors.groupingBy(x -> {
+                            String code = x.getCode();
+                            String[] relCode = code.split("\\.");
+                            if (relCode.length > 1) {
+                                return relCode[0];
+                            } else {
+                                return "";
                             }
-                        });
+                        }));
+
+                /**
+                 * find all related field and change all these IEntity to use mixed IValue
+                 */
+                Collection<IEntity> finalEntities = entities
+                        .stream()
+                        .map(iEntity -> {
+                            //find fieldName from ientity;
+                            iEntity.entityValue().values().stream()
+                                    .forEach(envValue -> {
+                                        IEntityField field = envValue.getField();
+                                        entityClass.field(field.id()).ifPresent(envValue::setField);
+                                    });
+                            iEntity.resetEntityValue(new MixedEntityValue(iEntity.entityValue()));
+                            return iEntity;
+                        }).collect(Collectors.toList());
+
+                if (!entities.isEmpty()) {
+                    mappedQueryFields.entrySet().stream()
+                            .filter(x -> !StringUtils.isEmpty(x.getKey()))
+                            .forEach(entry -> {
+                                Optional<IEntityClass> searchableRelatedEntity = reader.getSearchableRelatedEntity(entry.getKey());
+                                String relatedField = entry.getKey() + ".id";
+                                Optional<? extends IEntityField> relationFieldOp = reader.column(relatedField);
+
+                                if (searchableRelatedEntity.isPresent() && relationFieldOp.isPresent()) {
+
+                                    //always assume this is long
+                                    List<Long> values = finalEntities
+                                            .stream()
+                                            .map(entity -> entity.entityValue()
+                                                    .getValue(relatedField).map(IValue::valueToLong))
+                                            .filter(Optional::isPresent)
+                                            .map(Optional::get)
+                                            .collect(Collectors.toList());
+
+                                    //in case idField is not absent build a dummy one;
+                                    IEntityField idField = new EntityField(1, "dummy", FieldType.LONG, new FieldConfig().searchable(true).identifie(true));
+                                    Conditions conditionsIds =
+                                            new Conditions(new Condition(idField
+                                                    , ConditionOperator.MULTIPLE_EQUALS
+                                                    , values.stream().map(x -> new LongValue(idField, x)).toArray(IValue[]::new)));
+
+                                    try {
+                                        Collection<IEntity> iEntities = entitySearchService.selectByConditions(conditionsIds, searchableRelatedEntity.get(), new Page(0, values.size()));
+
+                                        //append value
+
+                                        Map<Long, IEntity> leftEntities = iEntities.stream().collect(Collectors.toMap(IEntity::id, leftEntity -> leftEntity));
+
+                                        finalEntities.stream().forEach(originEntity -> {
+                                            Long id = originEntity.entityValue()
+                                                    .getValue(relatedField).map(IValue::valueToLong).orElse(0L);
+
+                                            if (leftEntities.get(id) != null && leftEntities.get(id).entityValue() != null) {
+                                                entry.getValue().forEach(queryFieldsUp -> {
+                                                    leftEntities.get(id).entityValue().getValue(queryFieldsUp.getId()).ifPresent(value -> {
+                                                        leftAppend(originEntity, entry.getKey(), value);
+                                                    });
+                                                });
+                                            }
+                                        });
+
+                                    } catch (SQLException ex) {
+                                        ex.printStackTrace();
+                                    }
+                                }
+                            });
+                }
+
+
+                result = OperationResult.newBuilder()
+                        .setCode(OperationResult.Code.OK)
+                        .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
+                                .stream().filter(Objects::nonNull).map(this::toEntityUp).collect(Collectors.toList()))
+                        .setTotalRow(page == null ?
+                                Optional.ofNullable(entities).orElseGet(Collections::emptyList).size() :
+                                Long.valueOf(page.getTotalCount()).intValue())
+                        .buildPartial();
+
+            } catch (Exception e) {
+                logger.error("{}", e);
+                result = OperationResult.newBuilder()
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
             }
 
-
-            result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.OK)
-                    .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
-                            .stream().filter(Objects::nonNull).map(this::toEntityUp).collect(Collectors.toList()))
-                    .setTotalRow(page == null ?
-                            Optional.ofNullable(entities).orElseGet(Collections::emptyList).size() :
-                            Long.valueOf(page.getTotalCount()).intValue())
-                    .buildPartial();
-
-        } catch (Exception e) {
-            logger.error("{}", e);
-            result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                    .buildPartial();
-        }
-        return CompletableFuture.completedFuture(result);
+            return result;
+        });
     }
 
     private Optional<IEntityClass> getRelatedEntityClassById(IEntityClass entityClass, long subEntityClassId) {
@@ -485,25 +489,25 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         entity.entityValue().addValue(iValue);
     }
 
-    /**
-     * TODO
-     * related
-     * only one to one || many to one
-     *
-     * @param entityClass
-     * @param subEntityClassId
-     * @return
-     */
-    private Optional<IEntityField> findRelationField(IEntityClass entityClass, long subEntityClassId) {
-        return entityClass.relations()
-                .stream()
-                .filter(rel -> ("onetoone".equalsIgnoreCase(rel.getRelationType())
-                        || "manytoone".equalsIgnoreCase(rel.getRelationType()))
-                        && rel.getEntityClassId() == subEntityClassId
-                )
-                .map(Relation::getEntityField)
-                .findFirst();
-    }
+//    /**
+//     * TODO
+//     * related
+//     * only one to one || many to one
+//     *
+//     * @param entityClass
+//     * @param subEntityClassId
+//     * @return
+//     */
+//    private Optional<IEntityField> findRelationField(IEntityClass entityClass, long subEntityClassId) {
+//        return entityClass.relations()
+//                .stream()
+//                .filter(rel -> ("onetoone".equalsIgnoreCase(rel.getRelationType())
+//                        || "manytoone".equalsIgnoreCase(rel.getRelationType()))
+//                        && rel.getEntityClassId() == subEntityClassId
+//                )
+//                .map(Relation::getEntityField)
+//                .findFirst();
+//    }
 
     @Override
     public CompletionStage<OperationResult> commit(TransactionUp in, Metadata metadata) {
@@ -751,6 +755,35 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
                                 , originField
                                 , ConditionOperator.GREATER_THAN_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , nonNullValueList.get(0)).toArray(new IValue[]{}));
+
+                        Condition right = new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
+                                , ConditionOperator.LESS_THAN
+                                , toTypedValue(fieldOp.get()
+                                , nonNullValueList.get(1)).toArray(new IValue[]{}));
+
+
+                        conditions = new Conditions(left).addAnd(right);
+
+                    } else {
+                        logger.warn("required value more then 2, fallback to ge");
+                        conditions = new Conditions(new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
+                                , ConditionOperator.GREATER_THAN_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                    }
+                    break;
+                case gt_lt:
+                    if (nonNullValueList.size() > 1) {
+                        Condition left = new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
+                                , ConditionOperator.GREATER_THAN
                                 , toTypedValue(fieldOp.get()
                                 , nonNullValueList.get(0)).toArray(new IValue[]{}));
 
