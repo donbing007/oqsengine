@@ -230,7 +230,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         assertTrue("insert is ok", one.isRight());
 
         //select by condition
-        assertTrue("select by deci eq is ok",entityService.findByCondition(testBillSub.get()
+        assertTrue("select by deci eq is ok", entityService.findByCondition(testBillSub.get()
                 , new RequestBuilder().field("deci", ConditionOp.eq, 12.56).build()).get()._1() > 0);
 
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> deci = entityService.findByCondition(testBillSub.get()
@@ -240,7 +240,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
         assertTrue("select by deci ge is ok", deci.get()._1() > 0);
 
-        assertTrue("select by deci le is ok",entityService.findByCondition(testBillSub.get()
+        assertTrue("select by deci le is ok", entityService.findByCondition(testBillSub.get()
                 , new RequestBuilder().field("deci", ConditionOp.le, 12.57).build()).get()._1() > 0);
 
         assertTrue("clear is ok", entityService.deleteOne(testBillSub.get(), childId).isRight());
@@ -272,8 +272,8 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> byConditionWithIds =
                 entityService.findByConditionWithIds(ticket.get()
-                , Arrays.asList(id1, id2, id3)
-                , new ConditionQueryRequest());
+                        , Arrays.asList(id1, id2, id3)
+                        , new ConditionQueryRequest());
 
         System.out.println(byConditionWithIds);
 
@@ -440,15 +440,24 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         //clean old
         entityService.findByCondition(salesBill
                 , new RequestBuilder()
-                        .field("bill_data_status", ConditionOp.eq, "200")
+                        .field("bill_data_status", ConditionOp.eq, "2000")
                         .build()).map(x -> {
-                            return x._2();
-                        }).forEach(x -> x.stream().forEach(l ->
+            return x._2();
+        }).forEach(x -> x.stream().forEach(l ->
                 entityService.deleteOne(salesBill, Long.parseLong(l.get("id").toString()))));
+
+        entityService.findByCondition(baseBill
+                , new RequestBuilder()
+                        .field("bill_data_status", ConditionOp.eq, "2000")
+                        .build()).map(x -> {
+            return x._2();
+        }).forEach(x -> x.stream().forEach(l ->
+                entityService.deleteOne(baseBill, Long.parseLong(l.get("id").toString()))));
+
 
         entityService.findByCondition(salesBill
                 , new RequestBuilder()
-                        .field("bill_data_status", ConditionOp.eq, "300")
+                        .field("bill_data_status", ConditionOp.eq, "3000")
                         .build()).map(x -> {
             return x._2();
         }).forEach(x -> x.stream().forEach(l ->
@@ -457,7 +466,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
         //insert one
         Map<String, Object> map = new HashMap<>();
-        map.put("bill_data_status", "200");
+        map.put("bill_data_status", "2000");
         map.put("seller_tax_no", "212324");
 
         Either<String, IEntity> ret = entityServiceEx.create(salesBill, map);
@@ -468,7 +477,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         //insert two
         Map<String, Object> mapD = new HashMap<>();
 
-        mapD.put("bill_data_status", "200");
+        mapD.put("bill_data_status", "2000");
         mapD.put("seller_tax_no", "212325");
 
         Either<String, IEntity> ret2 = entityServiceEx.create(salesBill, mapD);
@@ -477,36 +486,36 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> billSearchRet =
                 entityService.findByCondition(baseBill
-                , new RequestBuilder()
-                        .field("bill_data_status", ConditionOp.eq, "200")
-                        .build());
+                        , new RequestBuilder()
+                                .field("bill_data_status", ConditionOp.eq, "2000")
+                                .build());
 
         assertEquals("search by parent size is 2", 2, (int) billSearchRet.get()._1());
 
         //update by sub
         Map<String, Object> map3 = new HashMap<>();
-        map3.put("bill_data_status", "300");
+        map3.put("bill_data_status", "3000");
 
         entityService.updateById(salesBill, selfId, map3);
 
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> billSearchRet2 =
                 entityService.findByCondition(baseBill
                         , new RequestBuilder()
-                        .field("bill_data_status", ConditionOp.eq, "300")
-                        .build());
+                                .field("bill_data_status", ConditionOp.eq, "3000")
+                                .build());
 
         assertEquals("search by parent size is 1", 1, (int) billSearchRet2.get()._1());
 
 
         //update by parent
         Map<String, Object> map4 = new HashMap<>();
-        map4.put("bill_data_status", "200");
+        map4.put("bill_data_status", "2000");
         entityService.updateById(baseBill, parentId, map4);
 
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> billSearchRet3 =
                 entityService.findByCondition(salesBill
                         , new RequestBuilder()
-                                .field("bill_data_status", ConditionOp.eq, "200")
+                                .field("bill_data_status", ConditionOp.eq, "2000")
                                 .build());
         assertEquals("search by parent size is 2", 2, (int) billSearchRet3.get()._1());
 
@@ -594,4 +603,4 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         entityService.getEntityClasss().forEach(System.out::println);
 
     }
- }
+}

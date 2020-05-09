@@ -27,7 +27,7 @@ storage:
     name: "oqsbigentity"
     shard:
       table:
-        enabled: false
+        enabled: true
         size: 1
   index:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.

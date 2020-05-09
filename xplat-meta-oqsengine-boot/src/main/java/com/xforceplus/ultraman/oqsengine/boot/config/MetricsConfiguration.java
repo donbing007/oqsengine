@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import akka.monitor.instrumentation.ActorCellInstrumentation;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import io.kontainers.micrometer.akka.AkkaMetricRegistry;
 import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tags;
@@ -31,4 +33,8 @@ public class MetricsConfiguration {
         return new TimedAspect(Metrics.globalRegistry, pjp -> Tags.empty());
     }
 
+    @Bean
+    public void register(){
+        AkkaMetricRegistry.setRegistry(Metrics.globalRegistry);
+    }
 }

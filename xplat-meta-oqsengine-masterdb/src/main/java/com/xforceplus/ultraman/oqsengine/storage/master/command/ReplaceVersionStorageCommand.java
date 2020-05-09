@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.command;
 
-import com.sun.org.apache.regexp.internal.RE;
 import com.xforceplus.ultraman.oqsengine.storage.master.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
