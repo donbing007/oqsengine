@@ -778,6 +778,35 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
+                case gt_lt:
+                    if (nonNullValueList.size() > 1) {
+                        Condition left = new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
+                                , ConditionOperator.GREATER_THAN
+                                , toTypedValue(fieldOp.get()
+                                , nonNullValueList.get(0)).toArray(new IValue[]{}));
+
+                        Condition right = new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
+                                , ConditionOperator.LESS_THAN
+                                , toTypedValue(fieldOp.get()
+                                , nonNullValueList.get(1)).toArray(new IValue[]{}));
+
+
+                        conditions = new Conditions(left).addAnd(right);
+
+                    } else {
+                        logger.warn("required value more then 2, fallback to ge");
+                        conditions = new Conditions(new Condition(
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
+                                , ConditionOperator.GREATER_THAN_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                    }
+                    break;
                 case le:
                     conditions = new Conditions(new Condition(
                             isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
