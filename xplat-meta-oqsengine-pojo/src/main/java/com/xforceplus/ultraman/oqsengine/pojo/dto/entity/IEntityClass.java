@@ -68,4 +68,11 @@ public interface IEntityClass {
      */
     public boolean isAny();
 
+    /**
+     * 是否是一个动态的类型 默认是
+     * @return
+     */
+    default boolean isDynamic(){
+        return true;
+    }
 }

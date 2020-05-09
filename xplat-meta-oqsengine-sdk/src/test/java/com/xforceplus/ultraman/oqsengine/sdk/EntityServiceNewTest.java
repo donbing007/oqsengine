@@ -68,6 +68,8 @@ public class EntityServiceNewTest {
     private ModuleUpResult mockModuleUpResult(){
         return ModuleUpResult
                 .newBuilder()
+                .setVersion("0.0.1")
+                .setId(111111111111L)
                 .addBoUps(BoUp
                         .newBuilder()
                         .setId("1")
@@ -99,6 +101,8 @@ public class EntityServiceNewTest {
     private ModuleUpResult manyToOne() {
         return ModuleUpResult
                 .newBuilder()
+                .setVersion("0.0.1")
+                .setId(111111111111L)
                 .addBoUps(BoUp
                         .newBuilder()
                         .setId("1")
@@ -165,6 +169,7 @@ public class EntityServiceNewTest {
         return ModuleUpResult
                 .newBuilder()
                 .setVersion("0.0.1")
+                .setId(111111111111L)
                 .addBoUps(BoUp
                         .newBuilder()
                         .setId("1")
