@@ -27,7 +27,6 @@ public class TestFlake {
         IntStream.range(0 , 5000)
                 .mapToObj(i -> new Thread(() -> {
                     Long id = generator.next();
-                    System.out.println();
                     list.add(id);
                     latch.countDown();
                 }))
