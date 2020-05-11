@@ -16,13 +16,10 @@ transaction:
   timeoutMs: 300000
 
 storage:
+  timeoutMs:
+    query: 3000
   master:
     name: "oqsbigentity"
-    query:
-      # default cpu core.
-      worker: 3
-      # default 3 second
-      timeout: 3000
     shard:
       table:
         enabled: false

@@ -19,7 +19,6 @@ import com.xforceplus.ultraman.oqsengine.sdk.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -53,7 +52,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private TransactionManagementService transactionManagementService;
 
     @Autowired
-    @Qualifier("dispatcher")
     private ExecutorService asyncDispatcher;
 
     private Logger logger = LoggerFactory.getLogger(EntityServicePowerApi.class);

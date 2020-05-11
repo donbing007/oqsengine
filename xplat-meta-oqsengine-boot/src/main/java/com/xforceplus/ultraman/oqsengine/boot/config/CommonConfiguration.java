@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.storage.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -34,19 +35,19 @@ import java.util.concurrent.TimeUnit;
 public class CommonConfiguration {
 
     @ConditionalOnProperty(name = "instance.type", havingValue = "statefulset", matchIfMissing = false)
-    @Bean
+    @Bean("nodeIdGenerator")
     public NodeIdGenerator kubernetesStatefulsetNodeIdGenerator() {
         return new kubernetesStatefulsetNodeIdGenerator();
     }
 
     @ConditionalOnProperty(name = "instance.type", havingValue = "static", matchIfMissing = true)
-    @Bean
+    @Bean("nodeIdGenerator")
     public NodeIdGenerator staticNodeIdGenerator(@Value("${instance.id:0}") int instanceId) {
         return new StaticNodeIdGenerator(instanceId);
     }
 
     @Bean
-    public LongIdGenerator longIdGenerator(NodeIdGenerator nodeIdGenerator) {
+    public LongIdGenerator longIdGenerator(@Qualifier("nodeIdGenerator") NodeIdGenerator nodeIdGenerator) {
         return new SnowflakeLongIdGenerator(nodeIdGenerator);
     }
 
@@ -94,20 +95,6 @@ public class CommonConfiguration {
             0L, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<>(500),
             ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
-            new ThreadPoolExecutor.AbortPolicy()
-        );
-    }
-
-    @Bean(name = "dispatcher")
-    public ExecutorService asyncDispatcher(@Value("${dispatcher.threadPool.size:10}") int size) {
-        if (size == 0) {
-            size = Runtime.getRuntime().availableProcessors() + 1;
-        }
-
-        return new ThreadPoolExecutor(size, size,
-            0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(500),
-            ExecutorHelper.buildNameThreadFactory("grpc-blocking", false),
             new ThreadPoolExecutor.AbortPolicy()
         );
     }
