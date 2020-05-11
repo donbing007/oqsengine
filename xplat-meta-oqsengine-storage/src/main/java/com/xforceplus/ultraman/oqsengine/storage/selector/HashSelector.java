@@ -19,6 +19,9 @@ public class HashSelector<V> implements Selector<V> {
     private List<V> targets;
 
     public HashSelector(List<V> targets) {
+        if (targets.isEmpty()) {
+            throw new IllegalArgumentException("There are no optional elements.");
+        }
         this.targets = new ArrayList(targets);
     }
 
