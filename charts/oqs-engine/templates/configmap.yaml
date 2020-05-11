@@ -43,7 +43,7 @@ data:
           application:
             name: "oqsengine"
         transaction:
-          timeoutms: {{ .Values.storage.transaction.timeoutMs | default "2000" }}
+        timeoutMs: {{ .Values.storage.transaction.timeoutMs | default "2000" }}
         threadPool:
           size: {{ .Values.storage.threadPool.size | default "0" }}
         storage:
