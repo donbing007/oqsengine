@@ -212,13 +212,18 @@ public class JoinSelectTest {
         buff.addAll(entities != null ? entities : Collections.emptyList());
         buff.addAll(driverEntities != null ? driverEntities : Collections.emptyList());
 
-        buff.stream().forEach(e -> {
-            try {
+        long txId = transactionManagementService.begin();
+        transactionManagementService.restore(txId);
+        try {
+            for (IEntity e : entities) {
                 managementService.delete(e);
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
             }
-        });
+            transactionManagementService.commit();
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            transactionManagementService.rollback();
+        }
+
     }
 
     private void buildEntities(List<IEntity> entities) throws SQLException {

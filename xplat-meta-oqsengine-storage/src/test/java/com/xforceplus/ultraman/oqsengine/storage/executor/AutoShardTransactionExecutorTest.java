@@ -8,19 +8,16 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.Before;
 import org.junit.After;
-import org.mockito.ArgumentMatcher;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.booleanThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -106,7 +103,7 @@ public class AutoShardTransactionExecutorTest {
         Optional<Transaction> t = tm.getCurrent();
         Assert.assertTrue(t.isPresent());
 
-        Optional<TransactionResource> resource = t.get().query(mockDataSource);
+        Optional<TransactionResource> resource = t.get().query(mockDataSource.toString());
         Assert.assertTrue(resource.isPresent());
         Assert.assertEquals(expectedConn, resource.get().value());
 
@@ -121,14 +118,14 @@ public class AutoShardTransactionExecutorTest {
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
         Transaction currentT = tm.create();
-        currentT.join(new ConnectionTransactionResource(mockDataSource, expectedConn, false));
+        currentT.join(new ConnectionTransactionResource(mockDataSource.toString(), expectedConn, false));
 
         AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class);
         // 分片键不关心
         te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override
             public Object run(TransactionResource resource) throws SQLException {
-                Assert.assertEquals(currentT.query(mockDataSource).get(), resource);
+                Assert.assertEquals(currentT.query(mockDataSource.toString()).get(), resource);
 
                 return null;
             }
@@ -137,7 +134,7 @@ public class AutoShardTransactionExecutorTest {
         Optional<Transaction> t = tm.getCurrent();
         Assert.assertTrue(t.isPresent());
 
-        Optional<TransactionResource> resource = t.get().query(mockDataSource);
+        Optional<TransactionResource> resource = t.get().query(mockDataSource.toString());
         Assert.assertTrue(resource.isPresent());
         Assert.assertEquals(expectedConn, resource.get().value());
 

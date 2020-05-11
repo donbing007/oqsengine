@@ -24,7 +24,7 @@ public interface TransactionResource<V> {
      * 资源的标识.
      * @return 资源的标识.
      */
-    Object key();
+    String key();
 
     /**
      * 承载的资源实体.
@@ -55,5 +55,11 @@ public interface TransactionResource<V> {
      */
     boolean isDestroyed() throws SQLException;
 
+    /**
+     * 发起 undo 操作.
+     *
+     * @param commit true 提交,false 回流.
+     * @throws SQLException
+     */
     void undo(boolean commit) throws SQLException;
 }

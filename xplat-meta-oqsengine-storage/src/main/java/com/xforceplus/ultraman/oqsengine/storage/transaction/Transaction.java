@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
-
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -64,7 +62,7 @@ public interface Transaction {
      * @param key resource`s key.
      * @return true Has joined. false not.
      */
-    Optional<TransactionResource> query(Object key);
+    Optional<TransactionResource> query(String key);
 
     /**
      * Attachment id. Usually a thread id.

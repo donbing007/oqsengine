@@ -82,13 +82,18 @@ storage:
 
 # datasource json config
 # Multiple data sources are separated by Numbers.
+# The HikariCP connection pool implementation is used, see configuration parameters.
+# see https://github.com/brettwooldridge/HikariCP#configuration-knobs-baby
+# Note that mysql default connection idle time is 8 hours and manticore is 15 minutes.
 datasource:
   master: |-
     {
       driverClassName: "com.mysql.cj.jdbc.Driver"
       jdbcUrl: "jdbc:mysql://120.55.249.44:23112/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8"
-      password: "root"
-      username: "azYBG3RW9N"
+      username: "root",
+      password: "root",
+      maximumPoolSize: 1,
+      maxLifetime: 25200000
     }
   index:
     # Note that the url of the index must take the following parameters.
@@ -97,13 +102,17 @@ datasource:
       {
         driverClassName: "com.mysql.cj.jdbc.Driver"
         jdbcUrl: "jdbc:mysql://120.55.249.44:23113/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
-        password: "root"
-        username: "root"
+        username: "root",
+        password: "root",
+        maximumPoolSize: 1,
+        maxLifetime: 600000
       }
     search: |-
       {
         driverClassName: "com.mysql.cj.jdbc.Driver"
         jdbcUrl: "jdbc:mysql://120.55.249.44:23113/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
-        password: "root"
-        username: "root"
+        username: "root",
+        password: "root",
+        maximumPoolSize: 1,
+        maxLifetime: 600000
       }

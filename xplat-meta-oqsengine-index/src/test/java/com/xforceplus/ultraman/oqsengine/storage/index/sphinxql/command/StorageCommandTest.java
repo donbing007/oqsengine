@@ -11,12 +11,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.storage.selector.TakeTurnsSelector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,8 +63,7 @@ public class StorageCommandTest {
 
     @Before
     public void init() {
-        buildWriteDataSourceSelector("./src/test/resources/sql_index_storage.conf");
-        buildSearchDataSourceSelector("./src/test/resources/sql_index_storage.conf");
+        buildDataSourcePackage("./src/test/resources/sql_index_storage.conf");
 
         storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
@@ -100,6 +98,11 @@ public class StorageCommandTest {
         }
     }
 
+    @After
+    public void after() {
+        dataSourcePackage.close();
+    }
+
     @Test
     public void storageCommandTest() {
         List<DataSource> ds = dataSourcePackage.getIndexWriter();
@@ -109,6 +112,7 @@ public class StorageCommandTest {
             try {
                 TransactionResource resource = new SphinxQLTransactionResource("1", dataSource.getConnection(), true);
                 new DeleteStorageCommand("oqsindextest").execute(resource, storageEntity);
+                resource.destroy();
             } catch (SQLException ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
@@ -119,6 +123,7 @@ public class StorageCommandTest {
             try {
                 TransactionResource resource = new SphinxQLTransactionResource("1", dataSource.getConnection(), true);
                 new BuildStorageCommand("oqsindextest").execute(resource, storageEntity);
+                resource.destroy();
             } catch (SQLException ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
@@ -127,6 +132,7 @@ public class StorageCommandTest {
             try {
                 TransactionResource resource = new SphinxQLTransactionResource("1", dataSource.getConnection(), true);
                 StorageEntity res = new SelectByIdStorageCommand("oqsindextest").execute(resource, storageEntity);
+                resource.destroy();
                 //verify
                 Assert.assertTrue(res != null);
                 Assert.assertTrue(res.getId() == Long.MAX_VALUE);
@@ -141,6 +147,7 @@ public class StorageCommandTest {
             try {
                 TransactionResource resource = new SphinxQLTransactionResource("1", dataSource.getConnection(), true);
                 new ReplaceStorageCommand("oqsindextest").execute(resource, storageEntity);
+                resource.destroy();
             } catch (SQLException ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
@@ -149,6 +156,7 @@ public class StorageCommandTest {
             try {
                 TransactionResource resource = new SphinxQLTransactionResource("1", dataSource.getConnection(), true);
                 StorageEntity res = new SelectByIdStorageCommand("oqsindextest").execute(resource, storageEntity);
+                resource.destroy();
                 //verify
                 Assert.assertTrue(res != null);
                 Assert.assertTrue(res.getEntity() == (Long.MAX_VALUE - 1));
@@ -162,6 +170,7 @@ public class StorageCommandTest {
             try {
                 TransactionResource resource = new SphinxQLTransactionResource("1", dataSource.getConnection(), true);
                 new DeleteStorageCommand("oqsindextest").execute(resource, storageEntity);
+                resource.destroy();
             } catch (SQLException ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
@@ -171,6 +180,7 @@ public class StorageCommandTest {
             try {
                 TransactionResource resource = new SphinxQLTransactionResource("1", dataSource.getConnection(), true);
                 res = new SelectByIdStorageCommand("oqsindextest").execute(resource, storageEntity);
+                resource.destroy();
             } catch (SQLException ex) {
                 System.out.println(ex.getMessage());
             }
@@ -244,20 +254,11 @@ public class StorageCommandTest {
 
     }
 
-    private Selector<DataSource> buildWriteDataSourceSelector(String file) {
+    private void buildDataSourcePackage(String file) {
         if (dataSourcePackage == null) {
             System.setProperty(DataSourceFactory.CONFIG_FILE, file);
             dataSourcePackage = DataSourceFactory.build();
         }
-        return new TakeTurnsSelector<>(dataSourcePackage.getIndexWriter());
-    }
-
-    private Selector<DataSource> buildSearchDataSourceSelector(String file) {
-        if (dataSourcePackage == null) {
-            System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-            dataSourcePackage = DataSourceFactory.build();
-        }
-        return new TakeTurnsSelector<>(dataSourcePackage.getIndexSearch());
     }
 
     /**

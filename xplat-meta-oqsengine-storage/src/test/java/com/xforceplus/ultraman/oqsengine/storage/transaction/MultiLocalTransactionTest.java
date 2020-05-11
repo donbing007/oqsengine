@@ -153,7 +153,7 @@ public class MultiLocalTransactionTest {
 
 
         @Override
-        public Object key() {
+        public String key() {
             return key;
         }
 

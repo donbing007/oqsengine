@@ -1,34 +1,23 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.sql;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
+import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
  * sphinxQL 相关的资源管理器.
+ *
  * @author dongbin
  * @version 0.1 2020/2/28 17:25
  * @since 1.8
  */
 public class SphinxQLTransactionResource extends UndoTransactionResource<Connection> {
 
-    private Object key;
+    private String key;
     private Connection conn;
-
-    public SphinxQLTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
-        this.key = key;
-        this.conn = conn;
-        // SphinxQL 只有在 autocommit = true 情况下才工作.
-        this.conn.setAutoCommit(true);
-
-        if (!autocommit) {
-            execute("begin");
-        }
-    }
 
     public SphinxQLTransactionResource(String key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
@@ -47,7 +36,7 @@ public class SphinxQLTransactionResource extends UndoTransactionResource<Connect
     }
 
     @Override
-    public Object key() {
+    public String key() {
         return key;
     }
 

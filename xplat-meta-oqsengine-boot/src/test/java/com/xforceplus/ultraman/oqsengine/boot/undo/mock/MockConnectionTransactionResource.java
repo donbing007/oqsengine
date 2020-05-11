@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
 import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 import org.junit.Ignore;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -17,18 +16,8 @@ import java.sql.SQLException;
 @Ignore
 public class MockConnectionTransactionResource extends UndoTransactionResource<Connection> {
 
-    private Object key;
+    private String key;
     private Connection conn;
-
-    public MockConnectionTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
-        this.key = key;
-        this.conn = conn;
-        if (autocommit) {
-            this.conn.setAutoCommit(true);
-        } else {
-            this.conn.setAutoCommit(false);
-        }
-    }
 
     public MockConnectionTransactionResource(String key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
@@ -46,7 +35,7 @@ public class MockConnectionTransactionResource extends UndoTransactionResource<C
     }
 
     @Override
-    public Object key() {
+    public String key() {
         return key;
     }
 

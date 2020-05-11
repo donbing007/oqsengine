@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
 import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 import org.junit.Ignore;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -18,19 +17,8 @@ import java.sql.Statement;
 @Ignore
 public class MockSphinxQLTransactionResource extends UndoTransactionResource<Connection> {
 
-    private Object key;
+    private String key;
     private Connection conn;
-
-    public MockSphinxQLTransactionResource(DataSource key, Connection conn, boolean autocommit) throws SQLException {
-        this.key = key;
-        this.conn = conn;
-        // SphinxQL 只有在 autocommit = true 情况下才工作.
-        this.conn.setAutoCommit(true);
-
-        if (!autocommit) {
-            execute("begin");
-        }
-    }
 
     public MockSphinxQLTransactionResource(String key, Connection conn, boolean autocommit) throws SQLException {
         this.key = key;
@@ -49,7 +37,7 @@ public class MockSphinxQLTransactionResource extends UndoTransactionResource<Con
     }
 
     @Override
-    public Object key() {
+    public String key() {
         return key;
     }
 

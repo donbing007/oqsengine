@@ -96,7 +96,7 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
-    public Optional<TransactionResource> query(Object key) {
+    public Optional<TransactionResource> query(String key) {
 
         if (isCompleted()) {
             return Optional.empty();
@@ -119,44 +119,6 @@ public class MultiLocalTransaction implements Transaction {
     @Override
     public void attach(long id) {
         this.attachment = id;
-    }
-
-    private void doEnd(boolean commit) throws SQLException {
-        try {
-            List<SQLException> exHolder = new LinkedList<>();
-            for (TransactionResource transactionResource : transactionResourceHolder) {
-                try {
-                    if (commit) {
-                        transactionResource.commit();
-                    } else {
-                        transactionResource.rollback();
-                    }
-
-                    transactionResource.destroy();
-                } catch (SQLException ex) {
-                    exHolder.add(0, ex);
-
-                    //TODO: 发生了异常,需要 rollback, 这里需要 undo 日志.by dongbin 2020/02/17
-
-                }
-
-            }
-
-            throwSQLExceptionIfNecessary(exHolder);
-
-            if (commit) {
-
-                committed = true;
-
-            } else {
-
-                rollback = true;
-
-            }
-        } finally {
-            timerSample.stop(Metrics.globalRegistry.timer(MetricsDefine.TRANSACTION_DURATION_SECONDS));
-        }
-
     }
 
     private void throwSQLExceptionIfNecessary(List<SQLException> exHolder) throws SQLException {
@@ -222,7 +184,9 @@ public class MultiLocalTransaction implements Transaction {
 
     private void saveTransactionResourcesUndoLog(List<TransactionResource> transactionResourceHolder) {
         for (TransactionResource transactionResource : transactionResourceHolder) {
-            ((UndoTransactionResource) transactionResource).createUndoLog(id);
+            if (UndoTransactionResource.class.isInstance(transactionResource)) {
+                ((UndoTransactionResource) transactionResource).createUndoLog(id);
+            }
         }
     }
 
