@@ -20,6 +20,9 @@
 
 包名前辍统一使用 `com.xforceplus.ultraman.oqsengine`
 
+#依赖
+依赖的最小元数据版本为1.0.0.
+
 #启动配置
 oqsengine 没有使用 spring 提供的数据源配置,而是自己进行了管理.
 可以在启动参数中增加 -Dds={路径}指定配置文件,或者当前类路径下的"oqsengine-ds.conf"文件.
