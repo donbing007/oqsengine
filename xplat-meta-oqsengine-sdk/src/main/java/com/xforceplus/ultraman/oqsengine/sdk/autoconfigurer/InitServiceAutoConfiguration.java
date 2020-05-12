@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer;
 
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
+import com.xforceplus.ultraman.metadata.grpc.CheckServiceClient;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
@@ -98,8 +99,10 @@ public class InitServiceAutoConfiguration {
     }
 
     @Bean
-    public ModuleInitService moduleInitService(){
-        return new ModuleInitService();
+    public ModuleInitService moduleInitService(CheckServiceClient checkServiceClient
+            , ActorMaterializer mat, AuthSearcherConfig config
+            , ApplicationEventPublisher publisher){
+        return new ModuleInitService(checkServiceClient, mat, config, publisher);
     }
 
     @Bean

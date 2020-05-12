@@ -19,17 +19,22 @@ public class ModuleInitService implements InitializingBean {
 
     private Logger logger = LoggerFactory.getLogger(ModuleInitService.class);
 
-    @Autowired
-    CheckServiceClient checkServiceClient;
+    private final CheckServiceClient checkServiceClient;
 
-    @Autowired
-    private ActorMaterializer mat;
+    private final ActorMaterializer mat;
 
-    @Autowired
-    private AuthSearcherConfig config;
+    private final AuthSearcherConfig config;
 
-    @Autowired
-    private ApplicationEventPublisher publisher;
+    private final ApplicationEventPublisher publisher;
+
+    public ModuleInitService(CheckServiceClient checkServiceClient
+            , ActorMaterializer mat, AuthSearcherConfig config
+            , ApplicationEventPublisher publisher) {
+        this.checkServiceClient = checkServiceClient;
+        this.mat = mat;
+        this.config = config;
+        this.publisher = publisher;
+    }
 
     @Override
     public void afterPropertiesSet() throws Exception {
