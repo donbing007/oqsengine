@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.boot;
 
-import de.invesdwin.instrument.DynamicInstrumentationLoader;
 import org.redisson.spring.starter.RedissonAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -20,9 +19,6 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
 public class OqsengineBootApplication {
 
     public static void main(String[] args) throws Exception {
-        DynamicInstrumentationLoader.waitForInitialized(); //dynamically attach java agent to jvm if not already present
-        DynamicInstrumentationLoader.initLoadTimeWeavingContext(); //weave all classes before they are loaded as beans
-
         SpringApplication.run(OqsengineBootApplication.class, args);
     }
 }
