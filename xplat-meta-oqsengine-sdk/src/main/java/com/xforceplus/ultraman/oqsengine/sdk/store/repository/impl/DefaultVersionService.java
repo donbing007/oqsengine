@@ -5,6 +5,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.repository.VersionService;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.apache.metamodel.UpdateableDataContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.*;
@@ -17,6 +19,8 @@ import java.util.stream.IntStream;
  * TODO using read write lock
  */
 public class DefaultVersionService implements VersionService {
+
+    private Logger logger = LoggerFactory.getLogger(VersionService.class);
 
     /**
      * set long is not thread-safe
@@ -181,20 +185,24 @@ public class DefaultVersionService implements VersionService {
     @Override
     public synchronized UpdateableDataContext getCurrentVersionDCForBoByCode(String code) {
 
+        logger.debug("select code {}" , code);
         LinkedList<Tuple2<Long, String>> versionedList = findByCode(code);
         if (versionedList == null) {
             /**
              * not init
              */
+            logger.debug("current no such version {}" , code);
             return null;
         }
 
         Tuple2<Long, String> last = versionedList.getLast();
 
         if (last != null) {
+            logger.debug("got last version {} for {}" , code, last._2());
             return this.getVersionedDCForModule(last._1(), last._2());
         }
 
+        logger.debug("last version is empty {}" , code);
         return null;
     }
 

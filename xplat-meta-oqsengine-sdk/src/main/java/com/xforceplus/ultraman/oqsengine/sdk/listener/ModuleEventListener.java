@@ -33,11 +33,14 @@ public class ModuleEventListener {
 
     Logger logger = LoggerFactory.getLogger(ModuleEventListener.class);
 
+    @Async
     @EventListener(MetadataModuleGotEvent.class)
     public void saveMetadata(MetadataModuleGotEvent event){
         logger.info("Got Module {}", event);
         store.save(event.getResponse(), event.getRequest().getTenantId(), event.getRequest().getAppId());
-
+        logger.info("Module saved ");
+        System.out.println(store.currentVersion().getVersionMapping());
+        store.findAllEntities().stream().map(x -> x.code()).forEach(System.out::println);
     }
 
     @Async
