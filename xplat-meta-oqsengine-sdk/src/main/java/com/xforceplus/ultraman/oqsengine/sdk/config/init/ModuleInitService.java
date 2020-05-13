@@ -52,7 +52,7 @@ public class ModuleInitService implements InitializingBean {
                     //publisher.publishEvent();
                     MetadataModuleGotEvent event = new MetadataModuleGotEvent(request, x);
                     store.save(event.getResponse(), event.getRequest().getTenantId(), event.getRequest().getAppId());
-                    logger.debug("saved module ");
+                    logger.info("saved module ");
                 }), mat);
     }
 }
