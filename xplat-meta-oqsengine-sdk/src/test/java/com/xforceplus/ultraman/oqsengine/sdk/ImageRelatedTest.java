@@ -58,7 +58,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
             try {
                 System.out.println("waiting");
                 isInited = true;
-                Thread.sleep(30000);
+                Thread.sleep(10000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
