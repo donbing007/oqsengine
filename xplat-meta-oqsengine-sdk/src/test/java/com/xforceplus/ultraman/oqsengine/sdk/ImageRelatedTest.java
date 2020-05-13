@@ -18,6 +18,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.AssertionErrors;
 
@@ -33,6 +34,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * remote image test
  */
+@EnableAsync
 @ActiveProfiles("image")
 public class ImageRelatedTest extends ContextWareBaseTest {
 

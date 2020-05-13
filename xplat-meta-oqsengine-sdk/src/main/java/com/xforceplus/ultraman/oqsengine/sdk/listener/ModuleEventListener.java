@@ -33,6 +33,7 @@ public class ModuleEventListener {
 
     Logger logger = LoggerFactory.getLogger(ModuleEventListener.class);
 
+    @Async
     @EventListener(MetadataModuleGotEvent.class)
     public void saveMetadata(MetadataModuleGotEvent event){
         logger.info("Got Module {}", event);
