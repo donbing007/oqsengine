@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
@@ -16,6 +17,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.AssertionErrors;
 
@@ -43,6 +45,9 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Autowired
     ContextService contextService;
 
+    @Autowired
+    MetadataRepository store;
+
     private static boolean isInited = false;
 
     @Before
@@ -56,6 +61,9 @@ public class ImageRelatedTest extends ContextWareBaseTest {
                 e.printStackTrace();
             }
         }
+
+        System.out.println(store.currentVersion().getVersionMapping());
+        store.findAllEntities().stream().map(x -> x.code()).forEach(System.out::println);
     }
 
     @Test
