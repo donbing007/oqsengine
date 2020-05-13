@@ -9,6 +9,8 @@ import java.util.function.BiFunction;
 
 /**
  * disable version
+ * @param <R>
+ * @param <T>
  */
 public class VersionInterceptor<T, R> implements MessageDispatcherInterceptor<QueryMessage<T, R>> {
 
