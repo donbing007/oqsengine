@@ -11,3 +11,6 @@ xplat:
         tenant:
         app-id: 5
         env: 0
+logging:
+  level:
+    com.xforceplus.ultraman.oqsengine.sdk: debug

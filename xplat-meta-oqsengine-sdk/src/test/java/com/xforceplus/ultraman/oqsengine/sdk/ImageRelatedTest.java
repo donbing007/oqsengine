@@ -13,6 +13,7 @@ import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ActiveProfiles;
@@ -42,12 +43,18 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Autowired
     ContextService contextService;
 
+    private static boolean isInited = false;
+
     @Before
     public void waitForLoad(){
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if(!isInited) {
+            try {
+                System.out.println("waiting");
+                isInited = true;
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
