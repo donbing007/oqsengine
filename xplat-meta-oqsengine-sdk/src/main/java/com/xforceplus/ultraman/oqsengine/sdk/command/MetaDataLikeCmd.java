@@ -8,4 +8,6 @@ public interface MetaDataLikeCmd {
     String getBoId();
 
     String version();
+
+    void clearVersion();
 }

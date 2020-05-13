@@ -32,4 +32,9 @@ public class ConditionSearchCmd implements MetaDataLikeCmd{
     public ConditionQueryRequest getConditionQueryRequest() {
         return conditionQueryRequest;
     }
+
+    @Override
+    public void clearVersion() {
+        this.version = null;
+    }
 }

@@ -29,4 +29,8 @@ public class SingleQueryCmd implements MetaDataLikeCmd{
         return id;
     }
 
+    @Override
+    public void clearVersion() {
+        this.version = null;
+    }
 }
