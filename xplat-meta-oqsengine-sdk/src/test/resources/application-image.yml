@@ -3,6 +3,7 @@ xplat:
     sdk:
       override: true
       enabled: true
+      stopverisoned: true
 
   meta:
     oqsengine:

@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 
 /**
  * module event listener
@@ -39,6 +40,7 @@ public class ModuleEventListener {
 
     }
 
+    @Async
     @EventListener(MetadataModuleVersionMissingEvent.class)
     public void requestMetadata(MetadataModuleVersionMissingEvent event){
 

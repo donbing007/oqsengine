@@ -29,4 +29,9 @@ public class SingleDeleteCmd implements MetaDataLikeCmd{
     public String getId() {
         return id;
     }
+
+    @Override
+    public void clearVersion() {
+        this.version = null;
+    }
 }

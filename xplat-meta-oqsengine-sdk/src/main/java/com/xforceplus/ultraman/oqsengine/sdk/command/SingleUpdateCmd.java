@@ -39,4 +39,9 @@ public class SingleUpdateCmd implements MetaDataLikeCmd{
     public Map<String, Object> getBody() {
         return body;
     }
+
+    @Override
+    public void clearVersion() {
+        this.version = null;
+    }
 }
