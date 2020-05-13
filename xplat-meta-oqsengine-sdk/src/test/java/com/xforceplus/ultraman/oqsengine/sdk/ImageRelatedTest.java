@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ActiveProfiles;
@@ -41,10 +42,17 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Autowired
     ContextService contextService;
 
+    @Before
+    public void waitForLoad(){
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
     public void testFindByParentEntityTicket() throws InterruptedException {
-
-        Thread.sleep(10000);
 
         Optional<EntityClass> ticket = entityService.loadByCode("ticket");
         Optional<EntityClass> ticketInvoice = entityService.loadByCode("ticketInvoice");
@@ -70,7 +78,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void testSelectByCode() throws InterruptedException {
-        Thread.sleep(10000);
 
         Optional<EntityClass> baseBill = entityService.loadByCode("baseBill");
         assertTrue("baseBill here", baseBill.isPresent());
@@ -78,7 +85,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void testConditionFind() throws InterruptedException {
-        Thread.sleep(10000);
 
         Optional<EntityClass> imageBill = entityService.loadByCode("image");
         assertTrue("image is present", imageBill.isPresent());
@@ -110,7 +116,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void testSaveImageWithDate() throws InterruptedException {
-        Thread.sleep(10000);
 
         Optional<EntityClass> image = entityService.loadByCode("image");
         AssertionErrors.assertTrue("image is present", image.isPresent());
@@ -130,8 +135,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void testUpdateAndDelete() throws InterruptedException {
-
-        Thread.sleep(10000);
 
         Optional<EntityClass> testBill = entityService.loadByCode("testbill");
         Optional<EntityClass> testBillSub = entityService.loadByCode("testbillsub");
@@ -169,8 +172,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Test
     public void exShouldReturnChildId() throws InterruptedException {
 
-        Thread.sleep(10000);
-
         Optional<EntityClass> testBillSub = entityService.loadByCode("testbillsub");
 
         Optional<EntityClass> testBill = entityService.loadByCode("testbill");
@@ -207,7 +208,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void testDecimal() throws InterruptedException {
-        Thread.sleep(10000);
 
         Optional<EntityClass> testBillSub = entityService.loadByCode("testbillsub");
 
@@ -250,8 +250,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Test
     public void testFindInIds() throws InterruptedException {
 
-        Thread.sleep(10000);
-
         Optional<EntityClass> ticket = entityService.loadByCode("ticket");
 
         Map<String, Object> objectMap = new HashMap<>();
@@ -287,8 +285,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void testInCondition() throws InterruptedException {
-
-        Thread.sleep(10000);
 
         Optional<EntityClass> ticket = entityService.loadByCode("ticket");
 
@@ -339,7 +335,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void testSystemProperties() throws InterruptedException {
-        Thread.sleep(10000);
 
         setupContext();
 
@@ -398,8 +393,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Test
     public void testParentUpdateAndSearch() throws InterruptedException {
 
-        Thread.sleep(10000);
-
         Optional<EntityClass> entityOpt = entityService.loadByCode("ticketInvoice");
         String qstr = "{'tax_amount':'0.0','tenant_id':'1203260024735584256','paper_drew_date':'20200318','exception_status':'0','amount_without_tax':'0.0','batch_no':'1','create_time':'1584522310130','create_user_name':'荣颖','ticket_code':'ticketInvoice','invoice_no':'07612455','warning_status':'0','purchaser_tax_no':'91370000661397973Y','amount_with_tax':'0.0','invoice_code':'3500171130','exception_info':'','seller_name':'乐普艺术陶瓷有限公司','seller_tax_no':'91350583741673616C','purchaser_name':'山东小珠山建设发展有限公司','is_public':'0',";
         String hstr = "'create_user_id':'1214481717915123712','image_id':'6645968161583661057','warning_info':'','invoice_sheet':'1','invoice_type':'s','x_point':0,'y_point':0,'width':0,'height':0,'angle':0}";
@@ -429,7 +422,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void testEq() throws InterruptedException {
-        Thread.sleep(10000);
 
         Optional<EntityClass> entityOpt = entityService.loadByCode("salesBill");
         Optional<EntityClass> parentOp = entityService.loadByCode("baseBill");
@@ -527,7 +519,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void testSystemOverride() throws InterruptedException {
-        Thread.sleep(10000);
 
         setupContext();
         Optional<EntityClass> entityOpt = entityService.loadByCode("baseBill");
@@ -549,8 +540,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void testLabelQuery() throws InterruptedException {
-
-        Thread.sleep(10000);
 
         setupContext();
 
@@ -580,7 +569,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void testRecordError() throws InterruptedException {
-        Thread.sleep(10000);
 
         setupContext();
         Optional<EntityClass> entityOpt = entityService.loadByCode("ticketAttachment");
@@ -598,7 +586,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void findAllEntities() throws InterruptedException {
-        Thread.sleep(10000);
 
         entityService.getEntityClasss().forEach(System.out::println);
 
@@ -606,7 +593,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Test
     public void searchLabel() throws InterruptedException{
-        Thread.sleep(10000);
 
         Optional<EntityClass> label = entityService.loadByCode("ticketAttachment");
 
