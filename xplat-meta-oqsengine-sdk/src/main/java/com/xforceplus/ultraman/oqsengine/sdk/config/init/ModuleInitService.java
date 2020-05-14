@@ -16,6 +16,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * module grpc init service
@@ -44,6 +45,9 @@ public class ModuleInitService implements SmartInitializingSingleton {
 
     @Value("${xplat.oqsengine.sdk.init-time:10}")
     private Integer time;
+
+    @Value("${xplat.oqsengine.sdk.init-timeout:30}")
+    private Integer timeout;
 
     @Override
     public void afterSingletonsInstantiated() {
@@ -75,7 +79,7 @@ public class ModuleInitService implements SmartInitializingSingleton {
 
         logger.info("------- Waiting For Module init expected max module size {} max waiting time {}s-------", size, time);
         try {
-            countDownLatch.await();
+            countDownLatch.await(timeout, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
