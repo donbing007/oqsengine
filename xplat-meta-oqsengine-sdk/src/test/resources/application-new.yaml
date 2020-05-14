@@ -1,0 +1,17 @@
+xplat:
+  oqsengine:
+    sdk:
+      override: true
+      enabled: true
+      stopverisoned: true
+      initsize: 1
+
+  meta:
+    oqsengine:
+      permissions:
+        tenant:
+        app-id: 1258214304045776897
+        env: 0
+logging:
+  level:
+    com.xforceplus.ultraman.oqsengine.sdk: debug

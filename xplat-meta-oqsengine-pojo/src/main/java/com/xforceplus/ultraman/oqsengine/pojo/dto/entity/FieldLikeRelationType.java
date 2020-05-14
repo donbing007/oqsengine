@@ -30,7 +30,7 @@ public enum FieldLikeRelationType {
 
     MULTI_VALUES("multivalues", rel -> {
 
-        return toField(rel, FieldType.STRINGS, "ids", true, false, true);
+        return toField(rel, FieldType.STRINGS, "id", true, false, true);
     }, true);
 
     private String name;

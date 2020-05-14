@@ -284,7 +284,7 @@ public class EntityServiceNewTest {
         System.out.println(entityClassReal);
 
         Map<String, Object> maps = new HashMap<>();
-        maps.put("rel1.ids", "1,2");
+        maps.put("rel1.id", "1,2");
 
         Long id = entityService.create(entityClassReal, maps).get();
 
@@ -292,7 +292,7 @@ public class EntityServiceNewTest {
 
         System.out.println(entityService.findByCondition(entityClassReal
                 , new RequestBuilder()
-                    .field("rel1.ids", ConditionOp.in, "1")
+                    .field("rel1.id", ConditionOp.in, "1")
                     .build()));
     }
 
