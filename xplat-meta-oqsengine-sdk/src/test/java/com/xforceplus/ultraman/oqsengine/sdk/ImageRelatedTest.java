@@ -602,7 +602,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         Optional<EntityClass> label = entityService.loadByCode("ticketAttachment");
 
         Map<String, Object> inputMap = new HashMap<>();
-        inputMap.put("label.ids", "1234");
+        inputMap.put("label.id", "1234");
 
         Long id = entityService.create(label.get(), inputMap).get();
 
