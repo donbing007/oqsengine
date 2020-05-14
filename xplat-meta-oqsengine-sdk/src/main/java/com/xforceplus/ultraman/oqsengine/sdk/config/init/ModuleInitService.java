@@ -9,13 +9,10 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository
 import com.xforceplus.xplat.galaxy.grpc.client.LongConnect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -70,7 +67,7 @@ public class ModuleInitService implements SmartInitializingSingleton {
                     publisher.publishEvent(event);
                     logger.info("dispatched module ");
 
-                    if(countDownLatch.getCount() > 0){
+                    if (countDownLatch.getCount() > 0) {
                         logger.info("first Modules lock count down");
                         countDownLatch.countDown();
                     }
