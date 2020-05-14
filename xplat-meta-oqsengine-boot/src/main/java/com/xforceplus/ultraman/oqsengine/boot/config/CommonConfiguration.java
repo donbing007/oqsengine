@@ -85,16 +85,43 @@ public class CommonConfiguration {
         return storageStrategyFactory;
     }
 
-    @Bean
-    public ExecutorService threadPool(@Value("${threadPool.size:0}") int size) {
-        if (size == 0) {
-            size = Runtime.getRuntime().availableProcessors() + 1;
+    @Bean("ioThreadPool")
+    public ExecutorService ioThreadPool(
+        @Value("${threadPool.io.worker:0}") int worker, @Value("${threadPool.io.queue:500}") int queue) {
+        int useWorker = worker;
+        int useQueue = queue;
+        if (useWorker == 0) {
+            useWorker = Runtime.getRuntime().availableProcessors() + 1;
         }
 
-        return new ThreadPoolExecutor(size, size,
+        if (useQueue < 500) {
+            useQueue = 500;
+        }
+
+        return buildThreadPool(useWorker, useQueue, "oqsengine-io", false);
+    }
+
+    @Bean("callThreadPool")
+    public ExecutorService callThreadPool(
+        @Value("${threadPool.call.worker:0}") int worker, @Value("${threadPool.call.queue:500}") int queue) {
+        int useWorker = worker;
+        int useQueue = queue;
+        if (useWorker == 0) {
+            useWorker = Runtime.getRuntime().availableProcessors() + 1;
+        }
+
+        if (useQueue < 500) {
+            useQueue = 500;
+        }
+
+        return buildThreadPool(useWorker, useQueue, "oqsengine-call", false);
+    }
+
+    private ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {
+        return new ThreadPoolExecutor(worker, worker,
             0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(500),
-            ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
+            new ArrayBlockingQueue<>(queue),
+            ExecutorHelper.buildNameThreadFactory(namePrefix, daemon),
             new ThreadPoolExecutor.AbortPolicy()
         );
     }

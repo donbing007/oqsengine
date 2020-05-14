@@ -67,7 +67,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Resource
     private IndexStorage indexStorage;
 
-    @Resource
+    @Resource(name = "ioThreadPool")
     private ExecutorService threadPool;
 
     private int maxJoinEntityNumber;

@@ -57,7 +57,7 @@ public class SQLMasterStorage implements MasterStorage {
     @Resource(name = "masterStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
 
-    @Resource
+    @Resource(name = "ioThreadPool")
     private ExecutorService threadPool;
 
     private long queryTimeout;
@@ -141,6 +141,7 @@ public class SQLMasterStorage implements MasterStorage {
                 throw new SQLException("Query failed, timeout.");
             }
         } catch (InterruptedException e) {
+            throw new SQLException(e.getMessage(), e);
         }
 
         List<IEntity> results = new ArrayList<>(ids.size());

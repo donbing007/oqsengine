@@ -9,6 +9,7 @@ import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.annotation.Resource;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -21,9 +22,22 @@ import java.util.concurrent.ExecutorService;
 @Configuration
 public class MetricsConfiguration {
 
+    @Resource(name = "ioThreadPool")
+    private ExecutorService ioThreadPool;
+
+    @Resource(name = "callThreadPool")
+    private ExecutorService callThreadPool;
+
     @Bean
-    public ExecutorServiceMetrics executorServiceMetrics(ExecutorService threadPool) {
-        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(threadPool, MetricsDefine.PREFIX, Tags.empty());
+    public ExecutorServiceMetrics ioExecutorServiceMetrics() {
+        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(ioThreadPool, MetricsDefine.PREFIX, Tags.empty());
+        esm.bindTo(Metrics.globalRegistry);
+        return esm;
+    }
+
+    @Bean
+    public ExecutorServiceMetrics callExecutorServiceMetrics() {
+        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(callThreadPool, MetricsDefine.PREFIX, Tags.empty());
         esm.bindTo(Metrics.globalRegistry);
         return esm;
     }
