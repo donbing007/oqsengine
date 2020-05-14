@@ -1,89 +1,88 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-    name: {{ template "oqsengine.fullname" . }}-configmap
-    labels:
-        app: {{ template "oqsengine.name" . }}
-        chart: {{ template "oqsengine.chart" . }}
-        release: {{ .Release.Name }}
-        heritage: {{ .Release.Service }}
+  name: {{ template "oqsengine.fullname" . }}-configmap
+  labels:
+    app: {{ template "oqsengine.name" . }}
+    chart: {{ template "oqsengine.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 data:
-    application.yml: |
-        instance:
-          type: statefulset
-          id: 0
-        server:
-          port: {{ .Values.service.port.http }}
-        grpc:
-          server:
-            port: {{ .Values.service.port.grpc }}
-        logging:
-          level:
-            root: {{ .Values.logger.level }}
-        management:
-          health:
-            redis:
-              enabled: false
-          endpoints:
-            enabled-by-default: false
-          web:
-            exposure:
-                include: "*"
-          endpoint:
-            health:
-              enabled: true
-              show-details: never
-            shutdown:
-              enabled: true
-            info:
-              enabled: true
-            prometheus:
-              enabled: true
-        spring:
-          application:
-            name: "oqsengine"
-        transaction:
-        timeoutMs: {{ .Values.storage.transaction.timeoutMs | default "2000" }}
-        threadPool:
-        io:
-          worker: {{ .Values.storage.threadPool.io.worker | default "0" }}
-          queue: {{ .Values.storage.threadPool.io.queue | default "1000" }}
-        call:
-          worker: {{ .Values.storage.threadPool.call.worker | default "0" }}
-          queue: {{ .Values.storage.threadPool.call.queue | default "500" }}
-        storage:
-          timeoutMs:
-            query: {{ .Values.storage.timeoutMs.query | default "3000" }}
-          master:
-          name: {{ .Values.storage.master.name | default "oqsbigentity" | quote }}
-            shard:
-              table:
-              enabled: {{ .Values.storage.master.shard.table.enabled | default "false" }}
-                size: {{ .Values.storage.master.shard.table.size | default "3" }}
-          index:
-          name: {{ .Values.storage.index.name | default "oqsindex" | quote }}
-          undo:
-          store: {{ .Values.storage.undo.store | default "simple" |quote }}
-
-    oqsengine-ds.conf: |
-        {
-          "dataSources": {
-            "index": {
-              "write": [
-{{ .Values.datasource.index.write | indent 17 }}
-              ],
-              "search": [
+  application.yml: |
+    instance:
+      type: statefulset
+      id: 0
+    server:
+      port: {{ .Values.service.port.http }}
+    grpc:
+      server:
+        port: {{ .Values.service.port.grpc }}
+    logging:
+      level:
+        root: {{ .Values.logger.level }}
+    management:
+      health:
+        redis:
+          enabled: false
+      endpoints:
+        enabled-by-default: false
+      web:
+        exposure:
+            include: "*"
+      endpoint:
+        health:
+          enabled: true
+          show-details: never
+        shutdown:
+          enabled: true
+        info:
+          enabled: true
+        prometheus:
+          enabled: true
+    spring:
+      application:
+        name: "oqsengine"
+    transaction:
+      timeoutMs: {{ .Values.storage.transaction.timeoutMs | default "2000" }}
+    threadPool:
+      io:
+        worker: {{ .Values.storage.threadPool.io.worker | default "0" }}
+        queue: {{ .Values.storage.threadPool.io.queue | default "1000" }}
+      call:
+        worker: {{ .Values.storage.threadPool.call.worker | default "0" }}
+        queue: {{ .Values.storage.threadPool.call.queue | default "500" }}
+    storage:
+      timeoutMs:
+        query: {{ .Values.storage.timeoutMs.query | default "3000" }}
+      master:
+        name: {{ .Values.storage.master.name | default "oqsbigentity" | quote }}
+        shard:
+          table:
+          enabled: {{ .Values.storage.master.shard.table.enabled | default "false" }}
+            size: {{ .Values.storage.master.shard.table.size | default "3" }}
+      index:
+        name: {{ .Values.storage.index.name | default "oqsindex" | quote }}
+      undo:
+        store: {{ .Values.storage.undo.store | default "simple" |quote }}
+  oqsengine-ds.conf: |
+    {
+      "dataSources": {
+        "index": {
+          "write": [
+  {{ .Values.datasource.index.write | indent 17 }}
+],
+"search": [
 {{ .Values.datasource.index.search | indent 17 }}
-              ]
-            },
-          "master": [
+]
+},
+"master": [
 {{ .Values.datasource.master | indent 14 }}
-          ]
-        }
-        akka {
-          loglevel = "INFO"
-        }
-        }
+]
+}
+  akka {
+  loglevel = "INFO"
+  }
+  }
 
 
 
