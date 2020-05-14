@@ -50,6 +50,27 @@ public class EntityControllerTest extends ContextWareBaseTest {
 
 
     @Test
+    public void testQueryWired() throws Exception {
+
+        Thread.sleep(10000);
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                post("/bos/1260142973288783874/entities/query?v=0.0.6")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN)
+                        .characterEncoding("utf-8")
+                        .content("{\"sort\":[],\"entity\":{\"fields\":[\"name\",\"age\",\"address\",\"id\"],\"entities\":[]},\"pageNo\":1,\"pageSize\":20,\"startFrom\":null,\"conditions\":{\"fields\":[],\"entities\":[]}}")
+
+
+        ).andDo(print()).andReturn();
+
+        System.out.println(mvcResult.getResponse().getContentAsString(StandardCharsets.UTF_8));
+    }
+
+
+
+
+    @Test
     public void testQueryLeftJoin() throws Exception  {
 
         Thread.sleep(10000);

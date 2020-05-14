@@ -4,6 +4,7 @@ xplat:
       override: true
       enabled: true
       stopverisoned: true
+      initsize: 1
 
   meta:
     oqsengine:

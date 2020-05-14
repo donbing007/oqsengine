@@ -37,8 +37,6 @@ public class EntityControllerTestForImage extends ContextWareBaseTest{
     @Test
     public void  testQueryWithImage() throws Exception{
 
-        Thread.sleep(5000);
-
         MvcResult mvcResult = this.mockMvc.perform(
                 post("/bos/1227069312661626882/entities/query?v=0.0.6")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -48,8 +46,6 @@ public class EntityControllerTestForImage extends ContextWareBaseTest{
         ).andDo(print()).andReturn();
 
         System.out.println(mvcResult.getResponse().getContentAsString(StandardCharsets.UTF_8));
-
-        Thread.sleep(10000);
 
 
         MvcResult mvcResult2 = this.mockMvc.perform(
