@@ -3,6 +3,7 @@ xplat:
     sdk:
       override: true
       enabled: true
+      initsize: 3
 
   meta:
     oqsengine:
@@ -13,3 +14,7 @@ xplat:
 spring:
   application:
     name: sdk-test
+
+logging:
+  level:
+    com.xforceplus.ultraman: debug

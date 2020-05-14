@@ -50,20 +50,8 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Autowired
     MetadataRepository store;
 
-    private static boolean isInited = false;
-
     @Before
     public void waitForLoad(){
-        if(!isInited) {
-            try {
-                System.out.println("waiting");
-                isInited = true;
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
         System.out.println(store.currentVersion().getVersionMapping());
         store.findAllEntities().stream().map(x -> x.code()).forEach(System.out::println);
     }
