@@ -14,6 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
 /**
  * module event listener
  */
@@ -36,17 +40,22 @@ public class ModuleEventListener {
     @Async
     @EventListener(MetadataModuleGotEvent.class)
     public void saveMetadata(MetadataModuleGotEvent event){
-        logger.info("Got Module {}", event);
-        store.save(event.getResponse(), event.getRequest().getTenantId(), event.getRequest().getAppId());
-        logger.info("Module saved ");
-        System.out.println(store.currentVersion().getVersionMapping());
-        store.findAllEntities().stream().map(x -> x.code()).forEach(System.out::println);
+
+
+        List<ModuleUpResult> moduleUpResults = Optional.ofNullable(event.getResponse()).orElseGet(Collections::emptyList);
+
+        moduleUpResults.forEach(module -> {
+            logger.debug("Got Module {}", event);
+            store.save(module, event.getRequest().getTenantId(), event.getRequest().getAppId());
+            logger.info("Module saved ");
+        });
     }
 
     @Async
     @EventListener(MetadataModuleVersionMissingEvent.class)
     public void requestMetadata(MetadataModuleVersionMissingEvent event){
 
+        logger.debug("Got Module Missing {}", event);
         Base.Authorization request = com.xforceplus
                 .ultraman.metadata.grpc.Base.Authorization.newBuilder()
                 .setAppId(config.getAppId())
@@ -63,6 +72,8 @@ public class ModuleEventListener {
                 .addAuthorization(request)
                 .build()).toCompletableFuture().join();
 
+        logger.debug("Got Versioned Module {}", result);
         repository.save(result, config.getTenant(), config.getAppId());
+        logger.debug("Versioned Module saved {}", Optional.ofNullable(result).map(x -> x.getVersion()).orElseGet(() -> "none"));
     }
 }

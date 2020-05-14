@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.sdk.event;
 import com.xforceplus.ultraman.metadata.grpc.Base;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 
+import java.util.List;
+
 /**
  * a module is got
  */
@@ -10,26 +12,27 @@ public class MetadataModuleGotEvent {
 
     private Base.Authorization request;
 
-    private ModuleUpResult response;
+    private List<ModuleUpResult> modules;
 
-    public MetadataModuleGotEvent(Base.Authorization request, ModuleUpResult response) {
+    public MetadataModuleGotEvent(Base.Authorization request, List<ModuleUpResult> modules) {
         this.request = request;
-        this.response = response;
+        this.modules = modules;
     }
 
     public Base.Authorization getRequest() {
         return request;
     }
 
-    public ModuleUpResult getResponse() {
-        return response;
+    public List<ModuleUpResult> getResponse() {
+        return modules;
     }
+
 
     @Override
     public String toString() {
         return "MetadataModuleGotEvent{" +
                 "request=" + request +
-                ", response=" + response +
+                ", modules=" + modules +
                 '}';
     }
 }

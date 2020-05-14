@@ -430,6 +430,32 @@ public class EntityServiceNewTest {
     }
 
     @Test
+    public void testConcurrentCurrentVersion() throws InterruptedException {
+
+        CountDownLatch latch = new CountDownLatch(20);
+
+        //SAVE Threads
+        List<Thread> collect1 = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
+
+            metadataRepository.save(manyToOne(), "1", "1");
+            latch.countDown();
+
+        })).collect(Collectors.toList());
+
+        //READ Threads
+        List<Thread> collect2 = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
+
+            System.out.println(metadataRepository.load("1", "1", "1"));
+            latch.countDown();
+        })).collect(Collectors.toList());
+
+        collect1.forEach(Thread::start);
+        collect2.forEach(Thread::start);
+
+        latch.await();
+    }
+
+    @Test
     public void testConcurrent() throws InterruptedException {
 
 //        ScheduledExecutorService scheduledExecutorService =
@@ -460,7 +486,7 @@ public class EntityServiceNewTest {
         //READ Threads
         List<Thread> collect2 = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
 
-            System.out.println(metadataRepository.load("1", "1", "1"));
+            System.out.println(metadataRepository.load("1", "1", "1", "0.0.2"));
             latch.countDown();
         })).collect(Collectors.toList());
 
