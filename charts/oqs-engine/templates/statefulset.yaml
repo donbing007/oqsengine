@@ -88,8 +88,8 @@ volumes:
       name: {{ template "oqsengine.fullname" . }}-configmap
 affinity:
   {{- if .Values.affinity }}
-    {{ toYaml .Values.affinity | indent 14 }}
-    {{- else }}
+  {{ toYaml .Values.affinity | indent 14 }}
+  {{- else }}
 podAntiAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:
     - topologyKey: "kubernetes.io/hostname"
@@ -101,8 +101,8 @@ podAntiAffinity:
   {{- with .Values.nodeSelector }}
 nodeSelector:
   {{ toYaml . | indent 14 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
+  {{- end }}
+  {{- with .Values.tolerations }}
 tolerations:
   {{ toYaml . | indent 14 }}
-    {{- end }}
+  {{- end }}
