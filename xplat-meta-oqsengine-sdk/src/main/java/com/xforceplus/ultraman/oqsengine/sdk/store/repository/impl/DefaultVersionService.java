@@ -5,16 +5,22 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.repository.VersionService;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.apache.metamodel.UpdateableDataContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 /**
  * default version service
+ * TODO using read write lock
  */
 public class DefaultVersionService implements VersionService {
+
+    private Logger logger = LoggerFactory.getLogger(VersionService.class);
 
     /**
      * set long is not thread-safe
@@ -34,9 +40,29 @@ public class DefaultVersionService implements VersionService {
 
     private ApplicationEventPublisher publisher;
 
+    private ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+
     public DefaultVersionService(int versionSize, ApplicationEventPublisher eventPublisher) {
         this.versionSize = versionSize;
         this.publisher = eventPublisher;
+    }
+
+    private <T> T read(Supplier<T> supplier) {
+        rwLock.readLock().lock();
+        try {
+            return supplier.get();
+        } finally {
+            rwLock.readLock().unlock();
+        }
+    }
+
+    private void write(Supplier<Void> supplier) {
+        rwLock.writeLock().lock();
+        try {
+            supplier.get();
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     /**
@@ -80,7 +106,7 @@ public class DefaultVersionService implements VersionService {
     }
 
     @Override
-    public UpdateableDataContext getVersionedDCForBoByCode(String code, String version) {
+    public synchronized UpdateableDataContext getVersionedDCForBoByCode(String code, String version) {
         List<Tuple2<Long, String>> versionedList = findByCode(code);
 
         if (versionedList == null) {
@@ -136,7 +162,7 @@ public class DefaultVersionService implements VersionService {
     }
 
     @Override
-    public UpdateableDataContext getCurrentVersionDCForBoById(Long id) {
+    public synchronized UpdateableDataContext getCurrentVersionDCForBoById(Long id) {
         LinkedList<Tuple2<Long, String>> versionedList = findById(id);
 
 
@@ -157,27 +183,31 @@ public class DefaultVersionService implements VersionService {
     }
 
     @Override
-    public UpdateableDataContext getCurrentVersionDCForBoByCode(String code) {
+    public synchronized UpdateableDataContext getCurrentVersionDCForBoByCode(String code) {
 
+        logger.debug("select code {}" , code);
         LinkedList<Tuple2<Long, String>> versionedList = findByCode(code);
         if (versionedList == null) {
             /**
              * not init
              */
+            logger.debug("current no such version {}" , code);
             return null;
         }
 
         Tuple2<Long, String> last = versionedList.getLast();
 
         if (last != null) {
+            logger.debug("got last version {} for {}" , code, last._2());
             return this.getVersionedDCForModule(last._1(), last._2());
         }
 
+        logger.debug("last version is empty {}" , code);
         return null;
     }
 
     @Override
-    public UpdateableDataContext getVersionedDCForModule(long id, String version) {
+    public synchronized UpdateableDataContext getVersionedDCForModule(long id, String version) {
         LinkedList<VersionedModule> versionedModules = currentVersionForModule.get(id);
         return versionedModules.stream().filter(x -> x.getVersion().equals(version))
                 .findAny().map(x -> x.getRingDC().getDc()).orElse(null);
@@ -239,7 +269,7 @@ public class DefaultVersionService implements VersionService {
     }
 
     @Override
-    public void initVersionedDC(int versionSize, Supplier<UpdateableDataContext> dcSupplier) {
+    public synchronized void initVersionedDC(int versionSize, Supplier<UpdateableDataContext> dcSupplier) {
         if (versionSize < 0) {
             versionSize = 1;
         }
@@ -258,7 +288,7 @@ public class DefaultVersionService implements VersionService {
     }
 
     @Override
-    public Map<Long, String> getCurrentVersion() {
+    public synchronized Map<Long, String> getCurrentVersion() {
         return Collections.unmodifiableMap(this.currentModuleVersionMap);
     }
 
@@ -277,7 +307,7 @@ public class DefaultVersionService implements VersionService {
     }
 
     @Override
-    public Map<BoNode, LinkedList<Tuple2<Long, String>>> getBoModuleMapping() {
+    public synchronized Map<BoNode, LinkedList<Tuple2<Long, String>>> getBoModuleMapping() {
         return Collections.unmodifiableMap(boModuleMapping);
     }
 }

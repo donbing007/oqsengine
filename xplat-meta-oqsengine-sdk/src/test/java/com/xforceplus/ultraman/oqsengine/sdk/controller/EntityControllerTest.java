@@ -50,6 +50,27 @@ public class EntityControllerTest extends ContextWareBaseTest {
 
 
     @Test
+    public void testQueryWired() throws Exception {
+
+        Thread.sleep(10000);
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                post("/bos/1260142973288783874/entities/query?v=0.0.6")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN)
+                        .characterEncoding("utf-8")
+                        .content("{\"sort\":[],\"entity\":{\"fields\":[\"name\",\"age\",\"address\",\"id\"],\"entities\":[]},\"pageNo\":1,\"pageSize\":20,\"startFrom\":null,\"conditions\":{\"fields\":[],\"entities\":[]}}")
+
+
+        ).andDo(print()).andReturn();
+
+        System.out.println(mvcResult.getResponse().getContentAsString(StandardCharsets.UTF_8));
+    }
+
+
+
+
+    @Test
     public void testQueryLeftJoin() throws Exception  {
 
         Thread.sleep(10000);
@@ -101,7 +122,6 @@ public class EntityControllerTest extends ContextWareBaseTest {
         ).andDo(print()).andReturn();
 
         System.out.println(mvcResult.getResponse().getContentAsString(StandardCharsets.UTF_8));
-
     }
 
     @Test
@@ -115,6 +135,22 @@ public class EntityControllerTest extends ContextWareBaseTest {
                         .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN)
                         .characterEncoding("utf-8")
                         .content("{\"sort\":[],\"entity\":{\"fields\":[\"name\",\"age\",\"address\",\"city\",\"id\"],\"entities\":[{\"code\":\"personOTOcity\",\"fields\":[\"name\",\"code\",\"un_code\",\"id\"]}]},\"pageNo\":1,\"pageSize\":20,\"startFrom\":null,\"conditions\":{\"fields\":[],\"entities\":[{\"code\":\"personOTOcity\",\"fields\":[{\"code\":\"name\",\"operation\":\"eq\",\"value\":[\"大连\"]}]}]}}")
+        ).andDo(print()).andReturn();
+
+        System.out.println(mvcResult.getResponse().getContentAsString(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    public void  testWiredQuery() throws Exception{
+
+        Thread.sleep(20000);
+
+        MvcResult mvcResult = this.mockMvc.perform(
+                post("/bos/1260142809153085442/entities/query?v=0.0.2")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN)
+                        .characterEncoding("utf-8")
+                        .content("{\"pageNo\":1,\"pageSize\":100,\"entity\":{\"fields\":[\"name\",\"id\"],\"entities\":[]},\"conditions\":{\"fields\":[],\"entities\":[]}}")
         ).andDo(print()).andReturn();
 
         System.out.println(mvcResult.getResponse().getContentAsString(StandardCharsets.UTF_8));

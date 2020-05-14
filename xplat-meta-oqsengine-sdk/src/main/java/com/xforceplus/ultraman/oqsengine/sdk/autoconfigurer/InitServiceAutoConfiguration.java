@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.CodeExtendedInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.DefaultSearchInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.MatchRouter;
+import com.xforceplus.ultraman.oqsengine.sdk.interceptor.VersionInterceptor;
 import com.xforceplus.ultraman.oqsengine.sdk.listener.ModuleEventListener;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.*;
@@ -263,5 +264,21 @@ public class InitServiceAutoConfiguration {
     @Bean
     public ModuleEventListener listener(){
         return new ModuleEventListener();
+    }
+
+
+    /**
+     * xplat:
+     *   oqsengine:
+     *     sdk:
+     *       override: true
+     *       enabled: true
+     *       verisoned: false
+     * @return
+     */
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.stopverisoned", matchIfMissing = true)
+    @Bean
+    public MessageDispatcherInterceptor<?> clearVersion(){
+        return new VersionInterceptor<>();
     }
 }

@@ -3,6 +3,8 @@ xplat:
     sdk:
       override: true
       enabled: true
+      stopverisoned: true
+      initsize: 1
 
   meta:
     oqsengine:
@@ -10,3 +12,6 @@ xplat:
         tenant:
         app-id: 5
         env: 0
+logging:
+  level:
+    com.xforceplus.ultraman.oqsengine.sdk: debug

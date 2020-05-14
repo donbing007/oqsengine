@@ -28,7 +28,13 @@ public class SingleCreateCmd implements MetaDataLikeCmd{
         return version;
     }
 
+    @Override
+    public void clearVersion() {
+        this.version = null;
+    }
+
     public Map<String, Object> getBody() {
         return body;
     }
+
 }

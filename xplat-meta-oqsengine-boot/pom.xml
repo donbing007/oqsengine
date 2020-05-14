@@ -73,11 +73,6 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
-            <groupId>de.invesdwin</groupId>
-            <artifactId>invesdwin-instrument</artifactId>
-            <version>1.0.8</version><!---project.version.invesdwin-instrument-->
-        </dependency>
-        <dependency>
             <groupId>com.spring4all</groupId>
             <artifactId>spring-boot-starter-swagger</artifactId>
             <exclusions>

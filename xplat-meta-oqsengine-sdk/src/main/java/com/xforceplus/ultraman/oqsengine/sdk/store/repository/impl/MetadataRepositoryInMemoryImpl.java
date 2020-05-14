@@ -382,7 +382,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 return Tuple.of(relation, entityClass);
             });
         });
-    }
+}
 
     @Override
     public Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode) {

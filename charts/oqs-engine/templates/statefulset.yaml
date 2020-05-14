@@ -1,108 +1,108 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-    name: {{ template "oqsengine.fullname" . }}
-    labels:
-        app: {{ template "oqsengine.name" . }}
-        chart: {{ template "oqsengine.chart" . }}
-        release: {{ .Release.Name }}
-        heritage: {{ .Release.Service }}
+  name: {{ template "oqsengine.fullname" . }}
+  labels:
+    app: {{ template "oqsengine.name" . }}
+    chart: {{ template "oqsengine.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
-    replicas: {{ .Values.replicaCount }}
-    selector:
-        matchLabels:
-            app: {{ template "oqsengine.name" . }}
-            release: {{ .Release.Name }}
-    podManagementPolicy: Parallel
-    template:
-        metadata:
-            labels:
-                app: {{ template "oqsengine.name" . }}
-                release: {{ .Release.Name }}
-            {{- with .Values.annotations }}
-            annotations:
-{{ toYaml . | indent 14 }}
-            {{- end }}
-        spec:
-            containers:
-                - name: {{ .Chart.Name }}
-                  image: "{{ .Values.image.repository }}:{{ template "image.tag" . }}"
-                  imagePullPolicy: {{ .Values.image.pullPolicy }}
-                  lifecycle:
-                      preStop:
-                          exec:
-                              command: ["/bin/sh","-c","curl","-X","POST","http://127.0.0.1:8086/actuator/shutdown"]
-                  env:
-                  {{- range .Values.environment }}
-                  {{- range $k,$v := .}}
-                    - name: {{ $k }}
-                      value: {{ $v |quote }}
-                  {{- end}}
-                  {{- end}}
-                  command: ["java"]
-                  args:
-                      - -jar
-                          {{- range .Values.jvm }}
-                      - {{ . }}
-                          {{- end }}
-                      - -Dds=/xplat/oqsengine-ds.conf
-                      - /xplat/xplat-meta-oqsengine.jar
-                      - --spring.config.location=/xplat/application.yml
-                  ports:
-                      - name: http-metrics
-                        containerPort: 8086
-                        protocol: TCP
-                      - name: grpc
-                        containerPort: 8081
-                        protocol: TCP
-                  volumeMounts:
-                      - mountPath: /xplat/application.yml
-                        name: config
-                        subPath: application.yml
-                      - mountPath: /xplat/oqsengine-ds.conf
-                        name: config
-                        subPath: oqsengine-ds.conf
-                  livenessProbe:
-                      httpGet:
-                          scheme: HTTP
-                          path: /actuator/health
-                          port: 8086
-                      initialDelaySeconds: 30
-                      periodSeconds: 60
-                      failureThreshold: 3
-                      timeoutSeconds: 30
-                  readinessProbe:
-                      httpGet:
-                          scheme: HTTP
-                          path: /actuator/health
-                          port: 8086
-                      initialDelaySeconds: 30
-                      periodSeconds: 6
-                      failureThreshold: 3
-                      timeoutSeconds: 30
-                  resources:
-{{ toYaml .Values.resources | indent 20 }}
-            volumes:
-                - name: config
-                  configMap:
-                      name: {{ template "oqsengine.fullname" . }}-configmap
-            affinity:
-            {{- if .Values.affinity }}
-{{ toYaml .Values.affinity | indent 14 }}
-            {{- else }}
-                podAntiAffinity:
-                    requiredDuringSchedulingIgnoredDuringExecution:
-                        - topologyKey: "kubernetes.io/hostname"
-                          labelSelector:
-                              matchLabels:
-                                  app: {{ template "oqsengine.name" . }}
-                                  release: {{ .Release.Name }}
-            {{- end }}
-            {{- with .Values.nodeSelector }}
-            nodeSelector:
-{{ toYaml . | indent 14 }}
-            {{- end }}
-            {{- with .Values.tolerations }}
-            tolerations:
-{{ toYaml . | indent 14 }}
-            {{- end }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "oqsengine.name" . }}
+      release: {{ .Release.Name }}
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app: {{ template "oqsengine.name" . }}
+        release: {{ .Release.Name }}
+      {{- with .Values.annotations }}
+      annotations:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ template "image.tag" . }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh","-c","curl","-X","POST","http://127.0.0.1:8086/actuator/shutdown"]
+        env:
+        {{- range .Values.environment }}
+        {{- range $k,$v := .}}
+        - name: {{ $k }}
+          value: {{ $v |quote }}
+        {{- end}}
+        {{- end}}
+        command: ["java"]
+        args:
+        - -jar
+          {{- range .Values.jvm }}
+        - {{ . }}
+          {{- end }}
+        - -Dds=/xplat/oqsengine-ds.conf
+        - /xplat/xplat-meta-oqsengine.jar
+        - --spring.config.location=/xplat/application.yml
+        ports:
+        - name: http-metrics
+          containerPort: 8086
+          protocol: TCP
+        - name: grpc
+          containerPort: 8081
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /xplat/application.yml
+          name: config
+          subPath: application.yml
+        - mountPath: /xplat/oqsengine-ds.conf
+          name: config
+          subPath: oqsengine-ds.conf
+        livenessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /actuator/health
+            port: 8086
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          failureThreshold: 3
+          timeoutSeconds: 30
+        readinessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /actuator/health
+            port: 8086
+          initialDelaySeconds: 30
+          periodSeconds: 6
+          failureThreshold: 3
+          timeoutSeconds: 30
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "oqsengine.fullname" . }}-configmap
+      affinity:
+      {{- if .Values.affinity }}
+{{ toYaml .Values.affinity | indent 8 }}
+      {{- else }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: "kubernetes.io/hostname"
+            labelSelector:
+            matchLabels:
+              app: {{ template "oqsengine.name" . }}
+              release: {{ .Release.Name }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+      {{- end }}

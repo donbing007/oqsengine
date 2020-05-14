@@ -67,6 +67,7 @@ public class UltPageInitService implements CommandLineRunner {
             }
         } catch (Exception e) {
             logger.info("init pages config faild");
+            logger.error("{}", e);
             throw new Exception(
                     String.format("init pages config faild,The url is '%s'.", url));
         }

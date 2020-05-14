@@ -28,6 +28,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
@@ -221,5 +222,13 @@ public class EntityServiceTest {
 
         System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.eq
                 , "1").build()));
+    }
+
+    @Test
+    public void testMultiValue(){
+
+        Optional<EntityClass> load = entityService.load("1260142892112224258");
+        boolean multiValues = load.get().relations().stream().anyMatch(x -> x.getRelationType().equals("MultiValues"));
+        assertTrue("hash multi", multiValues);
     }
 }

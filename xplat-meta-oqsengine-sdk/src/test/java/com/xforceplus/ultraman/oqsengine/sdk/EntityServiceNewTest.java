@@ -24,17 +24,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.client.RestTemplateAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.TENANT_ID;
@@ -51,6 +48,7 @@ import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKe
         , com.xforceplus.xplat.galaxy.framework.configuration.ContextConfiguration.class
         , RestTemplateAutoConfiguration.class
 })
+@EnableAsync
 public class EntityServiceNewTest {
 
     @Autowired
@@ -432,23 +430,70 @@ public class EntityServiceNewTest {
     }
 
     @Test
+    public void testConcurrentCurrentVersion() throws InterruptedException {
+
+        CountDownLatch latch = new CountDownLatch(20);
+
+        //SAVE Threads
+        List<Thread> collect1 = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
+
+            metadataRepository.save(manyToOne(), "1", "1");
+            latch.countDown();
+
+        })).collect(Collectors.toList());
+
+        //READ Threads
+        List<Thread> collect2 = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
+
+            System.out.println(metadataRepository.load("1", "1", "1"));
+            latch.countDown();
+        })).collect(Collectors.toList());
+
+        collect1.forEach(Thread::start);
+        collect2.forEach(Thread::start);
+
+        latch.await();
+    }
+
+    @Test
     public void testConcurrent() throws InterruptedException {
 
-        ScheduledExecutorService scheduledExecutorService =
-                Executors.newScheduledThreadPool(1);
+//        ScheduledExecutorService scheduledExecutorService =
+//                Executors.newScheduledThreadPool(10);
+//
+//
+//        ScheduledFuture scheduledFuture =
+//                scheduledExecutorService.scheduleAtFixedRate(() -> {
+//                    metadataRepository.save(manyToOne(), "1", "1");
+//                },5, 5, TimeUnit.SECONDS);
+//
+//        ScheduledFuture loadedFuture =
+//                scheduledExecutorService.scheduleAtFixedRate(() -> {
+//                    System.out.println(metadataRepository.load("1", "1", "1"));
+//                },5, 5, TimeUnit.SECONDS);
 
-        ScheduledFuture scheduledFuture =
-                scheduledExecutorService.scheduleAtFixedRate(() -> {
-                    metadataRepository.save(manyToOne(), "1", "1");
-                },5, 5, TimeUnit.SECONDS);
+        CountDownLatch latch = new CountDownLatch(20);
 
-        ScheduledFuture loadedFuture =
-                scheduledExecutorService.scheduleAtFixedRate(() -> {
-                    System.out.println(metadataRepository.loadByCode("1", "1", "main"));
-                },5, 5, TimeUnit.SECONDS);
+        //SAVE Threads
+        List<Thread> collect1 = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
+
+            metadataRepository.save(manyToOne(), "1", "1");
+            latch.countDown();
+
+        })).collect(Collectors.toList());
 
 
-        Thread.sleep(15000L);
+        //READ Threads
+        List<Thread> collect2 = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
+
+            System.out.println(metadataRepository.load("1", "1", "1", "0.0.2"));
+            latch.countDown();
+        })).collect(Collectors.toList());
+
+        collect1.forEach(Thread::start);
+        collect2.forEach(Thread::start);
+
+        latch.await();
     }
 
     @Test
@@ -519,7 +564,6 @@ public class EntityServiceNewTest {
 
         metadataRepository.save(manyToOneNew(), "1", "1");
         System.out.println(metadataRepository.load("1", "2", "10001"));
-
         System.out.println(metadataRepository.load("1", "2", "1", "0.0.5"));
     }
 }
