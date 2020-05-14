@@ -45,20 +45,25 @@ data:
         transaction:
         timeoutMs: {{ .Values.storage.transaction.timeoutMs | default "2000" }}
         threadPool:
-          size: {{ .Values.storage.threadPool.size | default "0" }}
+        io:
+          worker: {{ .Values.storage.threadPool.io.worker | default "0" }}
+          queue: {{ .Values.storage.threadPool.io.queue | default "1000" }}
+        call:
+          worker: {{ .Values.storage.threadPool.call.worker | default "0" }}
+          queue: {{ .Values.storage.threadPool.call.queue | default "500" }}
         storage:
           timeoutMs:
             query: {{ .Values.storage.timeoutMs.query | default "3000" }}
           master:
-            name: {{ .Values.storage.master.name | default "oqsbigentity" }}
+          name: {{ .Values.storage.master.name | default "oqsbigentity" | quote }}
             shard:
               table:
-                enabled: {{ .Values.storage.master.shard.table.enabled | default "true" }}
+              enabled: {{ .Values.storage.master.shard.table.enabled | default "false" }}
                 size: {{ .Values.storage.master.shard.table.size | default "3" }}
           index:
-            name: {{ .Values.storage.index.name | quote }}
+          name: {{ .Values.storage.index.name | default "oqsindex" | quote }}
           undo:
-            store: {{ .Values.storage.undo.store | quote }}
+          store: {{ .Values.storage.undo.store | default "simple" |quote }}
 
     oqsengine-ds.conf: |
         {

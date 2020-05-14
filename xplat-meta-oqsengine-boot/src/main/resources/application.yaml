@@ -18,7 +18,13 @@ transaction:
 
 threadPool:
   # 0 or not exist use cpu core + 1
-  size: 0
+  io:
+    worker: 0
+    queue: 500
+  # 0 or not exist use cpu core + 1
+  call:
+    worker: 0
+    queue: 1000
 
 storage:
   timeoutMs:

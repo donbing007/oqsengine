@@ -29,8 +29,6 @@ docker-build:
   script:
     - docker_build
     - chart_build
-  only:
-  - tags
     
 
 .auto_devops: &auto_devops |

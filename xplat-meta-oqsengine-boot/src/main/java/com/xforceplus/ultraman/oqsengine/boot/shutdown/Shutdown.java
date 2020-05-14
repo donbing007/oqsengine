@@ -30,8 +30,11 @@ public class Shutdown {
     @Resource
     private TransactionManager tm;
 
-    @Resource
-    private ExecutorService threadPool;
+    @Resource(name = "ioThreadPool")
+    private ExecutorService ioThreadPool;
+
+    @Resource(name = "callThreadPool")
+    private ExecutorService callThreadPool;
 
     @PreDestroy
     public void destroy() throws Exception {
@@ -41,7 +44,13 @@ public class Shutdown {
         tm.freeze();
 
         // wait shutdown
-        ExecutorHelper.shutdownAndAwaitTermination(threadPool, 3600);
+        logger.info("Start closing the IO worker thread.....");
+        ExecutorHelper.shutdownAndAwaitTermination(callThreadPool, 3600);
+        logger.info("Start closing the IO worker thread.....ok!");
+
+        logger.info("Start closing the call worker thread.....");
+        ExecutorHelper.shutdownAndAwaitTermination(ioThreadPool, 3600);
+        logger.info("Start closing the call worker thread.....ok!");
 
         // 每次等待时间(秒)
         final int waitTimeSec = 30;
