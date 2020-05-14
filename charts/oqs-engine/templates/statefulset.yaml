@@ -21,7 +21,7 @@ spec:
         release: {{ .Release.Name }}
       {{- with .Values.annotations }}
       annotations:
-  {{ toYaml . | indent 14 }}
+  {{ toYaml . | indent 8 }}
   {{- end }}
 spec:
   containers:
@@ -42,7 +42,7 @@ spec:
       command: ["java"]
       args:
         - -jar
-          {{- range .Values.jvm }}
+      {{- range .Values.jvm }}
         - {{ . }}
           {{- end }}
         - -Dds=/xplat/oqsengine-ds.conf
@@ -81,14 +81,14 @@ spec:
         failureThreshold: 3
         timeoutSeconds: 30
       resources:
-  {{ toYaml .Values.resources | indent 20 }}
+  {{ toYaml .Values.resources | indent 10 }}
 volumes:
   - name: config
     configMap:
       name: {{ template "oqsengine.fullname" . }}-configmap
 affinity:
   {{- if .Values.affinity }}
-  {{ toYaml .Values.affinity | indent 14 }}
+  {{ toYaml .Values.affinity | indent 8 }}
   {{- else }}
 podAntiAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:
@@ -100,9 +100,9 @@ podAntiAffinity:
   {{- end }}
   {{- with .Values.nodeSelector }}
 nodeSelector:
-  {{ toYaml . | indent 14 }}
+  {{ toYaml . | indent 8 }}
   {{- end }}
   {{- with .Values.tolerations }}
 tolerations:
-  {{ toYaml . | indent 14 }}
+  {{ toYaml . | indent 8 }}
   {{- end }}

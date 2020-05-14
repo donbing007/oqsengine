@@ -39,7 +39,6 @@ nodeSelector: {}
 
 tolerations: []
 
-affinity-enabled: false
 affinity: {}
 
 annotations:
