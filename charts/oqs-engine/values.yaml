@@ -62,7 +62,13 @@ logger:
 storage:
   threadPool:
     # 0 or not exist use cpu core + 1
-    size: 0
+    io:
+      worker: 0
+      queue: 500
+    # 0 or not exist use cpu core + 1
+    call:
+      worker: 0
+      queue: 1000
   transaction:
     # The transaction is valid for a period of time that will be rollback.
     timeoutMs: 3000
@@ -73,7 +79,7 @@ storage:
     shard:
       table:
         # Whether sub-tables are needed and the number of sub-tables.
-        enabled: true
+        enabled: false
         size: 1
   index:
     name: "oqsindex"

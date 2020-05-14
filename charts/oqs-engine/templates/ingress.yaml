@@ -4,14 +4,14 @@ kind: Ingress
 metadata:
   name: {{ .Release.Name }}
   labels:
-{{ include "service.labels.standard" . | indent 4 }}
+  {{ include "service.labels.standard" . | indent 4 }}
 spec:
   rules:
-  - host: {{ .Values.ingress.host }}
-    http:
-      paths:
-      - backend:
-          serviceName: {{ .Values.service.name }}
-          servicePort: {{ .Values.service.port }}
-        path: /
-{{- end }}
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - backend:
+              serviceName: {{ .Values.service.name }}
+              servicePort: {{ .Values.service.port }}
+            path: /
+  {{- end }}
