@@ -94,9 +94,9 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
           - topologyKey: "kubernetes.io/hostname"
             labelSelector:
-            matchLabels:
-              app: {{ template "oqsengine.name" . }}
-              release: {{ .Release.Name }}
+              matchLabels:
+                app: {{ template "oqsengine.name" . }}
+                release: {{ .Release.Name }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
