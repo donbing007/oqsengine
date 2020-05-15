@@ -30,14 +30,14 @@ public class MetricsConfiguration {
 
     @Bean
     public ExecutorServiceMetrics ioExecutorServiceMetrics() {
-        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(ioThreadPool, MetricsDefine.PREFIX, Tags.empty());
+        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(ioThreadPool, MetricsDefine.PREFIX + ".io", Tags.empty());
         esm.bindTo(Metrics.globalRegistry);
         return esm;
     }
 
     @Bean
     public ExecutorServiceMetrics callExecutorServiceMetrics() {
-        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(callThreadPool, MetricsDefine.PREFIX, Tags.empty());
+        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(callThreadPool, MetricsDefine.PREFIX + ".call", Tags.empty());
         esm.bindTo(Metrics.globalRegistry);
         return esm;
     }
