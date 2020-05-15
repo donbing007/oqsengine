@@ -37,7 +37,7 @@ public class EntityHelperTest {
         EntityField relDupField = new EntityField(2004L, "rel1Dup.id", FieldType.LONG);
         EntityField rel2Field = new EntityField(3001L, "rel2.id", FieldType.LONG);
         EntityField rel2DupField = new EntityField(3004L, "rel2Dup.id", FieldType.LONG);
-        EntityField rel3Field = new EntityField(4001L, "rel3.ids", FieldType.LONG);
+        EntityField rel3Field = new EntityField(4001L, "rel3.id", FieldType.LONG);
 
         Relation rel1 = new Relation("rel1", 2L
                 , "OneToOne"
