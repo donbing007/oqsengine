@@ -26,8 +26,8 @@ data:
               enabled: false
           endpoints:
             enabled-by-default: false
-          web:
-            exposure:
+            web:
+              exposure:
                 include: "*"
           endpoint:
             health:
