@@ -53,8 +53,6 @@ jvm:
 jmx:
   enabled: false
   port: 1099
-  ssl: false
-  authenticate: false
   hostname: "127.0.0.1"
 
 environment:
