@@ -10,7 +10,7 @@ public class GrpcServerProperties {
 
     private boolean enabled = true;
 
-    private String host = "localhost";
+    private String host = "0.0.0.0";
 
     private Integer port = 8081;
 
