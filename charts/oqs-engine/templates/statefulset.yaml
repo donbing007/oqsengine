@@ -45,6 +45,13 @@ spec:
           {{- range .Values.jvm }}
         - {{ . }}
           {{- end }}
+          {{- if .Values.jmx.enabled }}
+        - -Dcom.sun.management.jmxremote
+        - -Dcom.sun.management.jmxremote.ssl=false
+        - -Dcom.sun.management.jmxremote.authenticate=false
+        - -Dcom.sun.management.jmxremote.port={{ .Values.jmx.port | default "1099" }}
+        - -Djava.rmi.server.hostname={{ .Values.jmx.hostname | default "127.0.0.1" }}
+          {{- end }}
         - -Dds=/xplat/oqsengine-ds.conf
         - /xplat/xplat-meta-oqsengine.jar
         - --spring.config.location=/xplat/application.yml

@@ -48,9 +48,14 @@ annotations:
 
 jvm:
   - -server
-  - -version:gc
   - -XX:+UseParallelGC
-  - -XX:+PrintGCTimeStamps
+
+jmx:
+  enabled: false
+  port: 1099
+  ssl: false
+  authenticate: false
+  hostname: "127.0.0.1"
 
 environment:
   - JVM_HEAP_PERCENTAGE: 60
