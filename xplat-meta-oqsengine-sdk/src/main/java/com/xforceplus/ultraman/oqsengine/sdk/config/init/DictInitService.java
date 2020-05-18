@@ -39,6 +39,7 @@ public class DictInitService implements InitializingBean {
 
         LongConnect.safeSource(2, 20
                 , () -> client.checkStreaming(request))
+                .log("DictService")
                 .runWith(Sink.foreach(x -> {
                     dictLocalStore.save(x, request.getTenantId(), request.getAppId());
                 }), mat);

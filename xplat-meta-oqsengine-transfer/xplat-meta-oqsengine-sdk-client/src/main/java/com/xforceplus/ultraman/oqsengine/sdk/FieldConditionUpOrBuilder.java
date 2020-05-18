@@ -9,52 +9,64 @@ public interface FieldConditionUpOrBuilder extends
 
   /**
    * <code>string code = 1;</code>
+   * @return The code.
    */
-  String getCode();
+  java.lang.String getCode();
   /**
    * <code>string code = 1;</code>
+   * @return The bytes for code.
    */
   com.google.protobuf.ByteString
       getCodeBytes();
 
   /**
    * <code>.FieldConditionUp.Op operation = 2;</code>
+   * @return The enum numeric value on the wire for operation.
    */
   int getOperationValue();
   /**
    * <code>.FieldConditionUp.Op operation = 2;</code>
+   * @return The operation.
    */
-  FieldConditionUp.Op getOperation();
+  com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Op getOperation();
 
   /**
    * <code>repeated string values = 3;</code>
+   * @return A list containing the values.
    */
-  java.util.List<String>
+  java.util.List<java.lang.String>
       getValuesList();
   /**
    * <code>repeated string values = 3;</code>
+   * @return The count of values.
    */
   int getValuesCount();
   /**
    * <code>repeated string values = 3;</code>
+   * @param index The index of the element to return.
+   * @return The values at the given index.
    */
-  String getValues(int index);
+  java.lang.String getValues(int index);
   /**
    * <code>repeated string values = 3;</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the values at the given index.
    */
   com.google.protobuf.ByteString
       getValuesBytes(int index);
 
   /**
    * <code>.FieldUp field = 4;</code>
+   * @return Whether the field field is set.
    */
   boolean hasField();
   /**
    * <code>.FieldUp field = 4;</code>
+   * @return The field.
    */
-  FieldUp getField();
+  com.xforceplus.ultraman.oqsengine.sdk.FieldUp getField();
   /**
    * <code>.FieldUp field = 4;</code>
    */
-  FieldUpOrBuilder getFieldOrBuilder();
+  com.xforceplus.ultraman.oqsengine.sdk.FieldUpOrBuilder getFieldOrBuilder();
 }

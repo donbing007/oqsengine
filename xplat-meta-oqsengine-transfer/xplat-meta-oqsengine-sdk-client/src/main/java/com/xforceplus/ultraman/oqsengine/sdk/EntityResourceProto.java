@@ -77,7 +77,7 @@ public final class EntityResourceProto {
   private static  com.google.protobuf.Descriptors.FileDescriptor
       descriptor;
   static {
-    String[] descriptorData = {
+    java.lang.String[] descriptorData = {
       "\n\016transfer.proto\"\301\001\n\021SelectByCondition\022\031" +
       "\n\006entity\030\001 \001(\0132\t.EntityUp\022\016\n\006pageNo\030\002 \001(" +
       "\005\022\020\n\010pageSize\030\003 \001(\005\022!\n\nconditions\030\004 \001(\0132" +
@@ -134,84 +134,76 @@ public final class EntityResourceProto {
       ".ultraman.oqsengine.sdkB\023EntityResourceP" +
       "rotoP\001b\006proto3"
     };
-    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-        new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
-          public com.google.protobuf.ExtensionRegistry assignDescriptors(
-              com.google.protobuf.Descriptors.FileDescriptor root) {
-            descriptor = root;
-            return null;
-          }
-        };
-    com.google.protobuf.Descriptors.FileDescriptor
+    descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
-        }, assigner);
+        });
     internal_static_SelectByCondition_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_SelectByCondition_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_SelectByCondition_descriptor,
-        new String[] { "Entity", "PageNo", "PageSize", "Conditions", "Sort", "QueryFields", "Ids", });
+        new java.lang.String[] { "Entity", "PageNo", "PageSize", "Conditions", "Sort", "QueryFields", "Ids", });
     internal_static_ConditionsUp_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_ConditionsUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ConditionsUp_descriptor,
-        new String[] { "Fields", });
+        new java.lang.String[] { "Fields", });
     internal_static_FieldSortUp_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_FieldSortUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldSortUp_descriptor,
-        new String[] { "Code", "Order", "Field", });
+        new java.lang.String[] { "Code", "Order", "Field", });
     internal_static_FieldConditionUp_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_FieldConditionUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldConditionUp_descriptor,
-        new String[] { "Code", "Operation", "Values", "Field", });
+        new java.lang.String[] { "Code", "Operation", "Values", "Field", });
     internal_static_OperationResult_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_OperationResult_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_OperationResult_descriptor,
-        new String[] { "Code", "Message", "QueryResult", "TransactionResult", "AffectedRow", "Ids", "TotalRow", });
+        new java.lang.String[] { "Code", "Message", "QueryResult", "TransactionResult", "AffectedRow", "Ids", "TotalRow", });
     internal_static_TransactionUp_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_TransactionUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_TransactionUp_descriptor,
-        new String[] { "Id", "Service", "TansType", });
+        new java.lang.String[] { "Id", "Service", "TansType", });
     internal_static_EntityUp_descriptor =
       getDescriptor().getMessageTypes().get(6);
     internal_static_EntityUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityUp_descriptor,
-        new String[] { "Id", "Relation", "EntityClasses", "ExtendEntityClass", "Fields", "Values", "ObjId", "Code", "SubEntityClass", });
+        new java.lang.String[] { "Id", "Relation", "EntityClasses", "ExtendEntityClass", "Fields", "Values", "ObjId", "Code", "SubEntityClass", });
     internal_static_QueryFieldsUp_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_QueryFieldsUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_QueryFieldsUp_descriptor,
-        new String[] { "Code", "Id", "EntityId", });
+        new java.lang.String[] { "Code", "Id", "EntityId", });
     internal_static_RelationUp_descriptor =
       getDescriptor().getMessageTypes().get(8);
     internal_static_RelationUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_RelationUp_descriptor,
-        new String[] { "Name", "RelationType", "Identity", "EntityField", "RelatedEntityClassId", });
+        new java.lang.String[] { "Name", "RelationType", "Identity", "EntityField", "RelatedEntityClassId", });
     internal_static_ValueUp_descriptor =
       getDescriptor().getMessageTypes().get(9);
     internal_static_ValueUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ValueUp_descriptor,
-        new String[] { "Value", "Name", "FieldType", "FieldId", });
+        new java.lang.String[] { "Value", "Name", "FieldType", "FieldId", });
     internal_static_FieldUp_descriptor =
       getDescriptor().getMessageTypes().get(10);
     internal_static_FieldUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldUp_descriptor,
-        new String[] { "Id", "Name", "FieldType", "Code", "DisplayType", "Editable", "EnumCode", "MaxLength", "Required", "Searchable", "MinLength", "DictId", "DefaultValue", "Precision", "Identifier", });
+        new java.lang.String[] { "Id", "Name", "FieldType", "Code", "DisplayType", "Editable", "EnumCode", "MaxLength", "Required", "Searchable", "MinLength", "DictId", "DefaultValue", "Precision", "Identifier", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

@@ -9,21 +9,25 @@ public interface QueryFieldsUpOrBuilder extends
 
   /**
    * <code>string code = 1;</code>
+   * @return The code.
    */
-  String getCode();
+  java.lang.String getCode();
   /**
    * <code>string code = 1;</code>
+   * @return The bytes for code.
    */
   com.google.protobuf.ByteString
       getCodeBytes();
 
   /**
    * <code>int64 id = 2;</code>
+   * @return The id.
    */
   long getId();
 
   /**
    * <code>int64 entityId = 3;</code>
+   * @return The entityId.
    */
   long getEntityId();
 }

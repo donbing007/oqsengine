@@ -57,6 +57,7 @@ public class NodeReporterInitService implements InitializingBean {
 
         LongConnect.safeSource(2, 20
                 , () -> nodeServiceClient.report(reportSource))
+                .log("NodeService")
                 .runWith(Sink.foreach(x -> {
                     logger.debug("Got reply at {}", LocalDateTime.now());
                 }), mat);
