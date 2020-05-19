@@ -24,6 +24,8 @@ public interface Record extends Comparable<Record>  {
 
     Optional<Object> get(String fieldName);
 
+    Object get(int index);
+
     Optional<Object> get(IEntityField field);
 
     Optional<IValue> getTypedValue(String fieldName);
@@ -44,5 +46,16 @@ public interface Record extends Comparable<Record>  {
 
     Stream<Tuple2<IEntityField, Object>> stream();
 
+    /**
+     * filter the input key
+     * @param keys filter keys;
+     * @return
+     */
+    Stream<Tuple2<IEntityField, Object>> stream(Set<String> keys);
+
     Map<String, Object> toMap(Set<String> keys);
+
+    Boolean isEmpty();
+
+    Boolean nonEmpty();
 }

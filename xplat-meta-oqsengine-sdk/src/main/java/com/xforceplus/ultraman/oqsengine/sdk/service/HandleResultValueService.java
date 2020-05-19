@@ -12,6 +12,6 @@ import java.util.Map;
  */
 public interface HandleResultValueService {
 
-    Record toRecord(EntityClass entityClass, EntityUp up);
+    Record toRecord(IEntityClass entityClass, EntityUp up);
 
 }

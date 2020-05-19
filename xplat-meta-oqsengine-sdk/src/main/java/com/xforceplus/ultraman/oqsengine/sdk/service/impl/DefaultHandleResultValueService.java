@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
@@ -41,7 +42,7 @@ public class DefaultHandleResultValueService implements HandleResultValueService
     }
 
     @Override
-    public Record toRecord(EntityClass entityClass, EntityUp up) {
+    public Record toRecord(IEntityClass entityClass, EntityUp up) {
         IEntityClassReader reader = new IEntityClassReader(entityClass);
 
         Map<String, Object> retValue = up.getValuesList().stream().collect(Collectors.toMap(ValueUp::getName, ValueUp::getValue));

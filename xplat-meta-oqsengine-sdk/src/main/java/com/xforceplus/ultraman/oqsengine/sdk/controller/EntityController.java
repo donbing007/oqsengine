@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author admin
@@ -247,5 +248,39 @@ public class EntityController {
             rep.setMessage(FAILED.concat(result.getLeft()));
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
         }
+    }
+
+    /**
+     * TODO
+     *
+     * @param boId
+     * @param version
+     * @param condition
+     * @return
+     */
+    @PostMapping("/bos/{boId}/entities/export")
+    @ResponseBody
+    public CompletableFuture<Response<String>> conditionExport(
+            @PathVariable String boId,
+            @RequestParam(required = false, value = "v") String version,
+            @RequestBody ConditionQueryRequest condition) {
+
+        condition.setPageNo(0);
+        condition.setPageSize(50000);
+
+        CompletableFuture<Either<String, String>> exportResult = dispatcher.querySync(new ConditionExportCmd(boId, condition, version)
+                , DefaultUiService.class, "conditionExport");
+
+        return exportResult.thenApply(x -> {
+            if (x.isRight()) {
+                Response<String> response = new Response<>();
+                response.setResult(x.get());
+                response.setMessage("OK");
+                response.setCode("1");
+                return response;
+            } else {
+                return Response.Error(x.getLeft());
+            }
+        });
     }
 }

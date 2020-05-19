@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityDeleted;
@@ -128,7 +130,7 @@ public class EntityServiceImpl implements EntityService {
     }
 
     @Override
-    public Either<String, Map<String, Object>> findOne(EntityClass entityClass, long id) {
+    public Either<String, Map<String, Object>> findOne(IEntityClass entityClass, long id) {
         String transId = contextService.get(TRANSACTION_KEY);
 
         SingleResponseRequestBuilder<EntityUp, OperationResult> queryResultBuilder = entityServiceClient.selectOne();
@@ -163,7 +165,7 @@ public class EntityServiceImpl implements EntityService {
      * @return
      */
     @Override
-    public Either<String, Integer> deleteOne(EntityClass entityClass, Long id) {
+    public Either<String, Integer> deleteOne(IEntityClass entityClass, Long id) {
 
         String transId = contextService.get(TRANSACTION_KEY);
         SingleResponseRequestBuilder<EntityUp, OperationResult> removeBuilder = entityServiceClient.remove();
@@ -199,7 +201,7 @@ public class EntityServiceImpl implements EntityService {
     }
 
     @Override
-    public Either<String, Integer> updateById(EntityClass entityClass, Long id, Map<String, Object> body) {
+    public Either<String, Integer> updateById(IEntityClass entityClass, Long id, Map<String, Object> body) {
 
         String transId = contextService.get(TRANSACTION_KEY);
         SingleResponseRequestBuilder<EntityUp, OperationResult> replaceBuilder = entityServiceClient.replace();
@@ -231,7 +233,7 @@ public class EntityServiceImpl implements EntityService {
 
 
     @Override
-    public Either<String, Integer> replaceById(EntityClass entityClass, Long id, Map<String, Object> body) {
+    public Either<String, Integer> replaceById(IEntityClass entityClass, Long id, Map<String, Object> body) {
         String transId = contextService.get(TRANSACTION_KEY);
         SingleResponseRequestBuilder<EntityUp, OperationResult> replaceBuilder = entityServiceClient.replace();
         if (transId != null) {
@@ -263,25 +265,18 @@ public class EntityServiceImpl implements EntityService {
         }
     }
 
+
     /**
-     * query
-     *
+     * Record has all field and not filtered;
+     * for export
      * @param entityClass
      * @param condition
      * @return
      */
     @Override
-    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByCondition(EntityClass entityClass
-            , ConditionQueryRequest condition) {
+    public Either<String, Tuple2<Integer, List<Record>>> findRecordsByCondition(IEntityClass entityClass, List<Long> ids, ConditionQueryRequest condition){
 
-        return findByConditionWithIds(entityClass, null, condition);
-    }
-
-    @Override
-    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByConditionWithIds(EntityClass entityClass
-            , List<Long> ids, ConditionQueryRequest condition) {
         String transId = contextService.get(TRANSACTION_KEY);
-
 
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
 
@@ -294,7 +289,8 @@ public class EntityServiceImpl implements EntityService {
          */
         ConditionsUp conditionsUp = Optional.ofNullable(condition)
                 .map(ConditionQueryRequest::getConditions)
-                .map(x ->  handleQueryValueService
+                .map(x ->
+                        handleQueryValueService
                         .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY))
                 .orElseGet(() -> ConditionsUp.newBuilder().build());
 
@@ -302,27 +298,53 @@ public class EntityServiceImpl implements EntityService {
          * condition
          */
         OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, ids, condition, conditionsUp))
-            .toCompletableFuture().join();
+                .toCompletableFuture().join();
 
         if (result.getCode() == OperationResult.Code.OK) {
-            List<Map<String, Object>> repList = result.getQueryResultList()
-                .stream()
-                .map(x -> {
-
-                    return handleResultValueService.toRecord(entityClass, x)
-                            .toMap(Optional.ofNullable(condition)
-                            .map(ConditionQueryRequest::getStringKeys)
-                            .orElseGet(Collections::emptySet));
-                }).collect(Collectors.toList());
-            Tuple2<Integer, List<Map<String, Object>>> queryResult = Tuple.of(result.getTotalRow(), repList);
+            List<Record> repList = result.getQueryResultList()
+                    .stream()
+                    .map(x -> {
+                        return handleResultValueService.toRecord(entityClass, x);
+                    }).collect(Collectors.toList());
+            Tuple2<Integer, List<Record>> queryResult = Tuple.of(result.getTotalRow(), repList);
             return Either.right(queryResult);
         } else {
             return Either.left(result.getMessage());
         }
     }
 
+
+    /**
+     * query
+     *
+     * @param entityClass
+     * @param condition
+     * @return
+     */
     @Override
-    public Either<String, Long> create(EntityClass entityClass, Map<String, Object> body) {
+    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByCondition(IEntityClass entityClass
+            , ConditionQueryRequest condition) {
+
+        return findByConditionWithIds(entityClass, null, condition);
+    }
+
+    @Override
+    public Either<String, Tuple2<Integer, List<Map<String, Object>>>> findByConditionWithIds(IEntityClass entityClass
+            , List<Long> ids, ConditionQueryRequest condition) {
+
+
+        return findRecordsByCondition(entityClass, ids, condition).map(tuple -> {
+
+            List<Map<String, Object>> mapResult = tuple._2().stream().map(record -> record.toMap(Optional.ofNullable(condition)
+                    .map(ConditionQueryRequest::getStringKeys)
+                    .orElseGet(Collections::emptySet)))
+                    .collect(Collectors.toList());
+            return Tuple.of(tuple._1(), mapResult);
+        });
+    }
+
+    @Override
+    public Either<String, Long> create(IEntityClass entityClass, Map<String, Object> body) {
 
         String transId = contextService.get(TRANSACTION_KEY);
 
@@ -355,7 +377,7 @@ public class EntityServiceImpl implements EntityService {
     }
 
     @Override
-    public Integer count(EntityClass entityClass, ConditionQueryRequest condition) {
+    public Integer count(IEntityClass entityClass, ConditionQueryRequest condition) {
         String transId = contextService.get(TRANSACTION_KEY);
 
 
@@ -408,19 +430,19 @@ public class EntityServiceImpl implements EntityService {
      * @param id
      * @return
      */
-    private EntityDeleted buildDeleteEvent(EntityClass entityClass, Long id) {
+    private EntityDeleted buildDeleteEvent(IEntityClass entityClass, Long id) {
         String code = entityClass.code();
         Map<String, String> context = getContext();
         return new EntityDeleted(code, id, context);
     }
 
-    private EntityCreated buildCreatedEvent(EntityClass entityClass, Long id, Map<String, Object> data) {
+    private EntityCreated buildCreatedEvent(IEntityClass entityClass, Long id, Map<String, Object> data) {
         String code = entityClass.code();
         Map<String, String> context = getContext();
         return new EntityCreated(code, id, data, context);
     }
 
-    private EntityUpdated buildUpdatedEvent(EntityClass entityClass, Long id, Map<String, Object> data) {
+    private EntityUpdated buildUpdatedEvent(IEntityClass entityClass, Long id, Map<String, Object> data) {
         String code = entityClass.code();
         Map<String, String> context = getContext();
         return new EntityUpdated(code, id, data, context);

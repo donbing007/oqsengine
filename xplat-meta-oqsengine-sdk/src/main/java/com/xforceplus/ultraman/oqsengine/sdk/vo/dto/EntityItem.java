@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -12,6 +13,7 @@ public class EntityItem {
     List<SubEntityItem> entities;
 
     public List<String> getFields() {
+        if (fields == null) return Collections.emptyList();
         return fields;
     }
 
@@ -20,6 +22,7 @@ public class EntityItem {
     }
 
     public List<SubEntityItem> getEntities() {
+        if (entities == null) return Collections.emptyList();
         return entities;
     }
 

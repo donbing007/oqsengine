@@ -266,6 +266,11 @@ public class InitServiceAutoConfiguration {
         return new ModuleEventListener();
     }
 
+    @Bean
+    public ExportSource exportSource(EntityService entityService
+            , @Value("${xplat.oqsengine.sdk.export.step:1000}") int step){
+        return new SequenceExportSource(entityService, step);
+    }
 
     /**
      * xplat:
@@ -280,5 +285,11 @@ public class InitServiceAutoConfiguration {
     @Bean
     public MessageDispatcherInterceptor<?> clearVersion(){
         return new VersionInterceptor<>();
+    }
+
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.export.default-sink", matchIfMissing = true)
+    @Bean
+    public ExportSink localFileSink(){
+        return new LocalFileExportSink();
     }
 }

@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 
 /**
  * Record
- *
+ * <p>
  * field and Row
  *
  * @author admin
@@ -25,6 +25,19 @@ public class GeneralRecord implements Record {
     private final Object[] values;
 
     private final IEntityField[] fields;
+
+    private final Boolean isEmpty;
+
+
+    public static Record empty(){
+        return new GeneralRecord();
+    }
+
+    private GeneralRecord(){
+        isEmpty = true;
+        values = null;
+        fields = null;
+    };
 
     public GeneralRecord(Collection<? extends IEntityField> fields) {
 
@@ -38,6 +51,8 @@ public class GeneralRecord implements Record {
             this.fields[i] = field;
             i++;
         }
+
+        isEmpty = false;
     }
 
     private Long id;
@@ -61,6 +76,15 @@ public class GeneralRecord implements Record {
     @Override
     public Optional<Object> get(String fieldName) {
         return field(fieldName).flatMap(this::get);
+    }
+
+    @Override
+    public Object get(int index) {
+        if (index >= values.length) {
+            log.error("OutOfBound exception for visit index:{} and return null!", index);
+            return null;
+        }
+        return values[index];
     }
 
     private Optional<IEntityField> field(String fieldName) {
@@ -178,6 +202,22 @@ public class GeneralRecord implements Record {
     }
 
     @Override
+    public Stream<Tuple2<IEntityField, Object>> stream(Set<String> filterName) {
+        return  IntStream.range(0, fields.length)
+                .mapToObj(i -> {
+                    String name = fields[i].name();
+                    if (filterName != null && !filterName.isEmpty()) {
+                        if (filterName.contains(name)) {
+                            return Tuple.of(fields[i], values[i]);
+                        }
+                        return null;
+                    } else {
+                        return Tuple.of(fields[i], values[i]);
+                    }
+                }).filter(Objects::nonNull);
+    }
+
+    @Override
     public Map<String, Object> toMap(Set<String> filterName) {
 
         Map<String, Object> map = new HashMap<>(values.length);
@@ -197,6 +237,16 @@ public class GeneralRecord implements Record {
                 });
 
         return map;
+    }
+
+    @Override
+    public Boolean isEmpty() {
+        return isEmpty;
+    }
+
+    @Override
+    public Boolean nonEmpty() {
+        return !isEmpty;
     }
 
     /**

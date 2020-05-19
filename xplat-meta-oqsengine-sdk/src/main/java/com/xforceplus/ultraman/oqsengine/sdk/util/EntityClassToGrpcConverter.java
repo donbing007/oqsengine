@@ -89,7 +89,7 @@ public class EntityClassToGrpcConverter {
 //        return builder.build();
 //    }
 
-    public static EntityUp toEntityUp(EntityClass entityClass, Long id, List<ValueUp> valueList) {
+    public static EntityUp toEntityUp(IEntityClass entityClass, Long id, List<ValueUp> valueList) {
         //build entityUp
         EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
         builder.addAllValues(valueList);
@@ -97,7 +97,7 @@ public class EntityClassToGrpcConverter {
     }
 
 
-    public static SelectByCondition toSelectByCondition(EntityClass entityClass
+    public static SelectByCondition toSelectByCondition(IEntityClass entityClass
         , EntityItem entityItem
         , com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions conditions
         , Sort sort, Page page) {
@@ -126,7 +126,7 @@ public class EntityClassToGrpcConverter {
         return select.build();
     }
 
-    public static SelectByCondition toSelectByCondition(EntityClass entityClass, List<Long> ids, ConditionQueryRequest condition) {
+    public static SelectByCondition toSelectByCondition(IEntityClass entityClass, List<Long> ids, ConditionQueryRequest condition) {
         SelectByCondition.Builder select = SelectByCondition
             .newBuilder();
 
@@ -168,7 +168,7 @@ public class EntityClassToGrpcConverter {
      * @param condition
      * @return
      */
-    public static SelectByCondition toSelectByCondition(EntityClass entityClass, List<Long> ids, ConditionQueryRequest condition, ConditionsUp conditionsUp) {
+    public static SelectByCondition toSelectByCondition(IEntityClass entityClass, List<Long> ids, ConditionQueryRequest condition, ConditionsUp conditionsUp) {
         SelectByCondition.Builder select = SelectByCondition
                 .newBuilder();
 
@@ -294,16 +294,16 @@ public class EntityClassToGrpcConverter {
     }
 
 
-    public static Optional<IEntityField> getKeyFromRelation(EntityClass entityClass, String key) {
+    public static Optional<IEntityField> getKeyFromRelation(IEntityClass entityClass, String key) {
         return entityClass.relations().stream().filter(x -> x.getName().equals(key)).map(Relation::getEntityField).findFirst();
     }
 
     //TODO sub search
-    public static Optional<IEntityField> getKeyFromEntityClass(EntityClass entityClass, String key) {
+    public static Optional<IEntityField> getKeyFromEntityClass(IEntityClass entityClass, String key) {
         return entityClass.field(key);
     }
 
-    public static Optional<IEntityField> getKeyFromParent(EntityClass entityClass, String key) {
+    public static Optional<IEntityField> getKeyFromParent(IEntityClass entityClass, String key) {
         return Optional.ofNullable(entityClass.extendEntityClass()).flatMap(x -> x.field(key));
     }
 
@@ -329,7 +329,7 @@ public class EntityClassToGrpcConverter {
      * @param conditions
      * @return
      */
-    private static ConditionsUp toConditionsUp(EntityClass entityClass, Conditions conditions) {
+    private static ConditionsUp toConditionsUp(IEntityClass entityClass, Conditions conditions) {
         ConditionsUp.Builder conditionsUpBuilder = ConditionsUp.newBuilder();
 
         Stream<Optional<FieldConditionUp>> fieldInMainStream = Optional.ofNullable(conditions.getFields())
@@ -434,7 +434,7 @@ public class EntityClassToGrpcConverter {
     }
 
 
-    private static Stream<? extends Optional<FieldConditionUp>> toFieldConditionFromRel(EntityClass entityClass, SubFieldCondition entityCondition) {
+    private static Stream<? extends Optional<FieldConditionUp>> toFieldConditionFromRel(IEntityClass entityClass, SubFieldCondition entityCondition) {
         return entityClass.relations().stream()
             .map(rel -> {
                 Optional<FieldCondition> fieldConditionOp = entityCondition.getFields()
