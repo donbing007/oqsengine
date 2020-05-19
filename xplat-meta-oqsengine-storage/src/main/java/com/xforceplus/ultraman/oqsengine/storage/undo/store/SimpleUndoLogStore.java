@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.store;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.UndoLogStatus;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 
@@ -23,19 +23,19 @@ public class SimpleUndoLogStore implements UndoLogStore {
     private ConcurrentLinkedQueue<UndoLog> queue = new ConcurrentLinkedQueue<>();
 
     @Override
-    public UndoLog get(Long txId, DbType dbType, String shardKey) {
-        return store.containsKey(txId) ? store.get(txId).get(dbKey(dbType, shardKey)) : null;
+    public UndoLog get(Long txId, TransactionResourceType transactionResourceType, String shardKey) {
+        return store.containsKey(txId) ? store.get(txId).get(dbKey(transactionResourceType, shardKey)) : null;
     }
 
     @Override
-    public synchronized boolean save(Long txId, DbType dbType, String shardKey, UndoLog undoLog) {
+    public synchronized boolean save(Long txId, TransactionResourceType transactionResourceType, String shardKey, UndoLog undoLog) {
         undoLog.setTxId(txId);
-        undoLog.setDbType(dbType);
+        undoLog.setTransactionResourceType(transactionResourceType);
         undoLog.setShardKey(shardKey);
         undoLog.setTime(System.currentTimeMillis());
 
         store.putIfAbsent(txId, new HashMap<>());
-        store.get(txId).put(dbKey(dbType, shardKey), undoLog);
+        store.get(txId).put(dbKey(transactionResourceType, shardKey), undoLog);
 
         return true;
     }
@@ -57,32 +57,32 @@ public class SimpleUndoLogStore implements UndoLogStore {
     }
 
     @Override
-    public synchronized boolean remove(Long txId, DbType dbType, String shardKey) {
+    public synchronized boolean remove(Long txId, TransactionResourceType transactionResourceType, String shardKey) {
         if (isExist(txId)) {
-            ((Map) store.get(txId)).remove(dbKey(dbType, shardKey));
+            ((Map) store.get(txId)).remove(dbKey(transactionResourceType, shardKey));
         }
         return true;
     }
 
     @Override
-    public synchronized boolean removeItem(Long txId, DbType dbType, String shardKey, int index) {
-        if (isExist(txId) && store.get(txId).containsKey(dbKey(dbType, shardKey))) {
+    public synchronized boolean removeItem(Long txId, TransactionResourceType transactionResourceType, String shardKey, int index) {
+        if (isExist(txId) && store.get(txId).containsKey(dbKey(transactionResourceType, shardKey))) {
             Map<String, UndoLog> txMap = store.get(txId);
-            UndoLog undoLog = txMap.get(dbKey(dbType, shardKey));
+            UndoLog undoLog = txMap.get(dbKey(transactionResourceType, shardKey));
             undoLog.getItems().remove(index);
-            txMap.put(dbKey(dbType, shardKey), undoLog);
+            txMap.put(dbKey(transactionResourceType, shardKey), undoLog);
             store.put(txId, txMap);
         }
         return true;
     }
 
     @Override
-    public synchronized boolean updateStatus(Long txId, DbType dbType, String shardKey, UndoLogStatus status) {
-        if (isExist(txId) && store.get(txId).containsKey(dbKey(dbType, shardKey))) {
+    public synchronized boolean updateStatus(Long txId, TransactionResourceType transactionResourceType, String shardKey, UndoLogStatus status) {
+        if (isExist(txId) && store.get(txId).containsKey(dbKey(transactionResourceType, shardKey))) {
             Map<String, UndoLog> txMap = store.get(txId);
-            UndoLog undoLog = txMap.get(dbKey(dbType, shardKey));
+            UndoLog undoLog = txMap.get(dbKey(transactionResourceType, shardKey));
             undoLog.setStatus(status.value());
-            txMap.put(dbKey(dbType, shardKey), undoLog);
+            txMap.put(dbKey(transactionResourceType, shardKey), undoLog);
             store.put(txId, txMap);
         }
         return true;
@@ -104,8 +104,8 @@ public class SimpleUndoLogStore implements UndoLogStore {
         return queue;
     }
 
-    String dbKey(DbType dbType, String shardKey) {
-        return dbType.name() + "-" + shardKey;
+    String dbKey(TransactionResourceType transactionResourceType, String shardKey) {
+        return transactionResourceType.name() + "-" + shardKey;
     }
 
 }

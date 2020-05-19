@@ -3,9 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.command;
 import com.xforceplus.ultraman.oqsengine.storage.master.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.command.UndoStorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpType;
-import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +18,7 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class ReplaceVersionStorageCommand  extends UndoStorageCommand<StorageEntity> {
+public class ReplaceVersionStorageCommand  implements StorageCommand<StorageEntity> {
     final Logger logger = LoggerFactory.getLogger(ReplaceVersionStorageCommand.class);
 
     private Selector<String> tableNameSelector;
@@ -31,10 +29,6 @@ public class ReplaceVersionStorageCommand  extends UndoStorageCommand<StorageEnt
 
     @Override
     public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
-        if (!((UndoTransactionResource) resource).isCommitted()) {
-            StorageEntity oriStorageEntity = new SelectByIdStorageCommand(tableNameSelector).execute(resource, storageEntity);
-            super.prepareUndoLog(resource, OpType.REPLACE_VERSION, oriStorageEntity);
-        }
         return this.doExecute(resource, storageEntity);
     }
 
@@ -63,10 +57,5 @@ public class ReplaceVersionStorageCommand  extends UndoStorageCommand<StorageEnt
                 st.close();
             }
         }
-    }
-
-    @Override
-    public StorageEntity executeUndo(TransactionResource resource, StorageEntity data) throws SQLException {
-        return this.doExecute(resource, data);
     }
 }

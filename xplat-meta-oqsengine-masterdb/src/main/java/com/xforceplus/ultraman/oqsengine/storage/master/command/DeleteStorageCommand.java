@@ -3,8 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.command;
 import com.xforceplus.ultraman.oqsengine.storage.master.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.command.UndoStorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpType;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +18,7 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class DeleteStorageCommand extends UndoStorageCommand<StorageEntity> {
+public class DeleteStorageCommand implements StorageCommand<StorageEntity> {
 
     final Logger logger = LoggerFactory.getLogger(ReplaceStorageCommand.class);
 
@@ -31,7 +30,6 @@ public class DeleteStorageCommand extends UndoStorageCommand<StorageEntity> {
 
     @Override
     public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
-        super.prepareUndoLog(resource, OpType.DELETE, storageEntity);
         return this.doExecute(resource, storageEntity);
     }
 
@@ -54,37 +52,6 @@ public class DeleteStorageCommand extends UndoStorageCommand<StorageEntity> {
         final int onlyOne = 1;
         if (size != onlyOne) {
             throw new SQLException(String.format("Entity{%s} could not be delete successfully.", storageEntity.toString()));
-        }
-
-        try {
-            return null;
-        } finally {
-            if (st != null) {
-                st.close();
-            }
-        }
-    }
-
-    @Override
-    public StorageEntity executeUndo(TransactionResource resource, StorageEntity data) throws SQLException {
-        String tableName = tableNameSelector.select(Long.toString(data.getId()));
-        String sql = String.format(SQLConstant.UNDO_DELETE_SQL, tableName);
-        PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-
-        // deleted time id version;
-        st.setBoolean(1, false); // deleted
-        st.setLong(2, data.getTime()); // time
-        st.setLong(3, data.getId()); // id
-        st.setInt(4, data.getVersion() + 1); // version
-
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
-
-        int size = st.executeUpdate();
-        final int onlyOne = 1;
-        if (size != onlyOne) {
-            throw new SQLException(String.format("Entity{%s} undo delete failed.", data.toString()));
         }
 
         try {

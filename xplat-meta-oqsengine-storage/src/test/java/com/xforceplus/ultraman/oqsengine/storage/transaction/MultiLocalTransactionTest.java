@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -193,20 +192,14 @@ public class MultiLocalTransactionTest {
         }
 
         @Override
-        public DbType dbType() {
-            return null;
+        public TransactionResourceType type() {
+            return TransactionResourceType.INDEX;
         }
 
         @Override
         public boolean isDestroyed() throws SQLException {
             return false;
         }
-
-        @Override
-        public void undo(boolean commit) throws SQLException {
-
-        }
-
 
     }
 

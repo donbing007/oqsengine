@@ -63,21 +63,21 @@ public class UndoExecutor {
 
     public void saveUndoLog(UndoLog undoLog) {
         logger.debug("save undo infos {} items in store ", undoLog.getItems().size());
-        this.undoLogStore.save(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey(), undoLog);
+        this.undoLogStore.save(undoLog.getTxId(), undoLog.getTransactionResourceType(), undoLog.getShardKey(), undoLog);
     }
 
     public void updateUndoLogStatus(UndoLog undoLog, UndoLogStatus status) {
-        this.undoLogStore.updateStatus(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey(), status);
+        this.undoLogStore.updateStatus(undoLog.getTxId(), undoLog.getTransactionResourceType(), undoLog.getShardKey(), status);
         logger.debug("[UndoExecutor UNDO] success to clear undo log in store");
     }
 
     private void removeUndoLogItem(int index, UndoLog undoLog) {
-        this.undoLogStore.removeItem(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey(), index);
+        this.undoLogStore.removeItem(undoLog.getTxId(), undoLog.getTransactionResourceType(), undoLog.getShardKey(), index);
         logger.debug("success to clear undo log in store");
     }
 
     private void removeUndoLog(UndoLog undoLog) {
-        this.undoLogStore.remove(undoLog.getTxId(), undoLog.getDbType(), undoLog.getShardKey());
+        this.undoLogStore.remove(undoLog.getTxId(), undoLog.getTransactionResourceType(), undoLog.getShardKey());
         this.undoLogStore.tryRemove(undoLog.getTxId());
         logger.debug("success to clear undo log in store");
     }

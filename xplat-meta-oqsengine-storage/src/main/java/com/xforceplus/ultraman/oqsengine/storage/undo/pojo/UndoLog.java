@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.pojo;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class UndoLog implements Serializable {
     Long txId;
-    DbType dbType;
+    TransactionResourceType transactionResourceType;
     String shardKey;
     int status = 0;
     long time;
@@ -25,10 +25,10 @@ public class UndoLog implements Serializable {
 
     }
 
-    public UndoLog(Long txId, DbType dbType, String shardKey) {
+    public UndoLog(Long txId, TransactionResourceType transactionResourceType, String shardKey) {
         this.txId = txId;
         this.shardKey = shardKey;
-        this.dbType = dbType;
+        this.transactionResourceType = transactionResourceType;
     }
 
     public Long getTxId() {
@@ -47,12 +47,12 @@ public class UndoLog implements Serializable {
         this.shardKey = shardKey;
     }
 
-    public DbType getDbType() {
-        return dbType;
+    public TransactionResourceType getTransactionResourceType() {
+        return transactionResourceType;
     }
 
-    public void setDbType(DbType dbType) {
-        this.dbType = dbType;
+    public void setTransactionResourceType(TransactionResourceType transactionResourceType) {
+        this.transactionResourceType = transactionResourceType;
     }
 
     public int getStatus() {

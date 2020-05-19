@@ -31,4 +31,21 @@ public class StorageConfiguration {
         storage.setIndexTableName(indexTableName);
         return storage;
     }
+
+//    @Bean
+//    public StorageCommandExecutor storageCommandInvoker(
+//        @Value("${storage.index.name:oqsindex}") String indexTableName,
+//        @Qualifier("tableNameSelector") Selector<String> tableNameSelector
+//    ) {
+//        DefaultStorageCommandExecutor storageCommandInvoker = new DefaultStorageCommandExecutor();
+//        storageCommandInvoker.register(TransactionResourceType.INDEX, OpType.BUILD, new BuildStorageCommand(indexTableName));
+//        storageCommandInvoker.register(TransactionResourceType.INDEX, OpType.REPLACE, new ReplaceStorageCommand(indexTableName));
+//        storageCommandInvoker.register(TransactionResourceType.INDEX, OpType.DELETE, new DeleteStorageCommand(indexTableName));
+//
+//        storageCommandInvoker.register(TransactionResourceType.MASTER, OpType.BUILD, new com.xforceplus.ultraman.oqsengine.storage.master.command.BuildStorageCommand(tableNameSelector));
+//        storageCommandInvoker.register(TransactionResourceType.MASTER, OpType.REPLACE, new com.xforceplus.ultraman.oqsengine.storage.master.command.ReplaceStorageCommand(tableNameSelector));
+//        storageCommandInvoker.register(TransactionResourceType.MASTER, OpType.DELETE, new com.xforceplus.ultraman.oqsengine.storage.master.command.DeleteStorageCommand(tableNameSelector));
+//
+//        return storageCommandInvoker;
+//    }
 }

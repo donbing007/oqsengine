@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.command;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,40 +21,40 @@ public class DefaultStorageCommandExecutor implements StorageCommandExecutor {
 
     final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    protected Map<DbType, Map<OpType, StorageCommand>> storageCommands = new HashMap<>();
+    protected Map<TransactionResourceType, Map<OpType, StorageCommand>> storageCommands = new HashMap<>();
 
-    public void register(DbType dbType, OpType opType, StorageCommand cmd) {
-        if (dbType == null || opType == null || cmd == null) {
+    public void register(TransactionResourceType transactionResourceType, OpType opType, StorageCommand cmd) {
+        if (transactionResourceType == null || opType == null || cmd == null) {
             return;
         }
-        if (!storageCommands.containsKey(dbType)) {
-            storageCommands.put(dbType, new HashMap());
+        if (!storageCommands.containsKey(transactionResourceType)) {
+            storageCommands.put(transactionResourceType, new HashMap());
         }
-        storageCommands.get(dbType).put(opType, cmd);
+        storageCommands.get(transactionResourceType).put(opType, cmd);
     }
 
     @Override
     public Object execute(TransactionResource res, OpType opType, Object data) throws SQLException {
-        return selectCommand(res.dbType(), opType).execute(res, data);
+        return selectCommand(res.type(), opType).execute(res, data);
     }
 
     @Override
     public Object executeUndo(TransactionResource res, OpType opType, Object data) throws SQLException {
-        return ((UndoStorageCommand) selectCommand(res.dbType(), opType)).executeUndo(res, data);
+        return ((UndoStorageCommand) selectCommand(res.type(), opType)).executeUndo(res, data);
     }
 
-    private StorageCommand selectCommand(DbType dbType, OpType opType) throws SQLException {
-        if (dbType == null || opType == null
-                || !storageCommands.containsKey(dbType)
-                || storageCommands.get(dbType) == null
-                || !storageCommands.get(dbType).containsKey(opType)
-                || storageCommands.get(dbType).get(opType) == null
+    private StorageCommand selectCommand(TransactionResourceType transactionResourceType, OpType opType) throws SQLException {
+        if (transactionResourceType == null || opType == null
+                || !storageCommands.containsKey(transactionResourceType)
+                || storageCommands.get(transactionResourceType) == null
+                || !storageCommands.get(transactionResourceType).containsKey(opType)
+                || storageCommands.get(transactionResourceType).get(opType) == null
         ) {
-            String errMsg = String.format("can't find storageCommand by dbType-%s,opType-%s", dbType, opType);
+            String errMsg = String.format("can't find storageCommand by dbType-%s,opType-%s", transactionResourceType, opType);
             logger.error(errMsg);
             throw new SQLException(errMsg);
         }
-        return storageCommands.get(dbType).get(opType);
+        return storageCommands.get(transactionResourceType).get(opType);
     }
 
 }

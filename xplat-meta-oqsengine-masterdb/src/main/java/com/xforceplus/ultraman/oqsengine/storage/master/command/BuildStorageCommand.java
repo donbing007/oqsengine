@@ -3,8 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.command;
 import com.xforceplus.ultraman.oqsengine.storage.master.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.command.UndoStorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpType;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +18,7 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class BuildStorageCommand extends UndoStorageCommand<StorageEntity> {
+public class BuildStorageCommand implements StorageCommand<StorageEntity> {
 
     final Logger logger = LoggerFactory.getLogger(BuildStorageCommand.class);
 
@@ -31,8 +30,6 @@ public class BuildStorageCommand extends UndoStorageCommand<StorageEntity> {
 
     @Override
     public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
-        super.prepareUndoLog(resource, OpType.BUILD, storageEntity);
-
         return this.doExecute(resource, storageEntity);
     }
 
@@ -42,14 +39,22 @@ public class BuildStorageCommand extends UndoStorageCommand<StorageEntity> {
 
         PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
         // id, entity, version, time, pref, cref, deleted, attribute,refs
-        st.setLong(1, storageEntity.getId()); // id
-        st.setLong(2, storageEntity.getEntity()); // entity
-        st.setInt(3, 0); // version
-        st.setLong(4, System.currentTimeMillis()); // time
-        st.setLong(5, storageEntity.getPref()); // pref
-        st.setLong(6, storageEntity.getCref()); // cref
-        st.setBoolean(7, false); // deleted
-        st.setString(8, storageEntity.getAttribute()); // attribute
+        // id
+        st.setLong(1, storageEntity.getId());
+        // entity
+        st.setLong(2, storageEntity.getEntity());
+        // version
+        st.setInt(3, 0);
+        // time
+        st.setLong(4, System.currentTimeMillis());
+        // pref
+        st.setLong(5, storageEntity.getPref());
+        // cref
+        st.setLong(6, storageEntity.getCref());
+        // deleted
+        st.setBoolean(7, false);
+        // attribute
+        st.setString(8, storageEntity.getAttribute());
 
         if (logger.isDebugEnabled()) {
             logger.debug(st.toString());
@@ -64,34 +69,6 @@ public class BuildStorageCommand extends UndoStorageCommand<StorageEntity> {
         if (size != onlyOne) {
             throw new SQLException(
                     String.format("Entity{%s} could not be created successfully.", storageEntity.toString()));
-        }
-
-        try {
-            return null;
-        } finally {
-            if (st != null) {
-                st.close();
-            }
-        }
-    }
-
-    @Override
-    public StorageEntity executeUndo(TransactionResource resource, StorageEntity data) throws SQLException {
-        String tableName = tableNameSelector.select(Long.toString(data.getId()));
-        String sql = String.format(SQLConstant.UNDO_BUILD_SQL, tableName);
-
-        PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-        st.setLong(1, data.getId()); // id
-
-        int size = st.executeUpdate();
-
-        /**
-         * 插入影响条件恒定为1.
-         */
-        final int onlyOne = 1;
-        if (size != onlyOne) {
-            throw new SQLException(
-                    String.format("Entity{%s} undo build failed.", data.toString()));
         }
 
         try {

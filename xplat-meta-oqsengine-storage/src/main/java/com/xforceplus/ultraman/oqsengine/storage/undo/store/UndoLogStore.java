@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.store;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpType;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.UndoLogStatus;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 
@@ -17,19 +16,19 @@ import java.util.Queue;
  */
 public interface UndoLogStore {
 
-    UndoLog get(Long txId, DbType dbType, String shardKey);
+    UndoLog get(Long txId, TransactionResourceType transactionResourceType, String shardKey);
 
-    boolean save(Long txId, DbType dbType, String shardKey, UndoLog undoLog);
+    boolean save(Long txId, TransactionResourceType transactionResourceType, String shardKey, UndoLog undoLog);
 
     boolean isExist(Long txId);
 
     boolean tryRemove(Long txId);
 
-    boolean remove(Long txId, DbType dbType, String shardKey);
+    boolean remove(Long txId, TransactionResourceType transactionResourceType, String shardKey);
 
-    boolean removeItem(Long txId, DbType dbType, String shardKey, int index);
+    boolean removeItem(Long txId, TransactionResourceType transactionResourceType, String shardKey, int index);
 
-    boolean updateStatus(Long txId, DbType dbType, String shardKey, UndoLogStatus status);
+    boolean updateStatus(Long txId, TransactionResourceType transactionResourceType, String shardKey, UndoLogStatus status);
 
     Queue<UndoLog> getUndoLogQueue(List<Integer> statuss);
 }
