@@ -6,6 +6,8 @@ import java.sql.SQLException;
 
 /**
  * 所有事务资源的抽像.
+ *
+ * @param <T> 资源值.
  * @author dongbin
  * @version 0.1 2020/5/19 10:35
  * @since 1.8

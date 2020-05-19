@@ -5,6 +5,7 @@ import java.sql.SQLException;
 
 /**
  * 基于 java.sql.Connection 的资源.
+ *
  * @author dongbin
  * @version 0.1 2020/5/19 10:41
  * @since 1.8
@@ -13,7 +14,7 @@ public abstract class AbstractConnectionTransactionResource extends AbstractTran
 
     private boolean autoCommit;
 
-    public AbstractConnectionTransactionResource(String key, Connection value, boolean autoCommit) throws SQLException{
+    public AbstractConnectionTransactionResource(String key, Connection value, boolean autoCommit) throws SQLException {
         super(key, value);
         this.autoCommit = autoCommit;
         if (isAutoCommit()) {
