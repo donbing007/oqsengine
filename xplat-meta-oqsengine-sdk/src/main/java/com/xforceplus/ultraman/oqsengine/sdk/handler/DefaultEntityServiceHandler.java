@@ -156,7 +156,8 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
 
         AtomicBoolean isFirstLine = new AtomicBoolean(true);
         Long token = System.nanoTime();
-        Sink<ByteString, CompletionStage<IOResult>> fileSink = exportSink.getSink(token.toString());
+
+        Sink<ByteString, CompletionStage<Tuple2<IOResult, String>>> fileSink = exportSink.getSink(token.toString());
 
         ConditionQueryRequest request = cmd.getConditionQueryRequest();
 
@@ -226,7 +227,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
                     .runWith(fileSink, materializer)
                     .toCompletableFuture().thenApply(x -> {
 
-                        String downloadUrl = exportSink.getDownloadUrl(token.toString());
+                        String downloadUrl = exportSink.getDownloadUrl(x._2());
 
                         Map<String, Object> context = new HashMap<>();
                         if (contextService != null) {

@@ -95,6 +95,15 @@
             <artifactId>h2</artifactId>
         </dependency>
 
+        <!-- 文件服务 https://wiki.xforceplus.com/pages/viewpage.action?pageId=32112782  -->
+        <dependency>
+            <artifactId>tower-sdk-storage</artifactId>
+            <groupId>com.xforceplus.tower</groupId>
+            <version>1.1.0</version>
+<!--            <optional>true</optional>-->
+<!--            <scope>runtime</scope>-->
+        </dependency>
+
     </dependencies>
 
     <build>
