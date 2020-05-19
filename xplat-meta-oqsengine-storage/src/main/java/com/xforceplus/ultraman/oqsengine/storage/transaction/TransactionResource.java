@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
-
 import java.sql.SQLException;
 
 /**
@@ -18,7 +16,7 @@ public interface TransactionResource<V> {
      * 资源类型的标记
      * @return
      */
-    DbType dbType();
+    TransactionResourceType type();
 
     /**
      * 资源的标识.
@@ -54,12 +52,4 @@ public interface TransactionResource<V> {
      * 资源是否销毁或者回收
      */
     boolean isDestroyed() throws SQLException;
-
-    /**
-     * 发起 undo 操作.
-     *
-     * @param commit true 提交,false 回流.
-     * @throws SQLException
-     */
-    void undo(boolean commit) throws SQLException;
 }

@@ -27,7 +27,7 @@ public abstract class UndoTransactionResource<V> implements TransactionResource<
     protected UndoLog undoLog = new UndoLog();
 
     public UndoTransactionResource() {
-        undoLog.setDbType(this.dbType());
+        undoLog.setTransactionResourceType(this.type());
     }
 
     public void addUndoLogItem(OpType opType, Object obj) {
@@ -57,7 +57,6 @@ public abstract class UndoTransactionResource<V> implements TransactionResource<
         }
     }
 
-    @Override
     public void undo(boolean commit) throws SQLException {
         if (commit && committed) {
             if (undoExecutor != null) {

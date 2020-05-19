@@ -3,11 +3,8 @@ package com.xforceplus.ultraman.oqsengine.storage.executor;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.ConnectionTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.*;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -62,7 +59,7 @@ public class AutoShardTransactionExecutorTest {
 
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
-        AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class);
+        AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, MockConnectionTransactionResource.class);
         // 分片键不关心
         te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override
@@ -88,7 +85,7 @@ public class AutoShardTransactionExecutorTest {
 
         tm.create();
 
-        AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class);
+        AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, MockConnectionTransactionResource.class);
         // 分片键不关心
         te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override
@@ -118,9 +115,9 @@ public class AutoShardTransactionExecutorTest {
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
         Transaction currentT = tm.create();
-        currentT.join(new ConnectionTransactionResource(mockDataSource.toString(), expectedConn, false));
+        currentT.join(new MockConnectionTransactionResource(mockDataSource.toString(), expectedConn, false));
 
-        AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, ConnectionTransactionResource.class);
+        AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, MockConnectionTransactionResource.class);
         // 分片键不关心
         te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override
@@ -138,5 +135,17 @@ public class AutoShardTransactionExecutorTest {
         Assert.assertTrue(resource.isPresent());
         Assert.assertEquals(expectedConn, resource.get().value());
 
+    }
+
+    static class MockConnectionTransactionResource extends AbstractConnectionTransactionResource {
+
+        public MockConnectionTransactionResource(String key, Connection value, boolean autoCommit) throws SQLException {
+            super(key, value, autoCommit);
+        }
+
+        @Override
+        public TransactionResourceType type() {
+            return TransactionResourceType.MASTER;
+        }
     }
 }

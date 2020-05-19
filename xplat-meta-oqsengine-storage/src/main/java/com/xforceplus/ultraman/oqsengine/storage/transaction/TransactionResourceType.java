@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.undo.constant;
+package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 /**
  * 版权：    上海云砺信息科技有限公司
@@ -7,12 +7,12 @@ package com.xforceplus.ultraman.oqsengine.storage.undo.constant;
  * 功能描述:
  * 修改历史:
  */
-public enum DbType {
+public enum TransactionResourceType {
     MASTER("1"), INDEX("2");
 
     String value;
 
-    DbType(String value) {
+    TransactionResourceType(String value) {
         this.value = value;
     }
 

@@ -3,8 +3,6 @@ package com.xforceplus.ultraman.oqsengine.storage.executor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.undo.transaction.UndoTransactionResource;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Constructor;
@@ -23,30 +21,16 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
 
     private TransactionManager transactionManager;
 
-    private Class resourceClass;
-
-    private UndoExecutor undoExecutor;
+    private Class<? extends TransactionResource> resourceClass;
 
     /**
      * 构造一个事务执行器,需要一个事务管理器.
      *
      * @param transactionManager 事务管理器.
      */
-    public AutoShardTransactionExecutor(TransactionManager transactionManager, Class resourceClass) {
+    public AutoShardTransactionExecutor(TransactionManager transactionManager, Class<? extends TransactionResource> resourceClass) {
         this.transactionManager = transactionManager;
         this.resourceClass = resourceClass;
-    }
-
-    /**
-     * 构造一个事务执行器,需要一个事务管理器.
-     * @param transactionManager
-     * @param resourceClass
-     * @param undoExecutor
-     */
-    public AutoShardTransactionExecutor(TransactionManager transactionManager, Class resourceClass, UndoExecutor undoExecutor) {
-        this.transactionManager = transactionManager;
-        this.resourceClass = resourceClass;
-        this.undoExecutor = undoExecutor;
     }
 
     @Override
@@ -60,7 +44,7 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
 
         DataSource targetDataSource = shardTask.getDataSourceSelector().select(shardTask.getShardKey());
 
-        String dbKey = createDbKey(targetDataSource);
+        String dbKey = buildResourceKey(targetDataSource);
 
         TransactionResource resource;
         Optional<Transaction> tx = transactionManager.getCurrent();
@@ -79,7 +63,7 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
                 Connection conn = targetDataSource.getConnection();
 
                 try {
-                    resource = buildResource(dbKey, conn, false, shardTask.getShardKey());
+                    resource = buildResource(dbKey, conn, false);
                 } catch (Exception ex) {
                     throw new SQLException(ex.getMessage(), ex);
                 }
@@ -90,7 +74,7 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
             // 无事务运行.
             Connection conn = targetDataSource.getConnection();
             try {
-                resource = buildResource(dbKey, conn, true, shardTask.getShardKey());
+                resource = buildResource(dbKey, conn, true);
             } catch (Exception ex) {
                 throw new SQLException(ex.getMessage(), ex);
             }
@@ -105,29 +89,16 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
         }
     }
 
-    private TransactionResource buildResource(DataSource key, Connection value, boolean autocommit)
+    private TransactionResource buildResource(String key, Connection value, boolean autocommit)
             throws Exception {
 
-        Constructor<TransactionResource> constructor =
-                resourceClass.getConstructor(DataSource.class, Connection.class, Boolean.TYPE);
+        Constructor<? extends TransactionResource> constructor =
+                resourceClass.getConstructor(String.class, Connection.class, Boolean.TYPE);
         return constructor.newInstance(key, value, autocommit);
     }
 
-    private TransactionResource buildResource(String key, Connection value, boolean autocommit, String shardKey)
-            throws Exception {
-
-        Constructor<TransactionResource> constructor =
-                resourceClass.getConstructor(String.class, Connection.class, Boolean.TYPE);
-        TransactionResource resource = constructor.newInstance(key, value, autocommit);
-
-        ((UndoTransactionResource) resource).undoLog().setShardKey(shardKey);
-        ((UndoTransactionResource) resource).setUndoExecutor(undoExecutor);
-
-        return resource;
-    }
-
-    private String createDbKey(DataSource dataSource) {
-        return dataSource == null ? null : dataSource.toString();
+    private String buildResourceKey(DataSource dataSource) {
+        return dataSource == null ? "" : dataSource.toString();
     }
 
 }

@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.undo.store;
 
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.DbType;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.undo.constant.UndoLogStatus;
 import com.xforceplus.ultraman.oqsengine.storage.undo.pojo.UndoLog;
 import com.xforceplus.ultraman.oqsengine.storage.undo.util.CompressUtil;
@@ -32,17 +32,17 @@ public class RedisUndoLogStore implements UndoLogStore {
     }
 
     @Override
-    public UndoLog get(Long txId, DbType dbType, String shardKey) {
-        return getUndoLog(txId, dbType, shardKey);
+    public UndoLog get(Long txId, TransactionResourceType transactionResourceType, String shardKey) {
+        return getUndoLog(txId, transactionResourceType, shardKey);
     }
 
     @Override
-    public boolean save(Long txId, DbType dbType, String shardKey, UndoLog undoLog) {
+    public boolean save(Long txId, TransactionResourceType transactionResourceType, String shardKey, UndoLog undoLog) {
         undoLog.setTxId(txId);
-        undoLog.setDbType(dbType);
+        undoLog.setTransactionResourceType(transactionResourceType);
         undoLog.setShardKey(shardKey);
         undoLog.setTime(System.currentTimeMillis());
-        return saveUndoLog(txId, dbType, shardKey, undoLog);
+        return saveUndoLog(txId, transactionResourceType, shardKey, undoLog);
     }
 
     @Override
@@ -51,29 +51,29 @@ public class RedisUndoLogStore implements UndoLogStore {
     }
 
     @Override
-    public boolean remove(Long txId, DbType dbType, String shardKey) {
+    public boolean remove(Long txId, TransactionResourceType transactionResourceType, String shardKey) {
         Map<String, byte[]> txUndoMap = (Map) getUndoLog().get(txId);
         if (txUndoMap != null) {
-            txUndoMap.remove(dbKey(dbType, shardKey));
+            txUndoMap.remove(dbKey(transactionResourceType, shardKey));
         }
 
         if (txUndoMap.isEmpty()) {
             getUndoLog().remove(txId);
             return true;
         } else {
-            return lockPut(txId, dbType, shardKey, txUndoMap);
+            return lockPut(txId, transactionResourceType, shardKey, txUndoMap);
         }
     }
 
     @Override
-    public boolean removeItem(Long txId, DbType dbType, String shardKey, int index) {
+    public boolean removeItem(Long txId, TransactionResourceType transactionResourceType, String shardKey, int index) {
         Map<String, byte[]> txUndoMap = (Map) getUndoLog().get(txId);
-        UndoLog undoLog = (UndoLog) CompressUtil.decompressToObj(txUndoMap.get(dbKey(dbType, shardKey)));
+        UndoLog undoLog = (UndoLog) CompressUtil.decompressToObj(txUndoMap.get(dbKey(transactionResourceType, shardKey)));
         undoLog.getItems().set(index, null);
 
-        txUndoMap.put(dbKey(dbType, shardKey), CompressUtil.compress(undoLog));
+        txUndoMap.put(dbKey(transactionResourceType, shardKey), CompressUtil.compress(undoLog));
 
-        return lockPut(txId, dbType, shardKey, txUndoMap);
+        return lockPut(txId, transactionResourceType, shardKey, txUndoMap);
     }
 
     @Override
@@ -124,15 +124,15 @@ public class RedisUndoLogStore implements UndoLogStore {
     }
 
     @Override
-    public boolean updateStatus(Long txId, DbType dbType, String shardKey, UndoLogStatus status) {
-        UndoLog undoLog = getUndoLog(txId, dbType, shardKey);
+    public boolean updateStatus(Long txId, TransactionResourceType transactionResourceType, String shardKey, UndoLogStatus status) {
+        UndoLog undoLog = getUndoLog(txId, transactionResourceType, shardKey);
         if (undoLog == null) {
             return false;
         }
 
         undoLog.setStatus(status.value());
 
-        return saveUndoLog(txId, dbType, shardKey, undoLog);
+        return saveUndoLog(txId, transactionResourceType, shardKey, undoLog);
 
     }
 
@@ -140,27 +140,27 @@ public class RedisUndoLogStore implements UndoLogStore {
         return redissonClient.getMap(UNDO_LOG);
     }
 
-    UndoLog getUndoLog(Long txId, DbType dbType, String shardKey) {
+    UndoLog getUndoLog(Long txId, TransactionResourceType transactionResourceType, String shardKey) {
         getUndoLog().putIfAbsent(txId, new HashMap<>());
 
         Map<String, byte[]> txUndoMap = (Map<String, byte[]>) getUndoLog().get(txId);
 
-        return txUndoMap.containsKey(dbKey(dbType, shardKey)) ?
-                (UndoLog) CompressUtil.decompressToObj(txUndoMap.get(dbKey(dbType, shardKey))) : null;
+        return txUndoMap.containsKey(dbKey(transactionResourceType, shardKey)) ?
+                (UndoLog) CompressUtil.decompressToObj(txUndoMap.get(dbKey(transactionResourceType, shardKey))) : null;
     }
 
-    boolean saveUndoLog(Long txId, DbType dbType, String shardKey, UndoLog undoLog) {
+    boolean saveUndoLog(Long txId, TransactionResourceType transactionResourceType, String shardKey, UndoLog undoLog) {
         getUndoLog().putIfAbsent(txId, new HashMap<>());
 
         Map<String, byte[]> txUndoMap = (Map<String, byte[]>) getUndoLog().get(txId);
 
-        txUndoMap.put(dbKey(dbType, shardKey), CompressUtil.compress(undoLog));
+        txUndoMap.put(dbKey(transactionResourceType, shardKey), CompressUtil.compress(undoLog));
 
-        return lockPut(txId, dbType, shardKey, txUndoMap);
+        return lockPut(txId, transactionResourceType, shardKey, txUndoMap);
     }
 
-    boolean lockPut(Long txId, DbType dbType, String shardKey, Map<String, byte[]> txUndoMap) {
-        RLock lock = redissonClient.getLock(lockKey(txId, dbType, shardKey));
+    boolean lockPut(Long txId, TransactionResourceType transactionResourceType, String shardKey, Map<String, byte[]> txUndoMap) {
+        RLock lock = redissonClient.getLock(lockKey(txId, transactionResourceType, shardKey));
         if (lock != null) {
             try {
                 lock.tryLock(10, 10, TimeUnit.SECONDS);
@@ -177,11 +177,11 @@ public class RedisUndoLogStore implements UndoLogStore {
         return false;
     }
 
-    String dbKey(DbType dbType, String shardKey) {
-        return dbType.name() + "-" + shardKey;
+    String dbKey(TransactionResourceType transactionResourceType, String shardKey) {
+        return transactionResourceType.name() + "-" + shardKey;
     }
 
-    String lockKey(Long txId, DbType dbType, String shardKey) {
-        return "undolog-" + txId + "-" + dbType.name() + "-" + shardKey;
+    String lockKey(Long txId, TransactionResourceType transactionResourceType, String shardKey) {
+        return "undolog-" + txId + "-" + transactionResourceType.name() + "-" + shardKey;
     }
 }

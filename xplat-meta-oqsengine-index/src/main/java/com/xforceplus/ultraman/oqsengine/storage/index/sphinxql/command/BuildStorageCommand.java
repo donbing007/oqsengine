@@ -4,8 +4,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLCons
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.undo.command.UndoStorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.undo.constant.OpType;
+import com.xforceplus.ultraman.oqsengine.storage.undo.command.StorageCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +21,7 @@ import static com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.C
  * 功能描述:
  * 修改历史:
  */
-public class BuildStorageCommand extends UndoStorageCommand<StorageEntity> {
+public class BuildStorageCommand implements StorageCommand<StorageEntity> {
 
     final Logger logger = LoggerFactory.getLogger(BuildStorageCommand.class);
 
@@ -42,7 +41,6 @@ public class BuildStorageCommand extends UndoStorageCommand<StorageEntity> {
 
     @Override
     public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
-        super.prepareUndoLog(resource, OpType.BUILD, storageEntity);
 
         return this.doExecute(resource, storageEntity);
     }
@@ -79,10 +77,5 @@ public class BuildStorageCommand extends UndoStorageCommand<StorageEntity> {
         } finally {
             st.close();
         }
-    }
-
-    @Override
-    public StorageEntity executeUndo(TransactionResource resource, StorageEntity data) throws SQLException {
-        return new DeleteStorageCommand(indexTableName).execute(resource, data);
     }
 }

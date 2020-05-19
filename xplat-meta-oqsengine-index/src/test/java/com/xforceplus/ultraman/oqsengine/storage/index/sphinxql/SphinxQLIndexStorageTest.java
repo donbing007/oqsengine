@@ -19,12 +19,12 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.AutoShardTransactionEx
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.selector.TakeTurnsSelector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.sql.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.After;
 import org.junit.Assert;
@@ -183,7 +183,21 @@ public class SphinxQLIndexStorageTest {
 
         transactionManager.create();
 
-        initData(storage);
+        Transaction tx = transactionManager.getCurrent().get();
+        try {
+            initData(storage);
+            tx.commit();
+        } catch (Exception ex) {
+
+            if (!tx.isCompleted()) {
+                tx.rollback();
+            }
+
+            throw ex;
+
+        } finally {
+            transactionManager.finish();
+        }
 
         // 确认没有事务.
         Assert.assertFalse(transactionManager.getCurrent().isPresent());
@@ -714,11 +728,6 @@ public class SphinxQLIndexStorageTest {
             transactionManager.getCurrent().get().rollback();
             throw ex;
         }
-
-        //将事务正常提交,并从事务管理器中销毁事务.
-        Transaction tx = transactionManager.getCurrent().get();
-        tx.commit();
-        transactionManager.finish();
     }
 
     private Selector<DataSource> buildWriteDataSourceSelector(String file) {
