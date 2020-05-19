@@ -1,3 +1,4 @@
+[![pipeline status](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/badges/develop/pipeline.svg)](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/commits/develop)
 [![coverage report](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/badges/develop/coverage.svg)](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/commits/develop)
 
 #引言
