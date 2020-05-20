@@ -194,7 +194,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     @Override
     public void build(IEntity entity) throws SQLException {
-        doBuildOrReplace(entity, false);
+//        doBuildOrReplace(entity, false);
     }
 
     @Override

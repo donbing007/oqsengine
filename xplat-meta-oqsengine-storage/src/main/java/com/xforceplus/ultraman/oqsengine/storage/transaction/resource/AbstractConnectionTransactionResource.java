@@ -17,10 +17,8 @@ public abstract class AbstractConnectionTransactionResource extends AbstractTran
     public AbstractConnectionTransactionResource(String key, Connection value, boolean autoCommit) throws SQLException {
         super(key, value);
         this.autoCommit = autoCommit;
-        if (isAutoCommit()) {
-            value().setAutoCommit(true);
-        } else {
-            value().setAutoCommit(false);
+        if (value().getAutoCommit() != autoCommit) {
+            value().setAutoCommit(autoCommit);
         }
     }
 
