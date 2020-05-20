@@ -192,7 +192,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
                                     .stream(keys)
                                     .map(Tuple2::_1)
                                     .map(x -> Optional.ofNullable(x)
-                                            .map(IEntityField::name)
+                                            .map(IEntityField::cnName)
                                             .orElse(""))
                                     .collect(Collectors.joining(","));
                             sb.append(header);

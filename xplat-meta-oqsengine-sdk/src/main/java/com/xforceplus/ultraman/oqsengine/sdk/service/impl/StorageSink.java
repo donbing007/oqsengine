@@ -5,7 +5,6 @@ import akka.stream.IOResult;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.StreamConverters;
 import akka.util.ByteString;
-import com.sun.xml.internal.ws.util.CompletedFuture;
 import com.xforceplus.tower.file.client.model.Policy;
 import com.xforceplus.tower.storage.StorageFactory;
 import com.xforceplus.tower.storage.model.UploadFileRequest;
@@ -20,6 +19,9 @@ import java.io.InputStream;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+/**
+ * storageSink
+ */
 public class StorageSink implements ExportSink {
 
     private StorageFactory storageFactory;
@@ -30,7 +32,7 @@ public class StorageSink implements ExportSink {
 
     private String contextPath = "download/storage/%s";
 
-    public StorageSink(StorageFactory storageFactory, ContextService contextService, String appId){
+    public StorageSink(StorageFactory storageFactory, ContextService contextService, String appId) {
         this.storageFactory = storageFactory;
         this.contextService = contextService;
         this.appId = appId;
@@ -43,7 +45,7 @@ public class StorageSink implements ExportSink {
 //        Long fileId = storageFactory.uploadFile(UploadFileRequest uploadFileRequest)
         return StreamConverters.asInputStream().mapMaterializedValue(x -> {
 
-            Long fileId = upload(token,x);
+            Long fileId = upload(token, x);
             IOResult ioResult = new IOResult(0, Try.apply(Done::getInstance));
             return CompletableFuture.completedFuture(Tuple.of(ioResult, fileId.toString()));
         });
@@ -54,7 +56,7 @@ public class StorageSink implements ExportSink {
         return String.format(contextPath, token[0]);
     }
 
-    private Long upload(String name, InputStream inputStream){
+    private Long upload(String name, InputStream inputStream) {
 
         UploadFileRequest uploadFileRequest = new UploadFileRequest();
         uploadFileRequest.setAppId(appId);
