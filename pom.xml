@@ -244,7 +244,7 @@
         <checkstyle.skip>true</checkstyle.skip>
         <repository.host>http://120.27.140.65:8081/nexus</repository.host>
         <deployment.skip>false</deployment.skip>
-        <test.skip>false</test.skip>
+        <test.skip>true</test.skip>
     </properties>
 
 </project>
