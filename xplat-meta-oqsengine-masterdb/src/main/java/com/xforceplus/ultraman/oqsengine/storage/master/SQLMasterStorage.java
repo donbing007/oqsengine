@@ -221,22 +221,22 @@ public class SQLMasterStorage implements MasterStorage {
     public void build(IEntity entity) throws SQLException {
         checkId(entity);
 
-//        transactionExecutor.execute(
-//            new DataSourceShardingTask(
-//                dataSourceSelector, Long.toString(entity.id())) {
-//
-//                @Override
-//                public Object run(TransactionResource resource) throws SQLException {
-//                    StorageEntity storageEntity = new StorageEntity();
-//                    storageEntity.setId(entity.id());
-//                    storageEntity.setEntity(entity.entityClass().id());
-//                    storageEntity.setPref(entity.family().parent());
-//                    storageEntity.setCref(entity.family().child());
-//                    storageEntity.setAttribute(toJson(entity.entityValue()));
-//
-//                    return new BuildStorageCommand(tableNameSelector).execute(resource, storageEntity);
-//                }
-//            });
+        transactionExecutor.execute(
+            new DataSourceShardingTask(
+                dataSourceSelector, Long.toString(entity.id())) {
+
+                @Override
+                public Object run(TransactionResource resource) throws SQLException {
+                    StorageEntity storageEntity = new StorageEntity();
+                    storageEntity.setId(entity.id());
+                    storageEntity.setEntity(entity.entityClass().id());
+                    storageEntity.setPref(entity.family().parent());
+                    storageEntity.setCref(entity.family().child());
+                    storageEntity.setAttribute(toJson(entity.entityValue()));
+
+                    return new BuildStorageCommand(tableNameSelector).execute(resource, storageEntity);
+                }
+            });
     }
 
     @Override
