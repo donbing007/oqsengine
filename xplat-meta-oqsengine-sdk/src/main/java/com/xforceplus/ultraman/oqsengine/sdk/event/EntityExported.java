@@ -11,12 +11,15 @@ public class EntityExported implements EntityEvent{
 
     private String downloadUrl;
 
+    private String fileName;
+
     private Long completedTime;
 
-    public EntityExported(Map<String, Object> context, String downloadUrl) {
+    public EntityExported(Map<String, Object> context, String downloadUrl, String fileName) {
         this.context = context;
         this.downloadUrl = downloadUrl;
         this.completedTime = System.currentTimeMillis();
+        this.fileName = fileName;
     }
 
     public Map<String, Object> getContext() {
@@ -29,5 +32,9 @@ public class EntityExported implements EntityEvent{
 
     public Long getCompletedTime() {
         return completedTime;
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 }

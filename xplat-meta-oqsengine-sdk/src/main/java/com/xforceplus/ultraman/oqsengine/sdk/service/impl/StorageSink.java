@@ -16,6 +16,7 @@ import io.vavr.Tuple2;
 import scala.util.Try;
 
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -30,7 +31,7 @@ public class StorageSink implements ExportSink {
 
     private String appId;
 
-    private String contextPath = "download/storage/%s";
+    private String contextPath = "download/file/%s";
 
     public StorageSink(StorageFactory storageFactory, ContextService contextService, String appId) {
         this.storageFactory = storageFactory;
@@ -41,13 +42,17 @@ public class StorageSink implements ExportSink {
     @Override
     public Sink<ByteString, CompletionStage<Tuple2<IOResult, String>>> getSink(String token) {
 
+        Long telnetID = contextService.get(ContextKeys.LongKeys.TENANT_ID);
+        Long userID = contextService.get(ContextKeys.LongKeys.ACCOUNT_ID);
 
-//        Long fileId = storageFactory.uploadFile(UploadFileRequest uploadFileRequest)
-        return StreamConverters.asInputStream().mapMaterializedValue(x -> {
-
-            Long fileId = upload(token, x);
-            IOResult ioResult = new IOResult(0, Try.apply(Done::getInstance));
-            return CompletableFuture.completedFuture(Tuple.of(ioResult, fileId.toString()));
+        return StreamConverters.asInputStream(Duration.ofSeconds(50)).mapMaterializedValue(x -> {
+            //should always in a async context or will block the queue
+            //TODO contextService is not ok when using Async Thread
+            return CompletableFuture.supplyAsync(() -> {
+                Long fileId = upload(token, x, telnetID, userID);
+                IOResult ioResult = new IOResult(0, Try.apply(Done::getInstance));
+                return Tuple.of(ioResult, fileId.toString());
+            });
         });
     }
 
@@ -56,7 +61,15 @@ public class StorageSink implements ExportSink {
         return String.format(contextPath, token[0]);
     }
 
-    private Long upload(String name, InputStream inputStream) {
+    @Override
+    public InputStream getInputStream(String token) {
+
+        Long tenantId = contextService.get(ContextKeys.LongKeys.TENANT_ID);
+        Long userId = contextService.get(ContextKeys.LongKeys.ACCOUNT_ID);
+        return storageFactory.downloadInputStream(userId, tenantId, Long.parseLong(token), null);
+    }
+
+    private Long upload(String name, InputStream inputStream, Long telnetID, Long userID) {
 
         UploadFileRequest uploadFileRequest = new UploadFileRequest();
         uploadFileRequest.setAppId(appId);
@@ -64,8 +77,8 @@ public class StorageSink implements ExportSink {
         uploadFileRequest.setInputStream(inputStream);
         uploadFileRequest.setFileName(name);
         uploadFileRequest.setPolicy(Policy.PUBLIC_POLICY);
-        uploadFileRequest.setTenantId(contextService.get(ContextKeys.LongKeys.TENANT_ID));
-        uploadFileRequest.setUserId(contextService.get(ContextKeys.LongKeys.ACCOUNT_ID));
+        uploadFileRequest.setTenantId(telnetID);
+        uploadFileRequest.setUserId(userID);
         uploadFileRequest.setOverwrite(true);
         uploadFileRequest.setFilePath("/export/");
         return storageFactory.uploadByInputStream(uploadFileRequest);

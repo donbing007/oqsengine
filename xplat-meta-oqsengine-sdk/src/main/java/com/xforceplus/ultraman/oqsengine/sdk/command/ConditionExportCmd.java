@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 /**
  * condition export command
  */
-public class ConditionExportCmd implements MetaDataLikeCmd {
+public class ConditionExportCmd implements MetaDataLikeCmd, ContextAwareCmd {
 
     private String boId;
 

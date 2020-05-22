@@ -24,6 +24,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.DictItem;
 import com.xforceplus.xplat.galaxy.framework.context.ContextKeys;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.anno.QueryHandler;
+import com.xforceplus.xplat.galaxy.framework.dispatcher.messaging.MetaData;
+import com.xforceplus.xplat.galaxy.framework.dispatcher.messaging.QueryMessage;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.slf4j.Logger;
@@ -61,9 +63,6 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
 
     @Autowired
     private ApplicationEventPublisher publisher;
-
-    @Autowired(required = false)
-    private ContextService contextService;
 
     private static final String MISSING_ENTITIES = "查询对象不存在";
 
@@ -144,20 +143,27 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
     /**
      * export command
      * either a error msg and a link
-     * TODO
+     * Notice this is a async calling
      *
-     * @param cmd
+     * @param message
      * @return
      */
     @QueryHandler(isDefault = true)
     @Override
-    public CompletableFuture<Either<String, String>> conditionExport(ConditionExportCmd cmd) {
+    public CompletableFuture<Either<String, String>> conditionExport(QueryMessage<ConditionExportCmd, ?> message) {
         //TODO check this performance
 
-        AtomicBoolean isFirstLine = new AtomicBoolean(true);
-        Long token = System.nanoTime();
+        ConditionExportCmd cmd = message.getPayload();
 
-        Sink<ByteString, CompletionStage<Tuple2<IOResult, String>>> fileSink = exportSink.getSink(token.toString());
+        MetaData metaData = message.getMetaData();
+
+        AtomicBoolean isFirstLine = new AtomicBoolean(true);
+
+        String token = Optional.ofNullable(metaData.get("name")).map(Object::toString)
+                .orElse(Optional.ofNullable(metaData.get("code")).map(Object::toString)
+                        .orElse(cmd.getBoId())) + "-" + System.nanoTime();
+
+        Sink<ByteString, CompletionStage<Tuple2<IOResult, String>>> fileSink = exportSink.getSink(token);
 
         ConditionQueryRequest request = cmd.getConditionQueryRequest();
 
@@ -230,13 +236,10 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
                         String downloadUrl = exportSink.getDownloadUrl(x._2());
 
                         Map<String, Object> context = new HashMap<>();
-                        if (contextService != null) {
-                            context.put(ContextKeys.LongKeys.TENANT_ID.name(), contextService.get(ContextKeys.LongKeys.TENANT_ID));
-                            context.put(ContextKeys.LongKeys.ACCOUNT_ID.name(), contextService.get(ContextKeys.LongKeys.ACCOUNT_ID));
-                            context.put(ContextKeys.StringKeys.USERNAME.name(), contextService.get(ContextKeys.StringKeys.USERNAME));
-                            context.put(ContextKeys.StringKeys.USER_DISPLAYNAME.name(), contextService.get(ContextKeys.StringKeys.USER_DISPLAYNAME));
+                        if (metaData != null) {
+                            context.putAll(metaData);
                         }
-                        publisher.publishEvent(new EntityExported(context, downloadUrl));
+                        publisher.publishEvent(new EntityExported(context, downloadUrl, token));
                         return Either.right(downloadUrl);
                     });
         }
