@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import com.xforceplus.ultraman.oqsengine.sdk.service.HandleValueService;
@@ -43,7 +43,7 @@ public class DefaultHandleValueService implements HandleValueService {
      * @param body
      */
     @Override
-    public List<ValueUp> handlerValue(EntityClass entityClass, Map<String, Object> body, OperationType phase) {
+    public List<ValueUp> handlerValue(IEntityClass entityClass, Map<String, Object> body, OperationType phase) {
 
         IEntityClassReader reader = new IEntityClassReader(entityClass);
 

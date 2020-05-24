@@ -9,36 +9,43 @@ public interface ValueUpOrBuilder extends
 
   /**
    * <code>string value = 1;</code>
+   * @return The value.
    */
-  String getValue();
+  java.lang.String getValue();
   /**
    * <code>string value = 1;</code>
+   * @return The bytes for value.
    */
   com.google.protobuf.ByteString
       getValueBytes();
 
   /**
    * <code>string name = 2;</code>
+   * @return The name.
    */
-  String getName();
+  java.lang.String getName();
   /**
    * <code>string name = 2;</code>
+   * @return The bytes for name.
    */
   com.google.protobuf.ByteString
       getNameBytes();
 
   /**
    * <code>string fieldType = 3;</code>
+   * @return The fieldType.
    */
-  String getFieldType();
+  java.lang.String getFieldType();
   /**
    * <code>string fieldType = 3;</code>
+   * @return The bytes for fieldType.
    */
   com.google.protobuf.ByteString
       getFieldTypeBytes();
 
   /**
    * <code>int64 fieldId = 4;</code>
+   * @return The fieldId.
    */
   long getFieldId();
 }

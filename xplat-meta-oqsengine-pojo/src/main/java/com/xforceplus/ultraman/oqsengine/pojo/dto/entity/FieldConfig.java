@@ -48,6 +48,8 @@ public class FieldConfig implements Serializable {
 
     private String delimiter = "";
 
+    private String displayType = "";
+
     /**
      * 创建一个新的 FieldConfig.
      * @return 实例.
@@ -158,6 +160,15 @@ public class FieldConfig implements Serializable {
 //        return Objects.hash(isSearchable(), getMax(), getMin(), isIdentifie());
 //    }
 
+
+    public String getDisplayType(){
+        return this.displayType;
+    }
+
+    public FieldConfig displayType(String displayType){
+        this.displayType = displayType;
+        return this;
+    }
 
     public boolean isRequired() {
         return isRequired;

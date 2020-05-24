@@ -59,7 +59,7 @@
         <dependency>
             <groupId>com.xforceplus.xplat-galaxy.ultraman.metadata</groupId>
             <artifactId>config-client</artifactId>
-            <version>1.0.3-SNAPSHOT</version>
+            <version>1.0.4-SNAPSHOT</version>
         </dependency>
         <!-- OQSENGINE client -->
         <dependency>
@@ -93,6 +93,29 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>ST4</artifactId>
+            <version>4.3</version>
+        </dependency>
+
+        <!-- 文件服务 https://wiki.xforceplus.com/pages/viewpage.action?pageId=32112782  -->
+        <dependency>
+            <artifactId>tower-sdk-storage</artifactId>
+            <groupId>com.xforceplus.tower</groupId>
+            <version>1.1.0</version>
+<!--            <optional>true</optional>-->
+<!--            <scope>runtime</scope>-->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>xf-bm-xplat-msg</groupId>
+            <artifactId>notification-api</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
