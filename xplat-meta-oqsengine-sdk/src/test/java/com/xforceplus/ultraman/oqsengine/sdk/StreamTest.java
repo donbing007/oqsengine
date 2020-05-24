@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
 
 public class StreamTest {
@@ -35,6 +36,8 @@ public class StreamTest {
 
         List<String> list = Arrays.asList("a", "b");
 
+        CountDownLatch latch = new CountDownLatch(1);
+
        Source.from(list).map(ByteString::fromString)
                 .runWith(StreamConverters.asInputStream().mapMaterializedValue(x -> {
 
@@ -54,13 +57,12 @@ public class StreamTest {
                         }
 
                         System.out.println(sb.toString());
+                        latch.countDown();
                         return 1;
                     });
                 }), mat);
 
-//        Await.result(integerFuture, Duration.create("10 sec"));
-
-        Thread.sleep(1000000);
+        latch.await();
 
     }
 }
