@@ -41,6 +41,8 @@ public class UltForm {
      */
     private String tenantName;
 
+    private String tenantCode;
+
     /**
      * 配置信息
      */
@@ -69,7 +71,7 @@ public class UltForm {
      * @param setting
      * @param version
      */
-    public UltForm(Long id, Long appId, String name, String code, Long refFormId, Long tenantId, String tenantName, String setting, String version) {
+    public UltForm(Long id, Long appId, String name, String code, Long refFormId, Long tenantId, String tenantCode, String tenantName, String setting, String version) {
         this.id = id;
         this.appId = appId;
         this.name = name;
@@ -79,6 +81,7 @@ public class UltForm {
         this.tenantName = tenantName;
         this.setting = setting;
         this.version = version;
+        this.tenantCode = tenantCode;
     }
 
     public Long getId() {
@@ -153,24 +156,33 @@ public class UltForm {
         this.refFormId = refFormId;
     }
 
+    public String getTenantCode() {
+        return tenantCode;
+    }
+
+    public void setTenantCode(String tenantCode) {
+        this.tenantCode = tenantCode;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof UltForm)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         UltForm ultForm = (UltForm) o;
-        return Objects.equals(getId(), ultForm.getId()) &&
-                Objects.equals(getAppId(), ultForm.getAppId()) &&
-                Objects.equals(getName(), ultForm.getName()) &&
-                Objects.equals(getCode(), ultForm.getCode()) &&
-                Objects.equals(getRefFormId(), ultForm.getRefFormId()) &&
-                Objects.equals(getTenantId(), ultForm.getTenantId()) &&
-                Objects.equals(getTenantName(), ultForm.getTenantName()) &&
-                Objects.equals(getSetting(), ultForm.getSetting()) &&
-                Objects.equals(getVersion(), ultForm.getVersion());
+        return Objects.equals(id, ultForm.id) &&
+                Objects.equals(appId, ultForm.appId) &&
+                Objects.equals(name, ultForm.name) &&
+                Objects.equals(code, ultForm.code) &&
+                Objects.equals(refFormId, ultForm.refFormId) &&
+                Objects.equals(tenantId, ultForm.tenantId) &&
+                Objects.equals(tenantName, ultForm.tenantName) &&
+                Objects.equals(tenantCode, ultForm.tenantCode) &&
+                Objects.equals(setting, ultForm.setting) &&
+                Objects.equals(version, ultForm.version);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getAppId(), getName(), getCode(), getRefFormId(), getTenantId(), getTenantName(), getSetting(), getVersion());
+        return Objects.hash(id, appId, name, code, refFormId, tenantId, tenantName, tenantCode, setting, version);
     }
 }

@@ -43,6 +43,7 @@ public class PageBoMapLocalStore extends MapLocalStore {
             map.put("code", ultPage.getCode());
             map.put("refPageId", ultPage.getRefPageId());
             map.put("tenantId", ultPage.getTenantId());
+            map.put("tenantCode", ultPage.getTenantCode());
             map.put("tenantName", ultPage.getTenantName());
             map.put("version", ultPage.getVersion());
             map.put("boName", ultPageBo.getBoName());

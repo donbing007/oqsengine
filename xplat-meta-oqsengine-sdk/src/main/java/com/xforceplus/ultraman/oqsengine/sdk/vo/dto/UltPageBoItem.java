@@ -44,6 +44,8 @@ public class UltPageBoItem {
      */
     private String tenantName;
 
+    private String tenantCode;
+
     /**
      * 配置信息
      */
@@ -134,6 +136,14 @@ public class UltPageBoItem {
         this.envStatus = envStatus;
     }
 
+    public String getTenantCode() {
+        return tenantCode;
+    }
+
+    public void setTenantCode(String tenantCode) {
+        this.tenantCode = tenantCode;
+    }
+
     @Override
     public String toString() {
         return "UltPageBoItem{" +
@@ -145,6 +155,7 @@ public class UltPageBoItem {
                 ", remark='" + remark + '\'' +
                 ", tenantId=" + tenantId +
                 ", tenantName='" + tenantName + '\'' +
+                ", tenantCode='" + tenantCode + '\'' +
                 ", setting='" + setting + '\'' +
                 ", envStatus='" + envStatus + '\'' +
                 '}';
