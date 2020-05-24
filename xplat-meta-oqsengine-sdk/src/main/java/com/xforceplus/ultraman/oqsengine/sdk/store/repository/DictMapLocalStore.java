@@ -14,7 +14,7 @@ import java.util.Map;
 public class DictMapLocalStore extends MapLocalStore {
 
     public static DictMapLocalStore create() {
-        return new DictMapLocalStore("dicts", "dict", new String[]{"name", "dictId", "dictCode", "dictName", "publishDictId", "tenantId", "appId", "code", "version"}
+        return new DictMapLocalStore("dicts", "dict", new String[]{"name", "dictId", "dictCode", "dictName", "publishDictId", "tenantId", "tenantCode", "appId", "code", "version"}
             , null, false, null);
     }
 

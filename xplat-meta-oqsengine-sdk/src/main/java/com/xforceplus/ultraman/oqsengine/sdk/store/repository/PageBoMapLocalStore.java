@@ -16,7 +16,7 @@ public class PageBoMapLocalStore extends MapLocalStore {
 
     public static PageBoMapLocalStore create() {
         return new PageBoMapLocalStore("pageBos", "pageBo",
-            new String[]{"settingId", "id", "appId", "name", "code", "refPageId", "tenantId", "tenantName", "version", "boName", "boCode", "setting", "remark", "envStatus"}
+            new String[]{"settingId", "id", "appId", "name", "code", "refPageId", "tenantId", "tenantName", "tenantCode","version", "boName", "boCode", "setting", "remark", "envStatus"}
             , null, false, null);
     }
 
