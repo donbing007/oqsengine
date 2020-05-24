@@ -5,6 +5,7 @@ import com.xforceplus.xplat.galaxy.framework.dispatcher.messaging.QueryMessage;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -25,6 +26,10 @@ public interface DefaultUiService {
     Either<String, Tuple2<Integer, List<Map<String, Object>>>> conditionSearch(ConditionSearchCmd cmd);
 
     CompletableFuture<Either<String, String>> conditionExport(QueryMessage<ConditionExportCmd, ?> cmd);
+
+    Either<String, InputStream> importTemplate(GetImportTemplateCmd cmd);
+
+    Either<String, String> batchImport(ImportCmd cmd);
 }
 
 

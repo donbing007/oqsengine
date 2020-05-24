@@ -97,7 +97,7 @@ public class EntityServiceImpl implements EntityService {
     @Override
     public <T> Either<String, T> transactionalExecute(Callable<T> supplier) {
         OperationResult result = entityServiceClient
-            .commit(TransactionUp.newBuilder().build()).toCompletableFuture().join();
+            .begin(TransactionUp.newBuilder().build()).toCompletableFuture().join();
 
         if (result.getCode() == OperationResult.Code.OK) {
             contextService.set(TRANSACTION_KEY, result.getTransactionResult());
