@@ -379,7 +379,9 @@ public class EntityServiceExImpl implements EntityServiceEx {
                     dictItemList.add(dictItems.get(i));
                     maxVersion = dictItems.get(i).getVersion();
                 } else {
-                    dictItemList.add(dictItems.get(i));
+                    if (maxVersion.equals(dictItems.get(i).getVersion())){
+                        dictItemList.add(dictItems.get(i));
+                    }
                 }
             }
         }
