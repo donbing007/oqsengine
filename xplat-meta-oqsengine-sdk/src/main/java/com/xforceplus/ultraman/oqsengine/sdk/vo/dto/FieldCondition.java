@@ -19,6 +19,15 @@ public class FieldCondition {
 
     List<String> value;
 
+    public FieldCondition() {
+    }
+
+    public FieldCondition(String code, ConditionOp operation, List<String> value) {
+        this.code = code;
+        this.operation = operation;
+        this.value = value;
+    }
+
     public String getCode() {
         return code;
     }
