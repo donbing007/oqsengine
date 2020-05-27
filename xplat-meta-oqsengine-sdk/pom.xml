@@ -59,7 +59,7 @@
         <dependency>
             <groupId>com.xforceplus.xplat-galaxy.ultraman.metadata</groupId>
             <artifactId>config-client</artifactId>
-            <version>1.0.4-SNAPSHOT</version>
+            <version>1.0.5-SNAPSHOT</version>
         </dependency>
         <!-- OQSENGINE client -->
         <dependency>

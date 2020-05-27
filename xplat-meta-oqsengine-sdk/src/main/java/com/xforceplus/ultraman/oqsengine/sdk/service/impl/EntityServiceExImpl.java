@@ -206,11 +206,11 @@ public class EntityServiceExImpl implements EntityServiceEx {
 
     @Override
     public List<DictItem> findDictItems(String enumId, String enumCode) {
-        String tenantId = contextService.get(TENANTID_KEY);
+        String tenantCode = contextService.get(TENANTCODE_KEY);
         DataSet ds = null;
         List<Row> rows = new ArrayList<Row>();
         if (StringUtils.isEmpty(enumCode)) {
-            if (!StringUtils.isEmpty(tenantId)) {
+            if (!StringUtils.isEmpty(tenantCode)) {
                 //找到字典的code信息
                 ds = dictMapLocalStore.query().selectAll()
                         .where("publishDictId")
@@ -218,12 +218,13 @@ public class EntityServiceExImpl implements EntityServiceEx {
                         .execute();
                 rows = ds.toRows();
                 if (rows.size() > 0) {
-                    String dictCode = rows.get(0).getValue(3).toString();
+                    String dictCode = RowUtils.getRowValue(rows.get(0), "dictCode")
+                            .map(Object::toString).orElse("");
                     ds = dictMapLocalStore.query().selectAll()
                             .where("dictCode")
                             .eq(dictCode)
-                            .and("tenantId")
-                            .eq(tenantId)
+                            .and("tenantCode")
+                            .eq(tenantCode)
                             .execute();
                 }
             }
@@ -239,8 +240,8 @@ public class EntityServiceExImpl implements EntityServiceEx {
                 rows = ds.toRows();
             }
         } else {
-            if (!StringUtils.isEmpty(tenantId)) {
-                if (!StringUtils.isEmpty(tenantId)) {
+            if (!StringUtils.isEmpty(tenantCode)) {
+                if (!StringUtils.isEmpty(tenantCode)) {
                     //找到字典的code信息
                     ds = dictMapLocalStore.query().selectAll()
                             .where("publishDictId")
@@ -248,12 +249,13 @@ public class EntityServiceExImpl implements EntityServiceEx {
                             .execute();
                     rows = ds.toRows();
                     if (rows.size() > 0) {
-                        String dictCode = rows.get(0).getValue(3).toString();
+                        String dictCode = RowUtils.getRowValue(rows.get(0), "dictCode")
+                                .map(Object::toString).orElse("");
                         ds = dictMapLocalStore.query().selectAll()
                                 .where("dictCode")
                                 .eq(dictCode)
-                                .and("tenantId")
-                                .eq(tenantId)
+                                .and("tenantCode")
+                                .eq(tenantCode)
                                 .and("code")
                                 .eq(enumCode)
                                 .execute();
@@ -281,16 +283,18 @@ public class EntityServiceExImpl implements EntityServiceEx {
 
     @Override
     public List<DictItem> findDictItemsByCode(String code, String enumCode) {
-        String tenantId = contextService.get(TENANTID_KEY);
+
+        String tenantCode = contextService.get(TENANTCODE_KEY);
+
         DataSet ds = null;
         List<Row> rows = new ArrayList<Row>();
         if (StringUtils.isEmpty(enumCode)) {
-            if (!StringUtils.isEmpty(tenantId)){
+            if (!StringUtils.isEmpty(tenantCode)){
                 ds = dictMapLocalStore.query().selectAll()
                         .where("dictCode")
                         .eq(code)
-                        .and("tenantId")
-                        .eq(tenantId)
+                        .and("tenantCode")
+                        .eq(tenantCode)
                         .execute();
             }
 
@@ -306,12 +310,12 @@ public class EntityServiceExImpl implements EntityServiceEx {
                 rows = ds.toRows();
             }
         } else {
-            if (!StringUtils.isEmpty(tenantId)) {
+            if (!StringUtils.isEmpty(tenantCode)) {
                 ds = dictMapLocalStore.query().selectAll()
                         .where("dictCode")
                         .eq(code)
-                        .and("tenantId")
-                        .eq(tenantId)
+                        .and("tenantCode")
+                        .eq(tenantCode)
                         .and("code")
                         .eq(enumCode)
                         .execute();

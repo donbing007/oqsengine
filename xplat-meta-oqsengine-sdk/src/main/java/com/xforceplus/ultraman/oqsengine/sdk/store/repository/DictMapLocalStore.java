@@ -22,7 +22,7 @@ public class DictMapLocalStore extends MapLocalStore {
         super(schema, tableName, columns, pkColumns, hasVersion, versionComparator);
     }
 
-    public void save(DictUpResult dictUpResult, String tenantId, String appId) {
+    public void save(DictUpResult dictUpResult, String appId) {
         dictUpResult.getDictsList().forEach(dict -> {
 
             //remove all id related
@@ -31,7 +31,7 @@ public class DictMapLocalStore extends MapLocalStore {
             dict.getDictUpDetailsList().forEach(details -> {
                 //record
                 Map<String, Object> map = new HashMap<>();
-                map.put("tenantId", tenantId);
+                map.put("tenantCode", dict.getTenantCode());
                 map.put("appId", appId);
                 map.put("dictId", dict.getId());
                 map.put("dictCode", dict.getCode());

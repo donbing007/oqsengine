@@ -47,7 +47,7 @@ public class ModuleEventListener {
         moduleUpResults.forEach(module -> {
             logger.debug("Got Module {}", event);
             store.save(module, event.getRequest().getTenantId(), event.getRequest().getAppId());
-            logger.info("Module saved ");
+            logger.info("Module {}:{} saved ", module.getId(), module.getCode());
         });
     }
 

@@ -6,14 +6,15 @@ import com.xforceplus.ultraman.metadata.grpc.DictCheckServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.DictMapLocalStore;
 import com.xforceplus.xplat.galaxy.grpc.client.LongConnect;
-import org.springframework.beans.factory.InitializingBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * dict grpc init service
  */
-public class DictInitService implements InitializingBean {
+public class DictInitService implements SmartInitializingSingleton {
 
     @Autowired
     private DictCheckServiceClient client;
@@ -27,9 +28,10 @@ public class DictInitService implements InitializingBean {
     @Autowired
     private DictMapLocalStore dictLocalStore;
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
+    private Logger logger = LoggerFactory.getLogger(DictInitService.class);
 
+    @Override
+    public void afterSingletonsInstantiated() {
         com.xforceplus.ultraman.metadata.grpc.Base.Authorization request = com.xforceplus
                 .ultraman.metadata.grpc.Base.Authorization.newBuilder()
                 .setAppId(config.getAppId())
@@ -41,7 +43,12 @@ public class DictInitService implements InitializingBean {
                 , () -> client.checkStreaming(request))
                 .log("DictService")
                 .runWith(Sink.foreach(x -> {
-                    dictLocalStore.save(x, request.getTenantId(), request.getAppId());
+                    dictLocalStore.save(x, request.getAppId());
+                    if (logger.isInfoEnabled()) {
+                        x.getDictsList().forEach(dict -> {
+                            logger.info("Dict {}:{}:{} saved", dict.getCode(), dict.getPublishDictId(), dict.getId());
+                        });
+                    }
                 }), mat);
     }
 }
