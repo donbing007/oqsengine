@@ -10,7 +10,7 @@ maven-test-build:
   coverage: '/Total.*?([0-9]{1,3})%/'
   script:
     - update_pom_version
-    - mvn clean install -s ./.mvn/wrapper/settings.xml -Dtest=!ImageRelatedTest test
+    - mvn clean install -s ./.mvn/wrapper/settings.xml -Dtest=!ImageRelatedTest test -DfailIfNoTests=false
     - cat target/site/jacoco/index.html
     - mkdir -p /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     - cp ./target/xplat-meta-oqsengine.jar /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}/app.jar
