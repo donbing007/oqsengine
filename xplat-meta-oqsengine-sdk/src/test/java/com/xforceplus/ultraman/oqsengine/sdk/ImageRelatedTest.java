@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
+import com.xforceplus.ultraman.oqsengine.sdk.configuration.TestApplicationContextInitializer;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
@@ -20,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.AssertionErrors;
 
 import java.time.LocalDateTime;
@@ -36,6 +39,7 @@ import static org.junit.Assert.assertTrue;
  */
 @EnableAsync
 @ActiveProfiles("image")
+@ContextConfiguration(initializers = TestApplicationContextInitializer.class)
 public class ImageRelatedTest extends ContextWareBaseTest {
 
     @Autowired
@@ -51,7 +55,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     MetadataRepository store;
 
     @Before
-    public void waitForLoad(){
+    public void waitForLoad() {
         System.out.println(store.currentVersion().getVersionMapping());
         store.findAllEntities().stream().map(x -> x.code()).forEach(System.out::println);
     }
