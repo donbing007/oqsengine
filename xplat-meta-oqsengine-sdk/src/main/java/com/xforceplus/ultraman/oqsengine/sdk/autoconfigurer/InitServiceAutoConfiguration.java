@@ -2,12 +2,10 @@ package com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer;
 
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
-import com.xforceplus.tower.storage.StorageFactory;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.configuration.GatewayUrlSupplier;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.configuration.MessageAppIdSupplier;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.configuration.MessageTokenSupplier;
-import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.configuration.StorageAppIdSupplier;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.*;
 import com.xforceplus.ultraman.oqsengine.sdk.controller.DownloadController;
@@ -279,6 +277,13 @@ public class InitServiceAutoConfiguration {
         return new SequenceExportSource(entityService, step);
     }
 
+    @ConditionalOnMissingBean(ExportSink.class)
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.export.local-sink", matchIfMissing = true)
+    @Bean
+    public ExportSink localFileSink(@Value("${xplat.oqsengine.sdk.export.local.root:/}") String root) {
+        return new LocalFileExportSink(root);
+    }
+
     /**
      * xplat:
      * oqsengine:
@@ -295,20 +300,6 @@ public class InitServiceAutoConfiguration {
         return new VersionInterceptor<>();
     }
 
-    @ConditionalOnMissingBean(ExportSink.class)
-    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.export.local-sink", matchIfMissing = true)
-    @Bean
-    public ExportSink localFileSink(@Value("${xplat.oqsengine.sdk.export.local.root:/}") String root) {
-        return new LocalFileExportSink(root);
-    }
-
-    @ConditionalOnMissingBean(ExportSink.class)
-    @ConditionalOnBean(StorageAppIdSupplier.class)
-    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.export.storage-sink", matchIfMissing = false)
-    @Bean
-    public ExportSink storageFileSink(StorageFactory storageFactory, ContextService contextService, StorageAppIdSupplier storageAppIdSupplier) {
-        return new StorageSink(storageFactory, contextService, storageAppIdSupplier.getStorageAppId());
-    }
 
     @ConditionalOnBean(value = {MessageAppIdSupplier.class, MessageTokenSupplier.class, GatewayUrlSupplier.class, RestTemplate.class})
     @ConditionalOnProperty(value = "xplat.oqsengine.sdk.export.message.enabled", matchIfMissing = true)
