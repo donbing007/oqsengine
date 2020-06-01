@@ -116,7 +116,7 @@ public class NotMatchConditionBuilderTest {
                         new EntityField(Long.MAX_VALUE, "test", FieldType.STRING),
                         "!@#$%^&*()300")
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "S = '！＠#＄%＾&*（）300'"
+                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "S = '！＠#＄%＾&＊（）300'"
             )
         );
     }
