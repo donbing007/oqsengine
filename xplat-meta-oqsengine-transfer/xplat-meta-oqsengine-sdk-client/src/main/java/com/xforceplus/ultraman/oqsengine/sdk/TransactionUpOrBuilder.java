@@ -9,30 +9,36 @@ public interface TransactionUpOrBuilder extends
 
   /**
    * <code>string id = 1;</code>
+   * @return The id.
    */
-  String getId();
+  java.lang.String getId();
   /**
    * <code>string id = 1;</code>
+   * @return The bytes for id.
    */
   com.google.protobuf.ByteString
       getIdBytes();
 
   /**
    * <code>string service = 2;</code>
+   * @return The service.
    */
-  String getService();
+  java.lang.String getService();
   /**
    * <code>string service = 2;</code>
+   * @return The bytes for service.
    */
   com.google.protobuf.ByteString
       getServiceBytes();
 
   /**
    * <code>string tansType = 3;</code>
+   * @return The tansType.
    */
-  String getTansType();
+  java.lang.String getTansType();
   /**
    * <code>string tansType = 3;</code>
+   * @return The bytes for tansType.
    */
   com.google.protobuf.ByteString
       getTansTypeBytes();

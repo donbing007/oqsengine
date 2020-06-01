@@ -20,12 +20,17 @@ private static final long serialVersionUID = 0L;
     message_ = "";
     queryResult_ = java.util.Collections.emptyList();
     transactionResult_ = "";
-    affectedRow_ = 0;
-    ids_ = java.util.Collections.emptyList();
-    totalRow_ = 0;
+    ids_ = emptyLongList();
   }
 
-  @Override
+  @java.lang.Override
+  @SuppressWarnings({"unused"})
+  protected java.lang.Object newInstance(
+      UnusedPrivateParameter unused) {
+    return new OperationResult();
+  }
+
+  @java.lang.Override
   public final com.google.protobuf.UnknownFieldSet
   getUnknownFields() {
     return this.unknownFields;
@@ -36,7 +41,7 @@ private static final long serialVersionUID = 0L;
       throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     if (extensionRegistry == null) {
-      throw new NullPointerException();
+      throw new java.lang.NullPointerException();
     }
     int mutable_bitField0_ = 0;
     com.google.protobuf.UnknownFieldSet.Builder unknownFields =
@@ -49,13 +54,6 @@ private static final long serialVersionUID = 0L;
           case 0:
             done = true;
             break;
-          default: {
-            if (!parseUnknownFieldProto3(
-                input, unknownFields, extensionRegistry, tag)) {
-              done = true;
-            }
-            break;
-          }
           case 8: {
             int rawValue = input.readEnum();
 
@@ -63,22 +61,22 @@ private static final long serialVersionUID = 0L;
             break;
           }
           case 18: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
 
             message_ = s;
             break;
           }
           case 26: {
-            if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
-              queryResult_ = new java.util.ArrayList<EntityUp>();
-              mutable_bitField0_ |= 0x00000004;
+            if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+              queryResult_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.sdk.EntityUp>();
+              mutable_bitField0_ |= 0x00000001;
             }
             queryResult_.add(
-                input.readMessage(EntityUp.parser(), extensionRegistry));
+                input.readMessage(com.xforceplus.ultraman.oqsengine.sdk.EntityUp.parser(), extensionRegistry));
             break;
           }
           case 34: {
-            String s = input.readStringRequireUtf8();
+            java.lang.String s = input.readStringRequireUtf8();
 
             transactionResult_ = s;
             break;
@@ -89,22 +87,22 @@ private static final long serialVersionUID = 0L;
             break;
           }
           case 48: {
-            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
-              ids_ = new java.util.ArrayList<Long>();
-              mutable_bitField0_ |= 0x00000020;
+            if (!((mutable_bitField0_ & 0x00000002) != 0)) {
+              ids_ = newLongList();
+              mutable_bitField0_ |= 0x00000002;
             }
-            ids_.add(input.readInt64());
+            ids_.addLong(input.readInt64());
             break;
           }
           case 50: {
             int length = input.readRawVarint32();
             int limit = input.pushLimit(length);
-            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020) && input.getBytesUntilLimit() > 0) {
-              ids_ = new java.util.ArrayList<Long>();
-              mutable_bitField0_ |= 0x00000020;
+            if (!((mutable_bitField0_ & 0x00000002) != 0) && input.getBytesUntilLimit() > 0) {
+              ids_ = newLongList();
+              mutable_bitField0_ |= 0x00000002;
             }
             while (input.getBytesUntilLimit() > 0) {
-              ids_.add(input.readInt64());
+              ids_.addLong(input.readInt64());
             }
             input.popLimit(limit);
             break;
@@ -112,6 +110,13 @@ private static final long serialVersionUID = 0L;
           case 56: {
 
             totalRow_ = input.readInt32();
+            break;
+          }
+          default: {
+            if (!parseUnknownField(
+                input, unknownFields, extensionRegistry, tag)) {
+              done = true;
+            }
             break;
           }
         }
@@ -122,11 +127,11 @@ private static final long serialVersionUID = 0L;
       throw new com.google.protobuf.InvalidProtocolBufferException(
           e).setUnfinishedMessage(this);
     } finally {
-      if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
+      if (((mutable_bitField0_ & 0x00000001) != 0)) {
         queryResult_ = java.util.Collections.unmodifiableList(queryResult_);
       }
-      if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
-        ids_ = java.util.Collections.unmodifiableList(ids_);
+      if (((mutable_bitField0_ & 0x00000002) != 0)) {
+        ids_.makeImmutable(); // C
       }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
@@ -134,14 +139,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return EntityResourceProto.internal_static_OperationResult_descriptor;
+    return com.xforceplus.ultraman.oqsengine.sdk.EntityResourceProto.internal_static_OperationResult_descriptor;
   }
 
-  protected FieldAccessorTable
+  @java.lang.Override
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return EntityResourceProto.internal_static_OperationResult_fieldAccessorTable
+    return com.xforceplus.ultraman.oqsengine.sdk.EntityResourceProto.internal_static_OperationResult_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            OperationResult.class, OperationResult.Builder.class);
+            com.xforceplus.ultraman.oqsengine.sdk.OperationResult.class, com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Builder.class);
   }
 
   /**
@@ -196,20 +202,26 @@ private static final long serialVersionUID = 0L;
 
     public final int getNumber() {
       if (this == UNRECOGNIZED) {
-        throw new IllegalArgumentException(
+        throw new java.lang.IllegalArgumentException(
             "Can't get the number of an unknown enum value.");
       }
       return value;
     }
 
     /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
      * @deprecated Use {@link #forNumber(int)} instead.
      */
-    @Deprecated
+    @java.lang.Deprecated
     public static Code valueOf(int value) {
       return forNumber(value);
     }
 
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     */
     public static Code forNumber(int value) {
       switch (value) {
         case 0: return OK;
@@ -243,7 +255,7 @@ private static final long serialVersionUID = 0L;
     }
     public static final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptor() {
-      return OperationResult.getDescriptor().getEnumTypes().get(0);
+      return com.xforceplus.ultraman.oqsengine.sdk.OperationResult.getDescriptor().getEnumTypes().get(0);
     }
 
     private static final Code[] VALUES = values();
@@ -251,7 +263,7 @@ private static final long serialVersionUID = 0L;
     public static Code valueOf(
         com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
       if (desc.getType() != getDescriptor()) {
-        throw new IllegalArgumentException(
+        throw new java.lang.IllegalArgumentException(
           "EnumValueDescriptor is not for this type.");
       }
       if (desc.getIndex() == -1) {
@@ -269,7 +281,6 @@ private static final long serialVersionUID = 0L;
     // @@protoc_insertion_point(enum_scope:OperationResult.Code)
   }
 
-  private int bitField0_;
   public static final int CODE_FIELD_NUMBER = 1;
   private int code_;
   /**
@@ -278,6 +289,7 @@ private static final long serialVersionUID = 0L;
    * </pre>
    *
    * <code>.OperationResult.Code code = 1;</code>
+   * @return The enum numeric value on the wire for code.
    */
   public int getCodeValue() {
     return code_;
@@ -288,29 +300,32 @@ private static final long serialVersionUID = 0L;
    * </pre>
    *
    * <code>.OperationResult.Code code = 1;</code>
+   * @return The code.
    */
-  public OperationResult.Code getCode() {
-    OperationResult.Code result = OperationResult.Code.valueOf(code_);
-    return result == null ? OperationResult.Code.UNRECOGNIZED : result;
+  public com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Code getCode() {
+    @SuppressWarnings("deprecation")
+    com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Code result = com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Code.valueOf(code_);
+    return result == null ? com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Code.UNRECOGNIZED : result;
   }
 
   public static final int MESSAGE_FIELD_NUMBER = 2;
-  private volatile Object message_;
+  private volatile java.lang.Object message_;
   /**
    * <pre>
    *message
    * </pre>
    *
    * <code>string message = 2;</code>
+   * @return The message.
    */
-  public String getMessage() {
-    Object ref = message_;
-    if (ref instanceof String) {
-      return (String) ref;
+  public java.lang.String getMessage() {
+    java.lang.Object ref = message_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs =
+      com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
-      String s = bs.toStringUtf8();
+      java.lang.String s = bs.toStringUtf8();
       message_ = s;
       return s;
     }
@@ -321,14 +336,15 @@ private static final long serialVersionUID = 0L;
    * </pre>
    *
    * <code>string message = 2;</code>
+   * @return The bytes for message.
    */
   public com.google.protobuf.ByteString
       getMessageBytes() {
-    Object ref = message_;
-    if (ref instanceof String) {
-      com.google.protobuf.ByteString b =
+    java.lang.Object ref = message_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
-              (String) ref);
+              (java.lang.String) ref);
       message_ = b;
       return b;
     } else {
@@ -337,17 +353,17 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int QUERYRESULT_FIELD_NUMBER = 3;
-  private java.util.List<EntityUp> queryResult_;
+  private java.util.List<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> queryResult_;
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
-  public java.util.List<EntityUp> getQueryResultList() {
+  public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> getQueryResultList() {
     return queryResult_;
   }
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
-  public java.util.List<? extends EntityUpOrBuilder>
+  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder> 
       getQueryResultOrBuilderList() {
     return queryResult_;
   }
@@ -360,44 +376,46 @@ private static final long serialVersionUID = 0L;
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
-  public EntityUp getQueryResult(int index) {
+  public com.xforceplus.ultraman.oqsengine.sdk.EntityUp getQueryResult(int index) {
     return queryResult_.get(index);
   }
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
-  public EntityUpOrBuilder getQueryResultOrBuilder(
+  public com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder getQueryResultOrBuilder(
       int index) {
     return queryResult_.get(index);
   }
 
   public static final int TRANSACTIONRESULT_FIELD_NUMBER = 4;
-  private volatile Object transactionResult_;
+  private volatile java.lang.Object transactionResult_;
   /**
    * <code>string transactionResult = 4;</code>
+   * @return The transactionResult.
    */
-  public String getTransactionResult() {
-    Object ref = transactionResult_;
-    if (ref instanceof String) {
-      return (String) ref;
+  public java.lang.String getTransactionResult() {
+    java.lang.Object ref = transactionResult_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs =
+      com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
-      String s = bs.toStringUtf8();
+      java.lang.String s = bs.toStringUtf8();
       transactionResult_ = s;
       return s;
     }
   }
   /**
    * <code>string transactionResult = 4;</code>
+   * @return The bytes for transactionResult.
    */
   public com.google.protobuf.ByteString
       getTransactionResultBytes() {
-    Object ref = transactionResult_;
-    if (ref instanceof String) {
-      com.google.protobuf.ByteString b =
+    java.lang.Object ref = transactionResult_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
-              (String) ref);
+              (java.lang.String) ref);
       transactionResult_ = b;
       return b;
     } else {
@@ -409,31 +427,36 @@ private static final long serialVersionUID = 0L;
   private int affectedRow_;
   /**
    * <code>int32 affectedRow = 5;</code>
+   * @return The affectedRow.
    */
   public int getAffectedRow() {
     return affectedRow_;
   }
 
   public static final int IDS_FIELD_NUMBER = 6;
-  private java.util.List<Long> ids_;
+  private com.google.protobuf.Internal.LongList ids_;
   /**
    * <code>repeated int64 ids = 6;</code>
+   * @return A list containing the ids.
    */
-  public java.util.List<Long>
+  public java.util.List<java.lang.Long>
       getIdsList() {
     return ids_;
   }
   /**
    * <code>repeated int64 ids = 6;</code>
+   * @return The count of ids.
    */
   public int getIdsCount() {
     return ids_.size();
   }
   /**
    * <code>repeated int64 ids = 6;</code>
+   * @param index The index of the element to return.
+   * @return The ids at the given index.
    */
   public long getIds(int index) {
-    return ids_.get(index);
+    return ids_.getLong(index);
   }
   private int idsMemoizedSerializedSize = -1;
 
@@ -441,12 +464,14 @@ private static final long serialVersionUID = 0L;
   private int totalRow_;
   /**
    * <code>int32 totalRow = 7;</code>
+   * @return The totalRow.
    */
   public int getTotalRow() {
     return totalRow_;
   }
 
   private byte memoizedIsInitialized = -1;
+  @java.lang.Override
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
     if (isInitialized == 1) return true;
@@ -456,10 +481,11 @@ private static final long serialVersionUID = 0L;
     return true;
   }
 
+  @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     getSerializedSize();
-    if (code_ != OperationResult.Code.OK.getNumber()) {
+    if (code_ != com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Code.OK.getNumber()) {
       output.writeEnum(1, code_);
     }
     if (!getMessageBytes().isEmpty()) {
@@ -479,7 +505,7 @@ private static final long serialVersionUID = 0L;
       output.writeUInt32NoTag(idsMemoizedSerializedSize);
     }
     for (int i = 0; i < ids_.size(); i++) {
-      output.writeInt64NoTag(ids_.get(i));
+      output.writeInt64NoTag(ids_.getLong(i));
     }
     if (totalRow_ != 0) {
       output.writeInt32(7, totalRow_);
@@ -487,12 +513,13 @@ private static final long serialVersionUID = 0L;
     unknownFields.writeTo(output);
   }
 
+  @java.lang.Override
   public int getSerializedSize() {
     int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
-    if (code_ != OperationResult.Code.OK.getNumber()) {
+    if (code_ != com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Code.OK.getNumber()) {
       size += com.google.protobuf.CodedOutputStream
         .computeEnumSize(1, code_);
     }
@@ -514,7 +541,7 @@ private static final long serialVersionUID = 0L;
       int dataSize = 0;
       for (int i = 0; i < ids_.size(); i++) {
         dataSize += com.google.protobuf.CodedOutputStream
-          .computeInt64SizeNoTag(ids_.get(i));
+          .computeInt64SizeNoTag(ids_.getLong(i));
       }
       size += dataSize;
       if (!getIdsList().isEmpty()) {
@@ -533,35 +560,34 @@ private static final long serialVersionUID = 0L;
     return size;
   }
 
-  @Override
-  public boolean equals(final Object obj) {
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof OperationResult)) {
+    if (!(obj instanceof com.xforceplus.ultraman.oqsengine.sdk.OperationResult)) {
       return super.equals(obj);
     }
-    OperationResult other = (OperationResult) obj;
+    com.xforceplus.ultraman.oqsengine.sdk.OperationResult other = (com.xforceplus.ultraman.oqsengine.sdk.OperationResult) obj;
 
-    boolean result = true;
-    result = result && code_ == other.code_;
-    result = result && getMessage()
-        .equals(other.getMessage());
-    result = result && getQueryResultList()
-        .equals(other.getQueryResultList());
-    result = result && getTransactionResult()
-        .equals(other.getTransactionResult());
-    result = result && (getAffectedRow()
-        == other.getAffectedRow());
-    result = result && getIdsList()
-        .equals(other.getIdsList());
-    result = result && (getTotalRow()
-        == other.getTotalRow());
-    result = result && unknownFields.equals(other.unknownFields);
-    return result;
+    if (code_ != other.code_) return false;
+    if (!getMessage()
+        .equals(other.getMessage())) return false;
+    if (!getQueryResultList()
+        .equals(other.getQueryResultList())) return false;
+    if (!getTransactionResult()
+        .equals(other.getTransactionResult())) return false;
+    if (getAffectedRow()
+        != other.getAffectedRow()) return false;
+    if (!getIdsList()
+        .equals(other.getIdsList())) return false;
+    if (getTotalRow()
+        != other.getTotalRow()) return false;
+    if (!unknownFields.equals(other.unknownFields)) return false;
+    return true;
   }
 
-  @Override
+  @java.lang.Override
   public int hashCode() {
     if (memoizedHashCode != 0) {
       return memoizedHashCode;
@@ -591,69 +617,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static OperationResult parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static OperationResult parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static OperationResult parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static OperationResult parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static OperationResult parseFrom(byte[] data)
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static OperationResult parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static OperationResult parseFrom(java.io.InputStream input)
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static OperationResult parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static OperationResult parseDelimitedFrom(java.io.InputStream input)
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static OperationResult parseDelimitedFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static OperationResult parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static OperationResult parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -661,21 +687,23 @@ private static final long serialVersionUID = 0L;
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
+  @java.lang.Override
   public Builder newBuilderForType() { return newBuilder(); }
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(OperationResult prototype) {
+  public static Builder newBuilder(com.xforceplus.ultraman.oqsengine.sdk.OperationResult prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
+  @java.lang.Override
   public Builder toBuilder() {
     return this == DEFAULT_INSTANCE
         ? new Builder() : new Builder().mergeFrom(this);
   }
 
-  @Override
+  @java.lang.Override
   protected Builder newBuilderForType(
-      BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -685,17 +713,18 @@ private static final long serialVersionUID = 0L;
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:OperationResult)
-      OperationResultOrBuilder {
+      com.xforceplus.ultraman.oqsengine.sdk.OperationResultOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return EntityResourceProto.internal_static_OperationResult_descriptor;
+      return com.xforceplus.ultraman.oqsengine.sdk.EntityResourceProto.internal_static_OperationResult_descriptor;
     }
 
-    protected FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return EntityResourceProto.internal_static_OperationResult_fieldAccessorTable
+      return com.xforceplus.ultraman.oqsengine.sdk.EntityResourceProto.internal_static_OperationResult_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              OperationResult.class, OperationResult.Builder.class);
+              com.xforceplus.ultraman.oqsengine.sdk.OperationResult.class, com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Builder.class);
     }
 
     // Construct using com.xforceplus.ultraman.oqsengine.sdk.OperationResult.newBuilder()
@@ -704,7 +733,7 @@ private static final long serialVersionUID = 0L;
     }
 
     private Builder(
-        BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
@@ -714,6 +743,7 @@ private static final long serialVersionUID = 0L;
         getQueryResultFieldBuilder();
       }
     }
+    @java.lang.Override
     public Builder clear() {
       super.clear();
       code_ = 0;
@@ -722,7 +752,7 @@ private static final long serialVersionUID = 0L;
 
       if (queryResultBuilder_ == null) {
         queryResult_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000001);
       } else {
         queryResultBuilder_.clear();
       }
@@ -730,40 +760,43 @@ private static final long serialVersionUID = 0L;
 
       affectedRow_ = 0;
 
-      ids_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000020);
+      ids_ = emptyLongList();
+      bitField0_ = (bitField0_ & ~0x00000002);
       totalRow_ = 0;
 
       return this;
     }
 
+    @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return EntityResourceProto.internal_static_OperationResult_descriptor;
+      return com.xforceplus.ultraman.oqsengine.sdk.EntityResourceProto.internal_static_OperationResult_descriptor;
     }
 
-    public OperationResult getDefaultInstanceForType() {
-      return OperationResult.getDefaultInstance();
+    @java.lang.Override
+    public com.xforceplus.ultraman.oqsengine.sdk.OperationResult getDefaultInstanceForType() {
+      return com.xforceplus.ultraman.oqsengine.sdk.OperationResult.getDefaultInstance();
     }
 
-    public OperationResult build() {
-      OperationResult result = buildPartial();
+    @java.lang.Override
+    public com.xforceplus.ultraman.oqsengine.sdk.OperationResult build() {
+      com.xforceplus.ultraman.oqsengine.sdk.OperationResult result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
       return result;
     }
 
-    public OperationResult buildPartial() {
-      OperationResult result = new OperationResult(this);
+    @java.lang.Override
+    public com.xforceplus.ultraman.oqsengine.sdk.OperationResult buildPartial() {
+      com.xforceplus.ultraman.oqsengine.sdk.OperationResult result = new com.xforceplus.ultraman.oqsengine.sdk.OperationResult(this);
       int from_bitField0_ = bitField0_;
-      int to_bitField0_ = 0;
       result.code_ = code_;
       result.message_ = message_;
       if (queryResultBuilder_ == null) {
-        if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        if (((bitField0_ & 0x00000001) != 0)) {
           queryResult_ = java.util.Collections.unmodifiableList(queryResult_);
-          bitField0_ = (bitField0_ & ~0x00000004);
+          bitField0_ = (bitField0_ & ~0x00000001);
         }
         result.queryResult_ = queryResult_;
       } else {
@@ -771,54 +804,60 @@ private static final long serialVersionUID = 0L;
       }
       result.transactionResult_ = transactionResult_;
       result.affectedRow_ = affectedRow_;
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        ids_ = java.util.Collections.unmodifiableList(ids_);
-        bitField0_ = (bitField0_ & ~0x00000020);
+      if (((bitField0_ & 0x00000002) != 0)) {
+        ids_.makeImmutable();
+        bitField0_ = (bitField0_ & ~0x00000002);
       }
       result.ids_ = ids_;
       result.totalRow_ = totalRow_;
-      result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
     }
 
+    @java.lang.Override
     public Builder clone() {
-      return (Builder) super.clone();
+      return super.clone();
     }
+    @java.lang.Override
     public Builder setField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
+        java.lang.Object value) {
+      return super.setField(field, value);
     }
+    @java.lang.Override
     public Builder clearField(
         com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
+      return super.clearField(field);
     }
+    @java.lang.Override
     public Builder clearOneof(
         com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
+      return super.clearOneof(oneof);
     }
+    @java.lang.Override
     public Builder setRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
+        int index, java.lang.Object value) {
+      return super.setRepeatedField(field, index, value);
     }
+    @java.lang.Override
     public Builder addRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
+        java.lang.Object value) {
+      return super.addRepeatedField(field, value);
     }
+    @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof OperationResult) {
-        return mergeFrom((OperationResult)other);
+      if (other instanceof com.xforceplus.ultraman.oqsengine.sdk.OperationResult) {
+        return mergeFrom((com.xforceplus.ultraman.oqsengine.sdk.OperationResult)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(OperationResult other) {
-      if (other == OperationResult.getDefaultInstance()) return this;
+    public Builder mergeFrom(com.xforceplus.ultraman.oqsengine.sdk.OperationResult other) {
+      if (other == com.xforceplus.ultraman.oqsengine.sdk.OperationResult.getDefaultInstance()) return this;
       if (other.code_ != 0) {
         setCodeValue(other.getCodeValue());
       }
@@ -830,7 +869,7 @@ private static final long serialVersionUID = 0L;
         if (!other.queryResult_.isEmpty()) {
           if (queryResult_.isEmpty()) {
             queryResult_ = other.queryResult_;
-            bitField0_ = (bitField0_ & ~0x00000004);
+            bitField0_ = (bitField0_ & ~0x00000001);
           } else {
             ensureQueryResultIsMutable();
             queryResult_.addAll(other.queryResult_);
@@ -843,8 +882,8 @@ private static final long serialVersionUID = 0L;
             queryResultBuilder_.dispose();
             queryResultBuilder_ = null;
             queryResult_ = other.queryResult_;
-            bitField0_ = (bitField0_ & ~0x00000004);
-            queryResultBuilder_ =
+            bitField0_ = (bitField0_ & ~0x00000001);
+            queryResultBuilder_ = 
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getQueryResultFieldBuilder() : null;
           } else {
@@ -862,7 +901,7 @@ private static final long serialVersionUID = 0L;
       if (!other.ids_.isEmpty()) {
         if (ids_.isEmpty()) {
           ids_ = other.ids_;
-          bitField0_ = (bitField0_ & ~0x00000020);
+          bitField0_ = (bitField0_ & ~0x00000002);
         } else {
           ensureIdsIsMutable();
           ids_.addAll(other.ids_);
@@ -877,19 +916,21 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    @java.lang.Override
     public final boolean isInitialized() {
       return true;
     }
 
+    @java.lang.Override
     public Builder mergeFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      OperationResult parsedMessage = null;
+      com.xforceplus.ultraman.oqsengine.sdk.OperationResult parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (OperationResult) e.getUnfinishedMessage();
+        parsedMessage = (com.xforceplus.ultraman.oqsengine.sdk.OperationResult) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -907,6 +948,7 @@ private static final long serialVersionUID = 0L;
      * </pre>
      *
      * <code>.OperationResult.Code code = 1;</code>
+     * @return The enum numeric value on the wire for code.
      */
     public int getCodeValue() {
       return code_;
@@ -917,6 +959,8 @@ private static final long serialVersionUID = 0L;
      * </pre>
      *
      * <code>.OperationResult.Code code = 1;</code>
+     * @param value The enum numeric value on the wire for code to set.
+     * @return This builder for chaining.
      */
     public Builder setCodeValue(int value) {
       code_ = value;
@@ -929,10 +973,12 @@ private static final long serialVersionUID = 0L;
      * </pre>
      *
      * <code>.OperationResult.Code code = 1;</code>
+     * @return The code.
      */
-    public OperationResult.Code getCode() {
-      OperationResult.Code result = OperationResult.Code.valueOf(code_);
-      return result == null ? OperationResult.Code.UNRECOGNIZED : result;
+    public com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Code getCode() {
+      @SuppressWarnings("deprecation")
+      com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Code result = com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Code.valueOf(code_);
+      return result == null ? com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Code.UNRECOGNIZED : result;
     }
     /**
      * <pre>
@@ -940,12 +986,14 @@ private static final long serialVersionUID = 0L;
      * </pre>
      *
      * <code>.OperationResult.Code code = 1;</code>
+     * @param value The code to set.
+     * @return This builder for chaining.
      */
-    public Builder setCode(OperationResult.Code value) {
+    public Builder setCode(com.xforceplus.ultraman.oqsengine.sdk.OperationResult.Code value) {
       if (value == null) {
         throw new NullPointerException();
       }
-
+      
       code_ = value.getNumber();
       onChanged();
       return this;
@@ -956,32 +1004,34 @@ private static final long serialVersionUID = 0L;
      * </pre>
      *
      * <code>.OperationResult.Code code = 1;</code>
+     * @return This builder for chaining.
      */
     public Builder clearCode() {
-
+      
       code_ = 0;
       onChanged();
       return this;
     }
 
-    private Object message_ = "";
+    private java.lang.Object message_ = "";
     /**
      * <pre>
      *message
      * </pre>
      *
      * <code>string message = 2;</code>
+     * @return The message.
      */
-    public String getMessage() {
-      Object ref = message_;
-      if (!(ref instanceof String)) {
+    public java.lang.String getMessage() {
+      java.lang.Object ref = message_;
+      if (!(ref instanceof java.lang.String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
-        String s = bs.toStringUtf8();
+        java.lang.String s = bs.toStringUtf8();
         message_ = s;
         return s;
       } else {
-        return (String) ref;
+        return (java.lang.String) ref;
       }
     }
     /**
@@ -990,14 +1040,15 @@ private static final long serialVersionUID = 0L;
      * </pre>
      *
      * <code>string message = 2;</code>
+     * @return The bytes for message.
      */
     public com.google.protobuf.ByteString
         getMessageBytes() {
-      Object ref = message_;
+      java.lang.Object ref = message_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b =
+        com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
-                (String) ref);
+                (java.lang.String) ref);
         message_ = b;
         return b;
       } else {
@@ -1010,13 +1061,15 @@ private static final long serialVersionUID = 0L;
      * </pre>
      *
      * <code>string message = 2;</code>
+     * @param value The message to set.
+     * @return This builder for chaining.
      */
     public Builder setMessage(
-        String value) {
+        java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-
+  
       message_ = value;
       onChanged();
       return this;
@@ -1027,9 +1080,10 @@ private static final long serialVersionUID = 0L;
      * </pre>
      *
      * <code>string message = 2;</code>
+     * @return This builder for chaining.
      */
     public Builder clearMessage() {
-
+      
       message_ = getDefaultInstance().getMessage();
       onChanged();
       return this;
@@ -1040,6 +1094,8 @@ private static final long serialVersionUID = 0L;
      * </pre>
      *
      * <code>string message = 2;</code>
+     * @param value The bytes for message to set.
+     * @return This builder for chaining.
      */
     public Builder setMessageBytes(
         com.google.protobuf.ByteString value) {
@@ -1047,28 +1103,28 @@ private static final long serialVersionUID = 0L;
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-
+      
       message_ = value;
       onChanged();
       return this;
     }
 
-    private java.util.List<EntityUp> queryResult_ =
+    private java.util.List<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> queryResult_ =
       java.util.Collections.emptyList();
     private void ensureQueryResultIsMutable() {
-      if (!((bitField0_ & 0x00000004) == 0x00000004)) {
-        queryResult_ = new java.util.ArrayList<EntityUp>(queryResult_);
-        bitField0_ |= 0x00000004;
+      if (!((bitField0_ & 0x00000001) != 0)) {
+        queryResult_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.sdk.EntityUp>(queryResult_);
+        bitField0_ |= 0x00000001;
        }
     }
 
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        EntityUp, EntityUp.Builder, EntityUpOrBuilder> queryResultBuilder_;
+        com.xforceplus.ultraman.oqsengine.sdk.EntityUp, com.xforceplus.ultraman.oqsengine.sdk.EntityUp.Builder, com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder> queryResultBuilder_;
 
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
-    public java.util.List<EntityUp> getQueryResultList() {
+    public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> getQueryResultList() {
       if (queryResultBuilder_ == null) {
         return java.util.Collections.unmodifiableList(queryResult_);
       } else {
@@ -1088,7 +1144,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
-    public EntityUp getQueryResult(int index) {
+    public com.xforceplus.ultraman.oqsengine.sdk.EntityUp getQueryResult(int index) {
       if (queryResultBuilder_ == null) {
         return queryResult_.get(index);
       } else {
@@ -1099,7 +1155,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
     public Builder setQueryResult(
-        int index, EntityUp value) {
+        int index, com.xforceplus.ultraman.oqsengine.sdk.EntityUp value) {
       if (queryResultBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -1116,7 +1172,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
     public Builder setQueryResult(
-        int index, EntityUp.Builder builderForValue) {
+        int index, com.xforceplus.ultraman.oqsengine.sdk.EntityUp.Builder builderForValue) {
       if (queryResultBuilder_ == null) {
         ensureQueryResultIsMutable();
         queryResult_.set(index, builderForValue.build());
@@ -1129,7 +1185,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
-    public Builder addQueryResult(EntityUp value) {
+    public Builder addQueryResult(com.xforceplus.ultraman.oqsengine.sdk.EntityUp value) {
       if (queryResultBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -1146,7 +1202,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
     public Builder addQueryResult(
-        int index, EntityUp value) {
+        int index, com.xforceplus.ultraman.oqsengine.sdk.EntityUp value) {
       if (queryResultBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -1163,7 +1219,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
     public Builder addQueryResult(
-        EntityUp.Builder builderForValue) {
+        com.xforceplus.ultraman.oqsengine.sdk.EntityUp.Builder builderForValue) {
       if (queryResultBuilder_ == null) {
         ensureQueryResultIsMutable();
         queryResult_.add(builderForValue.build());
@@ -1177,7 +1233,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
     public Builder addQueryResult(
-        int index, EntityUp.Builder builderForValue) {
+        int index, com.xforceplus.ultraman.oqsengine.sdk.EntityUp.Builder builderForValue) {
       if (queryResultBuilder_ == null) {
         ensureQueryResultIsMutable();
         queryResult_.add(index, builderForValue.build());
@@ -1191,7 +1247,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
     public Builder addAllQueryResult(
-        Iterable<? extends EntityUp> values) {
+        java.lang.Iterable<? extends com.xforceplus.ultraman.oqsengine.sdk.EntityUp> values) {
       if (queryResultBuilder_ == null) {
         ensureQueryResultIsMutable();
         com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -1208,7 +1264,7 @@ private static final long serialVersionUID = 0L;
     public Builder clearQueryResult() {
       if (queryResultBuilder_ == null) {
         queryResult_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000001);
         onChanged();
       } else {
         queryResultBuilder_.clear();
@@ -1231,14 +1287,14 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
-    public EntityUp.Builder getQueryResultBuilder(
+    public com.xforceplus.ultraman.oqsengine.sdk.EntityUp.Builder getQueryResultBuilder(
         int index) {
       return getQueryResultFieldBuilder().getBuilder(index);
     }
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
-    public EntityUpOrBuilder getQueryResultOrBuilder(
+    public com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder getQueryResultOrBuilder(
         int index) {
       if (queryResultBuilder_ == null) {
         return queryResult_.get(index);  } else {
@@ -1248,7 +1304,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
-    public java.util.List<? extends EntityUpOrBuilder>
+    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder> 
          getQueryResultOrBuilderList() {
       if (queryResultBuilder_ != null) {
         return queryResultBuilder_.getMessageOrBuilderList();
@@ -1259,33 +1315,33 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
-    public EntityUp.Builder addQueryResultBuilder() {
+    public com.xforceplus.ultraman.oqsengine.sdk.EntityUp.Builder addQueryResultBuilder() {
       return getQueryResultFieldBuilder().addBuilder(
-          EntityUp.getDefaultInstance());
+          com.xforceplus.ultraman.oqsengine.sdk.EntityUp.getDefaultInstance());
     }
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
-    public EntityUp.Builder addQueryResultBuilder(
+    public com.xforceplus.ultraman.oqsengine.sdk.EntityUp.Builder addQueryResultBuilder(
         int index) {
       return getQueryResultFieldBuilder().addBuilder(
-          index, EntityUp.getDefaultInstance());
+          index, com.xforceplus.ultraman.oqsengine.sdk.EntityUp.getDefaultInstance());
     }
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
-    public java.util.List<EntityUp.Builder>
+    public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.EntityUp.Builder> 
          getQueryResultBuilderList() {
       return getQueryResultFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        EntityUp, EntityUp.Builder, EntityUpOrBuilder>
+        com.xforceplus.ultraman.oqsengine.sdk.EntityUp, com.xforceplus.ultraman.oqsengine.sdk.EntityUp.Builder, com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder> 
         getQueryResultFieldBuilder() {
       if (queryResultBuilder_ == null) {
         queryResultBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-            EntityUp, EntityUp.Builder, EntityUpOrBuilder>(
+            com.xforceplus.ultraman.oqsengine.sdk.EntityUp, com.xforceplus.ultraman.oqsengine.sdk.EntityUp.Builder, com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder>(
                 queryResult_,
-                ((bitField0_ & 0x00000004) == 0x00000004),
+                ((bitField0_ & 0x00000001) != 0),
                 getParentForChildren(),
                 isClean());
         queryResult_ = null;
@@ -1293,32 +1349,34 @@ private static final long serialVersionUID = 0L;
       return queryResultBuilder_;
     }
 
-    private Object transactionResult_ = "";
+    private java.lang.Object transactionResult_ = "";
     /**
      * <code>string transactionResult = 4;</code>
+     * @return The transactionResult.
      */
-    public String getTransactionResult() {
-      Object ref = transactionResult_;
-      if (!(ref instanceof String)) {
+    public java.lang.String getTransactionResult() {
+      java.lang.Object ref = transactionResult_;
+      if (!(ref instanceof java.lang.String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
-        String s = bs.toStringUtf8();
+        java.lang.String s = bs.toStringUtf8();
         transactionResult_ = s;
         return s;
       } else {
-        return (String) ref;
+        return (java.lang.String) ref;
       }
     }
     /**
      * <code>string transactionResult = 4;</code>
+     * @return The bytes for transactionResult.
      */
     public com.google.protobuf.ByteString
         getTransactionResultBytes() {
-      Object ref = transactionResult_;
+      java.lang.Object ref = transactionResult_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b =
+        com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
-                (String) ref);
+                (java.lang.String) ref);
         transactionResult_ = b;
         return b;
       } else {
@@ -1327,28 +1385,33 @@ private static final long serialVersionUID = 0L;
     }
     /**
      * <code>string transactionResult = 4;</code>
+     * @param value The transactionResult to set.
+     * @return This builder for chaining.
      */
     public Builder setTransactionResult(
-        String value) {
+        java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-
+  
       transactionResult_ = value;
       onChanged();
       return this;
     }
     /**
      * <code>string transactionResult = 4;</code>
+     * @return This builder for chaining.
      */
     public Builder clearTransactionResult() {
-
+      
       transactionResult_ = getDefaultInstance().getTransactionResult();
       onChanged();
       return this;
     }
     /**
      * <code>string transactionResult = 4;</code>
+     * @param value The bytes for transactionResult to set.
+     * @return This builder for chaining.
      */
     public Builder setTransactionResultBytes(
         com.google.protobuf.ByteString value) {
@@ -1356,7 +1419,7 @@ private static final long serialVersionUID = 0L;
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-
+      
       transactionResult_ = value;
       onChanged();
       return this;
@@ -1365,79 +1428,95 @@ private static final long serialVersionUID = 0L;
     private int affectedRow_ ;
     /**
      * <code>int32 affectedRow = 5;</code>
+     * @return The affectedRow.
      */
     public int getAffectedRow() {
       return affectedRow_;
     }
     /**
      * <code>int32 affectedRow = 5;</code>
+     * @param value The affectedRow to set.
+     * @return This builder for chaining.
      */
     public Builder setAffectedRow(int value) {
-
+      
       affectedRow_ = value;
       onChanged();
       return this;
     }
     /**
      * <code>int32 affectedRow = 5;</code>
+     * @return This builder for chaining.
      */
     public Builder clearAffectedRow() {
-
+      
       affectedRow_ = 0;
       onChanged();
       return this;
     }
 
-    private java.util.List<Long> ids_ = java.util.Collections.emptyList();
+    private com.google.protobuf.Internal.LongList ids_ = emptyLongList();
     private void ensureIdsIsMutable() {
-      if (!((bitField0_ & 0x00000020) == 0x00000020)) {
-        ids_ = new java.util.ArrayList<Long>(ids_);
-        bitField0_ |= 0x00000020;
+      if (!((bitField0_ & 0x00000002) != 0)) {
+        ids_ = mutableCopy(ids_);
+        bitField0_ |= 0x00000002;
        }
     }
     /**
      * <code>repeated int64 ids = 6;</code>
+     * @return A list containing the ids.
      */
-    public java.util.List<Long>
+    public java.util.List<java.lang.Long>
         getIdsList() {
-      return java.util.Collections.unmodifiableList(ids_);
+      return ((bitField0_ & 0x00000002) != 0) ?
+               java.util.Collections.unmodifiableList(ids_) : ids_;
     }
     /**
      * <code>repeated int64 ids = 6;</code>
+     * @return The count of ids.
      */
     public int getIdsCount() {
       return ids_.size();
     }
     /**
      * <code>repeated int64 ids = 6;</code>
+     * @param index The index of the element to return.
+     * @return The ids at the given index.
      */
     public long getIds(int index) {
-      return ids_.get(index);
+      return ids_.getLong(index);
     }
     /**
      * <code>repeated int64 ids = 6;</code>
+     * @param index The index to set the value at.
+     * @param value The ids to set.
+     * @return This builder for chaining.
      */
     public Builder setIds(
         int index, long value) {
       ensureIdsIsMutable();
-      ids_.set(index, value);
+      ids_.setLong(index, value);
       onChanged();
       return this;
     }
     /**
      * <code>repeated int64 ids = 6;</code>
+     * @param value The ids to add.
+     * @return This builder for chaining.
      */
     public Builder addIds(long value) {
       ensureIdsIsMutable();
-      ids_.add(value);
+      ids_.addLong(value);
       onChanged();
       return this;
     }
     /**
      * <code>repeated int64 ids = 6;</code>
+     * @param values The ids to add.
+     * @return This builder for chaining.
      */
     public Builder addAllIds(
-        Iterable<? extends Long> values) {
+        java.lang.Iterable<? extends java.lang.Long> values) {
       ensureIdsIsMutable();
       com.google.protobuf.AbstractMessageLite.Builder.addAll(
           values, ids_);
@@ -1446,10 +1525,11 @@ private static final long serialVersionUID = 0L;
     }
     /**
      * <code>repeated int64 ids = 6;</code>
+     * @return This builder for chaining.
      */
     public Builder clearIds() {
-      ids_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000020);
+      ids_ = emptyLongList();
+      bitField0_ = (bitField0_ & ~0x00000002);
       onChanged();
       return this;
     }
@@ -1457,33 +1537,39 @@ private static final long serialVersionUID = 0L;
     private int totalRow_ ;
     /**
      * <code>int32 totalRow = 7;</code>
+     * @return The totalRow.
      */
     public int getTotalRow() {
       return totalRow_;
     }
     /**
      * <code>int32 totalRow = 7;</code>
+     * @param value The totalRow to set.
+     * @return This builder for chaining.
      */
     public Builder setTotalRow(int value) {
-
+      
       totalRow_ = value;
       onChanged();
       return this;
     }
     /**
      * <code>int32 totalRow = 7;</code>
+     * @return This builder for chaining.
      */
     public Builder clearTotalRow() {
-
+      
       totalRow_ = 0;
       onChanged();
       return this;
     }
+    @java.lang.Override
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
-      return super.setUnknownFieldsProto3(unknownFields);
+      return super.setUnknownFields(unknownFields);
     }
 
+    @java.lang.Override
     public final Builder mergeUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.mergeUnknownFields(unknownFields);
@@ -1494,17 +1580,18 @@ private static final long serialVersionUID = 0L;
   }
 
   // @@protoc_insertion_point(class_scope:OperationResult)
-  private static final OperationResult DEFAULT_INSTANCE;
+  private static final com.xforceplus.ultraman.oqsengine.sdk.OperationResult DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new OperationResult();
+    DEFAULT_INSTANCE = new com.xforceplus.ultraman.oqsengine.sdk.OperationResult();
   }
 
-  public static OperationResult getDefaultInstance() {
+  public static com.xforceplus.ultraman.oqsengine.sdk.OperationResult getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
   private static final com.google.protobuf.Parser<OperationResult>
       PARSER = new com.google.protobuf.AbstractParser<OperationResult>() {
+    @java.lang.Override
     public OperationResult parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1517,12 +1604,13 @@ private static final long serialVersionUID = 0L;
     return PARSER;
   }
 
-  @Override
+  @java.lang.Override
   public com.google.protobuf.Parser<OperationResult> getParserForType() {
     return PARSER;
   }
 
-  public OperationResult getDefaultInstanceForType() {
+  @java.lang.Override
+  public com.xforceplus.ultraman.oqsengine.sdk.OperationResult getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

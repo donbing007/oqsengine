@@ -59,7 +59,7 @@
         <dependency>
             <groupId>com.xforceplus.xplat-galaxy.ultraman.metadata</groupId>
             <artifactId>config-client</artifactId>
-            <version>1.0.3-SNAPSHOT</version>
+            <version>1.0.5-SNAPSHOT</version>
         </dependency>
         <!-- OQSENGINE client -->
         <dependency>
@@ -95,6 +95,53 @@
             <artifactId>h2</artifactId>
         </dependency>
 
+
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>ST4</artifactId>
+            <version>4.3</version>
+        </dependency>
+
+        <!-- 文件服务 https://wiki.xforceplus.com/pages/viewpage.action?pageId=32112782  -->
+        <dependency>
+            <artifactId>tower-sdk-storage</artifactId>
+            <groupId>com.xforceplus.tower</groupId>
+            <version>1.1.0</version>
+<!--            <optional>true</optional>-->
+<!--            <scope>runtime</scope>-->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>xf-bm-xplat-msg</groupId>
+            <artifactId>notification-api</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.conscrypt</groupId>
+            <artifactId>conscrypt-openjdk</artifactId>
+            <version>2.4.0</version>
+            <classifier>${os.detected.classifier}</classifier>
+            <scope>test</scope>
+        </dependency>
+
+
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>3.2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>4.2</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -112,6 +159,14 @@
                 </configuration>
             </plugin>
         </plugins>
+        <extensions>
+            <!-- Use os-maven-plugin to initialize the "os.detected" properties -->
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.6.2</version>
+            </extension>
+        </extensions>
     </build>
 
     <dependencyManagement>

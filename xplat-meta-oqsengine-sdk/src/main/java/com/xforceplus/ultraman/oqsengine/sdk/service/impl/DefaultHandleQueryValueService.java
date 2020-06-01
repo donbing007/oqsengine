@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
@@ -50,7 +51,7 @@ public class DefaultHandleQueryValueService implements HandleQueryValueService {
     }
 
     @Override
-    public ConditionsUp handleQueryValue(EntityClass entityClass, Conditions conditions, OperationType phase) {
+    public ConditionsUp handleQueryValue(IEntityClass entityClass, Conditions conditions, OperationType phase) {
 
         ConditionsUp.Builder conditionsUpBuilder = ConditionsUp.newBuilder();
 

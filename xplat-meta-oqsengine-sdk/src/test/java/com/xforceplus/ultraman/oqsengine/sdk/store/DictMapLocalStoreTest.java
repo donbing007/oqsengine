@@ -28,7 +28,7 @@ public class DictMapLocalStoreTest {
                 ))
                 .build();
 
-        store.save(result, "0", "0");
+        store.save(result, "0");
         store.query().selectAll().execute().toRows().forEach(System.out::println);
     }
 }

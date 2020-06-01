@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 
@@ -13,6 +14,6 @@ import java.util.Map;
  */
 public interface HandleValueService {
 
-    List<ValueUp> handlerValue(EntityClass entityClass, Map<String, Object> body, OperationType phase);
+    List<ValueUp> handlerValue(IEntityClass entityClass, Map<String, Object> body, OperationType phase);
 
 }

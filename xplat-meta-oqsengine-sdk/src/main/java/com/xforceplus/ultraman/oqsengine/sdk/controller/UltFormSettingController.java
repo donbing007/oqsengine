@@ -58,10 +58,12 @@ public class UltFormSettingController {
     @ResponseBody
     public Response pageBoSeetings(HttpServletRequest request, @PathVariable String id) throws NoSuchAttributeException {
         DataSet ds = null;
-        String tenantId = request.getParameter("tenantId");
+//        String tenantId = request.getParameter("tenantId");
+        String tenantCode = request.getParameter("tenantCode");
+
         Response<UltForm> response = new Response<>();
         if (!StringUtils.isEmpty(id)) {
-            ResponseList<UltForm> items = getSeetings(id, tenantId);
+            ResponseList<UltForm> items = getSettings(id, tenantCode);
             if (items.size() == 1) {
                 response.setMessage("查询成功");
                 response.setCode("200");
@@ -70,7 +72,7 @@ public class UltFormSettingController {
             } else {
                 Response<List<UltForm>> result = initSeetings(id);
                 if (result.getResult().size() > 0) {
-                    items = getSeetings(id, tenantId);
+                    items = getSettings(id, tenantCode);
                 }
                 if (items.size() == 1) {
                     response.setMessage("查询成功");
@@ -118,16 +120,16 @@ public class UltFormSettingController {
         }
     }
 
-    private ResponseList getSeetings(String id, String tenantId) {
+    private ResponseList getSettings(String id, String tenantCode) {
         DataSet ds = null;
         if (!StringUtils.isEmpty(id)) {
             List<Row> trows = new ArrayList<>();
-            if (!StringUtils.isEmpty(tenantId)) {
+            if (!StringUtils.isEmpty(tenantCode)) {
                 ds = formBoMapLocalStore.query().selectAll()
                         .where("refFormId")
                         .eq(id)
-                        .and("tenantId")
-                        .eq(tenantId)
+                        .and("tenantCode")
+                        .eq(tenantCode)
                         .execute();
                 trows = ds.toRows();
             }
@@ -158,6 +160,10 @@ public class UltFormSettingController {
         ultForm.setRefFormId(Long.parseLong(RowUtils.getRowValue(row, "refFormId").map(Object::toString).orElse("")));
         if (!"".equals(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse(""))) {
             ultForm.setTenantId(Long.parseLong(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse("")));
+        }
+
+        if (!"".equals(RowUtils.getRowValue(row, "tenantCode").map(Object::toString).orElse(""))) {
+            ultForm.setTenantCode(RowUtils.getRowValue(row, "tenantCode").map(Object::toString).orElse(""));
         }
         ultForm.setTenantName(RowUtils.getRowValue(row, "tenantName").map(Object::toString).orElse(""));
         ultForm.setSetting(RowUtils.getRowValue(row, "setting").map(Object::toString).orElse(""));

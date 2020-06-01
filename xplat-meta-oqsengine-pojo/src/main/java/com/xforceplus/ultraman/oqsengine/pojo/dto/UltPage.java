@@ -44,6 +44,8 @@ public class UltPage {
      */
     private String tenantName;
 
+    private String tenantCode;
+
     /**
      * 版本信息
      */
@@ -78,7 +80,7 @@ public class UltPage {
      * @param pageBoVos
      */
     public UltPage(Long id, Long appId, String name, String code, Long refPageId,
-                   Long tenantId, String tenantName, String version, List<UltPageBo> pageBoVos) {
+                   Long tenantId, String tenantName, String tenantCode, String version, List<UltPageBo> pageBoVos) {
         this.id = id;
         this.appId = appId;
         this.name = name;
@@ -88,6 +90,7 @@ public class UltPage {
         this.tenantName = tenantName;
         this.version = version;
         this.pageBoVos = pageBoVos;
+        this.tenantCode = tenantCode;
     }
 
     public Long getId() {
@@ -170,24 +173,34 @@ public class UltPage {
         this.envStatus = envStatus;
     }
 
+    public String getTenantCode() {
+        return tenantCode;
+    }
+
+    public void setTenantCode(String tenantCode) {
+        this.tenantCode = tenantCode;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof UltPage)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         UltPage ultPage = (UltPage) o;
-        return Objects.equals(getId(), ultPage.getId()) &&
-                Objects.equals(getAppId(), ultPage.getAppId()) &&
-                Objects.equals(getName(), ultPage.getName()) &&
-                Objects.equals(getCode(), ultPage.getCode()) &&
-                Objects.equals(getRefPageId(), ultPage.getRefPageId()) &&
-                Objects.equals(getTenantId(), ultPage.getTenantId()) &&
-                Objects.equals(getTenantName(), ultPage.getTenantName()) &&
-                Objects.equals(getVersion(), ultPage.getVersion()) &&
-                Objects.equals(getPageBoVos(), ultPage.getPageBoVos());
+        return id.equals(ultPage.id) &&
+                appId.equals(ultPage.appId) &&
+                name.equals(ultPage.name) &&
+                code.equals(ultPage.code) &&
+                refPageId.equals(ultPage.refPageId) &&
+                tenantId.equals(ultPage.tenantId) &&
+                tenantName.equals(ultPage.tenantName) &&
+                tenantCode.equals(ultPage.tenantCode) &&
+                version.equals(ultPage.version) &&
+                envStatus.equals(ultPage.envStatus) &&
+                pageBoVos.equals(ultPage.pageBoVos);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getAppId(), getName(), getCode(), getRefPageId(), getTenantId(), getTenantName(), getVersion(), getPageBoVos());
+        return Objects.hash(id, appId, name, code, refPageId, tenantId, tenantName, tenantCode, version, envStatus, pageBoVos);
     }
 }

@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.store.RowUtils;
+import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.tables.FieldTable;
 import org.apache.metamodel.data.Row;
 
 /**
@@ -62,6 +63,10 @@ public class FieldHelper {
         String validateRule = RowUtils.getRowValue(row, "validateRule")
             .map(String::valueOf).orElse("");
 
+
+        String displayType = RowUtils.getRowValue(row, FieldTable.DISPLAY_TYPE)
+                .map(String::valueOf).orElse("");
+
         FieldConfig fieldConfig = FieldConfig
             .build()
             .searchable(searchable)
@@ -69,6 +74,7 @@ public class FieldHelper {
             .required(required)
             .precision(precision)
             .identifie(identifier)
+            .displayType(displayType)
             .validateRegexString(validateRule);
         String cnName = RowUtils.getRowValue(row, "name").map(String::valueOf).orElse("");
 

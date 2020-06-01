@@ -11,6 +11,8 @@ public class SimpleBoItem {
 
     private String code;
 
+    private String cname;
+
     public String getParentId() {
         return parentId;
     }
@@ -33,5 +35,13 @@ public class SimpleBoItem {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public String getCname() {
+        return cname;
+    }
+
+    public void setCname(String cname) {
+        this.cname = cname;
     }
 }

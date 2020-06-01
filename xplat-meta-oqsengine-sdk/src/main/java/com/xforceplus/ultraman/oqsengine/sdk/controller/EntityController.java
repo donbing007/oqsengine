@@ -11,13 +11,20 @@ import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ResolvableType;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author admin
@@ -247,5 +254,100 @@ public class EntityController {
             rep.setMessage(FAILED.concat(result.getLeft()));
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
         }
+    }
+
+    /**
+     * TODO
+     *
+     * @param boId
+     * @param version
+     * @param condition
+     * @return
+     */
+    @PostMapping("/bos/{boId}/entities/export")
+    @ResponseBody
+    public CompletableFuture<Response<String>> conditionExport(
+            @PathVariable String boId,
+            @RequestParam(required = false, value = "v") String version,
+            @RequestParam(required = true, defaultValue = "sync", value = "exportType") String exportType,
+            @RequestBody ConditionQueryRequest condition) {
+
+        condition.setPageNo(0);
+        condition.setPageSize(50000);
+
+        CompletableFuture<Either<String, String>> exportResult = dispatcher.querySync(new ConditionExportCmd(boId, condition, version, exportType)
+                , DefaultUiService.class, "conditionExport");
+
+        return exportResult.thenApply(x -> {
+            if (x.isRight()) {
+                Response<String> response = new Response<>();
+                response.setResult(x.get());
+                response.setMessage("OK");
+                response.setCode("1");
+                return response;
+            } else {
+                return Response.Error(x.getLeft());
+            }
+        });
+    }
+
+
+    /**
+     * download template
+     *
+     * @param boId
+     * @return
+     */
+    @GetMapping("/bos/{boId}/entities/import/template")
+    @ResponseBody
+    public ResponseEntity<StreamingResponseBody> importTemplate(@PathVariable String boId
+            , @RequestParam(required = false, value = "v") String version) {
+
+
+        Either<String, InputStream> importTemplate = dispatcher.querySync(new GetImportTemplateCmd(boId, version)
+                , DefaultUiService.class, "importTemplate");
+
+        if (importTemplate.isRight()) {
+
+            InputStream finalInput = importTemplate.get();
+            StreamingResponseBody responseBody = outputStream -> {
+                StreamUtils.copy(finalInput, outputStream);
+                outputStream.close();
+            };
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=" + boId + "-template.csv")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(responseBody);
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+
+    @PostMapping("/bos/{boId}/entities/import")
+    @ResponseBody
+    public ResponseEntity<Response<String>> importEntities(@PathVariable String boId
+            , @RequestParam(required = false, value = "v") String version, MultipartFile file) {
+
+
+        Either<String, String> result = dispatcher.querySync(new ImportCmd(boId, version, file)
+                , DefaultUiService.class, "batchImport");
+
+
+        return Optional.ofNullable(result).orElseGet(() -> Either.left("没有返回值")).map(x -> {
+            Response<String> rep = new Response<>();
+            rep.setCode("1");
+            rep.setResult(String.valueOf(x));
+            rep.setMessage("操作成功");
+            return ResponseEntity.ok(rep);
+        }).getOrElseGet(str -> {
+            Response<String> rep = new Response<>();
+            rep.setCode("-1");
+            rep.setMessage(FAILED.concat(str));
+            rep.setResult(str);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(rep);
+        });
     }
 }

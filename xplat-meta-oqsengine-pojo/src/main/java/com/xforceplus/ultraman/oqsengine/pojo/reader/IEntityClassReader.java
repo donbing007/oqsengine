@@ -68,7 +68,7 @@ public class IEntityClassReader {
 
     private List<ColumnField> allColumn_related;
 
-    private Map<Long, IEntityClass> relatedEntities;
+    private Map<Long, List<IEntityClass>> relatedEntities;
 
     private static final String FIELD_CODE_AMBIGUOUS = "field [{}] code is ambiguous, return first id [{}]";
 
@@ -112,11 +112,12 @@ public class IEntityClassReader {
                 }));
 
         //init related entities mapping
+        //TODO multi
         relatedEntities = entityClass
                 .entityClasss()
                 .stream()
                 .collect(Collectors
-                        .toMap(IEntityClass::id, y -> y));
+                        .groupingBy(IEntityClass::id));
 
         //buildColumnes
         AtomicInteger index = new AtomicInteger(0);
@@ -128,7 +129,7 @@ public class IEntityClassReader {
                 .flatMap(rel -> {
 
                     //find related iEntityClass
-                    IEntityClass relatedEntityClass = relatedEntities.get(rel.getEntityClassId());
+                    IEntityClass relatedEntityClass = relatedEntities.get(rel.getEntityClassId()).get(0);
 
                     //TODO
                     Stream<ColumnField> selfStream = relatedEntityClass.fields().stream()
@@ -172,7 +173,7 @@ public class IEntityClassReader {
                         .stream()
                         .map(relation -> {
                             IEntityField field = relation.getEntityField();
-                            return new ColumnField(field.name(), field, relatedEntities.get(relation.getEntityClassId()));
+                            return new ColumnField(field.name(), field, relatedEntities.get(relation.getEntityClassId()).get(0));
                         })
         ).distinct()
                 .peek(x -> x.setIndex(index.getAndIncrement()))
@@ -377,7 +378,7 @@ public class IEntityClassReader {
                 .filter(x -> FieldLikeRelationType.from(x.getRelationType()).map(FieldLikeRelationType::isOwnerSide)
                         .orElse(false))
                 .filter(x -> key.equals(x.getName()))
-                .map(x -> relatedEntities.get(x.getEntityClassId()))
+                .map(x -> relatedEntities.get(x.getEntityClassId()).get(0))
                 .findFirst();
     }
 

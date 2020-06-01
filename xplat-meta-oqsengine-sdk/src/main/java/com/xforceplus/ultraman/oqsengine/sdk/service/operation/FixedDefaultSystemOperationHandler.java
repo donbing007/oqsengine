@@ -14,8 +14,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
-import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.TENANTID_KEY;
-import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.USER_DISPLAYNAME;
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
 
 /**
  * handle all system operation
@@ -40,6 +39,7 @@ public class FixedDefaultSystemOperationHandler implements FieldOperationHandler
         fixed.put("update_time", () -> LocalDateTime.now().toInstant(ZoneOffset.of("+8")).toEpochMilli());
         fixed.put("update_user_id", () -> contextService.get(ID));
         fixed.put("update_user_name", () -> contextService.get(USER_DISPLAYNAME));
+        fixed.put("tenant_code", () -> contextService.get(TENANTCODE_KEY));
 
         this.isOverride = isOverride;
     }

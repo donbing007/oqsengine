@@ -51,7 +51,7 @@ public class UltPageSettingController {
     @ResponseBody
     public Response deploymentsPage(@PathVariable String id) throws NoSuchAttributeException {
 
-        Response<List<UltPage>> result = initSeetings(id);
+        Response<List<UltPage>> result = initSettings(id);
         return result;
     }
 
@@ -65,10 +65,12 @@ public class UltPageSettingController {
     public Response pageBos(HttpServletRequest request, @PathVariable String id) throws NoSuchAttributeException {
 
         DataSet ds = null;
-        String tenantId = request.getParameter("tenantId");
+//        String tenantId = request.getParameter("tenantId");
+
+        String tenantCode = request.getParameter("tenantCode");
         Response<ResponseList<UltPageBoItem>> response = new Response<>();
         if (!StringUtils.isEmpty(id)) {
-            ResponseList<UltPageBoItem> items = getPageBos(id, tenantId);
+            ResponseList<UltPageBoItem> items = getPageBos(id, tenantCode);
             if (items.size() > 0) {
                 response.setMessage("查询成功");
                 response.setCode("200");
@@ -76,9 +78,9 @@ public class UltPageSettingController {
                 return response;
             } else {
                 try {
-                    Response<List<UltPage>> result = initSeetings(id);
+                    Response<List<UltPage>> result = initSettings(id);
                     if (result.getResult().size() > 0) {
-                        items = getPageBos(id, tenantId);
+                        items = getPageBos(id, tenantCode);
                     }
                     if (items.size() > 0) {
                         response.setMessage("查询成功");
@@ -113,10 +115,12 @@ public class UltPageSettingController {
     @GetMapping("/page-codes/{code}/bo-settings")
     @ResponseBody
     public Response pageBosByCode(HttpServletRequest request, @PathVariable String code) throws NoSuchAttributeException {
-        String tenantId = request.getParameter("tenantId");
+//        String tenantId = request.getParameter("tenantId");
+
+        String tenantCode = request.getParameter("tenantCode");
         Response<ResponseList<UltPageBoItem>> response = new Response<>();
         if (!StringUtils.isEmpty(code)) {
-            List<UltPageBoItem> items = entityServiceEx.findPageBos(code, tenantId);
+            List<UltPageBoItem> items = entityServiceEx.findPageBos(code, tenantCode);
             if (items.size() > 0) {
                 response.setMessage("查询成功");
                 response.setCode("200");
@@ -172,7 +176,7 @@ public class UltPageSettingController {
     }
 
 
-    private Response initSeetings(String id) throws NoSuchAttributeException {
+    private Response initSettings(String id) throws NoSuchAttributeException {
         String accessUri = ExternalServiceConfig.PfcpAccessUri();
         String url = String.format("%s/pages/%s/deployments"
             , accessUri
@@ -204,17 +208,16 @@ public class UltPageSettingController {
         }
     }
 
-    private ResponseList getPageBos(String id, String tenantId) {
+    private ResponseList getPageBos(String id, String tenantCode) {
         DataSet ds = null;
         if (!StringUtils.isEmpty(id)) {
-            Response<ResponseList<UltPageBoItem>> response = new Response<>();
             List<Row> trows = new ArrayList<>();
-            if (!StringUtils.isEmpty(tenantId)) {
+            if (!StringUtils.isEmpty(tenantCode)) {
                 ds = pageBoMapLocalStore.query().selectAll()
                     .where("refPageId")
                     .eq(id)
-                    .and("tenantId")
-                    .eq(tenantId)
+                    .and("tenantCode")
+                    .eq(tenantCode)
                     .execute();
                 trows = ds.toRows();
             }
@@ -253,7 +256,6 @@ public class UltPageSettingController {
         }
     }
 
-
     private UltPageBoItem toUltPageBos(Row row) {
         UltPageBoItem ultPageBoItem = new UltPageBoItem();
         ultPageBoItem.setId(Long.parseLong(RowUtils.getRowValue(row, "settingId").map(Object::toString).orElse("")));
@@ -261,6 +263,9 @@ public class UltPageSettingController {
         ultPageBoItem.setBoCode(RowUtils.getRowValue(row, "boCode").map(Object::toString).orElse(""));
         if (!"".equals(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse(""))) {
             ultPageBoItem.setTenantId(Long.parseLong(RowUtils.getRowValue(row, "tenantId").map(Object::toString).orElse("")));
+        }
+        if (!"".equals(RowUtils.getRowValue(row, "tenantCode").map(Object::toString).orElse(""))) {
+            ultPageBoItem.setTenantCode((RowUtils.getRowValue(row, "tenantCode").map(Object::toString).orElse("")));
         }
         ultPageBoItem.setTenantName(RowUtils.getRowValue(row, "tenantName").map(Object::toString).orElse(""));
         ultPageBoItem.setBoName(RowUtils.getRowValue(row, "boName").map(Object::toString).orElse(""));

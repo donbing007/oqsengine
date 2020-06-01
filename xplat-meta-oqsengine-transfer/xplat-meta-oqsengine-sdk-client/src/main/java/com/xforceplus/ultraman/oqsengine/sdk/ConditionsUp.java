@@ -19,7 +19,14 @@ private static final long serialVersionUID = 0L;
     fields_ = java.util.Collections.emptyList();
   }
 
-  @Override
+  @java.lang.Override
+  @SuppressWarnings({"unused"})
+  protected java.lang.Object newInstance(
+      UnusedPrivateParameter unused) {
+    return new ConditionsUp();
+  }
+
+  @java.lang.Override
   public final com.google.protobuf.UnknownFieldSet
   getUnknownFields() {
     return this.unknownFields;
@@ -30,7 +37,7 @@ private static final long serialVersionUID = 0L;
       throws com.google.protobuf.InvalidProtocolBufferException {
     this();
     if (extensionRegistry == null) {
-      throw new NullPointerException();
+      throw new java.lang.NullPointerException();
     }
     int mutable_bitField0_ = 0;
     com.google.protobuf.UnknownFieldSet.Builder unknownFields =
@@ -43,20 +50,20 @@ private static final long serialVersionUID = 0L;
           case 0:
             done = true;
             break;
-          default: {
-            if (!parseUnknownFieldProto3(
-                input, unknownFields, extensionRegistry, tag)) {
-              done = true;
-            }
-            break;
-          }
           case 10: {
-            if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              fields_ = new java.util.ArrayList<FieldConditionUp>();
+            if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+              fields_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp>();
               mutable_bitField0_ |= 0x00000001;
             }
             fields_.add(
-                input.readMessage(FieldConditionUp.parser(), extensionRegistry));
+                input.readMessage(com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.parser(), extensionRegistry));
+            break;
+          }
+          default: {
+            if (!parseUnknownField(
+                input, unknownFields, extensionRegistry, tag)) {
+              done = true;
+            }
             break;
           }
         }
@@ -67,7 +74,7 @@ private static final long serialVersionUID = 0L;
       throw new com.google.protobuf.InvalidProtocolBufferException(
           e).setUnfinishedMessage(this);
     } finally {
-      if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+      if (((mutable_bitField0_ & 0x00000001) != 0)) {
         fields_ = java.util.Collections.unmodifiableList(fields_);
       }
       this.unknownFields = unknownFields.build();
@@ -76,28 +83,29 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return EntityResourceProto.internal_static_ConditionsUp_descriptor;
+    return com.xforceplus.ultraman.oqsengine.sdk.EntityResourceProto.internal_static_ConditionsUp_descriptor;
   }
 
-  protected FieldAccessorTable
+  @java.lang.Override
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return EntityResourceProto.internal_static_ConditionsUp_fieldAccessorTable
+    return com.xforceplus.ultraman.oqsengine.sdk.EntityResourceProto.internal_static_ConditionsUp_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            ConditionsUp.class, ConditionsUp.Builder.class);
+            com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp.class, com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp.Builder.class);
   }
 
   public static final int FIELDS_FIELD_NUMBER = 1;
-  private java.util.List<FieldConditionUp> fields_;
+  private java.util.List<com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp> fields_;
   /**
    * <code>repeated .FieldConditionUp fields = 1;</code>
    */
-  public java.util.List<FieldConditionUp> getFieldsList() {
+  public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp> getFieldsList() {
     return fields_;
   }
   /**
    * <code>repeated .FieldConditionUp fields = 1;</code>
    */
-  public java.util.List<? extends FieldConditionUpOrBuilder>
+  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUpOrBuilder> 
       getFieldsOrBuilderList() {
     return fields_;
   }
@@ -110,18 +118,19 @@ private static final long serialVersionUID = 0L;
   /**
    * <code>repeated .FieldConditionUp fields = 1;</code>
    */
-  public FieldConditionUp getFields(int index) {
+  public com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp getFields(int index) {
     return fields_.get(index);
   }
   /**
    * <code>repeated .FieldConditionUp fields = 1;</code>
    */
-  public FieldConditionUpOrBuilder getFieldsOrBuilder(
+  public com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUpOrBuilder getFieldsOrBuilder(
       int index) {
     return fields_.get(index);
   }
 
   private byte memoizedIsInitialized = -1;
+  @java.lang.Override
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
     if (isInitialized == 1) return true;
@@ -131,6 +140,7 @@ private static final long serialVersionUID = 0L;
     return true;
   }
 
+  @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     for (int i = 0; i < fields_.size(); i++) {
@@ -139,6 +149,7 @@ private static final long serialVersionUID = 0L;
     unknownFields.writeTo(output);
   }
 
+  @java.lang.Override
   public int getSerializedSize() {
     int size = memoizedSize;
     if (size != -1) return size;
@@ -153,24 +164,23 @@ private static final long serialVersionUID = 0L;
     return size;
   }
 
-  @Override
-  public boolean equals(final Object obj) {
+  @java.lang.Override
+  public boolean equals(final java.lang.Object obj) {
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof ConditionsUp)) {
+    if (!(obj instanceof com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp)) {
       return super.equals(obj);
     }
-    ConditionsUp other = (ConditionsUp) obj;
+    com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp other = (com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp) obj;
 
-    boolean result = true;
-    result = result && getFieldsList()
-        .equals(other.getFieldsList());
-    result = result && unknownFields.equals(other.unknownFields);
-    return result;
+    if (!getFieldsList()
+        .equals(other.getFieldsList())) return false;
+    if (!unknownFields.equals(other.unknownFields)) return false;
+    return true;
   }
 
-  @Override
+  @java.lang.Override
   public int hashCode() {
     if (memoizedHashCode != 0) {
       return memoizedHashCode;
@@ -186,69 +196,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static ConditionsUp parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static ConditionsUp parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static ConditionsUp parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static ConditionsUp parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static ConditionsUp parseFrom(byte[] data)
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static ConditionsUp parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static ConditionsUp parseFrom(java.io.InputStream input)
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static ConditionsUp parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static ConditionsUp parseDelimitedFrom(java.io.InputStream input)
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static ConditionsUp parseDelimitedFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static ConditionsUp parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static ConditionsUp parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -256,21 +266,23 @@ private static final long serialVersionUID = 0L;
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
+  @java.lang.Override
   public Builder newBuilderForType() { return newBuilder(); }
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(ConditionsUp prototype) {
+  public static Builder newBuilder(com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
+  @java.lang.Override
   public Builder toBuilder() {
     return this == DEFAULT_INSTANCE
         ? new Builder() : new Builder().mergeFrom(this);
   }
 
-  @Override
+  @java.lang.Override
   protected Builder newBuilderForType(
-      BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -280,17 +292,18 @@ private static final long serialVersionUID = 0L;
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:ConditionsUp)
-      ConditionsUpOrBuilder {
+      com.xforceplus.ultraman.oqsengine.sdk.ConditionsUpOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return EntityResourceProto.internal_static_ConditionsUp_descriptor;
+      return com.xforceplus.ultraman.oqsengine.sdk.EntityResourceProto.internal_static_ConditionsUp_descriptor;
     }
 
-    protected FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return EntityResourceProto.internal_static_ConditionsUp_fieldAccessorTable
+      return com.xforceplus.ultraman.oqsengine.sdk.EntityResourceProto.internal_static_ConditionsUp_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              ConditionsUp.class, ConditionsUp.Builder.class);
+              com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp.class, com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp.Builder.class);
     }
 
     // Construct using com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp.newBuilder()
@@ -299,7 +312,7 @@ private static final long serialVersionUID = 0L;
     }
 
     private Builder(
-        BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
@@ -309,6 +322,7 @@ private static final long serialVersionUID = 0L;
         getFieldsFieldBuilder();
       }
     }
+    @java.lang.Override
     public Builder clear() {
       super.clear();
       if (fieldsBuilder_ == null) {
@@ -320,28 +334,32 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return EntityResourceProto.internal_static_ConditionsUp_descriptor;
+      return com.xforceplus.ultraman.oqsengine.sdk.EntityResourceProto.internal_static_ConditionsUp_descriptor;
     }
 
-    public ConditionsUp getDefaultInstanceForType() {
-      return ConditionsUp.getDefaultInstance();
+    @java.lang.Override
+    public com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp getDefaultInstanceForType() {
+      return com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp.getDefaultInstance();
     }
 
-    public ConditionsUp build() {
-      ConditionsUp result = buildPartial();
+    @java.lang.Override
+    public com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp build() {
+      com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
       return result;
     }
 
-    public ConditionsUp buildPartial() {
-      ConditionsUp result = new ConditionsUp(this);
+    @java.lang.Override
+    public com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp buildPartial() {
+      com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp result = new com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp(this);
       int from_bitField0_ = bitField0_;
       if (fieldsBuilder_ == null) {
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        if (((bitField0_ & 0x00000001) != 0)) {
           fields_ = java.util.Collections.unmodifiableList(fields_);
           bitField0_ = (bitField0_ & ~0x00000001);
         }
@@ -353,43 +371,50 @@ private static final long serialVersionUID = 0L;
       return result;
     }
 
+    @java.lang.Override
     public Builder clone() {
-      return (Builder) super.clone();
+      return super.clone();
     }
+    @java.lang.Override
     public Builder setField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
+        java.lang.Object value) {
+      return super.setField(field, value);
     }
+    @java.lang.Override
     public Builder clearField(
         com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
+      return super.clearField(field);
     }
+    @java.lang.Override
     public Builder clearOneof(
         com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
+      return super.clearOneof(oneof);
     }
+    @java.lang.Override
     public Builder setRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
+        int index, java.lang.Object value) {
+      return super.setRepeatedField(field, index, value);
     }
+    @java.lang.Override
     public Builder addRepeatedField(
         com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
+        java.lang.Object value) {
+      return super.addRepeatedField(field, value);
     }
+    @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof ConditionsUp) {
-        return mergeFrom((ConditionsUp)other);
+      if (other instanceof com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp) {
+        return mergeFrom((com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(ConditionsUp other) {
-      if (other == ConditionsUp.getDefaultInstance()) return this;
+    public Builder mergeFrom(com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp other) {
+      if (other == com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp.getDefaultInstance()) return this;
       if (fieldsBuilder_ == null) {
         if (!other.fields_.isEmpty()) {
           if (fields_.isEmpty()) {
@@ -408,7 +433,7 @@ private static final long serialVersionUID = 0L;
             fieldsBuilder_ = null;
             fields_ = other.fields_;
             bitField0_ = (bitField0_ & ~0x00000001);
-            fieldsBuilder_ =
+            fieldsBuilder_ = 
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getFieldsFieldBuilder() : null;
           } else {
@@ -421,19 +446,21 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    @java.lang.Override
     public final boolean isInitialized() {
       return true;
     }
 
+    @java.lang.Override
     public Builder mergeFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      ConditionsUp parsedMessage = null;
+      com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (ConditionsUp) e.getUnfinishedMessage();
+        parsedMessage = (com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -444,22 +471,22 @@ private static final long serialVersionUID = 0L;
     }
     private int bitField0_;
 
-    private java.util.List<FieldConditionUp> fields_ =
+    private java.util.List<com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp> fields_ =
       java.util.Collections.emptyList();
     private void ensureFieldsIsMutable() {
-      if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        fields_ = new java.util.ArrayList<FieldConditionUp>(fields_);
+      if (!((bitField0_ & 0x00000001) != 0)) {
+        fields_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp>(fields_);
         bitField0_ |= 0x00000001;
        }
     }
 
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        FieldConditionUp, FieldConditionUp.Builder, FieldConditionUpOrBuilder> fieldsBuilder_;
+        com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp, com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Builder, com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUpOrBuilder> fieldsBuilder_;
 
     /**
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
-    public java.util.List<FieldConditionUp> getFieldsList() {
+    public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp> getFieldsList() {
       if (fieldsBuilder_ == null) {
         return java.util.Collections.unmodifiableList(fields_);
       } else {
@@ -479,7 +506,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
-    public FieldConditionUp getFields(int index) {
+    public com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp getFields(int index) {
       if (fieldsBuilder_ == null) {
         return fields_.get(index);
       } else {
@@ -490,7 +517,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
     public Builder setFields(
-        int index, FieldConditionUp value) {
+        int index, com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp value) {
       if (fieldsBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -507,7 +534,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
     public Builder setFields(
-        int index, FieldConditionUp.Builder builderForValue) {
+        int index, com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Builder builderForValue) {
       if (fieldsBuilder_ == null) {
         ensureFieldsIsMutable();
         fields_.set(index, builderForValue.build());
@@ -520,7 +547,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
-    public Builder addFields(FieldConditionUp value) {
+    public Builder addFields(com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp value) {
       if (fieldsBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -537,7 +564,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
     public Builder addFields(
-        int index, FieldConditionUp value) {
+        int index, com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp value) {
       if (fieldsBuilder_ == null) {
         if (value == null) {
           throw new NullPointerException();
@@ -554,7 +581,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
     public Builder addFields(
-        FieldConditionUp.Builder builderForValue) {
+        com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Builder builderForValue) {
       if (fieldsBuilder_ == null) {
         ensureFieldsIsMutable();
         fields_.add(builderForValue.build());
@@ -568,7 +595,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
     public Builder addFields(
-        int index, FieldConditionUp.Builder builderForValue) {
+        int index, com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Builder builderForValue) {
       if (fieldsBuilder_ == null) {
         ensureFieldsIsMutable();
         fields_.add(index, builderForValue.build());
@@ -582,7 +609,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
     public Builder addAllFields(
-        Iterable<? extends FieldConditionUp> values) {
+        java.lang.Iterable<? extends com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp> values) {
       if (fieldsBuilder_ == null) {
         ensureFieldsIsMutable();
         com.google.protobuf.AbstractMessageLite.Builder.addAll(
@@ -622,14 +649,14 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
-    public FieldConditionUp.Builder getFieldsBuilder(
+    public com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Builder getFieldsBuilder(
         int index) {
       return getFieldsFieldBuilder().getBuilder(index);
     }
     /**
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
-    public FieldConditionUpOrBuilder getFieldsOrBuilder(
+    public com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUpOrBuilder getFieldsOrBuilder(
         int index) {
       if (fieldsBuilder_ == null) {
         return fields_.get(index);  } else {
@@ -639,7 +666,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
-    public java.util.List<? extends FieldConditionUpOrBuilder>
+    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUpOrBuilder> 
          getFieldsOrBuilderList() {
       if (fieldsBuilder_ != null) {
         return fieldsBuilder_.getMessageOrBuilderList();
@@ -650,44 +677,46 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
-    public FieldConditionUp.Builder addFieldsBuilder() {
+    public com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Builder addFieldsBuilder() {
       return getFieldsFieldBuilder().addBuilder(
-          FieldConditionUp.getDefaultInstance());
+          com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.getDefaultInstance());
     }
     /**
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
-    public FieldConditionUp.Builder addFieldsBuilder(
+    public com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Builder addFieldsBuilder(
         int index) {
       return getFieldsFieldBuilder().addBuilder(
-          index, FieldConditionUp.getDefaultInstance());
+          index, com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.getDefaultInstance());
     }
     /**
      * <code>repeated .FieldConditionUp fields = 1;</code>
      */
-    public java.util.List<FieldConditionUp.Builder>
+    public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Builder> 
          getFieldsBuilderList() {
       return getFieldsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        FieldConditionUp, FieldConditionUp.Builder, FieldConditionUpOrBuilder>
+        com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp, com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Builder, com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUpOrBuilder> 
         getFieldsFieldBuilder() {
       if (fieldsBuilder_ == null) {
         fieldsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-            FieldConditionUp, FieldConditionUp.Builder, FieldConditionUpOrBuilder>(
+            com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp, com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Builder, com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUpOrBuilder>(
                 fields_,
-                ((bitField0_ & 0x00000001) == 0x00000001),
+                ((bitField0_ & 0x00000001) != 0),
                 getParentForChildren(),
                 isClean());
         fields_ = null;
       }
       return fieldsBuilder_;
     }
+    @java.lang.Override
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
-      return super.setUnknownFieldsProto3(unknownFields);
+      return super.setUnknownFields(unknownFields);
     }
 
+    @java.lang.Override
     public final Builder mergeUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {
       return super.mergeUnknownFields(unknownFields);
@@ -698,17 +727,18 @@ private static final long serialVersionUID = 0L;
   }
 
   // @@protoc_insertion_point(class_scope:ConditionsUp)
-  private static final ConditionsUp DEFAULT_INSTANCE;
+  private static final com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new ConditionsUp();
+    DEFAULT_INSTANCE = new com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp();
   }
 
-  public static ConditionsUp getDefaultInstance() {
+  public static com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
   private static final com.google.protobuf.Parser<ConditionsUp>
       PARSER = new com.google.protobuf.AbstractParser<ConditionsUp>() {
+    @java.lang.Override
     public ConditionsUp parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -721,12 +751,13 @@ private static final long serialVersionUID = 0L;
     return PARSER;
   }
 
-  @Override
+  @java.lang.Override
   public com.google.protobuf.Parser<ConditionsUp> getParserForType() {
     return PARSER;
   }
 
-  public ConditionsUp getDefaultInstanceForType() {
+  @java.lang.Override
+  public com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

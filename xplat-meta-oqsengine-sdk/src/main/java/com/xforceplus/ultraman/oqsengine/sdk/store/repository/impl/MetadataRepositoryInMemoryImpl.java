@@ -676,6 +676,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 simpleBoItem.setCode(RowUtils.getRowValue(row, BoTable.CODE).map(String::valueOf).orElse(""));
                 simpleBoItem.setParentId(RowUtils.getRowValue(row, BoTable.PARENT_ID).map(String::valueOf).orElse(""));
                 simpleBoItem.setId(boId);
+                simpleBoItem.setCname(RowUtils.getRowValue(row, BoTable.NAME).map(String::valueOf).orElse(""));
                 return simpleBoItem;
             } else {
                 return null;
