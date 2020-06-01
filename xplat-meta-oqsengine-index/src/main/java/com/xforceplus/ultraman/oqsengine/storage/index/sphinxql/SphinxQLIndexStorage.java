@@ -54,6 +54,11 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     final Logger logger = LoggerFactory.getLogger(SphinxQLIndexStorage.class);
 
+    /**
+     * 默认的最大查询匹配量.
+     */
+    private static final int DEFAULT_MAX_MATCH = 10000;
+
     @Resource(name = "indexConditionsBuilderFactory")
     private SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory;
 
@@ -75,6 +80,10 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         this.indexTableName = indexTableName;
     }
 
+    public String getIndexTableName() {
+        return indexTableName;
+    }
+
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
         throws SQLException {
@@ -88,9 +97,12 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
                     }
 
+                    long maxMatches = DEFAULT_MAX_MATCH;
                     if (!page.isSinglePage()) {
                         long count = count(resource, entityClass, whereCondition);
                         page.setTotalCount(count);
+
+                        maxMatches = page.getVisibleTotalCount();
                     }
 
                     // 空页,空结果返回.
@@ -119,6 +131,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         st.setLong(1, entityClass.id());
                         st.setLong(2, scope.getStartLine());
                         st.setLong(3, page.getPageSize());
+                        st.setLong(4, maxMatches);
 
                         if (logger.isDebugEnabled()) {
                             logger.debug(st.toString());
@@ -331,16 +344,17 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         return fullSet;
     }
 
-    // 处理成<F123L>F123L 789</F123L> 形式字符串.
+    // 处理成<F123L>789F123L</F123L> 形式字符串.
     private String serializeStorageValueFull(StorageValue value) {
         StringBuilder buff = new StringBuilder();
         buff.append("<").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
-        buff.append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.storageName()).append(' ');
         if (value.type() == StorageType.STRING) {
             buff.append(SphinxQLHelper.encodeSpecialCharset(value.value().toString()));
         } else {
             buff.append(value.value().toString());
         }
+//        buff.append(' ');
+        buff.append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.storageName());
         buff.append("</").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
         return buff.toString();
     }

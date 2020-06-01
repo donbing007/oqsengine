@@ -12,7 +12,7 @@ import java.io.ObjectOutput;
  * PageScope scope = page.getNextPage();
  * 那么返回的行数范围一定是第2页的第3行至第7行.
  *
- * @author Mike
+ * @author dongbin
  * @version 1.00 2010-12-20
  * @since 1.5
  */

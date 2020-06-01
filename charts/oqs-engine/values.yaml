@@ -62,14 +62,16 @@ logger:
   level: INFO
 
 storage:
+  # Maximum amount of visible data.
+  maxVisibleNumber: 10000
   threadPool:
     # 0 or not exist use cpu core + 1
     io:
-      worker: 0
-      queue: 500
+      worker: 32
+      queue: 1000
     # 0 or not exist use cpu core + 1
     call:
-      worker: 0
+      worker: 32
       queue: 1000
   transaction:
     # The transaction is valid for a period of time that will be rollback.
@@ -97,10 +99,10 @@ datasource:
   master: |-
     {
       driverClassName: "com.mysql.cj.jdbc.Driver"
-      jdbcUrl: "jdbc:mysql://120.55.249.44:23112/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8"
+      jdbcUrl: "jdbc:mysql://127.0.0.1:3306/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8"
       username: "root",
       password: "root",
-      maximumPoolSize: 1,
+      maximumPoolSize: 3,
       maxLifetime: 25200000
     }
   index:
@@ -109,18 +111,18 @@ datasource:
     write: |-
       {
         driverClassName: "com.mysql.cj.jdbc.Driver"
-        jdbcUrl: "jdbc:mysql://120.55.249.44:23113/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
+        jdbcUrl: "jdbc:mysql://127.0.0.1:9306/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
         username: "root",
         password: "root",
-        maximumPoolSize: 1,
+        maximumPoolSize: 3,
         maxLifetime: 600000
       }
     search: |-
       {
         driverClassName: "com.mysql.cj.jdbc.Driver"
-        jdbcUrl: "jdbc:mysql://120.55.249.44:23113/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
+        jdbcUrl: "jdbc:mysql://127.0.0.1:9306/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai"
         username: "root",
         password: "root",
-        maximumPoolSize: 1,
+        maximumPoolSize: 3,
         maxLifetime: 600000
       }

@@ -33,7 +33,7 @@ public class SphinxQLHelper {
 
     /**
      * 处理以下字段.
-     * !    "    $    '    (    )    -    /    <    @    \    ^    |    ~
+     * !    "    $    '    (    )    -    /    <    @    \    ^    |    ~ 空格 *
      * 使用'\'转义.
      *
      * @param value 目标字串.
@@ -59,13 +59,20 @@ public class SphinxQLHelper {
                 case '^':
                 case '|':
                 case '~':
+                case '*':
                 case '\"': {
                     // 半角和全角差距为 65248.
                     buff.append((char) (c + 65248));
                     break;
                 }
-                default:
-                    buff.append(c);
+                default: {
+                    if (c == ' ') {
+                        // 全角空格.
+                        buff.append((char) 12288);
+                    } else {
+                        buff.append(c);
+                    }
+                }
 
             }
         }
@@ -173,24 +180,19 @@ public class SphinxQLHelper {
      */
     public static String buildFullPreciseQuery(StorageValue value, boolean useGroupName) {
         StringBuilder buff = new StringBuilder();
-        buff.append("(ZONESPAN:").append(ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(' ');
-        if (!useGroupName) {
-            buff.append('\"');
+        buff.append("(ZONE:").append(ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(' ');
+
+        buff.append('\"');
+        if (StorageType.STRING == value.type()) {
+            buff.append(encodeSpecialCharset(value.value().toString()));
+        } else {
+            buff.append(value.value().toString());
         }
         buff.append(ATTRIBUTE_FULL_FIELD_PREFIX);
         if (useGroupName) {
             buff.append(value.groupStorageName()).append("*");
         } else {
             buff.append(value.storageName());
-        }
-        buff.append(' ');
-        if (useGroupName) {
-            buff.append('\"');
-        }
-        if (StorageType.STRING == value.type()) {
-            buff.append(encodeSpecialCharset(value.value().toString()));
-        } else {
-            buff.append(value.value().toString());
         }
         buff.append("\")");
         return buff.toString();
@@ -206,17 +208,18 @@ public class SphinxQLHelper {
     public static String buildFullFuzzyQuery(StorageValue value, boolean useGroupName) {
         StringBuilder buff = new StringBuilder();
         buff.append("(ZONESPAN:").append(ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(" ");
-        buff.append(ATTRIBUTE_FULL_FIELD_PREFIX)
-            .append(useGroupName ? value.groupStorageName() + "*" : value.storageName())
-            .append(" \"*");
 
+        buff.append("\"*");
         if (StorageType.STRING == value.type()) {
             buff.append(encodeSpecialCharset(value.value().toString()));
         } else {
             buff.append(value.value().toString());
         }
+        buff.append('*');
+//        buff.append(ATTRIBUTE_FULL_FIELD_PREFIX)
+//            .append(useGroupName ? value.groupStorageName() + "*" : value.storageName());
 
-        buff.append("*\")");
+        buff.append("\")");
         return buff.toString();
     }
 }

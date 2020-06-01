@@ -56,6 +56,11 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      */
     final int DEFAULT_MAX_JOIN_DRIVER_LINE_NUMBER = 1000;
 
+    /**
+     * 查询时最大可见数据量.
+     */
+    final int DEFAULT_MAX_VISIBLE_TOTAL_COUNT = 10000;
+
     private Counter oneReadCountTotal = Metrics.counter(MetricsDefine.READ_COUNT_TOTAL, "action", "one");
     private Counter multipleReadCountTotal = Metrics.counter(MetricsDefine.READ_COUNT_TOTAL, "action", "multiple");
     private Counter searchReadCountTotal = Metrics.counter(MetricsDefine.READ_COUNT_TOTAL, "action", "search");
@@ -70,6 +75,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Resource(name = "ioThreadPool")
     private ExecutorService threadPool;
 
+    private long maxVisibleTotalCount;
     private int maxJoinEntityNumber;
     private int maxJoinDriverLineNumber;
 
@@ -82,6 +88,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         if (maxJoinDriverLineNumber <= 0) {
             maxJoinDriverLineNumber = DEFAULT_MAX_JOIN_DRIVER_LINE_NUMBER;
         }
+
+        if (maxVisibleTotalCount <= 0) {
+            maxVisibleTotalCount = DEFAULT_MAX_VISIBLE_TOTAL_COUNT;
+        }
+
+        logger.info("Search service startup:[maxVisibleTotal:{}, maxJoinEntityNumber:{}, maxJoinDriverLineNumber:{}]",
+            maxVisibleTotalCount, maxJoinEntityNumber, maxJoinDriverLineNumber);
     }
 
     public int getMaxJoinEntityNumber() {
@@ -98,6 +111,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     public void setMaxJoinDriverLineNumber(int maxJoinDriverLineNumber) {
         this.maxJoinDriverLineNumber = maxJoinDriverLineNumber;
+    }
+
+    public long getMaxVisibleTotalCount() {
+        return maxVisibleTotalCount;
+    }
+
+    public void setMaxVisibleTotalCount(long maxVisibleTotalCount) {
+        this.maxVisibleTotalCount = maxVisibleTotalCount;
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "one"})
@@ -220,13 +241,15 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         Conditions useConditions = conditions;
         Sort useSort = sort;
-        Page usePage = page;
         if (useSort == null) {
             useSort = Sort.buildOutOfSort();
         }
+
+        Page usePage = page;
         if (usePage == null) {
             usePage = new Page();
         }
+        usePage.setVisibleTotalCount(maxVisibleTotalCount);
 
         try {
             // join
@@ -581,8 +604,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 return new AbstractMap.SimpleEntry<>(key, Collections.emptyList());
             }
 
+            Page driverPage = Page.newSinglePage(maxJoinDriverLineNumber);
+            driverPage.setVisibleTotalCount(maxJoinDriverLineNumber);
             Collection<EntityRef> refs = indexStorage.select(
-                conditions, key.getEntityClass(), Sort.buildOutOfSort(), Page.newSinglePage(maxJoinDriverLineNumber));
+                conditions, key.getEntityClass(), Sort.buildOutOfSort(), driverPage);
             return new AbstractMap.SimpleEntry<>(key, refs);
         }
 

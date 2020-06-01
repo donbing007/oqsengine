@@ -176,7 +176,8 @@ public class SphinxQLIndexStorageTest {
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
-        storage.setIndexTableName("oqsindextest");
+//        storage.setIndexTableName("oqsindextest");
+        storage.setIndexTableName("oqsindex");
         storage.init();
 
         truncate();
@@ -226,7 +227,7 @@ public class SphinxQLIndexStorageTest {
 
         transactionManager.finish();
 
-        truncate();
+//        truncate();
 
         dataSourcePackage.close();
     }
@@ -309,6 +310,10 @@ public class SphinxQLIndexStorageTest {
     }
 
     private Collection<Case> buildSelectCase() {
+
+        Page limitOnePage = new Page(1, 10);
+        limitOnePage.setVisibleTotalCount(1);
+
         return Arrays.asList(
             // long eq
             new Case(
@@ -688,6 +693,29 @@ public class SphinxQLIndexStorageTest {
                     Assert.assertEquals(4, refs.size());
                     long[] expectedIds = new long[]{
                         Long.MAX_VALUE - 4, Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                    return true;
+                }
+            )
+            ,
+            // stringsField in
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        stringsField,
+                        ConditionOperator.MULTIPLE_EQUALS,
+                        new StringsValue(stringsField, "UNKNOWN"),
+                        new StringsValue(stringsField, "value3")
+                    )
+                ),
+                entityClass,
+                limitOnePage,
+                refs -> {
+                    Assert.assertEquals(1, refs.size());
+                    long[] expectedIds = new long[]{
+                        Long.MAX_VALUE - 4
+                    };
                     Assert.assertEquals(0,
                         refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
                     return true;
