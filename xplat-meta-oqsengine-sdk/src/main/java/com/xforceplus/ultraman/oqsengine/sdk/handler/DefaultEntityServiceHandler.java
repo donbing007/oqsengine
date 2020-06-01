@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.sdk.command.*;
+import com.xforceplus.ultraman.oqsengine.sdk.event.EntityErrorExported;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityExported;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
@@ -191,63 +192,75 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
             return CompletableFuture.completedFuture(Either.left(MISSING_ENTITIES));
         } else {
 
-            IEntityClass entityClass = iEntityClassOp.get();
+            try {
+                IEntityClass entityClass = iEntityClassOp.get();
 
-            byte[] bom = new byte[]{(byte) 0xef, (byte) 0xbb, (byte) 0xbf};
-            Source<ByteString, NotUsed> bomSource = Source.single(ByteString.fromArray(bom));
+                byte[] bom = new byte[]{(byte) 0xef, (byte) 0xbb, (byte) 0xbf};
+                Source<ByteString, NotUsed> bomSource = Source.single(ByteString.fromArray(bom));
 
-            Source<ByteString, NotUsed> content = exportService.source(entityClass, cmd.getConditionQueryRequest())
-                    .map(record -> {
-                        StringBuilder sb = new StringBuilder();
-                        if (isFirstLine.get()) {
-                            String header = record
+                Source<ByteString, NotUsed> content = exportService.source(entityClass, cmd.getConditionQueryRequest())
+                        .map(record -> {
+                            StringBuilder sb = new StringBuilder();
+                            if (isFirstLine.get()) {
+                                String header = record
+                                        .stream(keys)
+                                        .map(Tuple2::_1)
+                                        .map(x -> Optional.ofNullable(x)
+                                                .map(IEntityField::cnName)
+                                                .orElse(""))
+                                        .collect(Collectors.joining(","));
+                                sb.append(header);
+                                sb.append("\n");
+                                isFirstLine.set(false);
+                            }
+
+                            //may have null conver to ""
+                            String line = record
                                     .stream(keys)
-                                    .map(Tuple2::_1)
-                                    .map(x -> Optional.ofNullable(x)
-                                            .map(IEntityField::cnName)
-                                            .orElse(""))
+                                    .map(x -> {
+
+                                        IEntityField field = x._1();
+                                        Object value = x._2();
+
+                                        //TODO take field type in consideration?
+                                        //convert enum to dict value
+                                        // \t is a tricky for csv see
+                                        //     https://qastack.cn/superuser/318420/formatting-a-comma-delimited-csv-to-force-excel-to-interpret-value-as-a-string
+                                        return "\"\t" + getString(entityClass, field, value, mapping, searchTable) + "\"";
+                                    })
                                     .collect(Collectors.joining(","));
-                            sb.append(header);
+                            sb.append(line);
                             sb.append("\n");
-                            isFirstLine.set(false);
-                        }
+                            return sb.toString();
 
-                        //may have null conver to ""
-                        String line = record
-                                .stream(keys)
-                                .map(x -> {
+                        })
+                        .map(x -> ByteString.fromString(x, StandardCharsets.UTF_8));
 
-                                    IEntityField field = x._1();
-                                    Object value = x._2();
+                CompletableFuture<Either<String, String>> syncCompleteResult = bomSource.concat(content)
+                        .runWith(fileSink, materializer)
+                        .toCompletableFuture().thenApply(x -> {
 
-                                    //TODO take field type in consideration?
-                                    //convert enum to dict value
-                                    // \t is a tricky for csv see
-                                    //     https://qastack.cn/superuser/318420/formatting-a-comma-delimited-csv-to-force-excel-to-interpret-value-as-a-string
-                                    return "\"\t" + getString(entityClass, field, value, mapping, searchTable) + "\"";
-                                })
-                                .collect(Collectors.joining(","));
-                        sb.append(line);
-                        sb.append("\n");
+                            String downloadUrl = exportSink.getDownloadUrl(x._2());
 
-                        return sb.toString();
+                            Map<String, Object> context = new HashMap<>(metaData);
+                            publisher.publishEvent(new EntityExported(context, downloadUrl, token));
+                            return Either.<String, String>right(downloadUrl);
+                        }).exceptionally(th -> {
+                            Map<String, Object> context = new HashMap<>(metaData);
+                            publisher.publishEvent(new EntityErrorExported(context, token, th.getMessage()));
+                            return Either.left(th.getMessage());
+                        });
 
-                    })
-                    .map(x -> ByteString.fromString(x, StandardCharsets.UTF_8));
 
-            return bomSource.concat(content)
-                    .runWith(fileSink, materializer)
-                    .toCompletableFuture().thenApply(x -> {
-
-                        String downloadUrl = exportSink.getDownloadUrl(x._2());
-
-                        Map<String, Object> context = new HashMap<>();
-                        if (metaData != null) {
-                            context.putAll(metaData);
-                        }
-                        publisher.publishEvent(new EntityExported(context, downloadUrl, token));
-                        return Either.right(downloadUrl);
-                    });
+                if ("sync".equalsIgnoreCase(cmd.getExportType())) {
+                    return syncCompleteResult;
+                } else {
+                    return CompletableFuture.completedFuture(Either.right("请求完成"));
+                }
+            } catch (Exception ex) {
+                log.error("{}", ex);
+                return CompletableFuture.completedFuture(Either.left(ex.getMessage()));
+            }
         }
     }
 

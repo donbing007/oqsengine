@@ -5,29 +5,25 @@ import java.util.Map;
 /**
  * entity exported
  */
-public class EntityExported implements EntityEvent{
+public class EntityErrorExported implements EntityEvent{
 
     private Map<String, Object> context;
-
-    private String downloadUrl;
 
     private String fileName;
 
     private Long completedTime;
 
-    public EntityExported(Map<String, Object> context, String downloadUrl, String fileName) {
+    private String reason;
+
+    public EntityErrorExported(Map<String, Object> context, String fileName, String reason) {
         this.context = context;
-        this.downloadUrl = downloadUrl;
         this.completedTime = System.currentTimeMillis();
         this.fileName = fileName;
+        this.reason = reason;
     }
 
     public Map<String, Object> getContext() {
         return context;
-    }
-
-    public String getDownloadUrl() {
-        return downloadUrl;
     }
 
     public Long getCompletedTime() {
@@ -38,13 +34,17 @@ public class EntityExported implements EntityEvent{
         return fileName;
     }
 
+    public String getReason() {
+        return reason;
+    }
+
     @Override
     public String toString() {
-        return "EntityExported{" +
+        return "EntityErrorExported{" +
                 "context=" + context +
-                ", downloadUrl='" + downloadUrl + '\'' +
                 ", fileName='" + fileName + '\'' +
                 ", completedTime=" + completedTime +
+                ", reason='" + reason + '\'' +
                 '}';
     }
 }

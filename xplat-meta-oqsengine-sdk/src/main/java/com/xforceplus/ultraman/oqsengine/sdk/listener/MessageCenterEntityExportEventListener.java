@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.listener;
 import com.xforcecloud.noification.model.BaseResponse;
 import com.xforcecloud.noification.model.MessageInfo;
 import com.xforcecloud.noification.model.Scope;
+import com.xforceplus.ultraman.oqsengine.sdk.event.EntityErrorExported;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityExported;
 import com.xforceplus.xplat.galaxy.framework.context.ContextKeys;
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ import java.util.function.Supplier;
 /**
  * message can config template
  */
-public class MessageCenterEntityExportEventListener {
+public class MessageCenterEntityExportEventListener implements ExportEventAwareListener{
 
     private Supplier<String> tokenSupplier;
 
@@ -84,9 +85,50 @@ public class MessageCenterEntityExportEventListener {
         title = new ST(this.titleTemplate, '$', '$');
     }
 
+    @Override
+    @Async
+    @EventListener(EntityErrorExported.class)
+    public void errorListener(EntityErrorExported entityExported) {
+        Map<String, Object> context = entityExported.getContext();
+
+        if (context != null) {
+            Object tenantIdObj = context.get(ContextKeys.LongKeys.TENANT_ID.name());
+            Object userId = context.get(ContextKeys.LongKeys.ACCOUNT_ID.name());
+            if (tenantIdObj != null) {
+                Long tenantId = (Long) tenantIdObj;
+                MessageInfo messageInfo = new MessageInfo();
+
+                String fileName = entityExported.getFileName();
+                String reason = entityExported.getReason();
+
+                messageInfo.setScope(Scope.SINGLE);
+                messageInfo.setTitle("导出失败");
+                messageInfo.setContent("导出失败：" + fileName + "， 原因:" + reason);
+                messageInfo.setReceiverIds(Arrays.asList((Long) userId));
+                messageInfo.setType(0);
+
+                HttpHeaders headers = new HttpHeaders();
+                MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
+                headers.setContentType(type);
+                headers.add("Accept", MediaType.APPLICATION_JSON.toString());
+                headers.add("x-app-token", tokenSupplier.get());
+
+                HttpEntity messageEntity = new HttpEntity<>(messageInfo, headers);
+                String url = String.format(routePattern, gatewayUrl, tenantId, senderId);
+                try {
+                    ResponseEntity<BaseResponse> response = restTemplate.postForEntity(url, messageEntity, BaseResponse.class);
+                    //TODO if check this response
+                } catch (RuntimeException ex) {
+                    logger.error("{}", ex);
+                }
+            }
+        }
+    }
+
+    @Override
     @Async
     @EventListener(EntityExported.class)
-    public void sendToMessage(EntityExported entityExported) {
+    public void messageListener(EntityExported entityExported) {
         Map<String, Object> context = entityExported.getContext();
 
         if (context != null) {

@@ -88,18 +88,22 @@ public class GeneralRecord implements Record {
     }
 
     private Optional<IEntityField> field(String fieldName) {
-        if (fieldName == null)
+        if (fieldName == null) {
             return null;
+        }
 
         IEntityField fieldMatch = null;
 
-        for (IEntityField f : fields)
-            if (fieldName.equals(f.name()))
-                if (fieldMatch == null)
+        for (IEntityField f : fields) {
+            if (fieldName.equals(f.name())) {
+                if (fieldMatch == null) {
                     fieldMatch = f;
-                else
+                } else {
                     log.info("Ambiguous match found for "
                             + fieldName + ". Both " + fieldMatch + " and " + f + " match.");
+                }
+            }
+        }
 
         return Optional.ofNullable(fieldMatch);
     }
@@ -115,13 +119,17 @@ public class GeneralRecord implements Record {
         if (field != null) {
             int size = fields.length;
 
-            for (int i = 0; i < size; i++)
-                if (fields[i] == field)
+            for (int i = 0; i < size; i++) {
+                if (fields[i] == field) {
                     return i;
+                }
+            }
 
-            for (int i = 0; i < size; i++)
-                if (fields[i].equals(field))
+            for (int i = 0; i < size; i++) {
+                if (fields[i].equals(field)) {
                     return i;
+                }
+            }
         }
 
         return -1;

@@ -269,12 +269,13 @@ public class EntityController {
     public CompletableFuture<Response<String>> conditionExport(
             @PathVariable String boId,
             @RequestParam(required = false, value = "v") String version,
+            @RequestParam(required = true, defaultValue = "sync", value = "exportType") String exportType,
             @RequestBody ConditionQueryRequest condition) {
 
         condition.setPageNo(0);
         condition.setPageSize(50000);
 
-        CompletableFuture<Either<String, String>> exportResult = dispatcher.querySync(new ConditionExportCmd(boId, condition, version)
+        CompletableFuture<Either<String, String>> exportResult = dispatcher.querySync(new ConditionExportCmd(boId, condition, version, exportType)
                 , DefaultUiService.class, "conditionExport");
 
         return exportResult.thenApply(x -> {

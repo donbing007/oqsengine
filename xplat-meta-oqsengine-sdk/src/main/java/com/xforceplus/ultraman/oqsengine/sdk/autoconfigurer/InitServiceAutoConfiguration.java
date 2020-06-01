@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.config.init.*;
 import com.xforceplus.ultraman.oqsengine.sdk.controller.DownloadController;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler;
 import com.xforceplus.ultraman.oqsengine.sdk.interceptor.*;
+import com.xforceplus.ultraman.oqsengine.sdk.listener.ExportEventLoggerListener;
 import com.xforceplus.ultraman.oqsengine.sdk.listener.MessageCenterEntityExportEventListener;
 import com.xforceplus.ultraman.oqsengine.sdk.listener.ModuleEventListener;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
@@ -317,5 +318,11 @@ public class InitServiceAutoConfiguration {
     @Bean
     public DownloadController downloadController(ExportSink exportSink) {
         return new DownloadController(exportSink);
+    }
+
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.export.log", matchIfMissing = true)
+    @Bean
+    public ExportEventLoggerListener loggerListener(){
+        return new ExportEventLoggerListener();
     }
 }
