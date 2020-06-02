@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 /**
  * message can config template
  */
-public class MessageCenterEntityExportEventListener implements ExportEventAwareListener{
+public class MessageCenterEntityExportEventListener implements ExportEventAwareListener {
 
     private Supplier<String> tokenSupplier;
 
@@ -130,7 +130,7 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
     @EventListener(EntityExported.class)
     public void messageListener(EntityExported entityExported) {
 
-        if("sync".equalsIgnoreCase(entityExported.getExportType()) && ignoreOnSync){
+        if ("sync".equalsIgnoreCase(entityExported.getExportType()) && ignoreOnSync) {
             //in sync
             return;
         }
