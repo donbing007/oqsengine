@@ -137,7 +137,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                     )
                 ),
                 "MATCH('@" + FieldDefine.FULL_FIELDS +
-                    " ((ZONE:F1S \"v1F1S\") | (ZONE:F1S \"v2F1S\")) (ZONE:F2S \"v3F2S\")')"
+                    " (\"v1F1S\" | \"v2F1S\") \"v3F2S\"')"
             )
             ,
             new Case(

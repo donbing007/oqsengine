@@ -69,15 +69,15 @@ public class SphinxQLHelperTest {
     @Test
     public void testBuildFullPreciseQuery() throws Exception {
         LongStorageValue longStorageValue = new LongStorageValue("1L", 100, false);
-        Assert.assertEquals("(ZONE:F1L \"100F1L\")",
+        Assert.assertEquals("\"100F1L\"",
             SphinxQLHelper.buildFullPreciseQuery(longStorageValue, false));
-        Assert.assertEquals("(ZONE:F1L \"100F1L*\")",
+        Assert.assertEquals("\"100F1L*\"",
             SphinxQLHelper.buildFullPreciseQuery(longStorageValue, true));
 
         StringStorageValue stringStorageValue = new StringStorageValue("1L", "string value", false);
-        Assert.assertEquals("(ZONE:F1S \"string　valueF1S\")",
+        Assert.assertEquals("\"string　valueF1S\"",
             SphinxQLHelper.buildFullPreciseQuery(stringStorageValue, false));
-        Assert.assertEquals("(ZONE:F1S \"string　valueF1S*\")",
+        Assert.assertEquals("\"string　valueF1S*\"",
             SphinxQLHelper.buildFullPreciseQuery(stringStorageValue, true));
     }
 

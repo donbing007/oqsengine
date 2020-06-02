@@ -70,7 +70,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                expectPrefix + "(ZONE:F1L \"100F1L\")" + expectAfter
+                expectPrefix + "\"100F1L\"" + expectAfter
             )
             ,
             new Case(
@@ -94,7 +94,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new EntityField(2, "c2", FieldType.STRING),
                         ConditionOperator.EQUALS,
                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "(ZONE:F1L \"100F1L\") (ZONE:F2S \"testF2S\")" + expectAfter
+                expectPrefix + "\"100F1L\" \"testF2S\"" + expectAfter
             ),
             new Case(
                 new Conditions(
@@ -106,7 +106,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new EntityField(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-(ZONE:F1L \"100F1L\") -(ZONE:F2S \"testF2S\") =Sg" + expectAfter
+                expectPrefix + "-\"100F1L\" -\"testF2S\" =Sg" + expectAfter
             ),
             new Case(
                 new Conditions(
@@ -118,7 +118,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new EntityField(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-(ZONE:F2S \"testF2S\") =Sg" + expectAfter + " " + SqlKeywordDefine.AND + " id = 100"
+                expectPrefix + "-\"testF2S\" =Sg" + expectAfter + " " + SqlKeywordDefine.AND + " id = 100"
             ),
             new Case(
                 new Conditions(
@@ -152,7 +152,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         )
                     )
                 ),
-                expectPrefix + "((ZONE:F1L \"123456F1L0\") (ZONE:F1L \"123456F1L1\"))" + expectAfter
+                expectPrefix + "(\"123456F1L0\" \"123456F1L1\")" + expectAfter
             ),
             new Case(
                 Conditions.buildEmtpyConditions()
@@ -161,7 +161,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                     ConditionOperator.EQUALS,
                     new StringsValue(new EntityField(1, "c1", FieldType.STRINGS), "v1")
                 )),
-                expectPrefix + "(ZONE:F1S \"v1F1S*\")" + expectAfter
+                expectPrefix + "\"v1F1S*\"" + expectAfter
             ),
             new Case(
                 Conditions.buildEmtpyConditions()
@@ -170,7 +170,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         ConditionOperator.NOT_EQUALS,
                         new StringsValue(new EntityField(1, "c1", FieldType.STRINGS), "v1")
                     )),
-                expectPrefix + "-(ZONE:F1S \"v1F1S*\") =Sg" + expectAfter
+                expectPrefix + "-\"v1F1S*\" =Sg" + expectAfter
             )
         );
     }
