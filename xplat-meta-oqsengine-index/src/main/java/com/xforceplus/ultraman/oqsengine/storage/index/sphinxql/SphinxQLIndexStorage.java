@@ -54,11 +54,6 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     final Logger logger = LoggerFactory.getLogger(SphinxQLIndexStorage.class);
 
-    /**
-     * 默认的最大查询匹配量.
-     */
-    private static final int DEFAULT_MAX_MATCH = 10000;
-
     @Resource(name = "indexConditionsBuilderFactory")
     private SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory;
 
@@ -97,12 +92,14 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
                     }
 
-                    long maxMatches = DEFAULT_MAX_MATCH;
+                    long maxMatches = 0;
                     if (!page.isSinglePage()) {
                         long count = count(resource, entityClass, whereCondition);
                         page.setTotalCount(count);
 
                         maxMatches = page.getVisibleTotalCount();
+                    } else {
+                        maxMatches = page.getPageSize();
                     }
 
                     // 空页,空结果返回.

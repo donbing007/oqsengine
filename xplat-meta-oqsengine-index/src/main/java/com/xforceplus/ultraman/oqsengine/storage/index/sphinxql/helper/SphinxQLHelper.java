@@ -180,7 +180,6 @@ public class SphinxQLHelper {
      */
     public static String buildFullPreciseQuery(StorageValue value, boolean useGroupName) {
         StringBuilder buff = new StringBuilder();
-        buff.append("(ZONE:").append(ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(' ');
 
         buff.append('\"');
         if (StorageType.STRING == value.type()) {
@@ -194,7 +193,7 @@ public class SphinxQLHelper {
         } else {
             buff.append(value.storageName());
         }
-        buff.append("\")");
+        buff.append("\"");
         return buff.toString();
     }
 
@@ -216,9 +215,6 @@ public class SphinxQLHelper {
             buff.append(value.value().toString());
         }
         buff.append('*');
-//        buff.append(ATTRIBUTE_FULL_FIELD_PREFIX)
-//            .append(useGroupName ? value.groupStorageName() + "*" : value.storageName());
-
         buff.append("\")");
         return buff.toString();
     }
