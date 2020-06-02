@@ -93,7 +93,7 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
 
         if (context != null) {
             Object tenantIdObj = context.get(ContextKeys.LongKeys.TENANT_ID.name());
-            Object userId = context.get(ContextKeys.LongKeys.ACCOUNT_ID.name());
+            Object userId = context.get(ContextKeys.LongKeys.ID.name());
             if (tenantIdObj != null) {
                 Long tenantId = (Long) tenantIdObj;
                 MessageInfo messageInfo = new MessageInfo();
@@ -143,7 +143,7 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
 
         if (context != null) {
             Object tenantIdObj = context.get(ContextKeys.LongKeys.TENANT_ID.name());
-            Object userId = context.get(ContextKeys.LongKeys.ACCOUNT_ID.name());
+            Object userId = context.get(ContextKeys.LongKeys.ID.name());
             if (tenantIdObj != null) {
                 Long tenantId = (Long) tenantIdObj;
                 MessageInfo messageInfo = new MessageInfo();

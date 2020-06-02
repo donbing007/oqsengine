@@ -25,6 +25,7 @@ import org.springframework.boot.autoconfigure.web.client.RestTemplateAutoConfigu
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -38,6 +39,7 @@ import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
 
 @RunWith(SpringRunner.class)
+@ActiveProfiles("local")
 @SpringBootTest
 @ContextConfiguration(classes = {TestConfiguration.class
         , InitServiceAutoConfiguration.class
@@ -99,7 +101,7 @@ public class EntityServiceNewTest {
     private ModuleUpResult manyToOne() {
         return ModuleUpResult
                 .newBuilder()
-                .setVersion("0.0.1")
+                .setVersion("0.0.2")
                 .setId(111111111111L)
                 .addBoUps(BoUp
                         .newBuilder()
@@ -482,8 +484,9 @@ public class EntityServiceNewTest {
 
         })).collect(Collectors.toList());
 
+        Thread.sleep(5000);
 
-        //READ Threads
+//        //READ Threads
         List<Thread> collect2 = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
 
             System.out.println(metadataRepository.load("1", "1", "1", "0.0.2"));

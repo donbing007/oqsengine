@@ -41,6 +41,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -95,16 +96,19 @@ public class InitServiceAutoConfiguration {
         return FormBoMapLocalStore.create();
     }
 
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.meta.enabled", matchIfMissing = true)
     @Bean
     public DictInitService dictInitService() {
         return new DictInitService();
     }
 
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.meta.enabled", matchIfMissing = true)
     @Bean
     public ModuleInitService moduleInitService() {
         return new ModuleInitService();
     }
 
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.meta.enabled", matchIfMissing = true)
     @Bean
     public NodeReporterInitService nodeReporterInitService() {
         return new NodeReporterInitService();
@@ -115,9 +119,15 @@ public class InitServiceAutoConfiguration {
         return new DefaultEntityServiceHandler();
     }
 
+
     @Bean
+    public static PropertySourcesPlaceholderConfigurer propertyConfigInDev() {
+        return new PropertySourcesPlaceholderConfigurer();
+    }
+
     @ConditionalOnMissingBean(MetadataRepository.class)
-    public MetadataRepository metadataRepository(ApplicationEventPublisher publisher) {
+    @Bean
+    public MetadataRepository metadataRepository(@Value("${xplat.oqsengine.sdk.max-version:3}") Integer isOverride, ApplicationEventPublisher publisher ) {
         return new MetadataRepositoryInMemoryImpl(3, publisher);
     }
 
