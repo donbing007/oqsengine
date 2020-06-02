@@ -151,7 +151,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         }
     }
 
-
     @Override
     public BoItem getBoDetailById(String id) {
 

@@ -41,13 +41,11 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
 
     private Logger logger = LoggerFactory.getLogger(MessageCenterEntityExportEventListener.class);
 
-    private ST content;
-
-    private ST title;
+    private String contextPath = "";
 
     private final String defaultContentStr = "<a href='$downloadUrl$'>$fileName$</a>";
 
-    private ST defaultContent = new ST(defaultContentStr, '$', '$');
+    private boolean ignoreOnSync;
 
     /**
      * sendId is a appId for message
@@ -60,13 +58,16 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
      * @param restTemplate
      */
     public MessageCenterEntityExportEventListener(Supplier<String> tokenSupplier
-            , Supplier<String> senderIdSupplier, Supplier<String> gatewayUrl, String contentTemplate, String titleTemplate, RestTemplate restTemplate) {
+            , Supplier<String> senderIdSupplier, Supplier<String> gatewayUrl
+            , String contentTemplate, String titleTemplate, RestTemplate restTemplate
+            , String contextPath, boolean ignoreOnSync) {
         //dynamic
         this.tokenSupplier = tokenSupplier;
         // only once
         this.senderId = senderIdSupplier.get();
         this.gatewayUrl = gatewayUrl.get();
         this.restTemplate = restTemplate;
+        this.ignoreOnSync = ignoreOnSync;
 
         //MessageContent
         if (contentTemplate != null) {
@@ -81,8 +82,7 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
             this.titleTemplate = "导出下载";
         }
 
-        content = new ST(this.contentTemplate, '$', '$');
-        title = new ST(this.titleTemplate, '$', '$');
+        this.contextPath = contextPath;
     }
 
     @Override
@@ -129,7 +129,17 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
     @Async
     @EventListener(EntityExported.class)
     public void messageListener(EntityExported entityExported) {
+
+        if("sync".equalsIgnoreCase(entityExported.getExportType()) && ignoreOnSync){
+            //in sync
+            return;
+        }
+
         Map<String, Object> context = entityExported.getContext();
+
+        ST content = new ST(this.contentTemplate, '$', '$');
+        ST title = new ST(this.titleTemplate, '$', '$');
+        ST defaultContent = new ST(defaultContentStr, '$', '$');
 
         if (context != null) {
             Object tenantIdObj = context.get(ContextKeys.LongKeys.TENANT_ID.name());
@@ -138,13 +148,15 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
                 Long tenantId = (Long) tenantIdObj;
                 MessageInfo messageInfo = new MessageInfo();
 
-
                 String downloadUrl = entityExported.getDownloadUrl();
+
+                String finalDownloadUrl = contextPath + downloadUrl;
+
                 String fileName = entityExported.getFileName();
 
                 messageInfo.setScope(Scope.SINGLE);
-                messageInfo.setTitle(getRendered(title, fileName, downloadUrl, () -> "导出成功"));
-                messageInfo.setContent(getRendered(content, fileName, downloadUrl, () -> getRendered(defaultContent, downloadUrl, fileName, () -> "下载地址")));
+                messageInfo.setTitle(getRendered(title, fileName, finalDownloadUrl, () -> "导出成功"));
+                messageInfo.setContent(getRendered(content, fileName, finalDownloadUrl, () -> getRendered(defaultContent, finalDownloadUrl, fileName, () -> "下载地址")));
                 messageInfo.setReceiverIds(Arrays.asList((Long) userId));
                 messageInfo.setType(0);
 

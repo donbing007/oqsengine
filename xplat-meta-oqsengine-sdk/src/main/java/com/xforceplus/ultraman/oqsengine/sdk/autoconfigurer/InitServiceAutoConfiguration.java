@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.FieldVa
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.RegxValidator;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.RequiredValidator;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.TypeCheckValidator;
+//import com.xforceplus.ultraman.oqsengine.sdk.staticmode.StaticServiceLoader;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.DictMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
@@ -34,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -309,8 +311,12 @@ public class InitServiceAutoConfiguration {
             , MessageAppIdSupplier appIdSupplier, GatewayUrlSupplier gatewayUrlSupplier
             , @Value("${xplat.oqsengine.sdk.export.message.template.content:#{null}}") String content
             , @Value("${xplat.oqsengine.sdk.export.message.template.title:#{null}}") String title
+            , @Value("${xplat.oqsengine.sdk.export.message.context-path:''}") String contextPath
+            , @Value("${xplat.oqsengine.sdk.export.message.ignore-on-sync:true}") boolean ignoreOnSync
             , RestTemplate restTemplate) {
-        return new MessageCenterEntityExportEventListener(tokenSupplier::getToken, appIdSupplier::getStorageAppId, gatewayUrlSupplier::getGatewayUrl, content, title, restTemplate);
+        return new MessageCenterEntityExportEventListener(tokenSupplier::getToken
+                , appIdSupplier::getStorageAppId, gatewayUrlSupplier::getGatewayUrl
+                , content, title, restTemplate, contextPath, ignoreOnSync);
     }
 
     @ConditionalOnBean(ExportSink.class)
@@ -325,4 +331,12 @@ public class InitServiceAutoConfiguration {
     public ExportEventLoggerListener loggerListener(){
         return new ExportEventLoggerListener();
     }
+
+
+//    @ConditionalOnClass()
+//    @Bean
+//    public StaticServiceLoader staticServiceLoader(@Value("${xplat.oqsengine.sdk.static.scan-package:null}")){
+//        return new StaticServiceLoader();
+//    }
+
 }
