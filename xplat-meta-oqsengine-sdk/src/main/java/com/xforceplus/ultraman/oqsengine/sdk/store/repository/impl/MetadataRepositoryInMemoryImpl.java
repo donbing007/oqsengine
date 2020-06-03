@@ -151,7 +151,6 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         }
     }
 
-
     @Override
     public BoItem getBoDetailById(String id) {
 
@@ -266,6 +265,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
             String version = moduleUpResult.getVersion();
             long moduleId = moduleUpResult.getId();
+
+
+
 
             versionService.saveModule(moduleId, version
                     , moduleUpResult.getBoUpsList().stream().flatMap(x -> {

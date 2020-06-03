@@ -29,7 +29,8 @@ public class ContextInterceptor<T, R> implements MessageDispatcherInterceptor<Qu
                 return (QueryMessage<T, R>) queryMessage
                         .withMetaData(queryMessage.getMetaData()
                                 .and(ContextKeys.LongKeys.TENANT_ID.name(), contextService.get(ContextKeys.LongKeys.TENANT_ID))
-                                .and(ContextKeys.LongKeys.ACCOUNT_ID.name(), contextService.get(ContextKeys.LongKeys.ACCOUNT_ID)));
+                                .and(ContextKeys.LongKeys.ACCOUNT_ID.name(), contextService.get(ContextKeys.LongKeys.ACCOUNT_ID))
+                                .and(ContextKeys.LongKeys.ID.name(), contextService.get(ContextKeys.LongKeys.ID)));
             } else {
                 return queryMessage;
             }

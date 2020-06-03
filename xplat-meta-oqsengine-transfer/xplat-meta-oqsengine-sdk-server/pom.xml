@@ -17,6 +17,7 @@
         <akka.grpc.version>0.8.4</akka.grpc.version>
         <project.encoding>UTF-8</project.encoding>
         <deployment.skip>false</deployment.skip>
+        <test.skip>true</test.skip>
     </properties>
     <dependencies>
         <dependency>

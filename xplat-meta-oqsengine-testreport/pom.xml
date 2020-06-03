@@ -12,6 +12,10 @@
     <artifactId>xplat-meta-oqsengine-testreport</artifactId>
     <description>Test rate statistics aggregation, no actual working code.</description>
 
+    <properties>
+        <test.skip>true</test.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
