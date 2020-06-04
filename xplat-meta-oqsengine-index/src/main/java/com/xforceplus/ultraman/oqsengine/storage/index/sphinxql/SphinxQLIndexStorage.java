@@ -87,11 +87,6 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             new DataSourceShardingTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
-                    // 空页,空结果返回.
-                    if (page.isEmptyPage()) {
-                        return Collections.emptyList();
-                    }
-
                     String whereCondition = sphinxQLConditionsBuilderFactory.getBuilder(conditions).build(conditions);
                     if (!whereCondition.isEmpty()) {
                         whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
@@ -107,6 +102,10 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         maxMatches = page.getPageSize();
                     }
 
+                    // 空页,空结果返回.
+                    if (page.isEmptyPage()) {
+                        return Collections.emptyList();
+                    }
 
                     PageScope scope = page.getNextPage();
                     // 超出页数
