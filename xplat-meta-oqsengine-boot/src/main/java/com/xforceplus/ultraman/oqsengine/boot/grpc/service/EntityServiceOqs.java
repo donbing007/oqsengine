@@ -484,7 +484,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private void leftAppend(IEntity entity, String relName, IValue iValue) {
 
         IEntityField originField = iValue.getField();
-        iValue.setField(new ColumnField(relName + "." + originField.name(), originField, null));
+
+        if(!originField.name().startsWith(relName.concat("."))){
+            iValue.setField(new ColumnField(relName + "." + originField.name(), originField, null));
+        }
         entity.entityValue().addValue(iValue);
     }
 

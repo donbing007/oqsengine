@@ -32,9 +32,6 @@ public class ModuleEventListener {
     @Autowired
     private AuthSearcherConfig config;
 
-    @Autowired
-    private MetadataRepository repository;
-
     Logger logger = LoggerFactory.getLogger(ModuleEventListener.class);
 
     @Async
@@ -73,7 +70,7 @@ public class ModuleEventListener {
                 .build()).toCompletableFuture().join();
 
         logger.debug("Got Versioned Module {}", result);
-        repository.save(result, config.getTenant(), config.getAppId());
+        store.save(result, config.getTenant(), config.getAppId());
         logger.debug("Versioned Module saved {}", Optional.ofNullable(result).map(x -> x.getVersion()).orElseGet(() -> "none"));
     }
 }
