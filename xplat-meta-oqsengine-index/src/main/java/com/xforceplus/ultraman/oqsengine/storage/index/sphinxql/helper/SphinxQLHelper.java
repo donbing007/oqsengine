@@ -81,6 +81,26 @@ public class SphinxQLHelper {
     }
 
     /**
+     * 处理成全文索引字符串.
+     */
+    public static String serializeStorageValueFull(StorageValue value) {
+        StringBuilder buff = new StringBuilder();
+        if (value.type() == StorageType.STRING) {
+
+            buff.append("<").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
+            buff.append(SphinxQLHelper.encodeSpecialCharset(value.value().toString()));
+            buff.append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.storageName());
+            buff.append("</").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
+
+        } else {
+
+            buff.append(value.value().toString());
+            buff.append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.storageName());
+        }
+        return buff.toString();
+    }
+
+    /**
      * 将 Map 序列化成 json 字符串.
      * 只关注处理 String 和非字符串,并且不会级联处理子对象.
      *
@@ -173,7 +193,7 @@ public class SphinxQLHelper {
 
     /**
      * 构造 sphinxQL 全文索引中精确查询语句.
-     * (ZONESPAN:{字段组名} "F{字段组名} value")
+     * {value}F{field name}
      *
      * @param value 目标字段.
      * @return 结果.
@@ -199,7 +219,7 @@ public class SphinxQLHelper {
 
     /**
      * 构造 sphinxQL 全文索引中的模糊查询语句.
-     * (ZONESPAN:{字段组名} F{字段组名} *value*)
+     * (ZONESPAN:{字段组名}F{字段组名} *value*)
      *
      * @param value
      * @return

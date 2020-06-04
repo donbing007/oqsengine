@@ -87,6 +87,11 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             new DataSourceShardingTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
                 @Override
                 public Object run(TransactionResource resource) throws SQLException {
+                    // 空页,空结果返回.
+                    if (page.isEmptyPage()) {
+                        return Collections.emptyList();
+                    }
+
                     String whereCondition = sphinxQLConditionsBuilderFactory.getBuilder(conditions).build(conditions);
                     if (!whereCondition.isEmpty()) {
                         whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
@@ -102,10 +107,6 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         maxMatches = page.getPageSize();
                     }
 
-                    // 空页,空结果返回.
-                    if (page.isEmptyPage()) {
-                        return Collections.emptyList();
-                    }
 
                     PageScope scope = page.getNextPage();
                     // 超出页数
@@ -331,29 +332,14 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             StorageValue storageValue = storageStrategyFactory.getStrategy(v.getField().type()).toStorageValue(v);
 
             while (storageValue != null) {
-                // 这里已经处理成了<F3S>F3S test</F3S>的储存样式.
-                fullSet.add(serializeStorageValueFull(storageValue));
+                // 这里已经处理成了索引的储存样式.
+                fullSet.add(SphinxQLHelper.serializeStorageValueFull(storageValue));
 
                 storageValue = storageValue.next();
             }
         });
 
         return fullSet;
-    }
-
-    // 处理成<F123L>789F123L</F123L> 形式字符串.
-    private String serializeStorageValueFull(StorageValue value) {
-        StringBuilder buff = new StringBuilder();
-        buff.append("<").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
-        if (value.type() == StorageType.STRING) {
-            buff.append(SphinxQLHelper.encodeSpecialCharset(value.value().toString()));
-        } else {
-            buff.append(value.value().toString());
-        }
-//        buff.append(' ');
-        buff.append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.storageName());
-        buff.append("</").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
-        return buff.toString();
     }
 
     /**
@@ -397,7 +383,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                 storageValue = new StringStorageValue(key, (String) value, false);
             }
 
-            fullfileds.add(serializeStorageValueFull(storageValue));
+            fullfileds.add(SphinxQLHelper.serializeStorageValueFull(storageValue));
         }
 
         return fullfileds;
