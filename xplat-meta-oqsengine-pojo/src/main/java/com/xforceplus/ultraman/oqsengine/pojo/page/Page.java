@@ -188,6 +188,14 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
+     * 是否设置了可视数据早上限.
+     * @return true 已经设置,false 没有设置.
+     */
+    public boolean hasVisibleTotalCountLimit() {
+        return this.visibleTotalCount != UNSET;
+    }
+
+    /**
      * 设定数据总量，这个值必须在使用前设置。
      *
      * @param totalCount 数据总量
