@@ -61,6 +61,16 @@
             <artifactId>config-client</artifactId>
             <version>1.0.5-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java-util</artifactId>
+            <version>3.12.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.java-json-tools</groupId>
+            <artifactId>json-patch</artifactId>
+            <version>1.13</version>
+        </dependency>
         <!-- OQSENGINE client -->
         <dependency>
             <groupId>${project.groupId}</groupId>
