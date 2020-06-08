@@ -150,9 +150,17 @@ ngram_len = 1                 # 非英文字符的分词最小单位.
 # 监控
 oqsengine 会在 /actuator/prometheus 公开一系列指标来输出当前系统状态.如下.
 
-* oqs_write_count_total 写入操作总量
-* oqs_read_count_total 读取操作总量
-* oqs_fail_count_total 错误数量
-* oqs_process_delay_latency_seconds_max 操作最大延时
-* oqs_process_delay_latency_seconds_count 操作数量
-* oqs_process_delay_latency_seconds_sum 总耗时
+| 指标名称 | 标签 | 说明 |
+| :------- | :--- | :---- |
+| executor_queue_remaining_tasks | name(线程池名称) | 还可以接收的任务数量 |
+| executor_pool_size_threads | name(线程池名称) | 线程池最大线程数量 |
+| executor_queued_tasks | name(线程池名称 | 正在排队等待执行的任务 |
+| executor_active_threads | name(线程池名称) | 当前活动的线程 |
+| executor_completed_tasks_total | name(线程池名称) | 已经完成的任务数量 |
+| oqs_write_count_total | action(build,delete,replace) | 写入数据总量 |
+| oqs_transaction_count | | 活动事务量 |
+| oqs_fail_count_total | | 错误总量 |
+| oqs_read_count_total | action(one,nultiple,serch) | 读取数据总量 |
+| oqs_process_delay_latency_seconds_max | action(one,condition) | 操作延时最大值(秒) |
+| oqs_process_delay_latency_seconds_count | action(one,condition) | 操作延时统计数量 |
+| oqs_process_delay_latency_seconds_sum | action(one,condition) | 操作延时总和 |
