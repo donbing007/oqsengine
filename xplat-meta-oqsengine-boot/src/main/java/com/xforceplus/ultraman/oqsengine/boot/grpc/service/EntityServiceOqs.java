@@ -411,37 +411,42 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                                     .getValue(relatedField).map(IValue::valueToLong))
                                             .filter(Optional::isPresent)
                                             .map(Optional::get)
+                                            .distinct()
                                             .collect(Collectors.toList());
 
-                                    //in case idField is not absent build a dummy one;
-                                    IEntityField idField = new EntityField(1, "dummy", FieldType.LONG, new FieldConfig().searchable(true).identifie(true));
-                                    Conditions conditionsIds =
-                                            new Conditions(new Condition(idField
-                                                    , ConditionOperator.MULTIPLE_EQUALS
-                                                    , values.stream().map(x -> new LongValue(idField, x)).toArray(IValue[]::new)));
 
-                                    try {
-                                        Collection<IEntity> iEntities = entitySearchService.selectByConditions(conditionsIds, searchableRelatedEntity.get(), new Page(0, values.size()));
+                                    if (!values.isEmpty()) {
+                                        logger.info("Try to find related record for {}", searchableRelatedEntity.get().code());
+                                        //in case idField is not absent build a dummy one;
+                                        IEntityField idField = new EntityField(1, "dummy", FieldType.LONG, new FieldConfig().searchable(true).identifie(true));
+                                        Conditions conditionsIds =
+                                                new Conditions(new Condition(idField
+                                                        , ConditionOperator.MULTIPLE_EQUALS
+                                                        , values.stream().map(x -> new LongValue(idField, x)).toArray(IValue[]::new)));
 
-                                        //append value
+                                        try {
+                                            Collection<IEntity> iEntities = entitySearchService.selectByConditions(conditionsIds, searchableRelatedEntity.get(), new Page(0, values.size()));
 
-                                        Map<Long, IEntity> leftEntities = iEntities.stream().collect(Collectors.toMap(IEntity::id, leftEntity -> leftEntity));
+                                            //append value
 
-                                        finalEntities.stream().forEach(originEntity -> {
-                                            Long id = originEntity.entityValue()
-                                                    .getValue(relatedField).map(IValue::valueToLong).orElse(0L);
+                                            Map<Long, IEntity> leftEntities = iEntities.stream().collect(Collectors.toMap(IEntity::id, leftEntity -> leftEntity));
 
-                                            if (leftEntities.get(id) != null && leftEntities.get(id).entityValue() != null) {
-                                                entry.getValue().forEach(queryFieldsUp -> {
-                                                    leftEntities.get(id).entityValue().getValue(queryFieldsUp.getId()).ifPresent(value -> {
-                                                        leftAppend(originEntity, entry.getKey(), value);
+                                            finalEntities.stream().forEach(originEntity -> {
+                                                Long id = originEntity.entityValue()
+                                                        .getValue(relatedField).map(IValue::valueToLong).orElse(0L);
+
+                                                if (leftEntities.get(id) != null && leftEntities.get(id).entityValue() != null) {
+                                                    entry.getValue().forEach(queryFieldsUp -> {
+                                                        leftEntities.get(id).entityValue().getValue(queryFieldsUp.getId()).ifPresent(value -> {
+                                                            leftAppend(originEntity, entry.getKey(), value);
+                                                        });
                                                     });
-                                                });
-                                            }
-                                        });
+                                                }
+                                            });
 
-                                    } catch (SQLException ex) {
-                                        ex.printStackTrace();
+                                        } catch (SQLException ex) {
+                                            ex.printStackTrace();
+                                        }
                                     }
                                 }
                             });

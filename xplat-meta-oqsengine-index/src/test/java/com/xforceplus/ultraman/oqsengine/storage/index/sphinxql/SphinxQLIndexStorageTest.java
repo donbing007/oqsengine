@@ -177,6 +177,7 @@ public class SphinxQLIndexStorageTest {
         ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         storage.setIndexTableName("oqsindextest");
+//        storage.setIndexTableName("oqsindex");
         storage.init();
 
         truncate();
@@ -226,7 +227,7 @@ public class SphinxQLIndexStorageTest {
 
         transactionManager.finish();
 
-//        truncate();
+        truncate();
 
         dataSourcePackage.close();
     }
@@ -711,9 +712,9 @@ public class SphinxQLIndexStorageTest {
                 entityClass,
                 limitOnePage,
                 refs -> {
-                    Assert.assertEquals(1, refs.size());
+                    Assert.assertEquals(4, refs.size());
                     long[] expectedIds = new long[]{
-                        Long.MAX_VALUE - 4
+                        Long.MAX_VALUE - 4, Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1
                     };
                     Assert.assertEquals(0,
                         refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
@@ -721,7 +722,7 @@ public class SphinxQLIndexStorageTest {
                 }
             )
             ,
-            // empty
+            // empty page
             new Case(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(
@@ -735,6 +736,16 @@ public class SphinxQLIndexStorageTest {
                 Page.emptyPage(),
                 refs -> {
                     Assert.assertEquals(0, refs.size());
+                    return true;
+                }
+            )
+            ,
+            new Case(
+                Conditions.buildEmtpyConditions(),
+                entityClass,
+                new Page(),
+                refs -> {
+                    Assert.assertEquals(5, refs.size());
                     return true;
                 }
             )

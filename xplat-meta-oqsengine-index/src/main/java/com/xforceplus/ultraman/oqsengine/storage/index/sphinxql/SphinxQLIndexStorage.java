@@ -97,7 +97,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         long count = count(resource, entityClass, whereCondition);
                         page.setTotalCount(count);
 
-                        maxMatches = page.getVisibleTotalCount();
+                        maxMatches = page.getIndex() * page.getPageSize();
                     } else {
                         maxMatches = page.getPageSize();
                     }
