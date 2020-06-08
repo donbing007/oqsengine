@@ -102,6 +102,11 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         maxMatches = page.getPageSize();
                     }
 
+                    // 修正不能小于1
+                    if (maxMatches <= 0) {
+                        maxMatches = 1;
+                    }
+
                     // 空页,空结果返回.
                     if (page.isEmptyPage()) {
                         return Collections.emptyList();
