@@ -14,6 +14,7 @@
 
     <properties>
         <test.skip>true</test.skip>
+        <deployment.skip>true</deployment.skip>
     </properties>
 
     <dependencies>

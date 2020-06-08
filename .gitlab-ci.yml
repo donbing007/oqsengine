@@ -21,7 +21,9 @@ tag-mvn-deploy:
   stage: tag-mvn-deploy
   script:
     - update_pom_version
-    - mvn install deploy -s ./.mvn/wrapper/settings.xml -Dmaven.test.skip=true
+    - mvn clean deploy -s ./.mvn/wrapper/settings.xml -Dmaven.test.skip=true
+    - mkdir -p /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
+    - cp ./target/xplat-meta-oqsengine.jar /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}/app.jar
   only:
   - tags
 
