@@ -16,6 +16,7 @@ public class TestLoad extends ContextWareBaseTest{
     @Autowired
     EntityService entityService;
 
+
     @Test
     public void test(){
         Optional<EntityClass> entityClass = entityService.loadByCode("salesbill");

@@ -51,6 +51,7 @@ data:
           call:
             worker: {{ .Values.storage.threadPool.call.worker | default "0" }}
             queue: {{ .Values.storage.threadPool.call.queue | default "500" }}
+        maxVisibleNumber: {{ .Values.storage.maxVisibleNumber | default "10000" }}
         storage:
           timeoutMs:
             query: {{ .Values.storage.timeoutMs.query | default "3000" }}

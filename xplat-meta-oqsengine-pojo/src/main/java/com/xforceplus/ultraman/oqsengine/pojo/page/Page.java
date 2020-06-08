@@ -18,6 +18,8 @@ import java.io.ObjectOutput;
 public class Page implements Externalizable, Cloneable {
 
     private static final long serialVersionUID = -6034178522810109360L;
+
+    private static final long UNSET = -1;
     /**
      * 默认页面大小
      */
@@ -45,7 +47,7 @@ public class Page implements Externalizable, Cloneable {
     /**
      * 数据总量
      */
-    private long totalCount = -1;
+    private long totalCount = UNSET;
     /**
      * 数据剩余总量
      */
@@ -62,6 +64,11 @@ public class Page implements Externalizable, Cloneable {
      * 最后一页,此值为true表示直接定位为最后一页.
      */
     private boolean lastPage = false;
+
+    /**
+     * 可见数据量
+     */
+    private long visibleTotalCount = UNSET;
 
     /**
      * 默认构造方法，以内定默认页面大小和当前页数构造。
@@ -88,7 +95,6 @@ public class Page implements Externalizable, Cloneable {
         } else {
             this.pageSize = Page.DEFAULT_PAGE_SIZE;
         }
-
     }
 
     /**
@@ -158,6 +164,38 @@ public class Page implements Externalizable, Cloneable {
     }
 
     /**
+     * 设置数据总量上限,如果大于此值将被限制为 limit.
+     * 必须在调用 setTotalCount 之前设置.
+     * 默认无限.
+     * 设定后,分页计算时如果实际数据量超过此值将使用此值计算分页.
+     *
+     * @param totalCount 分页数据量上限.
+     */
+    public void setVisibleTotalCount(long totalCount) {
+        if (totalCount <= 0) {
+            throw new IllegalArgumentException("The total amount of data must be a positive integer greater than 0.");
+        }
+
+        this.visibleTotalCount = totalCount;
+    }
+
+    /**
+     * 得到当前可见数据量.
+     * @return 可见数据量.
+     */
+    public long getVisibleTotalCount() {
+        return visibleTotalCount;
+    }
+
+    /**
+     * 是否设置了可视数据早上限.
+     * @return true 已经设置,false 没有设置.
+     */
+    public boolean hasVisibleTotalCountLimit() {
+        return this.visibleTotalCount != UNSET;
+    }
+
+    /**
      * 设定数据总量，这个值必须在使用前设置。
      *
      * @param totalCount 数据总量
@@ -165,7 +203,15 @@ public class Page implements Externalizable, Cloneable {
     public void setTotalCount(long totalCount) {
         this.totalCount = totalCount;
 
-        pageCount = this.countPageCount(getPageSize(), this.totalCount);
+        long useTotalCount = this.totalCount;
+
+        if (visibleTotalCount != UNSET) {
+            if (this.totalCount > this.visibleTotalCount) {
+                useTotalCount = this.visibleTotalCount;
+            }
+        }
+
+        pageCount = this.countPageCount(getPageSize(), useTotalCount);
         if (pageIndex > pageCount) {
             pageIndex = pageCount;
         }
@@ -404,6 +450,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 判断当前实例是否为空页.
+     *
      * @return true 空页.false 非空页.
      */
     public boolean isEmptyPage() {

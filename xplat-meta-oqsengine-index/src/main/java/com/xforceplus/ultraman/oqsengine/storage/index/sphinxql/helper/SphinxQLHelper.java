@@ -33,7 +33,7 @@ public class SphinxQLHelper {
 
     /**
      * 处理以下字段.
-     * !    "    $    '    (    )    -    /    <    @    \    ^    |    ~
+     * !    "    $    '    (    )    -    /    <    @    \    ^    |    ~ 空格 *
      * 使用'\'转义.
      *
      * @param value 目标字串.
@@ -59,17 +59,44 @@ public class SphinxQLHelper {
                 case '^':
                 case '|':
                 case '~':
+                case '*':
                 case '\"': {
                     // 半角和全角差距为 65248.
                     buff.append((char) (c + 65248));
                     break;
                 }
-                default:
-                    buff.append(c);
+                default: {
+                    if (c == ' ') {
+                        // 全角空格.
+                        buff.append((char) 12288);
+                    } else {
+                        buff.append(c);
+                    }
+                }
 
             }
         }
 
+        return buff.toString();
+    }
+
+    /**
+     * 处理成全文索引字符串.
+     */
+    public static String serializeStorageValueFull(StorageValue value) {
+        StringBuilder buff = new StringBuilder();
+        if (value.type() == StorageType.STRING) {
+
+            buff.append("<").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
+            buff.append(SphinxQLHelper.encodeSpecialCharset(value.value().toString()));
+            buff.append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.storageName());
+            buff.append("</").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
+
+        } else {
+
+            buff.append(value.value().toString());
+            buff.append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.storageName());
+        }
         return buff.toString();
     }
 
@@ -166,16 +193,19 @@ public class SphinxQLHelper {
 
     /**
      * 构造 sphinxQL 全文索引中精确查询语句.
-     * (ZONESPAN:{字段组名} "F{字段组名} value")
+     * {value}F{field name}
      *
      * @param value 目标字段.
      * @return 结果.
      */
     public static String buildFullPreciseQuery(StorageValue value, boolean useGroupName) {
         StringBuilder buff = new StringBuilder();
-        buff.append("(ZONESPAN:").append(ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(' ');
-        if (!useGroupName) {
-            buff.append('\"');
+
+        buff.append('\"');
+        if (StorageType.STRING == value.type()) {
+            buff.append(encodeSpecialCharset(value.value().toString()));
+        } else {
+            buff.append(value.value().toString());
         }
         buff.append(ATTRIBUTE_FULL_FIELD_PREFIX);
         if (useGroupName) {
@@ -183,22 +213,13 @@ public class SphinxQLHelper {
         } else {
             buff.append(value.storageName());
         }
-        buff.append(' ');
-        if (useGroupName) {
-            buff.append('\"');
-        }
-        if (StorageType.STRING == value.type()) {
-            buff.append(encodeSpecialCharset(value.value().toString()));
-        } else {
-            buff.append(value.value().toString());
-        }
-        buff.append("\")");
+        buff.append("\"");
         return buff.toString();
     }
 
     /**
      * 构造 sphinxQL 全文索引中的模糊查询语句.
-     * (ZONESPAN:{字段组名} F{字段组名} *value*)
+     * (ZONESPAN:{字段组名}F{字段组名} *value*)
      *
      * @param value
      * @return
@@ -206,17 +227,15 @@ public class SphinxQLHelper {
     public static String buildFullFuzzyQuery(StorageValue value, boolean useGroupName) {
         StringBuilder buff = new StringBuilder();
         buff.append("(ZONESPAN:").append(ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(" ");
-        buff.append(ATTRIBUTE_FULL_FIELD_PREFIX)
-            .append(useGroupName ? value.groupStorageName() + "*" : value.storageName())
-            .append(" \"*");
 
+        buff.append("\"*");
         if (StorageType.STRING == value.type()) {
             buff.append(encodeSpecialCharset(value.value().toString()));
         } else {
             buff.append(value.value().toString());
         }
-
-        buff.append("*\")");
+        buff.append('*');
+        buff.append("\")");
         return buff.toString();
     }
 }

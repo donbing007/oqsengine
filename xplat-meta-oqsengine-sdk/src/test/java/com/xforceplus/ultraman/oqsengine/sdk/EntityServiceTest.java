@@ -224,11 +224,11 @@ public class EntityServiceTest {
                 , "1").build()));
     }
 
-    @Test
-    public void testMultiValue(){
-
-        Optional<EntityClass> load = entityService.load("1260142892112224258");
-        boolean multiValues = load.get().relations().stream().anyMatch(x -> x.getRelationType().equals("MultiValues"));
-        assertTrue("hash multi", multiValues);
-    }
+//    @Test
+//    public void testMultiValue(){
+//
+//        Optional<EntityClass> load = entityService.load("1260142892112224258");
+//        boolean multiValues = load.get().relations().stream().anyMatch(x -> x.getRelationType().equals("MultiValues"));
+//        assertTrue("hash multi", multiValues);
+//    }
 }

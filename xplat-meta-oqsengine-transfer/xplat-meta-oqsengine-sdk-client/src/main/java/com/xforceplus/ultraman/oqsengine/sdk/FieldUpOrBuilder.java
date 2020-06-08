@@ -13,6 +13,7 @@ public interface FieldUpOrBuilder extends
    * </pre>
    *
    * <code>int64 id = 1;</code>
+   * @return The id.
    */
   long getId();
 
@@ -22,14 +23,16 @@ public interface FieldUpOrBuilder extends
    * </pre>
    *
    * <code>string name = 2;</code>
+   * @return The name.
    */
-  String getName();
+  java.lang.String getName();
   /**
    * <pre>
    * 字段名称
    * </pre>
    *
    * <code>string name = 2;</code>
+   * @return The bytes for name.
    */
   com.google.protobuf.ByteString
       getNameBytes();
@@ -40,125 +43,149 @@ public interface FieldUpOrBuilder extends
    * </pre>
    *
    * <code>string fieldType = 3;</code>
+   * @return The fieldType.
    */
-  String getFieldType();
+  java.lang.String getFieldType();
   /**
    * <pre>
    * 字段类型
    * </pre>
    *
    * <code>string fieldType = 3;</code>
+   * @return The bytes for fieldType.
    */
   com.google.protobuf.ByteString
       getFieldTypeBytes();
 
   /**
    * <code>string code = 4;</code>
+   * @return The code.
    */
-  String getCode();
+  java.lang.String getCode();
   /**
    * <code>string code = 4;</code>
+   * @return The bytes for code.
    */
   com.google.protobuf.ByteString
       getCodeBytes();
 
   /**
    * <code>string displayType = 5;</code>
+   * @return The displayType.
    */
-  String getDisplayType();
+  java.lang.String getDisplayType();
   /**
    * <code>string displayType = 5;</code>
+   * @return The bytes for displayType.
    */
   com.google.protobuf.ByteString
       getDisplayTypeBytes();
 
   /**
    * <code>string editable = 6;</code>
+   * @return The editable.
    */
-  String getEditable();
+  java.lang.String getEditable();
   /**
    * <code>string editable = 6;</code>
+   * @return The bytes for editable.
    */
   com.google.protobuf.ByteString
       getEditableBytes();
 
   /**
    * <code>string enumCode = 7;</code>
+   * @return The enumCode.
    */
-  String getEnumCode();
+  java.lang.String getEnumCode();
   /**
    * <code>string enumCode = 7;</code>
+   * @return The bytes for enumCode.
    */
   com.google.protobuf.ByteString
       getEnumCodeBytes();
 
   /**
    * <code>string maxLength = 8;</code>
+   * @return The maxLength.
    */
-  String getMaxLength();
+  java.lang.String getMaxLength();
   /**
    * <code>string maxLength = 8;</code>
+   * @return The bytes for maxLength.
    */
   com.google.protobuf.ByteString
       getMaxLengthBytes();
 
   /**
    * <code>string required = 9;</code>
+   * @return The required.
    */
-  String getRequired();
+  java.lang.String getRequired();
   /**
    * <code>string required = 9;</code>
+   * @return The bytes for required.
    */
   com.google.protobuf.ByteString
       getRequiredBytes();
 
   /**
    * <code>string searchable = 10;</code>
+   * @return The searchable.
    */
-  String getSearchable();
+  java.lang.String getSearchable();
   /**
    * <code>string searchable = 10;</code>
+   * @return The bytes for searchable.
    */
   com.google.protobuf.ByteString
       getSearchableBytes();
 
   /**
    * <code>string minLength = 11;</code>
+   * @return The minLength.
    */
-  String getMinLength();
+  java.lang.String getMinLength();
   /**
    * <code>string minLength = 11;</code>
+   * @return The bytes for minLength.
    */
   com.google.protobuf.ByteString
       getMinLengthBytes();
 
   /**
    * <code>string dictId = 12;</code>
+   * @return The dictId.
    */
-  String getDictId();
+  java.lang.String getDictId();
   /**
    * <code>string dictId = 12;</code>
+   * @return The bytes for dictId.
    */
   com.google.protobuf.ByteString
       getDictIdBytes();
 
   /**
    * <code>string defaultValue = 13;</code>
+   * @return The defaultValue.
    */
-  String getDefaultValue();
+  java.lang.String getDefaultValue();
   /**
    * <code>string defaultValue = 13;</code>
+   * @return The bytes for defaultValue.
    */
   com.google.protobuf.ByteString
       getDefaultValueBytes();
 
   /**
    * <code>int32 precision = 14;</code>
+   * @return The precision.
    */
   int getPrecision();
 
   /**
    * <code>bool identifier = 15;</code>
+   * @return The identifier.
    */
   boolean getIdentifier();
 }

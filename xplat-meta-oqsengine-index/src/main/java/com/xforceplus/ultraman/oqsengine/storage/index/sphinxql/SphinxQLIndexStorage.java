@@ -75,6 +75,10 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         this.indexTableName = indexTableName;
     }
 
+    public String getIndexTableName() {
+        return indexTableName;
+    }
+
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
         throws SQLException {
@@ -88,9 +92,14 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
                     }
 
+                    long maxMatches = 0;
                     if (!page.isSinglePage()) {
                         long count = count(resource, entityClass, whereCondition);
                         page.setTotalCount(count);
+
+                        maxMatches = page.getIndex() * page.getPageSize();
+                    } else {
+                        maxMatches = page.getPageSize();
                     }
 
                     // 空页,空结果返回.
@@ -119,6 +128,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         st.setLong(1, entityClass.id());
                         st.setLong(2, scope.getStartLine());
                         st.setLong(3, page.getPageSize());
+                        st.setLong(4, maxMatches);
 
                         if (logger.isDebugEnabled()) {
                             logger.debug(st.toString());
@@ -321,28 +331,14 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             StorageValue storageValue = storageStrategyFactory.getStrategy(v.getField().type()).toStorageValue(v);
 
             while (storageValue != null) {
-                // 这里已经处理成了<F3S>F3S test</F3S>的储存样式.
-                fullSet.add(serializeStorageValueFull(storageValue));
+                // 这里已经处理成了索引的储存样式.
+                fullSet.add(SphinxQLHelper.serializeStorageValueFull(storageValue));
 
                 storageValue = storageValue.next();
             }
         });
 
         return fullSet;
-    }
-
-    // 处理成<F123L>F123L 789</F123L> 形式字符串.
-    private String serializeStorageValueFull(StorageValue value) {
-        StringBuilder buff = new StringBuilder();
-        buff.append("<").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
-        buff.append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.storageName()).append(' ');
-        if (value.type() == StorageType.STRING) {
-            buff.append(SphinxQLHelper.encodeSpecialCharset(value.value().toString()));
-        } else {
-            buff.append(value.value().toString());
-        }
-        buff.append("</").append(SphinxQLHelper.ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(">");
-        return buff.toString();
     }
 
     /**
@@ -386,7 +382,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                 storageValue = new StringStorageValue(key, (String) value, false);
             }
 
-            fullfileds.add(serializeStorageValueFull(storageValue));
+            fullfileds.add(SphinxQLHelper.serializeStorageValueFull(storageValue));
         }
 
         return fullfileds;

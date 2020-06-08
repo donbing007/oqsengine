@@ -15,7 +15,7 @@ public class FormBoMapLocalStore extends MapLocalStore {
 
     public static FormBoMapLocalStore create() {
         return new FormBoMapLocalStore("formBos", "formBo",
-            new String[]{"id", "appId", "name", "code", "refFormId", "tenantId", "tenantName", "setting", "version"}
+            new String[]{"id", "appId", "name", "code", "refFormId", "tenantId", "tenantName", "tenantCode", "setting", "version"}
             , null, false, null);
     }
 
@@ -33,6 +33,7 @@ public class FormBoMapLocalStore extends MapLocalStore {
         map.put("refFormId", ultForm.getRefFormId());
         map.put("tenantId", ultForm.getTenantId());
         map.put("tenantName", ultForm.getTenantName());
+        map.put("tenantCode", ultForm.getTenantCode());
         map.put("setting", ultForm.getSetting());
         map.put("version", ultForm.getVersion());
         this.save(map);

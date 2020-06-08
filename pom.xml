@@ -7,7 +7,7 @@
     <groupId>com.xforceplus.ultraman</groupId>
     <artifactId>xplat-meta-oqsengine</artifactId>
     <packaging>pom</packaging>
-    <version>0.1.3-SNAPSHOT</version>
+    <version>0.1.5-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -207,11 +207,11 @@
                 <scope>test</scope>
             </dependency>
 
-            <dependency>
-                <groupId>com.spring4all</groupId>
-                <artifactId>spring-boot-starter-swagger</artifactId>
-                <version>1.5.1.RELEASE</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>com.spring4all</groupId>-->
+<!--                <artifactId>spring-boot-starter-swagger</artifactId>-->
+<!--                <version>1.5.1.RELEASE</version>-->
+<!--            </dependency>-->
 
             <dependency>
                 <groupId>com.typesafe</groupId>

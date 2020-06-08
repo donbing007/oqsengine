@@ -63,6 +63,7 @@ public class ModuleInitService implements SmartInitializingSingleton {
 
         LongConnect.safeSource(2, 20
                 , () -> checkServiceClient.checkStreaming(request))
+                .log("ModuleService")
                 .groupedWithin(size, Duration.ofSeconds(time))
                 .runWith(Sink.foreach(x -> {
 

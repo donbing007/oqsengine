@@ -35,11 +35,10 @@ public class GrpcServerConfiguration {
 
 
         grpcServer.run(properties.getHost(), properties.getPort()
-                , EntityServicePowerApiHandlerFactory.create(oqs, actorMaterializer, actorSystem))
+                , EntityServicePowerApiHandlerFactory.create(oqs, actorSystem))
                 .thenAccept(x -> {
                     logger.info("EntityService is on {}", x.localAddress() );
                 });
         return grpcServer;
     }
-
 }

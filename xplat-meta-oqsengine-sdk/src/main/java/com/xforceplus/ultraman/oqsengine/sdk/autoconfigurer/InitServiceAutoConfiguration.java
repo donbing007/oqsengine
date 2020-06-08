@@ -2,16 +2,17 @@ package com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer;
 
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
+import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.configuration.GatewayUrlSupplier;
+import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.configuration.MessageAppIdSupplier;
+import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.configuration.MessageTokenSupplier;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.*;
-import com.xforceplus.ultraman.oqsengine.sdk.controller.*;
+import com.xforceplus.ultraman.oqsengine.sdk.controller.DownloadController;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler;
-import com.xforceplus.ultraman.oqsengine.sdk.interceptor.CodeExtendedInterceptor;
-import com.xforceplus.ultraman.oqsengine.sdk.interceptor.DefaultSearchInterceptor;
-import com.xforceplus.ultraman.oqsengine.sdk.interceptor.MatchRouter;
-import com.xforceplus.ultraman.oqsengine.sdk.interceptor.VersionInterceptor;
+import com.xforceplus.ultraman.oqsengine.sdk.interceptor.*;
+import com.xforceplus.ultraman.oqsengine.sdk.listener.ExportEventLoggerListener;
+import com.xforceplus.ultraman.oqsengine.sdk.listener.MessageCenterEntityExportEventListener;
 import com.xforceplus.ultraman.oqsengine.sdk.listener.ModuleEventListener;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.*;
@@ -20,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.FieldVa
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.RegxValidator;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.RequiredValidator;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.TypeCheckValidator;
+//import com.xforceplus.ultraman.oqsengine.sdk.staticmode.StaticServiceLoader;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.DictMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
@@ -28,17 +30,18 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.MetadataRepos
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.interceptor.MessageDispatcherInterceptor;
-import com.xforceplus.xplat.galaxy.framework.dispatcher.messaging.QueryMessage;
 import com.xforceplus.xplat.galaxy.grpc.spring.EnableGrpcServiceClients;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -54,7 +57,7 @@ import java.util.List;
  */
 @ConditionalOnProperty(value = "xplat.oqsengine.sdk.enabled", matchIfMissing = true)
 @AutoConfigureOrder
-@EnableGrpcServiceClients(basePackages = { "com.xforceplus.ultraman.metadata.grpc",  "com.xforceplus.ultraman.oqsengine.sdk"})
+@EnableGrpcServiceClients(basePackages = {"com.xforceplus.ultraman.metadata.grpc", "com.xforceplus.ultraman.oqsengine.sdk"})
 public class InitServiceAutoConfiguration {
 
 
@@ -63,7 +66,7 @@ public class InitServiceAutoConfiguration {
 
     @Bean(destroyMethod = "terminate")
     @ConditionalOnMissingBean(ActorSystem.class)
-    public ActorSystem actorSystem(){
+    public ActorSystem actorSystem() {
         return ActorSystem.create("grpc-server");
     }
 
@@ -93,62 +96,71 @@ public class InitServiceAutoConfiguration {
         return FormBoMapLocalStore.create();
     }
 
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.meta.enabled", matchIfMissing = true)
     @Bean
-    public DictInitService dictInitService(){
+    public DictInitService dictInitService() {
         return new DictInitService();
     }
 
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.meta.enabled", matchIfMissing = true)
     @Bean
-    public ModuleInitService moduleInitService(){
+    public ModuleInitService moduleInitService() {
         return new ModuleInitService();
     }
 
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.meta.enabled", matchIfMissing = true)
     @Bean
-    public NodeReporterInitService nodeReporterInitService(){
+    public NodeReporterInitService nodeReporterInitService() {
         return new NodeReporterInitService();
     }
 
     @Bean
-    public DefaultEntityServiceHandler entityServiceHandler(){
+    public DefaultEntityServiceHandler entityServiceHandler() {
         return new DefaultEntityServiceHandler();
     }
 
+
     @Bean
+    public static PropertySourcesPlaceholderConfigurer propertyConfigInDev() {
+        return new PropertySourcesPlaceholderConfigurer();
+    }
+
     @ConditionalOnMissingBean(MetadataRepository.class)
-    public MetadataRepository metadataRepository(ApplicationEventPublisher publisher){
+    @Bean
+    public MetadataRepository metadataRepository(@Value("${xplat.oqsengine.sdk.max-version:3}") Integer isOverride, ApplicationEventPublisher publisher ) {
         return new MetadataRepositoryInMemoryImpl(3, publisher);
     }
 
     //service
     @Bean
     public EntityService entityService(MetadataRepository metadataRepository
-                                    , EntityServiceClient entityServiceClient
-                                    , ContextService contextService){
+            , EntityServiceClient entityServiceClient
+            , ContextService contextService) {
         return new EntityServiceImpl(metadataRepository, entityServiceClient, contextService);
     }
 
     @Bean
     public EntityServiceEx entityServiceEx(MetadataRepository metadataRepository
-                                         , EntityServiceClient entityServiceClient
-                                         , ContextService contextService){
+            , EntityServiceClient entityServiceClient
+            , ContextService contextService) {
         return new EntityServiceExImpl(contextService, entityServiceClient);
     }
 
     @Bean
-    public DefaultEntityServiceHandler defaultEntityServiceHandler(){
+    public DefaultEntityServiceHandler defaultEntityServiceHandler() {
         return new DefaultEntityServiceHandler();
     }
 
     //REST client
     @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder){
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
 //        return new RestTemplate(factory);
 
         //先获取到converter列表
         List<HttpMessageConverter<?>> converters = builder.build().getMessageConverters();
-        for ( HttpMessageConverter<?> converter : converters ) {
+        for (HttpMessageConverter<?> converter : converters) {
             //因为我们只想要jsonConverter支持对text/html的解析
-            if ( converter instanceof MappingJackson2HttpMessageConverter ) {
+            if (converter instanceof MappingJackson2HttpMessageConverter) {
                 try {
                     //先将原先支持的MediaType列表拷出
                     List<MediaType> mediaTypeList = new ArrayList<>(converter.getSupportedMediaTypes());
@@ -166,7 +178,7 @@ public class InitServiceAutoConfiguration {
     }
 
     @Bean
-    public ClientHttpRequestFactory simpleClientHttpRequestFactory(){
+    public ClientHttpRequestFactory simpleClientHttpRequestFactory() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         //单位为ms
         factory.setReadTimeout(5000);
@@ -176,56 +188,62 @@ public class InitServiceAutoConfiguration {
     }
 
     @Bean
-    public MessageDispatcherInterceptor<?> codeExtendInterceptor(MetadataRepository metadataRepository, ContextService contextService){
-        return new CodeExtendedInterceptor(metadataRepository, contextService);
+    public MessageDispatcherInterceptor<?> codeExtendInterceptor(MetadataRepository metadataRepository) {
+        return new CodeExtendedInterceptor<>(metadataRepository);
     }
 
-    @ConditionalOnBean(name = "searchCondition", value = { MatchRouter.class} )
     @Bean
-    public MessageDispatcherInterceptor<?> DefaultSearchInterceptor(MatchRouter<String, ConditionQueryRequest> matchRouter){
+    public MessageDispatcherInterceptor<?> contextAwareInterceptor(ContextService contextService) {
+        return new ContextInterceptor<>(contextService);
+    }
+
+
+    @ConditionalOnBean(name = "searchCondition", value = {MatchRouter.class})
+    @Bean
+    public MessageDispatcherInterceptor<?> DefaultSearchInterceptor(MatchRouter<String, ConditionQueryRequest> matchRouter) {
         return new DefaultSearchInterceptor<>(matchRouter);
     }
 
     //----------------------------init for operation and validator
 
     @Bean
-    public FieldValidator regex(){
+    public FieldValidator regex() {
         return new RegxValidator();
     }
 
     @Bean
-    public FieldValidator required(){
+    public FieldValidator required() {
         return new RequiredValidator();
     }
 
     @Bean
-    public FieldValidator typedCheck(){
+    public FieldValidator typedCheck() {
         return new TypeCheckValidator();
     }
 
     @Bean
-    public FieldOperationHandler defaultField(){
+    public FieldOperationHandler defaultField() {
         return new DefaultFieldOperationHandler();
     }
 
 
     @Bean
-    public FieldOperationHandler defaultValueField(){
+    public FieldOperationHandler defaultValueField() {
         return new DefaultFieldValueOperationHandler();
     }
 
     @Bean
-    public FieldOperationHandler defaultSystemField(ContextService contextService, @Value("${xplat.oqsengine.sdk.override:false}") Boolean isOverride){
+    public FieldOperationHandler defaultSystemField(ContextService contextService, @Value("${xplat.oqsengine.sdk.override:false}") Boolean isOverride) {
         return new FixedDefaultSystemOperationHandler(contextService, isOverride);
     }
 
     @Bean
-    public FieldOperationHandler simpleExpressionFieldOperationHandler(ContextService contextService){
+    public FieldOperationHandler simpleExpressionFieldOperationHandler(ContextService contextService) {
         return new SimpleExpressionFieldOperationHandler(contextService);
     }
 
     @Bean
-    public HandleValueService defaultHandleValueService(List<FieldOperationHandler> fieldOperationHandlers, List<FieldValidator<Object>> fieldValidators){
+    public HandleValueService defaultHandleValueService(List<FieldOperationHandler> fieldOperationHandlers, List<FieldValidator<Object>> fieldValidators) {
         return new DefaultHandleValueService(fieldOperationHandlers, fieldValidators);
     }
 
@@ -236,49 +254,99 @@ public class InitServiceAutoConfiguration {
 
     @Bean
     public HandleResultValueService defaultHandleResultValueService(List<RecordOperationHandler> handlers
-            , List<ResultSideOperationHandler> resultSideOperationHandlers){
+            , List<ResultSideOperationHandler> resultSideOperationHandlers) {
         return new DefaultHandleResultValueService(handlers, resultSideOperationHandlers);
     }
 
     @Bean
-    public ResultSideOperationHandler booleanTyped(){
+    public ResultSideOperationHandler booleanTyped() {
         return new BooleanFieldOperationHandler();
     }
 
     @Bean
-    public RecordOperationHandler idAppend(){
+    public RecordOperationHandler idAppend() {
         return new IdAppenderRecordOperationHandler();
     }
 
     @Bean
-    public UltFormInitService ultFormInitService(){
+    public UltFormInitService ultFormInitService() {
         return new UltFormInitService();
     }
 
     @Bean
-    public UltPageInitService ultPageInitService(){
+    public UltPageInitService ultPageInitService() {
         return new UltPageInitService();
     }
 
 
     @Bean
-    public ModuleEventListener listener(){
+    public ModuleEventListener listener() {
         return new ModuleEventListener();
     }
 
+    @Bean
+    public ExportSource exportSource(EntityService entityService
+            , @Value("${xplat.oqsengine.sdk.export.step:1000}") int step) {
+        return new SequenceExportSource(entityService, step);
+    }
+
+    @ConditionalOnMissingBean(ExportSink.class)
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.export.local-sink", matchIfMissing = true)
+    @Bean
+    public ExportSink localFileSink(@Value("${xplat.oqsengine.sdk.export.local.root:/}") String root) {
+        return new LocalFileExportSink(root);
+    }
 
     /**
      * xplat:
-     *   oqsengine:
-     *     sdk:
-     *       override: true
-     *       enabled: true
-     *       verisoned: false
+     * oqsengine:
+     * sdk:
+     * override: true
+     * enabled: true
+     * verisoned: false
+     *
      * @return
      */
     @ConditionalOnProperty(value = "xplat.oqsengine.sdk.stopverisoned", matchIfMissing = true)
     @Bean
-    public MessageDispatcherInterceptor<?> clearVersion(){
+    public MessageDispatcherInterceptor<?> clearVersion() {
         return new VersionInterceptor<>();
     }
+
+
+    @ConditionalOnBean(value = {MessageAppIdSupplier.class, MessageTokenSupplier.class, GatewayUrlSupplier.class, RestTemplate.class})
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.export.message.enabled", matchIfMissing = true)
+    @Bean
+    public MessageCenterEntityExportEventListener exportEventListener(MessageTokenSupplier tokenSupplier
+            , MessageAppIdSupplier appIdSupplier, GatewayUrlSupplier gatewayUrlSupplier
+            , @Value("${xplat.oqsengine.sdk.export.message.template.content:#{null}}") String content
+            , @Value("${xplat.oqsengine.sdk.export.message.template.title:#{null}}") String title
+            , @Value("${xplat.oqsengine.sdk.export.message.context-path:''}") String contextPath
+            , @Value("${xplat.oqsengine.sdk.export.message.ignore-on-sync:true}") boolean ignoreOnSync
+            , RestTemplate restTemplate) {
+        return new MessageCenterEntityExportEventListener(tokenSupplier::getToken
+                , appIdSupplier::getStorageAppId, gatewayUrlSupplier::getGatewayUrl
+                , content, title, restTemplate, contextPath, ignoreOnSync);
+    }
+
+    @ConditionalOnBean(ExportSink.class)
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.export.local.download", matchIfMissing = true)
+    @Bean
+    public DownloadController downloadController(ExportSink exportSink) {
+        return new DownloadController(exportSink);
+    }
+
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.export.log", matchIfMissing = true)
+    @Bean
+    public ExportEventLoggerListener loggerListener(){
+        return new ExportEventLoggerListener();
+    }
+
+
+//    @ConditionalOnClass()
+//    @Bean
+//    public StaticServiceLoader staticServiceLoader(@Value("${xplat.oqsengine.sdk.static.scan-package:null}")){
+//        return new StaticServiceLoader();
+//    }
+
 }

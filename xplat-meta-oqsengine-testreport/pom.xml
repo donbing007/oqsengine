@@ -5,12 +5,17 @@
     <parent>
         <artifactId>xplat-meta-oqsengine</artifactId>
         <groupId>com.xforceplus.ultraman</groupId>
-        <version>0.1.3-SNAPSHOT</version>
+        <version>0.1.5-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>xplat-meta-oqsengine-testreport</artifactId>
     <description>Test rate statistics aggregation, no actual working code.</description>
+
+    <properties>
+        <test.skip>true</test.skip>
+        <deployment.skip>true</deployment.skip>
+    </properties>
 
     <dependencies>
         <dependency>

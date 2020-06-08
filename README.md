@@ -1,5 +1,5 @@
-[![pipeline status](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/badges/develop/pipeline.svg)](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/commits/develop)
-[![coverage report](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/badges/develop/coverage.svg)](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/commits/develop)
+[![pipeline status](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/badges/release-0.1.4/pipeline.svg)](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/commits/release-0.1.4)
+[![coverage report](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/badges/release-0.1.4/coverage.svg)](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/commits/release-0.1.4)
 
 #引言
 

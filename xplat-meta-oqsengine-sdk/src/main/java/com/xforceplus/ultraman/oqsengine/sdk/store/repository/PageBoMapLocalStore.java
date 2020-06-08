@@ -16,8 +16,8 @@ public class PageBoMapLocalStore extends MapLocalStore {
 
     public static PageBoMapLocalStore create() {
         return new PageBoMapLocalStore("pageBos", "pageBo",
-            new String[]{"settingId", "id", "appId", "name", "code", "refPageId", "tenantId", "tenantName", "version", "boName", "boCode", "setting", "remark", "envStatus"}
-            , null, false, null);
+                new String[]{"settingId", "id", "appId", "name", "code", "refPageId", "tenantId", "tenantName", "tenantCode", "version", "boName", "boCode", "setting", "remark", "envStatus"}
+                , null, false, null);
     }
 
     private PageBoMapLocalStore(String schema, String tableName, String[] columns, String[] pkColumns, boolean hasVersion, Comparator<Object> versionComparator) {
@@ -32,7 +32,7 @@ public class PageBoMapLocalStore extends MapLocalStore {
             //如果有相同code的但是版本不同的记录对它的状态进行删除
             if (!StringUtils.isEmpty(ultPage.getCode())) {
                 dc.executeUpdate(new DeleteFrom(getTable()).where("code").eq(ultPage.getCode())
-                    .where("version").ne(ultPage.getVersion()));
+                        .where("version").ne(ultPage.getVersion()));
             }
 
             Map<String, Object> map = new HashMap<>();
@@ -43,6 +43,7 @@ public class PageBoMapLocalStore extends MapLocalStore {
             map.put("code", ultPage.getCode());
             map.put("refPageId", ultPage.getRefPageId());
             map.put("tenantId", ultPage.getTenantId());
+            map.put("tenantCode", ultPage.getTenantCode());
             map.put("tenantName", ultPage.getTenantName());
             map.put("version", ultPage.getVersion());
             map.put("boName", ultPageBo.getBoName());

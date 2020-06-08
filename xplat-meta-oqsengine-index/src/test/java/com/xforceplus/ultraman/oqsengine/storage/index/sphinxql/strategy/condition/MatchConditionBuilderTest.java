@@ -59,7 +59,7 @@ public class MatchConditionBuilderTest {
                     ConditionOperator.EQUALS,
                     new StringValue(new EntityField(11111, "test", FieldType.STRING), "test")
                 ),
-                "(ZONESPAN:F11111S \"F11111S test\")"
+                "\"testF11111S\""
             ),
             new Case(
                 new Condition(
@@ -67,7 +67,7 @@ public class MatchConditionBuilderTest {
                     ConditionOperator.EQUALS,
                     new LongValue(new EntityField(11111, "test", FieldType.LONG), 200L)
                 ),
-                "(ZONESPAN:F11111L \"F11111L 200\")"
+                "\"200F11111L\""
             ),
             new Case(
                 new Condition(
@@ -75,7 +75,7 @@ public class MatchConditionBuilderTest {
                     ConditionOperator.EQUALS,
                     new DecimalValue(new EntityField(11111, "test", FieldType.DECIMAL), new BigDecimal("123.246"))
                 ),
-                "((ZONESPAN:F11111L \"F11111L0 123\") (ZONESPAN:F11111L \"F11111L1 246\"))"
+                "(\"123F11111L0\" \"246F11111L1\")"
             ),
             new Case(
                 new Condition(
@@ -83,7 +83,7 @@ public class MatchConditionBuilderTest {
                     ConditionOperator.NOT_EQUALS,
                     new StringValue(new EntityField(11111, "test", FieldType.STRING), "test")
                 ),
-                "-(ZONESPAN:F11111S \"F11111S test\")"
+                "-\"testF11111S\""
             ),
             new Case(
                 new Condition(
@@ -91,7 +91,7 @@ public class MatchConditionBuilderTest {
                     ConditionOperator.LIKE,
                     new StringValue(new EntityField(11111, "test", FieldType.STRING), "test")
                 ),
-                "(ZONESPAN:F11111S F11111S \"*test*\")"
+                "(ZONESPAN:F11111S \"*test*\")"
             ),
             new Case(
                 new Condition(
@@ -99,7 +99,7 @@ public class MatchConditionBuilderTest {
                     ConditionOperator.EQUALS,
                     new EnumValue(new EntityField(11111, "test", FieldType.ENUM), "test")
                 ),
-                "(ZONESPAN:F11111S \"F11111S test\")"
+                "\"testF11111S\""
             ),
             new Case(
                 new Condition(
@@ -107,7 +107,7 @@ public class MatchConditionBuilderTest {
                     ConditionOperator.NOT_EQUALS,
                     new EnumValue(new EntityField(11111, "test", FieldType.ENUM), "test")
                 ),
-                "-(ZONESPAN:F11111S \"F11111S test\")"
+                "-\"testF11111S\""
             ),
             new Case(
                 new Condition(
@@ -115,7 +115,7 @@ public class MatchConditionBuilderTest {
                     ConditionOperator.NOT_EQUALS,
                     new DecimalValue(new EntityField(1, "test", FieldType.DECIMAL), BigDecimal.ZERO)
                 ),
-                "-((ZONESPAN:F1L \"F1L0 0\") (ZONESPAN:F1L \"F1L1 0\"))"
+                "-(\"0F1L0\" \"0F1L1\")"
             ),
             // 多值只处理第一个值.
             new Case(
@@ -125,7 +125,7 @@ public class MatchConditionBuilderTest {
                     new StringsValue(new EntityField(1, "test", FieldType.STRINGS), "v1"),
                     new StringsValue(new EntityField(1, "test", FieldType.STRINGS), "v2")
                 ),
-                "(ZONESPAN:F1S F1S* \"v1\")",
+                "\"v1F1S*\"",
                 true
                 )
         );

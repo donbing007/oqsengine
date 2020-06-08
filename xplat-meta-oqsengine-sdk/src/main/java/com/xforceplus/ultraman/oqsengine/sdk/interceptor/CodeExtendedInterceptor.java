@@ -22,11 +22,9 @@ public class CodeExtendedInterceptor<T, R> implements MessageDispatcherIntercept
 
     private final MetadataRepository metadataRepository;
 
-    private final ContextService contextService;
 
-    public CodeExtendedInterceptor(MetadataRepository metadataRepository, ContextService contextService) {
+    public CodeExtendedInterceptor(MetadataRepository metadataRepository) {
         this.metadataRepository = metadataRepository;
-        this.contextService = contextService;
     }
 
     @SuppressWarnings("unchecked")
@@ -43,7 +41,11 @@ public class CodeExtendedInterceptor<T, R> implements MessageDispatcherIntercept
                                 .findOneById(boItem.getParentId());
                         if (boParentItem != null) {
                             return (QueryMessage) queryMessage
-                                    .withMetaData(queryMessage.getMetaData().and("code", boItem.getCode()).and("parentCode", boParentItem.getCode()));
+                                    .withMetaData(queryMessage.getMetaData()
+                                            .and("code", boItem.getCode())
+                                            .and("parentCode", boParentItem.getCode())
+                                            .and("name", boItem.getCname())
+                                    );
                         }
                     } else {
                         return (QueryMessage) queryMessage

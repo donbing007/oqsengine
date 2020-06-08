@@ -26,6 +26,8 @@ threadPool:
     worker: 0
     queue: 1000
 
+maxVisibleNumber: 10000
+
 storage:
   timeoutMs:
     query: 3000

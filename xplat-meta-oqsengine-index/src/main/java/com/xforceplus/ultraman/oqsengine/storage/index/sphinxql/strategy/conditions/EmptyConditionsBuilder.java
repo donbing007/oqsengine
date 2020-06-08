@@ -6,7 +6,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLH
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 
 /**
- * 条件数量小于1的处理.
+ * 空条件的处理.
  *
  * @author dongbin
  * @version 0.1 2020/2/28 09:11
@@ -14,7 +14,7 @@ import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
  */
 public class EmptyConditionsBuilder implements ConditionsBuilder<String> {
 
-    private String SELECT_ALL = "MATCH('@" + FieldDefine.FULL_FIELDS + " =" + SphinxQLHelper.ALL_DATA_FULL_TEXT + "')";
+    private String SELECT_ALL = "";
 
     @Override
     public String build(Conditions conditions) {
