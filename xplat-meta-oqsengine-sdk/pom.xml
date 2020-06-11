@@ -77,7 +77,11 @@
             <artifactId>xplat-meta-oqsengine-sdk-client</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.xforceplus.ultraman.config</groupId>
+            <artifactId>runtime-reconfiguration</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>

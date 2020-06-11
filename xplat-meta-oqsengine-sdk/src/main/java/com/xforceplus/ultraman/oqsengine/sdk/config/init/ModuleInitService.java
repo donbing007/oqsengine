@@ -1,12 +1,20 @@
 package com.xforceplus.ultraman.oqsengine.sdk.config.init;
 
 import akka.stream.ActorMaterializer;
+import akka.stream.javadsl.AsPublisher;
 import akka.stream.javadsl.Sink;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.j2objc.annotations.AutoreleasePool;
+import com.xforceplus.ultraman.config.ConfigurationEngine;
+import com.xforceplus.ultraman.config.json.JsonConfigNode;
 import com.xforceplus.ultraman.metadata.grpc.CheckServiceClient;
+import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.event.MetadataModuleGotEvent;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.xplat.galaxy.grpc.client.LongConnect;
+import io.reactivex.Observable;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -15,6 +23,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -51,8 +60,11 @@ public class ModuleInitService implements SmartInitializingSingleton {
     @Value("${xplat.oqsengine.sdk.init-time:10}")
     private Integer time;
 
-    @Value("${xplat.oqsengine.sdk.init-timeout:30}")
+    @Value("${xplat.oqsengine.sdk.iit-timeout:30}")
     private Integer timeout;
+
+    @Autowired
+    private ConfigurationEngine<ModuleUpResult, JsonConfigNode> moduleConfigEngine;
 
     @Override
     public void afterSingletonsInstantiated() {
@@ -66,22 +78,28 @@ public class ModuleInitService implements SmartInitializingSingleton {
                 .setTenantId(config.getTenant())
                 .build();
 
-        LongConnect.safeSource(2, 20
+        Publisher<List<ModuleUpResult>> moduleService = LongConnect.safeSource(2, 20
                 , () -> checkServiceClient.checkStreaming(request))
                 .log("ModuleService")
                 .groupedWithin(size, Duration.ofSeconds(time))
-                .runWith(Sink.foreach(x -> {
-
+                .map(x -> {
                     logger.info("Got module size {}", x.size());
-                    MetadataModuleGotEvent event = new MetadataModuleGotEvent(request, x);
-                    publisher.publishEvent(event);
-                    logger.info("dispatched module ");
+                    return x;
+                })
+                .runWith(Sink.asPublisher(AsPublisher.WITH_FANOUT), mat);
 
-                    if (countDownLatch.getCount() > 0) {
-                        logger.info("first Modules lock count down");
-                        countDownLatch.countDown();
-                    }
-                }), mat);
+        moduleConfigEngine.registerSource(Observable.fromPublisher(moduleService).flatMap(Observable::fromIterable));
+
+        moduleConfigEngine.getObservable().subscribe(x -> {
+
+//             MetadataModuleGotEvent event = new MetadataModuleGotEvent(request, x);
+//              publisher.publishEvent(event);
+//              logger.info("dispatched module ");
+              if (countDownLatch.getCount() > 0) {
+                  logger.info("first Modules lock count down");
+                  countDownLatch.countDown();
+              }
+        });
 
         logger.info("------- Waiting For Module init expected max module size {} max waiting time {}s-------", size, time);
         try {
