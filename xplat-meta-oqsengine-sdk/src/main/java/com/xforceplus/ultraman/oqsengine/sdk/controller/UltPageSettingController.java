@@ -14,6 +14,9 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.UltPageBoItem;
 import org.apache.metamodel.data.DataSet;
 import org.apache.metamodel.data.Row;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -89,20 +92,19 @@ public class UltPageSettingController {
                         return response;
                     } else {
                         response.setMessage("查询无结果");
-                        response.setCode("500");
+                        response.setCode("-1");
                         return response;
                     }
                 } catch (Exception e) {
                     response.setMessage("查询无结果");
-                    response.setCode("500");
+                    response.setCode("-1");
                     return response;
                 }
             }
 
         } else {
             response.setMessage("未传id");
-            response.setCode("1");
-
+            response.setCode("-1");
             return response;
         }
     }
@@ -128,14 +130,13 @@ public class UltPageSettingController {
                 return response;
             } else {
                 response.setMessage("查询无结果");
-                response.setCode("500");
+                response.setCode("-1");
                 return response;
             }
 
         } else {
             response.setMessage("未传Code");
-            response.setCode("500");
-
+            response.setCode("-1");
             return response;
         }
     }
@@ -159,10 +160,35 @@ public class UltPageSettingController {
 
             List<Row> rows = ds.toRows();
             ResponseList<UltPageBoItem> items = rows.stream().map(this::toUltPageBoSeeting).collect(Collectors.toCollection(ResponseList::new));
-            response.setMessage("查询成功");
-            response.setCode("1");
-            if (items.size() == 1) {
+            if (items.size() >= 1) {
                 response.setResult(items.get(0));
+                response.setMessage("查询成功");
+                response.setCode("1");
+            } else {
+                //存在未同步的配置，进行二次同步配置信息
+                try {
+                    initPages();
+                    ds = pageBoMapLocalStore.query().selectAll()
+                            .where("settingId")
+                            .eq(id)
+                            .execute();
+
+                    rows = ds.toRows();
+                    items = rows.stream().map(this::toUltPageBoSeeting).collect(Collectors.toCollection(ResponseList::new));
+                    if (items.size() >= 1) {
+                        response.setResult(items.get(0));
+                        response.setMessage("查询成功");
+                        response.setCode("1");
+                    } else {
+                        response.setMessage("查询无结果");
+                        response.setCode("-1");
+                        return response;
+                    }
+                } catch (Exception e) {
+                    response.setMessage("查询无结果");
+                    response.setCode("-1");
+                    return response;
+                }
             }
             return response;
 
@@ -194,16 +220,41 @@ public class UltPageSettingController {
                     UltPage saveUltPage = JSON.parseObject(JSON.toJSONString(ultPages.get(i)), UltPage.class);
                     pageBoMapLocalStore.save(saveUltPage);
                 }
-
-                //将List转成Entity
-//                UltPage ultPage = JSON.parseObject(JSON.toJSONString(result.getResult()),UltPage.class);
-                //将数据保存到内存中
-//                pageBoMapLocalStore.save(ultPage);
             }
             return result;
         } catch (Exception e) {
             result.setCode("400");
             result.setMessage("部署失败");
+            return result;
+        }
+    }
+
+    private Response initPages() throws Exception{
+        String accessUri = ExternalServiceConfig.PfcpAccessUri();
+        String url = String.format("%s/pages/init"
+                , accessUri);
+        Authorization auth = new Authorization();
+        auth.setAppId(Long.parseLong(config.getAppId()));
+        auth.setEnv(config.getEnv());
+        Response<List<UltPage>> result = new Response<List<UltPage>>();
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
+            headers.setContentType(type);
+            headers.add("Accept", MediaType.APPLICATION_JSON.toString());
+            HttpEntity authorizeEntity = new HttpEntity(auth, headers);
+            result = restTemplate.postForObject(url, authorizeEntity, Response.class);
+            if (result.getResult() != null) {
+                List<UltPage> ultPages = result.getResult();
+                for (int i = 0; i < ultPages.size(); i++) {
+                    UltPage saveUltPage = JSON.parseObject(JSON.toJSONString(ultPages.get(i)), UltPage.class);
+                    pageBoMapLocalStore.save(saveUltPage);
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            result.setCode("400");
+            result.setMessage("获取配置失败");
             return result;
         }
     }
