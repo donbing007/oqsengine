@@ -45,8 +45,6 @@ public class UltPageInitService implements SmartInitializingSingleton {
     private AuthSearcherConfig config;
     @Autowired
     private RestTemplate restTemplate;
-    @Autowired
-    private PageBoMapLocalStore pageBoMapLocalStore;
 
     @Autowired
     private ConfigurationEngine<UltPage, JsonConfigNode> pageConfigEngine;
@@ -84,8 +82,7 @@ public class UltPageInitService implements SmartInitializingSingleton {
                         .collect(Collectors.toList());
                 pageConfigEngine.registerSource(Observable
                         .fromIterable(collect));
-                pageConfigEngine.getObservable().subscribe(x -> eventPublisher.publishEvent(new ConfigChangeEvent("PAGE", x)));
-                logger.info("init pages config success");
+              //pageConfigEngine.getObservable().subscribe(x -> eventPublisher.publishEvent(new ConfigChangeEvent("PAGE", x)));
             }
         } catch (Exception e) {
             logger.info("init pages config faild");

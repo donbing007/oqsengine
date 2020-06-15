@@ -97,7 +97,14 @@ public class NewJsonConfiguration {
 
         ModuleUpResult result = manyToOneNew();
 
+
         String json = JsonFormat.printer().print(result);
+
+
+
+        ModuleUpResult.Builder result1 = ModuleUpResult.newBuilder();
+        JsonFormat.parser().merge(json, result1);
+        System.out.println(result1.build());
 
         JsonNode beforeNode = mapper.readTree(json);
 

@@ -22,4 +22,12 @@ public class ConfigChangeEvent {
     public ChangeList getChangeList() {
         return changeList;
     }
+
+    @Override
+    public String toString() {
+        return "ConfigChangeEvent{" +
+                "type='" + type + '\'' +
+                ", changeList=" + changeList +
+                '}';
+    }
 }

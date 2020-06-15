@@ -23,11 +23,15 @@ public class FieldHelper {
      * @return
      */
     public static IEntityField toEntityClassField(Row row) {
-
-        Long id = RowUtils.getRowValue(row, "id")
-            .map(String::valueOf)
-            .map(Long::valueOf)
-            .orElse(-1L);
+        Long id = 0l;
+        try {
+            id = RowUtils.getRowValue(row, "id")
+                    .map(String::valueOf)
+                    .map(Long::valueOf)
+                    .orElse(-1L);
+        }catch(Exception ex){
+            ex.printStackTrace();
+        }
         String name = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
         FieldType fieldType = RowUtils.getRowValue(row, "fieldType")
             .map(String::valueOf)

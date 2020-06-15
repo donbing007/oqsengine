@@ -21,6 +21,7 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.annotation.Order;
 
 import java.time.Duration;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * module grpc init service
  */
+@Order
 public class ModuleInitService implements SmartInitializingSingleton {
 
     private Logger logger = LoggerFactory.getLogger(ModuleInitService.class);
@@ -88,24 +90,24 @@ public class ModuleInitService implements SmartInitializingSingleton {
                 })
                 .runWith(Sink.asPublisher(AsPublisher.WITH_FANOUT), mat);
 
-        moduleConfigEngine.registerSource(Observable.fromPublisher(moduleService).flatMap(Observable::fromIterable));
+        moduleConfigEngine.registerSource(Observable.fromPublisher(moduleService).concatMap(Observable::fromIterable));
 
-        moduleConfigEngine.getObservable().subscribe(x -> {
-
-//             MetadataModuleGotEvent event = new MetadataModuleGotEvent(request, x);
-//              publisher.publishEvent(event);
-//              logger.info("dispatched module ");
-              if (countDownLatch.getCount() > 0) {
-                  logger.info("first Modules lock count down");
-                  countDownLatch.countDown();
-              }
-        });
-
-        logger.info("------- Waiting For Module init expected max module size {} max waiting time {}s-------", size, time);
-        try {
-            countDownLatch.await(timeout, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        moduleConfigEngine.getObservable().subscribe(x -> {
+//
+////             MetadataModuleGotEvent event = new MetadataModuleGotEvent(request, x);
+////              publisher.publishEvent(event);
+////              logger.info("dispatched module ");
+//              if (countDownLatch.getCount() > 0) {
+//                  logger.info("first Modules lock count down");
+//                  countDownLatch.countDown();
+//              }
+//        });
+//
+//        logger.info("------- Waiting For Module init expected max module size {} max waiting time {}s-------", size, time);
+//        try {
+//            countDownLatch.await(timeout, TimeUnit.SECONDS);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 }
