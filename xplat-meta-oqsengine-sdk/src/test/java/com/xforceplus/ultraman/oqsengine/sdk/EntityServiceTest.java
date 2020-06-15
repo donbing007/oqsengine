@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfiguration;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
+import com.xforceplus.ultraman.oqsengine.sdk.configuration.TestApplicationContextInitializer;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
@@ -37,19 +38,8 @@ import static org.springframework.test.util.AssertionErrors.assertTrue;
 /**
  * entity service test
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest
-@ContextConfiguration(classes = {TestConfiguration.class
-        , InitServiceAutoConfiguration.class
-        , AuthSearcherConfig.class
-        , ServiceInvokerAutoConfiguration.class
-        , AsyncTaskExecutorAutoConfiguration.class
-        , ServiceDispatcherAutoConfiguration.class
-        , com.xforceplus.xplat.galaxy.framework.configuration.ContextConfiguration.class
-        , RestTemplateAutoConfiguration.class
-})
-
-public class EntityServiceTest {
+@ContextConfiguration(initializers = TestApplicationContextInitializer.class)
+public class EntityServiceTest extends ContextWareBaseTest{
 
     @Autowired
     EntityService entityService;

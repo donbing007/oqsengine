@@ -1,41 +1,58 @@
 package com.xforceplus.ultraman.oqsengine.sdk.config.init;
 
 import akka.stream.ActorMaterializer;
+import akka.stream.javadsl.AsPublisher;
 import akka.stream.javadsl.Sink;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.j2objc.annotations.AutoreleasePool;
+import com.xforceplus.ultraman.config.ConfigurationEngine;
+import com.xforceplus.ultraman.config.json.JsonConfigNode;
 import com.xforceplus.ultraman.metadata.grpc.CheckServiceClient;
+import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.event.MetadataModuleGotEvent;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.xplat.galaxy.grpc.client.LongConnect;
+import io.reactivex.Observable;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.annotation.Order;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
  * module grpc init service
  */
-public class ModuleInitService implements SmartInitializingSingleton {
+@Order
+public class ModuleInitService implements InitializingBean {
 
     private Logger logger = LoggerFactory.getLogger(ModuleInitService.class);
 
-    @Autowired
-    CheckServiceClient checkServiceClient;
+    private final CheckServiceClient checkServiceClient;
 
-    @Autowired
-    private ActorMaterializer mat;
+    private final ActorMaterializer mat;
 
-    @Autowired
-    private AuthSearcherConfig config;
+    private final AuthSearcherConfig config;
 
-    @Autowired
-    private ApplicationEventPublisher publisher;
+    private final ApplicationEventPublisher publisher;
+
+    public ModuleInitService(CheckServiceClient checkServiceClient
+            , ActorMaterializer mat, AuthSearcherConfig config
+            , ApplicationEventPublisher publisher) {
+        this.checkServiceClient = checkServiceClient;
+        this.mat = mat;
+        this.config = config;
+        this.publisher = publisher;
+    }
 
     @Autowired
     MetadataRepository store;
@@ -46,13 +63,11 @@ public class ModuleInitService implements SmartInitializingSingleton {
     @Value("${xplat.oqsengine.sdk.init-time:10}")
     private Integer time;
 
-    @Value("${xplat.oqsengine.sdk.init-timeout:30}")
-    private Integer timeout;
+    @Autowired
+    private ConfigurationEngine<ModuleUpResult, JsonConfigNode> moduleConfigEngine;
 
     @Override
-    public void afterSingletonsInstantiated() {
-        //INIT Count
-        CountDownLatch countDownLatch = new CountDownLatch(1);
+    public void afterPropertiesSet() throws Exception {
 
         com.xforceplus.ultraman.metadata.grpc.Base.Authorization request = com.xforceplus
                 .ultraman.metadata.grpc.Base.Authorization.newBuilder()
@@ -61,28 +76,16 @@ public class ModuleInitService implements SmartInitializingSingleton {
                 .setTenantId(config.getTenant())
                 .build();
 
-        LongConnect.safeSource(2, 20
+        Publisher<List<ModuleUpResult>> moduleService = LongConnect.safeSource(2, 20
                 , () -> checkServiceClient.checkStreaming(request))
                 .log("ModuleService")
                 .groupedWithin(size, Duration.ofSeconds(time))
-                .runWith(Sink.foreach(x -> {
-
+                .map(x -> {
                     logger.info("Got module size {}", x.size());
-                    MetadataModuleGotEvent event = new MetadataModuleGotEvent(request, x);
-                    publisher.publishEvent(event);
-                    logger.info("dispatched module ");
+                    return x;
+                })
+                .runWith(Sink.asPublisher(AsPublisher.WITH_FANOUT), mat);
 
-                    if (countDownLatch.getCount() > 0) {
-                        logger.info("first Modules lock count down");
-                        countDownLatch.countDown();
-                    }
-                }), mat);
-
-        logger.info("------- Waiting For Module init expected max module size {} max waiting time {}s-------", size, time);
-        try {
-            countDownLatch.await(timeout, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        moduleConfigEngine.registerSource(Observable.fromPublisher(moduleService).concatMap(Observable::fromIterable));
     }
 }

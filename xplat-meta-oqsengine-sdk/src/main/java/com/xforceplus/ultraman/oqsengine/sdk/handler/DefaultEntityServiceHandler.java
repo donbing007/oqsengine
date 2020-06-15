@@ -317,10 +317,9 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
                             CSVRecord record = list.get(i);
                             for (int j = 0; j < header.size(); j++) {
                                 map.put(header.get(j), StringUtils.isEmpty(record.get(j)) ? null : record.get(j));
-                                entityService.create(entityClassOp.get(), map);
                             }
+                            entityService.create(entityClassOp.get(), map);
                         }
-                        //TODO sum
                         return "ok";
                     });
                 } else {
