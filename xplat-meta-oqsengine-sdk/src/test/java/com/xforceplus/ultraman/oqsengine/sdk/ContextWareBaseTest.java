@@ -29,7 +29,6 @@ import org.springframework.test.context.junit4.SpringRunner;
         , com.xforceplus.xplat.galaxy.framework.configuration.ContextConfiguration.class
         , RuntimeConfigAutoConfiguration.class
         , RestTemplateAutoConfiguration.class
-        , ConfigListener.class
 })
 public class ContextWareBaseTest {
 

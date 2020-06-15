@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
 
 /**
  * config Listener
@@ -50,7 +49,7 @@ public class ConfigListener {
     @EventListener(condition = "#event.type.equals('PAGE')")
     public void pageChangeListener(ConfigChangeEvent event) {
         logger.info("UPDATE PAGE");
-        ConfigNode confignode = (ConfigNode) event.getChangeList().getCurrent();
+        ConfigNode confignode = event.getChangeList().getCurrent();
         JsonNode jsonNode = (JsonNode) confignode.getOrigin();
 
         try {
@@ -63,8 +62,9 @@ public class ConfigListener {
 
     @EventListener(condition = "#event.type.equals('BO')")
     public void boChangeListener(ConfigChangeEvent event) {
+
         logger.info("UPDATE BO");
-        ConfigNode confignode = (ConfigNode) event.getChangeList().getCurrent();
+        ConfigNode confignode = event.getChangeList().getCurrent();
         JsonNode jsonNode = (JsonNode) confignode.getOrigin();
         ModuleUpResult.Builder moduleBuilder = ModuleUpResult.newBuilder();
         try {
@@ -80,7 +80,7 @@ public class ConfigListener {
     public void dictChangeListener(ConfigChangeEvent event) {
         logger.info("UPDATE DICT");
 
-        ConfigNode confignode = (ConfigNode) event.getChangeList().getCurrent();
+        ConfigNode confignode = event.getChangeList().getCurrent();
         JsonNode jsonNode = (JsonNode) confignode.getOrigin();
         DictUpResult.Builder dictBuilder = DictUpResult.newBuilder();
         try {
@@ -103,7 +103,7 @@ public class ConfigListener {
     public void formChangeListener(ConfigChangeEvent event) {
         logger.info("UPDATE FORM");
 
-        ConfigNode confignode = (ConfigNode) event.getChangeList().getCurrent();
+        ConfigNode confignode = event.getChangeList().getCurrent();
         JsonNode jsonNode = (JsonNode) confignode.getOrigin();
 
         try {

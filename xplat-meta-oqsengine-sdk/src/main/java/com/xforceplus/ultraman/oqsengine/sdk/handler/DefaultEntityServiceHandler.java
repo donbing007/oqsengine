@@ -320,7 +320,6 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
                             }
                             entityService.create(entityClassOp.get(), map);
                         }
-                        //TODO sum
                         return "ok";
                     });
                 } else {

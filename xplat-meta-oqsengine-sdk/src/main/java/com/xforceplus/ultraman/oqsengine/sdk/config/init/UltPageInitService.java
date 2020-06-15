@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
 import io.reactivex.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -38,7 +39,7 @@ import static com.xforceplus.ultraman.oqsengine.sdk.config.ExternalServiceConfig
  * 初始化Page信息
  */
 @Order(1) // @Order注解可以改变执行顺序，越小越先执行
-public class UltPageInitService implements SmartInitializingSingleton {
+public class UltPageInitService implements InitializingBean {
     final Logger logger = LoggerFactory.getLogger(UltPageInitService.class);
 
     @Autowired
@@ -53,7 +54,7 @@ public class UltPageInitService implements SmartInitializingSingleton {
     private ApplicationEventPublisher eventPublisher;
 
     @Override
-    public void afterSingletonsInstantiated() {
+    public void afterPropertiesSet() throws Exception {
         logger.info("begin init pages config");
         String accessUri = null;
         try {
@@ -82,7 +83,7 @@ public class UltPageInitService implements SmartInitializingSingleton {
                         .collect(Collectors.toList());
                 pageConfigEngine.registerSource(Observable
                         .fromIterable(collect));
-              //pageConfigEngine.getObservable().subscribe(x -> eventPublisher.publishEvent(new ConfigChangeEvent("PAGE", x)));
+                //pageConfigEngine.getObservable().subscribe(x -> eventPublisher.publishEvent(new ConfigChangeEvent("PAGE", x)));
             }
         } catch (Exception e) {
             logger.info("init pages config faild");

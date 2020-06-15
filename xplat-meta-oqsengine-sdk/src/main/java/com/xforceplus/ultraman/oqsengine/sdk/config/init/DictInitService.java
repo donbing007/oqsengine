@@ -16,6 +16,7 @@ import io.reactivex.Observable;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * dict grpc init service
  */
 @Order
-public class DictInitService implements SmartInitializingSingleton {
+public class DictInitService implements InitializingBean {
 
     @Autowired
     private DictCheckServiceClient client;
@@ -40,19 +41,13 @@ public class DictInitService implements SmartInitializingSingleton {
     @Autowired
     private AuthSearcherConfig config;
 
-//    @Autowired
-//    private DictMapLocalStore dictLocalStore;
-
     private Logger logger = LoggerFactory.getLogger(DictInitService.class);
-
-    @Autowired
-    private ApplicationEventPublisher publisher;
 
     @Autowired
     private ConfigurationEngine<DictUpResult, JsonConfigNode> dictConfigEngine;
 
     @Override
-    public void afterSingletonsInstantiated() {
+    public void afterPropertiesSet() throws Exception {
         com.xforceplus.ultraman.metadata.grpc.Base.Authorization request = com.xforceplus
                 .ultraman.metadata.grpc.Base.Authorization.newBuilder()
                 .setAppId(config.getAppId())
@@ -64,14 +59,6 @@ public class DictInitService implements SmartInitializingSingleton {
                 , () -> client.checkStreaming(request))
                 .log("DictService")
                 .runWith(Sink.asPublisher(AsPublisher.WITH_FANOUT), mat);
-//                .runWith(Sink.foreach(x -> {
-////                    dictLocalStore.save(x, request.getAppId());
-////                    if (logger.isInfoEnabled()) {
-////                        x.getDictsList().forEach(dict -> {
-////                            logger.info("Dict {}:{}:{} saved", dict.getCode(), dict.getPublishDictId(), dict.getId());
-////                        });
-////                    }
-//                }), mat);
 
         dictConfigEngine.registerSource(Observable.fromPublisher(dictPublisher));
     }

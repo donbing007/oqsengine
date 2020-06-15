@@ -37,6 +37,8 @@ import org.springframework.context.annotation.Configuration;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * runtime configuration
@@ -179,7 +181,7 @@ public class RuntimeConfigAutoConfiguration {
     }
 
     @Bean
-    public ConfigListener configListener(){
+    public ConfigListener configListener() {
         return new ConfigListener();
     }
 
@@ -189,7 +191,10 @@ public class RuntimeConfigAutoConfiguration {
             , ConfigurationEngine<UltPage, JsonConfigNode> pageConfigEngine
             , ConfigurationEngine<UltForm, JsonConfigNode> formConfigEngine
             , ConfigurationEngine<ModuleUpResult, JsonConfigNode> moduleConfigEngine
-            , ApplicationEventPublisher publisher) {
+            , ApplicationEventPublisher publisher
+            , @Value("${xplat.oqsengine.sdk.init-size:5}") Integer size
+            , @Value("${xplat.oqsengine.sdk.init-timeout:10}") Integer timeout
+    ) {
         return new SmartInitializingSingleton() {
 
             @Override
@@ -197,12 +202,23 @@ public class RuntimeConfigAutoConfiguration {
                 List<ChangeList> changeList = configurationStorage
                         .rebuild();
 
+                CountDownLatch latch = new CountDownLatch(size);
+
+                logger.info("Waiting For Module {}", size);
+
                 logger.info("Rebuilding-------------------");
 
                 changeList
                         .stream()
                         .forEach(x ->
-                                publisher.publishEvent(new ConfigChangeEvent(x.getType(), x)));
+                        {
+                            if (ConfigType.BO.name().equalsIgnoreCase(x.getType())) {
+                                if (latch.getCount() > 0) {
+                                    latch.countDown();
+                                }
+                            }
+                            publisher.publishEvent(new ConfigChangeEvent(x.getType(), x));
+                        });
 
                 Optional.ofNullable(dictConfigEngine.getObservable()).ifPresent(ob -> ob.subscribe(x -> {
 
@@ -212,7 +228,10 @@ public class RuntimeConfigAutoConfiguration {
                 }));
 
                 Optional.ofNullable(moduleConfigEngine.getObservable()).ifPresent(ob -> ob.subscribe(x -> {
-                    logger.info("Get New Module-------------------");
+                    logger.info("Get New Module List-------------------");
+                    while (latch.getCount() > 0) {
+                        latch.countDown();
+                    }
                     publisher.publishEvent(new ConfigChangeEvent(x.getType(), x));
                 }));
 
@@ -227,6 +246,13 @@ public class RuntimeConfigAutoConfiguration {
                     logger.info("Get New Form-------------------");
                     publisher.publishEvent(new ConfigChangeEvent(x.getType(), x));
                 }));
+
+                try {
+                    logger.info("Waiting For Module at most {}", timeout);
+                    latch.await(timeout, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         };
     }

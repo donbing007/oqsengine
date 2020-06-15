@@ -17,6 +17,7 @@ import io.reactivex.Observable;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  * module grpc init service
  */
 @Order
-public class ModuleInitService implements SmartInitializingSingleton {
+public class ModuleInitService implements InitializingBean {
 
     private Logger logger = LoggerFactory.getLogger(ModuleInitService.class);
 
@@ -62,16 +63,11 @@ public class ModuleInitService implements SmartInitializingSingleton {
     @Value("${xplat.oqsengine.sdk.init-time:10}")
     private Integer time;
 
-    @Value("${xplat.oqsengine.sdk.iit-timeout:30}")
-    private Integer timeout;
-
     @Autowired
     private ConfigurationEngine<ModuleUpResult, JsonConfigNode> moduleConfigEngine;
 
     @Override
-    public void afterSingletonsInstantiated() {
-        //INIT Count
-        CountDownLatch countDownLatch = new CountDownLatch(1);
+    public void afterPropertiesSet() throws Exception {
 
         com.xforceplus.ultraman.metadata.grpc.Base.Authorization request = com.xforceplus
                 .ultraman.metadata.grpc.Base.Authorization.newBuilder()
@@ -91,23 +87,5 @@ public class ModuleInitService implements SmartInitializingSingleton {
                 .runWith(Sink.asPublisher(AsPublisher.WITH_FANOUT), mat);
 
         moduleConfigEngine.registerSource(Observable.fromPublisher(moduleService).concatMap(Observable::fromIterable));
-
-//        moduleConfigEngine.getObservable().subscribe(x -> {
-//
-////             MetadataModuleGotEvent event = new MetadataModuleGotEvent(request, x);
-////              publisher.publishEvent(event);
-////              logger.info("dispatched module ");
-//              if (countDownLatch.getCount() > 0) {
-//                  logger.info("first Modules lock count down");
-//                  countDownLatch.countDown();
-//              }
-//        });
-//
-//        logger.info("------- Waiting For Module init expected max module size {} max waiting time {}s-------", size, time);
-//        try {
-//            countDownLatch.await(timeout, TimeUnit.SECONDS);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
     }
 }

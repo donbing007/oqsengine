@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
 import io.reactivex.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
  * @author admin
  */
 @Order(2) // @Order注解可以改变执行顺序，越小越先执行
-public class UltFormInitService implements SmartInitializingSingleton {
+public class UltFormInitService implements InitializingBean {
     final Logger logger = LoggerFactory.getLogger(UltFormInitService.class);
 
     @Autowired
@@ -50,7 +51,7 @@ public class UltFormInitService implements SmartInitializingSingleton {
     private ApplicationEventPublisher eventPublisher;
 
     @Override
-    public void afterSingletonsInstantiated() {
+    public void afterPropertiesSet() throws Exception {
 
         logger.info("begin init forms config");
         String accessUri = null;
@@ -83,8 +84,8 @@ public class UltFormInitService implements SmartInitializingSingleton {
                         .fromIterable(collect));
                 formConfigEngine.getObservable().subscribe(x -> eventPublisher.publishEvent(new ConfigChangeEvent(ConfigType.FORM.name(), x)));
                 logger.info("init forms config success");
-                    //UltForm saveUltForm = JSON.parseObject(JSON.toJSONString(ultForms.get(i)), UltForm.class);
-                    //formBoMapLocalStore.save(saveUltForm);
+                //UltForm saveUltForm = JSON.parseObject(JSON.toJSONString(ultForms.get(i)), UltForm.class);
+                //formBoMapLocalStore.save(saveUltForm);
             }
         } catch (Exception e) {
             logger.info("init forms config faild {}", e);
