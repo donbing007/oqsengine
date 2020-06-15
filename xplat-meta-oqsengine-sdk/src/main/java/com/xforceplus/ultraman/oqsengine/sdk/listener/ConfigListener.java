@@ -25,7 +25,6 @@ import org.springframework.stereotype.Component;
 /**
  * config Listener
  */
-@Component
 public class ConfigListener {
 
     @Autowired

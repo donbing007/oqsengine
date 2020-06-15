@@ -22,6 +22,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.config.engine.VersionedJsonConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.ConfigType;
 import com.xforceplus.ultraman.oqsengine.sdk.event.config.ConfigChangeEvent;
+import com.xforceplus.ultraman.oqsengine.sdk.listener.ConfigListener;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -175,6 +176,11 @@ public class RuntimeConfigAutoConfiguration {
 
         engine.setConverter(converter);
         return engine;
+    }
+
+    @Bean
+    public ConfigListener configListener(){
+        return new ConfigListener();
     }
 
     @Bean
