@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfiguration;
+import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.RuntimeConfigAutoConfiguration;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
@@ -47,6 +48,7 @@ import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKe
         , ServiceInvokerAutoConfiguration.class
         , AsyncTaskExecutorAutoConfiguration.class
         , ServiceDispatcherAutoConfiguration.class
+        , RuntimeConfigAutoConfiguration.class
         , com.xforceplus.xplat.galaxy.framework.configuration.ContextConfiguration.class
         , RestTemplateAutoConfiguration.class
 })
