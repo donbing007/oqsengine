@@ -37,13 +37,16 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * runtime configuration
+ */
 @Configuration
 public class RuntimeConfigAutoConfiguration {
 
     private Logger logger = LoggerFactory.getLogger(RuntimeConfigAutoConfiguration.class);
 
     @Bean
-    public Kryo kryo(){
+    public Kryo kryo() {
         Kryo kryo = new Kryo();
         kryo.setInstantiatorStrategy(new DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
         kryo.setRegistrationRequired(false);
@@ -52,29 +55,29 @@ public class RuntimeConfigAutoConfiguration {
 
     //TODO config
     @Bean
-    public EventStratregy jsonJsonEventStrategy(){
+    public EventStratregy jsonJsonEventStrategy() {
         return new DefaultJsonEventStrategy();
     }
 
     //TODO config
     @Bean
-    public DiscardStrategy discardStrategy(){
+    public DiscardStrategy discardStrategy() {
         return new VersiondDiscardStrategy();
     }
 
     @Bean
-    public ObjectMapper objectMapper(){
+    public ObjectMapper objectMapper() {
         return new ObjectMapper();
     }
 
     @ConditionalOnProperty(value = "xplat.oqsengine.sdk.config.file.enabled", matchIfMissing = true)
-    @ConditionalOnBean(value = { EventStratregy.class, DiscardStrategy.class })
+    @ConditionalOnBean(value = {EventStratregy.class, DiscardStrategy.class})
     @Bean
     public ConfigurationStorage fileStorage(@Value("${xplat.oqsengine.sdk.config.file.root:/}") String root
             , Kryo kryo
             , EventStratregy eventStratregy
             , DiscardStrategy discardStrategy
-    ){
+    ) {
         ConfigurationStorage fileStorage = new DefaultFileConfigurationStorage(
                 root
                 , kryo
@@ -84,9 +87,9 @@ public class RuntimeConfigAutoConfiguration {
         return fileStorage;
     }
 
-   // @ConditionalOnBean(value = { Kryo.class, ConfigurationStorage.class })
+    // @ConditionalOnBean(value = { Kryo.class, ConfigurationStorage.class })
     @Bean("moduleConfigEngine")
-    public ConfigurationEngine<ModuleUpResult, JsonConfigNode> engineForModule(ConfigurationStorage storage, ObjectMapper mapper){
+    public ConfigurationEngine<ModuleUpResult, JsonConfigNode> engineForModule(ConfigurationStorage storage, ObjectMapper mapper) {
 
         ConfigurationEngine<ModuleUpResult, JsonConfigNode> engine = new ConfigurationEngine<>();
         engine.setConfigurationStorage(storage);
@@ -107,7 +110,7 @@ public class RuntimeConfigAutoConfiguration {
     }
 
     @Bean("dictConfigEngine")
-    public ConfigurationEngine<DictUpResult, JsonConfigNode> engineForDict(ConfigurationStorage storage, ObjectMapper mapper, AuthSearcherConfig config){
+    public ConfigurationEngine<DictUpResult, JsonConfigNode> engineForDict(ConfigurationStorage storage, ObjectMapper mapper, AuthSearcherConfig config) {
 
         ConfigurationEngine<DictUpResult, JsonConfigNode> engine = new ConfigurationEngine<>();
         engine.setConfigurationStorage(storage);
@@ -116,7 +119,7 @@ public class RuntimeConfigAutoConfiguration {
         ConfigConverter<DictUpResult, JsonConfigNode> converter = customConfig -> {
             try {
                 String json = JsonFormat.printer().print(customConfig);
-                if(!customConfig.getDictsList().isEmpty()) {
+                if (!customConfig.getDictsList().isEmpty()) {
                     return new VersionedJsonConfig(customConfig.getDicts(0).getVersion(), ConfigType.DICT.name(), config.getAppId(), mapper.readTree(json), null);
                 }
             } catch (IOException e) {
@@ -131,7 +134,7 @@ public class RuntimeConfigAutoConfiguration {
     }
 
     @Bean("formConfigEngine")
-    public ConfigurationEngine<UltForm, JsonConfigNode> engineForForm(ConfigurationStorage storage, ObjectMapper mapper){
+    public ConfigurationEngine<UltForm, JsonConfigNode> engineForForm(ConfigurationStorage storage, ObjectMapper mapper) {
 
         ConfigurationEngine<UltForm, JsonConfigNode> engine = new ConfigurationEngine<>();
         engine.setConfigurationStorage(storage);
@@ -152,9 +155,9 @@ public class RuntimeConfigAutoConfiguration {
     }
 
 
-    @ConditionalOnBean(value = { Kryo.class, ConfigurationStorage.class })
+    @ConditionalOnBean(value = {Kryo.class, ConfigurationStorage.class})
     @Bean("pageConfigEngine")
-    public ConfigurationEngine<UltPage, JsonConfigNode> engineForPage(ConfigurationStorage storage, ObjectMapper mapper){
+    public ConfigurationEngine<UltPage, JsonConfigNode> engineForPage(ConfigurationStorage storage, ObjectMapper mapper) {
 
         ConfigurationEngine<UltPage, JsonConfigNode> engine = new ConfigurationEngine<>();
         engine.setConfigurationStorage(storage);
@@ -180,8 +183,8 @@ public class RuntimeConfigAutoConfiguration {
             , ConfigurationEngine<UltPage, JsonConfigNode> pageConfigEngine
             , ConfigurationEngine<UltForm, JsonConfigNode> formConfigEngine
             , ConfigurationEngine<ModuleUpResult, JsonConfigNode> moduleConfigEngine
-            , ApplicationEventPublisher publisher){
-        return new SmartInitializingSingleton(){
+            , ApplicationEventPublisher publisher) {
+        return new SmartInitializingSingleton() {
 
             @Override
             public void afterSingletonsInstantiated() {
@@ -214,7 +217,7 @@ public class RuntimeConfigAutoConfiguration {
                     publisher.publishEvent(new ConfigChangeEvent(x.getType(), x));
                 }));
 
-                Optional.ofNullable(formConfigEngine.getObservable()).ifPresent(ob ->ob.subscribe(x -> {
+                Optional.ofNullable(formConfigEngine.getObservable()).ifPresent(ob -> ob.subscribe(x -> {
                     logger.info("Get New Form-------------------");
                     publisher.publishEvent(new ConfigChangeEvent(x.getType(), x));
                 }));

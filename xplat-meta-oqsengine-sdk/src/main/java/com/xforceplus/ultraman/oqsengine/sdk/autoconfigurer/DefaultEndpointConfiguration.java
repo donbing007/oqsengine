@@ -42,4 +42,7 @@ public class DefaultEndpointConfiguration {
     public EntityController entityController(){
         return new EntityController();
     }
+
+    @Bean
+    public ConfigController configController(){ return new ConfigController(); }
 }

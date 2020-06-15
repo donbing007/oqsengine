@@ -23,63 +23,63 @@ public class FieldHelper {
      * @return
      */
     public static IEntityField toEntityClassField(Row row) {
-        Long id = 0l;
+        Long id = 0L;
         try {
             id = RowUtils.getRowValue(row, "id")
                     .map(String::valueOf)
                     .map(Long::valueOf)
                     .orElse(-1L);
-        }catch(Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         String name = RowUtils.getRowValue(row, "code").map(String::valueOf).orElse("");
         FieldType fieldType = RowUtils.getRowValue(row, "fieldType")
-            .map(String::valueOf)
-            .map(FieldType::fromRawType)
-            .orElse(FieldType.STRING);
+                .map(String::valueOf)
+                .map(FieldType::fromRawType)
+                .orElse(FieldType.STRING);
 
         Boolean searchable = RowUtils.getRowValue(row, "searchable")
-            .map(String::valueOf)
-            .map(Boolean::valueOf).orElse(false);
+                .map(String::valueOf)
+                .map(Boolean::valueOf).orElse(false);
 
         Boolean identifier = RowUtils.getRowValue(row, "identifier")
-            .map(String::valueOf)
-            .map(Boolean::valueOf).orElse(false);
+                .map(String::valueOf)
+                .map(Boolean::valueOf).orElse(false);
 
         Boolean required = RowUtils.getRowValue(row, "required")
-            .map(String::valueOf)
-            .map(Boolean::valueOf).orElse(false);
+                .map(String::valueOf)
+                .map(Boolean::valueOf).orElse(false);
 
         Long max = RowUtils.getRowValue(row, "maxLength")
-            .flatMap(OptionalHelper::ofEmptyStr)
-            .map(Long::valueOf).orElse(-1L);
+                .flatMap(OptionalHelper::ofEmptyStr)
+                .map(Long::valueOf).orElse(-1L);
 
         Integer precision = RowUtils.getRowValue(row, "precision")
-            .flatMap(OptionalHelper::ofEmptyStr)
-            .map(Integer::valueOf).orElse(0);
+                .flatMap(OptionalHelper::ofEmptyStr)
+                .map(Integer::valueOf).orElse(0);
 
         String defaultValue = RowUtils.getRowValue(row, "defaultValue")
-            .map(String::valueOf).orElse("");
+                .map(String::valueOf).orElse("");
 
         String dictId = RowUtils.getRowValue(row, "dictId")
-            .map(String::valueOf).orElse("");
+                .map(String::valueOf).orElse("");
 
         String validateRule = RowUtils.getRowValue(row, "validateRule")
-            .map(String::valueOf).orElse("");
+                .map(String::valueOf).orElse("");
 
 
         String displayType = RowUtils.getRowValue(row, FieldTable.DISPLAY_TYPE)
                 .map(String::valueOf).orElse("");
 
         FieldConfig fieldConfig = FieldConfig
-            .build()
-            .searchable(searchable)
-            .max(max)
-            .required(required)
-            .precision(precision)
-            .identifie(identifier)
-            .displayType(displayType)
-            .validateRegexString(validateRule);
+                .build()
+                .searchable(searchable)
+                .max(max)
+                .required(required)
+                .precision(precision)
+                .identifie(identifier)
+                .displayType(displayType)
+                .validateRegexString(validateRule);
         String cnName = RowUtils.getRowValue(row, "name").map(String::valueOf).orElse("");
 
         return new EntityField(id, name, cnName, fieldType, fieldConfig, dictId, defaultValue);
@@ -88,9 +88,9 @@ public class FieldHelper {
 
     public static IEntityField toEntityClassFieldFromRel(Row row, String boCode) {
         Long id = RowUtils.getRowValue(row, "id")
-            .map(String::valueOf)
-            .map(Long::valueOf)
-            .orElse(-1L);
+                .map(String::valueOf)
+                .map(Long::valueOf)
+                .orElse(-1L);
 
         //TODO current is id
         //fixed
@@ -98,8 +98,8 @@ public class FieldHelper {
         FieldType fieldType = FieldType.LONG;
 
         FieldConfig fieldConfig = FieldConfig
-            .build()
-            .searchable(true);
+                .build()
+                .searchable(true);
         return new EntityField(id, name, fieldType, fieldConfig);
     }
 }

@@ -114,12 +114,12 @@
 
     <distributionManagement>
         <repository>
-            <id>xplat-releases</id>
+            <id>com</id>
             <name>Nexus Release Repository</name>
             <url>${repository.host}/content/repositories/releases/</url>
         </repository>
         <snapshotRepository>
-            <id>xplat-snapshots</id>
+            <id>com</id>
             <name>Nexus Snapshot Repository</name>
             <url>${repository.host}/content/repositories/snapshots/</url>
         </snapshotRepository>

@@ -6,6 +6,9 @@ import com.xforceplus.ultraman.config.json.impl.DefaultJsonConfigNode;
 
 import java.util.Optional;
 
+/**
+ * versioned json config
+ */
 public class VersionedJsonConfig extends DefaultJsonConfigNode implements Versioned {
 
     private String version;
