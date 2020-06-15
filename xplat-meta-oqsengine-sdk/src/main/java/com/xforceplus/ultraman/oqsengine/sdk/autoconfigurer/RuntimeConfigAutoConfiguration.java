@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.config.event.ChangeList;
 import com.xforceplus.ultraman.config.json.JsonConfigNode;
 import com.xforceplus.ultraman.config.storage.ConfigurationStorage;
 import com.xforceplus.ultraman.config.storage.impl.DefaultFileConfigurationStorage;
+import com.xforceplus.ultraman.config.storage.impl.DefaultInMemoryConfigurationStorage;
 import com.xforceplus.ultraman.config.stratregy.DiscardStrategy;
 import com.xforceplus.ultraman.config.stratregy.VersiondDiscardStrategy;
 import com.xforceplus.ultraman.config.stratregy.impl.DefaultJsonEventStrategy;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -73,7 +75,23 @@ public class RuntimeConfigAutoConfiguration {
         return new ObjectMapper();
     }
 
-    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.config.file.enabled", matchIfMissing = true)
+    @ConditionalOnMissingBean(ConfigurationStorage.class)
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.config.mem.enabled", matchIfMissing = true)
+    @ConditionalOnBean(value = {EventStratregy.class, DiscardStrategy.class})
+    @Bean
+    public ConfigurationStorage memStorage(
+            EventStratregy eventStratregy
+            , DiscardStrategy discardStrategy
+    ) {
+        ConfigurationStorage memStorage = new DefaultInMemoryConfigurationStorage(
+                  eventStratregy
+                , discardStrategy);
+
+        return memStorage;
+    }
+
+    @ConditionalOnMissingBean(ConfigurationStorage.class)
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.config.file.enabled", matchIfMissing = false)
     @ConditionalOnBean(value = {EventStratregy.class, DiscardStrategy.class})
     @Bean
     public ConfigurationStorage fileStorage(@Value("${xplat.oqsengine.sdk.config.file.root:/}") String root
