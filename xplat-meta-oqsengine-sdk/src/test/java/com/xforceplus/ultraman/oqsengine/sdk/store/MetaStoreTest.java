@@ -59,7 +59,7 @@ public class MetaStoreTest {
         querys.forEach(Thread::start);
 
         try {
-            Thread.sleep(100000);
+            Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
