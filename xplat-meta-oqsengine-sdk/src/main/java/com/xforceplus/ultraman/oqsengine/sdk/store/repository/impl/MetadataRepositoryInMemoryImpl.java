@@ -34,6 +34,8 @@ import org.apache.metamodel.pojo.PojoDataContext;
 import org.apache.metamodel.pojo.TableDataProvider;
 import org.apache.metamodel.schema.Table;
 import org.apache.metamodel.util.SimpleTableDef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.*;
@@ -58,6 +60,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     private int maxVersion = 3;
 
+    Logger logger = LoggerFactory.getLogger(MetadataRepository.class);
 
     public MetadataRepositoryInMemoryImpl() {
         this(-1, null);
@@ -266,8 +269,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             String version = moduleUpResult.getVersion();
             long moduleId = moduleUpResult.getId();
 
-
-
+            logger.info("------- Version {} Got For {}", version, moduleId);
 
             versionService.saveModule(moduleId, version
                     , moduleUpResult.getBoUpsList().stream().flatMap(x -> {
@@ -280,10 +282,13 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             UpdateableDataContext versionedDCForModule = versionService.getVersionedDCForModule(moduleId, version);
 
             moduleUpResult.getBoUpsList().forEach(boUp -> {
-                //TODO
+                //clear bo
                 clearAllBoIdRelated(boUp.getId(), moduleId, versionedDCForModule);
+                logger.info("Clear Bo:{}", boUp.getId());
+
                 //insert bo
                 insertBo(moduleId, boUp, versionedDCForModule);
+                logger.info("Insert Bo:{}",  boUp.getId());
             });
             return null;
         });
@@ -389,9 +394,11 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     @Override
     public Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode) {
 
-        UpdateableDataContext dc = versionService.getCurrentVersionDCForBoByCode(boCode);
-        return Optional.ofNullable(dc).flatMap(contextDC ->
-                this.loadByCode(tenantId, appCode, boCode, contextDC));
+        return read(() -> {
+            UpdateableDataContext dc = versionService.getCurrentVersionDCForBoByCode(boCode);
+            return Optional.ofNullable(dc).flatMap(contextDC ->
+                    this.loadByCode(tenantId, appCode, boCode, contextDC));
+        });
     }
 
     /**

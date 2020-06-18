@@ -1,7 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.sdk;
 
 import com.alibaba.fastjson.JSONObject;
+import com.xforceplus.ultraman.metadata.grpc.BoUp;
+import com.xforceplus.ultraman.metadata.grpc.Field;
+import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.sdk.configuration.TestApplicationContextInitializer;
@@ -24,6 +28,8 @@ import org.springframework.test.util.AssertionErrors;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
@@ -278,8 +284,6 @@ public class ImageRelatedTest extends ContextWareBaseTest {
                 entityService.findByConditionWithIds(ticket.get()
                         , Arrays.asList(id1, id2, id3)
                         , new ConditionQueryRequest());
-
-        System.out.println(byConditionWithIds);
 
         assertEquals("records is equals 3", 3, (int) byConditionWithIds.get()._1());
 
@@ -610,5 +614,60 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         System.out.println(id);
 
         System.out.println(entityService.findOne(label.get(), id));
+    }
+
+    @Test
+    public void mockSearch() {
+        IEntityClass entityClass = new EntityClass(1259072162662416385L, "xx", Collections.emptyList());
+
+        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().build()));
+
+
+        IEntityClass entityClassReal = entityService.loadByCode("purchaseBill").get();
+
+
+        System.out.println(entityService.findByCondition(entityClassReal, new RequestBuilder().build()));
+
+    }
+
+    @Test
+    public void errorTest() throws InterruptedException {
+        IEntityClass entityClassReal = entityService.loadByCode("purchaseBill").get();
+
+        CountDownLatch latch = new CountDownLatch(400);
+
+        IntStream.range(0, 200)
+                .mapToObj(i -> new Thread(() -> {
+
+                            System.out.println("Get newest: " + i);
+                            System.out.println(entityService
+                                    .loadByCode("purchaseBill"));
+                            latch.countDown();
+                        })
+
+                ).forEach(Thread::start);
+
+        IntStream.range(0, 200).mapToObj(i -> new Thread(() -> {
+
+            ModuleUpResult build = ModuleUpResult.newBuilder()
+                    .setId(1226840497121304578L)
+                    .setVersion(i + "")
+                    .addBoUps(BoUp.newBuilder()
+                            .setId("1259072162662416385")
+                            .setCode("purchaseBill")
+                            .addFields(Field.newBuilder()
+                                    .setId("1111111")
+                                    .setCode("222222")
+                                    .build())
+                            .build())
+                    .build();
+
+            store.save(build, "", "5");
+            latch.countDown();
+
+        })).forEach(Thread::start);
+
+
+        latch.await();
     }
 }

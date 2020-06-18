@@ -12,8 +12,8 @@ import com.xforceplus.ultraman.config.ConfigurationEngine;
 import com.xforceplus.ultraman.config.json.JsonConfigNode;
 import com.xforceplus.ultraman.config.storage.ConfigurationStorage;
 import com.xforceplus.ultraman.config.storage.impl.DefaultFileConfigurationStorage;
-import com.xforceplus.ultraman.config.stratregy.VersiondDiscardStrategy;
-import com.xforceplus.ultraman.config.stratregy.impl.DefaultJsonEventStrategy;
+import com.xforceplus.ultraman.config.strategy.VersiondDiscardStrategy;
+import com.xforceplus.ultraman.config.strategy.impl.DefaultJsonEventStrategy;
 import com.xforceplus.ultraman.metadata.grpc.CheckServiceClient;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
@@ -146,8 +146,8 @@ public class InitServiceAutoConfiguration {
 
     @ConditionalOnMissingBean(MetadataRepository.class)
     @Bean
-    public MetadataRepository metadataRepository(@Value("${xplat.oqsengine.sdk.max-version:3}") Integer isOverride, ApplicationEventPublisher publisher ) {
-        return new MetadataRepositoryInMemoryImpl(3, publisher);
+    public MetadataRepository metadataRepository(@Value("${xplat.oqsengine.sdk.max-version:3}") Integer versionSize, ApplicationEventPublisher publisher ) {
+        return new MetadataRepositoryInMemoryImpl(versionSize, publisher);
     }
 
     //service

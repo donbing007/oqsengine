@@ -6,15 +6,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.util.JsonFormat;
 import com.xforceplus.ultraman.config.ConfigConverter;
 import com.xforceplus.ultraman.config.ConfigurationEngine;
-import com.xforceplus.ultraman.config.EventStratregy;
+import com.xforceplus.ultraman.config.EventStrategy;
 import com.xforceplus.ultraman.config.event.ChangeList;
 import com.xforceplus.ultraman.config.json.JsonConfigNode;
 import com.xforceplus.ultraman.config.storage.ConfigurationStorage;
 import com.xforceplus.ultraman.config.storage.impl.DefaultFileConfigurationStorage;
 import com.xforceplus.ultraman.config.storage.impl.DefaultInMemoryConfigurationStorage;
-import com.xforceplus.ultraman.config.stratregy.DiscardStrategy;
-import com.xforceplus.ultraman.config.stratregy.VersiondDiscardStrategy;
-import com.xforceplus.ultraman.config.stratregy.impl.DefaultJsonEventStrategy;
+import com.xforceplus.ultraman.config.strategy.DiscardStrategy;
+import com.xforceplus.ultraman.config.strategy.VersiondDiscardStrategy;
+import com.xforceplus.ultraman.config.strategy.impl.DefaultJsonEventStrategy;
 import com.xforceplus.ultraman.metadata.grpc.DictUpResult;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.UltForm;
@@ -60,7 +60,7 @@ public class RuntimeConfigAutoConfiguration {
 
     //TODO config
     @Bean
-    public EventStratregy jsonJsonEventStrategy() {
+    public EventStrategy jsonJsonEventStrategy() {
         return new DefaultJsonEventStrategy();
     }
 
@@ -77,10 +77,10 @@ public class RuntimeConfigAutoConfiguration {
 
     @ConditionalOnMissingBean(ConfigurationStorage.class)
     @ConditionalOnProperty(value = "xplat.oqsengine.sdk.config.mem.enabled", matchIfMissing = true)
-    @ConditionalOnBean(value = {EventStratregy.class, DiscardStrategy.class})
+    @ConditionalOnBean(value = {EventStrategy.class, DiscardStrategy.class})
     @Bean
     public ConfigurationStorage memStorage(
-            EventStratregy eventStratregy
+            EventStrategy eventStratregy
             , DiscardStrategy discardStrategy
     ) {
         ConfigurationStorage memStorage = new DefaultInMemoryConfigurationStorage(
@@ -92,11 +92,11 @@ public class RuntimeConfigAutoConfiguration {
 
     @ConditionalOnMissingBean(ConfigurationStorage.class)
     @ConditionalOnProperty(value = "xplat.oqsengine.sdk.config.file.enabled", matchIfMissing = false)
-    @ConditionalOnBean(value = {EventStratregy.class, DiscardStrategy.class})
+    @ConditionalOnBean(value = {EventStrategy.class, DiscardStrategy.class})
     @Bean
     public ConfigurationStorage fileStorage(@Value("${xplat.oqsengine.sdk.config.file.root:/}") String root
             , Kryo kryo
-            , EventStratregy eventStratregy
+            , EventStrategy eventStratregy
             , DiscardStrategy discardStrategy
     ) {
         ConfigurationStorage fileStorage = new DefaultFileConfigurationStorage(
