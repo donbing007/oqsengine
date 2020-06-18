@@ -311,7 +311,7 @@ public class SphinxQLIndexStorageTest {
 
     private Collection<Case> buildSelectCase() {
 
-        Page limitOnePage = new Page(1, 10);
+        Page limitOnePage = new Page();
         limitOnePage.setVisibleTotalCount(1);
 
         return Arrays.asList(
@@ -746,6 +746,24 @@ public class SphinxQLIndexStorageTest {
                 new Page(),
                 refs -> {
                     Assert.assertEquals(5, refs.size());
+                    return true;
+                }
+            )
+            // 空数据匹配.
+            ,
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        stringsField,
+                        ConditionOperator.MULTIPLE_EQUALS,
+                        new StringsValue(stringsField, "iqoweiqweq"),
+                        new StringsValue(stringsField, "nbbbb")
+                    )
+                ),
+                entityClass,
+                new Page(),
+                refs -> {
+                    Assert.assertEquals(0, refs.size());
                     return true;
                 }
             )
