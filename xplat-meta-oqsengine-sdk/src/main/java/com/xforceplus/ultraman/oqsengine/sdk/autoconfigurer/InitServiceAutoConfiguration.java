@@ -146,8 +146,8 @@ public class InitServiceAutoConfiguration {
 
     @ConditionalOnMissingBean(MetadataRepository.class)
     @Bean
-    public MetadataRepository metadataRepository(@Value("${xplat.oqsengine.sdk.max-version:3}") Integer isOverride, ApplicationEventPublisher publisher ) {
-        return new MetadataRepositoryInMemoryImpl(3, publisher);
+    public MetadataRepository metadataRepository(@Value("${xplat.oqsengine.sdk.max-version:3}") Integer versionSize, ApplicationEventPublisher publisher ) {
+        return new MetadataRepositoryInMemoryImpl(versionSize, publisher);
     }
 
     //service
