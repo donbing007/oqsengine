@@ -428,16 +428,20 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     @Override
     public List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId) {
-        return Optional.ofNullable(versionService.getCurrentVersionDCForBoById(Long.parseLong(parentId)))
-                .map(x -> this.findSubEntitiesById(tenantId, appId, parentId, x))
-                .orElseGet(Collections::emptyList);
+        return read(() -> {
+            return Optional.ofNullable(versionService.getCurrentVersionDCForBoById(Long.parseLong(parentId)))
+                    .map(x -> this.findSubEntitiesById(tenantId, appId, parentId, x))
+                    .orElseGet(Collections::emptyList);
+        });
     }
 
     @Override
     public List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId, String version) {
-        return Optional.ofNullable(versionService.getVersionedDCForBoById(Long.parseLong(parentId), version))
-                .map(x -> this.findSubEntitiesById(tenantId, appId, parentId, x))
-                .orElseGet(Collections::emptyList);
+        return read(() -> {
+            return Optional.ofNullable(versionService.getVersionedDCForBoById(Long.parseLong(parentId), version))
+                    .map(x -> this.findSubEntitiesById(tenantId, appId, parentId, x))
+                    .orElseGet(Collections::emptyList);
+        });
     }
 
     private List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId, UpdateableDataContext contextDC) {
@@ -481,21 +485,25 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     @Override
     public List<EntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode) {
 
-        UpdateableDataContext contextDC = versionService.getCurrentVersionDCForBoByCode(parentCode);
+        return read(() -> {
+            UpdateableDataContext contextDC = versionService.getCurrentVersionDCForBoByCode(parentCode);
 
-        return Optional.ofNullable(contextDC)
-                .map(x -> findSubEntitiesByCode(tenantId, appId, parentCode, x))
-                .orElseGet(Collections::emptyList);
+            return Optional.ofNullable(contextDC)
+                    .map(x -> findSubEntitiesByCode(tenantId, appId, parentCode, x))
+                    .orElseGet(Collections::emptyList);
+        });
     }
 
     @Override
     public List<EntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode, String version) {
 
-        UpdateableDataContext contextDC = versionService.getVersionedDCForBoByCode(parentCode, version);
+        return read(() -> {
+            UpdateableDataContext contextDC = versionService.getVersionedDCForBoByCode(parentCode, version);
 
-        return Optional.ofNullable(contextDC)
-                .map(x -> findSubEntitiesByCode(tenantId, appId, parentCode, x))
-                .orElseGet(Collections::emptyList);
+            return Optional.ofNullable(contextDC)
+                    .map(x -> findSubEntitiesByCode(tenantId, appId, parentCode, x))
+                    .orElseGet(Collections::emptyList);
+        });
     }
 
     /**
@@ -509,21 +517,28 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     @Override
     public Optional<EntityClass> load(String tenantId, String appCode, String boId) {
 
-        UpdateableDataContext dc = versionService.getCurrentVersionDCForBoById(Long.parseLong(boId));
-        return Optional.ofNullable(dc).flatMap(x -> this.load(tenantId, appCode, boId, x));
+        return read(() -> {
+            UpdateableDataContext dc = versionService.getCurrentVersionDCForBoById(Long.parseLong(boId));
+            return Optional.ofNullable(dc).flatMap(x -> this.load(tenantId, appCode, boId, x));
+        });
 
     }
 
     @Override
     public Optional<EntityClass> load(String tenantId, String appCode, String boId, String version) {
-        UpdateableDataContext contextDc = versionService.getVersionedDCForBoById(Long.parseLong(boId), version);
-        return Optional.ofNullable(contextDc).flatMap(x -> load(tenantId, appCode, boId, x));
+        return read(() -> {
+            UpdateableDataContext contextDc = versionService.getVersionedDCForBoById(Long.parseLong(boId), version);
+            return Optional.ofNullable(contextDc).flatMap(x -> load(tenantId, appCode, boId, x));
+        });
     }
 
     @Override
     public Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode, String version) {
-        UpdateableDataContext contextDc = versionService.getVersionedDCForBoByCode(boCode, version);
-        return Optional.ofNullable(contextDc).flatMap(x -> loadByCode(tenantId, appCode, boCode, x));
+
+        return read(() -> {
+            UpdateableDataContext contextDc = versionService.getVersionedDCForBoByCode(boCode, version);
+            return Optional.ofNullable(contextDc).flatMap(x -> loadByCode(tenantId, appCode, boCode, x));
+        });
     }
 
     private Optional<EntityClass> load(String tenantId, String appCode, String boId, UpdateableDataContext contextDC) {
@@ -662,14 +677,18 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     @Override
     public SimpleBoItem findOneById(String boId) {
-        UpdateableDataContext dc = versionService.getCurrentVersionDCForBoById(Long.parseLong(boId));
-        return Optional.ofNullable(dc).map(x -> this.findOneById(boId, dc)).orElse(null);
+        return read(() -> {
+            UpdateableDataContext dc = versionService.getCurrentVersionDCForBoById(Long.parseLong(boId));
+            return Optional.ofNullable(dc).map(x -> this.findOneById(boId, dc)).orElse(null);
+        });
     }
 
     @Override
     public SimpleBoItem findOneById(String boId, String version) {
-        UpdateableDataContext dc = versionService.getVersionedDCForBoById(Long.parseLong(boId), version);
-        return Optional.ofNullable(dc).map(x -> this.findOneById(boId, dc)).orElse(null);
+        return read(() -> {
+            UpdateableDataContext dc = versionService.getVersionedDCForBoById(Long.parseLong(boId), version);
+            return Optional.ofNullable(dc).map(x -> this.findOneById(boId, dc)).orElse(null);
+        });
     }
 
     public SimpleBoItem findOneById(String boId, UpdateableDataContext contextDC) {
@@ -697,15 +716,17 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     @Override
     public List<EntityClass> findAllEntities() {
 
-        return versionService.getBoModuleMapping().entrySet().stream().map(x -> {
-            Long boId = x.getKey().getId();
-            LinkedList<Tuple2<Long, String>> value = x.getValue();
-            String version = value.getLast()._2();
+        return read(() -> {
+            return versionService.getBoModuleMapping().entrySet().stream().map(x -> {
+                Long boId = x.getKey().getId();
+                LinkedList<Tuple2<Long, String>> value = x.getValue();
+                String version = value.getLast()._2();
 
-            UpdateableDataContext versionedDCForBoId = versionService.getVersionedDCForBoById(boId, version);
-            return load("", "", String.valueOf(boId), versionedDCForBoId);
-        }).filter(Optional::isPresent).map(Optional::get)
-                .collect(Collectors.toList());
+                UpdateableDataContext versionedDCForBoId = versionService.getVersionedDCForBoById(boId, version);
+                return load("", "", String.valueOf(boId), versionedDCForBoId);
+            }).filter(Optional::isPresent).map(Optional::get)
+                    .collect(Collectors.toList());
+        });
     }
 
     private List<EntityClass> findAllEntities(UpdateableDataContext contextDC) {
@@ -728,7 +749,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     //TODO
     @Override
     public CurrentVersion currentVersion() {
-        return new CurrentVersion(versionService.getCurrentVersion());
+        return read(() -> {
+            return new CurrentVersion(versionService.getCurrentVersion());
+        });
     }
 
     private void insertBoTable(String id, String moduleId, String code, String parentId, String name, UpdateableDataContext contextDC) {

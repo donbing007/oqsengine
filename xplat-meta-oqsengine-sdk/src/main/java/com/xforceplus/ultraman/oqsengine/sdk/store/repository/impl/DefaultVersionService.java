@@ -34,6 +34,7 @@ public class DefaultVersionService implements VersionService {
      */
     private Map<BoNode, LinkedList<Tuple2<Long, String>>> boModuleMapping = new HashMap<>();
 
+    //RingDC a DC context in RingBuffer
     private RingDCHolder dc;
 
     private int versionSize;
@@ -185,24 +186,24 @@ public class DefaultVersionService implements VersionService {
     @Override
     public synchronized UpdateableDataContext getCurrentVersionDCForBoByCode(String code) {
 
-        logger.debug("select code {}" , code);
+        logger.debug("select code {}", code);
         LinkedList<Tuple2<Long, String>> versionedList = findByCode(code);
         if (versionedList == null) {
             /**
              * not init
              */
-            logger.debug("current no such version {}" , code);
+            logger.debug("current no such version {}", code);
             return null;
         }
 
         Tuple2<Long, String> last = versionedList.getLast();
 
         if (last != null) {
-            logger.debug("got last version {} for {}" , code, last._2());
+            logger.debug("got last version {} for {}", code, last._2());
             return this.getVersionedDCForModule(last._1(), last._2());
         }
 
-        logger.debug("last version is empty {}" , code);
+        logger.debug("last version is empty {}", code);
         return null;
     }
 
@@ -237,12 +238,24 @@ public class DefaultVersionService implements VersionService {
             });
 
         } else if (!currentVersion.equals(version)) {
+
+            logger.debug("CurrentVersion is {}, Version is {}， VersionSize is {}", currentVersion, version, versionSize);
+
+
             LinkedList<VersionedModule> list = currentVersionForModule.get(id);
+            //TODO fix the bug
             if (list.size() + 1 > versionSize) {
+                logger.debug("version is overflow we need to roll it");
                 list.removeFirst();
             }
 
-            RingDC last = list.getLast().getRingDC();
+            RingDC last;
+            if (list.size() > 0) {
+                last = list.getLast().getRingDC();
+            } else {
+                last = dc.getRoot();
+            }
+
             list.addLast(new VersionedModule(version, boIds, last.next(), System.currentTimeMillis()));
 
             boIds.forEach(boNode -> {

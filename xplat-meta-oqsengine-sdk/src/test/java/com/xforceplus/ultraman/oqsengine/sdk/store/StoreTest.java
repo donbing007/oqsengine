@@ -473,7 +473,7 @@ public class StoreTest {
                         .addBoUps(boupANew())
                         .build();
 
-        MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
+        MetadataRepository repository = new MetadataRepositoryInMemoryImpl(3, null);
         repository.save(version1, "1", "1");
 
         List<IEntityField> fields = repository.load("1", "1", "111111")
