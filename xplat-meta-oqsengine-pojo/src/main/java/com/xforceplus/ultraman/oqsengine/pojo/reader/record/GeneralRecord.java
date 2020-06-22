@@ -29,15 +29,17 @@ public class GeneralRecord implements Record {
     private final Boolean isEmpty;
 
 
-    public static Record empty(){
+    public static Record empty() {
         return new GeneralRecord();
     }
 
-    private GeneralRecord(){
+    private GeneralRecord() {
         isEmpty = true;
         values = null;
         fields = null;
-    };
+    }
+
+    ;
 
     public GeneralRecord(Collection<? extends IEntityField> fields) {
 
@@ -211,7 +213,7 @@ public class GeneralRecord implements Record {
 
     @Override
     public Stream<Tuple2<IEntityField, Object>> stream(Set<String> filterName) {
-        return  IntStream.range(0, fields.length)
+        return IntStream.range(0, fields.length)
                 .mapToObj(i -> {
                     String name = fields[i].name();
                     if (filterName != null && !filterName.isEmpty()) {
@@ -245,6 +247,54 @@ public class GeneralRecord implements Record {
                 });
 
         return map;
+    }
+
+    @Override
+    public Map<String, Object> toNestedMap(Set<String> filterName) {
+
+        Map<String, Object> map = new HashMap<>(values.length);
+
+        IntStream.range(0, values.length)
+                .forEach(i -> {
+                    String name = fields[i].name();
+                    Boolean insert = false;
+                    if (filterName != null && !filterName.isEmpty()) {
+                        if (filterName.contains(name)) {
+                            insert = true;
+                        }
+                    } else {
+                        insert = true;
+                    }
+
+                    if (insert) {
+                        //insert
+                        if (name.contains(".")) {
+                            String[] names = name.split("\\.");
+
+                            Map currentMap = map;
+
+                            for (int index = 0; index < names.length - 1; index++) {
+                                String seg = names[index];
+                                Object segMap = currentMap.get(seg);
+                                if (segMap == null) {
+                                    Map<String, Object> innerMap = new HashMap<>();
+                                    currentMap.put(seg, innerMap);
+                                    currentMap = innerMap;
+                                } else if (segMap instanceof Map) {
+                                    currentMap = (Map) segMap;
+                                }
+                            }
+
+                            currentMap.put(names[names.length - 1], values[i]);
+
+                        } else {
+                            map.put(name, values[i]);
+                        }
+                    }
+                });
+
+        return map;
+
     }
 
     @Override
