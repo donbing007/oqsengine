@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * runtime configuration
  */
+@ConditionalOnProperty(value = "xplat.oqsengine.sdk.enabled", matchIfMissing = true)
 @Configuration
 public class RuntimeConfigAutoConfiguration {
 
