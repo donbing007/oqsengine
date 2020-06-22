@@ -100,10 +100,10 @@ public class EntityServiceNewTest {
      * , String relationType
      * @return
      */
-    private ModuleUpResult manyToOne() {
+    private ModuleUpResult manyToOne(String version) {
         return ModuleUpResult
                 .newBuilder()
-                .setVersion("0.0.2")
+                .setVersion(version)
                 .setId(111111111111L)
                 .addBoUps(BoUp
                         .newBuilder()
@@ -370,10 +370,10 @@ public class EntityServiceNewTest {
 
         Optional<EntityClass> entityClass2 = metadataRepository.load("1", "1", "1");
 
-        metadataRepository.save(manyToOne(), "1", "1");
+        metadataRepository.save(manyToOne("0.0.2"), "1", "1");
 
-        metadataRepository.save(manyToOne(), "1", "1");
-        metadataRepository.save(manyToOne(), "1", "1");
+        metadataRepository.save(manyToOne("0.0.2"), "1", "1");
+        metadataRepository.save(manyToOne("0.0.2"), "1", "1");
 
 
         Optional<EntityClass> entityClass = metadataRepository.load("1", "1", "1");
@@ -441,7 +441,7 @@ public class EntityServiceNewTest {
         //SAVE Threads
         List<Thread> collect1 = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
 
-            metadataRepository.save(manyToOne(), "1", "1");
+            metadataRepository.save(manyToOne("0.0." + i), "1", "1");
             latch.countDown();
 
         })).collect(Collectors.toList());
@@ -462,26 +462,12 @@ public class EntityServiceNewTest {
     @Test
     public void testConcurrent() throws InterruptedException {
 
-//        ScheduledExecutorService scheduledExecutorService =
-//                Executors.newScheduledThreadPool(10);
-//
-//
-//        ScheduledFuture scheduledFuture =
-//                scheduledExecutorService.scheduleAtFixedRate(() -> {
-//                    metadataRepository.save(manyToOne(), "1", "1");
-//                },5, 5, TimeUnit.SECONDS);
-//
-//        ScheduledFuture loadedFuture =
-//                scheduledExecutorService.scheduleAtFixedRate(() -> {
-//                    System.out.println(metadataRepository.load("1", "1", "1"));
-//                },5, 5, TimeUnit.SECONDS);
-
         CountDownLatch latch = new CountDownLatch(20);
 
         //SAVE Threads
         List<Thread> collect1 = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
 
-            metadataRepository.save(manyToOne(), "1", "1");
+            metadataRepository.save(manyToOne("0.0.2"), "1", "1");
             latch.countDown();
 
         })).collect(Collectors.toList());
@@ -503,7 +489,7 @@ public class EntityServiceNewTest {
 
     @Test
     public void testUpdate(){
-        metadataRepository.save(manyToOne(), "1", "1");
+        metadataRepository.save(manyToOne("0.0.2"), "1", "1");
         metadataRepository.save(manyToOneNew(), "1", "1");
     }
 

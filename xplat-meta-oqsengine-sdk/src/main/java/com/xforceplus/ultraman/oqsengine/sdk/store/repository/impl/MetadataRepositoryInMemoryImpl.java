@@ -428,9 +428,11 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     @Override
     public List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId) {
-        return Optional.ofNullable(versionService.getCurrentVersionDCForBoById(Long.parseLong(parentId)))
-                .map(x -> this.findSubEntitiesById(tenantId, appId, parentId, x))
-                .orElseGet(Collections::emptyList);
+        return read(() -> {
+            return Optional.ofNullable(versionService.getCurrentVersionDCForBoById(Long.parseLong(parentId)))
+                    .map(x -> this.findSubEntitiesById(tenantId, appId, parentId, x))
+                    .orElseGet(Collections::emptyList);
+        });
     }
 
     @Override
