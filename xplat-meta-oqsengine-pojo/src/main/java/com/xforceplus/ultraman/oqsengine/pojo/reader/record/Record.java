@@ -55,6 +55,8 @@ public interface Record extends Comparable<Record>  {
 
     Map<String, Object> toMap(Set<String> keys);
 
+    Map<String, Object> toNestedMap(Set<String> keys);
+
     Boolean isEmpty();
 
     Boolean nonEmpty();
