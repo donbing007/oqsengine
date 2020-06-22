@@ -4,8 +4,9 @@ import java.util.Objects;
 
 /**
  * 页面对象配置对象.
- * @version 0.1 2020/2/13 15:30
+ *
  * @author wangzheng
+ * @version 0.1 2020/2/13 15:30
  * @since 1.8
  */
 public class UltPageBo {
@@ -31,6 +32,11 @@ public class UltPageBo {
     private String setting;
 
     /**
+     * 显示位置
+     */
+    private Long sortPlace;
+
+    /**
      * 说明信息
      */
     private String remark;
@@ -43,6 +49,7 @@ public class UltPageBo {
 
     /**
      * 构造方法
+     *
      * @param settingId
      * @param boName
      * @param boCode
@@ -87,6 +94,14 @@ public class UltPageBo {
         this.setting = setting;
     }
 
+    public Long getSortPlace() {
+        return sortPlace;
+    }
+
+    public void setSortPlace(Long sortPlace) {
+        this.sortPlace = sortPlace;
+    }
+
     public String getRemark() {
         return remark;
     }
@@ -94,6 +109,7 @@ public class UltPageBo {
     public void setRemark(String remark) {
         this.remark = remark;
     }
+
 
     @Override
     public boolean equals(Object o) {
