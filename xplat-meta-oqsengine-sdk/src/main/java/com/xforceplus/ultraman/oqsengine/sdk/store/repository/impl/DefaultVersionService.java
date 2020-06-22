@@ -246,7 +246,7 @@ public class DefaultVersionService implements VersionService {
             //TODO fix the bug
             if (list.size() + 1 > versionSize) {
                 logger.debug("version is overflow we need to roll it");
-                list.removeLast();
+                list.removeFirst();
             }
 
             RingDC last;
