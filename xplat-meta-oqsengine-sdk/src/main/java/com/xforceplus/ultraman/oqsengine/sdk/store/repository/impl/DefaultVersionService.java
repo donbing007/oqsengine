@@ -186,24 +186,24 @@ public class DefaultVersionService implements VersionService {
     @Override
     public synchronized UpdateableDataContext getCurrentVersionDCForBoByCode(String code) {
 
-        logger.debug("select code {}" , code);
+        logger.debug("select code {}", code);
         LinkedList<Tuple2<Long, String>> versionedList = findByCode(code);
         if (versionedList == null) {
             /**
              * not init
              */
-            logger.debug("current no such version {}" , code);
+            logger.debug("current no such version {}", code);
             return null;
         }
 
         Tuple2<Long, String> last = versionedList.getLast();
 
         if (last != null) {
-            logger.debug("got last version {} for {}" , code, last._2());
+            logger.debug("got last version {} for {}", code, last._2());
             return this.getVersionedDCForModule(last._1(), last._2());
         }
 
-        logger.debug("last version is empty {}" , code);
+        logger.debug("last version is empty {}", code);
         return null;
     }
 
@@ -250,9 +250,9 @@ public class DefaultVersionService implements VersionService {
             }
 
             RingDC last;
-            if(list.size() > 0) {
+            if (list.size() > 0) {
                 last = list.getLast().getRingDC();
-            }else{
+            } else {
                 last = dc.getRoot();
             }
 
