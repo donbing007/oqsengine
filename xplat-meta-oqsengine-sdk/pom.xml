@@ -5,7 +5,7 @@
     <parent>
         <artifactId>xplat-meta-oqsengine</artifactId>
         <groupId>com.xforceplus.ultraman</groupId>
-        <version>0.1.5-SNAPSHOT</version>
+        <version>0.1.8-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -169,6 +169,14 @@
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
             <version>4.2</version>
+        </dependency>
+
+        <!-- static core version-->
+        <dependency>
+            <groupId>com.xforceplus</groupId>
+            <artifactId>ultraman-bocp-gen-core</artifactId>
+            <version>0.0.12</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
