@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
@@ -246,6 +247,46 @@ public class EntityServiceTest extends ContextWareBaseTest{
 
         entityService.deleteOne(entityClass, id);
     }
+
+
+
+    @Test
+    public void updateByConditionTransTest(){
+
+        AtomicLong atomicLong = new AtomicLong(0);
+        EntityClass entityClass = entity();
+
+        entityService.transactionalExecute(() -> {
+
+
+            Map<String, Object> map3 = new HashMap<>();
+            map3.put("hello", "1");
+            map3.put("defaultfield", "0");
+
+            Either<String, Long> saveResult = entityService.create(entityClass, map3);
+            Long id = saveResult.get();
+
+            atomicLong.set(id);
+
+            //change by another
+            Map<String, Object> firstUpdateBody = new HashMap<>();
+            firstUpdateBody.put("hello", "100");
+            entityService.updateById(entityClass, id, firstUpdateBody);
+
+            Map<String, Object> updateBody = new HashMap<>();
+            updateBody.put("hello", "2");
+
+            Either<String, Integer> updateResult = entityService.updateByCondition(entityClass, new RequestBuilder().field("hello", ConditionOp.eq, "1").build(), updateBody);
+
+            assertTrue("update is not ok", updateResult.isRight());
+            assertEquals("hello is still 100", entityService.findOne(entityClass, id).get().get("hello"), "100");
+
+            throw new RuntimeException("Roll");
+        });
+
+        System.out.println(entityService.findOne(entityClass, atomicLong.get()));
+    }
+
 
 //    @Test
 //    public void testMultiValue(){
