@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.util.DefaultInstantiatorStrategy;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.util.JsonFormat;
 import com.xforceplus.ultraman.config.ConfigConverter;
@@ -51,6 +52,7 @@ public class RuntimeConfigAutoConfiguration {
 
     private Logger logger = LoggerFactory.getLogger(RuntimeConfigAutoConfiguration.class);
 
+    @ConditionalOnMissingBean(Kryo.class)
     @Bean
     public Kryo kryo() {
         Kryo kryo = new Kryo();
@@ -60,20 +62,27 @@ public class RuntimeConfigAutoConfiguration {
     }
 
     //TODO config
+    @ConditionalOnMissingBean(EventStrategy.class)
     @Bean
     public EventStrategy jsonJsonEventStrategy() {
         return new DefaultJsonEventStrategy();
     }
 
     //TODO config
+    @ConditionalOnMissingBean(DiscardStrategy.class)
     @Bean
     public DiscardStrategy discardStrategy() {
         return new VersiondDiscardStrategy();
     }
 
+    @ConditionalOnMissingBean(ObjectMapper.class)
     @Bean
     public ObjectMapper objectMapper() {
-        return new ObjectMapper();
+        ObjectMapper mapper = new ObjectMapper();
+
+        //Ignore
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
     }
 
     @ConditionalOnMissingBean(ConfigurationStorage.class)

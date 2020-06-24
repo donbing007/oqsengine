@@ -13,6 +13,8 @@ service EntityService {
 
     rpc replace (EntityUp) returns (OperationResult);
 
+    rpc replaceByCondition ( SelectByCondition ) returns (OperationResult);
+
     rpc remove ( EntityUp ) returns (OperationResult);
 
     rpc selectOne ( EntityUp ) returns ( OperationResult );
@@ -34,6 +36,7 @@ message SelectByCondition {
     repeated QueryFieldsUp queryFields = 6;
     repeated int64 ids = 7;
 }
+
 
 message ConditionsUp {
     repeated FieldConditionUp fields = 1;

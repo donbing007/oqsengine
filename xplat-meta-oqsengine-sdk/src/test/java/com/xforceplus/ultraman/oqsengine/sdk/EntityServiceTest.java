@@ -33,6 +33,7 @@ import java.util.Optional;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
+import static org.springframework.test.util.AssertionErrors.assertEquals;
 import static org.springframework.test.util.AssertionErrors.assertTrue;
 
 /**
@@ -185,11 +186,15 @@ public class EntityServiceTest extends ContextWareBaseTest{
      */
     private EntityClass entity() {
         FieldConfig fieldConfig = new FieldConfig().searchable(true);
-
         fieldConfig.required(true);
-        EntityClass entityClass = new EntityClass(123L, "TestDefault"
+
+        FieldConfig nonRequiredfieldConfig = new FieldConfig().searchable(true);
+
+        EntityClass entityClass = new EntityClass(123666L, "TestDefault"
                 , Arrays.asList(new EntityField(123L, "defaultfield"
-                , FieldType.STRINGS, fieldConfig)));
+                , FieldType.STRINGS, fieldConfig)
+                , new EntityField(234L, "hello", FieldType.STRING, nonRequiredfieldConfig)
+        ));
 
         return entityClass;
     }
@@ -212,6 +217,34 @@ public class EntityServiceTest extends ContextWareBaseTest{
 
         System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.eq
                 , "1").build()));
+    }
+
+
+    @Test
+    public void updateByCondition(){
+        EntityClass entityClass = entity();
+
+        Map<String, Object> map3 = new HashMap<>();
+        map3.put("hello", "1");
+        map3.put("defaultfield", "0");
+
+        Either<String, Long> saveResult = entityService.create(entityClass, map3);
+        Long id = saveResult.get();
+
+        //change by another
+        Map<String, Object> firstUpdateBody = new HashMap<>();
+        firstUpdateBody.put("hello", "100");
+        entityService.updateById(entityClass, id, firstUpdateBody);
+
+        Map<String, Object> updateBody = new HashMap<>();
+        updateBody.put("hello", "2");
+
+        Either<String, Integer> updateResult = entityService.updateByCondition(entityClass, new RequestBuilder().field("hello", ConditionOp.eq, "1").build(), updateBody);
+
+        assertTrue("update is not ok", updateResult.isRight());
+        assertEquals("hello is still 100", entityService.findOne(entityClass, id).get().get("hello"), "100");
+
+        entityService.deleteOne(entityClass, id);
     }
 
 //    @Test

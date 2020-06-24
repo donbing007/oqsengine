@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,48 +47,6 @@ public class EntityClassToGrpcConverter {
             .addAllFields(entity.fields().stream().map(EntityClassToGrpcConverter::toFieldUp).collect(Collectors.toList()))
             .build();
     }
-
-//    /**
-//     * TODO check
-//     *
-//     * @param entityClass
-//     * @param body
-//     * @return
-//     */
-//    @Deprecated
-//    public static EntityUp toEntityUp(EntityClass entityClass, Long id, Map<String, Object> body) {
-//        //build entityUp
-//        EntityUp.Builder builder = toEntityUpBuilder(entityClass, id);
-//
-//        List<ValueUp> values = body.entrySet().stream()
-//            .map(entry -> {
-//                String key = entry.getKey();
-//                Optional<IEntityField> fieldOp = getKeyFromEntityClass(entityClass, key);
-//                Optional<IEntityField> fieldOpRel = getKeyFromRelation(entityClass, key);
-//                Optional<IEntityField> fieldOpParent = getKeyFromParent(entityClass, key);
-//
-//                Optional<IEntityField> fieldFinal = combine(fieldOp, fieldOpParent, fieldOpRel);
-//
-//                //filter null obj
-//                if (entry.getValue() == null) {
-//                    return Optional.<ValueUp>empty();
-//                }
-//
-//                return fieldFinal.map(field -> {
-//                    return ValueUp.newBuilder()
-//                        .setFieldId(field.id())
-//                        .setFieldType(field.type().getType())
-//                        .setValue(entry.getValue().toString())
-//                        .build();
-//                });
-//            })
-//            .filter(Optional::isPresent)
-//            .map(Optional::get)
-//            .collect(Collectors.toList());
-//
-//        builder.addAllValues(values);
-//        return builder.build();
-//    }
 
     public static EntityUp toEntityUp(IEntityClass entityClass, Long id, List<ValueUp> valueList) {
         //build entityUp
@@ -197,6 +156,39 @@ public class EntityClassToGrpcConverter {
 
         if (ids != null) {
             select.addAllIds(ids);
+        }
+
+        return select.build();
+    }
+
+    public static SelectByCondition toUpdateSelection(IEntityClass entityClass
+            , Supplier<EntityUp> entityUpSupplier
+            , ConditionQueryRequest condition
+            , ConditionsUp conditionsUp) {
+        SelectByCondition.Builder select = SelectByCondition
+                .newBuilder();
+
+        if (condition != null && condition.getPageNo() != null) {
+            select.setPageNo(condition.getPageNo());
+        }
+
+        if (condition != null && condition.getPageSize() != null) {
+            select.setPageSize(condition.getPageSize());
+        }
+
+        if (condition != null && condition.getConditions() != null) {
+            select.setConditions(conditionsUp);
+        }
+
+        if (condition != null && condition.getSort() != null) {
+            select.addAllSort(toSortUp(condition.getSort()));
+        }
+
+        select.setEntity(entityUpSupplier.get());
+
+        EntityItem entityItem = condition.getEntity();
+        if (entityItem != null) {
+            select.addAllQueryFields(toQueryFields(entityClass, entityItem));
         }
 
         return select.build();

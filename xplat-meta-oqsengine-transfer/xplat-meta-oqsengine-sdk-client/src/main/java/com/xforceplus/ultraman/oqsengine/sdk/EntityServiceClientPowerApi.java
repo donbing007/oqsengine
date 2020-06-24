@@ -43,6 +43,17 @@ public abstract class EntityServiceClientPowerApi {
   
     /**
      * Lower level "lifted" version of the method, giving access to request metadata etc.
+     * prefer replaceByCondition(com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition) if possible.
+     */
+    
+      public SingleResponseRequestBuilder<com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replaceByCondition()
+    
+    {
+        throw new java.lang.UnsupportedOperationException();
+    }
+  
+    /**
+     * Lower level "lifted" version of the method, giving access to request metadata etc.
      * prefer remove(com.xforceplus.ultraman.oqsengine.sdk.EntityUp) if possible.
      */
     

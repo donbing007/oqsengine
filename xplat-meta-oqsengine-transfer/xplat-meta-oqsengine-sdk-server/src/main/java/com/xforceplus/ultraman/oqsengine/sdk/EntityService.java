@@ -18,6 +18,9 @@ public interface EntityService {
   java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replace(com.xforceplus.ultraman.oqsengine.sdk.EntityUp in);
   
   
+  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replaceByCondition(com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition in);
+  
+  
   java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> remove(com.xforceplus.ultraman.oqsengine.sdk.EntityUp in);
   
   

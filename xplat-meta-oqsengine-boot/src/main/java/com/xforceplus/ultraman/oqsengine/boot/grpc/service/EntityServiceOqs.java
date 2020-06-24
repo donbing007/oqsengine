@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -139,7 +140,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 if (ds.isPresent()) {
                     IEntity entity = null;
                     if (mode.filter("replace"::equals).isPresent()) {
-                        entity = toEntity(entityClass, in);
+                        //reset the version
+                        entity = toEntity(entityClass, in, ds.get().version());
                     } else {
                         entity = ds.get();
                         updateEntity(entity, toEntity(entityClass, in));
@@ -164,6 +166,122 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                         .buildPartial();
             }
+
+            return result;
+        });
+    }
+
+    @Override
+    public CompletionStage<OperationResult> replaceByCondition(SelectByCondition in, Metadata metadata) {
+        return async(() -> {
+            extractTransaction(metadata).ifPresent(id -> {
+                try {
+                    transactionManagementService.restore(id);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            OperationResult result;
+
+            try {
+                IEntityClass entityClass = toEntityClass(in.getEntity());
+                //---------------------------------
+                Collection<IEntity> entities = null;
+
+                //check if has sub query for more details
+                List<QueryFieldsUp> queryField = in.getQueryFieldsList();
+
+                IEntityClassReader reader = new IEntityClassReader(entityClass);
+
+                Page page = null;
+                List<FieldSortUp> sort = in.getSortList();
+                ConditionsUp conditions = in.getConditions();
+                int pageNo = in.getPageNo();
+                int pageSize = in.getPageSize();
+                page = new Page(pageNo, pageSize);
+
+                Optional<? extends IEntityField> sortField;
+
+                if (sort == null || sort.isEmpty()) {
+                    sortField = Optional.empty();
+                } else {
+                    FieldSortUp sortUp = sort.get(0);
+                    //get related field
+                    sortField = reader.column(sortUp.getCode());
+                }
+
+                if (!sortField.isPresent()) {
+                    Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
+                    if (consOp.isPresent()) {
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
+                    } else {
+                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                    }
+                } else {
+                    FieldSortUp sortUp = sort.get(0);
+                    Sort sortParam;
+                    if (sortUp.getOrder() == FieldSortUp.Order.asc) {
+                        sortParam = Sort.buildAscSort(sortField.get());
+                    } else {
+                        sortParam = Sort.buildDescSort(sortField.get());
+                    }
+
+                    Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
+                    if (consOp.isPresent()) {
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
+
+                    } else {
+                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                    }
+                }
+
+                //----------------------------
+                AtomicInteger affected = new AtomicInteger(0);
+                Optional<String> mode = metadata.getText("mode");
+                if (!entities.isEmpty()) {
+
+                    entities.forEach(entityResult -> {
+
+                        IEntity entityInner = null;
+                        if (mode.filter("replace"::equals).isPresent()) {
+                            //need reset version here
+                            entityInner = toEntity(entityClass, in.getEntity(), entityResult.version());
+                        } else {
+                            //reference here !! so cannot reuse the entities !!!
+                            entityInner = entityResult;
+                            updateEntity(entityInner, toEntity(entityClass, in.getEntity()));
+                        }
+
+                        //side effect
+                        try {
+                            entityManagementService.replace(entityInner);
+                            affected.incrementAndGet();
+                        } catch (SQLException e) {
+                            //TODO
+                            logger.error("{}", e);
+                        }
+                    });
+
+                    result = OperationResult.newBuilder()
+                            .setAffectedRow(affected.intValue())
+                            .setCode(OperationResult.Code.OK)
+                            .buildPartial();
+                } else {
+                    result = OperationResult.newBuilder()
+                            .setCode(OperationResult.Code.OK)
+                            .setMessage("没有更新任何记录")
+                            .setAffectedRow(0)
+                            .buildPartial();
+                }
+            } catch (Exception e) {
+                logger.error("{}", e);
+                result = OperationResult.newBuilder()
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
+            }
+
 
             return result;
         });
@@ -599,6 +717,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     //TODO version
     private IEntity toEntity(IEntityClass entityClass, EntityUp in) {
         return new Entity(in.getObjId(), entityClass, toEntityValue(entityClass, in));
+    }
+
+    private IEntity toEntity(IEntityClass entityClass, EntityUp in, int version) {
+        return new Entity(in.getObjId(), entityClass, toEntityValue(entityClass, in), version);
     }
 
     private Optional<Conditions> toConditions(IEntityClass mainClass, IEntityClassReader reader

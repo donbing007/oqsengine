@@ -140,6 +140,12 @@ public class EntityServicePowerApiHandlerFactory {
               .thenApply(e -> GrpcMarshalling.marshal(e, OperationResultSerializer, writer, system, eHandler));
             break;
           
+          case "replaceByCondition":
+            response = GrpcMarshalling.unmarshal(request.entity().getDataBytes(), SelectByConditionSerializer, mat, reader)
+              .thenCompose(e -> implementation.replaceByCondition(e, metadata))
+              .thenApply(e -> GrpcMarshalling.marshal(e, OperationResultSerializer, writer, system, eHandler));
+            break;
+          
           case "remove":
             response = GrpcMarshalling.unmarshal(request.entity().getDataBytes(), EntityUpSerializer, mat, reader)
               .thenCompose(e -> implementation.remove(e, metadata))

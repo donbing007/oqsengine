@@ -25,8 +25,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.toEntityUp;
-import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.toSelectByCondition;
+import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.*;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
 
 /**
@@ -213,7 +212,7 @@ public class EntityServiceImpl implements EntityService {
 
         List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.UPDATE);
 
-        OperationResult updateResult = entityServiceClient.replace()
+        OperationResult updateResult = replaceBuilder
             .invoke(toEntityUp(entityClass, id, valueUps))
             .toCompletableFuture().join();
 
@@ -231,6 +230,51 @@ public class EntityServiceImpl implements EntityService {
         }
     }
 
+    @Override
+    public Either<String, Integer> updateByCondition(IEntityClass entityClass, ConditionQueryRequest condition, Map<String, Object> body) {
+        String transId = contextService.get(TRANSACTION_KEY);
+
+        SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.replaceByCondition();
+        if (transId != null) {
+            requestBuilder.addHeader("transaction-id", transId);
+        }
+
+
+
+        List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.UPDATE);
+        ConditionsUp conditionsUp = Optional.ofNullable(condition)
+                .map(ConditionQueryRequest::getConditions)
+                .map(x ->
+                        handleQueryValueService
+                                .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY))
+                .orElseGet(() -> ConditionsUp.newBuilder().build());
+
+
+
+        SelectByCondition sbc = toUpdateSelection(entityClass, () -> toEntityUp(entityClass, null, valueUps), condition, conditionsUp);
+
+
+        OperationResult updateResult = requestBuilder
+                .invoke(sbc)
+                .toCompletableFuture().join();
+
+
+        if (updateResult.getCode() == OperationResult.Code.OK) {
+            int rows = updateResult.getAffectedRow();
+
+
+            if (rows > 0) {
+                updateResult.getIdsList().forEach(x -> {
+                    publisher.publishEvent(buildUpdatedEvent(entityClass, x, body));
+                });
+            }
+
+            return Either.right(rows);
+        } else {
+            //indicates
+            return Either.left(updateResult.getMessage());
+        }
+    }
 
     @Override
     public Either<String, Integer> replaceById(IEntityClass entityClass, Long id, Map<String, Object> body) {
@@ -247,7 +291,7 @@ public class EntityServiceImpl implements EntityService {
 
         List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.REPLACE);
 
-        OperationResult updateResult = entityServiceClient.replace()
+        OperationResult updateResult = replaceBuilder
             .invoke(toEntityUp(entityClass, id, valueUps))
             .toCompletableFuture().join();
 
