@@ -79,9 +79,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     IEntity childEntity = buildChildEntity(entityClone, fatherId);
                     childEntity.resetId(childId);
 
-                    warnNoSearchable(fathcerEntity);
-                    warnNoSearchable(childEntity);
-
                     // master
                     masterStorage.build(fathcerEntity); // father
                     masterStorage.build(childEntity); // child
@@ -110,8 +107,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return entity;
 
                 } else {
-
-                    warnNoSearchable(entityClone);
 
                     entity.resetId(idGenerator.next());
                     entityClone.resetId(entity.id());
@@ -165,9 +160,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     fatherEntity.resetId(entity.family().parent());
 
                     IEntity childEntity = buildChildEntity(target, target.family().parent());
-
-                    warnNoSearchable(fatherEntity);
-                    warnNoSearchable(childEntity);
 
                     masterStorage.replace(fatherEntity);
                     masterStorage.replace(childEntity);
@@ -258,6 +250,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     // 构造一个适合索引的 IEntity 实例.
     private IEntity buildIndexEntity(IEntity target) {
         target.entityValue().filter(v -> v.getField().config().isSearchable());
+
+        // 没有任何可搜索的警告.
+        warnNoSearchable(target);
+
         return target;
     }
 
@@ -288,13 +284,17 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return new Entity(entity.id(), entityClass, newValues, family, entity.version());
     }
 
-    // 警告无索引
-    private void warnNoSearchable(IEntity entity) {
+    // true 发起了警告,false 没有发起警告.
+    private boolean warnNoSearchable(IEntity entity) {
         IEntityClass entityClass = entity.entityClass();
         long indexNumber = entityClass.fields().stream().filter(f -> f.config().isSearchable()).count();
         if (indexNumber == 0) {
-            logger.warn("An attempt was made to create an Entity({}) without any index.", entity.id());
+            logger.warn("An attempt was made to create an Entity({})-EntityClass({}) without any index.",
+                entity.id(), entity.id());
+            return true;
         }
+
+        return false;
     }
 
 }
