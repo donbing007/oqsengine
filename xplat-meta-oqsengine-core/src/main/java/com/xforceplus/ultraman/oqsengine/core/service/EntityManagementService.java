@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service;
 
+import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 
 import java.sql.SQLException;
@@ -23,11 +24,11 @@ public interface EntityManagementService {
      * 替换一个已经存在的 entity 的信息.
      * @param entity 目标 entity.
      */
-    void replace(IEntity entity) throws SQLException;
+    ResultStatus replace(IEntity entity) throws SQLException;
 
     /**
      * 删除一个已经存在的 entity.
      * @param entity 目标 entity.
      */
-    void delete(IEntity entity) throws SQLException;
+    ResultStatus delete(IEntity entity) throws SQLException;
 }

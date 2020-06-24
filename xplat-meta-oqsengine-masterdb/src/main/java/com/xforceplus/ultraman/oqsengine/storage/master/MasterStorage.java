@@ -40,6 +40,7 @@ public interface MasterStorage extends Storage {
      * 同步两个 id 表示的信息.实际需要同步的信息由实现定义.
      * @param id 源数据标识.
      * @param child 目标数据标识.
+     * @return 同步的数量.
      */
-    void synchronize(long id, long child) throws SQLException;
+    int synchronize(long id, long child) throws SQLException;
 }

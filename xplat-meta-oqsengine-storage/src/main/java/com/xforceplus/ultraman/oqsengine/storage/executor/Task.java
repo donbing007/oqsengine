@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor;
 
+import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
+
 import java.sql.SQLException;
 
 /**
@@ -18,5 +20,6 @@ public interface Task<V> {
      * @return
      * @throws SQLException
      */
-    Object run(V resource) throws SQLException;
+    Object run(V resource, ExecutorHint hint) throws SQLException;
+
 }

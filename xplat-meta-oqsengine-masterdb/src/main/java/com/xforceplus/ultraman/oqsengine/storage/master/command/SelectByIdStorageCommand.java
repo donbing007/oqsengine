@@ -20,7 +20,7 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class SelectByIdStorageCommand implements StorageCommand<StorageEntity> {
+public class SelectByIdStorageCommand implements StorageCommand<Long, StorageEntity> {
 
     final Logger logger = LoggerFactory.getLogger(SelectByIdStorageCommand.class);
 
@@ -31,11 +31,11 @@ public class SelectByIdStorageCommand implements StorageCommand<StorageEntity> {
     }
 
     @Override
-    public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
-        return this.doExecute(resource, storageEntity.getId());
+    public StorageEntity execute(TransactionResource resource, Long id) throws SQLException {
+        return this.doExecute(resource, id);
     }
 
-    StorageEntity doExecute(TransactionResource resource, Long id) throws SQLException {
+    private StorageEntity doExecute(TransactionResource resource, long id) throws SQLException {
         String tableName = tableNameSelector.select(Long.toString(id));
         String sql = String.format(SQLConstant.SELECT_SQL, tableName);
 
@@ -55,19 +55,13 @@ public class SelectByIdStorageCommand implements StorageCommand<StorageEntity> {
             StorageEntity storageEntity = null;
             if (rs.next()) {
                 storageEntity = new StorageEntity(
-                        id,
-                        rs.getLong(FieldDefine.ENTITY),
-                        rs.getInt(FieldDefine.VERSION),
-                        rs.getLong(FieldDefine.PREF),
-                        rs.getLong(FieldDefine.CREF),
-                        rs.getBoolean(FieldDefine.DELETED),
-                        rs.getString(FieldDefine.ATTRIBUTE)
-                );
-            }
-
-            if (storageEntity == null) {
-                throw new SQLException(
-                         String.format("Data that does not exist.[%d]", id)
+                    id,
+                    rs.getLong(FieldDefine.ENTITY),
+                    rs.getInt(FieldDefine.VERSION),
+                    rs.getLong(FieldDefine.PREF),
+                    rs.getLong(FieldDefine.CREF),
+                    rs.getBoolean(FieldDefine.DELETED),
+                    rs.getString(FieldDefine.ATTRIBUTE)
                 );
             }
 

@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.command.*;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
@@ -81,40 +82,9 @@ public class SQLMasterStorage implements MasterStorage {
             new DataSourceShardingTask(dataSourceSelector, Long.toString(id)) {
 
                 @Override
-                public Object run(TransactionResource resource) throws SQLException {
-                    String tableName = tableNameSelector.select(Long.toString(id));
-                    String sql = String.format(SELECT_SQL, tableName);
-
-                    PreparedStatement st = null;
-                    ResultSet rs = null;
-                    try {
-                        st = ((Connection) resource.value()).prepareStatement(sql);
-                        st.setLong(1, id); // id
-
-                        if (logger.isDebugEnabled()) {
-                            logger.debug(st.toString());
-                        }
-
-                        rs = st.executeQuery();
-                        // entity, version, time, pref, cref, deleted, attribute, refs
-
-
-                        if (rs.next()) {
-
-                            return buildEntityFromResultSet(rs, entityClass);
-
-                        } else {
-                            return Optional.empty();
-                        }
-                    } finally {
-                        if (rs != null) {
-                            rs.close();
-                        }
-
-                        if (st != null) {
-                            st.close();
-                        }
-                    }
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                    StorageEntity storageEntity = new SelectByIdStorageCommand(tableNameSelector).execute(resource, id);
+                    return buildEntityFromStorageEntity(storageEntity, entityClass);
                 }
             });
     }
@@ -157,14 +127,14 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public void synchronize(long sourceId, long targetId) throws SQLException {
+    public int synchronize(long sourceId, long targetId) throws SQLException {
         // 需要在内部类中修改,所以使用了引用类型.
         final int[] newVersion = new int[1];
         final long[] newTime = new long[1];
         transactionExecutor.execute(
             new DataSourceShardingTask(dataSourceSelector, Long.toString(sourceId)) {
                 @Override
-                public Object run(TransactionResource resource) throws SQLException {
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                     String tableName = tableNameSelector.select(Long.toString(sourceId));
                     String sql = String.format(SELECT_VERSION_TIME_SQL, tableName);
 
@@ -199,10 +169,10 @@ public class SQLMasterStorage implements MasterStorage {
             }
         );
 
-        transactionExecutor.execute(
+        return (int) transactionExecutor.execute(
             new DataSourceShardingTask(dataSourceSelector, Long.toString(targetId)) {
                 @Override
-                public Object run(TransactionResource resource) throws SQLException {
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                     StorageEntity input = new StorageEntity();
                     input.setId(targetId);
                     input.setVersion(newVersion[0]);
@@ -218,15 +188,15 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public void build(IEntity entity) throws SQLException {
+    public int build(IEntity entity) throws SQLException {
         checkId(entity);
 
-        transactionExecutor.execute(
+        return (int) transactionExecutor.execute(
             new DataSourceShardingTask(
                 dataSourceSelector, Long.toString(entity.id())) {
 
                 @Override
-                public Object run(TransactionResource resource) throws SQLException {
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                     StorageEntity storageEntity = new StorageEntity();
                     storageEntity.setId(entity.id());
                     storageEntity.setEntity(entity.entityClass().id());
@@ -240,15 +210,15 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public void replace(IEntity entity) throws SQLException {
+    public int replace(IEntity entity) throws SQLException {
         checkId(entity);
 
-        transactionExecutor.execute(
+        return (int) transactionExecutor.execute(
             new DataSourceShardingTask(
                 dataSourceSelector, Long.toString(entity.id())) {
 
                 @Override
-                public Object run(TransactionResource resource) throws SQLException {
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                     StorageEntity storageEntity = new StorageEntity();
                     storageEntity.setId(entity.id());
                     storageEntity.setVersion(entity.version());
@@ -260,15 +230,15 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public void delete(IEntity entity) throws SQLException {
+    public int delete(IEntity entity) throws SQLException {
         checkId(entity);
 
-        transactionExecutor.execute(
+        return (int) transactionExecutor.execute(
             new DataSourceShardingTask(
                 dataSourceSelector, Long.toString(entity.id())) {
 
                 @Override
-                public Object run(TransactionResource resource) throws SQLException {
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                     StorageEntity storageEntity = new StorageEntity();
                     storageEntity.setId(entity.id());
                     storageEntity.setVersion(entity.version());
@@ -425,7 +395,7 @@ public class SQLMasterStorage implements MasterStorage {
                         dataSourceSelector, dataSourceShardKey) {
 
                         @Override
-                        public Object run(TransactionResource resource) throws SQLException {
+                        public Object run(TransactionResource resource,ExecutorHint hint) throws SQLException {
                             List<IEntity> entities = new ArrayList(size);
                             for (String table : ids.keySet()) {
                                 entities.addAll(select(table, ids.get(table), resource));
@@ -494,6 +464,26 @@ public class SQLMasterStorage implements MasterStorage {
             rs.getInt(FieldDefine.VERSION)
         );
 
+        return Optional.of(entity);
+    }
+
+    private Optional<IEntity> buildEntityFromStorageEntity(StorageEntity se, IEntityClass entityClass) throws SQLException {
+        long dataEntityClassId = se.getEntity();
+        if (entityClass.id() != dataEntityClassId) {
+            throw new SQLException(
+                String.format(
+                    "The incorrect Entity type is expected to be %d, but the actual data type is %d."
+                    , entityClass.id(), dataEntityClassId));
+        }
+
+        long id = se.getId();
+        Entity entity = new Entity(
+            id,
+            entityClass,
+            toEntityValue(se.getId(), entityClass, se.getAttribute()),
+            new EntityFamily(se.getPref(), se.getCref()),
+            se.getVersion()
+        );
         return Optional.of(entity);
     }
 }

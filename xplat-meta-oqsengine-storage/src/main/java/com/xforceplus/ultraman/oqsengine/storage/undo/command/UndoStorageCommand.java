@@ -14,7 +14,7 @@ import java.sql.SQLException;
  * @author youyifan
  * @param <T>
  */
-public abstract class UndoStorageCommand<T> implements StorageCommand<T> {
+public abstract class UndoStorageCommand<T,R> implements StorageCommand<T,R> {
 
     protected void prepareUndoLog(TransactionResource resource, OpType opType, T data) {
         UndoTransactionResource undoResource = (UndoTransactionResource) resource;
@@ -29,5 +29,5 @@ public abstract class UndoStorageCommand<T> implements StorageCommand<T> {
      * @return
      * @throws SQLException
      */
-    public abstract T executeUndo(TransactionResource resource, T data) throws SQLException;
+    public abstract R executeUndo(TransactionResource resource, T data) throws SQLException;
 }

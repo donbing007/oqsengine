@@ -23,7 +23,7 @@ import java.util.Set;
  * 功能描述:
  * 修改历史:
  */
-public class SelectByIdStorageCommand implements StorageCommand<StorageEntity> {
+public class SelectByIdStorageCommand implements StorageCommand<Long, StorageEntity> {
 
     final Logger logger = LoggerFactory.getLogger(SelectByIdStorageCommand.class);
 
@@ -34,11 +34,11 @@ public class SelectByIdStorageCommand implements StorageCommand<StorageEntity> {
     }
 
     @Override
-    public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
-        return this.doExecute(resource, storageEntity.getId());
+    public StorageEntity execute(TransactionResource resource, Long id) throws SQLException {
+        return this.doExecute(resource, id);
     }
 
-    StorageEntity doExecute(TransactionResource resource, Long id) throws SQLException {
+    private StorageEntity doExecute(TransactionResource resource, Long id) throws SQLException {
         PreparedStatement st = null;
         ResultSet rs = null;
         try {
@@ -50,20 +50,15 @@ public class SelectByIdStorageCommand implements StorageCommand<StorageEntity> {
             StorageEntity storageEntity = null;
             if (rs.next()) {
                 storageEntity = new StorageEntity(
-                        id,
-                        rs.getLong(FieldDefine.ENTITY),
-                        rs.getLong(FieldDefine.PREF),
-                        rs.getLong(FieldDefine.CREF),
-                        SphinxQLHelper.deserializeJson(rs.getString(FieldDefine.JSON_FIELDS)),
-                        null
+                    id,
+                    rs.getLong(FieldDefine.ENTITY),
+                    rs.getLong(FieldDefine.PREF),
+                    rs.getLong(FieldDefine.CREF),
+                    SphinxQLHelper.deserializeJson(rs.getString(FieldDefine.JSON_FIELDS)),
+                    null
                 );
             }
 
-            if (storageEntity == null) {
-                throw new SQLException(
-                        String.format("Attempt to update a property on a data that does not exist.[%d]", id)
-                );
-            }
             return storageEntity;
         } finally {
             if (rs != null) {

@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor;
 
+import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
+import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -12,6 +14,7 @@ import java.util.Optional;
 
 /**
  * 自动事务处理的执行器实现.
+ * 不会创建事务,只会加入事务.
  *
  * @author dongbin
  * @version 0.1 2020/2/17 15:41
@@ -80,8 +83,9 @@ public class AutoShardTransactionExecutor implements TransactionExecutor {
             }
         }
 
+        ExecutorHint hint = new DefaultExecutorHint();
         try {
-            return task.run(resource);
+            return task.run(resource, hint);
         } finally {
             if (!tx.isPresent()) {
                 resource.destroy();

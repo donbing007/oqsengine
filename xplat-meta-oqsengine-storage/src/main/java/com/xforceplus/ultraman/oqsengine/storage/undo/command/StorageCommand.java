@@ -13,8 +13,8 @@ import java.sql.SQLException;
  * @author youyifan
  * @param <T>
  */
-public interface StorageCommand<T> {
+public interface StorageCommand<T,R> {
 
-    T execute(TransactionResource resource, T data) throws SQLException;
+    R execute(TransactionResource resource, T data) throws SQLException;
 
 }

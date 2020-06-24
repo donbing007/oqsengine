@@ -18,7 +18,7 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class ReplaceVersionStorageCommand  implements StorageCommand<StorageEntity> {
+public class ReplaceVersionStorageCommand  implements StorageCommand<StorageEntity,Integer> {
     final Logger logger = LoggerFactory.getLogger(ReplaceVersionStorageCommand.class);
 
     private Selector<String> tableNameSelector;
@@ -28,11 +28,11 @@ public class ReplaceVersionStorageCommand  implements StorageCommand<StorageEnti
     }
 
     @Override
-    public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+    public Integer execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
         return this.doExecute(resource, storageEntity);
     }
 
-    StorageEntity doExecute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+    private int doExecute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
         String tableName = tableNameSelector.select(Long.toString(storageEntity.getId()));
         String sql = String.format(SQLConstant.REPLACE_VERSION_TIME_SQL, tableName);
 
@@ -42,16 +42,8 @@ public class ReplaceVersionStorageCommand  implements StorageCommand<StorageEnti
         st.setLong(2, storageEntity.getTime());
         st.setLong(3, storageEntity.getId());
 
-        int size = st.executeUpdate();
-
-        final int onlyOne = 1;
-        if (size != onlyOne) {
-            throw new SQLException(
-                    String.format("Unable to synchronize information to %d.", storageEntity.getId()));
-        }
-
         try {
-            return null;
+            return st.executeUpdate();
         } finally {
             if (st != null) {
                 st.close();

@@ -36,19 +36,19 @@ public interface Storage {
      * @param entity target entity.
      * @throws SQLException Storage error.
      */
-    void build(IEntity entity) throws SQLException;
+    int build(IEntity entity) throws SQLException;
 
     /**
      * Replace the information of the target Entity.
      * @param entity target entity.
      * @throws SQLException Storage error.
      */
-    void replace(IEntity entity) throws SQLException;
+    int replace(IEntity entity) throws SQLException;
 
     /**
      * Deletes an existing entity.
      * @param entity target entity.
      * @throws SQLException Storage error.
      */
-    void delete(IEntity entity) throws SQLException;
+    int delete(IEntity entity) throws SQLException;
 }

@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
@@ -63,7 +64,7 @@ public class AutoShardTransactionExecutorTest {
         // 分片键不关心
         te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override
-            public Object run(TransactionResource resource) throws SQLException {
+            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                 Connection conn = (Connection) resource.value();
                 Assert.assertEquals(expectedConn, conn);
 
@@ -89,7 +90,7 @@ public class AutoShardTransactionExecutorTest {
         // 分片键不关心
         te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override
-            public Object run(TransactionResource resource) throws SQLException {
+            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                 Connection conn = (Connection) resource.value();
                 Assert.assertEquals(expectedConn, conn);
 
@@ -121,7 +122,7 @@ public class AutoShardTransactionExecutorTest {
         // 分片键不关心
         te.execute(new DataSourceShardingTask(dataSourceSelector, "") {
             @Override
-            public Object run(TransactionResource resource) throws SQLException {
+            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                 Assert.assertEquals(currentT.query(mockDataSource.toString()).get(), resource);
 
                 return null;

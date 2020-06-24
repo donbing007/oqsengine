@@ -18,7 +18,7 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class BuildStorageCommand implements StorageCommand<StorageEntity> {
+public class BuildStorageCommand implements StorageCommand<StorageEntity,Integer> {
 
     final Logger logger = LoggerFactory.getLogger(BuildStorageCommand.class);
 
@@ -29,11 +29,11 @@ public class BuildStorageCommand implements StorageCommand<StorageEntity> {
     }
 
     @Override
-    public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+    public Integer execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
         return this.doExecute(resource, storageEntity);
     }
 
-    StorageEntity doExecute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+    private int doExecute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
         String tableName = tableNameSelector.select(Long.toString(storageEntity.getId()));
         String sql = String.format(SQLConstant.BUILD_SQL, tableName);
 
@@ -60,19 +60,8 @@ public class BuildStorageCommand implements StorageCommand<StorageEntity> {
             logger.debug(st.toString());
         }
 
-        int size = st.executeUpdate();
-
-        /**
-         * 插入影响条件恒定为1.
-         */
-        final int onlyOne = 1;
-        if (size != onlyOne) {
-            throw new SQLException(
-                    String.format("Entity{%s} could not be created successfully.", storageEntity.toString()));
-        }
-
         try {
-            return null;
+            return st.executeUpdate();
         } finally {
             if (st != null) {
                 st.close();

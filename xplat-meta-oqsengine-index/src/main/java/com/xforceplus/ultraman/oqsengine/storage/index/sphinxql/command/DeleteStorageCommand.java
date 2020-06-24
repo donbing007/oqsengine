@@ -17,7 +17,7 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class DeleteStorageCommand implements StorageCommand<StorageEntity> {
+public class DeleteStorageCommand implements StorageCommand<Long, Integer> {
 
     final Logger logger = LoggerFactory.getLogger(DeleteStorageCommand.class);
 
@@ -28,14 +28,14 @@ public class DeleteStorageCommand implements StorageCommand<StorageEntity> {
     }
 
     @Override
-    public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
-        return this.doExecute(resource, storageEntity);
+    public Integer execute(TransactionResource resource, Long id) throws SQLException {
+        return this.doExecute(resource, id);
     }
 
-    StorageEntity doExecute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+    private int doExecute(TransactionResource resource, long id) throws SQLException {
         String sql = String.format(SQLConstant.DELETE_SQL, indexTableName);
         PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-        st.setLong(1, storageEntity.getId()); // id
+        st.setLong(1, id); // id
 
         if (logger.isDebugEnabled()) {
             logger.debug(st.toString());
@@ -45,7 +45,8 @@ public class DeleteStorageCommand implements StorageCommand<StorageEntity> {
         st.executeUpdate();
 
         try {
-            return null;
+            // 不做版本控制.没有异常即为成功.
+            return 1;
         } finally {
             if (st != null) {
                 st.close();

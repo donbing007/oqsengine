@@ -21,7 +21,7 @@ import static com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.C
  * 功能描述:
  * 修改历史:
  */
-public class ReplaceStorageCommand implements StorageCommand<StorageEntity> {
+public class ReplaceStorageCommand implements StorageCommand<StorageEntity,Integer> {
 
     final Logger logger = LoggerFactory.getLogger(ReplaceStorageCommand.class);
 
@@ -40,20 +40,24 @@ public class ReplaceStorageCommand implements StorageCommand<StorageEntity> {
     }
 
     @Override
-    public StorageEntity execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+    public Integer execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
         return this.doExecute(resource, storageEntity);
     }
 
-    StorageEntity doExecute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+    private int doExecute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
         final String sql = String.format(replaceSql, indexTableName);
 
         PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
 
         // id, entity, pref, cref, jsonfileds, fullfileds
-        st.setLong(1, storageEntity.getId()); // id
-        st.setLong(2, storageEntity.getEntity()); // entity
-        st.setLong(3, storageEntity.getPref()); // pref
-        st.setLong(4, storageEntity.getCref()); // cref
+        // id
+        st.setLong(1, storageEntity.getId());
+        // entity
+        st.setLong(2, storageEntity.getEntity());
+        // pref
+        st.setLong(3, storageEntity.getPref());
+        // cref
+        st.setLong(4, storageEntity.getCref());
         // jsonfileds
         st.setString(5, SphinxQLHelper.serializableJson(storageEntity.getJsonFields()));
         // fullfileds
@@ -63,15 +67,11 @@ public class ReplaceStorageCommand implements StorageCommand<StorageEntity> {
             logger.debug(st.toString());
         }
 
-        int size = st.executeUpdate();
+        st.executeUpdate();
 
         try {
-//            // 成功只应该有一条语句影响
-//            final int onlyOne = 1;
-//            if(size == onlyOne) {
-//                throw new SQLException(String.format("Entity{%s} could not be created successfully.", storageEntity.toString()));
-//            }
-            return null;
+            // 不做版本控制.没有异常即为成功.
+            return 1;
         } finally {
             st.close();
         }
