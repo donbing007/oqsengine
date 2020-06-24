@@ -99,18 +99,18 @@
             </plugin>
         </plugins>
     </build>
-    <modules>
-        <module>xplat-meta-oqsengine-common</module>
-        <module>xplat-meta-oqsengine-pojo</module>
-        <module>xplat-meta-oqsengine-storage</module>
-        <module>xplat-meta-oqsengine-masterdb</module>
-        <module>xplat-meta-oqsengine-index</module>
-        <module>xplat-meta-oqsengine-core</module>
-        <module>xplat-meta-oqsengine-transfer</module>
-        <module>xplat-meta-oqsengine-sdk</module>
-        <module>xplat-meta-oqsengine-boot</module>
-        <module>xplat-meta-oqsengine-testreport</module>
-    </modules>
+<!--    <modules>-->
+<!--        <module>xplat-meta-oqsengine-common</module>-->
+<!--        <module>xplat-meta-oqsengine-pojo</module>-->
+<!--        <module>xplat-meta-oqsengine-storage</module>-->
+<!--        <module>xplat-meta-oqsengine-masterdb</module>-->
+<!--        <module>xplat-meta-oqsengine-index</module>-->
+<!--        <module>xplat-meta-oqsengine-core</module>-->
+<!--        <module>xplat-meta-oqsengine-transfer</module>-->
+<!--        <module>xplat-meta-oqsengine-sdk</module>-->
+<!--        <module>xplat-meta-oqsengine-boot</module>-->
+<!--        <module>xplat-meta-oqsengine-testreport</module>-->
+<!--    </modules>-->
 
     <distributionManagement>
         <repository>
