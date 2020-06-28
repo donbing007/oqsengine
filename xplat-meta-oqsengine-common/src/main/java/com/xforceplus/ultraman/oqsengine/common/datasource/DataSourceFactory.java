@@ -73,7 +73,7 @@ public class DataSourceFactory {
         if (dsConfigFile == null) {
             config = ConfigFactory.load("oqsengine-ds.conf");
         } else {
-            config = ConfigFactory.parseFile(new File(dsConfigFile));
+            config = ConfigFactory.load(ConfigFactory.parseFile(new File(dsConfigFile)));
         }
 
         List<DataSource> indexWrite;
