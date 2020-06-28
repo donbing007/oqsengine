@@ -16,6 +16,7 @@ maven-oqsengine-build:
     - cp ./target/xplat-meta-oqsengine.jar /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}/app.jar
   except:
     - tags
+    - /^.*-sdk$/
 
 maven-sdk-build:
   stage: mvn-package
