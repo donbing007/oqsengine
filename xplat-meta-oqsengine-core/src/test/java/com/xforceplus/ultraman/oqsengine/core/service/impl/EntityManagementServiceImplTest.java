@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
+import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
@@ -28,6 +29,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -191,7 +193,7 @@ public class EntityManagementServiceImplTest {
         IEntityField removeField = fatherEntityClass.fields().stream().findFirst().get();
         expectedEntity.entityValue().remove(removeField);
 
-        service.replace(expectedEntity);
+        Assert.assertEquals(ResultStatus.SUCCESS, service.replace(expectedEntity));
 
         IEntity masterEntity = masterStorage.select(expectedEntity.id(), fatherEntityClass).get();
         Assert.assertEquals(
@@ -217,21 +219,92 @@ public class EntityManagementServiceImplTest {
             new DecimalValue(fatherEntityClass.fields().stream().skip(2).findFirst().get(), new BigDecimal("8888.8888"))
         );
 
-        service.replace(expectedEntity);
+        Assert.assertEquals(ResultStatus.SUCCESS, service.replace(expectedEntity));
 
         // 验证父类
         IEntity masterEntity = masterStorage.select(expectedEntity.family().parent(), fatherEntityClass).get();
-        Assert.assertEquals("8888.8888",masterEntity.entityValue().getValue("f3").get().valueToString());
+        Assert.assertEquals("8888.8888", masterEntity.entityValue().getValue("f3").get().valueToString());
         // 验证父类索引
         masterEntity = indexStorage.select(expectedEntity.family().parent()).get();
-        Assert.assertEquals("8888.8888",masterEntity.entityValue().getValue("f3").get().valueToString());
+        Assert.assertEquals("8888.8888", masterEntity.entityValue().getValue("f3").get().valueToString());
 
         //验证子类索引
         IEntity indexEntity = indexStorage.select(expectedEntity.id()).get();
-        Assert.assertEquals("8888.8888",indexEntity.entityValue().getValue("f3").get().valueToString());
+        Assert.assertEquals("8888.8888", indexEntity.entityValue().getValue("f3").get().valueToString());
     }
 
+    @Test
+    public void testVersionConflict() throws Exception {
+        final IEntity expectedEntity = service.build(buildEntity(fatherEntityClass, true));
+
+        int workSize = 30;
+
+        List<Boolean> results = new ArrayList<>(workSize);
+
+        CountDownLatch latch = new CountDownLatch(workSize);
+        CountDownLatch doLatch = new CountDownLatch(workSize);
+        ExecutorService workPool = Executors.newFixedThreadPool(workSize);
+        for (int i = 0; i < workSize; i++) {
+            workPool.submit(() -> {
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+
+                IEntity finalExpectedEntity = null;
+                try {
+                    finalExpectedEntity = copyEntity(masterStorage.select(expectedEntity.id(), fatherEntityClass).get());
+                } catch (SQLException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+                LongValue old = (LongValue) finalExpectedEntity.entityValue().remove(
+                    fatherEntityClass.field("f1").get());
+
+                finalExpectedEntity.entityValue().addValue(
+                    new LongValue(fatherEntityClass.field("f1").get(), old.getValue() + 1));
+
+                ResultStatus status;
+                try {
+                    status = service.replace(finalExpectedEntity);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+
+                results.add(ResultStatus.SUCCESS == status);
+
+                doLatch.countDown();
+
+            });
+        }
+
+        for (int i = 0; i < workSize; i++) {
+            latch.countDown();
+        }
+
+        doLatch.await();
+
+        workPool.shutdown();
+
+        int successSize = 0;
+        for (boolean r : results) {
+            if (r) {
+                successSize++;
+            }
+        }
+
+        LongValue oldLongValue = (LongValue) expectedEntity.entityValue().getValue("f1").get();
+        IEntity newEntity = masterStorage.select(expectedEntity.id(), fatherEntityClass).get();
+        Assert.assertEquals(oldLongValue.valueToLong() + successSize,
+            newEntity.entityValue().getValue("f1").get().valueToLong());
+    }
+
+
     private static IEntity copyEntity(IEntity source) {
+        return copyEntity(source, false);
+    }
+
+    private static IEntity copyEntity(IEntity source, boolean incrVersion) {
         IEntityValue newValue = new EntityValue(source.id());
         newValue.addValues(source.entityValue().values());
 
@@ -240,7 +313,7 @@ public class EntityManagementServiceImplTest {
             source.entityClass(),
             newValue,
             new EntityFamily(source.family().parent(), source.family().child()),
-            source.version()
+            incrVersion ? source.version() + 1 : source.version()
         );
     }
 
@@ -286,7 +359,7 @@ public class EntityManagementServiceImplTest {
 
     static class MockMasterStorage implements MasterStorage {
 
-        private Map<Long, IEntity> data = new HashMap<>();
+        private ConcurrentMap<Long, IEntity> data = new ConcurrentHashMap<>();
 
         @Override
         public Optional<IEntity> select(long id, IEntityClass entityClass) throws SQLException {
@@ -299,7 +372,7 @@ public class EntityManagementServiceImplTest {
         }
 
         @Override
-        public void synchronize(long id, long child) throws SQLException {
+        public synchronized int synchronize(long id, long child) throws SQLException {
             IEntity source = data.get(id);
             IEntity target = data.get(child);
 
@@ -307,27 +380,45 @@ public class EntityManagementServiceImplTest {
             try {
                 field = target.getClass().getField("version");
 
-
                 field.setAccessible(true);
                 field.setInt(target, source.version());
+
             } catch (Exception e) {
                 throw new SQLException(e.getMessage(), e);
+            }
+
+            return 1;
+        }
+
+        @Override
+        public int build(IEntity entity) throws SQLException {
+            data.put(entity.id(), copyEntity(entity));
+            return 1;
+        }
+
+        @Override
+        public synchronized int replace(IEntity entity) throws SQLException {
+
+            IEntity old = data.get(entity.id());
+            if (old.version() != entity.version()) {
+                return 0;
+            } else {
+                data.put(entity.id(), copyEntity(entity, true));
+                return 1;
             }
         }
 
         @Override
-        public void build(IEntity entity) throws SQLException {
-            data.put(entity.id(), copyEntity(entity));
-        }
+        public synchronized int delete(IEntity entity) throws SQLException {
 
-        @Override
-        public void replace(IEntity entity) throws SQLException {
-            data.put(entity.id(), copyEntity(entity));
-        }
+            IEntity old = data.get(entity.id());
+            if (old.version() != entity.version()) {
+                return 0;
+            } else {
+                data.remove(entity.id());
+                return 1;
+            }
 
-        @Override
-        public void delete(IEntity entity) throws SQLException {
-            data.remove(entity.id());
         }
     }
 
@@ -354,18 +445,21 @@ public class EntityManagementServiceImplTest {
         }
 
         @Override
-        public void build(IEntity entity) throws SQLException {
+        public int build(IEntity entity) throws SQLException {
             data.put(entity.id(), copyEntity(entity));
+            return 1;
         }
 
         @Override
-        public void replace(IEntity entity) throws SQLException {
+        public int replace(IEntity entity) throws SQLException {
             data.put(entity.id(), copyEntity(entity));
+            return 1;
         }
 
         @Override
-        public void delete(IEntity entity) throws SQLException {
+        public int delete(IEntity entity) throws SQLException {
             data.remove(entity.id());
+            return 1;
         }
     }
 

@@ -553,23 +553,23 @@ public class EntitySearchServiceImplTest {
         }
 
         @Override
-        public void synchronize(long id, long child) throws SQLException {
-
+        public int synchronize(long id, long child) throws SQLException {
+            return 0;
         }
 
         @Override
-        public void build(IEntity entity) throws SQLException {
-
+        public int build(IEntity entity) throws SQLException {
+            return 0;
         }
 
         @Override
-        public void replace(IEntity entity) throws SQLException {
-
+        public int replace(IEntity entity) throws SQLException {
+            return 0;
         }
 
         @Override
-        public void delete(IEntity entity) throws SQLException {
-
+        public int delete(IEntity entity) throws SQLException {
+            return 0;
         }
     }
 
@@ -615,18 +615,18 @@ public class EntitySearchServiceImplTest {
         }
 
         @Override
-        public void build(IEntity entity) throws SQLException {
-
+        public int build(IEntity entity) throws SQLException {
+            return 0;
         }
 
         @Override
-        public void replace(IEntity entity) throws SQLException {
-
+        public int replace(IEntity entity) throws SQLException {
+            return 0;
         }
 
         @Override
-        public void delete(IEntity entity) throws SQLException {
-
+        public int delete(IEntity entity) throws SQLException {
+            return 0;
         }
     }
 
