@@ -269,7 +269,6 @@
                 <module>xplat-meta-oqsengine-pojo</module>
                 <module>xplat-meta-oqsengine-sdk</module>
                 <module>xplat-meta-oqsengine-transfer</module>
-                <module>xplat-meta-oqsengine-testreport</module>
             </modules>
         </profile>
     </profiles>
