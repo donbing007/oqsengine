@@ -34,7 +34,7 @@ tag-mvn-deploy:
   stage: tag-mvn-deploy
   script:
     - update_pom_version
-    - mvn clean deploy -s ./.mvn/wrapper/settings.xml -Dmaven.test.skip=true
+    - mvn clean deploy -P sdk,oqsengine -s ./.mvn/wrapper/settings.xml -Dmaven.test.skip=true
     - mkdir -p /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     - cp ./target/xplat-meta-oqsengine.jar /cache/${CI_PROJECT_NAME}-${CI_PROJECT_ID}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}/app.jar
   only:
@@ -45,6 +45,8 @@ docker-build:
   script:
     - docker_build
     - chart_build
+  except:
+    - /^.*-sdk$/
     
 .auto_devops: &auto_devops |
   http_status_code=`curl -o .auto_devops.sh -s -m 10 --connect-timeout 10 -w %{http_code} "${CHOERODON_URL}/devops/ci?token=${Token}&type=microservice"`
