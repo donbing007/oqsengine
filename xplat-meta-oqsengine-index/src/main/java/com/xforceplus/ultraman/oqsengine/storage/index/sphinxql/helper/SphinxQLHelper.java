@@ -3,10 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 
-import java.util.AbstractMap;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author dongbin
@@ -140,11 +137,12 @@ public class SphinxQLHelper {
         if (!json.startsWith("{")) {
             throw new IllegalStateException("Wrong JSON format.");
         }
+        Map<String, Object> data = new HashMap();
+
         if ("{}".equals(json)) {
-            return Collections.emptyMap();
+            return data;
         }
 
-        Map<String, Object> data = new LinkedHashMap<>();
         StringBuilder buff = new StringBuilder();
         String key = null;
         String value;
