@@ -11,10 +11,12 @@ import java.sql.SQLException;
  * 创建时间: 4/9/2020 2:00 PM
  * 功能描述:
  * 修改历史:
- * @author youyifan
+ *
  * @param <T>
+ * @param <R>
+ * @author youyifan
  */
-public abstract class UndoStorageCommand<T,R> implements StorageCommand<T,R> {
+public abstract class UndoStorageCommand<T, R> implements StorageCommand<T, R> {
 
     protected void prepareUndoLog(TransactionResource resource, OpType opType, T data) {
         UndoTransactionResource undoResource = (UndoTransactionResource) resource;

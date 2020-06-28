@@ -24,7 +24,7 @@ public class ReplaceStorageCommand implements StorageCommand<StorageEntity, Inte
 
     private Selector<String> tableNameSelector;
 
-    public ReplaceStorageCommand(Selector<String> tableNameSelector){
+    public ReplaceStorageCommand(Selector<String> tableNameSelector) {
         this.tableNameSelector = tableNameSelector;
     }
 

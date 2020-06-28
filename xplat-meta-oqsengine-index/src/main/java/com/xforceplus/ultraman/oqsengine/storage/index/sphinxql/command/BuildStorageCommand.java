@@ -21,7 +21,7 @@ import static com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.C
  * 功能描述:
  * 修改历史:
  */
-public class BuildStorageCommand implements StorageCommand<StorageEntity,Integer> {
+public class BuildStorageCommand implements StorageCommand<StorageEntity, Integer> {
 
     final Logger logger = LoggerFactory.getLogger(BuildStorageCommand.class);
 
@@ -33,10 +33,10 @@ public class BuildStorageCommand implements StorageCommand<StorageEntity,Integer
         this.indexTableName = indexTableName;
 
         buildSql =
-                String.format(SQLConstant.WRITER_SQL,
-                        "insert", indexTableName,
-                        FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
-                        FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
+            String.format(SQLConstant.WRITER_SQL,
+                "insert", indexTableName,
+                FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
+                FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
     }
 
     @Override

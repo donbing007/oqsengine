@@ -21,7 +21,7 @@ import static com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.C
  * 功能描述:
  * 修改历史:
  */
-public class ReplaceStorageCommand implements StorageCommand<StorageEntity,Integer> {
+public class ReplaceStorageCommand implements StorageCommand<StorageEntity, Integer> {
 
     final Logger logger = LoggerFactory.getLogger(ReplaceStorageCommand.class);
 
@@ -33,10 +33,10 @@ public class ReplaceStorageCommand implements StorageCommand<StorageEntity,Integ
         this.indexTableName = indexTableName;
 
         replaceSql =
-                String.format(SQLConstant.WRITER_SQL,
-                        "replace", indexTableName,
-                        FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
-                        FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
+            String.format(SQLConstant.WRITER_SQL,
+                "replace", indexTableName,
+                FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
+                FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
     }
 
     @Override

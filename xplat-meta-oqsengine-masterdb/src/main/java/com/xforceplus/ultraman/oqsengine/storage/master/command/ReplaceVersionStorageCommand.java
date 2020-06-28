@@ -18,12 +18,12 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class ReplaceVersionStorageCommand  implements StorageCommand<StorageEntity,Integer> {
+public class ReplaceVersionStorageCommand implements StorageCommand<StorageEntity, Integer> {
     final Logger logger = LoggerFactory.getLogger(ReplaceVersionStorageCommand.class);
 
     private Selector<String> tableNameSelector;
 
-    public ReplaceVersionStorageCommand(Selector<String> tableNameSelector){
+    public ReplaceVersionStorageCommand(Selector<String> tableNameSelector) {
         this.tableNameSelector = tableNameSelector;
     }
 

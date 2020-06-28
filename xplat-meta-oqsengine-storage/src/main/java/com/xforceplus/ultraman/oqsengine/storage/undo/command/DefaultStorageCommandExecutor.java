@@ -45,10 +45,10 @@ public class DefaultStorageCommandExecutor implements StorageCommandExecutor {
 
     private StorageCommand selectCommand(TransactionResourceType transactionResourceType, OpType opType) throws SQLException {
         if (transactionResourceType == null || opType == null
-                || !storageCommands.containsKey(transactionResourceType)
-                || storageCommands.get(transactionResourceType) == null
-                || !storageCommands.get(transactionResourceType).containsKey(opType)
-                || storageCommands.get(transactionResourceType).get(opType) == null
+            || !storageCommands.containsKey(transactionResourceType)
+            || storageCommands.get(transactionResourceType) == null
+            || !storageCommands.get(transactionResourceType).containsKey(opType)
+            || storageCommands.get(transactionResourceType).get(opType) == null
         ) {
             String errMsg = String.format("can't find storageCommand by dbType-%s,opType-%s", transactionResourceType, opType);
             logger.error(errMsg);

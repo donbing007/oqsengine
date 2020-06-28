@@ -395,7 +395,7 @@ public class SQLMasterStorage implements MasterStorage {
                         dataSourceSelector, dataSourceShardKey) {
 
                         @Override
-                        public Object run(TransactionResource resource,ExecutorHint hint) throws SQLException {
+                        public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                             List<IEntity> entities = new ArrayList(size);
                             for (String table : ids.keySet()) {
                                 entities.addAll(select(table, ids.get(table), resource));

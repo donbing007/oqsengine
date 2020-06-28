@@ -18,13 +18,13 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class DeleteStorageCommand implements StorageCommand<StorageEntity,Integer> {
+public class DeleteStorageCommand implements StorageCommand<StorageEntity, Integer> {
 
     final Logger logger = LoggerFactory.getLogger(ReplaceStorageCommand.class);
 
     private Selector<String> tableNameSelector;
 
-    public DeleteStorageCommand(Selector<String> tableNameSelector){
+    public DeleteStorageCommand(Selector<String> tableNameSelector) {
         this.tableNameSelector = tableNameSelector;
     }
 

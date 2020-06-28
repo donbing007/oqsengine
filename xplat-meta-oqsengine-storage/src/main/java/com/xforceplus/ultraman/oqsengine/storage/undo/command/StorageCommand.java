@@ -10,10 +10,12 @@ import java.sql.SQLException;
  * 创建时间: 3/27/2020 3:38 PM
  * 功能描述:
  * 修改历史:
+ *
+ * @param <T> 数据
+ * @param <R> 处理结果.
  * @author youyifan
- * @param <T>
  */
-public interface StorageCommand<T,R> {
+public interface StorageCommand<T, R> {
 
     R execute(TransactionResource resource, T data) throws SQLException;
 

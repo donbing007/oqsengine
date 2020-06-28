@@ -18,13 +18,13 @@ import java.sql.SQLException;
  * 功能描述:
  * 修改历史:
  */
-public class BuildStorageCommand implements StorageCommand<StorageEntity,Integer> {
+public class BuildStorageCommand implements StorageCommand<StorageEntity, Integer> {
 
     final Logger logger = LoggerFactory.getLogger(BuildStorageCommand.class);
 
     private Selector<String> tableNameSelector;
 
-    public BuildStorageCommand(Selector<String> tableNameSelector){
+    public BuildStorageCommand(Selector<String> tableNameSelector) {
         this.tableNameSelector = tableNameSelector;
     }
 

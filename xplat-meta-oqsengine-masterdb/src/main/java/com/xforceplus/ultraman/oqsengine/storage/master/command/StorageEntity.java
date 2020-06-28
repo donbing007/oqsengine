@@ -19,7 +19,8 @@ public class StorageEntity implements Serializable {
     private String attribute;
     private long time;
 
-    public StorageEntity() {}
+    public StorageEntity() {
+    }
 
     public StorageEntity(long id, long entity, int version, long pref, long cref, Boolean deleted, String attribute) {
         this.id = id;
@@ -98,13 +99,13 @@ public class StorageEntity implements Serializable {
     @Override
     public String toString() {
         return "StorageEntity{" +
-                "id=" + id +
-                ", entity=" + entity +
-                ", version=" + version +
-                ", pref=" + pref +
-                ", cref=" + cref +
-                ", deleted=" + deleted +
-                ", attribute=" + attribute +
-                '}';
+            "id=" + id +
+            ", entity=" + entity +
+            ", version=" + version +
+            ", pref=" + pref +
+            ", cref=" + cref +
+            ", deleted=" + deleted +
+            ", attribute=" + attribute +
+            '}';
     }
 }
