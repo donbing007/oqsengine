@@ -256,7 +256,7 @@ public class EntityServiceTest extends ContextWareBaseTest{
         AtomicLong atomicLong = new AtomicLong(0);
         EntityClass entityClass = entity();
 
-        entityService.transactionalExecute(() -> {
+        Either<String, Object> objects = entityService.transactionalExecute(() -> {
 
 
             Map<String, Object> map3 = new HashMap<>();
@@ -284,6 +284,8 @@ public class EntityServiceTest extends ContextWareBaseTest{
             throw new RuntimeException("Roll");
         });
 
+        System.out.println(objects.getLeft());
+        System.out.println(atomicLong.get());
         System.out.println(entityService.findOne(entityClass, atomicLong.get()));
     }
 

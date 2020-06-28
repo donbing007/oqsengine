@@ -119,7 +119,7 @@ public class DataSourceFactory {
             try {
                 invokeMethod(hikariConfig, e.getKey(), e.getValue());
             } catch (Exception ex) {
-                throw new RuntimeException(String.format("Configuration error, wrong property '%s'.", e.getKey()));
+                throw new RuntimeException(String.format("Configuration error, wrong property '%s' '%s'.", e.getKey(), e.getValue()));
             }
         });
 
