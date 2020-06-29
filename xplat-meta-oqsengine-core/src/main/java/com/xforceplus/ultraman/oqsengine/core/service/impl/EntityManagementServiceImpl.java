@@ -102,7 +102,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                          * 索引中只存放可搜索字段,子类包含父类和本身的所有可搜索字段.
                          * 这里先将父的属性合并进来过滤再储存.
                          */
-                        IEntity indexEntity = EntityManagementServiceImpl.this.buildIndexEntity(entityClone);
+                        IEntity indexEntity = buildIndexEntity(entityClone);
                         // 来源于外部 entity,所以这里需要调整继承家族信息.
                         indexEntity.resetFamily(new EntityFamily(fatherId, 0));
                         indexStorage.build(indexEntity); // child
@@ -117,7 +117,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         entityClone.resetId(entity.id());
 
                         masterStorage.build(entityClone);
-                        indexStorage.build(EntityManagementServiceImpl.this.buildIndexEntity(entityClone));
+                        indexStorage.build(buildIndexEntity(entityClone));
 
                         return entity;
                     }
@@ -231,10 +231,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                     if (EntityManagementServiceImpl.this.isSub(entity)) {
 
-                        IEntity fatherEntity = EntityManagementServiceImpl.this.buildFatherEntity(entity, entity.id());
+                        IEntity fatherEntity = buildFatherEntity(entity, entity.id());
                         fatherEntity.resetId(entity.family().parent());
 
-                        IEntity childEntity = EntityManagementServiceImpl.this.buildChildEntity(entity, entity.family().parent());
+                        IEntity childEntity = buildChildEntity(entity, entity.family().parent());
 
                         if (isConflict(masterStorage.delete(fatherEntity))) {
                             hint.setRollback(true);
