@@ -11,20 +11,32 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.util.flow.FlowRegistry;
+import com.xforceplus.ultraman.oqsengine.sdk.util.flow.QueueFlow;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
+import io.github.resilience4j.ratelimiter.RateLimiter;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.*;
@@ -52,6 +64,20 @@ public class EntityServiceImpl implements EntityService {
 
     @Autowired
     private HandleResultValueService handleResultValueService;
+
+    @Autowired
+    private RetryRegistry retryRegistry;
+
+    @Autowired
+    private FlowRegistry flowRegistry;
+
+    private Random random = new Random();
+
+    @Value("${xplat.oqsengine.sdk.cas.retry.max-attempts:2}")
+    int maxAttempts;
+
+    @Value("${xplat.oqsengine.sdk.cas.retry.delay:100}")
+    int delay;
 
     private Logger logger = LoggerFactory.getLogger(EntityService.class);
 
@@ -174,6 +200,32 @@ public class EntityServiceImpl implements EntityService {
         } else {
             return Either.left(queryResult.getMessage());
         }
+    }
+
+    @Override
+    public <T> Either<String, T> retryExecute(String key, Supplier<Either<String, T>> supplier) {
+
+        QueueFlow<Either<String, T>> queueFlow = flowRegistry.flow(key);
+        CompletableFuture<Either<String, T>> future = new CompletableFuture<>();
+
+        //this is fixed by only retry for update and delete
+        RetryConfig config = RetryConfig.<Either<String, T>>custom()
+                .maxAttempts(maxAttempts)
+                .waitDuration(Duration.ofMillis(delay))
+                .retryOnResult(response -> response.isLeft() && response.getLeft().equalsIgnoreCase("CONFLICT"))
+                .build();
+
+        Retry retry = retryRegistry.retry("retry-" + UUID.randomUUID().toString(), config);
+
+        retry.getEventPublisher().onRetry(retryEvt -> {
+            logger.info("Trigger Retry {} attempts {} left {}", retryEvt.getName(), retryEvt.getNumberOfRetryAttempts()
+                    , maxAttempts - retryEvt.getNumberOfRetryAttempts());
+        });
+
+        queueFlow.feed(Tuple.of(future, Retry.decorateSupplier(retry, supplier)));
+
+        //TODO
+        return future.join();
     }
 
     /**

@@ -127,6 +127,11 @@
 
     <repositories>
         <repository>
+            <id>alimaven</id>
+            <name>aliyun maven</name>
+            <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+        </repository>
+        <repository>
             <id>xplat-snapshots</id>
             <url>${repository.host}/content/repositories/snapshots/</url>
             <snapshots>

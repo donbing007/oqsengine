@@ -1,6 +1,10 @@
 xplat:
   oqsengine:
     sdk:
+      cas:
+        retry:
+          delay: 500
+          max-attempts: 2
       override: true
       enabled: true
       initsize: 3

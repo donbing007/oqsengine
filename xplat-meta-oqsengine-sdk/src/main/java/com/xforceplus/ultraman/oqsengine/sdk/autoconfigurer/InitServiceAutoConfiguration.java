@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer;
 
+
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
 import com.xforceplus.ultraman.metadata.grpc.CheckServiceClient;
@@ -27,10 +28,15 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStor
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.MetadataRepositoryInMemoryImpl;
+import com.xforceplus.ultraman.oqsengine.sdk.util.flow.FlowRegistry;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.interceptor.MessageDispatcherInterceptor;
 import com.xforceplus.xplat.galaxy.grpc.spring.EnableGrpcServiceClients;
+import io.github.resilience4j.ratelimiter.RateLimiter;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.retry.RetryRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
@@ -48,6 +54,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -343,5 +350,32 @@ public class InitServiceAutoConfiguration {
     @Bean
     public ExportEventLoggerListener loggerListener() {
         return new ExportEventLoggerListener();
+    }
+
+    @Bean
+    public RetryRegistry retryRegistry(){
+        return RetryRegistry.ofDefaults();
+    }
+
+    @Bean
+    public RateLimiterRegistry rateLimiterRegistry(){
+        return RateLimiterRegistry.ofDefaults();
+    }
+
+    @Bean
+    public FlowRegistry flowRegistry(ActorMaterializer mat){
+        return new FlowRegistry(mat);
+    }
+
+    @Bean
+    public RateLimiter rateLimiter(RateLimiterRegistry registry){
+        RateLimiterConfig config = RateLimiterConfig.custom()
+                .limitRefreshPeriod(Duration.ofMillis(10))
+                .limitForPeriod(10)
+                .timeoutDuration(Duration.ofMillis(25))
+                .build();
+
+        RateLimiter rateLimiter = registry.rateLimiter("retry", config);
+        return rateLimiter;
     }
 }

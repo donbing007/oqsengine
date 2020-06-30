@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 /**
  * user api
@@ -28,6 +29,8 @@ public interface EntityService {
     <T> Either<String, T> transactionalExecute(Callable<T> supplier);
 
     Either<String, Map<String, Object>> findOne(IEntityClass entityClass, long id);
+
+    <T> Either<String, T> retryExecute(String key, Supplier<Either<String, T>> supplier);
 
     Either<String, Integer> deleteOne(IEntityClass entityClass, Long id);
 

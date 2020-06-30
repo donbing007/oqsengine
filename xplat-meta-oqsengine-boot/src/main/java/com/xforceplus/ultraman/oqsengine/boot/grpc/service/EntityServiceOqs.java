@@ -4,6 +4,7 @@ import akka.grpc.javadsl.Metadata;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
+import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -147,12 +148,31 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         updateEntity(entity, toEntity(entityClass, in));
                     }
                     //side effect
+                    ResultStatus replaceStatus = entityManagementService.replace(entity);
 
-                    entityManagementService.replace(entity);
-                    result = OperationResult.newBuilder()
-                            .setAffectedRow(1)
-                            .setCode(OperationResult.Code.OK)
-                            .buildPartial();
+                    switch(replaceStatus){
+                        case SUCCESS:
+                            result = OperationResult.newBuilder()
+                                    .setAffectedRow(1)
+                                    .setCode(OperationResult.Code.OK)
+                                    .buildPartial();
+                            break;
+                        case CONFLICT:
+                            //send to sdk
+                            result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.OTHER)
+                                    .setMessage(ResultStatus.CONFLICT.name())
+                                    .buildPartial();
+                            break;
+                        default:
+                            //unreachable code
+                            result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.FAILED)
+                                    .setMessage("产生了未知的错误")
+                                    .buildPartial();
+                    }
                 } else {
                     result = OperationResult.newBuilder()
                             .setCode(OperationResult.Code.FAILED)
@@ -313,11 +333,32 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 if (op.isPresent()) {
                     IEntity entity = op.get();
-                    entityManagementService.delete(entity);
-                    result = OperationResult.newBuilder()
-                            .setAffectedRow(1)
-                            .setCode(OperationResult.Code.OK)
-                            .buildPartial();
+                    ResultStatus deleteStatus = entityManagementService.delete(entity);
+
+                    switch(deleteStatus) {
+                        case SUCCESS:
+                            result = OperationResult.newBuilder()
+                                    .setAffectedRow(1)
+                                    .setCode(OperationResult.Code.OK)
+                                    .buildPartial();
+                            break;
+                        case CONFLICT:
+                            //send to sdk
+                            result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.OTHER)
+                                    .setMessage(ResultStatus.CONFLICT.name())
+                                    .buildPartial();
+                            break;
+                        default:
+                            //unreachable code
+                            result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.FAILED)
+                                    .setMessage("产生了未知的错误")
+                                    .buildPartial();
+                    }
+
                 } else {
                     result = OperationResult.newBuilder()
                             .setAffectedRow(0)

@@ -15,6 +15,7 @@
     <properties>
         <checkstyle.skip>false</checkstyle.skip>
         <dependencies.version>6.0.1-SNAPSHOT</dependencies.version>
+        <resilience4jVersion>1.5.0</resilience4jVersion>
         <test.skip>false</test.skip>
     </properties>
 
@@ -177,6 +178,19 @@
             <artifactId>ultraman-bocp-gen-core</artifactId>
             <version>0.0.12</version>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- Retry -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-retry</artifactId>
+            <version>${resilience4jVersion}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-ratelimiter</artifactId>
+            <version>${resilience4jVersion}</version>
         </dependency>
     </dependencies>
 
