@@ -19,6 +19,8 @@ public interface EntityServicePowerApi extends EntityService {
   
   java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replace(com.xforceplus.ultraman.oqsengine.sdk.EntityUp in, Metadata metadata);
   
+  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replaceByCondition(com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition in, Metadata metadata);
+  
   java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> remove(com.xforceplus.ultraman.oqsengine.sdk.EntityUp in, Metadata metadata);
   
   java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> selectOne(com.xforceplus.ultraman.oqsengine.sdk.EntityUp in, Metadata metadata);
@@ -40,6 +42,10 @@ public interface EntityServicePowerApi extends EntityService {
   }
   
   default java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replace(com.xforceplus.ultraman.oqsengine.sdk.EntityUp in) {
+    throw new GrpcServiceException(Status.UNIMPLEMENTED);
+  }
+  
+  default java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replaceByCondition(com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition in) {
     throw new GrpcServiceException(Status.UNIMPLEMENTED);
   }
   

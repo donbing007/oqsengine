@@ -170,6 +170,14 @@
             <artifactId>opencsv</artifactId>
             <version>4.2</version>
         </dependency>
+
+        <!-- static core version-->
+        <dependency>
+            <groupId>com.xforceplus</groupId>
+            <artifactId>ultraman-bocp-gen-core</artifactId>
+            <version>0.0.12</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>

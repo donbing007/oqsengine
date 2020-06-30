@@ -291,6 +291,7 @@ private static final long serialVersionUID = 0L;
    * <code>.OperationResult.Code code = 1;</code>
    * @return The enum numeric value on the wire for code.
    */
+  @Override
   public int getCodeValue() {
     return code_;
   }
@@ -318,6 +319,7 @@ private static final long serialVersionUID = 0L;
    * <code>string message = 2;</code>
    * @return The message.
    */
+  @Override
   public java.lang.String getMessage() {
     java.lang.Object ref = message_;
     if (ref instanceof java.lang.String) {
@@ -338,6 +340,7 @@ private static final long serialVersionUID = 0L;
    * <code>string message = 2;</code>
    * @return The bytes for message.
    */
+  @Override
   public com.google.protobuf.ByteString
       getMessageBytes() {
     java.lang.Object ref = message_;
@@ -357,31 +360,36 @@ private static final long serialVersionUID = 0L;
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
+  @Override
   public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> getQueryResultList() {
     return queryResult_;
   }
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
-  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder> 
+  @Override
+  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder>
       getQueryResultOrBuilderList() {
     return queryResult_;
   }
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
+  @Override
   public int getQueryResultCount() {
     return queryResult_.size();
   }
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
+  @Override
   public com.xforceplus.ultraman.oqsengine.sdk.EntityUp getQueryResult(int index) {
     return queryResult_.get(index);
   }
   /**
    * <code>repeated .EntityUp queryResult = 3;</code>
    */
+  @Override
   public com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder getQueryResultOrBuilder(
       int index) {
     return queryResult_.get(index);
@@ -393,6 +401,7 @@ private static final long serialVersionUID = 0L;
    * <code>string transactionResult = 4;</code>
    * @return The transactionResult.
    */
+  @Override
   public java.lang.String getTransactionResult() {
     java.lang.Object ref = transactionResult_;
     if (ref instanceof java.lang.String) {
@@ -409,6 +418,7 @@ private static final long serialVersionUID = 0L;
    * <code>string transactionResult = 4;</code>
    * @return The bytes for transactionResult.
    */
+  @Override
   public com.google.protobuf.ByteString
       getTransactionResultBytes() {
     java.lang.Object ref = transactionResult_;
@@ -429,6 +439,7 @@ private static final long serialVersionUID = 0L;
    * <code>int32 affectedRow = 5;</code>
    * @return The affectedRow.
    */
+  @Override
   public int getAffectedRow() {
     return affectedRow_;
   }
@@ -439,6 +450,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated int64 ids = 6;</code>
    * @return A list containing the ids.
    */
+  @Override
   public java.util.List<java.lang.Long>
       getIdsList() {
     return ids_;
@@ -447,6 +459,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated int64 ids = 6;</code>
    * @return The count of ids.
    */
+  @Override
   public int getIdsCount() {
     return ids_.size();
   }
@@ -455,6 +468,7 @@ private static final long serialVersionUID = 0L;
    * @param index The index of the element to return.
    * @return The ids at the given index.
    */
+  @Override
   public long getIds(int index) {
     return ids_.getLong(index);
   }
@@ -466,6 +480,7 @@ private static final long serialVersionUID = 0L;
    * <code>int32 totalRow = 7;</code>
    * @return The totalRow.
    */
+  @Override
   public int getTotalRow() {
     return totalRow_;
   }
@@ -950,6 +965,7 @@ private static final long serialVersionUID = 0L;
      * <code>.OperationResult.Code code = 1;</code>
      * @return The enum numeric value on the wire for code.
      */
+    @Override
     public int getCodeValue() {
       return code_;
     }
@@ -1022,6 +1038,7 @@ private static final long serialVersionUID = 0L;
      * <code>string message = 2;</code>
      * @return The message.
      */
+    @Override
     public java.lang.String getMessage() {
       java.lang.Object ref = message_;
       if (!(ref instanceof java.lang.String)) {
@@ -1042,6 +1059,7 @@ private static final long serialVersionUID = 0L;
      * <code>string message = 2;</code>
      * @return The bytes for message.
      */
+    @Override
     public com.google.protobuf.ByteString
         getMessageBytes() {
       java.lang.Object ref = message_;
@@ -1124,6 +1142,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
+    @Override
     public java.util.List<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> getQueryResultList() {
       if (queryResultBuilder_ == null) {
         return java.util.Collections.unmodifiableList(queryResult_);
@@ -1134,6 +1153,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
+    @Override
     public int getQueryResultCount() {
       if (queryResultBuilder_ == null) {
         return queryResult_.size();
@@ -1144,6 +1164,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
+    @Override
     public com.xforceplus.ultraman.oqsengine.sdk.EntityUp getQueryResult(int index) {
       if (queryResultBuilder_ == null) {
         return queryResult_.get(index);
@@ -1294,6 +1315,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
+    @Override
     public com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder getQueryResultOrBuilder(
         int index) {
       if (queryResultBuilder_ == null) {
@@ -1304,7 +1326,8 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .EntityUp queryResult = 3;</code>
      */
-    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder> 
+    @Override
+    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.sdk.EntityUpOrBuilder>
          getQueryResultOrBuilderList() {
       if (queryResultBuilder_ != null) {
         return queryResultBuilder_.getMessageOrBuilderList();
@@ -1354,6 +1377,7 @@ private static final long serialVersionUID = 0L;
      * <code>string transactionResult = 4;</code>
      * @return The transactionResult.
      */
+    @Override
     public java.lang.String getTransactionResult() {
       java.lang.Object ref = transactionResult_;
       if (!(ref instanceof java.lang.String)) {
@@ -1370,6 +1394,7 @@ private static final long serialVersionUID = 0L;
      * <code>string transactionResult = 4;</code>
      * @return The bytes for transactionResult.
      */
+    @Override
     public com.google.protobuf.ByteString
         getTransactionResultBytes() {
       java.lang.Object ref = transactionResult_;
@@ -1430,6 +1455,7 @@ private static final long serialVersionUID = 0L;
      * <code>int32 affectedRow = 5;</code>
      * @return The affectedRow.
      */
+    @Override
     public int getAffectedRow() {
       return affectedRow_;
     }
@@ -1466,6 +1492,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated int64 ids = 6;</code>
      * @return A list containing the ids.
      */
+    @Override
     public java.util.List<java.lang.Long>
         getIdsList() {
       return ((bitField0_ & 0x00000002) != 0) ?
@@ -1475,6 +1502,7 @@ private static final long serialVersionUID = 0L;
      * <code>repeated int64 ids = 6;</code>
      * @return The count of ids.
      */
+    @Override
     public int getIdsCount() {
       return ids_.size();
     }
@@ -1483,6 +1511,7 @@ private static final long serialVersionUID = 0L;
      * @param index The index of the element to return.
      * @return The ids at the given index.
      */
+    @Override
     public long getIds(int index) {
       return ids_.getLong(index);
     }
@@ -1539,6 +1568,7 @@ private static final long serialVersionUID = 0L;
      * <code>int32 totalRow = 7;</code>
      * @return The totalRow.
      */
+    @Override
     public int getTotalRow() {
       return totalRow_;
     }

@@ -121,18 +121,19 @@ public final class EntityResourceProto {
       "\n\010required\030\t \001(\t\022\022\n\nsearchable\030\n \001(\t\022\021\n\t" +
       "minLength\030\013 \001(\t\022\016\n\006dictId\030\014 \001(\t\022\024\n\014defau" +
       "ltValue\030\r \001(\t\022\021\n\tprecision\030\016 \001(\005\022\022\n\niden" +
-      "tifier\030\017 \001(\0102\357\002\n\rEntityService\022)\n\005begin\022" +
+      "tifier\030\017 \001(\0102\253\003\n\rEntityService\022)\n\005begin\022" +
       "\016.TransactionUp\032\020.OperationResult\022$\n\005bui" +
       "ld\022\t.EntityUp\032\020.OperationResult\022&\n\007repla" +
-      "ce\022\t.EntityUp\032\020.OperationResult\022%\n\006remov" +
-      "e\022\t.EntityUp\032\020.OperationResult\022(\n\tselect" +
-      "One\022\t.EntityUp\032\020.OperationResult\022:\n\022sele" +
-      "ctByConditions\022\022.SelectByCondition\032\020.Ope" +
-      "rationResult\022*\n\006commit\022\016.TransactionUp\032\020" +
-      ".OperationResult\022,\n\010rollBack\022\016.Transacti" +
-      "onUp\032\020.OperationResultB>\n%com.xforceplus" +
-      ".ultraman.oqsengine.sdkB\023EntityResourceP" +
-      "rotoP\001b\006proto3"
+      "ce\022\t.EntityUp\032\020.OperationResult\022:\n\022repla" +
+      "ceByCondition\022\022.SelectByCondition\032\020.Oper" +
+      "ationResult\022%\n\006remove\022\t.EntityUp\032\020.Opera" +
+      "tionResult\022(\n\tselectOne\022\t.EntityUp\032\020.Ope" +
+      "rationResult\022:\n\022selectByConditions\022\022.Sel" +
+      "ectByCondition\032\020.OperationResult\022*\n\006comm" +
+      "it\022\016.TransactionUp\032\020.OperationResult\022,\n\010" +
+      "rollBack\022\016.TransactionUp\032\020.OperationResu" +
+      "ltB>\n%com.xforceplus.ultraman.oqsengine." +
+      "sdkB\023EntityResourceProtoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,

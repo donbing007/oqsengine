@@ -2,4 +2,5 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.xforceplus.ul
 com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfiguration, \
 com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.DefaultEndpointConfiguration, \
 com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.StorageAutoConfiguration, \
-com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.RuntimeConfigAutoConfiguration
+com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.RuntimeConfigAutoConfiguration ,\
+com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.StaticAutoConfiguration  

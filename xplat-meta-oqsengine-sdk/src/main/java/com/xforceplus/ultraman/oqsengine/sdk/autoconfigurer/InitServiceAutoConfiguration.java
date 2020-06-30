@@ -2,26 +2,12 @@ package com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer;
 
 import akka.actor.ActorSystem;
 import akka.stream.ActorMaterializer;
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.util.DefaultInstantiatorStrategy;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.util.JsonFormat;
-import com.xforceplus.ultraman.config.ConfigConverter;
-import com.xforceplus.ultraman.config.ConfigurationEngine;
-import com.xforceplus.ultraman.config.json.JsonConfigNode;
-import com.xforceplus.ultraman.config.storage.ConfigurationStorage;
-import com.xforceplus.ultraman.config.storage.impl.DefaultFileConfigurationStorage;
-import com.xforceplus.ultraman.config.strategy.VersiondDiscardStrategy;
-import com.xforceplus.ultraman.config.strategy.impl.DefaultJsonEventStrategy;
 import com.xforceplus.ultraman.metadata.grpc.CheckServiceClient;
-import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.configuration.GatewayUrlSupplier;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.configuration.MessageAppIdSupplier;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.configuration.MessageTokenSupplier;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
-import com.xforceplus.ultraman.oqsengine.sdk.config.engine.VersionedJsonConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.config.init.*;
 import com.xforceplus.ultraman.oqsengine.sdk.controller.DownloadController;
 import com.xforceplus.ultraman.oqsengine.sdk.handler.DefaultEntityServiceHandler;
@@ -36,7 +22,6 @@ import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.FieldVa
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.RegxValidator;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.RequiredValidator;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.TypeCheckValidator;
-//import com.xforceplus.ultraman.oqsengine.sdk.staticmode.StaticServiceLoader;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.DictMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
@@ -46,12 +31,10 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.interceptor.MessageDispatcherInterceptor;
 import com.xforceplus.xplat.galaxy.grpc.spring.EnableGrpcServiceClients;
-import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -65,9 +48,10 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+//import com.xforceplus.ultraman.oqsengine.sdk.staticmode.StaticServiceLoader;
 
 /**
  * sdk auto-configuration
@@ -146,7 +130,7 @@ public class InitServiceAutoConfiguration {
 
     @ConditionalOnMissingBean(MetadataRepository.class)
     @Bean
-    public MetadataRepository metadataRepository(@Value("${xplat.oqsengine.sdk.max-version:3}") Integer versionSize, ApplicationEventPublisher publisher ) {
+    public MetadataRepository metadataRepository(@Value("${xplat.oqsengine.sdk.max-version:3}") Integer versionSize, ApplicationEventPublisher publisher) {
         return new MetadataRepositoryInMemoryImpl(versionSize, publisher);
     }
 
@@ -357,14 +341,7 @@ public class InitServiceAutoConfiguration {
 
     @ConditionalOnProperty(value = "xplat.oqsengine.sdk.export.log", matchIfMissing = true)
     @Bean
-    public ExportEventLoggerListener loggerListener(){
+    public ExportEventLoggerListener loggerListener() {
         return new ExportEventLoggerListener();
     }
-
-
-//    @ConditionalOnClass()
-//    @Bean
-//    public StaticServiceLoader staticServiceLoader(@Value("${xplat.oqsengine.sdk.static.scan-package:null}")){
-//        return new StaticServiceLoader();
-//    }
 }

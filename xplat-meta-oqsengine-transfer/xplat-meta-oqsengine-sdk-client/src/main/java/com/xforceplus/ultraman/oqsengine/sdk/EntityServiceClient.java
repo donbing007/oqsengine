@@ -69,6 +69,12 @@ public abstract class EntityServiceClient extends EntityServiceClientPowerApi im
     
   
     
+      private final SingleResponseRequestBuilder<com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replaceByConditionRequestBuilder(scala.concurrent.Future<ManagedChannel> channel){
+        return new JavaUnaryRequestBuilder<>(replaceByConditionDescriptor, channel, options, settings, ec);
+      }
+    
+  
+    
       private final SingleResponseRequestBuilder<com.xforceplus.ultraman.oqsengine.sdk.EntityUp, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> removeRequestBuilder(scala.concurrent.Future<ManagedChannel> channel){
         return new JavaUnaryRequestBuilder<>(removeDescriptor, channel, options, settings, ec);
       }
@@ -155,6 +161,25 @@ public abstract class EntityServiceClient extends EntityServiceClientPowerApi im
         
         {
           return clientState.withChannel( this::replaceRequestBuilder);
+        }
+      
+
+        /**
+         * For access to method metadata use the parameterless version of replaceByCondition
+         */
+        public java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replaceByCondition(com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition request) {
+          return replaceByCondition().invoke(request);
+        }
+
+        /**
+         * Lower level "lifted" version of the method, giving access to request metadata etc.
+         * prefer replaceByCondition(com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition) if possible.
+         */
+        
+          public SingleResponseRequestBuilder<com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replaceByCondition()
+        
+        {
+          return clientState.withChannel( this::replaceByConditionRequestBuilder);
         }
       
 
@@ -292,6 +317,20 @@ public abstract class EntityServiceClient extends EntityServiceClientPowerApi im
 )
             .setFullMethodName(MethodDescriptor.generateFullMethodName("EntityService", "replace"))
             .setRequestMarshaller(new ProtoMarshaller<com.xforceplus.ultraman.oqsengine.sdk.EntityUp>(EntityUpSerializer))
+            .setResponseMarshaller(new ProtoMarshaller<com.xforceplus.ultraman.oqsengine.sdk.OperationResult>(OperationResultSerializer))
+            .setSampledToLocalTracing(true)
+            .build();
+        
+        private static MethodDescriptor<com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition, com.xforceplus.ultraman.oqsengine.sdk.OperationResult> replaceByConditionDescriptor =
+          MethodDescriptor.<com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition, com.xforceplus.ultraman.oqsengine.sdk.OperationResult>newBuilder()
+            .setType(
+   MethodDescriptor.MethodType.UNARY 
+  
+  
+  
+)
+            .setFullMethodName(MethodDescriptor.generateFullMethodName("EntityService", "replaceByCondition"))
+            .setRequestMarshaller(new ProtoMarshaller<com.xforceplus.ultraman.oqsengine.sdk.SelectByCondition>(SelectByConditionSerializer))
             .setResponseMarshaller(new ProtoMarshaller<com.xforceplus.ultraman.oqsengine.sdk.OperationResult>(OperationResultSerializer))
             .setSampledToLocalTracing(true)
             .build();

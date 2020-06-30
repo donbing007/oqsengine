@@ -161,7 +161,9 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
             UpdateableDataContext dc = versionService.getCurrentVersionDCForBoById(Long.parseLong(id));
 
-            if (dc == null) return null;
+            if (dc == null) {
+                return null;
+            }
 
             DataSet boDetails = dc.query().from(BoTable.TABLE_NAME)
                     .selectAll()
@@ -288,7 +290,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
                 //insert bo
                 insertBo(moduleId, boUp, versionedDCForModule);
-                logger.info("Insert Bo:{}",  boUp.getId());
+                logger.info("Insert Bo:{}", boUp.getId());
             });
             return null;
         });
@@ -389,7 +391,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 return Tuple.of(relation, entityClass);
             });
         });
-}
+    }
 
     @Override
     public Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode) {
