@@ -22,12 +22,29 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
 
     @Override
     public long begin() throws SQLException {
-        long txId = transactionManager.create().id();
+        return begin(DEFAULT_TRANSACTION_TIMEOUT);
+    }
 
-        // 创建事务,但是当前不需要使用取消绑定.
-        transactionManager.unbind();
+    @Override
+    public long begin(long timeoutMs) throws SQLException {
+        long txId;
 
-        return txId;
+        try {
+            if (DEFAULT_TRANSACTION_TIMEOUT == timeoutMs) {
+                txId = transactionManager.create().id();
+            } else if (timeoutMs > DEFAULT_TRANSACTION_TIMEOUT) {
+                txId = transactionManager.create(timeoutMs).id();
+            } else {
+                throw new SQLException(
+                    String.format("%d is an invalid transaction timeout and must be an integer greater than 0.", timeoutMs));
+            }
+
+            return txId;
+        } finally {
+
+            // 创建事务,但是当前不需要使用取消绑定.
+            transactionManager.unbind();
+        }
     }
 
     @Override
