@@ -468,6 +468,9 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     private Optional<IEntity> buildEntityFromStorageEntity(StorageEntity se, IEntityClass entityClass) throws SQLException {
+        if (se == null) {
+            return Optional.empty();
+        }
         long dataEntityClassId = se.getEntity();
         if (entityClass.id() != dataEntityClassId) {
             throw new SQLException(
