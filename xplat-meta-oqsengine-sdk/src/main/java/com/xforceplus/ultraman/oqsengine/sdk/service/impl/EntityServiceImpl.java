@@ -95,6 +95,7 @@ public class EntityServiceImpl implements EntityService {
 
     @Override
     public <T> Either<String, T> transactionalExecute(Callable<T> supplier) {
+        //maybe timeout
         OperationResult result = entityServiceClient
             .begin(TransactionUp.newBuilder().build()).toCompletableFuture().join();
 
@@ -118,9 +119,10 @@ public class EntityServiceImpl implements EntityService {
                     return Either.right(commitedT.join());
                 }
             } catch (Exception ex) {
+                //maybe timeout
                 entityServiceClient.rollBack(TransactionUp.newBuilder()
                     .setId(result.getTransactionResult())
-                    .build());
+                    .build()).toCompletableFuture().join();
                 return Either.left(ex.getMessage());
             }
         } else {
