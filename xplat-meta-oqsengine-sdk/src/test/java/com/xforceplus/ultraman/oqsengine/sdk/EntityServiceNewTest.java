@@ -510,6 +510,7 @@ public class EntityServiceNewTest {
         entityService.deleteOne(boolEntity, result);
     }
 
+
     @Test
     public void testLeftJoinTest(){
         metadataRepository.save(manyToOneNew(), "1", "1");

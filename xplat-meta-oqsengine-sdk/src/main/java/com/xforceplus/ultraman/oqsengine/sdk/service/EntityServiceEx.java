@@ -22,10 +22,10 @@ public interface EntityServiceEx {
      * 查找页面的BO列表，先从租户上找，如果没有则返回默认
      *
      * @param pageCode
-     * @param tenantId
+     * @param tenantCode
      * @return
      */
-    List<UltPageBoItem> findPageBos(String pageCode, String tenantId);
+    List<UltPageBoItem> findPageBos(String pageCode, String tenantCode);
 
     /**
      * 根据字典ID查找字典信息，根据字典id+code查找具体的字典项

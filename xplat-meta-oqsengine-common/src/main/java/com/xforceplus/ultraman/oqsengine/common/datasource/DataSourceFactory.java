@@ -73,7 +73,7 @@ public class DataSourceFactory {
         if (dsConfigFile == null) {
             config = ConfigFactory.load("oqsengine-ds.conf");
         } else {
-            config = ConfigFactory.parseFile(new File(dsConfigFile));
+            config = ConfigFactory.load(ConfigFactory.parseFile(new File(dsConfigFile)));
         }
 
         List<DataSource> indexWrite;
@@ -119,7 +119,7 @@ public class DataSourceFactory {
             try {
                 invokeMethod(hikariConfig, e.getKey(), e.getValue());
             } catch (Exception ex) {
-                throw new RuntimeException(String.format("Configuration error, wrong property '%s'.", e.getKey()));
+                throw new RuntimeException(String.format("Configuration error, wrong property '%s' '%s'.", e.getKey(), e.getValue()));
             }
         });
 

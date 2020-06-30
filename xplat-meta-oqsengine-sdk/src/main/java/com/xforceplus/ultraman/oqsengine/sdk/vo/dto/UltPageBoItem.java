@@ -52,6 +52,11 @@ public class UltPageBoItem {
     private String setting;
 
     /**
+     * 显示位置
+     */
+    private Long sortPlace;
+
+    /**
      * 部署状态
      */
     private String envStatus;
@@ -142,6 +147,14 @@ public class UltPageBoItem {
 
     public void setTenantCode(String tenantCode) {
         this.tenantCode = tenantCode;
+    }
+
+    public Long getSortPlace() {
+        return sortPlace;
+    }
+
+    public void setSortPlace(Long sortPlace) {
+        this.sortPlace = sortPlace;
     }
 
     @Override

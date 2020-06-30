@@ -16,8 +16,8 @@ public class PageBoMapLocalStore extends MapLocalStore {
 
     public static PageBoMapLocalStore create() {
         return new PageBoMapLocalStore("pageBos", "pageBo",
-                new String[]{"settingId", "id", "appId", "name", "code", "refPageId", "tenantId", "tenantName", "tenantCode", "version", "boName", "boCode", "setting", "remark", "envStatus"}
-                , null, false, null);
+                new String[]{"settingId", "id", "appId", "name", "code", "refPageId", "tenantId", "tenantName", "tenantCode", "version",
+                        "boName", "boCode", "setting", "remark", "envStatus", "sortPlace"}, null, false, null);
     }
 
     private PageBoMapLocalStore(String schema, String tableName, String[] columns, String[] pkColumns, boolean hasVersion, Comparator<Object> versionComparator) {
@@ -49,6 +49,7 @@ public class PageBoMapLocalStore extends MapLocalStore {
             map.put("boName", ultPageBo.getBoName());
             map.put("boCode", ultPageBo.getBoCode());
             map.put("setting", ultPageBo.getSetting());
+            map.put("sortPlace", ultPageBo.getSortPlace());
             map.put("remark", ultPageBo.getRemark());
             map.put("envStatus", ultPage.getEnvStatus());
             this.save(map);

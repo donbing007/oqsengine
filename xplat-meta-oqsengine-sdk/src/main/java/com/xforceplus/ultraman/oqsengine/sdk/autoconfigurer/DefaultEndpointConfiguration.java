@@ -43,6 +43,7 @@ public class DefaultEndpointConfiguration {
         return new EntityController();
     }
 
+    @ConditionalOnProperty(value = "xplat.oqsengine.sdk.enabled")
     @Bean
     public ConfigController configController(){ return new ConfigController(); }
 }
