@@ -335,7 +335,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
-
     @Override
     public CompletionStage<OperationResult> selectOne(EntityUp in, Metadata metadata) {
         return async(() -> {

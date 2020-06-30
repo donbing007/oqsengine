@@ -16,6 +16,8 @@ import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.StringUtils;
@@ -50,6 +52,8 @@ public class EntityServiceImpl implements EntityService {
 
     @Autowired
     private HandleResultValueService handleResultValueService;
+
+    private Logger logger = LoggerFactory.getLogger(EntityService.class);
 
     public EntityServiceImpl(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
         this.metadataRepository = metadataRepository;
@@ -97,33 +101,45 @@ public class EntityServiceImpl implements EntityService {
     public <T> Either<String, T> transactionalExecute(Callable<T> supplier) {
         //maybe timeout
         OperationResult result = entityServiceClient
-            .begin(TransactionUp.newBuilder().build()).toCompletableFuture().join();
+                .begin(TransactionUp.newBuilder().build()).toCompletableFuture().join();
 
         if (result.getCode() == OperationResult.Code.OK) {
+            logger.info("Transaction create success with id:{}", result.getTransactionResult());
             contextService.set(TRANSACTION_KEY, result.getTransactionResult());
+            logger.debug("set currentService with {}", result.getTransactionResult());
             try {
                 T t = supplier.call();
-                CompletableFuture<T> commitedT = entityServiceClient.commit(TransactionUp.newBuilder()
-                    .setId(result.getTransactionResult())
-                    .build()).thenApply(x -> {
-                    if (x.getCode() == OperationResult.Code.OK) {
-                        return t;
-                    } else {
-                        throw new RuntimeException("事务提交失败");
-                    }
-                }).toCompletableFuture();
+                CompletableFuture<Either<String,T>> commitedT = entityServiceClient.commit(TransactionUp.newBuilder()
+                        .setId(result.getTransactionResult())
+                        .build())
+                        .exceptionally(ex -> {
+                            logger.error("Transaction with id:{} failed to commit with exception {}", result.getTransactionResult(), ex.getMessage());
+                            return OperationResult
+                                    .newBuilder()
+                                    .setCode(OperationResult.Code.EXCEPTION)
+                                    .setMessage(ex.getMessage())
+                                    .buildPartial();
+                        }).thenApply(x -> {
+                            if (x.getCode() == OperationResult.Code.OK) {
+                                logger.info("Transaction with id:{} has committed successfully ", result.getTransactionResult());
+                                return Either.<String, T>right(t);
+                            } else {
+                                logger.error("Transaction with id:{} failed to commit", result.getTransactionResult());
+                                return Either.<String, T>left("事务提交失败:" + x.getMessage());
+                            }
+                        }).toCompletableFuture();
 
-                if (commitedT.isCompletedExceptionally()) {
-                    return Either.left("事务提交失败");
-                } else {
-                    return Either.right(commitedT.join());
-                }
+                return commitedT.join();
             } catch (Exception ex) {
                 //maybe timeout
                 entityServiceClient.rollBack(TransactionUp.newBuilder()
-                    .setId(result.getTransactionResult())
-                    .build()).toCompletableFuture().join();
+                        .setId(result.getTransactionResult())
+                        .build()).toCompletableFuture().join();
                 return Either.left(ex.getMessage());
+            } finally {
+                //remove TRANSACTION_KEY
+                logger.info("remove currentService {} with {}", TRANSACTION_KEY.name(), result.getTransactionResult());
+                contextService.set(TRANSACTION_KEY, null);
             }
         } else {
             return Either.left("事务创建失败");
@@ -137,18 +153,21 @@ public class EntityServiceImpl implements EntityService {
         SingleResponseRequestBuilder<EntityUp, OperationResult> queryResultBuilder = entityServiceClient.selectOne();
 
         if (transId != null) {
-            queryResultBuilder.addHeader("transaction-id", transId);
+            logger.info("Query with Transaction id:{} ", transId);
+            queryResultBuilder = queryResultBuilder.addHeader("transaction-id", transId);
+        } else {
+            logger.debug("Query without Transaction");
         }
 
         OperationResult queryResult = queryResultBuilder.invoke(toEntityUp(entityClass, id))
-            .toCompletableFuture().join();
+                .toCompletableFuture().join();
 
         if (queryResult.getCode() == OperationResult.Code.OK) {
             if (queryResult.getTotalRow() > 0) {
 
                 return Either.right(
                         handleResultValueService.toRecord(entityClass, queryResult.getQueryResultList().get(0))
-                        .toMap(null));
+                                .toMap(null));
             } else {
                 return Either.left("未查询到记录");
             }
@@ -171,12 +190,13 @@ public class EntityServiceImpl implements EntityService {
         String transId = contextService.get(TRANSACTION_KEY);
         SingleResponseRequestBuilder<EntityUp, OperationResult> removeBuilder = entityServiceClient.remove();
         if (transId != null) {
-            removeBuilder.addHeader("transaction-id", transId);
+            logger.info("delete with Transaction id:{} ", transId);
+            removeBuilder = removeBuilder.addHeader("transaction-id", transId);
         }
 
         OperationResult updateResult =
-            removeBuilder.invoke(toEntityUp(entityClass, id))
-                .toCompletableFuture().join();
+                removeBuilder.invoke(toEntityUp(entityClass, id))
+                        .toCompletableFuture().join();
 
         if (updateResult.getCode() == OperationResult.Code.OK) {
             int rows = updateResult.getAffectedRow();
@@ -207,7 +227,8 @@ public class EntityServiceImpl implements EntityService {
         String transId = contextService.get(TRANSACTION_KEY);
         SingleResponseRequestBuilder<EntityUp, OperationResult> replaceBuilder = entityServiceClient.replace();
         if (transId != null) {
-            replaceBuilder.addHeader("transaction-id", transId);
+            logger.info("updateById with Transaction id:{} ", transId);
+            replaceBuilder = replaceBuilder.addHeader("transaction-id", transId);
         }
         //处理系统字段的逻辑-add by wz
 //        body = entityMetaHandler.updateFill(entityClass,body);
@@ -215,8 +236,8 @@ public class EntityServiceImpl implements EntityService {
         List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.UPDATE);
 
         OperationResult updateResult = replaceBuilder
-            .invoke(toEntityUp(entityClass, id, valueUps))
-            .toCompletableFuture().join();
+                .invoke(toEntityUp(entityClass, id, valueUps))
+                .toCompletableFuture().join();
 
         if (updateResult.getCode() == OperationResult.Code.OK) {
             int rows = updateResult.getAffectedRow();
@@ -238,10 +259,9 @@ public class EntityServiceImpl implements EntityService {
 
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.replaceByCondition();
         if (transId != null) {
-            requestBuilder.addHeader("transaction-id", transId);
+            logger.info("updateByCondition with Transaction id:{} ", transId);
+            requestBuilder = requestBuilder.addHeader("transaction-id", transId);
         }
-
-
 
         List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.UPDATE);
         ConditionsUp conditionsUp = Optional.ofNullable(condition)
@@ -251,19 +271,14 @@ public class EntityServiceImpl implements EntityService {
                                 .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY))
                 .orElseGet(() -> ConditionsUp.newBuilder().build());
 
-
-
         SelectByCondition sbc = toUpdateSelection(entityClass, () -> toEntityUp(entityClass, null, valueUps), condition, conditionsUp);
-
 
         OperationResult updateResult = requestBuilder
                 .invoke(sbc)
                 .toCompletableFuture().join();
 
-
         if (updateResult.getCode() == OperationResult.Code.OK) {
             int rows = updateResult.getAffectedRow();
-
 
             if (rows > 0) {
                 updateResult.getIdsList().forEach(x -> {
@@ -283,10 +298,11 @@ public class EntityServiceImpl implements EntityService {
         String transId = contextService.get(TRANSACTION_KEY);
         SingleResponseRequestBuilder<EntityUp, OperationResult> replaceBuilder = entityServiceClient.replace();
         if (transId != null) {
-            replaceBuilder.addHeader("transaction-id", transId);
+            logger.info("replaceById with Transaction id:{} ", transId);
+            replaceBuilder = replaceBuilder.addHeader("transaction-id", transId);
         }
 
-        replaceBuilder.addHeader("mode", "replace");
+        replaceBuilder = replaceBuilder.addHeader("mode", "replace");
 
         //处理系统字段的逻辑-add by wz
 //        body = entityMetaHandler.updateFill(entityClass,body);
@@ -294,8 +310,8 @@ public class EntityServiceImpl implements EntityService {
         List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.REPLACE);
 
         OperationResult updateResult = replaceBuilder
-            .invoke(toEntityUp(entityClass, id, valueUps))
-            .toCompletableFuture().join();
+                .invoke(toEntityUp(entityClass, id, valueUps))
+                .toCompletableFuture().join();
 
         if (updateResult.getCode() == OperationResult.Code.OK) {
             int rows = updateResult.getAffectedRow();
@@ -315,19 +331,21 @@ public class EntityServiceImpl implements EntityService {
     /**
      * Record has all field and not filtered;
      * for export
+     *
      * @param entityClass
      * @param condition
      * @return
      */
     @Override
-    public Either<String, Tuple2<Integer, List<Record>>> findRecordsByCondition(IEntityClass entityClass, List<Long> ids, ConditionQueryRequest condition){
+    public Either<String, Tuple2<Integer, List<Record>>> findRecordsByCondition(IEntityClass entityClass, List<Long> ids, ConditionQueryRequest condition) {
 
         String transId = contextService.get(TRANSACTION_KEY);
 
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
 
         if (transId != null) {
-            requestBuilder.addHeader("transaction-id", transId);
+            logger.info("findRecordsByCondition with Transaction id:{} ", transId);
+            requestBuilder = requestBuilder.addHeader("transaction-id", transId);
         }
 
         /**
@@ -337,7 +355,7 @@ public class EntityServiceImpl implements EntityService {
                 .map(ConditionQueryRequest::getConditions)
                 .map(x ->
                         handleQueryValueService
-                        .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY))
+                                .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY))
                 .orElseGet(() -> ConditionsUp.newBuilder().build());
 
         /**
@@ -397,14 +415,15 @@ public class EntityServiceImpl implements EntityService {
         SingleResponseRequestBuilder<EntityUp, OperationResult> buildBuilder = entityServiceClient.build();
 
         if (transId != null) {
-            buildBuilder.addHeader("transaction-id", transId);
+            logger.info("create with Transaction id:{} ", transId);
+            buildBuilder = buildBuilder.addHeader("transaction-id", transId);
         }
 
         List<ValueUp> valueUps = handlerValueService.handlerValue(entityClass, body, OperationType.CREATE);
 
         OperationResult createResult = buildBuilder
-            .invoke(toEntityUp(entityClass, null, valueUps))
-            .toCompletableFuture().join();
+                .invoke(toEntityUp(entityClass, null, valueUps))
+                .toCompletableFuture().join();
 
         if (createResult.getCode() == OperationResult.Code.OK) {
             if (createResult.getIdsList().size() < 1) {
@@ -430,11 +449,12 @@ public class EntityServiceImpl implements EntityService {
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
 
         if (transId != null) {
-            requestBuilder.addHeader("transaction-id", transId);
+            logger.info("count with Transaction id:{} ", transId);
+            requestBuilder = requestBuilder.addHeader("transaction-id", transId);
         }
 
         OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, null, condition))
-            .toCompletableFuture().join();
+                .toCompletableFuture().join();
 
         if (result.getCode() == OperationResult.Code.OK) {
             return result.getTotalRow();
@@ -456,7 +476,7 @@ public class EntityServiceImpl implements EntityService {
         }
         String appCode = contextService.get(APPCODE);
 
-        if ( version == null ){
+        if (version == null) {
             return metadataRepository.findSubEntitiesByCode(tenantId, appCode, bocode);
         } else {
             return metadataRepository.findSubEntitiesByCode(tenantId, appCode, bocode, version);
