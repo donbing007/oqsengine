@@ -11,13 +11,11 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.util.context.ContextDecorator;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.FlowRegistry;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.QueueFlow;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
-import io.github.resilience4j.ratelimiter.RateLimiter;
-import io.github.resilience4j.ratelimiter.RateLimiterConfig;
-import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
@@ -31,7 +29,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -135,7 +132,7 @@ public class EntityServiceImpl implements EntityService {
             logger.debug("set currentService with {}", result.getTransactionResult());
             try {
                 T t = supplier.call();
-                CompletableFuture<Either<String,T>> commitedT = entityServiceClient.commit(TransactionUp.newBuilder()
+                CompletableFuture<Either<String, T>> commitedT = entityServiceClient.commit(TransactionUp.newBuilder()
                         .setId(result.getTransactionResult())
                         .build())
                         .exceptionally(ex -> {
@@ -222,7 +219,7 @@ public class EntityServiceImpl implements EntityService {
                     , maxAttempts - retryEvt.getNumberOfRetryAttempts());
         });
 
-        queueFlow.feed(Tuple.of(future, Retry.decorateSupplier(retry, supplier)));
+        queueFlow.feed(Tuple.of(future, Retry.decorateSupplier(retry , ContextDecorator.decorateSupplier(contextService,  supplier))));
 
         //TODO
         return future.join();

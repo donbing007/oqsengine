@@ -5,17 +5,20 @@ import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.metadata.grpc.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.configuration.TestApplicationContextInitializer;
+import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ContextConfiguration;
-import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.IntStream;
+
+import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.TRANSACTION_KEY;
 
 @EnableAsync
 @ContextConfiguration(initializers = TestApplicationContextInitializer.class)
@@ -27,6 +30,8 @@ public class IssueRelatedTest extends ContextWareBaseTest {
     @Autowired
     private EntityService entityService;
 
+    @Autowired
+    private ContextService contextService;
 
     private ModuleUpResult manyToOneNew() {
         return ModuleUpResult
@@ -97,7 +102,6 @@ public class IssueRelatedTest extends ContextWareBaseTest {
     public void testCasConflict() throws InterruptedException {
         metadataRepository.save(manyToOneNew(), "1", "1");
 
-
         int concurrent = 10;
 
         EntityClass entityClass = entityService.load("1").get();
@@ -105,15 +109,17 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         maps.put("field1", "123");
         Long id = entityService.create(entityClass, maps).get();
 
+        contextService.set(TRANSACTION_KEY, "1234");
         CountDownLatch latch = new CountDownLatch(concurrent);
 
-
         IntStream.range(0, concurrent).mapToObj(x -> new Thread(() -> {
-
+            contextService.set(TRANSACTION_KEY, "1234");
             Map<String, Object> updateBody = new HashMap<>();
             updateBody.put("field1", "123-" + Thread.currentThread().getName());
-            System.out.println(entityService.retryExecute("a", () ->entityService.updateById(entityClass, id, updateBody)));
+            System.out.println(entityService.retryExecute("a", () -> entityService
+                    .updateById(entityClass, id, updateBody)));
             latch.countDown();
+            contextService.clear();
         })).forEach(Thread::start);
 
         latch.await();
@@ -121,5 +127,7 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         System.out.println(entityService.findOne(entityClass, id));
 
         entityService.deleteOne(entityClass, id);
+
+        Thread.sleep(10000);
     }
 }

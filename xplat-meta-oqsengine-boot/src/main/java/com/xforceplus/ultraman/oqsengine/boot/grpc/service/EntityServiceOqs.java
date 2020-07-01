@@ -90,7 +90,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             extractTransaction(metadata).ifPresent(id -> {
                 try {
                     transactionManagementService.restore(id);
-                } catch (SQLException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
@@ -126,7 +126,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             extractTransaction(metadata).ifPresent(id -> {
                 try {
                     transactionManagementService.restore(id);
-                } catch (SQLException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
@@ -197,7 +197,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             extractTransaction(metadata).ifPresent(id -> {
                 try {
                     transactionManagementService.restore(id);
-                } catch (SQLException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
@@ -318,7 +318,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             extractTransaction(metadata).ifPresent(id -> {
                 try {
                     transactionManagementService.restore(id);
-                } catch (SQLException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
@@ -382,7 +382,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             extractTransaction(metadata).ifPresent(id -> {
                 try {
                     transactionManagementService.restore(id);
-                } catch (SQLException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
@@ -448,6 +448,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> selectByConditions(SelectByCondition in, Metadata metadata) {
         return async(() -> {
+
+            extractTransaction(metadata).ifPresent(id -> {
+                try {
+                    transactionManagementService.restore(id);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
             OperationResult result;
             try {
 

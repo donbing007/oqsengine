@@ -296,8 +296,10 @@ public class InitServiceAutoConfiguration {
 
     @Bean
     public ExportSource exportSource(EntityService entityService
-            , @Value("${xplat.oqsengine.sdk.export.step:1000}") int step) {
-        return new SequenceExportSource(entityService, step);
+            , @Value("${xplat.oqsengine.sdk.export.step:1000}") int step
+            , ContextService contextService
+    ) {
+        return new SequenceExportSource(entityService, step, contextService);
     }
 
     @ConditionalOnMissingBean(ExportSink.class)

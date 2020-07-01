@@ -25,4 +25,5 @@ public class TestLoad extends ContextWareBaseTest{
         entityClass.ifPresent(System.out::println);
         entityClass2.ifPresent(System.out::println);
     }
+
 }
