@@ -23,6 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.testcontainers.containers.BindMode;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
@@ -39,7 +42,8 @@ import java.util.*;
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class JoinSelectTest {
 
-    final Logger logger = LoggerFactory.getLogger(JoinSelectTest.class);
+
+    private static GenericContainer manticore;
 
     @Resource
     private LongIdGenerator idGenerator;
@@ -221,30 +225,48 @@ public class JoinSelectTest {
 
         long txId = transactionManagementService.begin();
         transactionManagementService.restore(txId);
-        try {
-            for (IEntity e : entities) {
-                managementService.delete(e);
-            }
-            transactionManagementService.commit();
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-            transactionManagementService.rollback();
+        for (IEntity e : entities) {
+            transactionManagementService.restore(txId);
+            managementService.delete(e);
         }
+        transactionManagementService.restore(txId);
+        transactionManagementService.commit();
 
     }
 
     private void buildEntities(List<IEntity> entities) throws SQLException {
         long txId = transactionManagementService.begin();
-        transactionManagementService.restore(txId);
-        try {
-            for (IEntity e : entities) {
-                managementService.build(e);
-            }
-            transactionManagementService.commit();
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-            transactionManagementService.rollback();
+        for (IEntity e : entities) {
+            transactionManagementService.restore(txId);
+            managementService.build(e);
         }
+        transactionManagementService.restore(txId);
+        transactionManagementService.commit();
+    }
+
+    @AfterClass
+    public static void cleanEnvironment() throws Exception {
+        if (manticore != null) {
+            manticore.close();
+        }
+    }
+
+    @BeforeClass
+    public static void prepareEnvironment() throws Exception {
+        manticore = new GenericContainer<>("manticoresearch/manticore:3.4.2")
+            .withExposedPorts(9306)
+            .withNetworkAliases("manticore")
+            .withClasspathResourceMapping("manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
+            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+            .waitingFor(Wait.forListeningPort());
+        manticore.start();
+
+        String jdbcUrl = String.format(
+            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+            manticore.getContainerIpAddress(),
+            manticore.getFirstMappedPort());
+
+        System.setProperty("MANTICORE_JDBC_URL", jdbcUrl);
     }
 
 }

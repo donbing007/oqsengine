@@ -58,6 +58,8 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
 
             if (localTx) {
                 transactionManager.finish(tx);
+            } else {
+                transactionManager.unbind();
             }
 
         }

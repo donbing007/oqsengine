@@ -136,8 +136,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "v3")
                     )
                 ),
-                "MATCH('@" + FieldDefine.FULL_FIELDS +
-                    " (\"v1F1S\" | \"v2F1S\") \"v3F2S\"')"
+                "MATCH('@" + FieldDefine.FULL_FIELDS + " (\"v1F1S\" | \"v2F1S\") \"v3F2S\"') AND jsonfields.2S = 'v3'"
             )
             ,
             new Case(
