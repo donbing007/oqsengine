@@ -11,10 +11,24 @@ import java.sql.SQLException;
 public interface TransactionManagementService {
 
     /**
+     * 表示使用全局默认事务超时时间.
+     */
+    static final long DEFAULT_TRANSACTION_TIMEOUT = 0;
+
+    /**
      * 开始一个事务.
      * @return 事务 id.
+     * @throws SQLException 创建事务失败.
      */
     long begin() throws SQLException;
+
+    /**
+     * 开始一个事务,并指定事务超时时间.
+     * @param timeoutMs 超时毫秒数,不可为负数.0表示无限制.
+     * @return 事务 id.
+     * @throws SQLException 创建事务失败.
+     */
+    long begin(long timeoutMs) throws SQLException;
 
     /**
      * 恢复事务.
