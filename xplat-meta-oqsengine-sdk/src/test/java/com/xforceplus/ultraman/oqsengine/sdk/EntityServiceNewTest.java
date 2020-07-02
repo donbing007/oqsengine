@@ -39,6 +39,7 @@ import java.util.stream.IntStream;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.TENANT_ID;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles("local")
@@ -159,6 +160,25 @@ public class EntityServiceNewTest {
                 .build();
     }
 
+
+    private ModuleUpResult manyToOneStatic() {
+        return ModuleUpResult
+                .newBuilder()
+                .setVersion("0.0.111")
+                .setId(222222222222L)
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setId("20")
+                        .setCode("main2")
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("20_field")
+                                .setSearchable("0")
+                                .setId("20004")
+                                .build())
+                        .build())
+                .build();
+    }
 
     /**
      * Long id, String name
@@ -511,6 +531,24 @@ public class EntityServiceNewTest {
         entityService.deleteOne(boolEntity, result);
     }
 
+
+    @Test
+    public void testAfterSaveMultiVersionAndRead(){
+
+        metadataRepository.save(manyToOneStatic(), "1", "1");
+        IEntityClass entityClass = entityService.load("20").get();
+
+        assertEquals(entityClass.code(), "main2");
+
+        IntStream.range(0, 10).forEach(x -> metadataRepository.save(manyToOne(x + ""), "1", "1"));
+
+
+        entityClass = entityService.load("20").get();
+
+        assertEquals(entityClass.code(), "main2");
+
+
+    }
 
     @Test
     public void testLeftJoinTest(){
