@@ -84,7 +84,8 @@ public class AutoShardTransactionExecutorTest {
         when(mockDataSource.getConnection()).thenReturn(expectedConn);
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
-        tm.create();
+        Transaction tx = tm.create();
+        tm.bind(tx);
 
         AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, MockConnectionTransactionResource.class);
         // 分片键不关心
@@ -116,6 +117,7 @@ public class AutoShardTransactionExecutorTest {
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
         Transaction currentT = tm.create();
+        tm.bind(currentT);
         currentT.join(new MockConnectionTransactionResource(mockDataSource.toString(), expectedConn, false));
 
         AutoShardTransactionExecutor te = new AutoShardTransactionExecutor(tm, MockConnectionTransactionResource.class);

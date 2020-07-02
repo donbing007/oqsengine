@@ -33,6 +33,7 @@ public class AbstractTransactionManagerTest {
     public void test() throws Exception {
         MockTransactionManager tm = new MockTransactionManager();
         Transaction tx = tm.create();
+        tm.bind(tx);
 
         Assert.assertEquals(tx, tm.getCurrent().get());
 
