@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -46,7 +47,7 @@ public interface IEntityClass {
      * 本对象的属性信息
      * @return 属性集合
      */
-    public Collection<IEntityField> fields();
+    public List<IEntityField> fields();
 
     /**
      * 本地对象指定字段的信息.

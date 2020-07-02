@@ -85,7 +85,7 @@ public class EntityServiceImpl implements EntityService {
     }
 
     @Override
-    public Optional<EntityClass> load(String boId) {
+    public Optional<IEntityClass> load(String boId) {
 
         String tenantId = contextService.get(TENANTID_KEY);
         String appCode = contextService.get(APPCODE);
@@ -94,7 +94,7 @@ public class EntityServiceImpl implements EntityService {
     }
 
     @Override
-    public Optional<EntityClass> load(String boId, String version) {
+    public Optional<IEntityClass> load(String boId, String version) {
 
         String tenantId = contextService.get(TENANTID_KEY);
         String appCode = contextService.get(APPCODE);
@@ -103,7 +103,7 @@ public class EntityServiceImpl implements EntityService {
     }
 
     @Override
-    public Optional<EntityClass> loadByCode(String bocode) {
+    public Optional<IEntityClass> loadByCode(String bocode) {
 
         String tenantId = contextService.get(TENANTID_KEY);
         String appCode = contextService.get(APPCODE);
@@ -112,7 +112,7 @@ public class EntityServiceImpl implements EntityService {
     }
 
     @Override
-    public Optional<EntityClass> loadByCode(String bocode, String version) {
+    public Optional<IEntityClass> loadByCode(String bocode, String version) {
 
         String tenantId = contextService.get(TENANTID_KEY);
         String appCode = contextService.get(APPCODE);
@@ -219,7 +219,7 @@ public class EntityServiceImpl implements EntityService {
                     , maxAttempts - retryEvt.getNumberOfRetryAttempts());
         });
 
-        queueFlow.feed(Tuple.of(future, Retry.decorateSupplier(retry , ContextDecorator.decorateSupplier(contextService,  supplier))));
+        queueFlow.feed(Tuple.of(future, Retry.decorateSupplier(retry, ContextDecorator.decorateSupplier(contextService, supplier))));
 
         //TODO
         return future.join();
@@ -392,7 +392,7 @@ public class EntityServiceImpl implements EntityService {
 
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
 
-        if(condition.getPageSize() == null || condition.getPageNo() == null){
+        if (condition.getPageSize() == null || condition.getPageNo() == null) {
             return Either.left("RangeSearch without range");
         }
 
@@ -517,12 +517,12 @@ public class EntityServiceImpl implements EntityService {
     }
 
     @Override
-    public List<EntityClass> loadSonByCode(String bocode, String tenantId) {
+    public List<IEntityClass> loadSonByCode(String bocode, String tenantId) {
         return this.loadSonByCode(bocode, tenantId, null);
     }
 
     @Override
-    public List<EntityClass> loadSonByCode(String bocode, String tenantId, String version) {
+    public List<IEntityClass> loadSonByCode(String bocode, String tenantId, String version) {
 
         if (StringUtils.isEmpty(tenantId)) {
             tenantId = contextService.get(TENANTID_KEY);
@@ -537,7 +537,7 @@ public class EntityServiceImpl implements EntityService {
     }
 
     @Override
-    public List<EntityClass> getEntityClasss() {
+    public List<IEntityClass> getEntityClasss() {
         return metadataRepository.findAllEntities();
     }
 

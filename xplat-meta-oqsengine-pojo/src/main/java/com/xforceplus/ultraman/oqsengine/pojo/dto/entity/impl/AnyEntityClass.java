@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -53,7 +54,7 @@ public class AnyEntityClass implements IEntityClass {
     }
 
     @Override
-    public Collection<IEntityField> fields() {
+    public List<IEntityField> fields() {
         return Collections.emptyList();
     }
 

@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import org.junit.Test;
@@ -19,8 +20,8 @@ public class TestLoad extends ContextWareBaseTest{
 
     @Test
     public void test(){
-        Optional<EntityClass> entityClass = entityService.loadByCode("salesbill");
-        Optional<EntityClass> entityClass2 = entityService.loadByCode("test");
+        Optional<IEntityClass> entityClass = entityService.loadByCode("salesbill");
+        Optional<IEntityClass> entityClass2 = entityService.loadByCode("test");
 
         entityClass.ifPresent(System.out::println);
         entityClass2.ifPresent(System.out::println);

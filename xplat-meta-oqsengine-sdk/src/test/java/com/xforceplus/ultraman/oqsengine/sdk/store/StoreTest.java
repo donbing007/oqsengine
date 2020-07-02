@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.store;
 
 import com.xforceplus.ultraman.metadata.grpc.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
@@ -219,7 +220,7 @@ public class StoreTest {
     public void simpleSaveAndLoad() {
         MetadataRepository repository = new MetadataRepositoryInMemoryImpl();
         repository.save(mockModuleUpResult(), "1", "1");
-        Optional<EntityClass> entityclass = repository.load("1", "1", "111111");
+        Optional<IEntityClass> entityclass = repository.load("1", "1", "111111");
         assertTrue("插入读取成功", entityclass.isPresent());
     }
 
@@ -237,7 +238,7 @@ public class StoreTest {
 
 
         repository.save(result, "1", "1");
-        Optional<EntityClass> entityclass = repository.load("1", "1", "111111");
+        Optional<IEntityClass> entityclass = repository.load("1", "1", "111111");
 
         System.out.println(entityclass.get());
 
@@ -256,7 +257,7 @@ public class StoreTest {
 
 
         repository.save(result, "1", "1");
-        Optional<EntityClass> entityclass = repository.load("1", "1", "111111");
+        Optional<IEntityClass> entityclass = repository.load("1", "1", "111111");
 
         System.out.println(entityclass.get());
 
@@ -266,7 +267,7 @@ public class StoreTest {
                 .build();
 
         repository.save(resultNew, "1", "1");
-        Optional<EntityClass> entityclassNew = repository.load("1", "1", "111111");
+        Optional<IEntityClass> entityclassNew = repository.load("1", "1", "111111");
 
         System.out.println(entityclassNew.get());
     }
@@ -285,14 +286,14 @@ public class StoreTest {
 
         //repository.clearAllBoIdRelated("1111");
 
-        Optional<EntityClass> sub = repository.loadByCode("1", "1", "sub");
+        Optional<IEntityClass> sub = repository.loadByCode("1", "1", "sub");
         assertTrue("sub is present", sub.isPresent());
 
         CountDownLatch latch = new CountDownLatch(1000);
         IntStream.range(0, 1000)
                 .mapToObj(x -> new Thread(() -> {
                     System.out.println(x);
-                    Optional<EntityClass> parent = repository.loadByCode("1", "1", "parent");
+                    Optional<IEntityClass> parent = repository.loadByCode("1", "1", "parent");
                     assertTrue("parent is here", parent.isPresent());
                     latch.countDown();
                 })).collect(Collectors.toList()).forEach(Thread::start);
@@ -312,19 +313,19 @@ public class StoreTest {
                 .build();
 
         repository.save(result, "1", "1");
-        Optional<EntityClass> entityclass = repository.load("1", "1", "111111");
+        Optional<IEntityClass> entityclass = repository.load("1", "1", "111111");
 
         assertTrue("exists", entityclass.isPresent());
 
         System.out.println(entityclass.get());
 
         repository.save(result, "1", "1");
-        Optional<EntityClass> entityclassParent = repository.loadByCode("1", "1", "parent");
+        Optional<IEntityClass> entityclassParent = repository.loadByCode("1", "1", "parent");
 
         assertTrue("exists parent", entityclassParent.isPresent());
 
         repository.save(result, "1", "1");
-        List<EntityClass> subEntityclassParent = repository.findSubEntitiesByCode("1", "1", "parent");
+        List<IEntityClass> subEntityclassParent = repository.findSubEntitiesByCode("1", "1", "parent");
 
         assertTrue("exists child", !subEntityclassParent.isEmpty());
 
@@ -336,7 +337,7 @@ public class StoreTest {
                 .build();
 
         repository.save(resultNoParent, "1", "1");
-        Optional<EntityClass> entityclassA = repository.load("1", "1", "111111");
+        Optional<IEntityClass> entityclassA = repository.load("1", "1", "111111");
 
         System.out.println("A:" + entityclassA.get());
     }
@@ -350,7 +351,7 @@ public class StoreTest {
                 .build();
 
         repository.save(result, "1", "1");
-        Optional<EntityClass> entityclassA = repository.load("1", "1", "1111");
+        Optional<IEntityClass> entityclassA = repository.load("1", "1", "1111");
 
         System.out.println("A:" + entityclassA.get());
 
@@ -365,7 +366,7 @@ public class StoreTest {
                 .build();
 
         repository.save(result, "1", "1");
-        Optional<EntityClass> entityclassA = repository.load("1", "1", "1111");
+        Optional<IEntityClass> entityclassA = repository.load("1", "1", "1111");
 
         System.out.println("A:" + entityclassA.get());
     }
@@ -380,9 +381,9 @@ public class StoreTest {
                 .build();
 
         repository.save(result, "1", "1");
-        Optional<EntityClass> entityclassA = repository.load("1", "1", "11112");
-        Optional<EntityClass> entityclassB = repository.load("1", "1", "1111");
-        Optional<EntityClass> entityclassC = repository.load("1", "1", "111111");
+        Optional<IEntityClass> entityclassA = repository.load("1", "1", "11112");
+        Optional<IEntityClass> entityclassB = repository.load("1", "1", "1111");
+        Optional<IEntityClass> entityclassC = repository.load("1", "1", "111111");
 
 
         System.out.println("A:" + entityclassA.get());
@@ -400,9 +401,9 @@ public class StoreTest {
                 .build();
 
         repository.save(result, "1", "1");
-        Optional<EntityClass> entityclassA = repository.load("1", "1", "11112");
-        Optional<EntityClass> entityclassB = repository.load("1", "1", "1111");
-        Optional<EntityClass> entityclassC = repository.load("1", "1", "111111");
+        Optional<IEntityClass> entityclassA = repository.load("1", "1", "11112");
+        Optional<IEntityClass> entityclassB = repository.load("1", "1", "1111");
+        Optional<IEntityClass> entityclassC = repository.load("1", "1", "111111");
 
 
         BoItem boItem = repository.getBoDetailById("11112");
@@ -421,9 +422,9 @@ public class StoreTest {
                 .build();
 
         repository.save(result, "1", "1");
-        Optional<EntityClass> entityclassA = repository.load("1", "1", "11112");
-        Optional<EntityClass> entityclassB = repository.load("1", "1", "1111");
-        Optional<EntityClass> entityclassC = repository.load("1", "1", "111111");
+        Optional<IEntityClass> entityclassA = repository.load("1", "1", "11112");
+        Optional<IEntityClass> entityclassB = repository.load("1", "1", "1111");
+        Optional<IEntityClass> entityclassC = repository.load("1", "1", "111111");
 
         EntityService entityService = new EntityServiceImpl(repository, null, null);
 
@@ -514,13 +515,8 @@ public class StoreTest {
         List<IEntityField> fields7 = repository.load("1", "1", "111111", "0.0.2")
                 .get().fields();
 
-
-
-
         List<IEntityField> fields8 = repository.load("1", "1", "111111", "0.0.3")
                 .get().fields();
-
-
 
         List<IEntityField> fields9 = repository.load("1", "1", "111111", "0.0.4")
                 .get().fields();

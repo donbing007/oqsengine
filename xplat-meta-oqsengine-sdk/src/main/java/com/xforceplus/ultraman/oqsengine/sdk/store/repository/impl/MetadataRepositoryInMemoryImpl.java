@@ -394,7 +394,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     @Override
-    public Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode) {
+    public Optional<IEntityClass> loadByCode(String tenantId, String appCode, String boCode) {
 
         return read(() -> {
             UpdateableDataContext dc = versionService.getCurrentVersionDCForBoByCode(boCode);
@@ -412,7 +412,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * @param contextDC
      * @return
      */
-    public Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode, UpdateableDataContext contextDC) {
+    public Optional<IEntityClass> loadByCode(String tenantId, String appCode, String boCode, UpdateableDataContext contextDC) {
         return read(() -> {
             DataSet boDs = contextDC.query()
                     .from(BoTable.TABLE_NAME)
@@ -429,7 +429,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     @Override
-    public List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId) {
+    public List<IEntityClass> findSubEntitiesById(String tenantId, String appId, String parentId) {
         return read(() -> {
             return Optional.ofNullable(versionService.getCurrentVersionDCForBoById(Long.parseLong(parentId)))
                     .map(x -> this.findSubEntitiesById(tenantId, appId, parentId, x))
@@ -438,7 +438,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     @Override
-    public List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId, String version) {
+    public List<IEntityClass> findSubEntitiesById(String tenantId, String appId, String parentId, String version) {
         return read(() -> {
             return Optional.ofNullable(versionService.getVersionedDCForBoById(Long.parseLong(parentId), version))
                     .map(x -> this.findSubEntitiesById(tenantId, appId, parentId, x))
@@ -446,7 +446,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         });
     }
 
-    private List<EntityClass> findSubEntitiesById(String tenantId, String appId, String parentId, UpdateableDataContext contextDC) {
+    private List<IEntityClass> findSubEntitiesById(String tenantId, String appId, String parentId, UpdateableDataContext contextDC) {
         return read(() -> {
             DataSet boDs = contextDC.query()
                     .from(BoTable.TABLE_NAME)
@@ -463,7 +463,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         });
     }
 
-    private List<EntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode, UpdateableDataContext contextDC) {
+    private List<IEntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode, UpdateableDataContext contextDC) {
 
         return read(() -> {
             DataSet boDs = contextDC.query()
@@ -485,7 +485,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     @Override
-    public List<EntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode) {
+    public List<IEntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode) {
 
         return read(() -> {
             UpdateableDataContext contextDC = versionService.getCurrentVersionDCForBoByCode(parentCode);
@@ -497,7 +497,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     @Override
-    public List<EntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode, String version) {
+    public List<IEntityClass> findSubEntitiesByCode(String tenantId, String appId, String parentCode, String version) {
 
         return read(() -> {
             UpdateableDataContext contextDC = versionService.getVersionedDCForBoByCode(parentCode, version);
@@ -517,7 +517,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * @return
      */
     @Override
-    public Optional<EntityClass> load(String tenantId, String appCode, String boId) {
+    public Optional<IEntityClass> load(String tenantId, String appCode, String boId) {
 
         return read(() -> {
             UpdateableDataContext dc = versionService.getCurrentVersionDCForBoById(Long.parseLong(boId));
@@ -527,7 +527,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     @Override
-    public Optional<EntityClass> load(String tenantId, String appCode, String boId, String version) {
+    public Optional<IEntityClass> load(String tenantId, String appCode, String boId, String version) {
         return read(() -> {
             UpdateableDataContext contextDc = versionService.getVersionedDCForBoById(Long.parseLong(boId), version);
             return Optional.ofNullable(contextDc).flatMap(x -> load(tenantId, appCode, boId, x));
@@ -535,7 +535,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
     }
 
     @Override
-    public Optional<EntityClass> loadByCode(String tenantId, String appCode, String boCode, String version) {
+    public Optional<IEntityClass> loadByCode(String tenantId, String appCode, String boCode, String version) {
 
         return read(() -> {
             UpdateableDataContext contextDc = versionService.getVersionedDCForBoByCode(boCode, version);
@@ -543,7 +543,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         });
     }
 
-    private Optional<EntityClass> load(String tenantId, String appCode, String boId, UpdateableDataContext contextDC) {
+    private Optional<IEntityClass> load(String tenantId, String appCode, String boId, UpdateableDataContext contextDC) {
 
         logger.debug("load class {} with contextDC {}", boId, contextDC);
         return read(() -> {
@@ -570,7 +570,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      * @param row
      * @return
      */
-    private Optional<EntityClass> toEntityClass(Row row, UpdateableDataContext contextDC) {
+    private Optional<IEntityClass> toEntityClass(Row row, UpdateableDataContext contextDC) {
 
         return read(() -> {
 
@@ -717,7 +717,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     //TODO
     @Override
-    public List<EntityClass> findAllEntities() {
+    public List<IEntityClass> findAllEntities() {
 
         return read(() -> {
             return versionService.getBoModuleMapping().entrySet().stream().map(x -> {
@@ -733,7 +733,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         });
     }
 
-    private List<EntityClass> findAllEntities(UpdateableDataContext contextDC) {
+    private List<IEntityClass> findAllEntities(UpdateableDataContext contextDC) {
 
         return read(() -> {
 

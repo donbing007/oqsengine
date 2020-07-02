@@ -18,13 +18,13 @@ import java.util.function.Supplier;
  */
 public interface EntityService {
 
-    Optional<EntityClass> load(String boId);
+    Optional<IEntityClass> load(String boId);
 
-    Optional<EntityClass> load(String boId, String version);
+    Optional<IEntityClass> load(String boId, String version);
 
-    Optional<EntityClass> loadByCode(String bocode);
+    Optional<IEntityClass> loadByCode(String bocode);
 
-    Optional<EntityClass> loadByCode(String bocode, String version);
+    Optional<IEntityClass> loadByCode(String bocode, String version);
 
     <T> Either<String, T> transactionalExecute(Callable<T> supplier);
 
@@ -50,9 +50,9 @@ public interface EntityService {
 
     Integer count(IEntityClass entityClass, ConditionQueryRequest condition);
 
-    List<EntityClass> loadSonByCode(String bocode, String tenantId);
+    List<IEntityClass> loadSonByCode(String bocode, String tenantId);
 
-    List<EntityClass> loadSonByCode(String bocode, String tenantId, String version);
+    List<IEntityClass> loadSonByCode(String bocode, String tenantId, String version);
 
-    List<EntityClass> getEntityClasss();
+    List<IEntityClass> getEntityClasss();
 }

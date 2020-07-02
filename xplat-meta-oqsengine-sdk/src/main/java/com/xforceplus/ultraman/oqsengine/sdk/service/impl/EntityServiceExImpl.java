@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
@@ -68,7 +69,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
     private ApplicationEventPublisher publisher;
 
     @Override
-    public Either<String, IEntity> create(EntityClass entityClass, Map<String, Object> body) {
+    public Either<String, IEntity> create(IEntityClass entityClass, Map<String, Object> body) {
         String transId = contextService.get(TRANSACTION_KEY);
 
         SingleResponseRequestBuilder<EntityUp, OperationResult> buildBuilder = entityServiceClient.build();
@@ -122,7 +123,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
         return map;
     }
 
-    private EntityCreated buildCreatedEvent(EntityClass entityClass, Long id, Long childId, Map<String, Object> data) {
+    private EntityCreated buildCreatedEvent(IEntityClass entityClass, Long id, Long childId, Map<String, Object> data) {
         String code = entityClass.code();
         String parentCode = null;
         Map<String, String> context = getContext();
@@ -134,7 +135,7 @@ public class EntityServiceExImpl implements EntityServiceEx {
     }
 
     @Override
-    public Either<String, Map<String, Object>> findOneByParentId(EntityClass entityClass, EntityClass subEntityClass, long id) {
+    public Either<String, Map<String, Object>> findOneByParentId(IEntityClass entityClass, IEntityClass subEntityClass, long id) {
         if (subEntityClass != null && subEntityClass.extendEntityClass() != null
             && entityClass != null && entityClass.id() == subEntityClass.extendEntityClass().id()) {
 

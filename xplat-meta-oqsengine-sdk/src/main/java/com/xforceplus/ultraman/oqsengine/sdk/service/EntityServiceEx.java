@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.service;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.DictItem;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.UltPageBoItem;
@@ -14,9 +15,9 @@ import java.util.Map;
  */
 public interface EntityServiceEx {
 
-    Either<String, IEntity> create(EntityClass entityClass, Map<String, Object> inputValue);
+    Either<String, IEntity> create(IEntityClass entityClass, Map<String, Object> inputValue);
 
-    Either<String, Map<String, Object>> findOneByParentId(EntityClass entityClass, EntityClass subEntityClass, long id);
+    Either<String, Map<String, Object>> findOneByParentId(IEntityClass entityClass, IEntityClass subEntityClass, long id);
 
     /**
      * 查找页面的BO列表，先从租户上找，如果没有则返回默认

@@ -75,7 +75,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
 
     private Logger log = LoggerFactory.getLogger(DefaultUiService.class);
 
-    private Optional<EntityClass> getEntityClass(MetaDataLikeCmd cmd) {
+    private Optional<IEntityClass> getEntityClass(MetaDataLikeCmd cmd) {
         return
                 Optional
                         .ofNullable(cmd.version()).map(x -> {
@@ -87,7 +87,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
     @Override
     public Either<String, Map<String, Object>> singleQuery(SingleQueryCmd cmd) {
 
-        Optional<EntityClass> entityClassOp = getEntityClass(cmd);
+        Optional<IEntityClass> entityClassOp = getEntityClass(cmd);
 
         if (entityClassOp.isPresent()) {
             return entityService.findOne(entityClassOp.get(), Long.parseLong(cmd.getId()));
@@ -99,7 +99,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
     @QueryHandler(isDefault = true)
     @Override
     public Either<String, Integer> singleDelete(SingleDeleteCmd cmd) {
-        Optional<EntityClass> entityClassOp = getEntityClass(cmd);
+        Optional<IEntityClass> entityClassOp = getEntityClass(cmd);
 
         if (entityClassOp.isPresent()) {
             return entityService.deleteOne(entityClassOp.get(), Long.valueOf(cmd.getId()));
@@ -112,7 +112,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
     @Override
     public Either<String, Long> singleCreate(SingleCreateCmd cmd) {
 
-        Optional<EntityClass> entityClassOp = getEntityClass(cmd);
+        Optional<IEntityClass> entityClassOp = getEntityClass(cmd);
 
         if (entityClassOp.isPresent()) {
             return entityService.create(entityClassOp.get(), cmd.getBody());
@@ -125,7 +125,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
     @Override
     public Either<String, Integer> singleUpdate(SingleUpdateCmd cmd) {
 
-        Optional<EntityClass> entityClassOp = getEntityClass(cmd);
+        Optional<IEntityClass> entityClassOp = getEntityClass(cmd);
 
         if (entityClassOp.isPresent()) {
             return entityService.updateById(entityClassOp.get(), cmd.getId(), cmd.getBody());
@@ -138,7 +138,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
     @Override
     public Either<String, Tuple2<Integer, List<Map<String, Object>>>> conditionSearch(ConditionSearchCmd cmd) {
 
-        Optional<EntityClass> entityClassOp = getEntityClass(cmd);
+        Optional<IEntityClass> entityClassOp = getEntityClass(cmd);
 
         if (entityClassOp.isPresent()) {
             return entityService.findByCondition(entityClassOp.get(), cmd.getConditionQueryRequest());
@@ -270,10 +270,10 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
 
         String boId = cmd.getBoId();
 
-        Optional<EntityClass> entityClass = entityService.load(boId);
+        Optional<IEntityClass> entityClass = entityService.load(boId);
 
         if (entityClass.isPresent()) {
-            List<IEntityField> fields = entityClass.get().fields();
+            Collection<IEntityField> fields = entityClass.get().fields();
 
             String columns = fields.stream().map(IEntityField::name).collect(Collectors.joining(","));
             return Either.right(new ByteArrayInputStream(columns.getBytes(StandardCharsets.UTF_8)));
@@ -293,7 +293,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
 
         String boId = cmd.getBoId();
 
-        Optional<EntityClass> entityClassOp = entityService.load(boId);
+        Optional<IEntityClass> entityClassOp = entityService.load(boId);
 
         if (entityClassOp.isPresent()) {
 
@@ -378,7 +378,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
                         .map(Relation::getEntityClassId).findAny();
 
                 if (relatedId.isPresent()) {
-                    Optional<EntityClass> relatedEntityOp = entityService.load(relatedId.get().toString());
+                    Optional<IEntityClass> relatedEntityOp = entityService.load(relatedId.get().toString());
                     if (relatedEntityOp.isPresent()) {
                         IEntityClass relatedEntity = relatedEntityOp.get();
 

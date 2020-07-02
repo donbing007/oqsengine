@@ -1,9 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk;
 
 import com.alibaba.fastjson.JSONObject;
-import com.xforceplus.ultraman.metadata.grpc.BoUp;
-import com.xforceplus.ultraman.metadata.grpc.Field;
-import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
@@ -28,8 +25,6 @@ import org.springframework.test.util.AssertionErrors;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
@@ -66,8 +61,8 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Test
     public void testFindByParentEntityTicket() throws InterruptedException {
 
-        Optional<EntityClass> ticket = entityService.loadByCode("ticket");
-        Optional<EntityClass> ticketInvoice = entityService.loadByCode("ticketInvoice");
+        Optional<IEntityClass> ticket = entityService.loadByCode("ticket");
+        Optional<IEntityClass> ticketInvoice = entityService.loadByCode("ticketInvoice");
 
 //        if (ticket.isPresent() && ticketInvoice.isPresent()) {
 //            Either<String, Map<String, Object>> either = entityServiceEx
@@ -91,14 +86,14 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Test
     public void testSelectByCode() throws InterruptedException {
 
-        Optional<EntityClass> baseBill = entityService.loadByCode("baseBill");
+        Optional<IEntityClass> baseBill = entityService.loadByCode("baseBill");
         assertTrue("baseBill here", baseBill.isPresent());
     }
 
     @Test
     public void testConditionFind() throws InterruptedException {
 
-        Optional<EntityClass> imageBill = entityService.loadByCode("image");
+        Optional<IEntityClass> imageBill = entityService.loadByCode("image");
         assertTrue("image is present", imageBill.isPresent());
 
         //clear
@@ -132,7 +127,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Test
     public void testSaveImageWithDate() throws InterruptedException {
 
-        Optional<EntityClass> image = entityService.loadByCode("image");
+        Optional<IEntityClass> image = entityService.loadByCode("image");
         AssertionErrors.assertTrue("image is present", image.isPresent());
 
         //save image
@@ -265,7 +260,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Test
     public void testFindInIds() throws InterruptedException {
 
-        Optional<EntityClass> ticket = entityService.loadByCode("ticket");
+        Optional<IEntityClass> ticket = entityService.loadByCode("ticket");
 
         Map<String, Object> objectMap = new HashMap<>();
         objectMap.put("file_url", "a");
@@ -303,7 +298,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Test
     public void testInCondition() throws InterruptedException {
 
-        Optional<EntityClass> ticket = entityService.loadByCode("ticket");
+        Optional<IEntityClass> ticket = entityService.loadByCode("ticket");
 
         Map<String, Object> objectMap = new HashMap<>();
         objectMap.put("image_id", "100001");
@@ -358,9 +353,9 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
         setupContext();
 
-        Optional<EntityClass> entityOpt = entityService.loadByCode("baseBill");
+        Optional<IEntityClass> entityOpt = entityService.loadByCode("baseBill");
 
-        Optional<EntityClass> subEntityOpt = entityService.loadByCode("salesBill");
+        Optional<IEntityClass> subEntityOpt = entityService.loadByCode("salesBill");
 
         Map<String, Object> o = new HashMap<>();
         o.put("image_id", "1231231");
@@ -417,7 +412,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Test
     public void testParentUpdateAndSearch() throws InterruptedException {
 
-        Optional<EntityClass> entityOpt = entityService.loadByCode("ticketInvoice");
+        Optional<IEntityClass> entityOpt = entityService.loadByCode("ticketInvoice");
         String qstr = "{'tax_amount':'0.0','tenant_id':'1203260024735584256','paper_drew_date':'20200318','exception_status':'0','amount_without_tax':'0.0','batch_no':'1','create_time':'1584522310130','create_user_name':'荣颖','ticket_code':'ticketInvoice','invoice_no':'07612455','warning_status':'0','purchaser_tax_no':'91370000661397973Y','amount_with_tax':'0.0','invoice_code':'3500171130','exception_info':'','seller_name':'乐普艺术陶瓷有限公司','seller_tax_no':'91350583741673616C','purchaser_name':'山东小珠山建设发展有限公司','is_public':'0',";
         String hstr = "'create_user_id':'1214481717915123712','image_id':'6645968161583661057','warning_info':'','invoice_sheet':'1','invoice_type':'s','x_point':0,'y_point':0,'width':0,'height':0,'angle':0}";
         JSONObject json1 = JSONObject.parseObject(qstr + hstr);
@@ -436,7 +431,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
         assertTrue("child search is ok", mapEither2.isRight());
 
-        Optional<EntityClass> entityOpt1 = entityService.loadByCode("ticket");
+        Optional<IEntityClass> entityOpt1 = entityService.loadByCode("ticket");
         Either<String, Map<String, Object>> mapEither = entityService.findOne(entityOpt1.get(), fId);
 
         assertTrue("parent search is ok", mapEither2.isRight());
@@ -447,11 +442,11 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Test
     public void testEq() throws InterruptedException {
 
-        Optional<EntityClass> entityOpt = entityService.loadByCode("salesBill");
-        Optional<EntityClass> parentOp = entityService.loadByCode("baseBill");
+        Optional<IEntityClass> entityOpt = entityService.loadByCode("salesBill");
+        Optional<IEntityClass> parentOp = entityService.loadByCode("baseBill");
 
-        EntityClass salesBill = entityOpt.get();
-        EntityClass baseBill = parentOp.get();
+        IEntityClass salesBill = entityOpt.get();
+        IEntityClass baseBill = parentOp.get();
 
         //clean old
         entityService.findByCondition(salesBill
@@ -557,7 +552,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     public void testSystemOverride() throws InterruptedException {
 
         setupContext();
-        Optional<EntityClass> entityOpt = entityService.loadByCode("baseBill");
+        Optional<IEntityClass> entityOpt = entityService.loadByCode("baseBill");
 
         Map<String, Object> ss = new HashMap<>();
         ss.put("create_user_id", "1111111");
@@ -581,7 +576,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
         setupContext();
 
-        Optional<EntityClass> entityOpt = entityService.loadByCode("label");
+        Optional<IEntityClass> entityOpt = entityService.loadByCode("label");
 
         Map<String, Object> ss = new HashMap<>();
         ss.put("create_user_id", "1111111");
@@ -611,7 +606,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     public void testRecordError() throws InterruptedException {
 
         setupContext();
-        Optional<EntityClass> entityOpt = entityService.loadByCode("ticketAttachment");
+        Optional<IEntityClass> entityOpt = entityService.loadByCode("ticketAttachment");
 
         Map<String, Object> map = new HashMap<>();
         Long id = entityService.create(entityOpt.get(), map).get();
@@ -637,7 +632,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Test
     public void searchLabel() throws InterruptedException{
 
-        Optional<EntityClass> label = entityService.loadByCode("ticketAttachment");
+        Optional<IEntityClass> label = entityService.loadByCode("ticketAttachment");
 
         Map<String, Object> inputMap = new HashMap<>();
         inputMap.put("label.id", "1234");

@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.sdk;
 import com.xforceplus.ultraman.metadata.grpc.BoUp;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.metadata.grpc.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.configuration.TestApplicationContextInitializer;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
@@ -104,7 +105,7 @@ public class IssueRelatedTest extends ContextWareBaseTest {
 
         int concurrent = 10;
 
-        EntityClass entityClass = entityService.load("1").get();
+        IEntityClass entityClass = entityService.load("1").get();
         Map<String, Object> maps = new HashMap<>();
         maps.put("field1", "123");
         Long id = entityService.create(entityClass, maps).get();

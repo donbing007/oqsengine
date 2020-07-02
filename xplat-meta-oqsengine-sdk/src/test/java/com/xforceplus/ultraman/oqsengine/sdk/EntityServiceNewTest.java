@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.metadata.grpc.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfiguration;
@@ -281,9 +282,9 @@ public class EntityServiceNewTest {
 
         metadataRepository.save(mockModuleUpResult(), "1", "1");
 
-        Optional<EntityClass> entityClass = metadataRepository.load("1", "1", "1");
+        Optional<IEntityClass> entityClass = metadataRepository.load("1", "1", "1");
 
-        EntityClass entityClassReal = entityClass.get();
+        IEntityClass entityClassReal = entityClass.get();
 
         System.out.println(entityClassReal);
 
@@ -368,7 +369,7 @@ public class EntityServiceNewTest {
 
         metadataRepository.save(mockModuleUpResult(), "1", "1");
 
-        Optional<EntityClass> entityClass2 = metadataRepository.load("1", "1", "1");
+        Optional<IEntityClass> entityClass2 = metadataRepository.load("1", "1", "1");
 
         metadataRepository.save(manyToOne("0.0.2"), "1", "1");
 
@@ -376,9 +377,9 @@ public class EntityServiceNewTest {
         metadataRepository.save(manyToOne("0.0.2"), "1", "1");
 
 
-        Optional<EntityClass> entityClass = metadataRepository.load("1", "1", "1");
+        Optional<IEntityClass> entityClass = metadataRepository.load("1", "1", "1");
 
-        EntityClass entityClassReal = entityClass.get();
+        IEntityClass entityClassReal = entityClass.get();
 
         System.out.println(entityClassReal);
 
@@ -515,9 +516,9 @@ public class EntityServiceNewTest {
     public void testLeftJoinTest(){
         metadataRepository.save(manyToOneNew(), "1", "1");
 
-        EntityClass entityClass = entityService.load("1").get();
+        IEntityClass entityClass = entityService.load("1").get();
 
-        EntityClass entityClass2 = entityService.load("2").get();
+        IEntityClass entityClass2 = entityService.load("2").get();
 
         Map<String, Object> one = new HashMap<>();
         one.clear();
