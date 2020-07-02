@@ -33,6 +33,8 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
         Transaction tx;
         if (!txOptional.isPresent()) {
             tx = transactionManager.create();
+            transactionManager.bind(tx);
+
             localTx = true;
         } else {
             tx = txOptional.get();

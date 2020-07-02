@@ -17,14 +17,26 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * The main responsibilities are as follows.
- * <p>
- * 1. Keep running transactions.
- * <p>
- * 2. Restore the transaction to the thread context.
+ * 事务管理器抽像实现.
+ *
+ * 事务分为创建,绑定,反绑定和提交几步.
+ * 其中绑定和反绑定一定要重复出来.
+ *
+ * TransactionManager tm = ...
+ * Transaction tx = tm.create();
+ * tm.bind(tx);
+ * tru {
+ *     //...逻辑
+ * } finally {
+ *     tm.unbind();
+ * }
+ *
+ * rebind 在持主事务 id 的时候可以还原之前其他线程创建的事务现场.
+ *
  *
  * @author dongbin
  * @version 0.1 2020/2/14 11:47
+ * @version 0.2 2020/7/2 13:58 现在事务在创建后不会直接绑定.
  * @since 1.8
  */
 public abstract class AbstractTransactionManager implements TransactionManager {
@@ -66,7 +78,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     private int survivalTimeMs;
 
     /**
-     * 时间轮.
+     * 时间轮.处理事务超时.
      */
     private TimerWheel timerWheel;
 
@@ -113,7 +125,6 @@ public abstract class AbstractTransactionManager implements TransactionManager {
                 logger.debug("Start new Transaction({}),timeout will occur in {} milliseconds.", transaction.id(), timeoutMs);
             }
 
-            this.bind(transaction);
 
         } catch (Exception ex) {
 
@@ -124,7 +135,6 @@ public abstract class AbstractTransactionManager implements TransactionManager {
                 try {
                     survival.remove(transaction.id());
                     timerWheel.remove(transaction.id());
-                    this.unbind();
                 } catch (Exception e) {
                     logger.warn("An error occurred in creating the transaction, as well as in cleaning it up.", e);
                 }
@@ -202,7 +212,11 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     @Override
     public void finish(Transaction tx) throws SQLException {
 
-        survival.remove(tx.id());
+        Transaction old = survival.remove(tx.id());
+        if (old == null) {
+            throw new SQLException(
+                String.format("An attempt was made to complete a non-existent transaction.[id=%d]", tx.id()));
+        }
 
         size.decrementAndGet();
 

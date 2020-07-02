@@ -43,6 +43,9 @@ public class TransactionManagementServiceImplTest {
 
         long id = impl.begin();
         Assert.assertEquals(123L, id);
+
+        // 不应该 bind
+        Assert.assertFalse(tm.getCurrent().isPresent());
     }
 
     @Test
@@ -58,6 +61,9 @@ public class TransactionManagementServiceImplTest {
 
         long id = impl.begin(1000L);
         Assert.assertEquals(123L, id);
+
+        // 不应该 bind
+        Assert.assertFalse(tm.getCurrent().isPresent());
     }
 
     @Test
