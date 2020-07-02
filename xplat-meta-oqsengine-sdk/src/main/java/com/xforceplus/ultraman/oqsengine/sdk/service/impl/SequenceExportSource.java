@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Conditions;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.FieldCondition;
+import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.slf4j.Logger;
@@ -19,11 +20,12 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- *
+ * export source
  */
 public class SequenceExportSource implements ExportSource {
 
@@ -39,9 +41,12 @@ public class SequenceExportSource implements ExportSource {
 
     private EntityService entityService;
 
-    public SequenceExportSource(EntityService entityService, int step) {
+    private ContextService contextService;
+
+    public SequenceExportSource(EntityService entityService, int step, ContextService contextService) {
         this.entityService = entityService;
         this.step = step;
+        this.contextService = contextService;
     }
 
     @Override
@@ -54,12 +59,28 @@ public class SequenceExportSource implements ExportSource {
         //last record id for search
         AtomicLong lastId = new AtomicLong(0);
 
+        Map<String, Object> contextMap = null;
+        if (contextService != null) {
+            contextMap = contextService.getAll();
+        }
+
+        Map<String, Object> finalContextMap = contextMap;
+
         return Source.repeat(1).flatMapConcat(i -> {
+
+            if (contextService != null && finalContextMap != null) {
+                contextService.fromMap(finalContextMap);
+            }
 
             logger.info("-----Export {}:{} ---- query {} times ----", entityClass.code(), entityClass.id(), cursor.get());
             Either<String, Tuple2<Integer, List<Record>>> byCondition =
                     entityService
                             .findRecordsByCondition(entityClass, null, toQueryCondition(queryRequest, cursor.getAndIncrement(), step, lastId.get()));
+
+            if (contextService != null) {
+                contextService.clear();
+            }
+
             if (byCondition.isRight()) {
                 //clear error
                 error.set(0);
@@ -87,6 +108,8 @@ public class SequenceExportSource implements ExportSource {
                     return Source.single(GeneralRecord.empty());
                 }
             }
+
+
         }).takeWhile(Record::nonEmpty);
     }
 
@@ -102,8 +125,6 @@ public class SequenceExportSource implements ExportSource {
         if (conditions == null || conditions.getFields() == null) {
             newFieldConditions = new LinkedList<>();
         } else {
-
-
             newFieldConditions = new LinkedList<>(conditions.getFields());
         }
 

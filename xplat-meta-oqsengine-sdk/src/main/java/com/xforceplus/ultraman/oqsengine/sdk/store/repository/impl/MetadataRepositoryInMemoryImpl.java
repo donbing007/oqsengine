@@ -545,6 +545,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
 
     private Optional<EntityClass> load(String tenantId, String appCode, String boId, UpdateableDataContext contextDC) {
 
+        logger.debug("load class {} with contextDC {}", boId, contextDC);
         return read(() -> {
             DataSet boDs = contextDC.query()
                     .from(BoTable.TABLE_NAME)
@@ -725,7 +726,8 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 String version = value.getLast()._2();
 
                 UpdateableDataContext versionedDCForBoId = versionService.getVersionedDCForBoById(boId, version);
-                return load("", "", String.valueOf(boId), versionedDCForBoId);
+                logger.debug("CurrentContext is {}", versionedDCForBoId);
+                return Optional.ofNullable(versionedDCForBoId).flatMap(dc -> load("", "", String.valueOf(boId), dc));
             }).filter(Optional::isPresent).map(Optional::get)
                     .collect(Collectors.toList());
         });

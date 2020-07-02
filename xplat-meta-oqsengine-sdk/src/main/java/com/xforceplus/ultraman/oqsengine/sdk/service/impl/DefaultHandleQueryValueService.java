@@ -2,10 +2,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp;
 import com.xforceplus.ultraman.oqsengine.sdk.service.HandleQueryValueService;
@@ -14,14 +11,11 @@ import com.xforceplus.ultraman.oqsengine.sdk.service.operation.QuerySideFieldOpe
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.TriFunction;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Conditions;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.FieldCondition;
-import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.SubFieldCondition;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,14 +24,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp.Op.eq;
 import static com.xforceplus.ultraman.oqsengine.sdk.util.EntityClassToGrpcConverter.toFieldUp;
 
 /**
  * Query Handler chain
+ *
  * @see com.xforceplus.ultraman.oqsengine.sdk.service.operation.QuerySideFieldOperationHandler
- *
- *
  */
 public class DefaultHandleQueryValueService implements HandleQueryValueService {
 
@@ -61,16 +53,15 @@ public class DefaultHandleQueryValueService implements HandleQueryValueService {
         //entites to query
         Stream<Tuple2<String, FieldCondition>> subFieldConditionStream
                 = Optional.ofNullable(conditions).map(Conditions::getEntities)
-                          .orElseGet(Collections::emptyList)
-                          .stream()
-                          .flatMap(x -> x.getFields().stream().map(field -> Tuple.of(x.getCode(), field)));
+                .orElseGet(Collections::emptyList)
+                .stream()
+                .flatMap(x -> x.getFields().stream().map(field -> Tuple.of(x.getCode(), field)));
 
         //condition self to ;
         Stream<Tuple2<String, FieldCondition>> fieldConditionStream
                 = Optional.ofNullable(conditions).map(Conditions::getFields)
-                  .orElseGet(Collections::emptyList)
-                  .stream().map(x -> Tuple.of("", x));
-
+                .orElseGet(Collections::emptyList)
+                .stream().map(x -> Tuple.of("", x));
 
         List<FieldConditionUp> fieldConditionUps = Stream.concat(fieldConditionStream, subFieldConditionStream)
                 .map(x -> {
@@ -84,15 +75,17 @@ public class DefaultHandleQueryValueService implements HandleQueryValueService {
 
                     Optional<? extends IEntityField> fieldOp = reader.column(combinedName);
 
+                    //will fail if value is empty
+                    return fieldOp.map(field -> {
 
-                    return fieldOp.map(field ->
+                        return FieldConditionUp.newBuilder()
+                                .setCode(field.name())
+                                .setOperation(FieldConditionUp.Op.valueOf(fieldCondition.getOperation().name()))
+                                .addAllValues(doHandle(field, fieldCondition.getValue()))
+                                .setField(toFieldUp(field))
+                                .build();
 
-                            FieldConditionUp.newBuilder()
-                                    .setCode(field.name())
-                                    .setOperation(FieldConditionUp.Op.valueOf(fieldCondition.getOperation().name()))
-                                    .addAllValues(doHandle(field, fieldCondition.getValue()))
-                                    .setField(toFieldUp(field))
-                                    .build());
+                    });
                 })
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -104,23 +97,23 @@ public class DefaultHandleQueryValueService implements HandleQueryValueService {
 
     private List<String> doHandle(IEntityField field, List<String> origin) {
         return Optional.ofNullable(origin)
-            .orElseGet(Collections::emptyList).stream()
-            .filter(Objects::nonNull)
-            .map(input -> pipeline(input, field, OperationType.QUERY))
-            .filter(Objects::nonNull)
-            .map(Object::toString)
-            .collect(Collectors.toList());
+                .orElseGet(Collections::emptyList).stream()
+                .filter(Objects::nonNull)
+                .map(input -> pipeline(input, field, OperationType.QUERY))
+                .filter(Objects::nonNull)
+                .map(Object::toString)
+                .collect(Collectors.toList());
     }
 
     private Object pipeline(Object value, IEntityField field, OperationType phase) {
 
         try {
             return querySideFieldOperationHandler.stream()
-                .sorted()
-                .map(x -> (TriFunction) x)
-                .reduce(TriFunction::andThen)
-                .map(x -> x.apply(field, value, phase))
-                .orElse(value);
+                    .sorted()
+                    .map(x -> (TriFunction) x)
+                    .reduce(TriFunction::andThen)
+                    .map(x -> x.apply(field, value, phase))
+                    .orElse(value);
 
         } catch (Exception ex) {
             logger.error("{}", ex);

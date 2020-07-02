@@ -248,6 +248,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         indexStorage.delete(fatherEntity);
                         indexStorage.delete(entity);
 
+
                     } else {
 
                         if (isConflict(masterStorage.delete(entity))) {
@@ -274,7 +275,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             indexStorage.delete(chlidEntity);
                         }
                     }
-                    return null;
+                    return ResultStatus.SUCCESS;
                 }
             });
         } catch (Exception ex) {

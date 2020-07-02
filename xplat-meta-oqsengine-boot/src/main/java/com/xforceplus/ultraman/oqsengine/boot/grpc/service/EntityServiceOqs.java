@@ -4,6 +4,7 @@ import akka.grpc.javadsl.Metadata;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
+import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -16,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +58,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Resource(name = "callThreadPool")
     private ExecutorService asyncDispatcher;
 
+    @Autowired
+    private TransactionManager transactionManager;
+
     private Logger logger = LoggerFactory.getLogger(EntityServicePowerApi.class);
 
     private <T> CompletableFuture<T> async(Supplier<T> supplier) {
@@ -89,8 +94,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             extractTransaction(metadata).ifPresent(id -> {
                 try {
                     transactionManagementService.restore(id);
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    logger.error("{}", e);
                 }
             });
 
@@ -114,6 +119,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .setCode(OperationResult.Code.EXCEPTION)
                         .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                         .buildPartial();
+            } finally {
+                extractTransaction(metadata).ifPresent(id -> {
+                    transactionManager.unbind();
+                });
             }
             return result;
         });
@@ -125,8 +134,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             extractTransaction(metadata).ifPresent(id -> {
                 try {
                     transactionManagementService.restore(id);
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    logger.error("{}", e);
                 }
             });
 
@@ -147,12 +156,31 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         updateEntity(entity, toEntity(entityClass, in));
                     }
                     //side effect
+                    ResultStatus replaceStatus = entityManagementService.replace(entity);
 
-                    entityManagementService.replace(entity);
-                    result = OperationResult.newBuilder()
-                            .setAffectedRow(1)
-                            .setCode(OperationResult.Code.OK)
-                            .buildPartial();
+                    switch(replaceStatus){
+                        case SUCCESS:
+                            result = OperationResult.newBuilder()
+                                    .setAffectedRow(1)
+                                    .setCode(OperationResult.Code.OK)
+                                    .buildPartial();
+                            break;
+                        case CONFLICT:
+                            //send to sdk
+                            result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.OTHER)
+                                    .setMessage(ResultStatus.CONFLICT.name())
+                                    .buildPartial();
+                            break;
+                        default:
+                            //unreachable code
+                            result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.FAILED)
+                                    .setMessage("产生了未知的错误")
+                                    .buildPartial();
+                    }
                 } else {
                     result = OperationResult.newBuilder()
                             .setCode(OperationResult.Code.FAILED)
@@ -165,6 +193,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .setCode(OperationResult.Code.EXCEPTION)
                         .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                         .buildPartial();
+            } finally {
+                extractTransaction(metadata).ifPresent(id -> {
+                    transactionManager.unbind();
+                });
             }
 
             return result;
@@ -177,8 +209,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             extractTransaction(metadata).ifPresent(id -> {
                 try {
                     transactionManagementService.restore(id);
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    logger.error("{}", e);
                 }
             });
 
@@ -280,8 +312,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .setCode(OperationResult.Code.EXCEPTION)
                         .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                         .buildPartial();
+            } finally {
+                extractTransaction(metadata).ifPresent(id -> {
+                    transactionManager.unbind();
+                });
             }
-
 
             return result;
         });
@@ -298,8 +333,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             extractTransaction(metadata).ifPresent(id -> {
                 try {
                     transactionManagementService.restore(id);
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    logger.error("{}", e);
                 }
             });
 
@@ -313,11 +348,32 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 if (op.isPresent()) {
                     IEntity entity = op.get();
-                    entityManagementService.delete(entity);
-                    result = OperationResult.newBuilder()
-                            .setAffectedRow(1)
-                            .setCode(OperationResult.Code.OK)
-                            .buildPartial();
+                    ResultStatus deleteStatus = entityManagementService.delete(entity);
+
+
+                        switch (deleteStatus) {
+                            case SUCCESS:
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(1)
+                                        .setCode(OperationResult.Code.OK)
+                                        .buildPartial();
+                                break;
+                            case CONFLICT:
+                                //send to sdk
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(0)
+                                        .setCode(OperationResult.Code.OTHER)
+                                        .setMessage(ResultStatus.CONFLICT.name())
+                                        .buildPartial();
+                                break;
+                            default:
+                                //unreachable code
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(0)
+                                        .setCode(OperationResult.Code.FAILED)
+                                        .setMessage("产生了未知的错误")
+                                        .buildPartial();
+                        }
                 } else {
                     result = OperationResult.newBuilder()
                             .setAffectedRow(0)
@@ -330,7 +386,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .setCode(OperationResult.Code.EXCEPTION)
                         .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                         .buildPartial();
+            } finally {
+
+                extractTransaction(metadata).ifPresent(id -> {
+                        transactionManager.unbind();
+                });
             }
+
             return result;
         });
     }
@@ -338,13 +400,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> selectOne(EntityUp in, Metadata metadata) {
         return async(() -> {
-            extractTransaction(metadata).ifPresent(id -> {
-                try {
-                    transactionManagementService.restore(id);
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            });
+//            extractTransaction(metadata).ifPresent(id -> {
+//                try {
+//                    transactionManagementService.restore(id);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            });
 
             OperationResult result;
 
@@ -407,6 +469,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> selectByConditions(SelectByCondition in, Metadata metadata) {
         return async(() -> {
+
+//            extractTransaction(metadata).ifPresent(id -> {
+//                try {
+//                    transactionManagementService.restore(id);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            });
+
             OperationResult result;
             try {
 
