@@ -32,7 +32,9 @@ public class FlowRegistry {
                 @Override
                 public void onRemoval(@Nullable String s, @Nullable QueueFlow queueFlow, @NonNull RemovalCause removalCause) {
                     logger.info("Flow for {} is over due to time expiry", s);
-                    queueFlow.close();
+                    if(queueFlow != null) {
+                        queueFlow.close();
+                    }
                 }
             })
             .build(key -> {

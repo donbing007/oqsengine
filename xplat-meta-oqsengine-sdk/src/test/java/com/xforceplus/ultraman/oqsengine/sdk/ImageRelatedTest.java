@@ -104,7 +104,10 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         //clear
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> billsBefore =
                 entityService.findByCondition(imageBill.get()
-                        , new RequestBuilder().field("bill_image_id", ConditionOp.eq, 1111111111).build());
+                        , new RequestBuilder().field("bill_image_id", ConditionOp.eq, 1111111111)
+                                .pageSize(10)
+                                .pageNo(1)
+                                .build());
 
 
         billsBefore.forEach(x -> x._2().forEach(row -> {
@@ -118,7 +121,7 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         Long createId = entityService.create(imageBill.get(), body).get();
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> bills =
                 entityService.findByCondition(imageBill.get()
-                        , new RequestBuilder().field("bill_image_id", ConditionOp.eq, 1111111111).build());
+                        , new RequestBuilder().field("bill_image_id", ConditionOp.eq, 1111111111).pageSize(10).pageNo(1).build());
 
         assertTrue("result num is one", bills.get()._1() == 1);
         assertTrue("result list size is one", bills.get()._2().size() == 1);
@@ -280,12 +283,16 @@ public class ImageRelatedTest extends ContextWareBaseTest {
 
         Long id3 = entityService.create(ticket.get(), objectMap3).get();
 
+        ConditionQueryRequest request = new ConditionQueryRequest();
+        request.setPageNo(1);
+        request.setPageSize(10);
+
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> byConditionWithIds =
                 entityService.findByConditionWithIds(ticket.get()
                         , Arrays.asList(id1, id2, id3)
-                        , new ConditionQueryRequest());
+                        , request);
 
-        assertEquals("records is equals 3", 3, (int) byConditionWithIds.get()._1());
+        assertEquals("records is equals 3", 3, (int)byConditionWithIds.get()._1);
 
         //clear
         entityService.deleteOne(ticket.get(), id1);
@@ -315,7 +322,10 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         Long id3 = entityService.create(ticket.get(), objectMap3).get();
 
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> image_id = entityService.findByCondition(ticket.get()
-                , new RequestBuilder().field("image_id", ConditionOp.in, Arrays.asList("100001", "100002", "100003")).build());
+                , new RequestBuilder().field("image_id", ConditionOp.in, Arrays.asList("100001", "100002", "100003"))
+                        .pageSize(10)
+                        .pageNo(1)
+                        .build());
 
         assertEquals("query size is 3", 3, image_id.get()._1.intValue());
 
@@ -387,12 +397,16 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         Object create_time = either.get().get("create_time");
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> result = entityService.findByCondition(entityOpt.get(), new RequestBuilder()
                 .field("create_time", ConditionOp.eq, create_time)
+                .pageNo(1)
+                .pageSize(10)
                 .build());
 
         assertTrue("can query by create_time", result.get()._1 >= 0);
 
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> result2 = entityService.findByCondition(entityOpt.get(), new RequestBuilder()
                 .field("create_user_id", ConditionOp.eq, 123454L)
+                .pageNo(1)
+                .pageSize(10)
                 .build());
 
         assertTrue("can query by create_user_id", result2.get()._1 >= 0);
@@ -443,6 +457,8 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         entityService.findByCondition(salesBill
                 , new RequestBuilder()
                         .field("bill_data_status", ConditionOp.eq, "2000")
+                        .pageSize(100)
+                        .pageNo(1)
                         .build()).map(x -> {
             return x._2();
         }).forEach(x -> x.stream().forEach(l ->
@@ -451,6 +467,8 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         entityService.findByCondition(baseBill
                 , new RequestBuilder()
                         .field("bill_data_status", ConditionOp.eq, "2000")
+                        .pageSize(100)
+                        .pageNo(1)
                         .build()).map(x -> {
             return x._2();
         }).forEach(x -> x.stream().forEach(l ->
@@ -460,6 +478,8 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         entityService.findByCondition(salesBill
                 , new RequestBuilder()
                         .field("bill_data_status", ConditionOp.eq, "3000")
+                        .pageSize(100)
+                        .pageNo(1)
                         .build()).map(x -> {
             return x._2();
         }).forEach(x -> x.stream().forEach(l ->
@@ -490,6 +510,8 @@ public class ImageRelatedTest extends ContextWareBaseTest {
                 entityService.findByCondition(baseBill
                         , new RequestBuilder()
                                 .field("bill_data_status", ConditionOp.eq, "2000")
+                                .pageNo(1)
+                                .pageSize(10)
                                 .build());
 
         assertEquals("search by parent size is 2", 2, (int) billSearchRet.get()._1());
@@ -504,6 +526,8 @@ public class ImageRelatedTest extends ContextWareBaseTest {
                 entityService.findByCondition(baseBill
                         , new RequestBuilder()
                                 .field("bill_data_status", ConditionOp.eq, "3000")
+                                .pageSize(100)
+                                .pageNo(1)
                                 .build());
 
         assertEquals("search by parent size is 1", 1, (int) billSearchRet2.get()._1());
@@ -518,6 +542,8 @@ public class ImageRelatedTest extends ContextWareBaseTest {
                 entityService.findByCondition(salesBill
                         , new RequestBuilder()
                                 .field("bill_data_status", ConditionOp.eq, "2000")
+                                .pageSize(100)
+                                .pageNo(1)
                                 .build());
         assertEquals("search by parent size is 2", 2, (int) billSearchRet3.get()._1());
 
@@ -543,6 +569,8 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         assertTrue(entityService.findByCondition(entityOpt.get()
                 , new RequestBuilder()
                         .field("create_user_name", ConditionOp.eq, "created")
+                        .pageSize(100)
+                        .pageNo(1)
                         .build()).get()._1() > 0);
 
         entityService.deleteOne(entityOpt.get(), x);
@@ -570,6 +598,8 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         assertTrue(entityService.findByCondition(entityOpt.get()
                 , new RequestBuilder()
                         .field("create_user_name", ConditionOp.eq, "created")
+                        .pageNo(1)
+                        .pageSize(10)
                         .build()).get()._1() > 1);
 
         //clear
@@ -587,7 +617,10 @@ public class ImageRelatedTest extends ContextWareBaseTest {
         Long id = entityService.create(entityOpt.get(), map).get();
 
         Map<String, Object> ret = entityService.findOne(entityOpt.get(), id).get();
-        Map<String, Object> ret2 = entityService.findByConditionWithIds(entityOpt.get(), Arrays.asList(id), new ConditionQueryRequest()).get()._2().get(0);
+        ConditionQueryRequest request = new ConditionQueryRequest();
+        request.setPageNo(1);
+        request.setPageSize(10);
+        Map<String, Object> ret2 = entityService.findByConditionWithIds(entityOpt.get(), Arrays.asList(id), request).get()._2().get(0);
 
         assertEquals(ret, ret2);
 
@@ -619,55 +652,49 @@ public class ImageRelatedTest extends ContextWareBaseTest {
     @Test
     public void mockSearch() {
         IEntityClass entityClass = new EntityClass(1259072162662416385L, "xx", Collections.emptyList());
-
         System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().build()));
-
-
         IEntityClass entityClassReal = entityService.loadByCode("purchaseBill").get();
-
-
-        System.out.println(entityService.findByCondition(entityClassReal, new RequestBuilder().build()));
-
+        System.out.println(entityService.findByCondition(entityClassReal, new RequestBuilder().pageNo(1).pageSize(10).build()));
     }
 
-    @Test
-    public void errorTest() throws InterruptedException {
-        IEntityClass entityClassReal = entityService.loadByCode("purchaseBill").get();
-
-        CountDownLatch latch = new CountDownLatch(400);
-
-        IntStream.range(0, 200)
-                .mapToObj(i -> new Thread(() -> {
-
-                            System.out.println("Get newest: " + i);
-                            System.out.println(entityService
-                                    .loadByCode("purchaseBill"));
-                            latch.countDown();
-                        })
-
-                ).forEach(Thread::start);
-
-        IntStream.range(0, 200).mapToObj(i -> new Thread(() -> {
-
-            ModuleUpResult build = ModuleUpResult.newBuilder()
-                    .setId(1226840497121304578L)
-                    .setVersion(i + "")
-                    .addBoUps(BoUp.newBuilder()
-                            .setId("1259072162662416385")
-                            .setCode("purchaseBill")
-                            .addFields(Field.newBuilder()
-                                    .setId("1111111")
-                                    .setCode("222222")
-                                    .build())
-                            .build())
-                    .build();
-
-            store.save(build, "", "5");
-            latch.countDown();
-
-        })).forEach(Thread::start);
-
-
-        latch.await();
-    }
+//    @Test
+//    public void errorTest() throws InterruptedException {
+//        IEntityClass entityClassReal = entityService.loadByCode("purchaseBill").get();
+//
+//        CountDownLatch latch = new CountDownLatch(400);
+//
+//        IntStream.range(0, 200)
+//                .mapToObj(i -> new Thread(() -> {
+//
+//                            System.out.println("Get newest: " + i);
+//                            System.out.println(entityService
+//                                    .loadByCode("purchaseBill"));
+//                            latch.countDown();
+//                        })
+//
+//                ).forEach(Thread::start);
+//
+//        IntStream.range(0, 200).mapToObj(i -> new Thread(() -> {
+//
+//            ModuleUpResult build = ModuleUpResult.newBuilder()
+//                    .setId(1226840497121304578L)
+//                    .setVersion(i + "")
+//                    .addBoUps(BoUp.newBuilder()
+//                            .setId("1259072162662416385")
+//                            .setCode("purchaseBill")
+//                            .addFields(Field.newBuilder()
+//                                    .setId("1111111")
+//                                    .setCode("222222")
+//                                    .build())
+//                            .build())
+//                    .build();
+//
+//            store.save(build, "", "5");
+//            latch.countDown();
+//
+//        })).forEach(Thread::start);
+//
+//
+//        latch.await();
+//    }
 }

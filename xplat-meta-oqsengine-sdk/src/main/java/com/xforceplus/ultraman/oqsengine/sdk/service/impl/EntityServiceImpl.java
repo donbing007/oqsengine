@@ -392,6 +392,10 @@ public class EntityServiceImpl implements EntityService {
 
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
 
+        if(condition.getPageSize() == null || condition.getPageNo() == null){
+            return Either.left("RangeSearch without range");
+        }
+
         if (transId != null) {
             logger.info("findRecordsByCondition with Transaction id:{} ", transId);
             requestBuilder = requestBuilder.addHeader("transaction-id", transId);
