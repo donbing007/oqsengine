@@ -26,11 +26,11 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.testcontainers.containers.BindMode;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
@@ -51,6 +51,7 @@ import java.util.function.Predicate;
  */
 public class SphinxQLIndexStorageTest {
 
+    private static GenericContainer manticore;
 
     private TransactionManager transactionManager = new DefaultTransactionManager(
         new IncreasingOrderLongIdGenerator(0));
@@ -66,6 +67,10 @@ public class SphinxQLIndexStorageTest {
     private static IEntityField enumField = new EntityField(Long.MAX_VALUE - 5, "enum", FieldType.ENUM);
     private static IEntityField stringsField = new EntityField(Long.MAX_VALUE - 6, "strings", FieldType.STRINGS);
 
+    // issue #14
+    private static IEntityField stringField141 = new EntityField(Long.MAX_VALUE - 7, "string0", FieldType.STRING);
+    private static IEntityField stringField142 = new EntityField(Long.MAX_VALUE - 8, "string2", FieldType.STRING);
+
     private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "test", Arrays.asList(
         longField,
         stringField,
@@ -79,7 +84,7 @@ public class SphinxQLIndexStorageTest {
     private static IEntity[] entityes;
 
     static {
-        entityes = new IEntity[5];
+        entityes = new IEntity[7];
 
         long id = Long.MAX_VALUE;
         IEntityValue values = new EntityValue(id);
@@ -146,12 +151,29 @@ public class SphinxQLIndexStorageTest {
         ));
         entityes[4] = new Entity(id, entityClass, values);
 
+        // issue #14
+        id = Long.MAX_VALUE - 5;
+        values = new EntityValue(id);
+        values.addValues(Arrays.asList(
+            new StringValue(stringField141, "A"),
+            new StringValue(stringField142, "0")
+        ));
+        entityes[5] = new Entity(id, entityClass, values);
+
+        // issue #14
+        id = Long.MAX_VALUE - 6;
+        values = new EntityValue(id);
+        values.addValues(Arrays.asList(
+            new StringValue(stringField141, "B"),
+            new StringValue(stringField142, "1")
+        ));
+        entityes[6] = new Entity(id, entityClass, values);
+
     }
 
 
     @Before
     public void before() throws Exception {
-
 
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector("./src/test/resources/sql_index_storage.conf");
         Selector<DataSource> searchDataSourceSelector = buildSearchDataSourceSelector("./src/test/resources/sql_index_storage.conf");
@@ -176,8 +198,7 @@ public class SphinxQLIndexStorageTest {
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
-        storage.setIndexTableName("oqsindextest");
-//        storage.setIndexTableName("oqsindex");
+        storage.setIndexTableName("oqsindex");
         storage.init();
 
         truncate();
@@ -576,8 +597,8 @@ public class SphinxQLIndexStorageTest {
                 Page.newSinglePage(100),
                 refs -> {
 
-                    Assert.assertEquals(2, refs.size());
-                    long[] expectedIds = new long[]{Long.MAX_VALUE - 4, Long.MAX_VALUE};
+                    Assert.assertEquals(4, refs.size());
+                    long[] expectedIds = new long[]{Long.MAX_VALUE - 6, Long.MAX_VALUE - 5, Long.MAX_VALUE - 4, Long.MAX_VALUE};
                     Assert.assertEquals(0,
                         refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
@@ -745,7 +766,7 @@ public class SphinxQLIndexStorageTest {
                 entityClass,
                 new Page(),
                 refs -> {
-                    Assert.assertEquals(5, refs.size());
+                    Assert.assertEquals(7, refs.size());
                     return true;
                 }
             )
@@ -762,6 +783,29 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 new Page(),
+                refs -> {
+                    Assert.assertEquals(0, refs.size());
+                    return true;
+                }
+            )
+            ,
+            // issue #14
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        stringField141,
+                        ConditionOperator.EQUALS,
+                        new StringValue(stringField141, "B")
+                    )
+                ).addAnd(
+                    new Condition(
+                        stringField142,
+                        ConditionOperator.EQUALS,
+                        new StringValue(stringField142, "0")
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
                 refs -> {
                     Assert.assertEquals(0, refs.size());
                     return true;
@@ -828,5 +872,28 @@ public class SphinxQLIndexStorageTest {
             this.check = check;
             this.sort = sort;
         }
+    }
+
+    @AfterClass
+    public static void cleanEnvironment() throws Exception {
+        manticore.close();
+    }
+
+    @BeforeClass
+    public static void prepareEnvironment() throws Exception {
+        manticore = new GenericContainer<>("manticoresearch/manticore:3.4.2")
+            .withExposedPorts(9306)
+            .withNetworkAliases("manticore")
+            .withClasspathResourceMapping("manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
+            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+            .waitingFor(Wait.forListeningPort());
+        manticore.start();
+
+        String jdbcUrl = String.format(
+            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+            manticore.getContainerIpAddress(),
+            manticore.getFirstMappedPort());
+
+        System.setProperty("MANTICORE_JDBC_URL", jdbcUrl);
     }
 } 

@@ -220,24 +220,31 @@ public class JoinSelectTest {
         buff.addAll(driverEntities != null ? driverEntities : Collections.emptyList());
 
         long txId = transactionManagementService.begin();
-
-        for (IEntity e : entities) {
-            transactionManagementService.restore(txId);
-            managementService.delete(e);
-        }
         transactionManagementService.restore(txId);
-        transactionManagementService.commit();
+        try {
+            for (IEntity e : entities) {
+                managementService.delete(e);
+            }
+            transactionManagementService.commit();
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            transactionManagementService.rollback();
+        }
 
     }
 
     private void buildEntities(List<IEntity> entities) throws SQLException {
-        long txId = transactionManagementService.begin(30000000L);
-        for (IEntity e : entities) {
-            transactionManagementService.restore(txId);
-            managementService.build(e);
-        }
+        long txId = transactionManagementService.begin();
         transactionManagementService.restore(txId);
-        transactionManagementService.commit();
+        try {
+            for (IEntity e : entities) {
+                managementService.build(e);
+            }
+            transactionManagementService.commit();
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            transactionManagementService.rollback();
+        }
     }
 
 }

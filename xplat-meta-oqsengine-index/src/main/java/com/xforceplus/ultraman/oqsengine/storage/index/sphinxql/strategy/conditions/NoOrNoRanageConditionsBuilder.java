@@ -1,9 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
@@ -12,6 +10,9 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 没有范围查询,没有or 条件.主要利用全文搜索字段进行搜索.
@@ -41,6 +42,11 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
         boolean allNegative = true;
         SphinxQLConditionBuilder conditionQueryBuilder;
 
+        /**
+         * issue #14
+         * 在 match 结束后增加同样的条件,利用属性进行二次过滤保证结果正确.
+         */
+        List<Condition> secondaryFilterConditions = new ArrayList<>(conditions.size());
         for (ConditionNode node : conditions.collect()) {
             if (Conditions.isValueNode(node)) {
                 Condition condition = ((ValueConditionNode) node).getCondition();
@@ -59,6 +65,10 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
                         buff.append(" ");
                     }
                     buff.append(conditionQueryBuilder.build(condition));
+
+                    // issue #14
+                    secondaryFilterConditions.add(condition);
+
                     switch (condition.getOperator()) {
                         case EQUALS:
                         case MULTIPLE_EQUALS:
@@ -71,8 +81,6 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
                         }
                     }
                 }
-
-
             }
         }
 
@@ -85,6 +93,17 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
 
         if (idBuff.length() > 0) {
             buff.append(" ").append(SqlKeywordDefine.AND).append(" ").append(idBuff.toString());
+        }
+
+        // issue #14
+        if (!secondaryFilterConditions.isEmpty()) {
+            String condtitonStr = buildSecondFilterConditions(secondaryFilterConditions);
+            if (!condtitonStr.isEmpty()) {
+                buff.append(" ")
+                    .append(SqlKeywordDefine.AND)
+                    .append(" ")
+                    .append(condtitonStr);
+            }
         }
 
         return buff.toString();
@@ -103,5 +122,38 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
 
     public SphinxQLConditionQueryBuilderFactory getConditionQueryBuilderFactory() {
         return conditionQueryBuilderFactory;
+    }
+
+    // issue #14
+    private String buildSecondFilterConditions(List<Condition> conditions) {
+        StringBuilder buff = new StringBuilder();
+
+        SphinxQLConditionBuilder conditionQueryBuilder;
+        for (Condition condition : conditions) {
+            if (isIgnoreSecondaryFiltering(condition)) {
+                continue;
+            }
+            conditionQueryBuilder = conditionQueryBuilderFactory.getQueryBuilder(condition, false);
+            if (buff.length() > 0) {
+                buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
+            }
+
+            buff.append(conditionQueryBuilder.build(condition));
+        }
+
+        return buff.toString();
+    }
+
+    private boolean isIgnoreSecondaryFiltering(Condition condition) {
+        if (ConditionOperator.LIKE == condition.getOperator()) {
+            return true;
+        } else if (ConditionOperator.MULTIPLE_EQUALS == condition.getOperator()) {
+            return true;
+        } else if (FieldType.STRINGS == condition.getField().type()) {
+            return true;
+        } else if (FieldType.DECIMAL == condition.getField().type()) {
+            return true;
+        }
+        return false;
     }
 }

@@ -70,7 +70,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                expectPrefix + "\"100F1L\"" + expectAfter
+                expectPrefix + "\"100F1L\"" + expectAfter + " AND jsonfields.1L = 100"
             )
             ,
             new Case(
@@ -94,7 +94,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new EntityField(2, "c2", FieldType.STRING),
                         ConditionOperator.EQUALS,
                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "\"100F1L\" \"testF2S\"" + expectAfter
+                expectPrefix + "\"100F1L\" \"testF2S\"" + expectAfter + " AND jsonfields.1L = 100 AND jsonfields.2S = 'test'"
             ),
             new Case(
                 new Conditions(
@@ -106,7 +106,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new EntityField(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-\"100F1L\" -\"testF2S\" =Sg" + expectAfter
+                expectPrefix + "-\"100F1L\" -\"testF2S\" =Sg" + expectAfter + " AND jsonfields.1L != 100 AND jsonfields.2S != 'test'"
             ),
             new Case(
                 new Conditions(
@@ -118,7 +118,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new EntityField(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-\"testF2S\" =Sg" + expectAfter + " " + SqlKeywordDefine.AND + " id = 100"
+                expectPrefix + "-\"testF2S\" =Sg" + expectAfter + " " + SqlKeywordDefine.AND + " id = 100 AND jsonfields.2S != 'test'"
             ),
             new Case(
                 new Conditions(
