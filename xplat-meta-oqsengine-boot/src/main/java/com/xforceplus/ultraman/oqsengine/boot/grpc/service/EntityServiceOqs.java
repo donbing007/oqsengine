@@ -95,7 +95,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("{}", e);
                 }
             });
 
@@ -135,7 +135,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("{}", e);
                 }
             });
 
@@ -210,7 +210,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("{}", e);
                 }
             });
 
@@ -334,7 +334,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("{}", e);
                 }
             });
 
