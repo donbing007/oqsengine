@@ -54,6 +54,7 @@ public class AbstractTransactionManagerTest {
     public void testTimeout() throws Exception {
         MockTransactionManager tm = new MockTransactionManager(200);
         Transaction tx = tm.create();
+        tm.bind(tx);
 
         TimeUnit.MILLISECONDS.sleep(320);
 
@@ -67,6 +68,7 @@ public class AbstractTransactionManagerTest {
     public void testCommitAfterFinish() throws Exception {
         MockTransactionManager tm = new MockTransactionManager();
         Transaction tx = tm.create();
+        tm.bind(tx);
         tx.commit();
 
         tm.finish();
