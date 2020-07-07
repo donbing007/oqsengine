@@ -131,6 +131,11 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
+    public String name() {
+        return this.name;
+    }
+
+    @Override
     public Collection<Relation> relations() {
         return relations;
     }

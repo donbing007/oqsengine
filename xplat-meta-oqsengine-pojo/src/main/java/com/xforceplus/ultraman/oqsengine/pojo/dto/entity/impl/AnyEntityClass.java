@@ -39,6 +39,11 @@ public class AnyEntityClass implements IEntityClass {
     }
 
     @Override
+    public String name() {
+        return "";
+    }
+
+    @Override
     public Collection<Relation> relations() {
         return Collections.emptyList();
     }
