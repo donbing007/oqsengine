@@ -25,6 +25,8 @@ public interface IEntityClass {
      */
     public String code();
 
+    String name();
+
     /**
      * 关系信息的集合
      * @return 根对象默认为Null，OneToOne为OTO，OneToMany为OTM
