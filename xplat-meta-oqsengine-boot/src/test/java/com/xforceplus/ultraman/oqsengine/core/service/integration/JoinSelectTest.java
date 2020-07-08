@@ -23,6 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.testcontainers.containers.BindMode;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
@@ -38,6 +41,8 @@ import java.util.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class JoinSelectTest {
+
+    private static GenericContainer manticore;
 
     final Logger logger = LoggerFactory.getLogger(JoinSelectTest.class);
 
@@ -62,15 +67,6 @@ public class JoinSelectTest {
     private List<IEntity> entities;
     private List<IEntity> driverEntities;
     private long bigDriverSelectEntityId;
-
-    @BeforeClass
-    public static void setUp() {
-        /**
-         * 多个测试之间有可能冲突,这里防止这个表况出现.
-         *
-         */
-        System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
-    }
 
     @Before
     public void before() throws Exception {
@@ -238,6 +234,33 @@ public class JoinSelectTest {
         }
         transactionManagementService.restore(txId);
         transactionManagementService.commit();
+    }
+
+    @AfterClass
+    public static void cleanEnvironment() throws Exception {
+        if (manticore != null) {
+            manticore.close();
+        }
+    }
+
+    @BeforeClass
+    public static void prepareEnvironment() throws Exception {
+        manticore = new GenericContainer<>("manticoresearch/manticore:3.4.2")
+            .withExposedPorts(9306)
+            .withNetworkAliases("manticore")
+            .withClasspathResourceMapping("manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
+            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+            .waitingFor(Wait.forListeningPort());
+        manticore.start();
+
+        String jdbcUrl = String.format(
+            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+            manticore.getContainerIpAddress(),
+            manticore.getFirstMappedPort());
+
+        System.setProperty("MANTICORE_JDBC_URL", jdbcUrl);
+
+        System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
     }
 
 }
