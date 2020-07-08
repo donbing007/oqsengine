@@ -10,6 +10,7 @@ import com.xforceplus.xplat.galaxy.framework.dispatcher.ServiceDispatcher;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ResolvableType;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,9 @@ public class EntityController {
     private ServiceDispatcher dispatcher;
 
     private static String FAILED = "操作失败:";
+
+    @Value("${xplat.oqsengine.sdk.export.maxsize:50000}")
+    private int exportMaxSize;
 
     @GetMapping("/bos/{boId}/entities/{id}")
     @ResponseBody
@@ -232,6 +236,17 @@ public class EntityController {
             @RequestParam(required = false, value = "v") String version,
             @RequestBody ConditionQueryRequest condition) {
 
+        //default
+        if(condition != null){
+            if(condition.getPageNo() == null){
+                condition.setPageNo(1);
+            }
+
+            if(condition.getPageSize() == null){
+                condition.setPageSize(10);
+            }
+        }
+
         Either<String, Tuple2<Integer, List<Map<String, Object>>>> result =
                 dispatcher.querySync(new ConditionSearchCmd(boId, condition, version)
                         , DefaultUiService.class, "conditionSearch");
@@ -272,8 +287,16 @@ public class EntityController {
             @RequestParam(required = true, defaultValue = "sync", value = "exportType") String exportType,
             @RequestBody ConditionQueryRequest condition) {
 
-        condition.setPageNo(0);
-        condition.setPageSize(50000);
+        //default
+        if(condition != null){
+            if(condition.getPageNo() == null){
+                condition.setPageNo(1);
+            }
+
+            if(condition.getPageSize() == null || condition.getPageSize() > exportMaxSize){
+                condition.setPageSize(exportMaxSize);
+            }
+        }
 
         CompletableFuture<Either<String, String>> exportResult = dispatcher.querySync(new ConditionExportCmd(boId, condition, version, exportType)
                 , DefaultUiService.class, "conditionExport");
