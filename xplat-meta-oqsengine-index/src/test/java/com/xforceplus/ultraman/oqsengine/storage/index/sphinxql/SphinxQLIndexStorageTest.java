@@ -791,6 +791,29 @@ public class SphinxQLIndexStorageTest {
                     return true;
                 }
             )
+            // issue #23
+            ,
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        longField,
+                        ConditionOperator.EQUALS,
+                        new LongValue(longField, 2L)
+                    )
+                ),
+                entityClass,
+                Page.newSinglePage(100),
+                refs -> {
+
+                    Assert.assertEquals(2, refs.size());
+                    long[] expectedIds = new long[]{Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
+                    Assert.assertEquals(0,
+                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+
+                    return true;
+                },
+                Sort.buildAscSort(decimalField)
+            )
             ,
             // issue #14
             new Case(

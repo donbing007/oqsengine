@@ -100,6 +100,8 @@ public class SphinxQLHelper {
         return buff.toString();
     }
 
+    private static ObjectMapper mapper = new ObjectMapper();
+
     /**
      * 将 Map 序列化成 json 字符串.
      * 只关注处理 String 和非字符串,并且不会级联处理子对象.
@@ -114,8 +116,6 @@ public class SphinxQLHelper {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
-
-    private static ObjectMapper mapper = new ObjectMapper();
 
     /**
      * 将 serializableJson 的结果还原成 Map 表示.

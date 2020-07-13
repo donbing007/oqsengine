@@ -281,8 +281,13 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         if (!sort.isOutOfOrder()) {
             StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
             Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField());
+            //表示还没有排序字段时的长度.
+            int emptyLen = buff.length();
 
             for (String storageName : storageNames) {
+                if (buff.length() > emptyLen) {
+                    buff.append(", ");
+                }
                 if (storageStrategy.storageType() == StorageType.LONG) {
                     buff.append("bigint(")
                         .append(FieldDefine.JSON_FIELDS)
