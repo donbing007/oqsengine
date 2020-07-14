@@ -77,7 +77,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setTransactionResult(String.valueOf(transId)).buildPartial());
         } catch (Exception e) {
             logger.error("{}", e);
-
             return CompletableFuture.completedFuture(
                     OperationResult.newBuilder()
                             .setCode(OperationResult.Code.EXCEPTION)
@@ -91,13 +90,19 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         return async(() -> {
 
-            extractTransaction(metadata).ifPresent(id -> {
+            if(extractTransaction(metadata).isPresent()) {
+                Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
                     logger.error("{}", e);
+                    //fast fail
+                    return OperationResult.newBuilder()
+                            .setCode(OperationResult.Code.EXCEPTION)
+                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                            .buildPartial();
                 }
-            });
+            }
 
             OperationResult result;
 
@@ -131,13 +136,20 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> replace(EntityUp in, Metadata metadata) {
         return async(() -> {
-            extractTransaction(metadata).ifPresent(id -> {
+
+            if(extractTransaction(metadata).isPresent()) {
+                Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
                     logger.error("{}", e);
+                    //fast fail
+                    return OperationResult.newBuilder()
+                            .setCode(OperationResult.Code.EXCEPTION)
+                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                            .buildPartial();
                 }
-            });
+            }
 
             OperationResult result;
             IEntityClass entityClass = toEntityClass(in);
@@ -206,13 +218,20 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> replaceByCondition(SelectByCondition in, Metadata metadata) {
         return async(() -> {
-            extractTransaction(metadata).ifPresent(id -> {
+
+            if(extractTransaction(metadata).isPresent()) {
+                Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
                     logger.error("{}", e);
+                    //fast fail
+                    return OperationResult.newBuilder()
+                            .setCode(OperationResult.Code.EXCEPTION)
+                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                            .buildPartial();
                 }
-            });
+            }
 
             OperationResult result;
 
@@ -330,13 +349,20 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> remove(EntityUp in, Metadata metadata) {
         return async(() -> {
-            extractTransaction(metadata).ifPresent(id -> {
+
+            if(extractTransaction(metadata).isPresent()) {
+                Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
                     logger.error("{}", e);
+                    //fast fail
+                    return OperationResult.newBuilder()
+                            .setCode(OperationResult.Code.EXCEPTION)
+                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                            .buildPartial();
                 }
-            });
+            }
 
             OperationResult result;
 
@@ -400,13 +426,20 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> selectOne(EntityUp in, Metadata metadata) {
         return async(() -> {
-            extractTransaction(metadata).ifPresent(id -> {
+
+            if(extractTransaction(metadata).isPresent()) {
+                Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("{}", e);
+                    //fast fail
+                    return OperationResult.newBuilder()
+                            .setCode(OperationResult.Code.EXCEPTION)
+                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                            .buildPartial();
                 }
-            });
+            }
 
             OperationResult result;
 
@@ -475,13 +508,19 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> selectByConditions(SelectByCondition in, Metadata metadata) {
         return async(() -> {
 
-            extractTransaction(metadata).ifPresent(id -> {
+            if(extractTransaction(metadata).isPresent()) {
+                Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("{}", e);
+                    //fast fail
+                    return OperationResult.newBuilder()
+                            .setCode(OperationResult.Code.EXCEPTION)
+                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                            .buildPartial();
                 }
-            });
+            }
 
             OperationResult result;
             try {
