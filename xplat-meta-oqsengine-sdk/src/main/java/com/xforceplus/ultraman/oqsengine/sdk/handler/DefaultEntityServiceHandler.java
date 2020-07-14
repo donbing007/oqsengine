@@ -9,7 +9,6 @@ import akka.util.ByteString;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.sdk.command.*;
@@ -30,6 +29,7 @@ import io.vavr.control.Either;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,11 +166,19 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
 
         AtomicBoolean isFirstLine = new AtomicBoolean(true);
 
-        String token = Optional.ofNullable(metaData.get("name")).map(Object::toString)
-                .orElse(Optional.ofNullable(metaData.get("code")).map(Object::toString)
-                        .orElse(cmd.getBoId())) + "-" + System.nanoTime();
+        //#26 user-center not support Chinese
+        //remove
 
-        Sink<ByteString, CompletionStage<Tuple2<IOResult, String>>> fileSink = exportSink.getSink(token);
+        Long currentTime = System.nanoTime();
+
+        String token = Optional.ofNullable(metaData.get("code")).map(Object::toString)
+                .orElse(cmd.getBoId()).trim() + "-" + currentTime;
+
+        String fileName = Optional.ofNullable(metaData.get("name")).map(Object::toString).map(String::trim)
+                .orElse(Optional.ofNullable(metaData.get("code")).map(Object::toString)
+                        .orElse(cmd.getBoId())).trim() + "-" + currentTime;
+
+        Sink<ByteString, CompletionStage<Tuple2<IOResult, String[]>>> fileSink = exportSink.getSink(token, fileName);
 
         ConditionQueryRequest request = cmd.getConditionQueryRequest();
 
@@ -226,7 +234,8 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
                                         //convert enum to dict value
                                         // \t is a tricky for csv see
                                         //     https://qastack.cn/superuser/318420/formatting-a-comma-delimited-csv-to-force-excel-to-interpret-value-as-a-string
-                                        return "\"\t" + getString(entityClass, field, value, mapping, searchTable) + "\"";
+                                        // using escape instead
+                                        return getString(entityClass, field, value, mapping, searchTable);
                                     })
                                     .collect(Collectors.joining(","));
                             sb.append(line);
@@ -366,9 +375,15 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
                 retStr = items.stream()
                         .filter(x -> x.getValue().equals(safeSourceValue))
                         .map(DictItem::getText)
-                        .findAny().orElse("unknown");
+                        .findAny().orElse("");
                 break;
             case STRINGS:
+
+                if (safeSourceValue.trim().isEmpty()) {
+                    retStr = "";
+                    break;
+                }
+
                 String[] ids = safeSourceValue.split(",");
                 Long fieldId = entityField.id();
 
@@ -437,6 +452,6 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
 
         }
 
-        return retStr;
+        return StringEscapeUtils.escapeCsv("\t" + retStr);
     }
 }

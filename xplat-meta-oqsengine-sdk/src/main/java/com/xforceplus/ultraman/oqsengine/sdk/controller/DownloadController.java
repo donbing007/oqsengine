@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 /**
  *
@@ -28,7 +30,7 @@ public class DownloadController {
     //TODO default is csv
     @GetMapping(value = "/file/{token}")
     public ResponseEntity<StreamingResponseBody> uploadFile(@PathVariable String token
-            , @RequestParam(value = "fileName", required = false) String filename) {
+            , @RequestParam(value = "filename", required = false) String filename) {
 
         InputStream input = null;
         MediaType mediaType = null;
@@ -52,9 +54,16 @@ public class DownloadController {
             outputStream.close();
         };
 
+        String encodedName = innerFileName;
+        try {
+            encodedName = URLEncoder.encode(innerFileName, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=" + innerFileName + ".csv")
+                        "attachment; filename=" + encodedName + ".csv")
                 .contentType(mediaType)
                 .body(responseBody);
     }

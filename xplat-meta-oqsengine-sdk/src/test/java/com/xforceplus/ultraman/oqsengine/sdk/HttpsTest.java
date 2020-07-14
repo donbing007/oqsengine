@@ -6,6 +6,7 @@ import akka.stream.ActorMaterializer;
 import com.xforceplus.ultraman.metadata.grpc.Base;
 import com.xforceplus.ultraman.metadata.grpc.CheckServiceClient;
 import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import org.apache.commons.text.StringEscapeUtils;
 import org.junit.Test;
 import scala.concurrent.duration.Duration;
 
@@ -13,6 +14,11 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
 public class HttpsTest {
+
+    @Test
+    public void testEscape(){
+        System.out.println(StringEscapeUtils.escapeCsv("\t\"1231232,hello\"\",'yes'\"\"\""));
+    }
 
     @Test
     public void testSdkWithoutSpring() throws Exception {
