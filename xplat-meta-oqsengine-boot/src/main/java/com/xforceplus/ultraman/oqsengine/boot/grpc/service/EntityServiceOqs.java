@@ -400,13 +400,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> selectOne(EntityUp in, Metadata metadata) {
         return async(() -> {
-//            extractTransaction(metadata).ifPresent(id -> {
-//                try {
-//                    transactionManagementService.restore(id);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            });
+            extractTransaction(metadata).ifPresent(id -> {
+                try {
+                    transactionManagementService.restore(id);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
 
             OperationResult result;
 
@@ -453,6 +453,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .setCode(OperationResult.Code.EXCEPTION)
                         .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
                         .buildPartial();
+            } finally {
+
+                extractTransaction(metadata).ifPresent(id -> {
+                    transactionManager.unbind();
+                });
             }
 
             return result;
