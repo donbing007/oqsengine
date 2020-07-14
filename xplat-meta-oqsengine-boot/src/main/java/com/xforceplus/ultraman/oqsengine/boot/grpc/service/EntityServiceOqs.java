@@ -90,7 +90,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         return async(() -> {
 
-            if(extractTransaction(metadata).isPresent()) {
+            if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
@@ -137,7 +137,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> replace(EntityUp in, Metadata metadata) {
         return async(() -> {
 
-            if(extractTransaction(metadata).isPresent()) {
+            if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
@@ -170,7 +170,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     //side effect
                     ResultStatus replaceStatus = entityManagementService.replace(entity);
 
-                    switch(replaceStatus){
+                    switch (replaceStatus) {
                         case SUCCESS:
                             result = OperationResult.newBuilder()
                                     .setAffectedRow(1)
@@ -219,7 +219,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> replaceByCondition(SelectByCondition in, Metadata metadata) {
         return async(() -> {
 
-            if(extractTransaction(metadata).isPresent()) {
+            if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
@@ -350,7 +350,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> remove(EntityUp in, Metadata metadata) {
         return async(() -> {
 
-            if(extractTransaction(metadata).isPresent()) {
+            if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
@@ -377,29 +377,29 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     ResultStatus deleteStatus = entityManagementService.delete(entity);
 
 
-                        switch (deleteStatus) {
-                            case SUCCESS:
-                                result = OperationResult.newBuilder()
-                                        .setAffectedRow(1)
-                                        .setCode(OperationResult.Code.OK)
-                                        .buildPartial();
-                                break;
-                            case CONFLICT:
-                                //send to sdk
-                                result = OperationResult.newBuilder()
-                                        .setAffectedRow(0)
-                                        .setCode(OperationResult.Code.OTHER)
-                                        .setMessage(ResultStatus.CONFLICT.name())
-                                        .buildPartial();
-                                break;
-                            default:
-                                //unreachable code
-                                result = OperationResult.newBuilder()
-                                        .setAffectedRow(0)
-                                        .setCode(OperationResult.Code.FAILED)
-                                        .setMessage("产生了未知的错误")
-                                        .buildPartial();
-                        }
+                    switch (deleteStatus) {
+                        case SUCCESS:
+                            result = OperationResult.newBuilder()
+                                    .setAffectedRow(1)
+                                    .setCode(OperationResult.Code.OK)
+                                    .buildPartial();
+                            break;
+                        case CONFLICT:
+                            //send to sdk
+                            result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.OTHER)
+                                    .setMessage(ResultStatus.CONFLICT.name())
+                                    .buildPartial();
+                            break;
+                        default:
+                            //unreachable code
+                            result = OperationResult.newBuilder()
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.FAILED)
+                                    .setMessage("产生了未知的错误")
+                                    .buildPartial();
+                    }
                 } else {
                     result = OperationResult.newBuilder()
                             .setAffectedRow(0)
@@ -415,7 +415,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             } finally {
 
                 extractTransaction(metadata).ifPresent(id -> {
-                        transactionManager.unbind();
+                    transactionManager.unbind();
                 });
             }
 
@@ -427,7 +427,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> selectOne(EntityUp in, Metadata metadata) {
         return async(() -> {
 
-            if(extractTransaction(metadata).isPresent()) {
+            if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
@@ -508,7 +508,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     public CompletionStage<OperationResult> selectByConditions(SelectByCondition in, Metadata metadata) {
         return async(() -> {
 
-            if(extractTransaction(metadata).isPresent()) {
+            if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
                 try {
                     transactionManagementService.restore(id);
