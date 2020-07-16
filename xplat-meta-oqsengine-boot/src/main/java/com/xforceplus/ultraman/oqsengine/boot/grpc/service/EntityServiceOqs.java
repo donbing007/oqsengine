@@ -579,7 +579,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
 
                     } else {
-                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, sortParam, page);
                     }
                 }
 
