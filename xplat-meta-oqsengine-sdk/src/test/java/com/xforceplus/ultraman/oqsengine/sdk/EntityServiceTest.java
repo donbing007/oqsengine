@@ -276,6 +276,12 @@ public class EntityServiceTest extends ContextWareBaseTest{
 
             atomicLong.set(id);
 
+            Map<String, Object> map4 = new HashMap<>();
+            map4.put("hello", "1");
+            map4.put("defaultfield", "0");
+
+            Either<String, Long> saveResult2 = entityService.create(entityClass, map4);
+
             //change by another
             Map<String, Object> firstUpdateBody = new HashMap<>();
             firstUpdateBody.put("hello", "100");
@@ -287,9 +293,95 @@ public class EntityServiceTest extends ContextWareBaseTest{
             Either<String, Integer> updateResult = entityService.updateByCondition(entityClass, new RequestBuilder().field("hello", ConditionOp.eq, "1").build(), updateBody);
 
 
+
             System.out.println(updateResult);
             assertTrue("update is not ok", updateResult.isRight());
             //assertEquals("hello is still 100", entityService.findOne(entityClass, id).get().get("hello"), "100");
+
+            throw new RuntimeException("Roll");
+        });
+
+        System.out.println(objects.getLeft());
+        System.out.println(atomicLong.get());
+        System.out.println(entityService.findOne(entityClass, atomicLong.get()));
+    }
+
+
+    @Test
+    public void timeoutTransTest(){
+
+        AtomicLong id1 = new AtomicLong(0);
+        EntityClass entityClass = entity();
+
+        Either<String, Object> objects = entityService.transactionalExecute(() -> {
+
+
+            Map<String, Object> map3 = new HashMap<>();
+            map3.put("hello", "1");
+            map3.put("defaultfield", "0");
+
+            Either<String, Long> saveResult = entityService.create(entityClass, map3);
+            Long id = saveResult.get();
+
+            id1.set(id);
+
+            Thread.sleep(10000);
+
+            Map<String, Object> map4 = new HashMap<>();
+            map4.put("hello", "1");
+            map4.put("defaultfield", "0");
+
+            Either<String, Long> saveResult2 = entityService.create(entityClass, map4);
+
+            assertTrue("Failed", saveResult2.isLeft());
+
+            throw new RuntimeException("Roll");
+        });
+
+        System.out.println(objects.getLeft());
+        System.out.println(id1.get());
+        System.out.println(entityService.findOne(entityClass, id1.get()));
+    }
+
+    @Test
+    public void selectInTransTest(){
+
+        AtomicLong atomicLong = new AtomicLong(0);
+        EntityClass entityClass = entity();
+
+        Either<String, Object> objects = entityService.transactionalExecute(() -> {
+
+
+            Map<String, Object> map3 = new HashMap<>();
+            map3.put("hello", "1");
+            map3.put("defaultfield", "0");
+
+            Either<String, Long> saveResult = entityService.create(entityClass, map3);
+            Long id = saveResult.get();
+
+
+            assertEquals("hello is 1", entityService.findOne(entityClass, id).get().get("hello"), "1");
+
+            atomicLong.set(id);
+
+            //change by another
+            Map<String, Object> firstUpdateBody = new HashMap<>();
+            firstUpdateBody.put("hello", "100");
+            entityService.updateById(entityClass, id, firstUpdateBody);
+
+
+            assertEquals("hello is 100", entityService.findOne(entityClass, id).get().get("hello"), "100");
+
+            Map<String, Object> updateBody = new HashMap<>();
+            updateBody.put("hello", "2");
+
+            //Either<String, Integer> updateResult = entityService.updateByCondition(entityClass, new RequestBuilder().field("hello", ConditionOp.eq, "1").build(), updateBody);
+
+
+            assertEquals("hello is still 100", entityService.findOne(entityClass, id).get().get("hello"), "100");
+
+            //System.out.println(updateResult);
+            //assertTrue("update is not ok", updateResult.isRight());
 
             throw new RuntimeException("Roll");
         });

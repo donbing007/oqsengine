@@ -1,9 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author dongbin
@@ -97,6 +100,8 @@ public class SphinxQLHelper {
         return buff.toString();
     }
 
+    private static ObjectMapper mapper = new ObjectMapper();
+
     /**
      * 将 Map 序列化成 json 字符串.
      * 只关注处理 String 和非字符串,并且不会级联处理子对象.
@@ -105,26 +110,11 @@ public class SphinxQLHelper {
      * @return json.
      */
     public static String serializableJson(Map<String, Object> data) {
-        StringBuilder buff = new StringBuilder();
-        buff.append("{");
-
-        final int emptyLen = buff.length();
-        for (AbstractMap.Entry<String, Object> entry : data.entrySet()) {
-            if (buff.length() > emptyLen) {
-                buff.append(",");
-            }
-            buff.append("\"").append(entry.getKey()).append("\"");
-            buff.append(":");
-            if (String.class.isInstance(entry.getValue())) {
-                buff.append("\"").append(entry.getValue().toString()).append("\"");
-            } else {
-                buff.append(entry.getValue().toString());
-            }
+        try {
+            return mapper.writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
-
-        buff.append("}");
-
-        return buff.toString();
     }
 
     /**
@@ -143,48 +133,10 @@ public class SphinxQLHelper {
             return data;
         }
 
-        data = new HashMap<>();
-        StringBuilder buff = new StringBuilder();
-        String key = null;
-        String value;
-        boolean number;
-        for (char c : json.toCharArray()) {
-            // 首字符忽略.
-            if ('{' == c) {
-
-                continue;
-
-            } else if (':' == c) {
-
-                // 删除双引号
-                buff.deleteCharAt(0);
-                buff.deleteCharAt(buff.length() - 1);
-                key = buff.toString();
-                buff.delete(0, buff.length());
-
-            } else if (',' == c || '}' == c) {
-
-                number = (buff.indexOf("\"") != 0);
-
-                if (number) {
-                    // 长整形
-                    value = buff.toString();
-                    data.put(key, Long.valueOf(value));
-                } else {
-                    buff.deleteCharAt(0);
-                    buff.deleteCharAt(buff.length() - 1);
-                    value = buff.toString();
-                    // 字符串
-                    data.put(key, value);
-                }
-
-                buff.delete(0, buff.length());
-
-            } else {
-
-                buff.append(c);
-
-            }
+        try {
+            data = mapper.readValue(json, Map.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
 
         return data;

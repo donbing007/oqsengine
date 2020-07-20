@@ -17,6 +17,7 @@ import scala.util.Try;
 
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -31,7 +32,11 @@ public class StorageSink implements ExportSink {
 
     private String appId;
 
+    private Integer expireInDays = 7;
+
     private String contextPath = "download/file/%s";
+
+    private String contextPathWithFileName = "download/file/%s?filename=%s";
 
     public StorageSink(StorageFactory storageFactory, ContextService contextService, String appId) {
         this.storageFactory = storageFactory;
@@ -40,7 +45,7 @@ public class StorageSink implements ExportSink {
     }
 
     @Override
-    public Sink<ByteString, CompletionStage<Tuple2<IOResult, String>>> getSink(String token) {
+    public Sink<ByteString, CompletionStage<Tuple2<IOResult, String[]>>> getSink(String... token) {
 
         Long telnetID = contextService.get(ContextKeys.LongKeys.TENANT_ID);
         Long userID = contextService.get(ContextKeys.LongKeys.ACCOUNT_ID);
@@ -49,31 +54,37 @@ public class StorageSink implements ExportSink {
             //should always in a async context or will block the queue
             //TODO contextService is not ok when using Async Thread
             return CompletableFuture.supplyAsync(() -> {
-                Long fileId = upload(token, x, telnetID, userID);
+                Long fileId = upload(token[0], x, telnetID, userID);
                 IOResult ioResult = new IOResult(0, Try.apply(Done::getInstance));
-                return Tuple.of(ioResult, fileId.toString());
+
+                //append returned fileId
+                String[] newToken = Arrays.copyOf(token, token.length + 1);
+                newToken[token.length - 1] = fileId.toString();
+                return Tuple.of(ioResult, newToken);
             });
         });
     }
 
     @Override
     public String getDownloadUrl(String... token) {
-        return String.format(contextPath, token[0]);
+        //fileId is last
+        //TODO too many magic
+        return String.format(contextPathWithFileName, token[token.length - 1], token[1]);
     }
 
     @Override
-    public InputStream getInputStream(String token) {
+    public InputStream getInputStream(String... token) {
 
         Long tenantId = contextService.get(ContextKeys.LongKeys.TENANT_ID);
         Long userId = contextService.get(ContextKeys.LongKeys.ACCOUNT_ID);
-        return storageFactory.downloadInputStream(userId, tenantId, Long.parseLong(token), null);
+        return storageFactory.downloadInputStream(userId, tenantId, Long.parseLong(token[token.length - 1]), null);
     }
 
     private Long upload(String name, InputStream inputStream, Long telnetID, Long userID) {
 
         UploadFileRequest uploadFileRequest = new UploadFileRequest();
         uploadFileRequest.setAppId(appId);
-        uploadFileRequest.setExpires(1);
+        uploadFileRequest.setExpires(expireInDays);
         uploadFileRequest.setInputStream(inputStream);
         uploadFileRequest.setFileName(name);
         uploadFileRequest.setPolicy(Policy.PUBLIC_POLICY);

@@ -13,11 +13,11 @@ import java.util.concurrent.CompletionStage;
  */
 public interface ExportSink {
 
-    Sink<ByteString,  CompletionStage<Tuple2<IOResult, String>>> getSink(String token);
+    Sink<ByteString,  CompletionStage<Tuple2<IOResult, String[]>>> getSink(String... token);
 
     String getDownloadUrl(String... token);
 
 
-    InputStream getInputStream(String token);
+    InputStream getInputStream(String... token);
 
 }

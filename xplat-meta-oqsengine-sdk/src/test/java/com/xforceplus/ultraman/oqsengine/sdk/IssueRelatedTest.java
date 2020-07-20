@@ -8,6 +8,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.configuration.TestApplicationContextInitializer;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +66,13 @@ public class IssueRelatedTest extends ContextWareBaseTest {
                                 .setId("1000001")
                                 .setFieldType("Long")
                                 .setIdentifier("1")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("sortf")
+                                .setSearchable("1")
+                                .setId("1000002")
+                                .setFieldType("Long")
                                 .build())
                         .addFields(com.xforceplus.ultraman.metadata.grpc.Field
                                 .newBuilder()
@@ -130,5 +139,40 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         entityService.deleteOne(entityClass, id);
 
         Thread.sleep(10000);
+    }
+
+
+    @Test
+    public void testSort(){
+        metadataRepository.save(manyToOneNew(), "1", "1");
+        IEntityClass entityClass = entityService.load("1").get();
+
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("sortf", "1");
+
+
+        Map<String, Object> maps2 = new HashMap<>();
+        maps2.put("sortf", "2");
+
+
+
+        entityService.findByCondition(entityClass
+                , new RequestBuilder()
+                       .pageSize(10).pageNo(1).build()).get()._2().forEach(x -> {
+            entityService.deleteOne(entityClass, Long.parseLong((String) x.get("id")));
+        });
+
+        Long id = entityService.create(entityClass, maps).get();
+        Long id2 = entityService.create(entityClass, maps2).get();
+
+
+        System.out.println(entityService.findByCondition(entityClass
+                , new RequestBuilder()
+                        .sort("sortf", "asc").pageSize(10).pageNo(1).build()));
+
+        System.out.println(entityService.findByCondition(entityClass
+                , new RequestBuilder()
+                        .sort("sortf", "desc").pageSize(10).pageNo(1).build()));
+
     }
 }

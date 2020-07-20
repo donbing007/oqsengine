@@ -237,12 +237,12 @@ public class EntityController {
             @RequestBody ConditionQueryRequest condition) {
 
         //default
-        if (condition != null){
-            if (condition.getPageNo() == null){
+        if (condition != null) {
+            if (condition.getPageNo() == null) {;
                 condition.setPageNo(1);
             }
 
-            if (condition.getPageSize() == null){
+            if (condition.getPageSize() == null) {
                 condition.setPageSize(10);
             }
         }
@@ -288,12 +288,12 @@ public class EntityController {
             @RequestBody ConditionQueryRequest condition) {
 
         //default
-        if (condition != null){
-            if (condition.getPageNo() == null){
+        if (condition != null) {
+            if (condition.getPageNo() == null) {
                 condition.setPageNo(1);
             }
 
-            if (condition.getPageSize() == null || condition.getPageSize() > exportMaxSize){
+            if (condition.getPageSize() == null || condition.getPageSize() > exportMaxSize) {
                 condition.setPageSize(exportMaxSize);
             }
         }

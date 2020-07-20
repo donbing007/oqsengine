@@ -19,12 +19,13 @@ public class TestLoad extends ContextWareBaseTest{
 
 
     @Test
-    public void test(){
+    public void test() {
         Optional<IEntityClass> entityClass = entityService.loadByCode("salesbill");
         Optional<IEntityClass> entityClass2 = entityService.loadByCode("test");
 
         entityClass.ifPresent(System.out::println);
         entityClass2.ifPresent(System.out::println);
     }
+
 
 }
