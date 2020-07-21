@@ -301,8 +301,17 @@ public class SphinxQLIndexStorageTest {
 				new Case(
 						Conditions.buildEmtpyConditions().addAnd(
 								new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 2L))),
+						entityClass, new Page(200,10), result -> {
+							Assert.assertEquals(0, result.refs.size());
+							Assert.assertEquals(2, result.page.getTotalCount());
+							return true;
+						}),
+				// page max
+				new Case(
+						Conditions.buildEmtpyConditions().addAnd(
+								new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 2L))),
 						entityClass, new Page().setVisibleTotalCount(1), result -> {
-							Assert.assertEquals(2, result.refs.size());
+							Assert.assertEquals(1, result.refs.size());
 							Assert.assertEquals(2, result.page.getTotalCount());
 							return true;
 						}),
@@ -547,9 +556,8 @@ public class SphinxQLIndexStorageTest {
 						.addAnd(new Condition(stringsField, ConditionOperator.MULTIPLE_EQUALS,
 								new StringsValue(stringsField, "UNKNOWN"), new StringsValue(stringsField, "value3"))),
 						entityClass, limitOnePage, result -> {
-							Assert.assertEquals(4, result.refs.size());
-							long[] expectedIds = new long[] { Long.MAX_VALUE - 4, Long.MAX_VALUE - 3,
-									Long.MAX_VALUE - 2, Long.MAX_VALUE - 1 };
+							Assert.assertEquals(1, result.refs.size());
+							long[] expectedIds = new long[] {  Long.MAX_VALUE - 4 };
 							Assert.assertEquals(0, result.refs.stream()
 									.filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 							return true;
