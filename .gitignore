@@ -85,3 +85,5 @@ target/
 .settings/
 .factorypath
 .vscode/
+
+xplat-meta-oqsengine-index/src/test/java/com/xforceplus/ultraman/oqsengine/storage/index/sphinxql/ExportMain.java
