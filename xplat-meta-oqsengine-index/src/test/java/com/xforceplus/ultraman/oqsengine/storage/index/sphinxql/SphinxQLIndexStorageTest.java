@@ -328,7 +328,7 @@ public class SphinxQLIndexStorageTest {
                 throw new RuntimeException(e.getMessage(), e);
             }
 
-            c.check.test(refs);
+            c.check.test(new Result(refs, c.page));
         });
 
     }
@@ -350,12 +350,12 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(2, refs.size());
+                    Assert.assertEquals(2, result.refs.size());
                     long[] expectedIds = new long[]{Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -372,12 +372,12 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(3, refs.size());
+                    Assert.assertEquals(3, result.refs.size());
                     long[] expectedIds = new long[]{Long.MAX_VALUE - 4, Long.MAX_VALUE - 3, Long.MAX_VALUE};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -394,13 +394,13 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(2, refs.size());
+                    Assert.assertEquals(2, result.refs.size());
                     long[] expectedIds =
                         new long[]{Long.MAX_VALUE - 4, Long.MAX_VALUE - 3};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -417,13 +417,13 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(4, refs.size());
+                    Assert.assertEquals(4, result.refs.size());
                     long[] expectedIds =
                         new long[]{Long.MAX_VALUE - 4, Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -440,13 +440,13 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(1, refs.size());
+                    Assert.assertEquals(1, result.refs.size());
                     long[] expectedIds =
                         new long[]{Long.MAX_VALUE};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -463,13 +463,13 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(3, refs.size());
+                    Assert.assertEquals(3, result.refs.size());
                     long[] expectedIds =
                         new long[]{Long.MAX_VALUE - 2, Long.MAX_VALUE - 1, Long.MAX_VALUE};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -487,13 +487,13 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(3, refs.size());
+                    Assert.assertEquals(3, result.refs.size());
                     long[] expectedIds =
                         new long[]{Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -510,12 +510,12 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(1, refs.size());
+                    Assert.assertEquals(1, result.refs.size());
                     long[] expectedIds = new long[]{Long.MAX_VALUE - 4};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -532,12 +532,12 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(4, refs.size());
+                    Assert.assertEquals(4, result.refs.size());
                     long[] expectedIds = new long[]{Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1, Long.MAX_VALUE};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -554,12 +554,12 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(2, refs.size());
+                    Assert.assertEquals(2, result.refs.size());
                     long[] expectedIds = new long[]{Long.MAX_VALUE - 4, Long.MAX_VALUE - 3};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -576,12 +576,12 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(3, refs.size());
+                    Assert.assertEquals(3, result.refs.size());
                     long[] expectedIds = new long[]{Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -598,12 +598,12 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(4, refs.size());
+                    Assert.assertEquals(4, result.refs.size());
                     long[] expectedIds = new long[]{Long.MAX_VALUE - 6, Long.MAX_VALUE - 5, Long.MAX_VALUE - 4, Long.MAX_VALUE};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -620,12 +620,12 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(1, refs.size());
+                    Assert.assertEquals(1, result.refs.size());
                     long[] expectedIds = new long[]{Long.MAX_VALUE - 4};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -642,13 +642,13 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(4, refs.size());
+                    Assert.assertEquals(4, result.refs.size());
                     long[] expectedIds =
                         new long[]{Long.MAX_VALUE - 4, Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                     return true;
                 }
@@ -671,12 +671,12 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
+                result -> {
 
-                    Assert.assertEquals(2, refs.size());
+                    Assert.assertEquals(2, result.refs.size());
                     long[] expectedIds = new long[]{Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
                     return true;
                 }
             )
@@ -692,11 +692,11 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
-                    Assert.assertEquals(1, refs.size());
+                result -> {
+                    Assert.assertEquals(1, result.refs.size());
                     long[] expectedIds = new long[]{Long.MAX_VALUE - 4};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
                     return true;
                 }
             )
@@ -713,12 +713,12 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
-                    Assert.assertEquals(4, refs.size());
+                result -> {
+                    Assert.assertEquals(4, result.refs.size());
                     long[] expectedIds = new long[]{
                         Long.MAX_VALUE - 4, Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1};
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
                     return true;
                 }
             )
@@ -735,13 +735,13 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 limitOnePage,
-                refs -> {
-                    Assert.assertEquals(4, refs.size());
+                result -> {
+                    Assert.assertEquals(4, result.refs.size());
                     long[] expectedIds = new long[]{
                         Long.MAX_VALUE - 4, Long.MAX_VALUE - 3, Long.MAX_VALUE - 2, Long.MAX_VALUE - 1
                     };
                     Assert.assertEquals(0,
-                        refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
+                        result.refs.stream().filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
                     return true;
                 }
             )
@@ -758,8 +758,8 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.emptyPage(),
-                refs -> {
-                    Assert.assertEquals(0, refs.size());
+                result -> {
+                    Assert.assertEquals(0, result.refs.size());
                     return true;
                 }
             )
@@ -768,8 +768,8 @@ public class SphinxQLIndexStorageTest {
                 Conditions.buildEmtpyConditions(),
                 entityClass,
                 new Page(),
-                refs -> {
-                    Assert.assertEquals(7, refs.size());
+                result -> {
+                    Assert.assertEquals(7, result.refs.size());
                     return true;
                 }
             )
@@ -786,8 +786,8 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 new Page(),
-                refs -> {
-                    Assert.assertEquals(0, refs.size());
+                result -> {
+                    Assert.assertEquals(0, result.refs.size());
                     return true;
                 }
             )
@@ -809,8 +809,8 @@ public class SphinxQLIndexStorageTest {
                 ),
                 entityClass,
                 Page.newSinglePage(100),
-                refs -> {
-                    Assert.assertEquals(0, refs.size());
+                result -> {
+                    Assert.assertEquals(0, result.refs.size());
                     return true;
                 }
             )
@@ -860,20 +860,30 @@ public class SphinxQLIndexStorageTest {
         private IEntityClass entityClass;
         private Page page;
         private Sort sort;
-        private Predicate<? super Collection<EntityRef>> check;
+        private Predicate<? super Result> check;
 
         public Case(Conditions conditions, IEntityClass entityClass, Page page,
-                    Predicate<? super Collection<EntityRef>> check) {
+                    Predicate<? super Result> check) {
             this(conditions, entityClass, page, check, null);
         }
 
         public Case(Conditions conditions, IEntityClass entityClass, Page page,
-                    Predicate<? super Collection<EntityRef>> check, Sort sort) {
+                    Predicate<? super Result> check, Sort sort) {
             this.conditions = conditions;
             this.entityClass = entityClass;
             this.page = page;
             this.check = check;
             this.sort = sort;
+        }
+    }
+
+    private static class Result {
+        private Collection<EntityRef> refs;
+        private Page page;
+
+        public Result(Collection<EntityRef> refs, Page page) {
+            this.refs = refs;
+            this.page = page;
         }
     }
 
