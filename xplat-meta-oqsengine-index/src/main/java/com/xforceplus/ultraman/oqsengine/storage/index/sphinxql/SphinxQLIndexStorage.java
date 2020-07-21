@@ -1,5 +1,26 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -13,7 +34,11 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.*;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.BuildStorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.DeleteStorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.ReplaceStorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.SelectByIdStorageCommand;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
@@ -27,16 +52,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Resource;
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
 
 /**
  * 基于 SphinxQL 的索引储存实现.
@@ -229,41 +244,37 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         this.storageStrategyFactory = storageStrategyFactory;
     }
 
-    // 搜索数量
-    private long count(TransactionResource resource, IEntityClass entityClass, String whereCondition) throws SQLException {
-        String countSql = String.format(SQLConstant.SELECT_COUNT_SQL, indexTableName, whereCondition);
-        long count = 0;
+ // 搜索数量
+ 	private long count(TransactionResource resource) throws SQLException {
+ 		// String countSql = String.format(SQLConstant.SELECT_COUNT_SQL, indexTableName,
+ 		// whereCondition);
+ 		long count = 0;
+ 		Statement statement = null;
+ 		try {
+ 			Connection conn = (Connection) resource.value();
+ 			statement = conn.createStatement();
 
-        PreparedStatement st = null;
-        ResultSet rs = null;
-        try {
-            st = ((Connection) resource.value()).prepareStatement(countSql);
-            st.setLong(1, entityClass.id());
-
-            if (logger.isDebugEnabled()) {
-                logger.debug(st.toString());
-            }
-
-
-            rs = st.executeQuery();
-
-            while (rs.next()) {
-                count = rs.getLong(FieldDefine.COUNT);
-                break;
-            }
-        } finally {
-
-            if (rs != null) {
-                rs.close();
-            }
-
-            if (st != null) {
-                st.close();
-            }
-        }
-
-        return count;
-    }
+ 			ResultSet rs = statement.executeQuery(SQLConstant.SELECT_COUNT_SQL);
+ 			String totalFound = "total_found";
+ 			while (rs.next()) {
+ 				if (totalFound.equals(rs.getString("Variable_name"))) {
+ 					count = rs.getLong("Value");
+ 					break;
+ 				}
+ 			}
+ 			rs.close();
+ 		} catch (Exception ex) {
+ 			logger.error("QueryCount error:", ex);
+ 		} finally {
+ 			try {
+ 				statement.close();
+ 			} catch (Exception e) {
+ 				statement = null;
+ 				logger.error("Close rs error:", e);
+ 			}
+ 		}
+ 		return count;
+ 	}
 
     // 构造排序.
     private String buildOrderBy(Sort sort) {
