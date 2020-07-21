@@ -82,89 +82,79 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
-        throws SQLException {
+            throws SQLException {
 
-        return (Collection<EntityRef>) transactionExecutor.execute(
-            new DataSourceShardingTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
-                @Override
-                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                    String whereCondition = sphinxQLConditionsBuilderFactory.getBuilder(conditions).build(conditions);
-                    if (!whereCondition.isEmpty()) {
-                        whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
-                    }
-
-                    long maxMatches = 0;
-                    if (!page.isSinglePage()) {
-                        long count = count(resource, entityClass, whereCondition);
-                        page.setTotalCount(count);
-
-                        maxMatches = page.getIndex() * page.getPageSize();
-                    } else {
-                        maxMatches = page.getPageSize();
-                    }
-
-                    // 修正不能小于1
-                    if (maxMatches <= 0) {
-                        maxMatches = 1;
-                    }
-
-                    // 空页,空结果返回.
-                    if (page.isEmptyPage()) {
-                        return Collections.emptyList();
-                    }
-
-                    PageScope scope = page.getNextPage();
-                    // 超出页数
-                    if (scope == null) {
-                        return Collections.emptyList();
-                    }
-
-                    Sort useSort = sort;
-                    if (useSort == null) {
-                        useSort = Sort.buildOutOfSort();
-                    }
-
-                    String orderBy = buildOrderBy(useSort);
-
-                    String sql = String.format(SQLConstant.SELECT_SQL, indexTableName, whereCondition, orderBy);
-                    PreparedStatement st = null;
-                    ResultSet rs = null;
-                    try {
-                        st = ((Connection) resource.value()).prepareStatement(sql);
-                        st.setLong(1, entityClass.id());
-                        st.setLong(2, scope.getStartLine());
-                        st.setLong(3, page.getPageSize());
-                        st.setLong(4, maxMatches);
-
-                        if (logger.isDebugEnabled()) {
-                            logger.debug(st.toString());
+        return (Collection<EntityRef>) transactionExecutor
+                .execute(new DataSourceShardingTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
+                    @Override
+                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                        String whereCondition = sphinxQLConditionsBuilderFactory.getBuilder(conditions)
+                                .build(conditions);
+                        if (!whereCondition.isEmpty()) {
+                            whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
                         }
 
-                        rs = st.executeQuery();
-
-                        List<EntityRef> refs = new ArrayList((int) page.getPageSize());
-                        while (rs.next()) {
-                            refs.add(new EntityRef(
-                                rs.getLong(FieldDefine.ID),
-                                rs.getLong(FieldDefine.PREF),
-                                rs.getLong(FieldDefine.CREF)
-                            ));
+                        // 空页,空结果返回.
+                        if (page.isEmptyPage()) {
+                            return Collections.emptyList();
                         }
 
+                        page.setTotalCount(Long.MAX_VALUE);
+                        PageScope scope = page.getNextPage();
 
-                        return refs;
-
-                    } finally {
-                        if (rs != null) {
-                            rs.close();
+                        // 超出页数
+                        if (scope == null) {
+                            return Collections.emptyList();
                         }
 
-                        if (st != null) {
-                            st.close();
+                        Sort useSort = sort;
+                        if (useSort == null) {
+                            useSort = Sort.buildOutOfSort();
                         }
+
+                        String orderBy = buildOrderBy(useSort);
+
+                        String sql = String.format(SQLConstant.SELECT_SQL, indexTableName, whereCondition, orderBy);
+                        PreparedStatement st = null;
+                        ResultSet rs = null;
+                        try {
+                            st = ((Connection) resource.value()).prepareStatement(sql);
+                            st.setLong(1, entityClass.id());
+                            st.setLong(2, scope.getStartLine());
+                            st.setLong(3, page.getPageSize());
+                            st.setLong(4, page.getPageSize() * page.getIndex());
+
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(st.toString());
+                            }
+
+                            rs = st.executeQuery();
+
+                            List<EntityRef> refs = new ArrayList((int) page.getPageSize());
+                            while (rs.next()) {
+                                refs.add(new EntityRef(rs.getLong(FieldDefine.ID), rs.getLong(FieldDefine.PREF),
+                                        rs.getLong(FieldDefine.CREF)));
+                            }
+
+                            if (!page.isSinglePage()) {
+                                long count = count(resource);
+                                page.setTotalCount(count);
+                            }
+
+                            return refs;
+
+                        } finally {
+                            if (rs != null) {
+                                rs.close();
+                            }
+
+                            if (st != null) {
+                                st.close();
+                            }
+                        }
+
                     }
-                }
-            });
+                });
     }
 
     @Override
