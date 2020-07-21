@@ -60,7 +60,17 @@ public class SphinxQLHelperTest {
         Map<String, Object> data = SphinxQLHelper.deserializeJson(json);
         Assert.assertEquals(2, data.size());
         Assert.assertEquals("string value", data.get("c1"));
-        Assert.assertEquals(200L, data.get("c2"));
+        Assert.assertEquals(200, data.get("c2"));
+
+        json = "{\"1237202588218859522S\":\"https:／／www.baidu.com／\"}";
+        data = SphinxQLHelper.deserializeJson(json);
+        Assert.assertEquals(1, data.size());
+        Assert.assertEquals("https:／／www.baidu.com／", data.get("1237202588218859522S"));
+
+        json = "{\"1237202588218859522S\":\"周鑫 RZ 123\"}";
+        data = SphinxQLHelper.deserializeJson(json);
+        Assert.assertEquals(1, data.size());
+        Assert.assertEquals("周鑫 RZ 123", data.get("1237202588218859522S"));
     }
 
     /**

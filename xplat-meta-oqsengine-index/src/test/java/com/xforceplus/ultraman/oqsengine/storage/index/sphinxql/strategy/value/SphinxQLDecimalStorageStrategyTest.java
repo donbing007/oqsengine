@@ -1,6 +1,7 @@
-package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy;
+package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -14,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 
 /**
  * DecimalStorageStrategy Tester.
@@ -60,6 +62,15 @@ public class SphinxQLDecimalStorageStrategyTest {
         storageValue = storageValue.next();
         Assert.assertEquals(78887788L, storageValue.value());
         Assert.assertEquals(StorageType.LONG, storageValue.type());
+    }
+
+    @Test
+    public void testStorageNames() throws Exception {
+        SphinxQLDecimalStorageStrategy sphinxQLDecimalStorageStrategy = new SphinxQLDecimalStorageStrategy();
+        IEntityField field = new EntityField(1, "test", FieldType.DECIMAL);
+        Collection<String> storageNames = sphinxQLDecimalStorageStrategy.toStorageNames(field);
+        Assert.assertEquals(2, storageNames.size());
+        Assert.assertArrayEquals(new String[] {"1L0", "1L1"}, storageNames.toArray(new String[0]));
     }
 
 } 
