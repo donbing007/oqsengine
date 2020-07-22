@@ -26,8 +26,8 @@ public class GtEqNotMatchDecimalConditionBuilder extends NotMatchDecimalConditio
         return ConditionOperator.GREATER_THAN_EQUALS;
     }
 
-	@Override
-	public ConditionOperator orOperator() {
-		return ConditionOperator.GREATER_THAN;
-	}
+    @Override
+    public ConditionOperator orOperator() {
+        return ConditionOperator.GREATER_THAN;
+    }
 }

@@ -18,44 +18,44 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  */
 public abstract class NotMatchDecimalConditionBuilder extends SphinxQLConditionBuilder {
 
-	public NotMatchDecimalConditionBuilder(StorageStrategyFactory storageStrategyFactory, ConditionOperator operator) {
-		super(storageStrategyFactory, FieldType.DECIMAL, operator, false);
-	}
+    public NotMatchDecimalConditionBuilder(StorageStrategyFactory storageStrategyFactory, ConditionOperator operator) {
+        super(storageStrategyFactory, FieldType.DECIMAL, operator, false);
+    }
 
-	public abstract ConditionOperator intOperator();
+    public abstract ConditionOperator intOperator();
 
-	public abstract ConditionOperator decOperator();
-	
-	public abstract ConditionOperator orOperator();
+    public abstract ConditionOperator decOperator();
 
-	@Override
-	protected String doBuild(Condition condition) {
-		IValue logicValue = condition.getFirstValue();
-		StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(logicValue.getField().type());
-		StorageValue iStorageValue = storageStrategy.toStorageValue(logicValue);
+    public abstract ConditionOperator orOperator();
 
-		StorageValue dStoragetValue = iStorageValue.next();
-		if (dStoragetValue == null) {
-			throw new IllegalStateException("Unexpected decimal places.");
-		}
-		// andy.zhou 20200721
-		StringBuilder buff = new StringBuilder();
-		buff.append("(");
-		buff.append("(");
-		buff.append(FieldDefine.JSON_FIELDS).append(".").append(iStorageValue.storageName()).append(" ")
-				.append(orOperator().getSymbol()).append(" ").append(iStorageValue.value());
-		buff.append(") ");
-		buff.append(SqlKeywordDefine.OR).append(" ");
-		// end andy.zhou 20200721
+    @Override
+    protected String doBuild(Condition condition) {
+        IValue logicValue = condition.getFirstValue();
+        StorageStrategy storageStrategy = getStorageStrategyFactory().getStrategy(logicValue.getField().type());
+        StorageValue iStorageValue = storageStrategy.toStorageValue(logicValue);
 
-		buff.append("(");
-		buff.append(FieldDefine.JSON_FIELDS).append(".").append(iStorageValue.storageName()).append(" ")
-				.append(intOperator().getSymbol()).append(" ").append(iStorageValue.value());
-		buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
-		buff.append(FieldDefine.JSON_FIELDS).append(".").append(dStoragetValue.storageName()).append(" ")
-				.append(decOperator().getSymbol()).append(" ").append(dStoragetValue.value());
-		buff.append(")");
-		buff.append(")");
-		return buff.toString();
-	}
+        StorageValue dStoragetValue = iStorageValue.next();
+        if (dStoragetValue == null) {
+            throw new IllegalStateException("Unexpected decimal places.");
+        }
+        // andy.zhou 20200721
+        StringBuilder buff = new StringBuilder();
+        buff.append("(");
+        buff.append("(");
+        buff.append(FieldDefine.JSON_FIELDS).append(".").append(iStorageValue.storageName()).append(" ")
+                .append(orOperator().getSymbol()).append(" ").append(iStorageValue.value());
+        buff.append(") ");
+        buff.append(SqlKeywordDefine.OR).append(" ");
+        // end andy.zhou 20200721
+
+        buff.append("(");
+        buff.append(FieldDefine.JSON_FIELDS).append(".").append(iStorageValue.storageName()).append(" ")
+                .append(intOperator().getSymbol()).append(" ").append(iStorageValue.value());
+        buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
+        buff.append(FieldDefine.JSON_FIELDS).append(".").append(dStoragetValue.storageName()).append(" ")
+                .append(decOperator().getSymbol()).append(" ").append(dStoragetValue.value());
+        buff.append(")");
+        buff.append(")");
+        return buff.toString();
+    }
 }
