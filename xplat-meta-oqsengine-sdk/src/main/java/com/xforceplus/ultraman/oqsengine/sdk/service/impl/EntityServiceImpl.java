@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
@@ -68,13 +67,14 @@ public class EntityServiceImpl implements EntityService {
     @Autowired
     private FlowRegistry flowRegistry;
 
-    private Random random = new Random();
-
     @Value("${xplat.oqsengine.sdk.cas.retry.max-attempts:2}")
-    int maxAttempts;
+    private int maxAttempts;
 
     @Value("${xplat.oqsengine.sdk.cas.retry.delay:100}")
-    int delay;
+    private int delay;
+
+    @Value("${xplat.oqsengine.sdk.strict.range:true}")
+    private boolean isRangeStrict;
 
     private Logger logger = LoggerFactory.getLogger(EntityService.class);
 
@@ -243,6 +243,19 @@ public class EntityServiceImpl implements EntityService {
             removeBuilder = removeBuilder.addHeader("transaction-id", transId);
         }
 
+        //monitor delete action
+        String userDisplayName = contextService.get(USER_DISPLAYNAME);
+        String userName = contextService.get(USERNAME);
+
+        if (userDisplayName != null) {
+            removeBuilder = removeBuilder.addHeader("display-name", userDisplayName);
+        }
+
+        if (userName != null) {
+            removeBuilder = removeBuilder.addHeader("username", userDisplayName);
+        }
+
+
         OperationResult updateResult =
                 removeBuilder.invoke(toEntityUp(entityClass, id))
                         .toCompletableFuture().join();
@@ -392,8 +405,11 @@ public class EntityServiceImpl implements EntityService {
 
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
 
-        if (condition.getPageSize() == null || condition.getPageNo() == null) {
-            return Either.left("RangeSearch without range");
+        if (isRangeStrict) {
+            boolean noRange = (condition.getPageSize() == null || condition.getPageNo() == null);
+            if (noRange) {
+                return Either.left("[STRICT-MODE]: RangeSearch Without Range");
+            }
         }
 
         if (transId != null) {

@@ -51,6 +51,9 @@ import java.util.stream.Stream;
  *      *                 },
  *      *             ],
  *      *         },
+ *      *        mapping:[{"code": "", "text":""}]
+ *      *
+ *      *
  *      *     }
  */
 public class ConditionQueryRequest {
@@ -65,6 +68,8 @@ public class ConditionQueryRequest {
 
     //return code
     private EntityItem entity;
+
+    private List<NameMapping> mapping;
 
     public Integer getPageNo() {
         return pageNo;
@@ -100,6 +105,10 @@ public class ConditionQueryRequest {
 
     public EntityItem getEntity() {
         return entity;
+    }
+
+    public List<NameMapping> getMapping() {
+        return mapping;
     }
 
     public void setEntity(EntityItem entity) {

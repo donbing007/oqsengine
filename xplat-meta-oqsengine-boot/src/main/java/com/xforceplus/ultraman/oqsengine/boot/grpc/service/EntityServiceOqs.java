@@ -33,6 +33,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -363,6 +364,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             .buildPartial();
                 }
             }
+
+
+            logInfo(metadata, (displayname, username) -> String.format("Attempt to delete %s by %s:%s", in.getId(), displayname, username));
+
 
             OperationResult result;
 
@@ -802,6 +807,17 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private Optional<Long> extractTransaction(Metadata metadata) {
         Optional<String> transactionId = metadata.getText("transaction-id");
         return transactionId.map(Long::valueOf);
+    }
+
+    /**
+     *
+     * @param metadata
+     */
+    private void logInfo(Metadata metadata, BiFunction<String, String, String> template){
+        String displayName = metadata.getText("display-name").orElse("noname");
+        String userName = metadata.getText("username").orElse("noname");
+
+        logger.info(template.apply(displayName, userName));
     }
 
     private EntityUp toEntityUp(IEntity entity) {
