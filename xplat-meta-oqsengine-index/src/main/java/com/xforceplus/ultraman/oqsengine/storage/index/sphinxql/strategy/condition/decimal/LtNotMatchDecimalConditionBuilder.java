@@ -16,7 +16,7 @@ public class LtNotMatchDecimalConditionBuilder extends NotMatchDecimalConditionB
 
     @Override
     public ConditionOperator intOperator() {
-    	return ConditionOperator.EQUALS;
+        return ConditionOperator.EQUALS;
     }
 
     @Override
@@ -24,8 +24,8 @@ public class LtNotMatchDecimalConditionBuilder extends NotMatchDecimalConditionB
         return ConditionOperator.LESS_THAN;
     }
 
-	@Override
-	public ConditionOperator orOperator() {
-		return ConditionOperator.LESS_THAN;
-	}
+    @Override
+    public ConditionOperator orOperator() {
+        return ConditionOperator.LESS_THAN;
+    }
 }
