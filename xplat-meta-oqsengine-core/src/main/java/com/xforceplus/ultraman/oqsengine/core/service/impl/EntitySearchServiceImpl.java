@@ -613,15 +613,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         // 检查命中数据集大小.
         private long checkLineNumber() throws SQLException {
-            Page emptyPage = Page.emptyPage();
-            indexStorage.select(conditions, key.getEntityClass(), Sort.buildOutOfSort(), emptyPage);
-
-            if (emptyPage.getTotalCount() > maxJoinDriverLineNumber) {
+            Page page = new Page(1, 1);
+            indexStorage.select(conditions, key.getEntityClass(), Sort.buildOutOfSort(), page);
+            if (page.getTotalCount() > maxJoinDriverLineNumber) {
                 throw new SQLException(String.format("Drives entity(%s) data exceeding %d.",
                         key.getEntityClass().code(), maxJoinDriverLineNumber));
             }
 
-            return emptyPage.getTotalCount();
+            return page.getTotalCount();
         }
     }
 }

@@ -21,39 +21,35 @@ import java.math.BigDecimal;
  *
  * @author <Authors name>
  * @version 1.0 03/26/2020
- * @since <pre>Mar 26, 2020</pre>
+ * @since
+ * 
+ *        <pre>
+ * Mar 26, 2020
+ *        </pre>
  */
 public class GtEqNotMatchDecimalConditionBuilderTest {
 
-    private StorageStrategyFactory storageStrategyFactory;
+	private StorageStrategyFactory storageStrategyFactory;
 
-    @Before
-    public void before() throws Exception {
-        storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
-    }
+	@Before
+	public void before() throws Exception {
+		storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+		storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
+	}
 
-    @After
-    public void after() throws Exception {
-    }
+	@After
+	public void after() throws Exception {
+	}
 
+	@Test
+	public void testBuild() throws Exception {
+		GtEqNotMatchDecimalConditionBuilder builder = new GtEqNotMatchDecimalConditionBuilder(storageStrategyFactory);
+		IEntityField field = new EntityField(1, "test", FieldType.DECIMAL);
+		String conditionSql = builder.build(new Condition(field, ConditionOperator.GREATER_THAN_EQUALS,
+				new DecimalValue(field, new BigDecimal("123.456"))));
+		Assert.assertEquals("((" + FieldDefine.JSON_FIELDS + ".1L0 > 123) OR (" + FieldDefine.JSON_FIELDS
+				+ ".1L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".1L1 >= 456))", conditionSql);
 
-    @Test
-    public void testBuild() throws Exception {
-        GtEqNotMatchDecimalConditionBuilder builder = new GtEqNotMatchDecimalConditionBuilder(storageStrategyFactory);
-        IEntityField field = new EntityField(1, "test", FieldType.DECIMAL);
-        String conditionSql = builder.build(
-            new Condition(
-                field,
-                ConditionOperator.GREATER_THAN_EQUALS,
-                new DecimalValue(field, new BigDecimal("123.456")
-                )
-            )
-        );
-        Assert.assertEquals("(" + FieldDefine.JSON_FIELDS + ".1L0 >= 123 AND " + FieldDefine.JSON_FIELDS + ".1L1 >= 456)",
-            conditionSql);
+	}
 
-    }
-
-
-} 
+}

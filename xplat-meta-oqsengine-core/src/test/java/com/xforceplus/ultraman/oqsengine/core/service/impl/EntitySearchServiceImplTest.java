@@ -354,7 +354,7 @@ public class EntitySearchServiceImplTest {
                     driverEntityClass0.code()
                         + ".rel0.name = \"driver-v1\"."
                         + driverEntityClass0.id()
-                        + ".asc:false|des:true|outoforder:true.empty:true|single:false|ready:true",
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true",
 
                     driverEntityClass0.code()
                         + ".rel0.name = \"driver-v1\"."
@@ -396,7 +396,7 @@ public class EntitySearchServiceImplTest {
                     driverEntityClass0.code()
                         + ".rel0.name = \"driver-v1\" AND " + driverEntityClass0.code() + ".rel0.age = 100."
                         + driverEntityClass0.id()
-                        + ".asc:false|des:true|outoforder:true.empty:true|single:false|ready:true",
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true",
 
                     driverEntityClass0.code()
                         + ".rel0.name = \"driver-v1\" AND " + driverEntityClass0.code() + ".rel0.age = 100."
@@ -432,7 +432,7 @@ public class EntitySearchServiceImplTest {
                     notExistDriverEntityClass.code()
                         + ".rel0.name = \"driver-v1\"."
                         + notExistDriverEntityClass.id()
-                        + ".asc:false|des:true|outoforder:true.empty:true|single:false|ready:true"
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true"
                 )
             )
         );

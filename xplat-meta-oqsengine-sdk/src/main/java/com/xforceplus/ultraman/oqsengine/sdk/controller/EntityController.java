@@ -238,7 +238,7 @@ public class EntityController {
 
         //default
         if (condition != null) {
-            if (condition.getPageNo() == null) {;
+            if (condition.getPageNo() == null) {
                 condition.setPageNo(1);
             }
 

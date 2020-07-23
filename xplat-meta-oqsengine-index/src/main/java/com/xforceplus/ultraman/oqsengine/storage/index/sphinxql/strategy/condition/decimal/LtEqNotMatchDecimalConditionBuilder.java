@@ -16,11 +16,16 @@ public class LtEqNotMatchDecimalConditionBuilder extends NotMatchDecimalConditio
 
     @Override
     public ConditionOperator intOperator() {
-        return ConditionOperator.LESS_THAN_EQUALS;
+        return ConditionOperator.EQUALS;
     }
 
     @Override
     public ConditionOperator decOperator() {
         return ConditionOperator.LESS_THAN_EQUALS;
+    }
+
+    @Override
+    public ConditionOperator orOperator() {
+        return ConditionOperator.LESS_THAN;
     }
 }

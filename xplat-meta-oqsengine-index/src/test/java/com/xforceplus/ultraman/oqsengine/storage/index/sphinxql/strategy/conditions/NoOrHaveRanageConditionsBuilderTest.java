@@ -60,112 +60,109 @@ public class NoOrHaveRanageConditionsBuilderTest {
 
     private List<Case> buildCase() {
         return Arrays.asList(
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new EntityField(1, "c1", FieldType.LONG),
-                        ConditionOperator.GREATER_THAN,
-                        new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
-                    )
+                new Case(
+                        new Conditions(
+                                new Condition(
+                                        new EntityField(1, "c1", FieldType.LONG),
+                                        ConditionOperator.GREATER_THAN,
+                                        new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
+                                )
+                        ),
+                        FieldDefine.JSON_FIELDS + ".1L > 100"
+                )
+                ,
+                new Case(
+                        new Conditions(
+                                new Condition(
+                                        new EntityField(2, "c2", FieldType.STRING),
+                                        ConditionOperator.LIKE,
+                                        new StringValue(new EntityField(2, "c2", FieldType.STRING), "test")
+                                )
+                        ).addAnd(
+                                new Condition(
+                                        new EntityField(1, "c1", FieldType.LONG),
+                                        ConditionOperator.GREATER_THAN,
+                                        new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
+                                )
+                        ),
+                        FieldDefine.JSON_FIELDS + ".1L > 100 "
+                                + SqlKeywordDefine.AND + " MATCH('@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\")')"
                 ),
-                FieldDefine.JSON_FIELDS + ".1L > 100"
-            )
-            ,
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new EntityField(2, "c2", FieldType.STRING),
-                        ConditionOperator.LIKE,
-                        new StringValue(new EntityField(2, "c2", FieldType.STRING), "test")
-                    )
-                ).addAnd(
-                    new Condition(
-                        new EntityField(1, "c1", FieldType.LONG),
-                        ConditionOperator.GREATER_THAN,
-                        new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
-                    )
-                ),
-                FieldDefine.JSON_FIELDS + ".1L > 100 "
-                    + SqlKeywordDefine.AND + " MATCH('@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\")')"
-            ),
 
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new EntityField(3, "c3", FieldType.DECIMAL),
-                        ConditionOperator.GREATER_THAN,
-                        new DecimalValue(new EntityField(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
-                    )
-                ),
-                "(" + FieldDefine.JSON_FIELDS + ".3L0 >= 123 "
-                    + SqlKeywordDefine.AND + " " + FieldDefine.JSON_FIELDS + ".3L1 > 56789)"
-            )
-            ,
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new EntityField(3, "c3", FieldType.DECIMAL),
-                        ConditionOperator.GREATER_THAN,
-                        new DecimalValue(new EntityField(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
-                    )
-                ).addAnd(
-                    new Condition(
-                        new EntityField(2, "c2", FieldType.STRING),
-                        ConditionOperator.LIKE,
-                        new StringValue(new EntityField(2, "c2", FieldType.STRING), "test")
-                    )
-                ),
-                "(" + FieldDefine.JSON_FIELDS + ".3L0 >= 123 " + SqlKeywordDefine.AND + " " +
-                    FieldDefine.JSON_FIELDS + ".3L1 > 56789) " + SqlKeywordDefine.AND + " " +
-                    "MATCH('@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\")')"
-            )
-            ,
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(
-                        new Condition(
-                            new EntityField(1, "c1", FieldType.STRING),
-                            ConditionOperator.MULTIPLE_EQUALS,
-                            new StringValue(new EntityField(1, "c1", FieldType.STRING), "v1"),
-                            new StringValue(new EntityField(1, "c1", FieldType.STRING), "v2")
-                        )
-                    ).addAnd(
-                    new Condition(
-                        new EntityField(2, "c2", FieldType.STRING),
-                        ConditionOperator.EQUALS,
-                        new StringValue(new EntityField(2, "c2", FieldType.STRING), "v3")
-                    )
-                ),
-                "MATCH('@" + FieldDefine.FULL_FIELDS + " (\"v1F1S\" | \"v2F1S\") \"v3F2S\"') AND jsonfields.2S = 'v3'"
-            )
-            ,
-            new Case(
-                new Conditions(
-                    new Condition(
-                        new EntityField(3, "c3", FieldType.DECIMAL),
-                        ConditionOperator.GREATER_THAN,
-                        new DecimalValue(new EntityField(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
-                    )
-                ).addAnd(
-                    new Condition(
-                        new EntityField(2, "c2", FieldType.STRING),
-                        ConditionOperator.LIKE,
-                        new StringValue(new EntityField(2, "c2", FieldType.STRING), "test")
-                    )
-                ).addAnd(
-                    new Condition(
-                        new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
-                        ConditionOperator.MULTIPLE_EQUALS,
-                        new LongValue(new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 1L),
-                        new LongValue(new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 2L),
-                        new LongValue(new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 3L)
-                    )
-                ),
-                "(" + FieldDefine.JSON_FIELDS + ".3L0 >= 123 " + SqlKeywordDefine.AND + " " +
-                    FieldDefine.JSON_FIELDS + ".3L1 > 56789) " + SqlKeywordDefine.AND + " " +
-                    "MATCH('@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\")') " +
-                    SqlKeywordDefine.AND + " id IN (1,2,3)"
-            )
+                new Case(
+                        new Conditions(
+                                new Condition(
+                                        new EntityField(3, "c3", FieldType.DECIMAL),
+                                        ConditionOperator.GREATER_THAN,
+                                        new DecimalValue(new EntityField(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
+                                )
+                        ),
+                        "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 56789))"
+                )
+                ,
+                new Case(
+                        new Conditions(
+                                new Condition(
+                                        new EntityField(3, "c3", FieldType.DECIMAL),
+                                        ConditionOperator.GREATER_THAN,
+                                        new DecimalValue(new EntityField(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
+                                )
+                        ).addAnd(
+                                new Condition(
+                                        new EntityField(2, "c2", FieldType.STRING),
+                                        ConditionOperator.LIKE,
+                                        new StringValue(new EntityField(2, "c2", FieldType.STRING), "test")
+                                )
+                        ),
+                        "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 56789)) " + SqlKeywordDefine.AND + " " +
+                                "MATCH('@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\")')"
+                )
+                ,
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(
+                                        new Condition(
+                                                new EntityField(1, "c1", FieldType.STRING),
+                                                ConditionOperator.MULTIPLE_EQUALS,
+                                                new StringValue(new EntityField(1, "c1", FieldType.STRING), "v1"),
+                                                new StringValue(new EntityField(1, "c1", FieldType.STRING), "v2")
+                                        )
+                                ).addAnd(
+                                new Condition(
+                                        new EntityField(2, "c2", FieldType.STRING),
+                                        ConditionOperator.EQUALS,
+                                        new StringValue(new EntityField(2, "c2", FieldType.STRING), "v3")
+                                )
+                        ),
+                        "MATCH('@" + FieldDefine.FULL_FIELDS + " (\"v1F1S\" | \"v2F1S\") \"v3F2S\"') AND jsonfields.2S = 'v3'"
+                )
+                ,
+                new Case(
+                        new Conditions(
+                                new Condition(
+                                        new EntityField(3, "c3", FieldType.DECIMAL),
+                                        ConditionOperator.GREATER_THAN,
+                                        new DecimalValue(new EntityField(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
+                                )
+                        ).addAnd(
+                                new Condition(
+                                        new EntityField(2, "c2", FieldType.STRING),
+                                        ConditionOperator.LIKE,
+                                        new StringValue(new EntityField(2, "c2", FieldType.STRING), "test")
+                                )
+                        ).addAnd(
+                                new Condition(
+                                        new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
+                                        ConditionOperator.MULTIPLE_EQUALS,
+                                        new LongValue(new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 1L),
+                                        new LongValue(new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 2L),
+                                        new LongValue(new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 3L)
+                                )
+                        ),
+                        "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 56789)) " + SqlKeywordDefine.AND + " " +
+                                "MATCH('@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\")') " +
+                                SqlKeywordDefine.AND + " id IN (1,2,3)"
+                )
         );
     }
 
