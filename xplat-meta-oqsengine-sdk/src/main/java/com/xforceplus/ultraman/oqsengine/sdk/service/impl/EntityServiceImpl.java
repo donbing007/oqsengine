@@ -206,10 +206,11 @@ public class EntityServiceImpl implements EntityService {
         CompletableFuture<Either<String, T>> future = new CompletableFuture<>();
 
         //this is fixed by only retry for update and delete
+
         RetryConfig config = RetryConfig.<Either<String, T>>custom()
                 .maxAttempts(maxAttempts)
                 .waitDuration(Duration.ofMillis(delay))
-                .retryOnResult(response -> response.isLeft() && response.getLeft().equalsIgnoreCase("CONFLICT"))
+                .retryOnResult(response -> response == null || (response.isLeft() && "CONFLICT".equalsIgnoreCase(response.getLeft())))
                 .build();
 
         Retry retry = retryRegistry.retry("retry-" + UUID.randomUUID().toString(), config);
