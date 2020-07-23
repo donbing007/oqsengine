@@ -275,6 +275,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             indexStorage.delete(chlidEntity);
                         }
                     }
+
+                    if (logger.isInfoEnabled()) {
+                        logger.info("Entity({}), Class({}) was successfully deleted.", entity.id(), entity.entityClass().id());
+                    }
                     return ResultStatus.SUCCESS;
                 }
             });
@@ -284,9 +288,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         } finally {
             deleteCountTotal.increment();
 
-            if (logger.isInfoEnabled()) {
-                logger.info("Entity({}), Class({}) was successfully deleted.", entity.id(), entity.entityClass().id());
-            }
         }
     }
 
