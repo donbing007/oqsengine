@@ -283,6 +283,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             throw ex;
         } finally {
             deleteCountTotal.increment();
+
+            if (logger.isInfoEnabled()) {
+                logger.info("Entity({}), Class({}) was successfully deleted.", entity.id(), entity.entityClass().id());
+            }
         }
     }
 
