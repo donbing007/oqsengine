@@ -366,7 +366,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             }
 
 
-            logInfo(metadata, (displayname, username) -> String.format("Attempt to delete %s by %s:%s", in.getId(), displayname, username));
+            try {
+                logInfo(metadata, (displayname, username) -> String.format("Attempt to delete %s:%s by %s:%s", in.getId(), in.getObjId(), displayname, username));
+            } catch (Exception ex){
+                logger.error("{}", ex);
+            }
 
 
             OperationResult result;
