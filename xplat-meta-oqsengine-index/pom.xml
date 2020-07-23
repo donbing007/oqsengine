@@ -69,11 +69,6 @@
             <artifactId>jackson-core</artifactId>
         </dependency>
 
-        <dependency>
-        	<groupId>net.wicp.tams</groupId>
-        	<artifactId>common-jdbc</artifactId>
-        	<version>3.6.12</version>
-        </dependency>
     </dependencies>
 
 
