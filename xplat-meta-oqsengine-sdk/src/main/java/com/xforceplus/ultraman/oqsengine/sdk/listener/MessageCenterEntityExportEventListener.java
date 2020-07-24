@@ -19,6 +19,7 @@ import org.stringtemplate.v4.ST;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -113,8 +114,10 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
                 headers.add("Accept", MediaType.APPLICATION_JSON.toString());
                 headers.add("x-app-token", tokenSupplier.get());
 
+                String finalAppId = Optional.ofNullable(entityExported.getAppId()).orElse(senderId);
+
                 HttpEntity messageEntity = new HttpEntity<>(messageInfo, headers);
-                String url = String.format(routePattern, gatewayUrl, tenantId, senderId);
+                String url = String.format(routePattern, gatewayUrl, tenantId, finalAppId);
                 try {
                     ResponseEntity<BaseResponse> response = restTemplate.postForEntity(url, messageEntity, BaseResponse.class);
                     //TODO if check this response
@@ -166,8 +169,10 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
                 headers.add("Accept", MediaType.APPLICATION_JSON.toString());
                 headers.add("x-app-token", tokenSupplier.get());
 
+                String finalAppId = Optional.ofNullable(entityExported.getAppId()).orElse(senderId);
+
                 HttpEntity messageEntity = new HttpEntity<>(messageInfo, headers);
-                String url = String.format(routePattern, gatewayUrl, tenantId, senderId);
+                String url = String.format(routePattern, gatewayUrl, tenantId, finalAppId);
                 try {
                     ResponseEntity<BaseResponse> response = restTemplate.postForEntity(url, messageEntity, BaseResponse.class);
                     //TODO if check this response

@@ -15,11 +15,14 @@ public class EntityErrorExported implements EntityEvent{
 
     private String reason;
 
-    public EntityErrorExported(Map<String, Object> context, String fileName, String reason) {
+    private String appId;
+
+    public EntityErrorExported(Map<String, Object> context, String fileName, String reason, String appId) {
         this.context = context;
         this.completedTime = System.currentTimeMillis();
         this.fileName = fileName;
         this.reason = reason;
+        this.appId = appId;
     }
 
     public Map<String, Object> getContext() {
@@ -38,6 +41,10 @@ public class EntityErrorExported implements EntityEvent{
         return reason;
     }
 
+    public String getAppId() {
+        return appId;
+    }
+    
     @Override
     public String toString() {
         return "EntityErrorExported{" +
@@ -45,6 +52,7 @@ public class EntityErrorExported implements EntityEvent{
                 ", fileName='" + fileName + '\'' +
                 ", completedTime=" + completedTime +
                 ", reason='" + reason + '\'' +
+                ", appId='" + appId + '\'' +
                 '}';
     }
 }

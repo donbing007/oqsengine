@@ -283,8 +283,9 @@ public class EntityController {
     @ResponseBody
     public CompletableFuture<Response<String>> conditionExport(
             @PathVariable String boId,
-            @RequestParam(required = false, value = "v") String version,
             @RequestParam(required = true, defaultValue = "sync", value = "exportType") String exportType,
+            @RequestParam(required = false, value = "v") String version,
+            @RequestParam(required = false, value = "appId") String appId,
             @RequestBody ConditionQueryRequest condition) {
 
         //default
@@ -298,7 +299,7 @@ public class EntityController {
             }
         }
 
-        CompletableFuture<Either<String, String>> exportResult = dispatcher.querySync(new ConditionExportCmd(boId, condition, version, exportType)
+        CompletableFuture<Either<String, String>> exportResult = dispatcher.querySync(new ConditionExportCmd(boId, condition, version, exportType, appId)
                 , DefaultUiService.class, "conditionExport");
 
         return exportResult.thenApply(x -> {

@@ -3,13 +3,13 @@ package com.xforceplus.ultraman.oqsengine.sdk;
 import com.xforceplus.ultraman.metadata.grpc.BoUp;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.metadata.grpc.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.configuration.TestApplicationContextInitializer;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
-import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +22,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.IntStream;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.TRANSACTION_KEY;
+import static org.junit.Assert.assertEquals;
 
 @EnableAsync
 @ContextConfiguration(initializers = TestApplicationContextInitializer.class)
@@ -88,6 +89,13 @@ public class IssueRelatedTest extends ContextWareBaseTest {
                                 .build())
                         .addFields(com.xforceplus.ultraman.metadata.grpc.Field
                                 .newBuilder()
+                                .setCode("decimalField")
+                                .setSearchable("1")
+                                .setId("100466")
+                                .setFieldType(FieldType.DECIMAL.name())
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
                                 .setCode("field3")
                                 .setSearchable("0")
                                 .setId("1005")
@@ -143,7 +151,7 @@ public class IssueRelatedTest extends ContextWareBaseTest {
 
 
     @Test
-    public void testSort(){
+    public void testSort() {
         metadataRepository.save(manyToOneNew(), "1", "1");
         IEntityClass entityClass = entityService.load("1").get();
 
@@ -155,10 +163,9 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         maps2.put("sortf", "2");
 
 
-
         entityService.findByCondition(entityClass
                 , new RequestBuilder()
-                       .pageSize(10).pageNo(1).build()).get()._2().forEach(x -> {
+                        .pageSize(10).pageNo(1).build()).get()._2().forEach(x -> {
             entityService.deleteOne(entityClass, Long.parseLong((String) x.get("id")));
         });
 
@@ -174,5 +181,31 @@ public class IssueRelatedTest extends ContextWareBaseTest {
                 , new RequestBuilder()
                         .sort("sortf", "desc").pageSize(10).pageNo(1).build()));
 
+    }
+
+    @Test
+    public void testCompareDecimal() {
+        metadataRepository.save(manyToOneNew(), "1", "1");
+        IEntityClass entityClass = entityService.load("1").get();
+
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("decimalField", "15.23");
+
+
+        Map<String, Object> maps2 = new HashMap<>();
+        maps2.put("decimalField", "16.10");
+
+        Long id = entityService.create(entityClass, maps).get();
+        Long id2 = entityService.create(entityClass, maps2).get();
+
+        Integer rows = entityService.findByCondition(entityClass
+                , new RequestBuilder()
+                        .field("decimalField", ConditionOp.gt_lt, "14", "16.21")
+                        .pageSize(10).pageNo(1).build()).get()._1();
+
+        assertEquals(rows, (Integer)2);
+
+        entityService.deleteOne(entityClass, id);
+        entityService.deleteOne(entityClass, id2);
     }
 }
