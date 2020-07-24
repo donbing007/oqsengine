@@ -59,22 +59,27 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
 
     }
 
+    /**
+     * 事务的结束操作,需要保证此操作之间不能中断和原子性.
+     * 因为实际会有两步操作,主要 commit/rollback中间或者和最后清理中间被认为超时清理后会产生错误的事务状态.
+     * 比如数据无法回滚等严重问题.
+     */
     private void doFinish(boolean rollback) throws SQLException {
         Optional<Transaction> tx = transactionManager.getCurrent();
         if (tx.isPresent()) {
-
+            Transaction t = tx.get();
             try {
-                if (!tx.get().isCompleted()) {
+                if (!t.isCompleted()) {
                     if (rollback) {
-                        tx.get().rollback();
+                        t.rollback();
                     } else {
-                        tx.get().commit();
+                        t.commit();
                     }
                 } else {
                     throw new SQLException(String.format("Transaction %d has completed.", tx.get().id()));
                 }
             } finally {
-                transactionManager.finish(tx.get());
+                transactionManager.finish(t);
             }
         } else {
             throw new SQLException("There are no transactions currently.");

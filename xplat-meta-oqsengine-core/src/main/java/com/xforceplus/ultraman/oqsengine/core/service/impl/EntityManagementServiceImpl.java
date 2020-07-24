@@ -275,18 +275,20 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             indexStorage.delete(chlidEntity);
                         }
                     }
+
+                    if (logger.isInfoEnabled()) {
+                        logger.info("Entity({}), Class({}) was successfully deleted.", entity.id(), entity.entityClass().id());
+                    }
+
                     return ResultStatus.SUCCESS;
                 }
             });
+
         } catch (Exception ex) {
             failCountTotal.increment();
             throw ex;
         } finally {
             deleteCountTotal.increment();
-
-            if (logger.isInfoEnabled()) {
-                logger.info("Entity({}), Class({}) was successfully deleted.", entity.id(), entity.entityClass().id());
-            }
         }
     }
 
@@ -331,9 +333,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private boolean warnNoSearchable(IEntity entity) {
         IEntityClass entityClass = entity.entityClass();
         long indexNumber = entityClass.fields().stream().filter(f -> f.config().isSearchable()).count();
+        if (isSub(entity)) {
+            indexNumber +=
+                entityClass.extendEntityClass().fields().stream().filter(f -> f.config().isSearchable()).count();
+        }
         if (indexNumber == 0) {
             logger.warn("An attempt was made to create an Entity({})-EntityClass({}) without any index.",
-                entity.id(), entity.id());
+                entity.id(), entity.entityClass().id());
             return true;
         }
 

@@ -8,6 +8,12 @@ package com.xforceplus.ultraman.oqsengine.storage.executor.hint;
  */
 public class DefaultExecutorHint implements ExecutorHint {
 
+    private static DefaultExecutorHint EMPTY_HINT = new DefaultExecutorHint();
+
+    public static ExecutorHint buildEmptyHint() {
+        return EMPTY_HINT;
+    }
+
     private boolean rollback = false;
 
     @Override
