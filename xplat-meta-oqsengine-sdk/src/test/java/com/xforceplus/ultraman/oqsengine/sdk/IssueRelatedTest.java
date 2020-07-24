@@ -11,12 +11,16 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
+import io.vavr.Tuple2;
+import io.vavr.control.Either;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ContextConfiguration;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.IntStream;
@@ -191,7 +195,6 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         Map<String, Object> maps = new HashMap<>();
         maps.put("decimalField", "15.23");
 
-
         Map<String, Object> maps2 = new HashMap<>();
         maps2.put("decimalField", "16.10");
 
@@ -207,5 +210,45 @@ public class IssueRelatedTest extends ContextWareBaseTest {
 
         entityService.deleteOne(entityClass, id);
         entityService.deleteOne(entityClass, id2);
+    }
+
+    @Test
+    public void testConditionSearch(){
+        metadataRepository.save(manyToOneNew(), "1", "1");
+        IEntityClass entityClass = entityService.load("1").get();
+
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("decimalField", "15.23");
+
+        Map<String, Object> maps2 = new HashMap<>();
+        maps2.put("decimalField", "16.10");
+
+        Long id = entityService.create(entityClass, maps).get();
+        Long id2 = entityService.create(entityClass, maps2).get();
+
+        Either<String, Tuple2<Integer, List<Map<String, Object>>>> result = entityService
+                .findByCondition(entityClass
+                        , new RequestBuilder()
+                                .field("decimalField", ConditionOp.in, Collections.emptyList()).pageNo(1).pageSize(10).build());
+
+
+        Either<String, Tuple2<Integer, List<Map<String, Object>>>> searchByIds = entityService
+                .findByConditionWithIds(entityClass
+                        , Collections.emptyList()
+                        , new RequestBuilder()
+                                .pageNo(1).pageSize(10).build());
+
+        Either<String, Tuple2<Integer, List<Map<String, Object>>>> result2 = entityService
+                .findByCondition(entityClass
+                        , new RequestBuilder()
+                                .pageNo(1).pageSize(10).build());
+
+        entityService.deleteOne(entityClass, id);
+        entityService.deleteOne(entityClass, id2);
+
+        System.out.println(result);
+        System.out.println(result2);
+        System.out.println(searchByIds);
+
     }
 }

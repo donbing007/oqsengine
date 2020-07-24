@@ -10,10 +10,13 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.util.ConditionQueryRequestHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.util.context.ContextDecorator;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.FlowRegistry;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.QueueFlow;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.FieldCondition;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
@@ -406,8 +409,10 @@ public class EntityServiceImpl implements EntityService {
 
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
 
+        ConditionQueryRequest finalRequest = ConditionQueryRequestHelper.build(ids, condition);
+
         if (isRangeStrict) {
-            boolean noRange = (condition.getPageSize() == null || condition.getPageNo() == null);
+            boolean noRange = (finalRequest.getPageSize() == null || finalRequest.getPageNo() == null);
             if (noRange) {
                 return Either.left("[STRICT-MODE]: RangeSearch Without Range");
             }
@@ -421,17 +426,18 @@ public class EntityServiceImpl implements EntityService {
         /**
          * to ConditionsUp
          */
-        ConditionsUp conditionsUp = Optional.ofNullable(condition)
+        ConditionsUp conditionsUp = Optional.ofNullable(finalRequest)
                 .map(ConditionQueryRequest::getConditions)
-                .map(x ->
-                        handleQueryValueService
-                                .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY))
+                .map(x -> {
+                    return handleQueryValueService
+                            .handleQueryValue(entityClass, x, OperationType.QUERY);
+                })
                 .orElseGet(() -> ConditionsUp.newBuilder().build());
 
         /**
          * condition
          */
-        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, ids, condition, conditionsUp))
+        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, finalRequest, conditionsUp))
                 .toCompletableFuture().join();
 
         if (result.getCode() == OperationResult.Code.OK) {
