@@ -18,24 +18,22 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 事务管理器抽像实现.
- *
+ * <p>
  * 事务分为创建,绑定,反绑定和提交几步.
  * 其中绑定和反绑定一定要重复出来.
- *
+ * <p>
  * TransactionManager tm = ...
  * Transaction tx = tm.create();
  * tm.bind(tx);
  * tru {
- *     //...逻辑
+ * //...逻辑
  * } finally {
- *     tm.unbind();
+ * tm.unbind();
  * }
- *
+ * <p>
  * rebind 在持主事务 id 的时候可以还原之前其他线程创建的事务现场.
  *
- *
  * @author dongbin
- * @version 0.1 2020/2/14 11:47
  * @version 0.2 2020/7/2 13:58 现在事务在创建后不会直接绑定.
  * @since 1.8
  */
@@ -80,7 +78,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     /**
      * 时间轮.处理事务超时.
      */
-    private TimerWheel timerWheel;
+    private TimerWheel<Transaction> timerWheel;
 
     public AbstractTransactionManager() {
         this(3000);
@@ -117,7 +115,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
             survival.put(transaction.id(), transaction);
 
-            timerWheel.add(transaction.id(), timeoutMs);
+            timerWheel.add(transaction, timeoutMs);
 
             transactionNumber.incrementAndGet();
 
@@ -134,7 +132,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
             if (transaction != null) {
                 try {
                     survival.remove(transaction.id());
-                    timerWheel.remove(transaction.id());
+                    timerWheel.remove(transaction);
                 } catch (Exception e) {
                     logger.warn("An error occurred in creating the transaction, as well as in cleaning it up.", e);
                 }
@@ -166,21 +164,12 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     }
 
     @Override
-    public void rebind(long id) {
+    public void bind(long id) {
+
         Transaction tx = survival.get(id);
         if (tx == null) {
-            throw new RuntimeException(String.format("Invalid transaction ID(%d), unable to bind the transaction.", id));
+            throw new RuntimeException(String.format("Invalid transaction({}), transaction may have timed out.", id));
         }
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Try rebind transaction({}).", tx.id());
-        }
-
-        bind(tx);
-    }
-
-    @Override
-    public void bind(Transaction tx) {
 
         long threadId = Thread.currentThread().getId();
         tx.attach(threadId);
@@ -211,19 +200,12 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
     @Override
     public void finish(Transaction tx) throws SQLException {
-
-        Transaction old = survival.remove(tx.id());
-        if (old == null) {
-            throw new SQLException(
-                String.format("An attempt was made to complete a non-existent transaction.[id=%d]", tx.id()));
-        }
-
         size.decrementAndGet();
 
         using.remove(tx.attachment());
         tx.attach(Transaction.NOT_ATTACHMENT);
 
-        timerWheel.remove(tx.id());
+        timerWheel.remove(tx);
 
         transactionNumber.decrementAndGet();
 
@@ -260,20 +242,49 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         frozenness.set(false);
     }
 
-    class TransaxtionTimeoutNotification implements TimeoutNotification<Long> {
+    /**
+     * 事务的超时处理逻辑.
+     * 需要保证事务正在使用中,即处在 using 中的事务不可清理.
+     * 如果事务超时但是处在 using 中,那么会再主动设置下一个检查点,固定为300ms.
+     * 这是为了尽量在事务处于非
+     */
+    class TransaxtionTimeoutNotification implements TimeoutNotification<Transaction> {
+
+        /**
+         * 正在使用的过期事务的再次检查毫秒值.
+         */
+        final int recheckMs = 300;
 
         @Override
-        public long notice(Long transactionId) {
-            Transaction transaction = survival.get(transactionId);
-            if (transaction != null) {
+        public long notice(Transaction transaction) {
+            /**
+             * 进入这里表示事务已经超时,不能再被bind.所以直接从生存列表中移除.
+             * 阻止 bind 成功,但是不影响已经 bind 的事务.
+             */
+            survival.remove(transaction.id());
 
+            /**
+             * 当出现在 using 中,那么表示事务正在被使用.
+             * 等待处于非使用中的时候进行过期,但是此事务不能再进行bind了.
+             */
+            if (using.containsKey(transaction.attachment())) {
 
-                logger.warn("The transaction ({}) timed out({}), so rollback.", transaction.id(), survivalTimeMs);
+                logger.warn("The transaction ({}) timed out({}ms),but still in use will be checked at the next checkpoint.",
+                    transaction.id(), survivalTimeMs);
 
-                try {
-                    finish(transaction);
-                } catch (SQLException e) {
-                    logger.error(e.getMessage(), e);
+                return recheckMs;
+
+            } else {
+
+                if (!transaction.isCompleted()) {
+                    logger.warn("The transaction ({}) timed out({}ms), so rollback.", transaction.id(), survivalTimeMs);
+
+                    try {
+                        finish(transaction);
+                    } catch (SQLException e) {
+                        String msg = String.format("%s transaction status: %s", e.getMessage(), transaction.toString());
+                        logger.error(msg, e);
+                    }
                 }
             }
 
