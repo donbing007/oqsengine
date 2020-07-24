@@ -158,10 +158,14 @@ public class EntityServiceImpl implements EntityService {
                 return commitedT.join();
             } catch (Exception ex) {
                 //maybe timeout
-                entityServiceClient.rollBack(TransactionUp.newBuilder()
-                        .setId(result.getTransactionResult())
-                        .build()).toCompletableFuture().join();
-                return Either.left(ex.getMessage());
+                try {
+                    entityServiceClient.rollBack(TransactionUp.newBuilder()
+                            .setId(result.getTransactionResult())
+                            .build()).toCompletableFuture().join();
+                    return Either.left(ex.getMessage());
+                } catch(Exception bindEx) {
+                    return Either.left(bindEx.getMessage());
+                }
             } finally {
                 //remove TRANSACTION_KEY
                 logger.info("remove currentService {} with {}", TRANSACTION_KEY.name(), result.getTransactionResult());

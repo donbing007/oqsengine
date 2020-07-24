@@ -15,15 +15,14 @@ import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.junit.Test;
+import org.junit.runner.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ContextConfiguration;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.TRANSACTION_KEY;
@@ -261,7 +260,7 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         metadataRepository.save(manyToOneNew(), "1", "1");
 
         try {
-            IEntityClass wrong = plainEntityService.load("2");
+            IEntityClass wrong = plainEntityService.load("200");
         }catch(Exception ex){
             System.out.println(ex.getMessage());
         }
@@ -273,5 +272,46 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         Long id = plainEntityService.create(entityClass, maps);
 
         System.out.println(plainEntityService.deleteOne(entityClass, id));
+    }
+
+    @Test
+    public void currentTransaction(){
+
+        metadataRepository.save(manyToOneNew(), "1", "1");
+
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("decimalField", "10000");
+
+
+        IEntityClass entityClass = plainEntityService.load("1");
+
+
+        System.out.println(entityService.findByCondition(entityClass
+                , new RequestBuilder().field("decimalField", ConditionOp.eq, "10000").pageSize(10).pageNo(1).build()));
+        /**
+         *
+         */
+        Either<String, List<Long>> lists = entityService.transactionalExecute(() -> {
+
+            Thread.sleep(2500);
+
+            return IntStream.range(1, 100)
+                    .boxed()
+                    .map(i -> {
+                        return entityService.create(entityClass, maps).getOrElse((Long) null);
+                    }).filter(Objects::nonNull).collect(Collectors.toList());
+        });
+
+        System.out.println(entityService.findByCondition(entityClass
+                , new RequestBuilder().field("decimalField", ConditionOp.eq, "10000").pageSize(10).pageNo(1).build()));
+
+        lists.map(r -> { r.forEach(x -> {
+            entityService.deleteOne(entityClass, x);
+
+        });
+        return "";}).orElseRun(System.out::println);
+
+        System.out.println(entityService.findByCondition(entityClass
+                , new RequestBuilder().field("decimalField", ConditionOp.eq, "10000").pageSize(10).pageNo(1).build()));
     }
 }
