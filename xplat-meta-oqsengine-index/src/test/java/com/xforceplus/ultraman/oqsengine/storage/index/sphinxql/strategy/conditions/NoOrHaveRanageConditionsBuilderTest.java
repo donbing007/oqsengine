@@ -134,7 +134,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "v3")
                                 )
                         ),
-                        "MATCH('@" + FieldDefine.FULL_FIELDS + " (\"v1F1S\" | \"v2F1S\") \"v3F2S\"') AND jsonfields.2S = 'v3'"
+                        "jsonfields.2S = 'v3' AND MATCH('@" + FieldDefine.FULL_FIELDS + " (\"v1F1S\" | \"v2F1S\") \"v3F2S\"')"
                 )
                 ,
                 new Case(
@@ -159,9 +159,9 @@ public class NoOrHaveRanageConditionsBuilderTest {
                                         new LongValue(new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 3L)
                                 )
                         ),
-                        "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 56789)) " + SqlKeywordDefine.AND + " " +
-                                "MATCH('@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\")') " +
-                                SqlKeywordDefine.AND + " id IN (1,2,3)"
+                        "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND "
+                            + FieldDefine.JSON_FIELDS + ".3L1 > 56789)) " + SqlKeywordDefine.AND + " id IN (1,2,3) AND " +
+                                "MATCH('@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\")')"
                 )
         );
     }
