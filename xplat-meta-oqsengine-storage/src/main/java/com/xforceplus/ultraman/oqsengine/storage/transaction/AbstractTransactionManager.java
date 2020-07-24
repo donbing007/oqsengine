@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * <p>
  * TransactionManager tm = ...
  * Transaction tx = tm.create();
- * tm.bind(tx);
+ * tm.bind(tx.id());
  * tru {
  * //...逻辑
  * } finally {

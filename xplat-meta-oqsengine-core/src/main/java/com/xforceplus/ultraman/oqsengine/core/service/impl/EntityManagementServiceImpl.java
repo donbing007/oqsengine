@@ -332,7 +332,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private boolean warnNoSearchable(IEntity entity) {
         IEntityClass entityClass = entity.entityClass();
         long indexNumber = entityClass.fields().stream().filter(f -> f.config().isSearchable()).count();
-        if (isSub(entity)) {
+        if (indexNumber == 0 && isSub(entity)) {
             indexNumber +=
                 entityClass.extendEntityClass().fields().stream().filter(f -> f.config().isSearchable()).count();
         }
