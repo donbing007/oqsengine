@@ -89,7 +89,7 @@ public class SQLMasterStorageTest {
         storage.init();
 
         Transaction tx = transactionManager.create();
-        transactionManager.bind(tx);
+        transactionManager.bind(tx.id());
         expectedEntitys = initData(storage, 10);
     }
 
@@ -147,7 +147,7 @@ public class SQLMasterStorageTest {
     public void testReplace() throws Exception {
 
         Transaction tx = transactionManager.create();
-        transactionManager.bind(tx);
+        transactionManager.bind(tx.id());
         IEntity entity = expectedEntitys.get(0);
         entity.entityValue().remove(entity.entityClass().fields().stream().findAny().get());
         storage.replace(entity);

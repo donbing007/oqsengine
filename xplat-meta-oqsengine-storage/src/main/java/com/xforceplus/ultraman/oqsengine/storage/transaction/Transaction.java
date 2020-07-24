@@ -4,7 +4,11 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 /**
- * A transaction instance definition.
+ * 事务实现接口.
+ * 需要注意实现中需要保证
+ * isCommitted,
+ * isRollback,
+ * 方法的多线程可见性.
  *
  * @author dongbin
  * @version 0.1 2020/2/13 20:37
