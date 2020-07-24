@@ -155,7 +155,7 @@ public class AbstractTransactionManagerTest {
             Assert.fail("An unbound exception is expected, but it is not.");
         } catch (RuntimeException ex) {
             Assert.assertEquals(
-                String.format("Invalid transaction({}), transaction may have timed out.", tx.id()), ex.getMessage());
+                String.format("Invalid transaction(%s), transaction may have timed out.", tx.id()), ex.getMessage());
         }
 
         Assert.assertFalse(tm.getCurrent().isPresent());
