@@ -368,7 +368,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
                 logInfo(metadata, (displayname, username) -> String.format("Attempt to delete %s:%s by %s:%s", in.getId(), in.getObjId(), displayname, username));
-            } catch (Exception ex){
+            } catch (Exception ex) {
                 logger.error("{}", ex);
             }
 
@@ -814,10 +814,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     /**
-     *
      * @param metadata
      */
-    private void logInfo(Metadata metadata, BiFunction<String, String, String> template){
+    private void logInfo(Metadata metadata, BiFunction<String, String, String> template) {
         String displayName = metadata.getText("display-name").orElse("noname");
         String userName = metadata.getText("username").orElse("noname");
 
@@ -1147,7 +1146,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             }
         }
 
-        if(conditions == null){
+        if (conditions == null) {
             throw new RuntimeException("Condition is invalid " + fieldCondition);
         }
 

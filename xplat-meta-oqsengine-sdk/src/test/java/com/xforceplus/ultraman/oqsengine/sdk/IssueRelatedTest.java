@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.configuration.TestApplicationContextInitializer;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.PlainEntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
@@ -37,6 +38,9 @@ public class IssueRelatedTest extends ContextWareBaseTest {
 
     @Autowired
     private EntityService entityService;
+
+    @Autowired
+    private PlainEntityService plainEntityService;
 
     @Autowired
     private ContextService contextService;
@@ -250,5 +254,24 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         System.out.println(result2);
         System.out.println(searchByIds);
 
+    }
+
+    @Test
+    public void testPlain(){
+        metadataRepository.save(manyToOneNew(), "1", "1");
+
+        try {
+            IEntityClass wrong = plainEntityService.load("2");
+        }catch(Exception ex){
+            System.out.println(ex.getMessage());
+        }
+        IEntityClass entityClass = plainEntityService.load("1");
+
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("decimalField22", "15.23");
+
+        Long id = plainEntityService.create(entityClass, maps);
+
+        System.out.println(plainEntityService.deleteOne(entityClass, id));
     }
 }
