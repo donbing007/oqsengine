@@ -195,24 +195,46 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         metadataRepository.save(manyToOneNew(), "1", "1");
         IEntityClass entityClass = entityService.load("1").get();
 
+
+
+        entityService.findByCondition(entityClass
+                , new RequestBuilder()
+                        .field("decimalField", ConditionOp.gt_lt, "150", "160.21")
+                        .pageSize(10).pageNo(1).build()).get()._2().forEach(x -> entityService.deleteOne(entityClass, Long.parseLong(x.get("id").toString())));
+
+
+        Map<String, Object> mapsfirst = new HashMap<>();
+        mapsfirst.put("field1", "1");
+
         Map<String, Object> maps = new HashMap<>();
-        maps.put("decimalField", "15.23");
+        maps.put("decimalField", "150.23");
 
         Map<String, Object> maps2 = new HashMap<>();
-        maps2.put("decimalField", "16.10");
+        maps2.put("decimalField", "160.10");
 
         Long id = entityService.create(entityClass, maps).get();
         Long id2 = entityService.create(entityClass, maps2).get();
+        Long id3 = entityService.create(entityClass, mapsfirst).get();
 
         Integer rows = entityService.findByCondition(entityClass
                 , new RequestBuilder()
-                        .field("decimalField", ConditionOp.gt_lt, "14", "16.21")
+                        .field("decimalField", ConditionOp.gt_lt, "150", "160.21")
                         .pageSize(10).pageNo(1).build()).get()._1();
 
         assertEquals(rows, (Integer)2);
 
+
+        Integer rows2 = entityService.findByCondition(entityClass
+                , new RequestBuilder()
+                        .field("decimalField", ConditionOp.gt_lt, "150", "160.21")
+                        .field("field1", ConditionOp.eq, "1")
+                        .pageSize(10).pageNo(1).build()).get()._1();
+
+        assertEquals(rows2, (Integer)0);
+
         entityService.deleteOne(entityClass, id);
         entityService.deleteOne(entityClass, id2);
+        entityService.deleteOne(entityClass, id3);
     }
 
     @Test
@@ -280,14 +302,14 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         metadataRepository.save(manyToOneNew(), "1", "1");
 
         Map<String, Object> maps = new HashMap<>();
-        maps.put("decimalField", "10000");
+        maps.put("decimalField", "100000");
 
 
         IEntityClass entityClass = plainEntityService.load("1");
 
 
         System.out.println(entityService.findByCondition(entityClass
-                , new RequestBuilder().field("decimalField", ConditionOp.eq, "10000").pageSize(10).pageNo(1).build()));
+                , new RequestBuilder().field("decimalField", ConditionOp.eq, "100000").pageSize(10).pageNo(1).build()));
         /**
          *
          */
@@ -303,7 +325,7 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         });
 
         System.out.println(entityService.findByCondition(entityClass
-                , new RequestBuilder().field("decimalField", ConditionOp.eq, "10000").pageSize(10).pageNo(1).build()));
+                , new RequestBuilder().field("decimalField", ConditionOp.eq, "100000").pageSize(10).pageNo(1).build()));
 
         lists.map(r -> { r.forEach(x -> {
             entityService.deleteOne(entityClass, x);
@@ -312,6 +334,7 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         return "";}).orElseRun(System.out::println);
 
         System.out.println(entityService.findByCondition(entityClass
-                , new RequestBuilder().field("decimalField", ConditionOp.eq, "10000").pageSize(10).pageNo(1).build()));
+                , new RequestBuilder().field("decimalField", ConditionOp.eq, "100000").pageSize(10).pageNo(1).build()));
     }
+
 }

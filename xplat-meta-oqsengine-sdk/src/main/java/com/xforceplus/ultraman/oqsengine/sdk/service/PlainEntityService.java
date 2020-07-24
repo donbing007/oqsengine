@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
+/**
+ *
+ */
 public interface PlainEntityService {
 
     IEntityClass load(String boId);
@@ -39,7 +42,7 @@ public interface PlainEntityService {
 
     DataCollection<Record> findRecordsByCondition(IEntityClass entityClass, List<Long> ids, ConditionQueryRequest condition);
 
-    DataCollection<Map<String, Object>>  findByConditionWithIds(IEntityClass entityClass, List<Long> ids, ConditionQueryRequest condition);
+    DataCollection<Map<String, Object>> findByConditionWithIds(IEntityClass entityClass, List<Long> ids, ConditionQueryRequest condition);
 
     Long create(IEntityClass entityClass, Map<String, Object> body);
 

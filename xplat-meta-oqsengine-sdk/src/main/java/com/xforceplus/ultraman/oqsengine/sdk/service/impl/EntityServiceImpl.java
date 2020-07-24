@@ -14,9 +14,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.util.ConditionQueryRequestHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.util.context.ContextDecorator;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.FlowRegistry;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.QueueFlow;
-import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
-import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.FieldCondition;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
@@ -163,7 +161,7 @@ public class EntityServiceImpl implements EntityService {
                             .setId(result.getTransactionResult())
                             .build()).toCompletableFuture().join();
                     return Either.left(ex.getMessage());
-                } catch(Exception bindEx) {
+                } catch (Exception bindEx) {
                     return Either.left(bindEx.getMessage());
                 }
             } finally {

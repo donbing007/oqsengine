@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.vo;
 
 import java.util.List;
 
+/**
+ * @param <T>
+ */
 public class DataCollection<T> {
 
     private Integer rowNum;

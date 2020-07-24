@@ -60,13 +60,13 @@ public class ConditionQueryRequestHelper {
         } else {
 
             Conditions conditions = condition.getConditions();
-            if(conditions != null){
+            if (conditions != null) {
                 Conditions newConditions = new Conditions();
-                if(conditions.getFields() != null){
+                if (conditions.getFields() != null) {
                     newConditions.setFields(new LinkedList<>(conditions.getFields()));
                 }
 
-                if(conditions.getEntities() != null){
+                if (conditions.getEntities() != null) {
                     newConditions.setEntities(new LinkedList<>(conditions.getEntities()));
                 }
 
@@ -74,28 +74,28 @@ public class ConditionQueryRequestHelper {
             }
 
             List<NameMapping> mapping = condition.getMapping();
-            if(mapping != null){
+            if (mapping != null) {
                 result.setMapping(new LinkedList<>(mapping));
             }
 
             List<FieldSort> sort = condition.getSort();
-            if(sort != null){
+            if (sort != null) {
                 result.setSort(new LinkedList<>(sort));
             }
 
             EntityItem entity = condition.getEntity();
-            if(entity != null){
+            if (entity != null) {
 
                 EntityItem newItem = new EntityItem();
 
                 List<SubEntityItem> entities = entity.getEntities();
                 List<String> fields = entity.getFields();
 
-                if(entities != null){
+                if (entities != null) {
                     newItem.setEntities(new LinkedList<>(entities));
                 }
 
-                if(fields != null){
+                if (fields != null) {
                     newItem.setFields(new LinkedList<>(fields));
                 }
                 result.setEntity(newItem);
