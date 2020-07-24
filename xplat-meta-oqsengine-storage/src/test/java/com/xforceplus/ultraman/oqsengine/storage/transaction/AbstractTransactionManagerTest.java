@@ -35,14 +35,14 @@ public class AbstractTransactionManagerTest {
     public void test() throws Exception {
         MockTransactionManager tm = new MockTransactionManager();
         Transaction tx = tm.create();
-        tm.bind(tx);
+        tm.bind(tx.id());
 
         Assert.assertEquals(tx, tm.getCurrent().get());
 
         tm.unbind();
         Assert.assertFalse(tm.getCurrent().isPresent());
 
-        tm.rebind(tx.id());
+        tm.bind(tx.id());
         Assert.assertEquals(tx, tm.getCurrent().get());
 
         tm.finish(tx);
@@ -53,24 +53,10 @@ public class AbstractTransactionManagerTest {
     }
 
     @Test
-    public void testTimeout() throws Exception {
-        MockTransactionManager tm = new MockTransactionManager(200);
-        Transaction tx = tm.create();
-        tm.bind(tx);
-
-        TimeUnit.MILLISECONDS.sleep(400);
-
-        Assert.assertFalse(tm.getCurrent().isPresent());
-        Assert.assertTrue(tx.isCompleted());
-        Assert.assertTrue(tx.isRollback());
-        Assert.assertFalse(tx.isCommitted());
-    }
-
-    @Test
     public void testCommitAfterFinish() throws Exception {
         MockTransactionManager tm = new MockTransactionManager();
         Transaction tx = tm.create();
-        tm.bind(tx);
+        tm.bind(tx.id());
         tx.commit();
 
         tm.finish();
@@ -140,22 +126,15 @@ public class AbstractTransactionManagerTest {
      */
     @Test
     public void testCommitBlockTimeout() throws Exception {
-        MockTransactionManager tm = new MockTransactionManager(201,600);
+        MockTransactionManager tm = new MockTransactionManager(201, 600);
         Transaction tx = tm.create();
-        tm.rebind(tx.id());
+        tm.bind(tx.id());
         tm.unbind();
 
-        tm.rebind(tx.id());
+        tm.bind(tx.id());
         tm.getCurrent().get().commit();
         tm.unbind();
 
-        try {
-            tm.rebind(tx.id());
-            Assert.fail("An unbound exception is expected, but it is not.");
-        } catch (RuntimeException ex) {
-            Assert.assertEquals(
-                String.format("Invalid transaction({}), transaction may have timed out.", tx.id()), ex.getMessage());
-        }
         TimeUnit.SECONDS.sleep(2);
 
         Assert.assertTrue(tx.isCommitted());
@@ -167,15 +146,23 @@ public class AbstractTransactionManagerTest {
     public void testTimeoutAfterCommit() throws Exception {
         MockTransactionManager tm = new MockTransactionManager(201);
         Transaction tx = tm.create();
-        tm.rebind(tx.id());
-        TimeUnit.MILLISECONDS.sleep(300);
+        tm.bind(tx.id());
+        tm.unbind();
+        TimeUnit.SECONDS.sleep(1);
+
+        try {
+            tm.bind(tx.id());
+            Assert.fail("An unbound exception is expected, but it is not.");
+        } catch (RuntimeException ex) {
+            Assert.assertEquals(
+                String.format("Invalid transaction({}), transaction may have timed out.", tx.id()), ex.getMessage());
+        }
 
         Assert.assertFalse(tm.getCurrent().isPresent());
         Assert.assertTrue(tx.isCompleted());
         Assert.assertFalse(tx.isCommitted());
         Assert.assertTrue(tx.isRollback());
     }
-
 
 
     static class MockTransactionManager extends AbstractTransactionManager {
@@ -242,7 +229,7 @@ public class AbstractTransactionManagerTest {
                 try {
                     TimeUnit.MILLISECONDS.sleep(waitMs);
                 } catch (InterruptedException e) {
-                    throw new SQLException(e.getMessage(),e);
+                    throw new SQLException(e.getMessage(), e);
                 }
             }
         }

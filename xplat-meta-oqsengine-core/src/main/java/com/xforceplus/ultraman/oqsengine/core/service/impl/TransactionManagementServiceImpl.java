@@ -43,7 +43,7 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
 
     @Override
     public void restore(long id) throws SQLException {
-        transactionManager.rebind(id);
+        transactionManager.bind(id);
     }
 
     @Override

@@ -164,21 +164,12 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     }
 
     @Override
-    public void rebind(long id) {
+    public void bind(long id) {
+
         Transaction tx = survival.get(id);
         if (tx == null) {
             throw new RuntimeException(String.format("Invalid transaction({}), transaction may have timed out.", id));
         }
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Try rebind transaction({}).", tx.id());
-        }
-
-        bind(tx);
-    }
-
-    @Override
-    public void bind(Transaction tx) {
 
         long threadId = Thread.currentThread().getId();
         tx.attach(threadId);
@@ -268,7 +259,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         public long notice(Transaction transaction) {
             /**
              * 进入这里表示事务已经超时,不能再被bind.所以直接从生存列表中移除.
-             * 阻止 rebind 成功.
+             * 阻止 bind 成功,但是不影响已经 bind 的事务.
              */
             survival.remove(transaction.id());
 

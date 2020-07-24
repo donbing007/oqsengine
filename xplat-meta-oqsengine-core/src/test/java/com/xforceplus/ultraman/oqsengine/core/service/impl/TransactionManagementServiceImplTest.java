@@ -75,7 +75,7 @@ public class TransactionManagementServiceImplTest {
 
         impl.restore(123L);
 
-        verify(tm, times(1)).rebind(123L);
+        verify(tm, times(1)).bind(123L);
     }
 
     @Test

@@ -174,7 +174,7 @@ public class SphinxQLIndexStorageTest {
 		truncate();
 
 		Transaction tx = transactionManager.create();
-		transactionManager.bind(tx);
+		transactionManager.bind(tx.id());
 
 		try {
 			initData(storage);
@@ -226,7 +226,7 @@ public class SphinxQLIndexStorageTest {
 	@Test
 	public void testReplaceAttribute() throws Exception {
 		Transaction tx = transactionManager.create();
-		transactionManager.bind(tx);
+		transactionManager.bind(tx.id());
 
 		IEntity expectedEntity = (IEntity) entityes[0].clone();
 		expectedEntity.entityValue().addValue(new LongValue(longField, 760L));
@@ -255,7 +255,7 @@ public class SphinxQLIndexStorageTest {
 	public void testDeleteSuccess() throws Exception {
 
 		Transaction tx = transactionManager.create();
-		transactionManager.bind(tx);
+		transactionManager.bind(tx.id());
 
 		IEntity expectedEntity = (IEntity) entityes[0].clone();
 		storage.delete(expectedEntity);
