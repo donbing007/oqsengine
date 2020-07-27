@@ -13,13 +13,16 @@ public class ConditionExportCmd implements MetaDataLikeCmd, ContextAwareCmd {
 
     private String exportType;
 
+    private String appId;
+
     private ConditionQueryRequest conditionQueryRequest;
 
-    public ConditionExportCmd(String boId, ConditionQueryRequest conditionQueryRequest, String version, String exportType) {
+    public ConditionExportCmd(String boId, ConditionQueryRequest conditionQueryRequest, String version, String exportType, String appId) {
         this.boId = boId;
         this.version = version;
         this.conditionQueryRequest = conditionQueryRequest;
         this.exportType = exportType;
+        this.appId = appId;
     }
 
     @Override
@@ -43,5 +46,9 @@ public class ConditionExportCmd implements MetaDataLikeCmd, ContextAwareCmd {
     @Override
     public void clearVersion() {
         this.version = null;
+    }
+
+    public String getAppId() {
+        return appId;
     }
 }

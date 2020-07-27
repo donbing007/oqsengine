@@ -70,7 +70,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                expectPrefix + "\"100F1L\"" + expectAfter + " AND jsonfields.1L = 100"
+                "jsonfields.1L = 100 AND " + expectPrefix + "\"100F1L\"" + expectAfter
             )
             ,
             new Case(
@@ -94,7 +94,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new EntityField(2, "c2", FieldType.STRING),
                         ConditionOperator.EQUALS,
                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "\"100F1L\" \"testF2S\"" + expectAfter + " AND jsonfields.1L = 100 AND jsonfields.2S = 'test'"
+                "jsonfields.1L = 100 AND jsonfields.2S = 'test' AND " + expectPrefix + "\"100F1L\" \"testF2S\"" + expectAfter
             ),
             new Case(
                 new Conditions(
@@ -106,7 +106,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new EntityField(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-\"100F1L\" -\"testF2S\" =Sg" + expectAfter + " AND jsonfields.1L != 100 AND jsonfields.2S != 'test'"
+                "jsonfields.1L != 100 AND jsonfields.2S != 'test' AND " + expectPrefix + "-\"100F1L\" -\"testF2S\" =Sg" + expectAfter
             ),
             new Case(
                 new Conditions(
@@ -118,7 +118,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new EntityField(2, "c2", FieldType.STRING),
                         ConditionOperator.NOT_EQUALS,
                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "test"))),
-                expectPrefix + "-\"testF2S\" =Sg" + expectAfter + " " + SqlKeywordDefine.AND + " id = 100 AND jsonfields.2S != 'test'"
+                "jsonfields.2S != 'test' AND id = 100 AND " + expectPrefix + "-\"testF2S\" =Sg" + expectAfter
             ),
             new Case(
                 new Conditions(
@@ -126,7 +126,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)),
                         ConditionOperator.EQUALS,
                         new LongValue(new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 100L))),
-                "MATCH('@fullfields  =Sg') AND id = 100"
+                "id = 100 AND MATCH('@fullfields  =Sg')"
             ),
             new Case(
                 new Conditions(
@@ -140,7 +140,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         ConditionOperator.EQUALS,
                         new LongValue(new EntityField(2, "c2", FieldType.LONG, FieldConfig.build().identifie(true)), 200L))
                 ),
-                "MATCH('@fullfields  =Sg') AND id = 100 AND id = 200"
+                "id = 100 AND id = 200 AND MATCH('@fullfields  =Sg')"
             ),
             new Case(
                 new Conditions(

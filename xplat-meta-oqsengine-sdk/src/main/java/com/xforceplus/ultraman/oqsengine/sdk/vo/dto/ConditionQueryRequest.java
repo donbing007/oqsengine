@@ -1,9 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -51,6 +48,9 @@ import java.util.stream.Stream;
  *      *                 },
  *      *             ],
  *      *         },
+ *      *        mapping:[{"code": "", "text":""}]
+ *      *
+ *      *
  *      *     }
  */
 public class ConditionQueryRequest {
@@ -65,6 +65,8 @@ public class ConditionQueryRequest {
 
     //return code
     private EntityItem entity;
+
+    private List<NameMapping> mapping;
 
     public Integer getPageNo() {
         return pageNo;
@@ -102,8 +104,16 @@ public class ConditionQueryRequest {
         return entity;
     }
 
+    public List<NameMapping> getMapping() {
+        return mapping;
+    }
+
     public void setEntity(EntityItem entity) {
         this.entity = entity;
+    }
+
+    public void setMapping(List<NameMapping> mapping) {
+        this.mapping = mapping;
     }
 
     public Set<String> getStringKeys(){

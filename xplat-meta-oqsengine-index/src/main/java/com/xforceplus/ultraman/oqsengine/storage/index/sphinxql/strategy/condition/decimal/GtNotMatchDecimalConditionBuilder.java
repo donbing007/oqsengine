@@ -17,11 +17,16 @@ public class GtNotMatchDecimalConditionBuilder extends NotMatchDecimalConditionB
 
     @Override
     public ConditionOperator intOperator() {
-        return ConditionOperator.GREATER_THAN_EQUALS;
+        return ConditionOperator.EQUALS;
     }
 
     @Override
     public ConditionOperator decOperator() {
+        return ConditionOperator.GREATER_THAN;
+    }
+
+    @Override
+    public ConditionOperator orOperator() {
         return ConditionOperator.GREATER_THAN;
     }
 }

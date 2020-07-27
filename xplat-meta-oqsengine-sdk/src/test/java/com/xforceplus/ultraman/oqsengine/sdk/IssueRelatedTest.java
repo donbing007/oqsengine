@@ -3,25 +3,30 @@ package com.xforceplus.ultraman.oqsengine.sdk;
 import com.xforceplus.ultraman.metadata.grpc.BoUp;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.metadata.grpc.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.configuration.TestApplicationContextInitializer;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.PlainEntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
-import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
+import io.vavr.Tuple2;
+import io.vavr.control.Either;
 import org.junit.Test;
+import org.junit.runner.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.ContextConfiguration;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.TRANSACTION_KEY;
+import static org.junit.Assert.assertEquals;
 
 @EnableAsync
 @ContextConfiguration(initializers = TestApplicationContextInitializer.class)
@@ -32,6 +37,9 @@ public class IssueRelatedTest extends ContextWareBaseTest {
 
     @Autowired
     private EntityService entityService;
+
+    @Autowired
+    private PlainEntityService plainEntityService;
 
     @Autowired
     private ContextService contextService;
@@ -85,6 +93,13 @@ public class IssueRelatedTest extends ContextWareBaseTest {
                                 .setCode("field2")
                                 .setSearchable("0")
                                 .setId("1004")
+                                .build())
+                        .addFields(com.xforceplus.ultraman.metadata.grpc.Field
+                                .newBuilder()
+                                .setCode("decimalField")
+                                .setSearchable("1")
+                                .setId("100466")
+                                .setFieldType(FieldType.DECIMAL.name())
                                 .build())
                         .addFields(com.xforceplus.ultraman.metadata.grpc.Field
                                 .newBuilder()
@@ -143,7 +158,7 @@ public class IssueRelatedTest extends ContextWareBaseTest {
 
 
     @Test
-    public void testSort(){
+    public void testSort() {
         metadataRepository.save(manyToOneNew(), "1", "1");
         IEntityClass entityClass = entityService.load("1").get();
 
@@ -155,10 +170,9 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         maps2.put("sortf", "2");
 
 
-
         entityService.findByCondition(entityClass
                 , new RequestBuilder()
-                       .pageSize(10).pageNo(1).build()).get()._2().forEach(x -> {
+                        .pageSize(10).pageNo(1).build()).get()._2().forEach(x -> {
             entityService.deleteOne(entityClass, Long.parseLong((String) x.get("id")));
         });
 
@@ -175,4 +189,152 @@ public class IssueRelatedTest extends ContextWareBaseTest {
                         .sort("sortf", "desc").pageSize(10).pageNo(1).build()));
 
     }
+
+    @Test
+    public void testCompareDecimal() {
+        metadataRepository.save(manyToOneNew(), "1", "1");
+        IEntityClass entityClass = entityService.load("1").get();
+
+
+
+        entityService.findByCondition(entityClass
+                , new RequestBuilder()
+                        .field("decimalField", ConditionOp.gt_lt, "150", "160.21")
+                        .pageSize(10).pageNo(1).build()).get()._2().forEach(x -> entityService.deleteOne(entityClass, Long.parseLong(x.get("id").toString())));
+
+
+        Map<String, Object> mapsfirst = new HashMap<>();
+        mapsfirst.put("field1", "1");
+
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("decimalField", "150.23");
+
+        Map<String, Object> maps2 = new HashMap<>();
+        maps2.put("decimalField", "160.10");
+
+        Long id = entityService.create(entityClass, maps).get();
+        Long id2 = entityService.create(entityClass, maps2).get();
+        Long id3 = entityService.create(entityClass, mapsfirst).get();
+
+        Integer rows = entityService.findByCondition(entityClass
+                , new RequestBuilder()
+                        .field("decimalField", ConditionOp.gt_lt, "150", "160.21")
+                        .pageSize(10).pageNo(1).build()).get()._1();
+
+        assertEquals(rows, (Integer)2);
+
+
+        Integer rows2 = entityService.findByCondition(entityClass
+                , new RequestBuilder()
+                        .field("decimalField", ConditionOp.gt_lt, "150", "160.21")
+                        .field("field1", ConditionOp.eq, "1")
+                        .pageSize(10).pageNo(1).build()).get()._1();
+
+        assertEquals(rows2, (Integer)0);
+
+        entityService.deleteOne(entityClass, id);
+        entityService.deleteOne(entityClass, id2);
+        entityService.deleteOne(entityClass, id3);
+    }
+
+    @Test
+    public void testConditionSearch(){
+        metadataRepository.save(manyToOneNew(), "1", "1");
+        IEntityClass entityClass = entityService.load("1").get();
+
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("decimalField", "15.23");
+
+        Map<String, Object> maps2 = new HashMap<>();
+        maps2.put("decimalField", "16.10");
+
+        Long id = entityService.create(entityClass, maps).get();
+        Long id2 = entityService.create(entityClass, maps2).get();
+
+        Either<String, Tuple2<Integer, List<Map<String, Object>>>> result = entityService
+                .findByCondition(entityClass
+                        , new RequestBuilder()
+                                .field("decimalField", ConditionOp.in, Collections.emptyList()).pageNo(1).pageSize(10).build());
+
+
+        Either<String, Tuple2<Integer, List<Map<String, Object>>>> searchByIds = entityService
+                .findByConditionWithIds(entityClass
+                        , Collections.emptyList()
+                        , new RequestBuilder()
+                                .pageNo(1).pageSize(10).build());
+
+        Either<String, Tuple2<Integer, List<Map<String, Object>>>> result2 = entityService
+                .findByCondition(entityClass
+                        , new RequestBuilder()
+                                .pageNo(1).pageSize(10).build());
+
+        entityService.deleteOne(entityClass, id);
+        entityService.deleteOne(entityClass, id2);
+
+        System.out.println(result);
+        System.out.println(result2);
+        System.out.println(searchByIds);
+
+    }
+
+    @Test
+    public void testPlain(){
+        metadataRepository.save(manyToOneNew(), "1", "1");
+
+        try {
+            IEntityClass wrong = plainEntityService.load("200");
+        }catch(Exception ex){
+            System.out.println(ex.getMessage());
+        }
+        IEntityClass entityClass = plainEntityService.load("1");
+
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("decimalField22", "15.23");
+
+        Long id = plainEntityService.create(entityClass, maps);
+
+        System.out.println(plainEntityService.deleteOne(entityClass, id));
+    }
+
+    @Test
+    public void currentTransaction(){
+
+        metadataRepository.save(manyToOneNew(), "1", "1");
+
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("decimalField", "100000");
+
+
+        IEntityClass entityClass = plainEntityService.load("1");
+
+
+        System.out.println(entityService.findByCondition(entityClass
+                , new RequestBuilder().field("decimalField", ConditionOp.eq, "100000").pageSize(10).pageNo(1).build()));
+        /**
+         *
+         */
+        Either<String, List<Long>> lists = entityService.transactionalExecute(() -> {
+
+            Thread.sleep(2500);
+
+            return IntStream.range(1, 100)
+                    .boxed()
+                    .map(i -> {
+                        return entityService.create(entityClass, maps).getOrElse((Long) null);
+                    }).filter(Objects::nonNull).collect(Collectors.toList());
+        });
+
+        System.out.println(entityService.findByCondition(entityClass
+                , new RequestBuilder().field("decimalField", ConditionOp.eq, "100000").pageSize(10).pageNo(1).build()));
+
+        lists.map(r -> { r.forEach(x -> {
+            entityService.deleteOne(entityClass, x);
+
+        });
+        return "";}).orElseRun(System.out::println);
+
+        System.out.println(entityService.findByCondition(entityClass
+                , new RequestBuilder().field("decimalField", ConditionOp.eq, "100000").pageSize(10).pageNo(1).build()));
+    }
+
 }

@@ -21,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.service.ExportSource;
 import com.xforceplus.ultraman.oqsengine.sdk.ui.DefaultUiService;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.DictItem;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.NameMapping;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.anno.QueryHandler;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.messaging.MetaData;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.messaging.QueryMessage;
@@ -168,7 +169,6 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
 
         //#26 user-center not support Chinese
         //remove
-
         Long currentTime = System.nanoTime();
 
         String token = Optional.ofNullable(metaData.get("code")).map(Object::toString)
@@ -210,13 +210,31 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
                         .map(record -> {
                             StringBuilder sb = new StringBuilder();
                             if (isFirstLine.get()) {
+
+                                List<NameMapping> nameMapping = request.getMapping();
+
+                                Map<String, String> map =
+                                        Optional.ofNullable(nameMapping).map(x -> x.stream()
+                                                .collect(Collectors.toMap(NameMapping::getCode, NameMapping::getText)))
+                                                .orElse(Collections.emptyMap());
+
                                 String header = record
                                         .stream(keys)
                                         .map(Tuple2::_1)
                                         .map(x -> Optional.ofNullable(x)
-                                                .map(IEntityField::cnName)
+                                                .map(y -> {
+                                                    String fieldName = y.name();
+                                                    String name = map.get(fieldName);
+                                                    if (name == null) {
+                                                        return y.cnName();
+                                                    } else {
+                                                        return name;
+                                                    }
+                                                })
                                                 .orElse(""))
                                         .collect(Collectors.joining(","));
+
+                                //setup headers
                                 sb.append(header);
                                 sb.append("\n");
                                 isFirstLine.set(false);
@@ -252,11 +270,11 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
                             String downloadUrl = exportSink.getDownloadUrl(x._2());
 
                             Map<String, Object> context = new HashMap<>(metaData);
-                            publisher.publishEvent(new EntityExported(context, downloadUrl, token, cmd.getExportType()));
+                            publisher.publishEvent(new EntityExported(context, downloadUrl, token, cmd.getExportType(), cmd.getAppId()));
                             return Either.<String, String>right(downloadUrl);
                         }).exceptionally(th -> {
                             Map<String, Object> context = new HashMap<>(metaData);
-                            publisher.publishEvent(new EntityErrorExported(context, token, th.getMessage()));
+                            publisher.publishEvent(new EntityErrorExported(context, token, th.getMessage(), cmd.getAppId()));
                             return Either.left(th.getMessage());
                         });
 

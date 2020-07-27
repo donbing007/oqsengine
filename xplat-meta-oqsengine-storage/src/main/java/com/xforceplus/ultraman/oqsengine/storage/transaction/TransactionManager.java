@@ -33,16 +33,10 @@ public interface TransactionManager {
     Optional<Transaction> getCurrent();
 
     /**
-     * 重建事务.
-     * @param id 事务 id.
-     */
-    void rebind(long id);
-
-    /**
      * 绑定一个非受管事务.
-     * @param tx 事务.
+     * @param id 事务id.
      */
-    void bind(Transaction tx);
+    void bind(long id);
 
     /**
      * 让事务不再绑定到当前上下文.

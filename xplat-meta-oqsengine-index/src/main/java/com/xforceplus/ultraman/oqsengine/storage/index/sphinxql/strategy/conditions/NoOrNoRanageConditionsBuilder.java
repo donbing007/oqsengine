@@ -91,18 +91,22 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
         }
         buff.append("')");
 
+        StringBuilder temp = new StringBuilder();
         if (idBuff.length() > 0) {
-            buff.append(" ").append(SqlKeywordDefine.AND).append(" ").append(idBuff.toString());
+            temp.append(idBuff.toString()).append(" ").append(SqlKeywordDefine.AND).append(" ");
+            buff.insert(0, temp.toString());
         }
 
         // issue #14
         if (!secondaryFilterConditions.isEmpty()) {
             String condtitonStr = buildSecondFilterConditions(secondaryFilterConditions);
             if (!condtitonStr.isEmpty()) {
-                buff.append(" ")
-                    .append(SqlKeywordDefine.AND)
+                temp.delete(0, temp.length());
+                temp.append(condtitonStr)
                     .append(" ")
-                    .append(condtitonStr);
+                    .append(SqlKeywordDefine.AND)
+                    .append(" ");
+                buff.insert(0, temp.toString());
             }
         }
 
