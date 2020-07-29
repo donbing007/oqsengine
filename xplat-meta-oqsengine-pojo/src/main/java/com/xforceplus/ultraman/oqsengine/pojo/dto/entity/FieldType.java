@@ -61,8 +61,19 @@ public enum FieldType {
 
     STRING("String", new String[]{"string"}
             , StringValue::new),
-    STRINGS("Strings", new String[]{"strings"}
-            , StringsValue::new),
+    STRINGS("Strings",
+            s -> {
+                try {
+                    s.trim().split(",");
+                    return true;
+                } catch (Exception e) {
+                    return false;
+                }
+            }, new String[]{"strings"}
+            , (x, str) -> {
+        return new StringsValue(x, str.trim().split(","));
+    }
+    ),
     DECIMAL("Decimal", s -> {
         try {
             new BigDecimal(s);

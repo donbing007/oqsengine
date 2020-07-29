@@ -230,7 +230,7 @@ public class GeneralRecord implements Record {
     @Override
     public Map<String, Object> toMap(Set<String> filterName) {
 
-        Map<String, Object> map = new HashMap<>(values.length);
+        Map<String, Object> map = new HashMap<>(values.length + 1);
 
         IntStream.range(0, values.length)
                 .forEach(i -> {
@@ -245,6 +245,9 @@ public class GeneralRecord implements Record {
                     }
 
                 });
+
+        //make up map id
+        map.putIfAbsent("id", id);
 
         return map;
     }

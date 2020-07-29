@@ -193,7 +193,7 @@ public class EntityServiceTest extends ContextWareBaseTest{
 
         FieldConfig nonRequiredfieldConfig = new FieldConfig().searchable(true);
 
-        EntityClass entityClass = new EntityClass(123666L, "TestDefault"
+        EntityClass entityClass = new EntityClass(1236666L, "TestDefault"
                 , Arrays.asList(new EntityField(123L, "defaultfield"
                 , FieldType.STRINGS, fieldConfig)
                 , new EntityField(234L, "hello", FieldType.STRING, nonRequiredfieldConfig)
@@ -206,20 +206,30 @@ public class EntityServiceTest extends ContextWareBaseTest{
     public void testStrings(){
 
         EntityClass entityClass = entity();
+
+        entityService.findByCondition(entityClass, new RequestBuilder().pageNo(1).pageSize(10).build()).map(x -> x._2()).forEach(
+                x -> x.stream().forEach(y -> {
+                    entityService.deleteOne(entityClass, (Long) y.get("id"));
+                })
+        );
+
+
         Map<String, Object> map3 = new HashMap<>();
-        map3.put("defaultfield", "1,2,3,4");
+        map3.put("defaultfield", "1,2,3");
 
         Either<String, Long> ret2 = entityService.create(entityClass, map3);
-        System.out.println(entityService.findOne(entityClass, ret2.get()));
+//        System.out.println(entityService.findOne(entityClass, ret2.get()));
 
-        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.in
-                , "1", "2").build()));
+        Integer row = entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.in
+                , "1", "2" , "3", "4" , "5").pageNo(1).pageSize(10).build()).get()._1();
+        assertEquals("Got", row, 1);
 
-        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.ne
-                , "1").build()));
-
-        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.eq
-                , "1").build()));
+//        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.ne
+//                , "1").pageNo(1).pageSize(10).build()));
+//
+        Integer row2 = entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.eq
+                , "1").pageNo(1).pageSize(10).build()).get()._1();
+        assertEquals("Got", row2, 1);
     }
 
 
