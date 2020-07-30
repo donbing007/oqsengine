@@ -369,6 +369,10 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
                 storageValue = new LongStorageValue(key, (Long) value, false);
 
+            } else if (Integer.class.isInstance(value)) {
+
+                storageValue = new LongStorageValue(key, ((Integer) value).longValue(), false);
+
             } else {
 
                 storageValue = new StringStorageValue(key, (String) value, false);
