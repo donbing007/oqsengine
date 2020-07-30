@@ -270,11 +270,11 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
                             String downloadUrl = exportSink.getDownloadUrl(x._2());
 
                             Map<String, Object> context = new HashMap<>(metaData);
-                            publisher.publishEvent(new EntityExported(context, downloadUrl, token, cmd.getExportType()));
+                            publisher.publishEvent(new EntityExported(context, downloadUrl, token, cmd.getExportType(), cmd.getAppId()));
                             return Either.<String, String>right(downloadUrl);
                         }).exceptionally(th -> {
                             Map<String, Object> context = new HashMap<>(metaData);
-                            publisher.publishEvent(new EntityErrorExported(context, token, th.getMessage()));
+                            publisher.publishEvent(new EntityErrorExported(context, token, th.getMessage(), cmd.getAppId()));
                             return Either.left(th.getMessage());
                         });
 

@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.util.ConditionQueryRequestHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.util.context.ContextDecorator;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.FlowRegistry;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.QueueFlow;
@@ -155,10 +156,14 @@ public class EntityServiceImpl implements EntityService {
                 return commitedT.join();
             } catch (Exception ex) {
                 //maybe timeout
-                entityServiceClient.rollBack(TransactionUp.newBuilder()
-                        .setId(result.getTransactionResult())
-                        .build()).toCompletableFuture().join();
-                return Either.left(ex.getMessage());
+                try {
+                    entityServiceClient.rollBack(TransactionUp.newBuilder()
+                            .setId(result.getTransactionResult())
+                            .build()).toCompletableFuture().join();
+                    return Either.left(ex.getMessage());
+                } catch (Exception bindEx) {
+                    return Either.left(bindEx.getMessage());
+                }
             } finally {
                 //remove TRANSACTION_KEY
                 logger.info("remove currentService {} with {}", TRANSACTION_KEY.name(), result.getTransactionResult());
@@ -406,8 +411,10 @@ public class EntityServiceImpl implements EntityService {
 
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
 
+        ConditionQueryRequest finalRequest = ConditionQueryRequestHelper.build(ids, condition);
+
         if (isRangeStrict) {
-            boolean noRange = (condition.getPageSize() == null || condition.getPageNo() == null);
+            boolean noRange = (finalRequest.getPageSize() == null || finalRequest.getPageNo() == null);
             if (noRange) {
                 return Either.left("[STRICT-MODE]: RangeSearch Without Range");
             }
@@ -421,17 +428,18 @@ public class EntityServiceImpl implements EntityService {
         /**
          * to ConditionsUp
          */
-        ConditionsUp conditionsUp = Optional.ofNullable(condition)
+        ConditionsUp conditionsUp = Optional.ofNullable(finalRequest)
                 .map(ConditionQueryRequest::getConditions)
-                .map(x ->
-                        handleQueryValueService
-                                .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY))
+                .map(x -> {
+                    return handleQueryValueService
+                            .handleQueryValue(entityClass, x, OperationType.QUERY);
+                })
                 .orElseGet(() -> ConditionsUp.newBuilder().build());
 
         /**
          * condition
          */
-        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, ids, condition, conditionsUp))
+        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, finalRequest, conditionsUp))
                 .toCompletableFuture().join();
 
         if (result.getCode() == OperationResult.Code.OK) {

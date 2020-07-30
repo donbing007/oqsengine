@@ -1,9 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.vo.dto;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -113,6 +110,10 @@ public class ConditionQueryRequest {
 
     public void setEntity(EntityItem entity) {
         this.entity = entity;
+    }
+
+    public void setMapping(List<NameMapping> mapping) {
+        this.mapping = mapping;
     }
 
     public Set<String> getStringKeys(){

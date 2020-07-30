@@ -150,6 +150,11 @@ public class InitServiceAutoConfiguration {
     }
 
     @Bean
+    public PlainEntityService plainEntityService(EntityService entityService) {
+        return new PlainEntityServiceImpl(entityService);
+    }
+
+    @Bean
     public EntityServiceEx entityServiceEx(MetadataRepository metadataRepository
             , EntityServiceClient entityServiceClient
             , ContextService contextService) {

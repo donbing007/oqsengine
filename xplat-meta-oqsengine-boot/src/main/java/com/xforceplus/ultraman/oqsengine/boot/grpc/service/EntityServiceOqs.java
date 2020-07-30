@@ -368,7 +368,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
                 logInfo(metadata, (displayname, username) -> String.format("Attempt to delete %s:%s by %s:%s", in.getId(), in.getObjId(), displayname, username));
-            } catch (Exception ex){
+            } catch (Exception ex) {
                 logger.error("{}", ex);
             }
 
@@ -814,10 +814,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     /**
-     *
      * @param metadata
      */
-    private void logInfo(Metadata metadata, BiFunction<String, String, String> template){
+    private void logInfo(Metadata metadata, BiFunction<String, String, String> template) {
         String displayName = metadata.getText("display-name").orElse("noname");
         String userName = metadata.getText("username").orElse("noname");
 
@@ -869,11 +868,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
              * turn alias field to columnfield
              */
             Optional<AliasField> field = reader.field(x.getField().getId());
-            return toOneConditions(field.flatMap(f -> reader.column(f.firstName())), x, mainClass);
+            return toOneConditions(field.flatMap(f ->
+                    reader.column(f.firstName())), x, mainClass);
         }).filter(Objects::nonNull).reduce((a, b) -> a.addAnd(b, true));
 
+        //remove special behavior for ids
+//        //Remove Empty ids judgment
         if (ids != null && !ids.isEmpty()) {
-
 //            Optional<IEntityField> idField = IEntityClassHelper.findFieldByCode(entityClass, "id");
             Optional<IEntityField> idField = reader.column("id").map(ColumnField::getOriginObject);
             Optional<Conditions> conditionsIds = idField.map(field -> {
@@ -923,8 +924,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             //return if field with invalid
             if (nonNullValueList.isEmpty()) {
-                conditions = Conditions.buildEmtpyConditions();
-                return conditions;
+//                conditions = Conditions.buildEmtpyConditions();
+//                return conditions;
+                throw new RuntimeException("Field " + columnField + " Value is Missing");
             }
 
             switch (op) {
@@ -1142,6 +1144,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 default:
 
             }
+        }
+
+        if (conditions == null) {
+            throw new RuntimeException("Condition is invalid " + fieldCondition);
         }
 
         return conditions;

@@ -168,7 +168,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
         Transaction tx = survival.get(id);
         if (tx == null) {
-            throw new RuntimeException(String.format("Invalid transaction({}), transaction may have timed out.", id));
+            throw new RuntimeException(String.format("Invalid transaction(%s), transaction may have timed out.", id));
         }
 
         long threadId = Thread.currentThread().getId();

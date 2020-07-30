@@ -72,9 +72,10 @@ public enum FieldType {
         }
     }, new String[]{"double", "decimal"}
             , (f, v) -> {
+        //default precision is 2
         int precision = Optional.ofNullable(f.config())
                 .map(FieldConfig::getPrecision)
-                .filter(x -> x > 0).orElse(1);
+                .filter(x -> x > 0).orElse(2);
         return new DecimalValue(f, new BigDecimal(v)
                 .setScale(precision, RoundingMode.HALF_UP));
     });
