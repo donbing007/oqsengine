@@ -18,14 +18,15 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  */
 public abstract class NotMatchDecimalConditionBuilder extends SphinxQLConditionBuilder {
 
-    public NotMatchDecimalConditionBuilder(
-        StorageStrategyFactory storageStrategyFactory, ConditionOperator operator) {
+    public NotMatchDecimalConditionBuilder(StorageStrategyFactory storageStrategyFactory, ConditionOperator operator) {
         super(storageStrategyFactory, FieldType.DECIMAL, operator, false);
     }
 
     public abstract ConditionOperator intOperator();
 
     public abstract ConditionOperator decOperator();
+
+    public abstract ConditionOperator orOperator();
 
     @Override
     protected String doBuild(Condition condition) {
@@ -37,24 +38,24 @@ public abstract class NotMatchDecimalConditionBuilder extends SphinxQLConditionB
         if (dStoragetValue == null) {
             throw new IllegalStateException("Unexpected decimal places.");
         }
-
+        // andy.zhou 20200721
         StringBuilder buff = new StringBuilder();
         buff.append("(");
-        buff.append(FieldDefine.JSON_FIELDS).append(".").append(iStorageValue.storageName())
-            .append(" ")
-            .append(intOperator().getSymbol())
-            .append(" ")
-            .append(iStorageValue.value());
+        buff.append("(");
+        buff.append(FieldDefine.JSON_FIELDS).append(".").append(iStorageValue.storageName()).append(" ")
+                .append(orOperator().getSymbol()).append(" ").append(iStorageValue.value());
+        buff.append(") ");
+        buff.append(SqlKeywordDefine.OR).append(" ");
+        // end andy.zhou 20200721
 
+        buff.append("(");
+        buff.append(FieldDefine.JSON_FIELDS).append(".").append(iStorageValue.storageName()).append(" ")
+                .append(intOperator().getSymbol()).append(" ").append(iStorageValue.value());
         buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
-
-        buff.append(FieldDefine.JSON_FIELDS).append(".").append(dStoragetValue.storageName())
-            .append(" ")
-            .append(decOperator().getSymbol())
-            .append(" ")
-            .append(dStoragetValue.value());
+        buff.append(FieldDefine.JSON_FIELDS).append(".").append(dStoragetValue.storageName()).append(" ")
+                .append(decOperator().getSymbol()).append(" ").append(dStoragetValue.value());
         buff.append(")");
-
+        buff.append(")");
         return buff.toString();
     }
 }

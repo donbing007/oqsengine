@@ -8,7 +8,12 @@ import org.slf4j.LoggerFactory;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Simple multi-local transaction implementation ensures atomicity before the commit,
@@ -28,8 +33,9 @@ public class MultiLocalTransaction implements Transaction {
     private long id;
     private long attachment;
     private List<TransactionResource> transactionResourceHolder;
-    private boolean committed;
-    private boolean rollback;
+    private volatile boolean committed;
+    private volatile boolean rollback;
+
 
     public MultiLocalTransaction(long id) {
         transactionResourceHolder = new LinkedList<>();
@@ -79,11 +85,7 @@ public class MultiLocalTransaction implements Transaction {
 
     @Override
     public boolean isCompleted() {
-        if (this.committed || this.rollback) {
-            return true;
-        }
-
-        return false;
+        return this.committed || this.rollback;
     }
 
     @Override
@@ -144,6 +146,15 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     private void doEnd(boolean commit) throws SQLException {
+        if (commit) {
+
+            committed = true;
+
+        } else {
+
+            rollback = true;
+
+        }
         List<SQLException> exHolder = new LinkedList<>();
         for (TransactionResource transactionResource : transactionResourceHolder) {
             try {
@@ -162,17 +173,34 @@ public class MultiLocalTransaction implements Transaction {
             }
 
         }
-        if (commit) {
-
-            committed = true;
-
-        } else {
-
-            rollback = true;
-
-        }
 
         throwSQLExceptionIfNecessary(exHolder);
+    }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof MultiLocalTransaction)) {
+            return false;
+        }
+        MultiLocalTransaction that = (MultiLocalTransaction) o;
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "MultiLocalTransaction{" +
+            "id=" + id +
+            ", attachment=" + attachment +
+            ", committed=" + committed +
+            ", rollback=" + rollback +
+            '}';
     }
 }

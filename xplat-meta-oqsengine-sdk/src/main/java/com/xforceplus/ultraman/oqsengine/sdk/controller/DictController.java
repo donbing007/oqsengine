@@ -14,7 +14,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +44,34 @@ public class DictController {
             response.setMessage("查询无结果");
             response.setCode("500");
         }
+        return response;
+    }
+
+    @GetMapping("/enums/options")
+    @ResponseBody
+    public Response getDicts(
+            @RequestParam(required = false, value = "ids") String[] enumIds
+    ) {
+        Response<Map<String, List<DictItem>>> response = new Response<>();
+        if (enumIds != null && enumIds.length > 0) {
+            Map<String, List<DictItem>> enums = new HashMap<>();
+            for (String enumId : enumIds) {
+                List<DictItem> dictItems = entityServiceEx.findDictItems(enumId, null);
+                enums.put(enumId, dictItems);
+            }
+            if (enums.size() > 0) {
+                response.setMessage("查询成功");
+                response.setCode("1");
+                response.setResult(enums);
+            } else {
+                response.setMessage("查询无结果");
+                response.setCode("-1");
+            }
+        } else {
+            response.setMessage("请传入需要查询的字典id");
+            response.setCode("-1");
+        }
+
         return response;
     }
 }

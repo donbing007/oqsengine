@@ -171,12 +171,13 @@ public class Page implements Externalizable, Cloneable {
      *
      * @param totalCount 分页数据量上限.
      */
-    public void setVisibleTotalCount(long totalCount) {
+    public Page setVisibleTotalCount(long totalCount) {
         if (totalCount <= 0) {
             throw new IllegalArgumentException("The total amount of data must be a positive integer greater than 0.");
         }
 
         this.visibleTotalCount = totalCount;
+        return this;
     }
 
     /**

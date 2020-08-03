@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.sdk.service.impl;
 
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityCreated;
@@ -11,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.util.ConditionQueryRequestHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.util.context.ContextDecorator;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.FlowRegistry;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.QueueFlow;
@@ -68,13 +68,14 @@ public class EntityServiceImpl implements EntityService {
     @Autowired
     private FlowRegistry flowRegistry;
 
-    private Random random = new Random();
-
     @Value("${xplat.oqsengine.sdk.cas.retry.max-attempts:2}")
-    int maxAttempts;
+    private int maxAttempts;
 
     @Value("${xplat.oqsengine.sdk.cas.retry.delay:100}")
-    int delay;
+    private int delay;
+
+    @Value("${xplat.oqsengine.sdk.strict.range:true}")
+    private boolean isRangeStrict;
 
     private Logger logger = LoggerFactory.getLogger(EntityService.class);
 
@@ -155,10 +156,14 @@ public class EntityServiceImpl implements EntityService {
                 return commitedT.join();
             } catch (Exception ex) {
                 //maybe timeout
-                entityServiceClient.rollBack(TransactionUp.newBuilder()
-                        .setId(result.getTransactionResult())
-                        .build()).toCompletableFuture().join();
-                return Either.left(ex.getMessage());
+                try {
+                    entityServiceClient.rollBack(TransactionUp.newBuilder()
+                            .setId(result.getTransactionResult())
+                            .build()).toCompletableFuture().join();
+                    return Either.left(ex.getMessage());
+                } catch (Exception bindEx) {
+                    return Either.left(bindEx.getMessage());
+                }
             } finally {
                 //remove TRANSACTION_KEY
                 logger.info("remove currentService {} with {}", TRANSACTION_KEY.name(), result.getTransactionResult());
@@ -206,10 +211,11 @@ public class EntityServiceImpl implements EntityService {
         CompletableFuture<Either<String, T>> future = new CompletableFuture<>();
 
         //this is fixed by only retry for update and delete
+
         RetryConfig config = RetryConfig.<Either<String, T>>custom()
                 .maxAttempts(maxAttempts)
                 .waitDuration(Duration.ofMillis(delay))
-                .retryOnResult(response -> response.isLeft() && response.getLeft().equalsIgnoreCase("CONFLICT"))
+                .retryOnResult(response -> response == null || (response.isLeft() && "CONFLICT".equalsIgnoreCase(response.getLeft())))
                 .build();
 
         Retry retry = retryRegistry.retry("retry-" + UUID.randomUUID().toString(), config);
@@ -242,6 +248,19 @@ public class EntityServiceImpl implements EntityService {
             logger.info("delete with Transaction id:{} ", transId);
             removeBuilder = removeBuilder.addHeader("transaction-id", transId);
         }
+
+        //monitor delete action
+        String userDisplayName = contextService.get(USER_DISPLAYNAME);
+        String userName = contextService.get(USERNAME);
+
+        if (userDisplayName != null) {
+            removeBuilder = removeBuilder.addHeader("display-name", userDisplayName);
+        }
+
+        if (userName != null) {
+            removeBuilder = removeBuilder.addHeader("username", userDisplayName);
+        }
+
 
         OperationResult updateResult =
                 removeBuilder.invoke(toEntityUp(entityClass, id))
@@ -392,8 +411,13 @@ public class EntityServiceImpl implements EntityService {
 
         SingleResponseRequestBuilder<SelectByCondition, OperationResult> requestBuilder = entityServiceClient.selectByConditions();
 
-        if (condition.getPageSize() == null || condition.getPageNo() == null) {
-            return Either.left("RangeSearch without range");
+        ConditionQueryRequest finalRequest = ConditionQueryRequestHelper.build(ids, condition);
+
+        if (isRangeStrict) {
+            boolean noRange = (finalRequest.getPageSize() == null || finalRequest.getPageNo() == null);
+            if (noRange) {
+                return Either.left("[STRICT-MODE]: RangeSearch Without Range");
+            }
         }
 
         if (transId != null) {
@@ -404,17 +428,18 @@ public class EntityServiceImpl implements EntityService {
         /**
          * to ConditionsUp
          */
-        ConditionsUp conditionsUp = Optional.ofNullable(condition)
+        ConditionsUp conditionsUp = Optional.ofNullable(finalRequest)
                 .map(ConditionQueryRequest::getConditions)
-                .map(x ->
-                        handleQueryValueService
-                                .handleQueryValue(entityClass, condition.getConditions(), OperationType.QUERY))
+                .map(x -> {
+                    return handleQueryValueService
+                            .handleQueryValue(entityClass, x, OperationType.QUERY);
+                })
                 .orElseGet(() -> ConditionsUp.newBuilder().build());
 
         /**
          * condition
          */
-        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, ids, condition, conditionsUp))
+        OperationResult result = requestBuilder.invoke(toSelectByCondition(entityClass, finalRequest, conditionsUp))
                 .toCompletableFuture().join();
 
         if (result.getCode() == OperationResult.Code.OK) {
