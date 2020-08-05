@@ -34,11 +34,13 @@
         <dependency>
             <groupId>com.xforceplus.xplat-galaxy</groupId>
             <artifactId>xplat-core-spi</artifactId>
+            <version>${dependencies.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.xforceplus.xplat-galaxy</groupId>
             <artifactId>xplat-common</artifactId>
+            <version>${dependencies.version}</version>
         </dependency>
 
         <dependency>
@@ -112,6 +114,7 @@
         <dependency>
             <artifactId>xplat-core-framework</artifactId>
             <groupId>com.xforceplus.xplat-galaxy</groupId>
+            <version>${dependencies.version}</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>

@@ -229,8 +229,9 @@ public class SphinxQLIndexStorageTest {
 		transactionManager.bind(tx.id());
 
 		IEntity expectedEntity = (IEntity) entityes[0].clone();
-		expectedEntity.entityValue().addValue(new LongValue(longField, 760L));
-		expectedEntity.entityValue().addValue(new StringsValue(stringsField, "\\\'新的字段,会有特殊字符.\'\\", "value3"));
+		expectedEntity.entityValue().clear()
+			.addValue(new LongValue(longField, 760))
+			.addValue(new StringsValue(stringsField, "\\\'新的字段,会有特殊字符.\'\\", "value3"));
 
 		storage.replaceAttribute(expectedEntity.entityValue());
 		transactionManager.getCurrent().get().commit();
