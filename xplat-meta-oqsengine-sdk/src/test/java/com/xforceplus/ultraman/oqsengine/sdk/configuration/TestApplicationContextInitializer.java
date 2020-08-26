@@ -10,6 +10,7 @@ public class TestApplicationContextInitializer implements ApplicationContextInit
     {
         System.setProperty("BOCP_SERVER_HOST", "ultraman.xforcecloud.com");
         System.setProperty("BOCP_SERVER_PORT", "23120");
-        //System.setProperty("OQSENGINE_SERVER_PORT", "23118");
+//        System.setProperty("OQSENGINE_SERVER_HOST", "localhost");
+//        System.setProperty("OQSENGINE_SERVER_PORT", "8081");
     }
 }

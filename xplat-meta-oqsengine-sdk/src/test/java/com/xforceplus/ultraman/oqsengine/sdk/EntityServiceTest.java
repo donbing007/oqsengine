@@ -8,10 +8,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfiguration;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.configuration.TestApplicationContextInitializer;
+import com.xforceplus.ultraman.oqsengine.sdk.controller.EntityController;
+import com.xforceplus.ultraman.oqsengine.sdk.service.EntityExportService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Response;
 import com.xforceplus.xplat.galaxy.framework.configuration.AsyncTaskExecutorAutoConfiguration;
 import com.xforceplus.xplat.galaxy.framework.configuration.ServiceDispatcherAutoConfiguration;
 import com.xforceplus.xplat.galaxy.framework.configuration.ServiceInvokerAutoConfiguration;
@@ -52,6 +56,12 @@ public class EntityServiceTest extends ContextWareBaseTest{
 
     @Autowired
     ContextService contextService;
+
+    @Autowired
+    EntityController entityController;
+
+    @Autowired
+    EntityExportService entityExportService;
 
 //    @Test
 //    public void testPagenation() throws InterruptedException {
@@ -193,9 +203,13 @@ public class EntityServiceTest extends ContextWareBaseTest{
 
         FieldConfig nonRequiredfieldConfig = new FieldConfig().searchable(true);
 
+
+        FieldConfig fieldConfig1 = new FieldConfig().identifie(true);
+
         EntityClass entityClass = new EntityClass(123666L, "TestDefault"
                 , Arrays.asList(new EntityField(123L, "defaultfield"
                 , FieldType.STRINGS, fieldConfig)
+                , new EntityField(10000L, "id", FieldType.LONG, fieldConfig1)
                 , new EntityField(234L, "hello", FieldType.STRING, nonRequiredfieldConfig)
         ));
 
@@ -343,6 +357,8 @@ public class EntityServiceTest extends ContextWareBaseTest{
         System.out.println(entityService.findOne(entityClass, id1.get()));
     }
 
+
+
     @Test
     public void selectInTransTest(){
 
@@ -391,12 +407,26 @@ public class EntityServiceTest extends ContextWareBaseTest{
         System.out.println(entityService.findOne(entityClass, atomicLong.get()));
     }
 
+    @Test
+    public void testExport(){
 
-//    @Test
-//    public void testMultiValue(){
-//
-//        Optional<EntityClass> load = entityService.load("1260142892112224258");
-//        boolean multiValues = load.get().relations().stream().anyMatch(x -> x.getRelationType().equals("MultiValues"));
-//        assertTrue("hash multi", multiValues);
-//    }
+        EntityClass entityClass = entity();
+
+//        Map<String, Object> body = new HashMap<>();
+//        IntStream.range(0, 50000).forEach(x -> {
+//            body.put("hello", "" + x);
+//            body.put("defaultfield", "");
+//            entityService.create(entityClass, body);
+//        });
+
+        ConditionQueryRequest build = new RequestBuilder().build();
+
+
+
+
+        Either<String, String> join = entityExportService.export(entityClass, build
+                , "ok", "ok", null, "sync", null).join();
+
+        System.out.println(join);
+    }
 }

@@ -385,4 +385,9 @@ public class InitServiceAutoConfiguration {
         RateLimiter rateLimiter = registry.rateLimiter("retry", config);
         return rateLimiter;
     }
+
+    @Bean
+    public EntityExportService entityExportService(){
+        return new EntityExportServiceImpl();
+    }
 }

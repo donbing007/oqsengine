@@ -68,7 +68,7 @@ public class EntityServiceImpl implements EntityService {
     @Autowired
     private FlowRegistry flowRegistry;
 
-    @Value("${xplat.oqsengine.sdk.cas.retry.max-attempts:2}")
+    @Value("${xplat.oqsengine.sdk.cas.retry.max-attempts:10}")
     private int maxAttempts;
 
     @Value("${xplat.oqsengine.sdk.cas.retry.delay:100}")

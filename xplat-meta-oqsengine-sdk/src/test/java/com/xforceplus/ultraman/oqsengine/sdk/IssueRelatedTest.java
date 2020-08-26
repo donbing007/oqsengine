@@ -141,7 +141,7 @@ public class IssueRelatedTest extends ContextWareBaseTest {
             contextService.set(TRANSACTION_KEY, "1234");
             Map<String, Object> updateBody = new HashMap<>();
             updateBody.put("field1", "123-" + Thread.currentThread().getName());
-            System.out.println(entityService.retryExecute("a", () -> entityService
+            System.out.println("1111111111" + entityService.retryExecute("a", () -> entityService
                     .updateById(entityClass, id, updateBody)));
             latch.countDown();
             contextService.clear();
@@ -149,6 +149,34 @@ public class IssueRelatedTest extends ContextWareBaseTest {
 
         latch.await();
 
+        System.out.println(entityService.findOne(entityClass, id));
+
+        entityService.deleteOne(entityClass, id);
+
+        Thread.sleep(10000);
+    }
+
+    @Test
+    public void testCasAutoRetry() throws InterruptedException {
+        metadataRepository.save(manyToOneNew(), "1", "1");
+
+        int concurrent = 100;
+
+        IEntityClass entityClass = entityService.load("1").get();
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("field1", "123");
+        Long id = entityService.create(entityClass, maps).get();
+
+        CountDownLatch latch = new CountDownLatch(concurrent);
+
+        IntStream.range(0, concurrent).mapToObj(x -> new Thread(() -> {
+            Map<String, Object> updateBody = new HashMap<>();
+            updateBody.put("field1", "123-" + Thread.currentThread().getName());
+            System.out.println("1212121212" + plainEntityService.updateById(entityClass, id, updateBody));
+            latch.countDown();
+        })).forEach(Thread::start);
+
+        latch.await();
         System.out.println(entityService.findOne(entityClass, id));
 
         entityService.deleteOne(entityClass, id);
