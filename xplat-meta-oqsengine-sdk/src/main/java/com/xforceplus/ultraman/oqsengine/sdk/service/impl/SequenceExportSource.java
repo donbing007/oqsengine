@@ -35,7 +35,7 @@ public class SequenceExportSource implements ExportSource {
     /**
      * step
      */
-    private int step = 1000;
+    private int step;
 
     private int maxRetryTimes = 5;
 
@@ -72,10 +72,11 @@ public class SequenceExportSource implements ExportSource {
                 contextService.fromMap(finalContextMap);
             }
 
-            logger.info("-----Export {}:{} ---- query {} times ----", entityClass.code(), entityClass.id(), cursor.get());
+            logger.info("-----Export {}:{} ---- query {} times ----with last id {}", entityClass.code(), entityClass.id(), cursor.getAndIncrement(), lastId.get());
+            //always
             Either<String, Tuple2<Integer, List<Record>>> byCondition =
                     entityService
-                            .findRecordsByCondition(entityClass, null, toQueryCondition(queryRequest, cursor.getAndIncrement(), step, lastId.get()));
+                            .findRecordsByCondition(entityClass, null, toQueryCondition(queryRequest, step, lastId.get()));
 
             if (contextService != null) {
                 contextService.clear();
@@ -115,17 +116,30 @@ public class SequenceExportSource implements ExportSource {
 
     //TODO
     //TODO side-effect is ok?
-    private ConditionQueryRequest toQueryCondition(ConditionQueryRequest request, int pageNo, int pageSize, Long lastId) {
+    private ConditionQueryRequest toQueryCondition(ConditionQueryRequest request, int pageSize, Long lastId) {
         request.setPageSize(pageSize);
-        request.setPageNo(pageNo);
+        request.setPageNo(1);
+
+        /**
+         * remove sort
+         */
+        request.setSort(null);
 
         Conditions conditions = request.getConditions();
 
-        List<FieldCondition> newFieldConditions;
-        if (conditions == null || conditions.getFields() == null) {
-            newFieldConditions = new LinkedList<>();
+        LinkedList<FieldCondition> newFieldConditions = null;
+        if (lastId == 0) {
+            if (conditions == null || conditions.getFields() == null) {
+                newFieldConditions = new LinkedList<>();
+            } else {
+                newFieldConditions = new LinkedList<>(conditions.getFields());
+            }
         } else {
-            newFieldConditions = new LinkedList<>(conditions.getFields());
+            newFieldConditions = (LinkedList<FieldCondition>) conditions.getFields();
+        }
+
+        if (lastId > 0) {
+            newFieldConditions.removeLast();
         }
 
         FieldCondition condition = new FieldCondition();
