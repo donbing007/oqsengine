@@ -87,6 +87,7 @@ storage:
         size: 1
   index:
     name: "oqsindex"
+    maxQueryTimeMs: 6000
   undo:
     store: "simple"
 

@@ -169,6 +169,7 @@ public class SphinxQLIndexStorageTest {
 		ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
 		ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
 		storage.setIndexTableName("oqsindex");
+		storage.setMaxQueryTimeMs(1000);
 		storage.init();
 
 		truncate();

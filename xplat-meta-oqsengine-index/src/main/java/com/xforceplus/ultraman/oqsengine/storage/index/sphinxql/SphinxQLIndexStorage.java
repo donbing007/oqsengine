@@ -1,26 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import javax.annotation.Resource;
-import javax.sql.DataSource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -34,11 +13,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.BuildStorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.DeleteStorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.ReplaceStorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.SelectByIdStorageCommand;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.*;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
@@ -52,6 +27,13 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+import java.sql.*;
+import java.util.*;
 
 /**
  * 基于 SphinxQL 的索引储存实现. 注意: 这里交所有的 单引号 双引号和斜杠都进行了替换. 此实现并不会进行属性的返回,只会进行查询.
@@ -83,6 +65,17 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     private StorageStrategyFactory storageStrategyFactory;
 
     private String indexTableName;
+
+    // 最大查询超时时间,默认为无限.
+    private long maxQueryTimeMs = 0;
+
+    public long getMaxQueryTimeMs() {
+        return maxQueryTimeMs;
+    }
+
+    public void setMaxQueryTimeMs(long maxQueryTimeMs) {
+        this.maxQueryTimeMs = maxQueryTimeMs;
+    }
 
     public void setIndexTableName(String indexTableName) {
         this.indexTableName = indexTableName;
@@ -125,7 +118,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                     }
 
                     String orderBy = buildOrderBy(useSort);
-
+                    // select id, pref, cref from %s where entity = ? %s %s limit ?,? option max_matches=?,max_query_time=?,ranker=none";
                     String sql = String.format(SQLConstant.SELECT_SQL, indexTableName, whereCondition, orderBy);
                     PreparedStatement st = null;
                     ResultSet rs = null;
@@ -136,6 +129,8 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         st.setLong(3, page.getPageSize());
                         st.setLong(4, page.hasVisibleTotalCountLimit() ? page.getVisibleTotalCount()
                             : page.getPageSize() * page.getIndex());
+                        // add max query timeout.
+                        st.setLong(5, getMaxQueryTimeMs());
                         if (logger.isDebugEnabled()) {
                             logger.debug(st.toString());
                         }
