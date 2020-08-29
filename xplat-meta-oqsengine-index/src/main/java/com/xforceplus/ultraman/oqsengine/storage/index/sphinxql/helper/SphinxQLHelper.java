@@ -177,16 +177,20 @@ public class SphinxQLHelper {
      */
     public static String buildFullFuzzyQuery(StorageValue value, boolean useGroupName) {
         StringBuilder buff = new StringBuilder();
-        buff.append("(ZONESPAN:").append(ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(" ");
-
         buff.append("\"*");
         if (StorageType.STRING == value.type()) {
             buff.append(encodeSpecialCharset(value.value().toString()));
         } else {
             buff.append(value.value().toString());
         }
-        buff.append('*');
-        buff.append("\")");
+        buff.append("*");
+//        buff.append(ATTRIBUTE_FULL_FIELD_PREFIX);
+//        if (useGroupName) {
+//            buff.append(value.groupStorageName()).append("*");
+//        } else {
+//            buff.append(value.storageName());
+//        }
+        buff.append("\"");
         return buff.toString();
     }
 }

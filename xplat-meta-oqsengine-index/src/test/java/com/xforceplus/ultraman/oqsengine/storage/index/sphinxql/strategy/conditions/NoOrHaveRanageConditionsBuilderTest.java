@@ -86,7 +86,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                                 )
                         ),
                         FieldDefine.JSON_FIELDS + ".1L > 100 "
-                                + SqlKeywordDefine.AND + " MATCH('@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\")')"
+                                + SqlKeywordDefine.AND + " MATCH('@" + FieldDefine.FULL_FIELDS + " \"*test*\"')"
                 ),
 
                 new Case(
@@ -115,7 +115,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                                 )
                         ),
                         "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 56789)) " + SqlKeywordDefine.AND + " " +
-                                "MATCH('@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\")')"
+                                "MATCH('@" + FieldDefine.FULL_FIELDS + " \"*test*\"')"
                 )
                 ,
                 new Case(
@@ -161,7 +161,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         ),
                         "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND "
                             + FieldDefine.JSON_FIELDS + ".3L1 > 56789)) " + SqlKeywordDefine.AND + " id IN (1,2,3) AND " +
-                                "MATCH('@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\")')"
+                                "MATCH('@" + FieldDefine.FULL_FIELDS + " \"*test*\"')"
                 )
         );
     }
