@@ -303,7 +303,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
      *
      * @return
      */
-    private Optional<IEntityClass> loadParentEntityClass(String boId, UpdateableDataContext dc) {
+    private Optional<IEntityClass> loadParentEntityClassWithRelation(String boId, UpdateableDataContext dc) {
 
         return read(() -> Optional.ofNullable(dc).flatMap(x -> {
             DataSet boDs = dc.query()
@@ -365,6 +365,31 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
         }));
     }
 
+    private Optional<IEntityClass> loadParentEntityClassWithoutRelation(String boId, UpdateableDataContext dc) {
+
+        return read(() -> Optional.ofNullable(dc).flatMap(x -> {
+            DataSet boDs = dc.query()
+                    .from(BoTable.TABLE_NAME)
+                    .selectAll().where(BoTable.ID).eq(boId)
+                    .execute();
+            if (boDs.next()) {
+                Row row = boDs.getRow();
+
+                String code = RowUtils.getRowValue(row, BoTable.CODE).map(String::valueOf).orElse("");
+
+                //raw ids
+                List<IEntityField> entityFields = loadFields(boId, dc);
+
+                return Optional.of(new EntityClass(Long.valueOf(boId), code, Collections.emptyList()
+                        , Collections.emptyList()
+                        , null
+                        , entityFields));
+            }
+
+            return Optional.empty();
+        }));
+    }
+
     /**
      * load related entity class
      *
@@ -397,7 +422,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
                 Optional<IEntityClass> parentEntityClass = RowUtils
                         .getRowValue(row, BoTable.PARENT_ID)
                         .map(String::valueOf)
-                        .flatMap(x -> this.loadParentEntityClass(x, contextDC));
+                        .flatMap(x -> this.loadParentEntityClassWithoutRelation(x, contextDC));
 
                 String subCode = RowUtils.getRowValue(row, BoTable.CODE)
                         .map(String::valueOf).orElse("");
@@ -624,7 +649,7 @@ public class MetadataRepositoryInMemoryImpl implements MetadataRepository {
             //build up parentClass
             String parentId = RowUtils.getRowValue(row, "parentId").map(String::valueOf).orElse("");
 
-            Optional<IEntityClass> parentEntityClassOp = loadParentEntityClass(parentId, contextDC);
+            Optional<IEntityClass> parentEntityClassOp = loadParentEntityClassWithRelation(parentId, contextDC);
 
             List<Row> relationRows = new LinkedList<>();
 

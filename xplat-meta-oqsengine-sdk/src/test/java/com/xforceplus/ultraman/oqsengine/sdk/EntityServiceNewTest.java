@@ -390,6 +390,8 @@ public class EntityServiceNewTest {
         System.out.println(entityService.findByCondition(entityClassReal
                 , new RequestBuilder()
                     .field("rel1.id", ConditionOp.in, "1")
+                        .pageNo(1)
+                        .pageSize(10)
                     .build()));
     }
 
@@ -476,7 +478,7 @@ public class EntityServiceNewTest {
         System.out.println(entityClassReal);
 
         Map<String, Object> maps = new HashMap<>();
-        maps.put("rel1.id", "{{tenant_id}}");
+        maps.put("rel1.id", "1235");
 
         Long id = entityService.create(entityClassReal, maps).get();
 

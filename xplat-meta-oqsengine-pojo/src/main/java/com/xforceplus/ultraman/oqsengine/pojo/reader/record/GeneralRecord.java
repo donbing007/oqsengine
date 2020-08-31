@@ -246,8 +246,8 @@ public class GeneralRecord implements Record {
 
                 });
 
-        //make up map id
-        map.putIfAbsent("id", id);
+        //make up map id and make sure id is long
+        map.put("id", id);
 
         return map;
     }

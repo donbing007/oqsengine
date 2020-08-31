@@ -221,9 +221,16 @@ public class EntityServiceTest extends ContextWareBaseTest{
 
         EntityClass entityClass = entity();
 
-        entityService.findByCondition(entityClass, new RequestBuilder().pageNo(1).pageSize(10).build()).map(x -> x._2()).forEach(
+        Integer count = entityService.count(entityClass, new RequestBuilder().pageNo(1).pageSize(100).field("defaultfield", ConditionOp.in
+                , "1", "2" , "3", "4" , "5").build());
+
+        System.out.println(count);
+
+        entityService.findByCondition(entityClass, new RequestBuilder().pageNo(1).pageSize(100).field("defaultfield", ConditionOp.in
+                , "1", "2" , "3", "4" , "5").build()).map(x -> x._2()).forEach(
                 x -> x.stream().forEach(y -> {
-                    entityService.deleteOne(entityClass, (Long) y.get("id"));
+                    Either<String, Integer> id = entityService.deleteOne(entityClass, (Long) y.get("id"));
+                    System.out.println(id);
                 })
         );
 
