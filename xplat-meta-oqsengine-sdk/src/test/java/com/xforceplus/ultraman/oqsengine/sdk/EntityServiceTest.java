@@ -229,7 +229,7 @@ public class EntityServiceTest extends ContextWareBaseTest{
         entityService.findByCondition(entityClass, new RequestBuilder().pageNo(1).pageSize(100).field("defaultfield", ConditionOp.in
                 , "1", "2" , "3", "4" , "5").build()).map(x -> x._2()).forEach(
                 x -> x.stream().forEach(y -> {
-                    Either<String, Integer> id = entityService.deleteOne(entityClass, (Long) y.get("id"));
+                    Either<String, Integer> id = entityService.deleteOne(entityClass, Long.parseLong((String) y.get("id")));
                     System.out.println(id);
                 })
         );
