@@ -59,7 +59,8 @@ public class StorageSink implements ExportSink {
 
                 //append returned fileId
                 String[] newToken = Arrays.copyOf(token, token.length + 1);
-                newToken[token.length - 1] = fileId.toString();
+                //append last
+                newToken[token.length] = fileId.toString();
                 return Tuple.of(ioResult, newToken);
             });
         });
