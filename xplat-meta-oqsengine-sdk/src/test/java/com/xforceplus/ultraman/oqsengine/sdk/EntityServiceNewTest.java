@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.sdk;
 
 import com.xforceplus.ultraman.metadata.grpc.BoUp;
+import com.xforceplus.ultraman.metadata.grpc.Field;
 import com.xforceplus.ultraman.metadata.grpc.ModuleUpResult;
 import com.xforceplus.ultraman.metadata.grpc.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -20,6 +22,8 @@ import com.xforceplus.xplat.galaxy.framework.configuration.AsyncTaskExecutorAuto
 import com.xforceplus.xplat.galaxy.framework.configuration.ServiceDispatcherAutoConfiguration;
 import com.xforceplus.xplat.galaxy.framework.configuration.ServiceInvokerAutoConfiguration;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
+import io.vavr.Tuple2;
+import io.vavr.control.Either;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +72,38 @@ public class EntityServiceNewTest {
 
     @Autowired
     MetadataRepository metadataRepository;
+
+
+    private ModuleUpResult mockParentAndChildRelation(){
+        return ModuleUpResult
+                .newBuilder()
+                .setVersion("0.0.1")
+                .setId(6666666L)
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setId("166")
+                        .setCode("A")
+                        .addRelations(Relation.newBuilder()
+                                .setId("1001")
+                                .setRelName("pp")
+                                .setRelationType("MultiValues")
+                                .setJoinBoId("266")
+                                .setBoId("166")
+                                .build())
+                        .build())
+                .addBoUps(BoUp.newBuilder().setId("266")
+                        .setCode("C")
+                        .addFields(Field.newBuilder().setCode("cfield").setId("2661").build()))
+                .addBoUps(BoUp
+                        .newBuilder()
+                        .setParentBoId("166")
+                        .setId("366")
+                        .setCode("B")
+                        .addFields(Field.newBuilder().setCode("bfield").setId("3661").build())
+                        .build())
+                .build();
+    }
+
 
     private ModuleUpResult mockModuleUpResult(){
         return ModuleUpResult
@@ -295,6 +331,42 @@ public class EntityServiceNewTest {
                 , FieldType.BOOLEAN, fieldConfig)));
 
         return entityClass;
+    }
+
+    @Test
+    public void testParentAndChild(){
+        metadataRepository.save(mockParentAndChildRelation(), "1", "1");
+
+        Optional<IEntityClass> entityClassB = metadataRepository.load("1", "1", "366");
+
+        System.out.println(entityClassB);
+
+        Optional<IEntityClass> entityClassC = metadataRepository.load("1", "1", "266");
+
+        System.out.println(entityClassC);
+
+        Map<String, Object> cMap = new HashMap<>();
+
+        cMap.put("cfield", "1223");
+        Long cId = entityService.create(entityClassC.get(), cMap).get();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("pp.id", cId);
+
+        Long bId = entityService.create(entityClassB.get(), map).get();
+
+        Either<String, Tuple2<Integer, List<Map<String, Object>>>> byCondition = entityService.findByCondition(entityClassB.get(),
+                new RequestBuilder()
+                        .pageSize(100)
+                        .pageNo(1)
+                        .field("pp.id", ConditionOp.eq, cId)
+                        .build());
+
+        assertEquals((int)byCondition.get()._1(), 1);
+
+        entityService.deleteOne(entityClassC.get(), cId);
+        entityService.deleteOne(entityClassB.get(), bId);
+
     }
 
     @Test
