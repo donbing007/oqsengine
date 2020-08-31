@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityErrorExported;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityExported;
@@ -26,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.nio.charset.StandardCharsets;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -204,6 +206,11 @@ public class EntityExportServiceImpl implements EntityExportService {
                         .filter(x -> x.getValue().equals(safeSourceValue))
                         .map(DictItem::getText)
                         .findAny().orElse("");
+                break;
+            case DATETIME:
+                retStr = entityField.type().toTypedValue(entityField, safeSourceValue).map(x -> {
+                    return ((DateTimeValue) x);
+                }).map(x -> x.getValue().format(DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:SS"))).orElse("");
                 break;
             case STRINGS:
 
