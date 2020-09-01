@@ -4,7 +4,7 @@ import akka.stream.IOResult;
 import akka.stream.javadsl.FileIO;
 import akka.stream.javadsl.Sink;
 import akka.util.ByteString;
-import com.xforceplus.ultraman.oqsengine.sdk.service.ExportSink;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.ExportSink;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.slf4j.Logger;

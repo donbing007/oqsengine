@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.sdk.service;
+package com.xforceplus.ultraman.oqsengine.sdk.service.export;
 
 import akka.stream.IOResult;
 import akka.stream.javadsl.Sink;
@@ -16,7 +16,6 @@ public interface ExportSink {
     Sink<ByteString,  CompletionStage<Tuple2<IOResult, String[]>>> getSink(String... token);
 
     String getDownloadUrl(String... token);
-
 
     InputStream getInputStream(String... token);
 

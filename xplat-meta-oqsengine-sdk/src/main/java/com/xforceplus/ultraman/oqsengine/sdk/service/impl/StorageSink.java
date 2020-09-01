@@ -8,7 +8,7 @@ import akka.util.ByteString;
 import com.xforceplus.tower.file.client.model.Policy;
 import com.xforceplus.tower.storage.StorageFactory;
 import com.xforceplus.tower.storage.model.UploadFileRequest;
-import com.xforceplus.ultraman.oqsengine.sdk.service.ExportSink;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.ExportSink;
 import com.xforceplus.xplat.galaxy.framework.context.ContextKeys;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple;
