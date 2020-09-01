@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.sdk.controller;
 
-import com.xforceplus.ultraman.oqsengine.sdk.service.ExportSink;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.ExportSink;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.handler;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.sdk.command.*;
-import com.xforceplus.ultraman.oqsengine.sdk.service.EntityExportService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.EntityExportService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.ui.DefaultUiService;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.anno.QueryHandler;
