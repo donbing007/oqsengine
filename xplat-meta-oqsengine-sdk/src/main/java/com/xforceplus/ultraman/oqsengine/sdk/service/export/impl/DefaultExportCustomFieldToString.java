@@ -63,7 +63,7 @@ public class DefaultExportCustomFieldToString implements ExportCustomFieldToStri
          * related entity
          */
         Map<String, Map<String, String>> searchTable = (Map<String, Map<String, String>>) context.getOrDefault("search", new HashMap<>());
-        context.putIfAbsent("search", mapping);
+        context.putIfAbsent("search", searchTable);
 
         switch (type) {
             case ENUM:
