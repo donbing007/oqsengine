@@ -39,7 +39,7 @@ public class TestFlake {
         assertTrue("there is no duplicated id",
                 list.stream()
                         .distinct()
-                        .collect(Collectors.toList()).size() == 500000);
+                        .collect(Collectors.toList()).size() == 5000);
     }
 
 
