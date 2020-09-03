@@ -360,7 +360,7 @@ public class InitServiceAutoConfiguration {
             , MessageAppIdSupplier appIdSupplier, GatewayUrlSupplier gatewayUrlSupplier
             , @Value("${xplat.oqsengine.sdk.export.message.template.content:#{null}}") String content
             , @Value("${xplat.oqsengine.sdk.export.message.template.title:#{null}}") String title
-            , @Value("${xplat.oqsengine.sdk.export.message.context-path:''}") String contextPath
+            , @Value("${xplat.oqsengine.sdk.export.message.context-path:}") String contextPath
             , @Value("${xplat.oqsengine.sdk.export.message.ignore-on-sync:true}") boolean ignoreOnSync
             , RestTemplate restTemplate) {
         return new MessageCenterEntityExportEventListener(tokenSupplier::getToken

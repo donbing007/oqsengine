@@ -15,8 +15,8 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
     public static final int NODE_SHIFT = 10;
     public static final int SEQ_SHIFT = 12;
 
-    public static final short MAX_NODE = 1024;
-    public static final short MAX_SEQUENCE = 4096;
+    public static final short MAX_NODE = 1024 - 1;
+    public static final short MAX_SEQUENCE = 4096 - 1;
 
     private short sequence;
     private long referenceTime;

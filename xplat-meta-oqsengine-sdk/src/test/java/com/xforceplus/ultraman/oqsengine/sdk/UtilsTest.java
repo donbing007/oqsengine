@@ -12,6 +12,8 @@ import org.junit.Test;
 import org.springframework.boot.test.autoconfigure.data.jdbc.DataJdbcTest;
 import org.stringtemplate.v4.*;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
@@ -61,6 +63,11 @@ public class UtilsTest {
 
         //assertEquals(conditionQueryRequestA, conditionQueryRequestB);
 
+    }
+
+    @Test
+    public void testDate(){
+        System.out.println(LocalDate.now().format(DateTimeFormatter.ofPattern("YYYY_MM_dd")));
     }
 
 

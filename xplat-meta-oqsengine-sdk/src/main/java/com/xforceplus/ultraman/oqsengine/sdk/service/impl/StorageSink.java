@@ -17,6 +17,8 @@ import scala.util.Try;
 
 import java.io.InputStream;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -92,7 +94,7 @@ public class StorageSink implements ExportSink {
         uploadFileRequest.setTenantId(telnetID);
         uploadFileRequest.setUserId(userID);
         uploadFileRequest.setOverwrite(true);
-        uploadFileRequest.setFilePath("/export/");
+        uploadFileRequest.setFilePath("/export/" + LocalDate.now().format(DateTimeFormatter.ofPattern("YYYY_MM_dd")));
         return storageFactory.uploadByInputStream(uploadFileRequest);
     }
 }
