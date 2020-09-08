@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.sdk.event;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+
 import java.util.Map;
 
 /**
@@ -19,13 +21,16 @@ public class EntityExported implements EntityEvent{
 
     private String appId;
 
-    public EntityExported(Map<String, Object> context, String downloadUrl, String fileName, String exportType, String appId) {
+    private IEntityClass entityClass;
+
+    public EntityExported(Map<String, Object> context, String downloadUrl, IEntityClass entityClass, String fileName, String exportType, String appId) {
         this.context = context;
         this.downloadUrl = downloadUrl;
         this.completedTime = System.currentTimeMillis();
         this.fileName = fileName;
         this.exportType = exportType;
         this.appId = appId;
+        this.entityClass = entityClass;
     }
 
     public Map<String, Object> getContext() {
@@ -50,6 +55,10 @@ public class EntityExported implements EntityEvent{
 
     public String getAppId() {
         return appId;
+    }
+
+    public IEntityClass getEntityClass() {
+        return entityClass;
     }
 
     @Override

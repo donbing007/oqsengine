@@ -121,7 +121,7 @@ public class EntityExportServiceImpl implements EntityExportService {
                     .runWith(fileSink, materializer)
                     .toCompletableFuture().thenApply(x -> {
                         String downloadUrl = exportSink.getDownloadUrl(x._2());
-                        publisher.publishEvent(new EntityExported(context, downloadUrl, token, exportType, appId));
+                        publisher.publishEvent(new EntityExported(context, downloadUrl, entityClass, fileName, exportType, appId));
                         return Either.<String, String>right(downloadUrl);
                     }).exceptionally(th -> {
                         publisher.publishEvent(new EntityErrorExported(context, token, th.getMessage(), appId));
