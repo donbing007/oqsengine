@@ -202,7 +202,6 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         size.decrementAndGet();
 
         clean(tx);
-        tx.attach(Transaction.NOT_ATTACHMENT);
 
         transactionNumber.decrementAndGet();
 
@@ -244,6 +243,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         survival.remove(tx.id());
         using.remove(tx.attachment());
         timerWheel.remove(tx);
+        tx.attach(Transaction.NOT_ATTACHMENT);
     }
 
     /**
