@@ -3,10 +3,7 @@ package com.xforceplus.ultraman.oqsengine.common.timerwheel;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -107,7 +104,7 @@ public class TimerWheel<T> {
             wheel.add(new Slot());
         }
 
-        this.removeHelp = new HashMap<>(16);
+        this.removeHelp = new ConcurrentHashMap<>(16);
 
         worker = new ThreadPoolExecutor(
             1,
@@ -148,11 +145,11 @@ public class TimerWheel<T> {
             Slot slot = wheel.get(actuallySlotIndex);
             slot.add(target, round);
 
-            this.removeHelp.put(target, actuallySlotIndex);
-
         } finally {
             lock.unlock();
         }
+
+        this.removeHelp.put(target, actuallySlotIndex);
     }
 
     /**
@@ -166,6 +163,16 @@ public class TimerWheel<T> {
     }
 
     /**
+     * 判断是否存在指定对象.
+     *
+     * @param target 要检查的目标对象.
+     * @return true存在, false不存在.
+     */
+    public boolean exist(T target) {
+        return removeHelp.containsKey(target);
+    }
+
+    /**
      * 从环中删除目标.不会触发过期回调.
      *
      * @param target 目标.
@@ -175,9 +182,9 @@ public class TimerWheel<T> {
             return;
         }
 
+        Integer slotIndex = this.removeHelp.remove(target);
         lock.lock();
         try {
-            Integer slotIndex = this.removeHelp.remove(target);
             if (slotIndex != null) {
                 Slot slot = this.wheel.get(slotIndex);
                 slot.remove(target);
@@ -193,12 +200,7 @@ public class TimerWheel<T> {
      * @return 总共还有多少未过期目标.
      */
     public int size() {
-        lock.lock();
-        try {
-            return removeHelp.size();
-        } finally {
-            lock.unlock();
-        }
+        return removeHelp.size();
     }
 
     //计算round
@@ -318,6 +320,8 @@ public class TimerWheel<T> {
                         resultTime = notification.notice(target);
                         if (resultTime > 0) {
                             add(target, resultTime);
+                        } else {
+                            removeHelp.remove(target);
                         }
                     }
                 } catch (Throwable ex) {
