@@ -7,12 +7,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
 import java.sql.SQLException;
+import java.text.Format;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * AbstractTransactionManager Tester.
@@ -164,6 +163,32 @@ public class AbstractTransactionManagerTest {
         Assert.assertTrue(tx.isRollback());
     }
 
+    @Test
+    public void testClean() throws Exception {
+        MockTransactionManager tm = new MockTransactionManager();
+        Transaction tx = tm.create();
+        tm.bind(tx.id());
+        tm.unbind();
+
+        TimeUnit.SECONDS.sleep(1);
+
+        tm.bind(tx.id());
+        tx.commit();
+        tm.finish(tx);
+
+        Assert.assertEquals(0, tm.size());
+
+        Field survivalField = AbstractTransactionManager.class.getDeclaredField("survival");
+        survivalField.setAccessible(true);
+        ConcurrentMap<Long, Transaction> survival = (ConcurrentMap<Long, Transaction>) survivalField.get(tm);
+        Assert.assertEquals(0, survival.size());
+
+        Field usingField = AbstractTransactionManager.class.getDeclaredField("using");
+        usingField.setAccessible(true);
+        ConcurrentMap<Long, Transaction> using = (ConcurrentMap<Long, Transaction>) usingField.get(tm);
+        Assert.assertEquals(0, using.size());
+    }
+
 
     static class MockTransactionManager extends AbstractTransactionManager {
 
@@ -171,6 +196,7 @@ public class AbstractTransactionManagerTest {
         private long waitMs = 0;
 
         public MockTransactionManager() {
+            super();
         }
 
         public MockTransactionManager(int survivalTimeMs) {
