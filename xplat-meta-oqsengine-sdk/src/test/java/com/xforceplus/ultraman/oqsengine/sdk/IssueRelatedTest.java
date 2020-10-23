@@ -135,11 +135,11 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         maps.put("field1", "123");
         Long id = entityService.create(entityClass, maps).get();
 
-        contextService.set(TRANSACTION_KEY, "1234");
+        //contextService.set(TRANSACTION_KEY, "1234");
         CountDownLatch latch = new CountDownLatch(concurrent);
 
         IntStream.range(0, concurrent).mapToObj(x -> new Thread(() -> {
-            contextService.set(TRANSACTION_KEY, "1234");
+            //contextService.set(TRANSACTION_KEY, "1234");
             Map<String, Object> updateBody = new HashMap<>();
             updateBody.put("field1", "123-" + Thread.currentThread().getName());
             System.out.println("1111111111" + entityService.retryExecute("a", () -> entityService
@@ -155,6 +155,17 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         entityService.deleteOne(entityClass, id);
 
         Thread.sleep(10000);
+    }
+
+    @Test
+    public void testRetry(){
+
+        Either<String, Object> objects = entityService.retryExecute("a", () -> {
+            return Either.left("CONFLICT");
+        });
+
+
+
     }
 
     @Test

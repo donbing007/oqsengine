@@ -74,7 +74,18 @@ public class PlainEntityServiceImpl implements PlainEntityService {
 
     @Override
     public Integer deleteOne(IEntityClass entityClass, Long id) {
-        return GetResult.get(entityService.deleteOne(entityClass, id));
+
+        if (autoRetry) {
+            String conflictKey = entityClass.code() + id;
+            return retryExecute(conflictKey, () -> entityService.deleteOne(entityClass, id));
+        } else {
+            return GetResult.get(entityService.deleteOne(entityClass, id ));
+        }
+    }
+
+    @Override
+    public Integer forceDeleteOne(IEntityClass entityClass, Long id) {
+        return GetResult.get(entityService.forceDeleteOne(entityClass, id));
     }
 
     @Override
@@ -94,7 +105,13 @@ public class PlainEntityServiceImpl implements PlainEntityService {
 
     @Override
     public Integer replaceById(IEntityClass entityClass, Long id, Map<String, Object> body) {
-        return GetResult.get(entityService.replaceById(entityClass, id, body));
+
+        if (autoRetry) {
+            String conflictKey = entityClass.code() + id;
+            return retryExecute(conflictKey, () -> entityService.replaceById(entityClass, id, body));
+        } else {
+            return GetResult.get(entityService.replaceById(entityClass, id, body));
+        }
     }
 
     @Override

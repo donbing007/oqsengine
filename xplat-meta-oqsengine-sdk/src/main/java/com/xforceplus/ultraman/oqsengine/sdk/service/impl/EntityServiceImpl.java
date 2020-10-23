@@ -24,6 +24,7 @@ import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -42,7 +43,7 @@ import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKe
 /**
  * main service for entity
  */
-public class EntityServiceImpl implements EntityService {
+public class EntityServiceImpl implements EntityService, InitializingBean {
 
     private final MetadataRepository metadataRepository;
 
@@ -67,6 +68,8 @@ public class EntityServiceImpl implements EntityService {
 
     @Autowired
     private FlowRegistry flowRegistry;
+
+    private RetryConfig retryConfig;
 
     @Value("${xplat.oqsengine.sdk.cas.retry.max-attempts:10}")
     private int maxAttempts;
@@ -212,13 +215,7 @@ public class EntityServiceImpl implements EntityService {
 
         //this is fixed by only retry for update and delete
 
-        RetryConfig config = RetryConfig.<Either<String, T>>custom()
-                .maxAttempts(maxAttempts)
-                .waitDuration(Duration.ofMillis(delay))
-                .retryOnResult(response -> response == null || (response.isLeft() && "CONFLICT".equalsIgnoreCase(response.getLeft())))
-                .build();
-
-        Retry retry = retryRegistry.retry("retry-" + UUID.randomUUID().toString(), config);
+        Retry retry = retryRegistry.retry("retry-" + UUID.randomUUID().toString(), retryConfig);
 
         retry.getEventPublisher().onRetry(retryEvt -> {
             logger.info("Trigger Retry {} attempts {} left {}", retryEvt.getName(), retryEvt.getNumberOfRetryAttempts()
@@ -637,5 +634,14 @@ public class EntityServiceImpl implements EntityService {
         String code = entityClass.code();
         Map<String, String> context = getContext();
         return new EntityUpdated(code, id, data, context);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.retryConfig = RetryConfig.<Either<String, ?>>custom()
+                .maxAttempts(maxAttempts)
+                .waitDuration(Duration.ofMillis(delay))
+                .retryOnResult(response -> response == null || (response.isLeft() && "CONFLICT".equalsIgnoreCase(response.getLeft())))
+                .build();
     }
 }
