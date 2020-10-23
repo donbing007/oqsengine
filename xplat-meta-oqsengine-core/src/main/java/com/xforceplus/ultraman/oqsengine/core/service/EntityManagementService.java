@@ -31,4 +31,15 @@ public interface EntityManagementService {
      * @param entity 目标 entity.
      */
     ResultStatus delete(IEntity entity) throws SQLException;
+
+    /**
+     * 删除一个已经存在的 entity,和delete不同的是这个优先级最高.
+     * 即不论数据是何状态都将进行删除.
+     * 这是一个危险的操作,如果数据正在被更新那将造成其他操作失败.
+     *
+     * @param entity 目标entity.
+     * @return 操作结果.
+     * @throws SQLException 操作异常.
+     */
+    ResultStatus deleteForce(IEntity entity) throws SQLException;
 }

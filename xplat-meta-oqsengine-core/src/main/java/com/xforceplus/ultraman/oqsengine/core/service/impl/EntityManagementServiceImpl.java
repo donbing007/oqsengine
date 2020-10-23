@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
@@ -277,7 +278,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     }
 
                     if (logger.isInfoEnabled()) {
-                        logger.info("Entity({}), Class({}) was successfully deleted.", entity.id(), entity.entityClass().id());
+                        logger.info("Entity({}), Class({}), Version({}) was successfully deleted.",
+                            entity.id(), entity.entityClass().id(), entity.version());
                     }
 
                     return ResultStatus.SUCCESS;
@@ -289,6 +291,16 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         } finally {
             deleteCountTotal.increment();
         }
+    }
+
+    @Override
+    public ResultStatus deleteForce(IEntity entity) throws SQLException {
+        /**
+         * 设置万能版本,表示和所有的版本都匹配.
+         */
+        entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
+
+        return delete(entity);
     }
 
     // 构造一个适合索引的 IEntity 实例.

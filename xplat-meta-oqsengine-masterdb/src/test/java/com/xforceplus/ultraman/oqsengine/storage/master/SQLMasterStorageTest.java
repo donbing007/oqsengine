@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
@@ -219,7 +220,20 @@ public class SQLMasterStorageTest {
         queryEntitys.stream().forEach(e -> {
             Assert.assertNotEquals(targetEntity.id(), e.id());
         });
+    }
 
+    @Test
+    public void testDeleteWithoutVersion() throws Exception {
+        IEntity targetEntity = expectedEntitys.get(0);
+        storage.replace(targetEntity);
+
+        targetEntity = storage.select(targetEntity.id(), targetEntity.entityClass()).get();
+        Assert.assertEquals(1, targetEntity.version());
+
+        targetEntity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
+        Assert.assertEquals(1, storage.delete(targetEntity));
+
+        Assert.assertFalse(storage.select(targetEntity.id(), targetEntity.entityClass()).isPresent());
     }
 
     // 初始化数据
