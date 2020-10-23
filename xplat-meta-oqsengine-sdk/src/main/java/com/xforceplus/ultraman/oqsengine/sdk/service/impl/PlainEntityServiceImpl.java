@@ -33,6 +33,9 @@ public class PlainEntityServiceImpl implements PlainEntityService {
     @Value("${xplat.oqsengine.sdk.cas.retry.auto:true}")
     private boolean autoRetry = true;
 
+    @Value("${xplat.oqsengine.sdk.cas.retry-delete.auto:false}")
+    private boolean autoRetryOnDelete = false;
+
     @Override
     public IEntityClass load(String boId) {
         return GetResult.get(entityService.load(boId)
@@ -74,18 +77,12 @@ public class PlainEntityServiceImpl implements PlainEntityService {
 
     @Override
     public Integer deleteOne(IEntityClass entityClass, Long id) {
-
-        if (autoRetry) {
+        if (autoRetryOnDelete) {
             String conflictKey = entityClass.code() + id;
             return retryExecute(conflictKey, () -> entityService.deleteOne(entityClass, id));
         } else {
-            return GetResult.get(entityService.deleteOne(entityClass, id ));
+            return GetResult.get(entityService.deleteOne(entityClass, id));
         }
-    }
-
-    @Override
-    public Integer forceDeleteOne(IEntityClass entityClass, Long id) {
-        return GetResult.get(entityService.forceDeleteOne(entityClass, id));
     }
 
     @Override

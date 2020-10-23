@@ -32,8 +32,6 @@ public interface PlainEntityService {
 
     Integer deleteOne(IEntityClass entityClass, Long id);
 
-    Integer forceDeleteOne(IEntityClass entityClass, Long id);
-
     Integer updateById(IEntityClass entityClass, Long id, Map<String, Object> body);
 
     Integer updateByCondition(IEntityClass entityClass, ConditionQueryRequest condition, Map<String, Object> body);

@@ -425,7 +425,7 @@ public class IssueRelatedTest extends ContextWareBaseTest {
                         e.printStackTrace();
                     }
 
-                    Either<String, Integer> integers = entityService.forceDeleteOne(entityClass, realId);
+                    Either<String, Integer> integers = entityService.deleteOne(entityClass, realId);
 
                     if(integers.isRight()){
                         Integer tried = 1000 - count;

@@ -80,6 +80,9 @@ public class EntityServiceImpl implements EntityService, InitializingBean {
     @Value("${xplat.oqsengine.sdk.strict.range:true}")
     private boolean isRangeStrict;
 
+    @Value("${xplat.oqsengine.sdk.strict.force-delete:true}")
+    private boolean isForce;
+
     private Logger logger = LoggerFactory.getLogger(EntityService.class);
 
     public EntityServiceImpl(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
@@ -230,12 +233,13 @@ public class EntityServiceImpl implements EntityService, InitializingBean {
 
     /**
      * new force
+     *
      * @param entityClass
      * @param id
      * @return
      */
-    @Override
-    public Either<String, Integer> forceDeleteOne(IEntityClass entityClass, Long id) {
+//    @Override
+    public Either<String, Integer> optimizeDeleteOne(IEntityClass entityClass, Long id) {
         String transId = contextService.get(TRANSACTION_KEY);
         SingleResponseRequestBuilder<EntityUp, OperationResult> removeBuilder = entityServiceClient.remove();
         if (transId != null) {
@@ -254,8 +258,6 @@ public class EntityServiceImpl implements EntityService, InitializingBean {
         if (userName != null) {
             removeBuilder = removeBuilder.addHeader("username", userDisplayName);
         }
-
-        removeBuilder = removeBuilder.addHeader("force", "true");
 
         OperationResult updateResult =
                 removeBuilder.invoke(toEntityUp(entityClass, id))
@@ -287,6 +289,7 @@ public class EntityServiceImpl implements EntityService, InitializingBean {
     public Either<String, Integer> deleteOne(IEntityClass entityClass, Long id) {
 
         String transId = contextService.get(TRANSACTION_KEY);
+
         SingleResponseRequestBuilder<EntityUp, OperationResult> removeBuilder = entityServiceClient.remove();
         if (transId != null) {
             logger.info("delete with Transaction id:{} ", transId);
@@ -305,6 +308,9 @@ public class EntityServiceImpl implements EntityService, InitializingBean {
             removeBuilder = removeBuilder.addHeader("username", userDisplayName);
         }
 
+        if (isForce) {
+            removeBuilder = removeBuilder.addHeader("force", "true");
+        }
 
         OperationResult updateResult =
                 removeBuilder.invoke(toEntityUp(entityClass, id))
