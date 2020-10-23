@@ -232,6 +232,53 @@ public class EntityServiceImpl implements EntityService {
     }
 
     /**
+     * new force
+     * @param entityClass
+     * @param id
+     * @return
+     */
+    @Override
+    public Either<String, Integer> forceDeleteOne(IEntityClass entityClass, Long id) {
+        String transId = contextService.get(TRANSACTION_KEY);
+        SingleResponseRequestBuilder<EntityUp, OperationResult> removeBuilder = entityServiceClient.remove();
+        if (transId != null) {
+            logger.info("delete with Transaction id:{} ", transId);
+            removeBuilder = removeBuilder.addHeader("transaction-id", transId);
+        }
+
+        //monitor delete action
+        String userDisplayName = contextService.get(USER_DISPLAYNAME);
+        String userName = contextService.get(USERNAME);
+
+        if (userDisplayName != null) {
+            removeBuilder = removeBuilder.addHeader("display-name", userDisplayName);
+        }
+
+        if (userName != null) {
+            removeBuilder = removeBuilder.addHeader("username", userDisplayName);
+        }
+
+        removeBuilder = removeBuilder.addHeader("force", "true");
+
+        OperationResult updateResult =
+                removeBuilder.invoke(toEntityUp(entityClass, id))
+                        .toCompletableFuture().join();
+
+        if (updateResult.getCode() == OperationResult.Code.OK) {
+            int rows = updateResult.getAffectedRow();
+
+            if (rows > 0) {
+                publisher.publishEvent(buildDeleteEvent(entityClass, id));
+            }
+
+            return Either.right(rows);
+        } else {
+            //indicates
+            return Either.left(updateResult.getMessage());
+        }
+    }
+
+    /**
      * //TODO transaction
      * return affect row
      *

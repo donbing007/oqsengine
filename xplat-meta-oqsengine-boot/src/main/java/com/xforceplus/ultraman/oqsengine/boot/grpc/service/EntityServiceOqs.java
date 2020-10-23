@@ -365,9 +365,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
             }
 
-
+            String force = "false";
             try {
-                logInfo(metadata, (displayname, username) -> String.format("Attempt to delete %s:%s by %s:%s", in.getId(), in.getObjId(), displayname, username));
+                force = metadata.getText("force").orElse("false");
+                String finalForce = force;
+                logInfo(metadata, (displayname, username) -> String.format("Attempt to delete %s:%s by %s:%s with %s", in.getId(), in.getObjId(), displayname, username, finalForce));
+
             } catch (Exception ex) {
                 logger.error("{}", ex);
             }
@@ -383,31 +386,50 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 if (op.isPresent()) {
                     IEntity entity = op.get();
-                    ResultStatus deleteStatus = entityManagementService.delete(entity);
 
+                    if (!Boolean.parseBoolean(force)) {
+                        ResultStatus deleteStatus = entityManagementService.delete(entity);
 
-                    switch (deleteStatus) {
-                        case SUCCESS:
-                            result = OperationResult.newBuilder()
-                                    .setAffectedRow(1)
-                                    .setCode(OperationResult.Code.OK)
-                                    .buildPartial();
-                            break;
-                        case CONFLICT:
-                            //send to sdk
-                            result = OperationResult.newBuilder()
-                                    .setAffectedRow(0)
-                                    .setCode(OperationResult.Code.OTHER)
-                                    .setMessage(ResultStatus.CONFLICT.name())
-                                    .buildPartial();
-                            break;
-                        default:
-                            //unreachable code
-                            result = OperationResult.newBuilder()
-                                    .setAffectedRow(0)
-                                    .setCode(OperationResult.Code.FAILED)
-                                    .setMessage("产生了未知的错误")
-                                    .buildPartial();
+                        switch (deleteStatus) {
+                            case SUCCESS:
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(1)
+                                        .setCode(OperationResult.Code.OK)
+                                        .buildPartial();
+                                break;
+                            case CONFLICT:
+                                //send to sdk
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(0)
+                                        .setCode(OperationResult.Code.OTHER)
+                                        .setMessage(ResultStatus.CONFLICT.name())
+                                        .buildPartial();
+                                break;
+                            default:
+                                //unreachable code
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(0)
+                                        .setCode(OperationResult.Code.FAILED)
+                                        .setMessage("产生了未知的错误")
+                                        .buildPartial();
+                        }
+                    } else {
+                        ResultStatus resultStatus = entityManagementService.deleteForce(entity);
+                        switch (resultStatus) {
+                            case SUCCESS:
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(1)
+                                        .setCode(OperationResult.Code.OK)
+                                        .buildPartial();
+                                break;
+                            default:
+                                //unreachable code
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(0)
+                                        .setCode(OperationResult.Code.FAILED)
+                                        .setMessage("产生了未知的错误")
+                                        .buildPartial();
+                        }
                     }
                 } else {
                     result = OperationResult.newBuilder()
