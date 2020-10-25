@@ -71,7 +71,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> begin(TransactionUp in, Metadata metadata) {
         try {
-            long transId = transactionManagementService.begin();
+
+            Optional<Integer> timeout = metadata.getText("timeout").map(Integer::parseInt);
+            long transId;
+
+            if(timeout.isPresent() && timeout.get() > 0) {
+                transId = transactionManagementService.begin(timeout.get());
+            } else{
+                transId = transactionManagementService.begin();
+            }
 
             return CompletableFuture.completedFuture(OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)

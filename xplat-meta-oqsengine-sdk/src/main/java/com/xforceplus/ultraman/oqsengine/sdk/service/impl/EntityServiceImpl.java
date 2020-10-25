@@ -10,6 +10,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.annotation.Propagation;
 import com.xforceplus.ultraman.oqsengine.sdk.util.ConditionQueryRequestHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.util.context.ContextDecorator;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.FlowRegistry;
@@ -83,6 +85,12 @@ public class EntityServiceImpl implements EntityService, InitializingBean {
     @Value("${xplat.oqsengine.sdk.strict.force-delete:true}")
     private boolean isForce;
 
+    @Value("${xplat.oqsengine.sdk.transaction.timeout:-1}")
+    private Integer timeout;
+
+    @Autowired
+    private TransactionManager transactionManager;
+
     private Logger logger = LoggerFactory.getLogger(EntityService.class);
 
     public EntityServiceImpl(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
@@ -129,54 +137,18 @@ public class EntityServiceImpl implements EntityService, InitializingBean {
 
     @Override
     public <T> Either<String, T> transactionalExecute(Callable<T> supplier) {
-        //maybe timeout
-        OperationResult result = entityServiceClient
-                .begin(TransactionUp.newBuilder().build()).toCompletableFuture().join();
 
-        if (result.getCode() == OperationResult.Code.OK) {
-            logger.info("Transaction create success with id:{}", result.getTransactionResult());
-            contextService.set(TRANSACTION_KEY, result.getTransactionResult());
-            logger.debug("set currentService with {}", result.getTransactionResult());
-            try {
-                T t = supplier.call();
-                CompletableFuture<Either<String, T>> commitedT = entityServiceClient.commit(TransactionUp.newBuilder()
-                        .setId(result.getTransactionResult())
-                        .build())
-                        .exceptionally(ex -> {
-                            logger.error("Transaction with id:{} failed to commit with exception {}", result.getTransactionResult(), ex.getMessage());
-                            return OperationResult
-                                    .newBuilder()
-                                    .setCode(OperationResult.Code.EXCEPTION)
-                                    .setMessage(ex.getMessage())
-                                    .buildPartial();
-                        }).thenApply(x -> {
-                            if (x.getCode() == OperationResult.Code.OK) {
-                                logger.info("Transaction with id:{} has committed successfully ", result.getTransactionResult());
-                                return Either.<String, T>right(t);
-                            } else {
-                                logger.error("Transaction with id:{} failed to commit", result.getTransactionResult());
-                                return Either.<String, T>left("事务提交失败:" + x.getMessage());
-                            }
-                        }).toCompletableFuture();
-
-                return commitedT.join();
-            } catch (Exception ex) {
-                //maybe timeout
-                try {
-                    entityServiceClient.rollBack(TransactionUp.newBuilder()
-                            .setId(result.getTransactionResult())
-                            .build()).toCompletableFuture().join();
-                    return Either.left(ex.getMessage());
-                } catch (Exception bindEx) {
-                    return Either.left(bindEx.getMessage());
-                }
-            } finally {
-                //remove TRANSACTION_KEY
-                logger.info("remove currentService {} with {}", TRANSACTION_KEY.name(), result.getTransactionResult());
-                contextService.set(TRANSACTION_KEY, null);
-            }
-        } else {
-            return Either.left("事务创建失败");
+        try {
+            T result = transactionManager.transactionExecution(
+                    Propagation.REQUIRES_NEW,
+                    timeout,
+                    null,
+                    null,
+                    supplier
+            );
+            return Either.right(result);
+        } catch (Throwable throwable) {
+            return Either.left(throwable.getMessage());
         }
     }
 

@@ -28,6 +28,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStor
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.MetadataRepositoryInMemoryImpl;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.DefaultTransactionManager;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.FlowRegistry;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
@@ -389,5 +391,10 @@ public class InitServiceAutoConfiguration {
     @Bean
     public EntityExportService entityExportService(){
         return new EntityExportServiceImpl();
+    }
+
+    @Bean
+    public TransactionManager transactionManager(){
+        return new DefaultTransactionManager();
     }
 }

@@ -6,6 +6,10 @@ import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.RuntimeConfigAutoCon
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.StorageAutoConfiguration;
 import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.listener.ConfigListener;
+import com.xforceplus.ultraman.oqsengine.sdk.service.TestA;
+import com.xforceplus.ultraman.oqsengine.sdk.service.TestB;
+import com.xforceplus.ultraman.oqsengine.sdk.service.TestC;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.OqsTransactionalAOP;
 import com.xforceplus.xplat.galaxy.framework.configuration.AsyncTaskExecutorAutoConfiguration;
 import com.xforceplus.xplat.galaxy.framework.configuration.ServiceDispatcherAutoConfiguration;
 import com.xforceplus.xplat.galaxy.framework.configuration.ServiceInvokerAutoConfiguration;
@@ -29,6 +33,10 @@ import org.springframework.test.context.junit4.SpringRunner;
         , com.xforceplus.xplat.galaxy.framework.configuration.ContextConfiguration.class
         , RuntimeConfigAutoConfiguration.class
         , RestTemplateAutoConfiguration.class
+        , OqsTransactionalAOP.class
+        , TestA.class
+        , TestB.class
+        , TestC.class
 })
 public class ContextWareBaseTest {
 
