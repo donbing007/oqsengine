@@ -143,6 +143,11 @@ public class InitServiceAutoConfiguration {
         return new MetadataRepositoryInMemoryImpl(versionSize, publisher);
     }
 
+    @Bean
+    public TransactionManager transactionManager(){
+        return new DefaultTransactionManager();
+    }
+
     //service
     @Bean
     public EntityService entityService(MetadataRepository metadataRepository
@@ -391,10 +396,5 @@ public class InitServiceAutoConfiguration {
     @Bean
     public EntityExportService entityExportService(){
         return new EntityExportServiceImpl();
-    }
-
-    @Bean
-    public TransactionManager transactionManager(){
-        return new DefaultTransactionManager();
     }
 }

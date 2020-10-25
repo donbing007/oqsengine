@@ -37,9 +37,6 @@ public class TransactionTest extends ContextWareBaseTest {
     @Autowired
     private EntityService entityService;
 
-    @Autowired
-    private TransactionManager transactionManager;
-
     @Test
     public void testRequire() {
         Object query = testA.query();
