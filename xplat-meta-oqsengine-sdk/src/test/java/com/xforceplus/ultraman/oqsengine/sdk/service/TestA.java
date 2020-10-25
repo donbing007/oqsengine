@@ -2,7 +2,8 @@ package com.xforceplus.ultraman.oqsengine.sdk.service;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.transactional.OqsTransaction;
-import com.xforceplus.ultraman.oqsengine.sdk.transactional.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.OqsTransactionManager;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.OqsTransactionManager;
 import com.xforceplus.ultraman.oqsengine.sdk.transactional.annotation.OqsTransactional;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import io.vavr.Tuple;
@@ -26,7 +27,7 @@ public class TestA{
     private EntityService entityService;
 
     @Autowired
-    private TransactionManager transactionManager;
+    private OqsTransactionManager transactionManager;
 
     @Autowired
     private TestB testB;

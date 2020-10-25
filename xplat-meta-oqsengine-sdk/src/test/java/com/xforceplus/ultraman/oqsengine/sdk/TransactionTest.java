@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.sdk.service.TestA;
 import com.xforceplus.ultraman.oqsengine.sdk.service.TestB;
 import com.xforceplus.ultraman.oqsengine.sdk.service.TestC;
 import com.xforceplus.ultraman.oqsengine.sdk.transactional.OqsTransaction;
-import com.xforceplus.ultraman.oqsengine.sdk.transactional.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.sdk.transactional.annotation.OqsTransactional;
 import io.vavr.Tuple2;
 import io.vavr.control.Either;
