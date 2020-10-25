@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
-import com.xforceplus.ultraman.oqsengine.sdk.transactional.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.OqsTransactionManager;
 import com.xforceplus.ultraman.oqsengine.sdk.transactional.annotation.Propagation;
 import com.xforceplus.ultraman.oqsengine.sdk.util.ConditionQueryRequestHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.util.context.ContextDecorator;
@@ -89,7 +89,7 @@ public class EntityServiceImpl implements EntityService, InitializingBean {
     private Integer timeout;
 
     @Autowired
-    private TransactionManager transactionManager;
+    private OqsTransactionManager oqsTransactionManager;
 
     private Logger logger = LoggerFactory.getLogger(EntityService.class);
 
@@ -97,6 +97,7 @@ public class EntityServiceImpl implements EntityService, InitializingBean {
         this.metadataRepository = metadataRepository;
         this.entityServiceClient = entityServiceClient;
         this.contextService = contextService;
+//        this.transactionManager = transactionManager;
     }
 
     @Override
@@ -139,7 +140,7 @@ public class EntityServiceImpl implements EntityService, InitializingBean {
     public <T> Either<String, T> transactionalExecute(Callable<T> supplier) {
 
         try {
-            T result = transactionManager.transactionExecution(
+            T result = oqsTransactionManager.transactionExecution(
                     Propagation.REQUIRES_NEW,
                     timeout,
                     null,

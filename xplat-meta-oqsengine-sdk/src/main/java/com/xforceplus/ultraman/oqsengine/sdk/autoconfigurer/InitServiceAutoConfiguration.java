@@ -29,7 +29,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.MetadataRepositoryInMemoryImpl;
 import com.xforceplus.ultraman.oqsengine.sdk.transactional.DefaultTransactionManager;
-import com.xforceplus.ultraman.oqsengine.sdk.transactional.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.OqsTransactionManager;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.FlowRegistry;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
@@ -144,15 +144,18 @@ public class InitServiceAutoConfiguration {
     }
 
     @Bean
-    public TransactionManager transactionManager(){
-        return new DefaultTransactionManager();
+    public OqsTransactionManager oqsTransactionManager(
+            EntityServiceClient entityServiceClient
+            , ContextService contextService){
+        return new DefaultTransactionManager(contextService, entityServiceClient);
     }
 
     //service
     @Bean
     public EntityService entityService(MetadataRepository metadataRepository
             , EntityServiceClient entityServiceClient
-            , ContextService contextService) {
+            , ContextService contextService
+    ) {
         return new EntityServiceImpl(metadataRepository, entityServiceClient, contextService);
     }
 

@@ -7,7 +7,7 @@ import java.util.concurrent.Callable;
 /**
  *
  */
-public interface TransactionManager {
+public interface OqsTransactionManager {
     OqsTransaction getCurrent();
 
     <T> T transactionExecution(Propagation propagation

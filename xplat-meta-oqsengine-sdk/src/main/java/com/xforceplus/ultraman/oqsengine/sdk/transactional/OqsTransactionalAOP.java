@@ -28,7 +28,7 @@ public class OqsTransactionalAOP {
     }
 
     @Autowired
-    private TransactionManager transactionManager;
+    private OqsTransactionManager oqsTransactionManager;
 
     private Logger logger = LoggerFactory.getLogger(OqsTransactionalAOP.class);
 
@@ -42,7 +42,7 @@ public class OqsTransactionalAOP {
         Class<? extends Throwable>[] rollBackForClass = oqsTransactional.rollbackFor();
 
         try {
-            Object output = transactionManager.transactionExecution(propagation, timeout, noRollBackForClass
+            Object output = oqsTransactionManager.transactionExecution(propagation, timeout, noRollBackForClass
                     , rollBackForClass,
                     () -> {
                         try {

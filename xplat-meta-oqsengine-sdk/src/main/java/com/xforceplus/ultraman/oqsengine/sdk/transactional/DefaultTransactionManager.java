@@ -1,14 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.sdk.transactional;
 
 import akka.grpc.javadsl.SingleResponseRequestBuilder;
-import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClientPowerApi;
+import com.xforceplus.ultraman.oqsengine.sdk.EntityServiceClient;
 import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
 import com.xforceplus.ultraman.oqsengine.sdk.TransactionUp;
 import com.xforceplus.ultraman.oqsengine.sdk.transactional.annotation.Propagation;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Stack;
@@ -21,15 +20,20 @@ import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKe
 /**
  *
  */
-public class DefaultTransactionManager implements TransactionManager {
+public class DefaultTransactionManager implements OqsTransactionManager {
 
-    private Logger logger = LoggerFactory.getLogger(TransactionManager.class);
+    private Logger logger = LoggerFactory.getLogger(OqsTransactionManager.class);
 
-    @Autowired
+//    @Autowired
     private ContextService contextService;
 
-    @Autowired
-    private EntityServiceClientPowerApi entityServiceClient;
+//    @Autowired
+    private EntityServiceClient entityServiceClient;
+
+    public DefaultTransactionManager(ContextService contextService, EntityServiceClient entityServiceClient) {
+        this.contextService = contextService;
+        this.entityServiceClient = entityServiceClient;
+    }
 
     @Override
     public OqsTransaction getCurrent() {
