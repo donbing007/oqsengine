@@ -1,12 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.sdk.transactional;
 
-import com.xforceplus.ultraman.oqsengine.sdk.EntityService;
-import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
-import com.xforceplus.ultraman.oqsengine.sdk.TransactionUp;
 import com.xforceplus.ultraman.oqsengine.sdk.transactional.annotation.OqsTransactional;
 import com.xforceplus.ultraman.oqsengine.sdk.transactional.annotation.Propagation;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
-import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -15,12 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Arrays;
 import java.util.Stack;
-import java.util.concurrent.CompletionStage;
-
-import static com.xforceplus.ultraman.oqsengine.sdk.transactional.OqsTransactionalAOP.TransactionKey.TRANSACTION_STACK;
-import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.TRANSACTION_KEY;
 
 /**
  *
@@ -42,7 +33,6 @@ public class OqsTransactionalAOP {
     private Logger logger = LoggerFactory.getLogger(OqsTransactionalAOP.class);
 
 
-
     @Around("@annotation(oqsTransactional)")
     public Object transactionExecution(ProceedingJoinPoint pjp, OqsTransactional oqsTransactional) throws Throwable {
 
@@ -62,10 +52,10 @@ public class OqsTransactionalAOP {
                         }
                     });
             return output;
-        } catch (Throwable throwable){
-            if(throwable instanceof TransactionWrapperException){
+        } catch (Throwable throwable) {
+            if (throwable instanceof TransactionWrapperException) {
                 throw throwable.getCause();
-            }else{
+            } else {
                 throw throwable;
             }
         }

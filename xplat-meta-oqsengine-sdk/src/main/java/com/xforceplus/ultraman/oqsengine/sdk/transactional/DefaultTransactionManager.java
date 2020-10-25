@@ -21,7 +21,7 @@ import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKe
 /**
  *
  */
-public class DefaultTransactionManager implements TransactionManager{
+public class DefaultTransactionManager implements TransactionManager {
 
     private Logger logger = LoggerFactory.getLogger(TransactionManager.class);
 
@@ -69,7 +69,7 @@ public class DefaultTransactionManager implements TransactionManager{
 
         OperationResult result =
                 builder.invoke(TransactionUp.newBuilder().build())
-                .toCompletableFuture().join();
+                        .toCompletableFuture().join();
         if (result.getCode() != OperationResult.Code.OK) {
             throw new TransactionCreateErrorException(result.getMessage());
         } else {
@@ -83,8 +83,8 @@ public class DefaultTransactionManager implements TransactionManager{
     public void commit(String transactionalKey) {
         CompletionStage<OperationResult> commit = entityServiceClient.commit()
                 .invoke(TransactionUp.newBuilder()
-                .setId(transactionalKey)
-                .build());
+                        .setId(transactionalKey)
+                        .build());
         OperationResult result = commit.toCompletableFuture().join();
         if (result.getCode() != OperationResult.Code.OK) {
             throw new TransactionCommitException(result.getMessage());
@@ -115,14 +115,14 @@ public class DefaultTransactionManager implements TransactionManager{
         try {
             entityServiceClient.rollBack()
                     .invoke(TransactionUp.newBuilder()
-                    .setId(transactionalKey)
-                    .build()).toCompletableFuture().join();
+                            .setId(transactionalKey)
+                            .build()).toCompletableFuture().join();
         } catch (Throwable rollbackEx) {
             logger.error("Rollback Transaction {} failed", rollbackEx.getMessage());
         }
     }
 
-    private void logCurrentTransaction(){
+    private void logCurrentTransaction() {
         Stack<OqsTransaction> stack = contextService.get(TRANSACTION_STACK);
         logger.info("Transaction stack {}", stack);
     }
@@ -156,7 +156,7 @@ public class DefaultTransactionManager implements TransactionManager{
             return output;
         } catch (Throwable throwable) {
             Throwable rootCause = throwable;
-            if(throwable instanceof TransactionWrapperException){
+            if (throwable instanceof TransactionWrapperException) {
                 rootCause = rootCause.getCause();
             }
             if (isTriggerRollBack(rootCause, noRollBackForClass, rollBackForClass)) {
@@ -171,7 +171,7 @@ public class DefaultTransactionManager implements TransactionManager{
             throw rootCause;
         } finally {
             //TODO
-            if(previewTransaction != null){
+            if (previewTransaction != null) {
                 contextService.set(TRANSACTION_KEY, previewTransaction.getId());
             } else {
                 contextService.set(TRANSACTION_KEY, null);
