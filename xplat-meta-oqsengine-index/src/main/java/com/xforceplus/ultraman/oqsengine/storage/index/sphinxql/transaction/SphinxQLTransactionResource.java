@@ -16,25 +16,12 @@ import java.sql.Statement;
  */
 public class SphinxQLTransactionResource extends AbstractConnectionTransactionResource {
 
-    private boolean autocommit;
-
     public SphinxQLTransactionResource(String key, Connection conn, boolean autocommit) throws SQLException {
-        // SphinxQL 只有在 autocommit = true 情况下才工作.
-        super(key, conn, true);
-
-        /**
-         * 重载 autocommit,来决定是否启用自动提交.
-         */
-        this.autocommit = autocommit;
+        super(key, conn, autocommit);
 
         if (!isAutoCommit()) {
             execute("begin");
         }
-    }
-
-    @Override
-    public boolean isAutoCommit() {
-        return autocommit;
     }
 
     @Override
@@ -45,11 +32,13 @@ public class SphinxQLTransactionResource extends AbstractConnectionTransactionRe
     @Override
     public void commit() throws SQLException {
         execute("commit");
+        value().commit();
     }
 
     @Override
     public void rollback() throws SQLException {
         execute("rollback");
+        value().rollback();
     }
 
     private void execute(String command) throws SQLException {
