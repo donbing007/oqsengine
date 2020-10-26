@@ -293,6 +293,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "deleteforce"})
     @Override
     public ResultStatus deleteForce(IEntity entity) throws SQLException {
         /**
