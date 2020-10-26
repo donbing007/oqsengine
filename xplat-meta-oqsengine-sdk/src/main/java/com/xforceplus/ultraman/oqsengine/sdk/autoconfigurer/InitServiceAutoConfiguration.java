@@ -17,6 +17,11 @@ import com.xforceplus.ultraman.oqsengine.sdk.listener.ExportEventLoggerListener;
 import com.xforceplus.ultraman.oqsengine.sdk.listener.MessageCenterEntityExportEventListener;
 import com.xforceplus.ultraman.oqsengine.sdk.listener.ModuleEventListener;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.*;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.impl.CSVRecordFlow;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.impl.DefaultExportCustomFieldToString;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.impl.EntityExportServiceImpl;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.impl.ExportStringTransformerImpl;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.*;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.*;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.FieldValidator;
@@ -172,6 +177,16 @@ public class InitServiceAutoConfiguration {
     }
 
     @Bean
+    public DefaultExportCustomFieldToString defaultExportCustomFieldToString(){
+        return new DefaultExportCustomFieldToString();
+    }
+
+    @Bean
+    public ExportStringTransformer stringTransformer(){
+        return new ExportStringTransformerImpl();
+    }
+
+    @Bean
     public DefaultEntityServiceHandler defaultEntityServiceHandler() {
         return new DefaultEntityServiceHandler();
     }
@@ -309,12 +324,19 @@ public class InitServiceAutoConfiguration {
         return new ModuleEventListener();
     }
 
+    @ConditionalOnMissingBean(ExportSource.class)
     @Bean
     public ExportSource exportSource(EntityService entityService
-            , @Value("${xplat.oqsengine.sdk.export.step:1000}") int step
+            , @Value("${xplat.oqsengine.sdk.export.step:500}") int step
             , ContextService contextService
     ) {
         return new SequenceExportSource(entityService, step, contextService);
+    }
+
+    @ConditionalOnMissingBean(ExportRecordStringFlow.class)
+    @Bean
+    public ExportRecordStringFlow Exportflow(){
+        return new CSVRecordFlow();
     }
 
     @ConditionalOnMissingBean(ExportSink.class)
@@ -348,7 +370,7 @@ public class InitServiceAutoConfiguration {
             , MessageAppIdSupplier appIdSupplier, GatewayUrlSupplier gatewayUrlSupplier
             , @Value("${xplat.oqsengine.sdk.export.message.template.content:#{null}}") String content
             , @Value("${xplat.oqsengine.sdk.export.message.template.title:#{null}}") String title
-            , @Value("${xplat.oqsengine.sdk.export.message.context-path:''}") String contextPath
+            , @Value("${xplat.oqsengine.sdk.export.message.context-path:}") String contextPath
             , @Value("${xplat.oqsengine.sdk.export.message.ignore-on-sync:true}") boolean ignoreOnSync
             , RestTemplate restTemplate) {
         return new MessageCenterEntityExportEventListener(tokenSupplier::getToken

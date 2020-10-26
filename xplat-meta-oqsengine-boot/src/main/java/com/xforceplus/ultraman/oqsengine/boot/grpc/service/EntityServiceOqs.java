@@ -897,9 +897,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             /**
              * turn alias field to columnfield
              */
+
             Optional<AliasField> field = reader.field(x.getField().getId());
-            return toOneConditions(field.flatMap(f ->
-                    reader.column(f.firstName())), x, mainClass);
+            return toOneConditions(field.map(AliasField::getOriginObject).map(f -> (ColumnField) f), x, mainClass);
         }).filter(Objects::nonNull).reduce((a, b) -> a.addAnd(b, true));
 
         //remove special behavior for ids
@@ -954,7 +954,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             //return if field with invalid
             if (nonNullValueList.isEmpty()) {
-//                conditions = Conditions.buildEmtpyConditions();
+//                conditions = Conditions.buildEmptyConditions();
 //                return conditions;
                 throw new RuntimeException("Field " + columnField + " Value is Missing");
             }

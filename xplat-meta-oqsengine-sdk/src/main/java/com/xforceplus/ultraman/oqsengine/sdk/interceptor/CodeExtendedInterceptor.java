@@ -49,7 +49,11 @@ public class CodeExtendedInterceptor<T, R> implements MessageDispatcherIntercept
                         }
                     } else {
                         return (QueryMessage) queryMessage
-                                .withMetaData(queryMessage.getMetaData().and("code", boItem.getCode()).and("parentCode", ""));
+                                .withMetaData(queryMessage.getMetaData()
+                                        .and("code", boItem.getCode())
+                                        .and("parentCode", "")
+                                        .and("name", boItem.getCname())
+                                );
                     }
                 } else {
                     return (QueryMessage) queryMessage.withMetaData(queryMessage.getMetaData().and("code", ""));

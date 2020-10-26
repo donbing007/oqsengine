@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer;
 
 import com.xforceplus.tower.storage.StorageFactory;
 import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.configuration.StorageAppIdSupplier;
-import com.xforceplus.ultraman.oqsengine.sdk.service.ExportSink;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.ExportSink;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.StorageSink;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;

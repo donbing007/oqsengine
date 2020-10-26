@@ -3,9 +3,12 @@ package com.xforceplus.ultraman.oqsengine.sdk.listener;
 import com.xforcecloud.noification.model.BaseResponse;
 import com.xforcecloud.noification.model.MessageInfo;
 import com.xforcecloud.noification.model.Scope;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityErrorExported;
 import com.xforceplus.ultraman.oqsengine.sdk.event.EntityExported;
 import com.xforceplus.xplat.galaxy.framework.context.ContextKeys;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.Velocity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -15,8 +18,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestTemplate;
-import org.stringtemplate.v4.ST;
 
+import java.io.StringWriter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
@@ -44,7 +49,8 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
 
     private String contextPath = "";
 
-    private final String defaultContentStr = "<a href='$downloadUrl$'>$fileName$</a>";
+    private final String defaultContentStr = "#set( $currentFileName = $fileName.split('-')[0] + '-' + $ldt.now().format($dtf.ofPattern('YYYYMMddHHmmSS')) ) \n" +
+            "<a href='$downloadUrl.split('\\?')[0]?filename=$currentFileName'>$currentFileName</a>";
 
     private boolean ignoreOnSync;
 
@@ -84,6 +90,15 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
         }
 
         this.contextPath = contextPath;
+
+        Velocity.init();
+
+        /**
+         *   context.put("ldt", LocalDateTime.class);
+         *   context.put("dtf", DateTimeFormatter.class);
+         */
+        //Velocity.addProperty("ldt", LocalDateTime.class);
+        //Velocity.addProperty("dtf", DateTimeFormatter.class);
     }
 
     @Override
@@ -140,9 +155,9 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
 
         Map<String, Object> context = entityExported.getContext();
 
-        ST content = new ST(this.contentTemplate, '$', '$');
-        ST title = new ST(this.titleTemplate, '$', '$');
-        ST defaultContent = new ST(defaultContentStr, '$', '$');
+//        ST content = new ST(this.contentTemplate, '$', '$');
+//        ST title = new ST(this.titleTemplate, '$', '$');
+//        ST defaultContent = new ST(defaultContentStr, '$', '$');
 
         if (context != null) {
             Object tenantIdObj = context.get(ContextKeys.LongKeys.TENANT_ID.name());
@@ -158,8 +173,9 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
                 String fileName = entityExported.getFileName();
 
                 messageInfo.setScope(Scope.SINGLE);
-                messageInfo.setTitle(getRendered(title, fileName, finalDownloadUrl, () -> "导出成功"));
-                messageInfo.setContent(getRendered(content, fileName, finalDownloadUrl, () -> getRendered(defaultContent, finalDownloadUrl, fileName, () -> "下载地址")));
+                messageInfo.setTitle(getRendered(this.titleTemplate, fileName, finalDownloadUrl, entityExported.getEntityClass(), () -> "导出成功"));
+                messageInfo.setContent(getRendered(this.contentTemplate, fileName, finalDownloadUrl, entityExported.getEntityClass()
+                        , () -> getRendered(defaultContentStr, finalDownloadUrl, fileName, entityExported.getEntityClass(), () -> "下载地址")));
                 messageInfo.setReceiverIds(Arrays.asList((Long) userId));
                 messageInfo.setType(0);
 
@@ -184,11 +200,23 @@ public class MessageCenterEntityExportEventListener implements ExportEventAwareL
     }
 
 
-    private String getRendered(ST st, String fileName, String downloadUrl, Supplier<String> fallbackStr) {
+    private String getRendered(String template, String fileName, String downloadUrl, IEntityClass entityClass, Supplier<String> fallbackStr) {
         try {
-            st.add("downloadUrl", downloadUrl);
-            st.add("fileName", fileName);
-            return st.render();
+//            st.add("downloadUrl", downloadUrl);
+//            st.add("fileName", fileName);
+//            st.add("now", LocalDateTime.now());
+//            return st.render();
+
+            VelocityContext context = new VelocityContext();
+            context.put("fileName", fileName);
+            context.put("downloadUrl", downloadUrl);
+            context.put("entityCls", entityClass);
+            context.put("ldt", LocalDateTime.class);
+            context.put("dtf", DateTimeFormatter.class);
+            StringWriter writer = new StringWriter();
+            Velocity.evaluate(context, writer, "info", template);
+            return writer.toString();
+
         } catch (Exception ex) {
             logger.error("{}", ex);
             return fallbackStr.get();

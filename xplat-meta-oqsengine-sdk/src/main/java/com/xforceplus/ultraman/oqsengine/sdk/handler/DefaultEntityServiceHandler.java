@@ -2,8 +2,9 @@ package com.xforceplus.ultraman.oqsengine.sdk.handler;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.sdk.command.*;
-import com.xforceplus.ultraman.oqsengine.sdk.service.EntityExportService;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.EntityExportService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.ui.DefaultUiService;
 import com.xforceplus.xplat.galaxy.framework.dispatcher.anno.QueryHandler;
@@ -14,6 +15,7 @@ import io.vavr.control.Either;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -169,13 +171,44 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
         Optional<IEntityClass> entityClass = entityService.load(boId);
 
         if (entityClass.isPresent()) {
-            Collection<IEntityField> fields = entityClass.get().fields();
+            IEntityClassReader reader = new IEntityClassReader(entityClass.get());
+            Collection<? extends IEntityField> fields = reader.columns();
 
-            String columns = fields.stream().map(IEntityField::name).collect(Collectors.joining(","));
-            return Either.right(new ByteArrayInputStream(columns.getBytes(StandardCharsets.UTF_8)));
+            byte[] bom = new byte[]{(byte) 0xef, (byte) 0xbb, (byte) 0xbf};
+            String columns = fields.stream()
+                    .map(x -> x.cnName() + "[" + x.name() + "]")
+                    .map(StringEscapeUtils::escapeCsv)
+                    .collect(Collectors.joining(","));
+            byte[] bytes = columns.getBytes(StandardCharsets.UTF_8);
+
+            byte[] allBytes = new byte[bom.length + bytes.length];
+
+            for (int i = 0; i < allBytes.length; ++i) {
+                allBytes[i] = i < bom.length ? bom[i] : bytes[i - bom.length];
+            }
+
+            return Either.right(new ByteArrayInputStream(allBytes));
 
         } else {
             return Either.left(MISSING_ENTITIES);
+        }
+
+    }
+
+    /**
+     * extract name from headerPart
+     *
+     * @param headerPart
+     * @return
+     */
+    private String getKeyFromHeader(String headerPart) {
+        int start = headerPart.indexOf("[");
+        int end = headerPart.indexOf("]");
+
+        if (start < 0 || end < 0) {
+            return headerPart;
+        } else {
+            return headerPart.substring(start + 1, end);
         }
     }
 
@@ -212,7 +245,7 @@ public class DefaultEntityServiceHandler implements DefaultUiService {
                         for (int i = 1; i < list.size(); i++) {
                             CSVRecord record = list.get(i);
                             for (int j = 0; j < header.size(); j++) {
-                                map.put(header.get(j), StringUtils.isEmpty(record.get(j)) ? null : record.get(j));
+                                map.put(getKeyFromHeader(header.get(j)), StringUtils.isEmpty(record.get(j)) ? null : record.get(j));
                             }
                             entityService.create(entityClassOp.get(), map);
                         }

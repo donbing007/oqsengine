@@ -6,7 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.record.GeneralRecord;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.record.Record;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
-import com.xforceplus.ultraman.oqsengine.sdk.service.ExportSource;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.ExportSource;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.Conditions;

@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.sdk.service;
+package com.xforceplus.ultraman.oqsengine.sdk.service.export;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;

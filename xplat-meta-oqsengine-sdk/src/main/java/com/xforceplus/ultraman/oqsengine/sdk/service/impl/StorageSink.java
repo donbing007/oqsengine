@@ -8,7 +8,7 @@ import akka.util.ByteString;
 import com.xforceplus.tower.file.client.model.Policy;
 import com.xforceplus.tower.storage.StorageFactory;
 import com.xforceplus.tower.storage.model.UploadFileRequest;
-import com.xforceplus.ultraman.oqsengine.sdk.service.ExportSink;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.ExportSink;
 import com.xforceplus.xplat.galaxy.framework.context.ContextKeys;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.Tuple;
@@ -17,6 +17,8 @@ import scala.util.Try;
 
 import java.io.InputStream;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -59,7 +61,8 @@ public class StorageSink implements ExportSink {
 
                 //append returned fileId
                 String[] newToken = Arrays.copyOf(token, token.length + 1);
-                newToken[token.length - 1] = fileId.toString();
+                //append last
+                newToken[token.length] = fileId.toString();
                 return Tuple.of(ioResult, newToken);
             });
         });
@@ -91,7 +94,7 @@ public class StorageSink implements ExportSink {
         uploadFileRequest.setTenantId(telnetID);
         uploadFileRequest.setUserId(userID);
         uploadFileRequest.setOverwrite(true);
-        uploadFileRequest.setFilePath("/export/");
+        uploadFileRequest.setFilePath("/export/" + LocalDate.now().format(DateTimeFormatter.ofPattern("YYYY_MM_dd")));
         return storageFactory.uploadByInputStream(uploadFileRequest);
     }
 }
