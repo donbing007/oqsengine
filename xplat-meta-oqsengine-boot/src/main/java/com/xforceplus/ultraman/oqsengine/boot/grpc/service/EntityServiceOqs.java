@@ -71,7 +71,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> begin(TransactionUp in, Metadata metadata) {
         try {
-            long transId = transactionManagementService.begin();
+
+            Optional<Integer> timeout = metadata.getText("timeout").map(Integer::parseInt);
+            long transId;
+
+            if (timeout.isPresent() && timeout.get() > 0) {
+                transId = transactionManagementService.begin(timeout.get());
+            } else {
+                transId = transactionManagementService.begin();
+            }
 
             return CompletableFuture.completedFuture(OperationResult.newBuilder()
                     .setCode(OperationResult.Code.OK)
@@ -365,9 +373,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
             }
 
-
+            String force = "false";
             try {
-                logInfo(metadata, (displayname, username) -> String.format("Attempt to delete %s:%s by %s:%s", in.getId(), in.getObjId(), displayname, username));
+                force = metadata.getText("force").orElse("false");
+                String finalForce = force;
+                logInfo(metadata, (displayname, username) -> String.format("Attempt to delete %s:%s by %s:%s with %s", in.getId(), in.getObjId(), displayname, username, finalForce));
+
             } catch (Exception ex) {
                 logger.error("{}", ex);
             }
@@ -383,31 +394,50 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 if (op.isPresent()) {
                     IEntity entity = op.get();
-                    ResultStatus deleteStatus = entityManagementService.delete(entity);
 
+                    if (!Boolean.parseBoolean(force)) {
+                        ResultStatus deleteStatus = entityManagementService.delete(entity);
 
-                    switch (deleteStatus) {
-                        case SUCCESS:
-                            result = OperationResult.newBuilder()
-                                    .setAffectedRow(1)
-                                    .setCode(OperationResult.Code.OK)
-                                    .buildPartial();
-                            break;
-                        case CONFLICT:
-                            //send to sdk
-                            result = OperationResult.newBuilder()
-                                    .setAffectedRow(0)
-                                    .setCode(OperationResult.Code.OTHER)
-                                    .setMessage(ResultStatus.CONFLICT.name())
-                                    .buildPartial();
-                            break;
-                        default:
-                            //unreachable code
-                            result = OperationResult.newBuilder()
-                                    .setAffectedRow(0)
-                                    .setCode(OperationResult.Code.FAILED)
-                                    .setMessage("产生了未知的错误")
-                                    .buildPartial();
+                        switch (deleteStatus) {
+                            case SUCCESS:
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(1)
+                                        .setCode(OperationResult.Code.OK)
+                                        .buildPartial();
+                                break;
+                            case CONFLICT:
+                                //send to sdk
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(0)
+                                        .setCode(OperationResult.Code.OTHER)
+                                        .setMessage(ResultStatus.CONFLICT.name())
+                                        .buildPartial();
+                                break;
+                            default:
+                                //unreachable code
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(0)
+                                        .setCode(OperationResult.Code.FAILED)
+                                        .setMessage("产生了未知的错误")
+                                        .buildPartial();
+                        }
+                    } else {
+                        ResultStatus resultStatus = entityManagementService.deleteForce(entity);
+                        switch (resultStatus) {
+                            case SUCCESS:
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(1)
+                                        .setCode(OperationResult.Code.OK)
+                                        .buildPartial();
+                                break;
+                            default:
+                                //unreachable code
+                                result = OperationResult.newBuilder()
+                                        .setAffectedRow(0)
+                                        .setCode(OperationResult.Code.FAILED)
+                                        .setMessage("产生了未知的错误")
+                                        .buildPartial();
+                        }
                     }
                 } else {
                     result = OperationResult.newBuilder()
@@ -867,9 +897,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             /**
              * turn alias field to columnfield
              */
+
             Optional<AliasField> field = reader.field(x.getField().getId());
-            return toOneConditions(field.flatMap(f ->
-                    reader.column(f.firstName())), x, mainClass);
+            return toOneConditions(field.map(AliasField::getOriginObject).map(f -> (ColumnField) f), x, mainClass);
         }).filter(Objects::nonNull).reduce((a, b) -> a.addAnd(b, true));
 
         //remove special behavior for ids
@@ -924,7 +954,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             //return if field with invalid
             if (nonNullValueList.isEmpty()) {
-//                conditions = Conditions.buildEmtpyConditions();
+//                conditions = Conditions.buildEmptyConditions();
 //                return conditions;
                 throw new RuntimeException("Field " + columnField + " Value is Missing");
             }

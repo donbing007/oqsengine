@@ -9,23 +9,25 @@ package com.xforceplus.ultraman.oqsengine.storage.master.constant;
  */
 public class SQLConstant {
     public static final String BUILD_SQL =
-            "insert into %s (id, entity, version, time, pref, cref, deleted, attribute) values(?,?,?,?,?,?,?,?)";
+        "insert into %s (id, entity, version, time, pref, cref, deleted, attribute) values(?,?,?,?,?,?,?,?)";
     public static final String REPLACE_SQL =
-            "update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
+        "update %s set version = version + 1, time = ?, attribute = ? where id = ? and version = ?";
     public static final String REPLACE_VERSION_TIME_SQL =
-            "update %s set version = ?, time = ? where id = ?";
+        "update %s set version = ?, time = ? where id = ?";
     public static final String DELETE_SQL =
-            "update %s set version = version + 1, deleted = ?, time = ? where id = ? and version = ?";
+        "update %s set version = version + 1, deleted = ?, time = ? where id = ? and version = ?";
+    public static final String DELETE_SQL_WITHOUT_VERSION_SQL =
+        "update %s set version = ?, deleted = ?, time = ? where id = ?";
     public static final String SELECT_SQL =
-            "select id, entity, version, time, pref, cref, deleted, attribute from %s where id = ? and deleted = false";
+        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id = ? and deleted = false";
     public static final String SELECT_IN_SQL =
-            "select id, entity, version, time, pref, cref, deleted, attribute from %s where id in (%s) and deleted = false";
+        "select id, entity, version, time, pref, cref, deleted, attribute from %s where id in (%s) and deleted = false";
     public static final String SELECT_VERSION_TIME_SQL =
-            "select version, time from %s where id = ?";
+        "select version, time from %s where id = ?";
 
     public static final String UNDO_BUILD_SQL = "delete from %s where id = ?";
     public static final String UNDO_DELETE_SQL =
-            "update %s set version = version - 1, deleted = ?, time = ? where id = ? and version = ?";
+        "update %s set version = version - 1, deleted = ?, time = ? where id = ? and version = ?";
     public static final String UNDO_REPLACE_SQL =
-            "update %s set version = version - 1, time = ?, attribute = ? where id = ? and version = ?";
+        "update %s set version = version - 1, time = ?, attribute = ? where id = ? and version = ?";
 }

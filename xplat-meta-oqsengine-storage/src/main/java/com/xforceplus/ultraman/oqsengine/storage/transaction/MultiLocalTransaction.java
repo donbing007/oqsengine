@@ -92,7 +92,7 @@ public class MultiLocalTransaction implements Transaction {
     public void join(TransactionResource transactionResource) throws SQLException {
         check();
 
-        transactionResourceHolder.add(0, transactionResource);
+        transactionResourceHolder.add(transactionResource);
     }
 
     @Override

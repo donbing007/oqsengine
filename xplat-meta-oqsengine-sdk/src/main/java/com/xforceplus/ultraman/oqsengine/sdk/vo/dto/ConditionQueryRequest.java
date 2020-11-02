@@ -125,4 +125,14 @@ public class ConditionQueryRequest {
             return Stream.concat(stream, keyStream).collect(Collectors.toSet());
         }).orElseGet(Collections::emptySet);
     }
+
+    public List<String> getStringKeysOrdered(){
+        return Optional.ofNullable(entity).map(x -> {
+            Stream<String> stream = x.getFields()
+                    .stream();
+            Stream<String> keyStream = x.getEntities()
+                    .stream().flatMap(sub -> sub.getFields().stream().map(subField -> sub.getCode() + "." + subField));
+            return Stream.concat(stream, keyStream).collect(Collectors.toList());
+        }).orElseGet(Collections::emptyList);
+    }
 }

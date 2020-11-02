@@ -16,7 +16,7 @@ public class SQLConstant {
     /**
      * %s 顺序为 where 条件, 排序.
      */
-    public static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? %s %s limit ?,? option max_matches=?,ranker=none";
+    public static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? %s %s limit ?,? option max_matches=?,max_query_time=?,ranker=none";
     public static final String SELECT_COUNT_SQL = "show meta";
     public static final String SELECT_FROM_ID_SQL = "select id, pref, cref, entity, jsonfields from %s where id = ? option max_matches=1,ranker=none";
 

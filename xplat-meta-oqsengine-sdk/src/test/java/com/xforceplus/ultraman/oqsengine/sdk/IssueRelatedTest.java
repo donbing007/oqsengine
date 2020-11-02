@@ -27,9 +27,10 @@ import java.util.stream.IntStream;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.TRANSACTION_KEY;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @EnableAsync
-@ContextConfiguration(initializers = TestApplicationContextInitializer.class)
+//@ContextConfiguration(initializers = TestApplicationContextInitializer.class)
 public class IssueRelatedTest extends ContextWareBaseTest {
 
     @Autowired
@@ -134,14 +135,14 @@ public class IssueRelatedTest extends ContextWareBaseTest {
         maps.put("field1", "123");
         Long id = entityService.create(entityClass, maps).get();
 
-        contextService.set(TRANSACTION_KEY, "1234");
+        //contextService.set(TRANSACTION_KEY, "1234");
         CountDownLatch latch = new CountDownLatch(concurrent);
 
         IntStream.range(0, concurrent).mapToObj(x -> new Thread(() -> {
-            contextService.set(TRANSACTION_KEY, "1234");
+            //contextService.set(TRANSACTION_KEY, "1234");
             Map<String, Object> updateBody = new HashMap<>();
             updateBody.put("field1", "123-" + Thread.currentThread().getName());
-            System.out.println(entityService.retryExecute("a", () -> entityService
+            System.out.println("1111111111" + entityService.retryExecute("a", () -> entityService
                     .updateById(entityClass, id, updateBody)));
             latch.countDown();
             contextService.clear();
@@ -149,6 +150,45 @@ public class IssueRelatedTest extends ContextWareBaseTest {
 
         latch.await();
 
+        System.out.println(entityService.findOne(entityClass, id));
+
+        entityService.deleteOne(entityClass, id);
+
+        Thread.sleep(10000);
+    }
+
+    @Test
+    public void testRetry(){
+
+        Either<String, Object> objects = entityService.retryExecute("a", () -> {
+            return Either.left("CONFLICT");
+        });
+
+
+
+    }
+
+    @Test
+    public void testCasAutoRetry() throws InterruptedException {
+        metadataRepository.save(manyToOneNew(), "1", "1");
+
+        int concurrent = 100;
+
+        IEntityClass entityClass = entityService.load("1").get();
+        Map<String, Object> maps = new HashMap<>();
+        maps.put("field1", "123");
+        Long id = entityService.create(entityClass, maps).get();
+
+        CountDownLatch latch = new CountDownLatch(concurrent);
+
+        IntStream.range(0, concurrent).mapToObj(x -> new Thread(() -> {
+            Map<String, Object> updateBody = new HashMap<>();
+            updateBody.put("field1", "123-" + Thread.currentThread().getName());
+            System.out.println("1212121212" + plainEntityService.updateById(entityClass, id, updateBody));
+            latch.countDown();
+        })).forEach(Thread::start);
+
+        latch.await();
         System.out.println(entityService.findOne(entityClass, id));
 
         entityService.deleteOne(entityClass, id);
@@ -337,4 +377,68 @@ public class IssueRelatedTest extends ContextWareBaseTest {
                 , new RequestBuilder().field("decimalField", ConditionOp.eq, "100000").pageSize(10).pageNo(1).build()));
     }
 
+
+    @Test
+    public void testForceDelete() throws InterruptedException {
+            //try delete
+            Optional<IEntityClass> load = entityService.load("1250257809316302850");
+
+            IEntityClass entityClass = load.get();
+
+            Map<String, Object> body = new HashMap<>();
+
+            body.put("amout", "12.5");
+
+            Either<String, Long> id = entityService.create(entityClass, body);
+
+            System.out.println(id);
+
+            Long realId = id.get();
+
+            CountDownLatch latch = new CountDownLatch(1);
+
+            int i = 20;
+            while(i -- > 0) {
+                new Thread(() -> {
+                    int count = 100;
+                    while (count-- > 0) {
+
+                        Map<String, Object> bodyUpdate = new HashMap<>();
+                        body.put("amout", "12.6");
+                        Either<String, Integer> integers = entityService.updateById(entityClass, realId, bodyUpdate);
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
+            }
+
+            new Thread(() -> {
+                int count = 1000;
+                while(count -- > 0){
+
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    Either<String, Integer> integers = entityService.deleteOne(entityClass, realId);
+
+                    if(integers.isRight()){
+                        Integer tried = 1000 - count;
+                        System.out.println("Try " + (1000 - count));
+
+                        assertTrue(tried == 1);
+                        count = 0;
+                    }
+                }
+
+                latch.countDown();
+            }).start();
+
+            latch.await();
+    }
 }

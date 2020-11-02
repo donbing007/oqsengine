@@ -78,7 +78,7 @@ spec:
         livenessProbe:
           httpGet:
             scheme: HTTP
-            path: /actuator/health
+            path: /actuator/prometheus
             port: 8086
           initialDelaySeconds: 30
           periodSeconds: 60

@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.command;
 
+import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.storage.master.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -30,7 +31,37 @@ public class DeleteStorageCommand implements StorageCommand<StorageEntity, Integ
 
     @Override
     public Integer execute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
-        return this.doExecute(resource, storageEntity);
+        if (VersionHelp.isOmnipotence(storageEntity.getVersion())) {
+            return this.doExecuteWithoutVersion(resource, storageEntity);
+        } else {
+            return this.doExecute(resource, storageEntity);
+        }
+    }
+
+    private int doExecuteWithoutVersion(TransactionResource resource, StorageEntity storageEntity) throws SQLException {
+        String tableName = tableNameSelector.select(Long.toString(storageEntity.getId()));
+
+        // update %s set version = ?, deleted = ?, time = ? where id = ?";
+        String sql = String.format(SQLConstant.DELETE_SQL_WITHOUT_VERSION_SQL, tableName);
+        PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+
+        st.setInt(1, storageEntity.getVersion()); // version
+        st.setBoolean(2, true); // deleted
+        st.setLong(3, System.currentTimeMillis()); // time
+        st.setLong(4, storageEntity.getId()); // id
+
+        if (logger.isDebugEnabled()) {
+            logger.debug(st.toString());
+        }
+
+        try {
+            return st.executeUpdate();
+        } finally {
+            if (st != null) {
+                st.close();
+            }
+        }
+
     }
 
     private int doExecute(TransactionResource resource, StorageEntity storageEntity) throws SQLException {

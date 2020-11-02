@@ -17,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -28,7 +29,11 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import javax.annotation.Resource;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
 
 /**
@@ -56,6 +61,9 @@ public class JoinSelectTest {
 
     @Resource
     private TransactionManagementService transactionManagementService;
+
+    @Resource(name = "indexWriteDataSourceSelector")
+    private Selector<DataSource> indexWriteDataSourceSelector;
 
     private boolean initialization;
 
@@ -211,19 +219,32 @@ public class JoinSelectTest {
     }
 
     private void clear() throws SQLException {
-        Collection<IEntity> buff = new ArrayList<>();
-        buff.addAll(entities != null ? entities : Collections.emptyList());
-        buff.addAll(driverEntities != null ? driverEntities : Collections.emptyList());
+        Collection<IEntity> iEntities = new ArrayList<>();
+        iEntities.addAll(entities != null ? entities : Collections.emptyList());
+        iEntities.addAll(driverEntities != null ? driverEntities : Collections.emptyList());
 
         long txId = transactionManagementService.begin();
 
-        for (IEntity e : entities) {
+        for (IEntity e : iEntities) {
             transactionManagementService.restore(txId);
             managementService.delete(e);
         }
         transactionManagementService.restore(txId);
         transactionManagementService.commit();
 
+        DataSource ds = indexWriteDataSourceSelector.select("any");
+        Connection conn = ds.getConnection();
+        Statement statement = conn.createStatement();
+        ResultSet rs = statement.executeQuery("select count(*) as count from oqsindex");
+        rs.next();
+        long size = rs.getLong(1);
+        try {
+            Assert.assertEquals(0, size);
+        } finally {
+            rs.close();
+            statement.close();
+            conn.close();
+        }
     }
 
     private void buildEntities(List<IEntity> entities) throws SQLException {

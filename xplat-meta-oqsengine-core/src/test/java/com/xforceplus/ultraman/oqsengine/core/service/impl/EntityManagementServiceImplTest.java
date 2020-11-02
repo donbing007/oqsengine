@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -88,6 +89,28 @@ public class EntityManagementServiceImplTest {
 
     @After
     public void after() throws Exception {
+    }
+
+    @Test
+    public void testDeleteForce() throws Exception {
+        // 没有继承
+        IEntity expectedEntity = buildEntity(fatherEntityClass, false);
+        expectedEntity = service.build(expectedEntity);
+
+        Assert.assertEquals(ResultStatus.SUCCESS, service.deleteForce(expectedEntity));
+    }
+
+    @Test
+    public void testDeleteForceLowVersion() throws Exception {
+        // 没有继承
+        IEntity expectedEntity = buildEntity(fatherEntityClass, false);
+        expectedEntity.resetVersion(Integer.MAX_VALUE - 1);
+        expectedEntity = service.build(expectedEntity);
+
+        // 填写一个低version.应该可以更新成功.
+        expectedEntity.resetVersion(0);
+        Assert.assertEquals(ResultStatus.SUCCESS, service.deleteForce(expectedEntity));
+        Assert.assertEquals(VersionHelp.OMNIPOTENCE_VERSION, expectedEntity.version());
     }
 
     @Test
@@ -411,12 +434,18 @@ public class EntityManagementServiceImplTest {
         @Override
         public synchronized int delete(IEntity entity) throws SQLException {
 
-            IEntity old = data.get(entity.id());
-            if (old.version() != entity.version()) {
-                return 0;
-            } else {
+            if (VersionHelp.isOmnipotence(entity.version())) {
                 data.remove(entity.id());
                 return 1;
+            } else {
+
+                IEntity old = data.get(entity.id());
+                if (old.version() != entity.version()) {
+                    return 0;
+                } else {
+                    data.remove(entity.id());
+                    return 1;
+                }
             }
 
         }

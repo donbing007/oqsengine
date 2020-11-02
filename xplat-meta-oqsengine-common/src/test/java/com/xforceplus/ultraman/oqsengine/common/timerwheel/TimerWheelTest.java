@@ -34,6 +34,29 @@ public class TimerWheelTest {
     }
 
     /**
+     * 测试淘汰一个对象后,是否清理干净.
+     */
+    @Test
+    public void testCleanExpire() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        TimerWheel<String> wheel = new TimerWheel((TimeoutNotification<String>) text -> {
+            try {
+                return 0;
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        wheel.add("test", 300L);
+
+        latch.await();
+
+        Assert.assertEquals(0, wheel.size());
+        Assert.assertFalse(wheel.exist("test"));
+
+    }
+
+    /**
      * 测试只有一个过期对象,将在5秒后过期,误差在1秒内.
      */
     @Test

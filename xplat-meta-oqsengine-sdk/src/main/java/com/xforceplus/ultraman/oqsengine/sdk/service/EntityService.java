@@ -32,6 +32,21 @@ public interface EntityService {
 
     <T> Either<String, T> retryExecute(String key, Supplier<Either<String, T>> supplier);
 
+//    /**
+//     * force delete
+//     * @param entityClass
+//     * @param id
+//     * @return
+//     */
+//    Either<String, Integer> forceDeleteOne(IEntityClass entityClass, Long id);
+
+    /**
+     * TODO
+     * optimise delete
+     * @param entityClass
+     * @param id
+     * @return
+     */
     Either<String, Integer> deleteOne(IEntityClass entityClass, Long id);
 
     Either<String, Integer> updateById(IEntityClass entityClass, Long id, Map<String, Object> body);

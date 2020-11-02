@@ -5,33 +5,24 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.sdk.autoconfigurer.InitServiceAutoConfiguration;
-import com.xforceplus.ultraman.oqsengine.sdk.config.AuthSearcherConfig;
 import com.xforceplus.ultraman.oqsengine.sdk.configuration.TestApplicationContextInitializer;
+import com.xforceplus.ultraman.oqsengine.sdk.controller.EntityController;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.EntityExportService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityServiceEx;
 import com.xforceplus.ultraman.oqsengine.sdk.util.RequestBuilder;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionOp;
-import com.xforceplus.xplat.galaxy.framework.configuration.AsyncTaskExecutorAutoConfiguration;
-import com.xforceplus.xplat.galaxy.framework.configuration.ServiceDispatcherAutoConfiguration;
-import com.xforceplus.xplat.galaxy.framework.configuration.ServiceInvokerAutoConfiguration;
+import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
 import io.vavr.control.Either;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.web.client.RestTemplateAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.IntStream;
 
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.LongKeys.ID;
 import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKeys.*;
@@ -52,6 +43,12 @@ public class EntityServiceTest extends ContextWareBaseTest{
 
     @Autowired
     ContextService contextService;
+
+    @Autowired
+    EntityController entityController;
+
+    @Autowired
+    EntityExportService entityExportService;
 
 //    @Test
 //    public void testPagenation() throws InterruptedException {
@@ -193,9 +190,13 @@ public class EntityServiceTest extends ContextWareBaseTest{
 
         FieldConfig nonRequiredfieldConfig = new FieldConfig().searchable(true);
 
+
+        FieldConfig fieldConfig1 = new FieldConfig().identifie(true);
+
         EntityClass entityClass = new EntityClass(123666L, "TestDefault"
                 , Arrays.asList(new EntityField(123L, "defaultfield"
                 , FieldType.STRINGS, fieldConfig)
+                , new EntityField(10000L, "id", FieldType.LONG, fieldConfig1)
                 , new EntityField(234L, "hello", FieldType.STRING, nonRequiredfieldConfig)
         ));
 
@@ -206,20 +207,37 @@ public class EntityServiceTest extends ContextWareBaseTest{
     public void testStrings(){
 
         EntityClass entityClass = entity();
+
+        Integer count = entityService.count(entityClass, new RequestBuilder().pageNo(1).pageSize(100).field("defaultfield", ConditionOp.in
+                , "1", "2" , "3", "4" , "5").build());
+
+        System.out.println(count);
+
+        entityService.findByCondition(entityClass, new RequestBuilder().pageNo(1).pageSize(100).field("defaultfield", ConditionOp.in
+                , "1", "2" , "3", "4" , "5").build()).map(x -> x._2()).forEach(
+                x -> x.stream().forEach(y -> {
+                    Either<String, Integer> id = entityService.deleteOne(entityClass, Long.parseLong((String) y.get("id")));
+                    System.out.println(id);
+                })
+        );
+
+
         Map<String, Object> map3 = new HashMap<>();
-        map3.put("defaultfield", "1,2,3,4");
+        map3.put("defaultfield", "1,2,3");
 
         Either<String, Long> ret2 = entityService.create(entityClass, map3);
-        System.out.println(entityService.findOne(entityClass, ret2.get()));
+//        System.out.println(entityService.findOne(entityClass, ret2.get()));
 
-        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.in
-                , "1", "2").build()));
+        Integer row = entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.in
+                , "1", "2" , "3", "4" , "5").pageNo(1).pageSize(10).build()).get()._1();
+        assertEquals("Got", row, 1);
 
-        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.ne
-                , "1").build()));
-
-        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.eq
-                , "1").build()));
+//        System.out.println(entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.ne
+//                , "1").pageNo(1).pageSize(10).build()));
+//
+        Integer row2 = entityService.findByCondition(entityClass, new RequestBuilder().field("defaultfield", ConditionOp.eq
+                , "1").pageNo(1).pageSize(10).build()).get()._1();
+        assertEquals("Got", row2, 1);
     }
 
 
@@ -343,6 +361,8 @@ public class EntityServiceTest extends ContextWareBaseTest{
         System.out.println(entityService.findOne(entityClass, id1.get()));
     }
 
+
+
     @Test
     public void selectInTransTest(){
 
@@ -391,12 +411,26 @@ public class EntityServiceTest extends ContextWareBaseTest{
         System.out.println(entityService.findOne(entityClass, atomicLong.get()));
     }
 
+    @Test
+    public void testExport(){
 
-//    @Test
-//    public void testMultiValue(){
-//
-//        Optional<EntityClass> load = entityService.load("1260142892112224258");
-//        boolean multiValues = load.get().relations().stream().anyMatch(x -> x.getRelationType().equals("MultiValues"));
-//        assertTrue("hash multi", multiValues);
-//    }
+        EntityClass entityClass = entity();
+
+//        Map<String, Object> body = new HashMap<>();
+//        IntStream.range(0, 50000).forEach(x -> {
+//            body.put("hello", "" + x);
+//            body.put("defaultfield", "");
+//            entityService.create(entityClass, body);
+//        });
+
+        ConditionQueryRequest build = new RequestBuilder().build();
+
+
+
+
+        Either<String, String> join = entityExportService.export(entityClass, build
+                , "ok", "ok", null, "sync", null).join();
+
+        System.out.println(join);
+    }
 }

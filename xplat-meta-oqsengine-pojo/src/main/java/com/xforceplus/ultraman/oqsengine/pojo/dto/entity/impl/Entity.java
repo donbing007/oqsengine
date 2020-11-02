@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityFamily;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -65,6 +68,11 @@ public class Entity implements IEntity, Serializable {
     @Override
     public int version() {
         return version;
+    }
+
+    @Override
+    public void resetVersion(int version) {
+        this.version = version;
     }
 
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue) {

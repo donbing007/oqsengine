@@ -131,8 +131,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
              */
             if (transaction != null) {
                 try {
-                    survival.remove(transaction.id());
-                    timerWheel.remove(transaction);
+                    clean(transaction);
                 } catch (Exception e) {
                     logger.warn("An error occurred in creating the transaction, as well as in cleaning it up.", e);
                 }
@@ -202,10 +201,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     public void finish(Transaction tx) throws SQLException {
         size.decrementAndGet();
 
-        using.remove(tx.attachment());
-        tx.attach(Transaction.NOT_ATTACHMENT);
-
-        timerWheel.remove(tx);
+        clean(tx);
 
         transactionNumber.decrementAndGet();
 
@@ -216,7 +212,6 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         if (logger.isDebugEnabled()) {
             logger.debug("End of transaction({}) and unbound.", tx.id());
         }
-
     }
 
     @Override
@@ -240,6 +235,15 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     @Override
     public void unfreeze() {
         frozenness.set(false);
+    }
+
+
+    // 清理事务.
+    private void clean(Transaction tx) {
+        survival.remove(tx.id());
+        using.remove(tx.attachment());
+        timerWheel.remove(tx);
+        tx.attach(Transaction.NOT_ATTACHMENT);
     }
 
     /**

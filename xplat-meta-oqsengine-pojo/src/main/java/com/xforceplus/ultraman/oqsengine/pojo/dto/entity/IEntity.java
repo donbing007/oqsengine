@@ -52,6 +52,13 @@ public interface IEntity extends Cloneable {
     public int version();
 
     /**
+     * 重置版本号为指定值.
+     *
+     * @param version 指定版本号.
+     */
+    public void resetVersion(int version);
+
+    /**
      * 克隆.
      * @return
      * @throws CloneNotSupportedException

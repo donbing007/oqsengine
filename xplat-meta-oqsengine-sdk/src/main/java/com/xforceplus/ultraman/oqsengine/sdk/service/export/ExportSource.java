@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.sdk.service;
+package com.xforceplus.ultraman.oqsengine.sdk.service.export;
 
 import akka.NotUsed;
 import akka.stream.javadsl.Source;
@@ -18,6 +18,6 @@ public interface ExportSource {
      * a export Source
      * @return
      */
-    Source<Record, NotUsed> source(IEntityClass entityclass, ConditionQueryRequest request);
+    Source<Record, NotUsed> source(IEntityClass entityClass, ConditionQueryRequest request);
 
 }

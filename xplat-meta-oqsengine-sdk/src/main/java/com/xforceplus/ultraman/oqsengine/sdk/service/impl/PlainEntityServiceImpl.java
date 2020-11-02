@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.sdk.util.GetResult;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.DataCollection;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import io.vavr.control.Either;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,12 @@ public class PlainEntityServiceImpl implements PlainEntityService {
     public PlainEntityServiceImpl(EntityService entityService) {
         this.entityService = entityService;
     }
+
+    @Value("${xplat.oqsengine.sdk.cas.retry.auto:true}")
+    private boolean autoRetry = true;
+
+    @Value("${xplat.oqsengine.sdk.cas.retry-delete.auto:false}")
+    private boolean autoRetryOnDelete = false;
 
     @Override
     public IEntityClass load(String boId) {
@@ -70,12 +77,22 @@ public class PlainEntityServiceImpl implements PlainEntityService {
 
     @Override
     public Integer deleteOne(IEntityClass entityClass, Long id) {
-        return GetResult.get(entityService.deleteOne(entityClass, id));
+        if (autoRetryOnDelete) {
+            String conflictKey = entityClass.code() + id;
+            return retryExecute(conflictKey, () -> entityService.deleteOne(entityClass, id));
+        } else {
+            return GetResult.get(entityService.deleteOne(entityClass, id));
+        }
     }
 
     @Override
     public Integer updateById(IEntityClass entityClass, Long id, Map<String, Object> body) {
-        return GetResult.get(entityService.updateById(entityClass, id, body));
+        if (autoRetry) {
+            String conflictKey = entityClass.code() + id;
+            return retryExecute(conflictKey, () -> entityService.updateById(entityClass, id, body));
+        } else {
+            return GetResult.get(entityService.updateById(entityClass, id, body));
+        }
     }
 
     @Override
@@ -85,7 +102,13 @@ public class PlainEntityServiceImpl implements PlainEntityService {
 
     @Override
     public Integer replaceById(IEntityClass entityClass, Long id, Map<String, Object> body) {
-        return GetResult.get(entityService.replaceById(entityClass, id, body));
+
+        if (autoRetry) {
+            String conflictKey = entityClass.code() + id;
+            return retryExecute(conflictKey, () -> entityService.replaceById(entityClass, id, body));
+        } else {
+            return GetResult.get(entityService.replaceById(entityClass, id, body));
+        }
     }
 
     @Override

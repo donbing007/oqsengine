@@ -17,6 +17,11 @@ import com.xforceplus.ultraman.oqsengine.sdk.listener.ExportEventLoggerListener;
 import com.xforceplus.ultraman.oqsengine.sdk.listener.MessageCenterEntityExportEventListener;
 import com.xforceplus.ultraman.oqsengine.sdk.listener.ModuleEventListener;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.*;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.impl.CSVRecordFlow;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.impl.DefaultExportCustomFieldToString;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.impl.EntityExportServiceImpl;
+import com.xforceplus.ultraman.oqsengine.sdk.service.export.impl.ExportStringTransformerImpl;
 import com.xforceplus.ultraman.oqsengine.sdk.service.impl.*;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.*;
 import com.xforceplus.ultraman.oqsengine.sdk.service.operation.validator.FieldValidator;
@@ -28,6 +33,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.store.repository.FormBoMapLocalStor
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.PageBoMapLocalStore;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.impl.MetadataRepositoryInMemoryImpl;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.DefaultTransactionManager;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.OqsTransactionManager;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.FlowRegistry;
 import com.xforceplus.ultraman.oqsengine.sdk.vo.dto.ConditionQueryRequest;
 import com.xforceplus.xplat.galaxy.framework.context.ContextService;
@@ -141,11 +148,19 @@ public class InitServiceAutoConfiguration {
         return new MetadataRepositoryInMemoryImpl(versionSize, publisher);
     }
 
+    @Bean
+    public OqsTransactionManager oqsTransactionManager(
+            EntityServiceClient entityServiceClient
+            , ContextService contextService){
+        return new DefaultTransactionManager(contextService, entityServiceClient);
+    }
+
     //service
     @Bean
     public EntityService entityService(MetadataRepository metadataRepository
             , EntityServiceClient entityServiceClient
-            , ContextService contextService) {
+            , ContextService contextService
+    ) {
         return new EntityServiceImpl(metadataRepository, entityServiceClient, contextService);
     }
 
@@ -159,6 +174,16 @@ public class InitServiceAutoConfiguration {
             , EntityServiceClient entityServiceClient
             , ContextService contextService) {
         return new EntityServiceExImpl(contextService, entityServiceClient);
+    }
+
+    @Bean
+    public DefaultExportCustomFieldToString defaultExportCustomFieldToString(){
+        return new DefaultExportCustomFieldToString();
+    }
+
+    @Bean
+    public ExportStringTransformer stringTransformer(){
+        return new ExportStringTransformerImpl();
     }
 
     @Bean
@@ -299,12 +324,19 @@ public class InitServiceAutoConfiguration {
         return new ModuleEventListener();
     }
 
+    @ConditionalOnMissingBean(ExportSource.class)
     @Bean
     public ExportSource exportSource(EntityService entityService
-            , @Value("${xplat.oqsengine.sdk.export.step:1000}") int step
+            , @Value("${xplat.oqsengine.sdk.export.step:500}") int step
             , ContextService contextService
     ) {
         return new SequenceExportSource(entityService, step, contextService);
+    }
+
+    @ConditionalOnMissingBean(ExportRecordStringFlow.class)
+    @Bean
+    public ExportRecordStringFlow Exportflow(){
+        return new CSVRecordFlow();
     }
 
     @ConditionalOnMissingBean(ExportSink.class)
@@ -338,7 +370,7 @@ public class InitServiceAutoConfiguration {
             , MessageAppIdSupplier appIdSupplier, GatewayUrlSupplier gatewayUrlSupplier
             , @Value("${xplat.oqsengine.sdk.export.message.template.content:#{null}}") String content
             , @Value("${xplat.oqsengine.sdk.export.message.template.title:#{null}}") String title
-            , @Value("${xplat.oqsengine.sdk.export.message.context-path:''}") String contextPath
+            , @Value("${xplat.oqsengine.sdk.export.message.context-path:}") String contextPath
             , @Value("${xplat.oqsengine.sdk.export.message.ignore-on-sync:true}") boolean ignoreOnSync
             , RestTemplate restTemplate) {
         return new MessageCenterEntityExportEventListener(tokenSupplier::getToken
@@ -384,5 +416,10 @@ public class InitServiceAutoConfiguration {
 
         RateLimiter rateLimiter = registry.rateLimiter("retry", config);
         return rateLimiter;
+    }
+
+    @Bean
+    public EntityExportService entityExportService(){
+        return new EntityExportServiceImpl();
     }
 }

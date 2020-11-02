@@ -10,6 +10,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.event.EntityUpdated;
 import com.xforceplus.ultraman.oqsengine.sdk.service.EntityService;
 import com.xforceplus.ultraman.oqsengine.sdk.service.*;
 import com.xforceplus.ultraman.oqsengine.sdk.store.repository.MetadataRepository;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.OqsTransactionManager;
+import com.xforceplus.ultraman.oqsengine.sdk.transactional.annotation.Propagation;
 import com.xforceplus.ultraman.oqsengine.sdk.util.ConditionQueryRequestHelper;
 import com.xforceplus.ultraman.oqsengine.sdk.util.context.ContextDecorator;
 import com.xforceplus.ultraman.oqsengine.sdk.util.flow.FlowRegistry;
@@ -24,6 +26,7 @@ import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -42,7 +45,7 @@ import static com.xforceplus.xplat.galaxy.framework.context.ContextKeys.StringKe
 /**
  * main service for entity
  */
-public class EntityServiceImpl implements EntityService {
+public class EntityServiceImpl implements EntityService, InitializingBean {
 
     private final MetadataRepository metadataRepository;
 
@@ -68,7 +71,9 @@ public class EntityServiceImpl implements EntityService {
     @Autowired
     private FlowRegistry flowRegistry;
 
-    @Value("${xplat.oqsengine.sdk.cas.retry.max-attempts:2}")
+    private RetryConfig retryConfig;
+
+    @Value("${xplat.oqsengine.sdk.cas.retry.max-attempts:10}")
     private int maxAttempts;
 
     @Value("${xplat.oqsengine.sdk.cas.retry.delay:100}")
@@ -77,12 +82,22 @@ public class EntityServiceImpl implements EntityService {
     @Value("${xplat.oqsengine.sdk.strict.range:true}")
     private boolean isRangeStrict;
 
+    @Value("${xplat.oqsengine.sdk.strict.force-delete:true}")
+    private boolean isForce;
+
+    @Value("${xplat.oqsengine.sdk.transaction.timeout:-1}")
+    private Integer timeout;
+
+    @Autowired
+    private OqsTransactionManager oqsTransactionManager;
+
     private Logger logger = LoggerFactory.getLogger(EntityService.class);
 
     public EntityServiceImpl(MetadataRepository metadataRepository, EntityServiceClient entityServiceClient, ContextService contextService) {
         this.metadataRepository = metadataRepository;
         this.entityServiceClient = entityServiceClient;
         this.contextService = contextService;
+//        this.transactionManager = transactionManager;
     }
 
     @Override
@@ -123,54 +138,18 @@ public class EntityServiceImpl implements EntityService {
 
     @Override
     public <T> Either<String, T> transactionalExecute(Callable<T> supplier) {
-        //maybe timeout
-        OperationResult result = entityServiceClient
-                .begin(TransactionUp.newBuilder().build()).toCompletableFuture().join();
 
-        if (result.getCode() == OperationResult.Code.OK) {
-            logger.info("Transaction create success with id:{}", result.getTransactionResult());
-            contextService.set(TRANSACTION_KEY, result.getTransactionResult());
-            logger.debug("set currentService with {}", result.getTransactionResult());
-            try {
-                T t = supplier.call();
-                CompletableFuture<Either<String, T>> commitedT = entityServiceClient.commit(TransactionUp.newBuilder()
-                        .setId(result.getTransactionResult())
-                        .build())
-                        .exceptionally(ex -> {
-                            logger.error("Transaction with id:{} failed to commit with exception {}", result.getTransactionResult(), ex.getMessage());
-                            return OperationResult
-                                    .newBuilder()
-                                    .setCode(OperationResult.Code.EXCEPTION)
-                                    .setMessage(ex.getMessage())
-                                    .buildPartial();
-                        }).thenApply(x -> {
-                            if (x.getCode() == OperationResult.Code.OK) {
-                                logger.info("Transaction with id:{} has committed successfully ", result.getTransactionResult());
-                                return Either.<String, T>right(t);
-                            } else {
-                                logger.error("Transaction with id:{} failed to commit", result.getTransactionResult());
-                                return Either.<String, T>left("事务提交失败:" + x.getMessage());
-                            }
-                        }).toCompletableFuture();
-
-                return commitedT.join();
-            } catch (Exception ex) {
-                //maybe timeout
-                try {
-                    entityServiceClient.rollBack(TransactionUp.newBuilder()
-                            .setId(result.getTransactionResult())
-                            .build()).toCompletableFuture().join();
-                    return Either.left(ex.getMessage());
-                } catch (Exception bindEx) {
-                    return Either.left(bindEx.getMessage());
-                }
-            } finally {
-                //remove TRANSACTION_KEY
-                logger.info("remove currentService {} with {}", TRANSACTION_KEY.name(), result.getTransactionResult());
-                contextService.set(TRANSACTION_KEY, null);
-            }
-        } else {
-            return Either.left("事务创建失败");
+        try {
+            T result = oqsTransactionManager.transactionExecution(
+                    Propagation.REQUIRES_NEW,
+                    timeout,
+                    null,
+                    null,
+                    supplier
+            );
+            return Either.right(result);
+        } catch (Throwable throwable) {
+            return Either.left(throwable.getMessage());
         }
     }
 
@@ -212,13 +191,7 @@ public class EntityServiceImpl implements EntityService {
 
         //this is fixed by only retry for update and delete
 
-        RetryConfig config = RetryConfig.<Either<String, T>>custom()
-                .maxAttempts(maxAttempts)
-                .waitDuration(Duration.ofMillis(delay))
-                .retryOnResult(response -> response == null || (response.isLeft() && "CONFLICT".equalsIgnoreCase(response.getLeft())))
-                .build();
-
-        Retry retry = retryRegistry.retry("retry-" + UUID.randomUUID().toString(), config);
+        Retry retry = retryRegistry.retry("retry-" + UUID.randomUUID().toString(), retryConfig);
 
         retry.getEventPublisher().onRetry(retryEvt -> {
             logger.info("Trigger Retry {} attempts {} left {}", retryEvt.getName(), retryEvt.getNumberOfRetryAttempts()
@@ -232,16 +205,14 @@ public class EntityServiceImpl implements EntityService {
     }
 
     /**
-     * //TODO transaction
-     * return affect row
+     * new force
      *
      * @param entityClass
      * @param id
      * @return
      */
-    @Override
-    public Either<String, Integer> deleteOne(IEntityClass entityClass, Long id) {
-
+//    @Override
+    public Either<String, Integer> optimizeDeleteOne(IEntityClass entityClass, Long id) {
         String transId = contextService.get(TRANSACTION_KEY);
         SingleResponseRequestBuilder<EntityUp, OperationResult> removeBuilder = entityServiceClient.remove();
         if (transId != null) {
@@ -261,6 +232,58 @@ public class EntityServiceImpl implements EntityService {
             removeBuilder = removeBuilder.addHeader("username", userDisplayName);
         }
 
+        OperationResult updateResult =
+                removeBuilder.invoke(toEntityUp(entityClass, id))
+                        .toCompletableFuture().join();
+
+        if (updateResult.getCode() == OperationResult.Code.OK) {
+            int rows = updateResult.getAffectedRow();
+
+            if (rows > 0) {
+                publisher.publishEvent(buildDeleteEvent(entityClass, id));
+            }
+
+            return Either.right(rows);
+        } else {
+            //indicates
+            return Either.left(updateResult.getMessage());
+        }
+    }
+
+    /**
+     * //TODO transaction
+     * return affect row
+     *
+     * @param entityClass
+     * @param id
+     * @return
+     */
+    @Override
+    public Either<String, Integer> deleteOne(IEntityClass entityClass, Long id) {
+
+        String transId = contextService.get(TRANSACTION_KEY);
+
+        SingleResponseRequestBuilder<EntityUp, OperationResult> removeBuilder = entityServiceClient.remove();
+        if (transId != null) {
+            logger.info("delete with Transaction id:{} ", transId);
+            removeBuilder = removeBuilder.addHeader("transaction-id", transId);
+        }
+
+        //monitor delete action
+        String userDisplayName = contextService.get(USER_DISPLAYNAME);
+        String userName = contextService.get(USERNAME);
+
+        if (userDisplayName != null) {
+            removeBuilder = removeBuilder.addHeader("display-name", userDisplayName);
+        }
+
+        if (userName != null) {
+            removeBuilder = removeBuilder.addHeader("username", userDisplayName);
+        }
+
+        if (isForce) {
+            removeBuilder = removeBuilder.addHeader("force", "true");
+        }
 
         OperationResult updateResult =
                 removeBuilder.invoke(toEntityUp(entityClass, id))
@@ -590,5 +613,14 @@ public class EntityServiceImpl implements EntityService {
         String code = entityClass.code();
         Map<String, String> context = getContext();
         return new EntityUpdated(code, id, data, context);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.retryConfig = RetryConfig.<Either<String, ?>>custom()
+                .maxAttempts(maxAttempts)
+                .waitDuration(Duration.ofMillis(delay))
+                .retryOnResult(response -> response == null || (response.isLeft() && "CONFLICT".equalsIgnoreCase(response.getLeft())))
+                .build();
     }
 }

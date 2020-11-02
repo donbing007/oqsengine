@@ -97,15 +97,15 @@ public class SphinxQLHelperTest {
     @Test
     public void testBuildFullFuzzyQuery() throws Exception {
         LongStorageValue longStorageValue = new LongStorageValue("1L", 100, false);
-        Assert.assertEquals("(ZONESPAN:F1L \"*100*\")",
+        Assert.assertEquals("\"*100*\"",
             SphinxQLHelper.buildFullFuzzyQuery(longStorageValue, false));
-        Assert.assertEquals("(ZONESPAN:F1L \"*100*\")",
+        Assert.assertEquals("\"*100*\"",
             SphinxQLHelper.buildFullFuzzyQuery(longStorageValue, true));
 
         StringStorageValue stringStorageValue = new StringStorageValue("1L", "string value", false);
-        Assert.assertEquals("(ZONESPAN:F1S \"*string　value*\")",
+        Assert.assertEquals("\"*string　value*\"",
             SphinxQLHelper.buildFullFuzzyQuery(stringStorageValue, false));
-        Assert.assertEquals("(ZONESPAN:F1S \"*string　value*\")",
+        Assert.assertEquals("\"*string　value*\"",
             SphinxQLHelper.buildFullFuzzyQuery(stringStorageValue, true));
     }
 

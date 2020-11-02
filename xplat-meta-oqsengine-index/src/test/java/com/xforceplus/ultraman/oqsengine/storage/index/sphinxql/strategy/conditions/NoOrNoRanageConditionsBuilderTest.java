@@ -81,7 +81,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new StringValue(new EntityField(1, "c1", FieldType.STRING), "test")
                     )
                 ),
-                expectPrefix + "(ZONESPAN:F1S \"*test*\")" + expectAfter
+                expectPrefix + "\"*test*\"" + expectAfter
             )
             ,
             new Case(

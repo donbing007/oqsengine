@@ -63,6 +63,7 @@ data:
                 size: {{ .Values.storage.master.shard.table.size | default "3" }}
           index:
             name: {{ .Values.storage.index.name | default "oqsindex" | quote }}
+            maxQueryTimeMs: {{ .Values.storage.index.maxQueryTimeMs | default "0" | quote }}
           undo:
             store: {{ .Values.storage.undo.store | default "simple" |quote }}
     oqsengine-ds.conf: |

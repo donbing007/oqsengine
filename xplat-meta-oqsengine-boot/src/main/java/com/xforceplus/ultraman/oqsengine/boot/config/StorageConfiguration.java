@@ -26,10 +26,13 @@ public class StorageConfiguration {
 
     @Bean
     public IndexStorage indexStorage(
-        @Value("${storage.index.name:oqsindex}") String indexTableName) {
+        @Value("${storage.index.name:oqsindex}") String indexTableName,
+        @Value("${storage.index.maxQueryTimeMs:0}") long maxQueryTimeMs
+    ) {
 
         SphinxQLIndexStorage storage = new SphinxQLIndexStorage();
         storage.setIndexTableName(indexTableName);
+        storage.setMaxQueryTimeMs(maxQueryTimeMs);
         return storage;
     }
 }
