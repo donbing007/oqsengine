@@ -200,10 +200,9 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     @Override
     public void finish(Transaction tx) throws SQLException {
         size.decrementAndGet();
+        transactionNumber.decrementAndGet();
 
         clean(tx);
-
-        transactionNumber.decrementAndGet();
 
         if (!tx.isCompleted()) {
             tx.rollback();
@@ -212,6 +211,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         if (logger.isDebugEnabled()) {
             logger.debug("End of transaction({}) and unbound.", tx.id());
         }
+
     }
 
     @Override
@@ -237,11 +237,10 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         frozenness.set(false);
     }
 
-
-    // 清理事务.
+    // 清理
     private void clean(Transaction tx) {
-        survival.remove(tx.id());
         using.remove(tx.attachment());
+        survival.remove(tx.id());
         timerWheel.remove(tx);
         tx.attach(Transaction.NOT_ATTACHMENT);
     }
@@ -257,7 +256,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         /**
          * 正在使用的过期事务的再次检查毫秒值.
          */
-        final int recheckMs = 300;
+        final int recheckMs = 600;
 
         @Override
         public long notice(Transaction transaction) {
@@ -273,22 +272,25 @@ public abstract class AbstractTransactionManager implements TransactionManager {
              */
             if (using.containsKey(transaction.attachment())) {
 
-                logger.warn("The transaction ({}) timed out({}ms),but still in use will be checked at the next checkpoint.",
-                    transaction.id(), survivalTimeMs);
+                logger.warn("The transaction ({}) timed out,but still in use will be checked at the next checkpoint.",
+                    transaction.id());
 
                 return recheckMs;
 
             } else {
 
-                if (!transaction.isCompleted()) {
-                    logger.warn("The transaction ({}) timed out({}ms), so rollback.", transaction.id(), survivalTimeMs);
+                try {
 
-                    try {
-                        finish(transaction);
-                    } catch (SQLException e) {
-                        String msg = String.format("%s transaction status: %s", e.getMessage(), transaction.toString());
-                        logger.error(msg, e);
-                    }
+                    transaction.exclusiveAction(() -> {
+                        if (!transaction.isCompleted()) {
+                            logger.warn("The transaction ({}) timed out, so rollback.", transaction.id());
+                            finish(transaction);
+
+                        }
+                    });
+                } catch (Exception e) {
+                    String msg = String.format("%s transaction status: %s", e.getMessage(), transaction.toString());
+                    logger.error(msg, e);
                 }
             }
 

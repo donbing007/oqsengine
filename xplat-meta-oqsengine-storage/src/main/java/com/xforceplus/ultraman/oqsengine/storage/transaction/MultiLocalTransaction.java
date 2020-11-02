@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,9 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -28,13 +24,12 @@ public class MultiLocalTransaction implements Transaction {
 
     final Logger logger = LoggerFactory.getLogger(MultiLocalTransaction.class);
 
-    private Timer.Sample timerSample;
-
     private long id;
     private long attachment;
     private List<TransactionResource> transactionResourceHolder;
-    private volatile boolean committed;
-    private volatile boolean rollback;
+    private boolean committed;
+    private boolean rollback;
+    private Lock lock = new ReentrantLock();
 
 
     public MultiLocalTransaction(long id) {
@@ -42,8 +37,6 @@ public class MultiLocalTransaction implements Transaction {
         committed = false;
         rollback = false;
         this.id = id;
-
-        timerSample = Timer.start(Metrics.globalRegistry);
     }
 
     @Override
@@ -52,7 +45,7 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
-    public void commit() throws SQLException {
+    public synchronized void commit() throws SQLException {
         check();
 
         doEnd(true);
@@ -63,7 +56,7 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
-    public void rollback() throws SQLException {
+    public synchronized void rollback() throws SQLException {
         check();
 
         doEnd(false);
@@ -74,22 +67,22 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
-    public boolean isCommitted() {
+    public synchronized boolean isCommitted() {
         return committed;
     }
 
     @Override
-    public boolean isRollback() {
+    public synchronized boolean isRollback() {
         return rollback;
     }
 
     @Override
-    public boolean isCompleted() {
+    public synchronized boolean isCompleted() {
         return this.committed || this.rollback;
     }
 
     @Override
-    public void join(TransactionResource transactionResource) throws SQLException {
+    public synchronized void join(TransactionResource transactionResource) throws SQLException {
         check();
 
         transactionResourceHolder.add(transactionResource);
@@ -119,6 +112,19 @@ public class MultiLocalTransaction implements Transaction {
     @Override
     public void attach(long id) {
         this.attachment = id;
+    }
+
+    @Override
+    public void exclusiveAction(TransactionExclusiveAction action) throws SQLException {
+        lock.lock();
+        try {
+            logger.debug("Starts the exclusive operation of transaction({}).", this.id());
+            action.act();
+        } finally {
+            lock.unlock();
+            logger.debug("The exclusive operation of the transaction({}) ends.");
+        }
+
     }
 
     private void throwSQLExceptionIfNecessary(List<SQLException> exHolder) throws SQLException {

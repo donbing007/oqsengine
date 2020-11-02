@@ -80,4 +80,12 @@ public interface Transaction {
      */
     void attach(long id);
 
+    /**
+     * Exclusive actions ensure that only one thread executes per transaction.
+     *
+     * @param action Actions that need to be performed.
+     */
+    void exclusiveAction(TransactionExclusiveAction action) throws SQLException;
+
+
 }

@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
@@ -17,6 +19,8 @@ import java.util.Optional;
  */
 public class TransactionManagementServiceImpl implements TransactionManagementService {
 
+    final Logger logger = LoggerFactory.getLogger(TransactionManagementServiceImpl.class);
+
     @Resource
     private TransactionManager transactionManager;
 
@@ -29,13 +33,18 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
     public long begin(long timeoutMs) throws SQLException {
         long txId;
 
-        if (DEFAULT_TRANSACTION_TIMEOUT == timeoutMs) {
-            txId = transactionManager.create().id();
-        } else if (timeoutMs > DEFAULT_TRANSACTION_TIMEOUT) {
-            txId = transactionManager.create(timeoutMs).id();
-        } else {
-            throw new SQLException(
-                String.format("%d is an invalid transaction timeout and must be an integer greater than 0.", timeoutMs));
+        try {
+            if (DEFAULT_TRANSACTION_TIMEOUT == timeoutMs) {
+                txId = transactionManager.create().id();
+            } else if (timeoutMs > DEFAULT_TRANSACTION_TIMEOUT) {
+                txId = transactionManager.create(timeoutMs).id();
+            } else {
+                throw new SQLException(
+                    String.format("%d is an invalid transaction timeout and must be an integer greater than 0.", timeoutMs));
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            throw ex;
         }
 
         return txId;
@@ -43,7 +52,12 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
 
     @Override
     public void restore(long id) throws SQLException {
-        transactionManager.bind(id);
+        try {
+            transactionManager.bind(id);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
     }
 
     @Override
@@ -66,23 +80,31 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
      */
     private void doFinish(boolean rollback) throws SQLException {
         Optional<Transaction> tx = transactionManager.getCurrent();
-        if (tx.isPresent()) {
-            Transaction t = tx.get();
-            try {
-                if (!t.isCompleted()) {
-                    if (rollback) {
-                        t.rollback();
-                    } else {
-                        t.commit();
+        try {
+            if (tx.isPresent()) {
+                Transaction t = tx.get();
+                t.exclusiveAction(() -> {
+                    try {
+                        if (!t.isCompleted()) {
+                            if (rollback) {
+                                t.rollback();
+                            } else {
+                                t.commit();
+                            }
+                        } else {
+                            throw new SQLException(String.format("Transaction %d has completed.", t.id()));
+                        }
+                    } finally {
+                        transactionManager.finish(t);
                     }
-                } else {
-                    throw new SQLException(String.format("Transaction %d has completed.", tx.get().id()));
-                }
-            } finally {
-                transactionManager.finish(t);
+                });
+
+            } else {
+                throw new SQLException("There are no transactions currently.");
             }
-        } else {
-            throw new SQLException("There are no transactions currently.");
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            throw ex;
         }
     }
 }
