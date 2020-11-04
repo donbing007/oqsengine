@@ -14,10 +14,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.BuildExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.QueryConditionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.QueryExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.ReplaceExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.*;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -154,21 +151,22 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     @Override
     public int build(IEntity entity) throws SQLException {
-        return doBuildOrReplace(entity, false);
+        throw new RuntimeException("Deprecated");
     }
 
     @Override
     public int replace(IEntity entity) throws SQLException {
-        // 在事务状态,返回值恒为false
-        return doBuildOrReplace(entity, true);
+        throw new RuntimeException("Deprecated");
     }
 
     @Override
     public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
         checkId(storageEntity.getId());
 
-        storageEntity.setJsonFields(serializeToMap(entityValue, true)); //  jsonFields
-        storageEntity.setFullFields(serializeSetFull(entityValue));                 // fullTexts
+        //  jsonFields
+        storageEntity.setJsonFields(serializeToMap(entityValue, true));
+        // fullTexts
+        storageEntity.setFullFields(serializeSetFull(entityValue));
 
         return doBuildReplaceStorageEntity(storageEntity, replacement);
     }
@@ -182,10 +180,10 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
                     @Override
                     public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                        return new DeleteStorageCommand(indexTableName).execute(resource, id);
+                        return DeleteExecutor.build(resource, indexTableName)
+                                .execute(id);
                     }
                 });
-
     }
 
     @Override
@@ -197,7 +195,8 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
                     @Override
                     public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                        return new DeleteStorageCommand(indexTableName).execute(resource, entity.id());
+                        return DeleteExecutor.build(resource, indexTableName)
+                                .execute(entity.id());
                     }
                 });
 
@@ -209,13 +208,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     }
 
 
-    private int doBuildOrReplace(IEntity entity, boolean replacement) throws SQLException {
-        checkId(entity.id());
 
-        return doBuildReplaceStorageEntity(new StorageEntity(entity.id(), entity.entityClass().id(),
-            entity.family().parent(), entity.family().child(), serializeToMap(entity.entityValue(), true),
-            serializeSetFull(entity.entityValue())), replacement);
-    }
 
     /**
      * <f>fieldId + fieldvalue(unicode)</f> + <f>fieldId +
@@ -295,22 +288,8 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         }
     }
 
-    // 查询原始数据.
-    private Optional<StorageEntity> doSelectStorageEntity(long id) throws SQLException {
-        return (Optional<StorageEntity>) transactionExecutor
-                .execute(new DataSourceShardingTask(searchDataSourceSelector, Long.toString(id)) {
 
-                    @Override
-                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                        StorageEntity storageEntity = new SelectByIdStorageCommand(indexTableName).execute(resource,
-                                id);
-
-                        return Optional.ofNullable(storageEntity);
-                    }
-                });
-    }
-
-    // 更新原始数据.
+//    // 更新原始数据.
     private int doBuildReplaceStorageEntity(StorageEntity storageEntity, boolean replacement) throws SQLException {
         return (int) transactionExecutor
                 .execute(new DataSourceShardingTask(writerDataSourceSelector, Long.toString(storageEntity.getId())) {
@@ -325,5 +304,29 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                     }
                 });
     }
+
+
+    //    // 查询原始数据.
+//    private Optional<StorageEntity> doSelectStorageEntity(long id) throws SQLException {
+//        return (Optional<StorageEntity>) transactionExecutor
+//                .execute(new DataSourceShardingTask(searchDataSourceSelector, Long.toString(id)) {
+//
+//                    @Override
+//                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+//                        StorageEntity storageEntity = new SelectByIdStorageCommand(indexTableName).execute(resource,
+//                                id);
+//
+//                        return Optional.ofNullable(storageEntity);
+//                    }
+//                });
+//    }
+
+//    private int doBuildOrReplace(IEntity entity, boolean replacement) throws SQLException {
+//        checkId(entity.id());
+//
+//        return doBuildReplaceStorageEntity(new StorageEntity(entity.id(), entity.entityClass().id(),
+//            entity.family().parent(), entity.family().child(), serializeToMap(entity.entityValue(), true),
+//            serializeSetFull(entity.entityValue())), replacement);
+//    }
 
 }

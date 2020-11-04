@@ -26,6 +26,10 @@ public class DeleteExecutor implements Executor<Long, Integer> {
         this.resource = resource;
     }
 
+    public static DeleteExecutor build(TransactionResource resource, String indexTableName){
+        return new DeleteExecutor(indexTableName, resource);
+    }
+
     @Override
     public Integer execute(Long id) throws SQLException {
         String sql = String.format(SQLConstant.DELETE_SQL, indexTableName);
