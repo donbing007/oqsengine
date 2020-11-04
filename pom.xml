@@ -293,6 +293,8 @@
                 <module>xplat-meta-oqsengine-transfer</module>
                 <module>xplat-meta-oqsengine-boot</module>
                 <module>xplat-meta-oqsengine-testreport</module>
+                <module>xplat-meta-oqsengine-status</module>
+                <module>xplat-meta-oqsengine-cdc</module>
             </modules>
         </profile>
         <profile>
