@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.storage.undo.UndoExecutor;
 
 /**
  * 默认的事务管理器.

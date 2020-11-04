@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor;
 
-import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 
 import javax.sql.DataSource;

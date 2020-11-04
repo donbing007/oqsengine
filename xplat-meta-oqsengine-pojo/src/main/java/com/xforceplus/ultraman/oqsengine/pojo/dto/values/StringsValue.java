@@ -35,10 +35,27 @@ public class StringsValue extends AbstractValue<String[]> {
             return false;
         }
 
-        StringsValue that = (StringsValue) o;
+        String[] thatValues = ((StringsValue) o).getValue();
+        if (thatValues.length != this.getValue().length) {
+            return false;
+        }
 
-        return Objects.equals(getField(), that.getField()) &&
-            Arrays.equals(this.getValue(), that.getValue());
+        boolean found = false;
+        for (String v : this.getValue()) {
+            found = true;
+            for (String tv : thatValues) {
+                if (tv.equals(v)) {
+                    // found,so next.
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor;
 
+import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+
 import java.sql.SQLException;
 
 /**
@@ -10,7 +12,7 @@ import java.sql.SQLException;
  * @version 0.1 2020/2/17 14:18
  * @since 1.8
  */
-public interface TransactionExecutor {
+public interface TransactionExecutor extends Executor<Task, Object> {
 
     /**
      * 事务执行任务.
@@ -19,5 +21,6 @@ public interface TransactionExecutor {
      * @return 执行结果.
      * @throws SQLException 执行异常.
      */
+    @Override
     Object execute(Task task) throws SQLException;
 }

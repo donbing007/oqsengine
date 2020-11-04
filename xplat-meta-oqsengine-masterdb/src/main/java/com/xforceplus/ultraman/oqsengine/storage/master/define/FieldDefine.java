@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.define;
 
 /**
+ * 字段定义.
  * @author dongbin
  * @version 0.1 2020/3/1 20:22
  * @since 1.8
@@ -18,6 +19,20 @@ public class FieldDefine {
      * 数据类型标识.
      */
     public static final String ENTITY = "entity";
+
+    /**
+     * 事务号.
+     */
+    public static final String TX = "tx";
+
+    /**
+     * 提交号.
+     */
+    public static final String COMMITID = "commitid";
+    /**
+     * 操作类型,OperationType 枚举值.
+     */
+    public static final String OP = "op";
 
     /**
      * 数据版本号.
@@ -48,4 +63,8 @@ public class FieldDefine {
      * 数据属性集合.
      */
     public static final String ATTRIBUTE = "attribute";
+    /**
+     * 元信息.用以数据同步.
+     */
+    public static final String META = "meta";
 }

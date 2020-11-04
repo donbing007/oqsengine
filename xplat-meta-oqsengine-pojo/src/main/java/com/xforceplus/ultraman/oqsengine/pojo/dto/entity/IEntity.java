@@ -25,6 +25,11 @@ public interface IEntity extends Cloneable {
      */
     public IEntityValue entityValue();
 
+    /**
+     * 重置字段信息.
+     *
+     * @param iEntityValue 新的字段信息.
+     */
     public void resetEntityValue(IEntityValue iEntityValue);
 
     /**
@@ -57,6 +62,20 @@ public interface IEntity extends Cloneable {
      * @param version 指定版本号.
      */
     public void resetVersion(int version);
+
+    /**
+     * 最后处理时间戳.
+     *
+     * @return 时间戳.
+     */
+    public long time();
+
+    /**
+     * 标记时间戳.
+     *
+     * @param time 新的时间戮.
+     */
+    public void markTime(long time);
 
     /**
      * 克隆.

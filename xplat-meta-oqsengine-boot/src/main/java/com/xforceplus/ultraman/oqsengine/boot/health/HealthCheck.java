@@ -61,7 +61,7 @@ public class HealthCheck implements HealthIndicator {
         );
 
         try {
-            entitySearchService.selectByConditions(conditions, notExistClass, Page.newSinglePage(100));
+            entitySearchService.selectByConditions(conditions, notExistClass, Page.newSinglePage(1));
         } catch (SQLException e) {
             logger.error(e.getMessage(), e);
             return Health.down(e).build();
