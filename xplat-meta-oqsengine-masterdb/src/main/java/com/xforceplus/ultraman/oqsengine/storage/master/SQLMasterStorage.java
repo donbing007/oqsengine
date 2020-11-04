@@ -434,6 +434,12 @@ public class SQLMasterStorage implements MasterStorage {
         return Optional.of(entity);
     }
 
+    private Map<String, IEntityField> getFieldTable(IEntityClass entityClass) {
+        // 以字段逻辑名称为 key, 字段信息为 value.
+        return entityClass.fields()
+                .stream().collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0));
+    }
+
     /**
      * 构造提示同步数据时的元信息.
      * 只会包含可搜索字段信息.
