@@ -254,18 +254,15 @@ public class SQLMasterStorage implements MasterStorage {
         }
     }
 
+
     /**
      * {
      * "numberAttribute": 1, # 普通数字属性
      * "stringAttribute": "value" # 普通字符串属性.
      * }
      */
-    private IEntityValue toEntityValue(long id, IEntityClass entityClass, String json) throws SQLException {
+    public IEntityValue toEntityValue(long id, long entity, Map<String, IEntityField> fieldTable, String json) throws SQLException {
         JSONObject object = JSON.parseObject(json);
-
-        // 以字段逻辑名称为 key, 字段信息为 value.
-        Map<String, IEntityField> fieldTable = entityClass.fields()
-            .stream().collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0));
 
         String logicName;
         IEntityField field = null;
@@ -318,7 +315,7 @@ public class SQLMasterStorage implements MasterStorage {
             } catch (Exception ex) {
                 throw new SQLException(
                     String.format("Something wrong has occured.[entity:%d, class: %d, fieldId: %d, msg:%s]",
-                        id, entityClass.id(), field.id(), ex.getClass().getName() + ":" + ex.getMessage()));
+                        id, entity, field.id(), ex.getClass().getName() + ":" + ex.getMessage()));
             }
         }
 
@@ -459,12 +456,19 @@ public class SQLMasterStorage implements MasterStorage {
         Entity entity = new Entity(
             id,
             entityClass,
-            toEntityValue(rs.getLong(FieldDefine.ID), entityClass, rs.getString(FieldDefine.ATTRIBUTE)),
+            toEntityValue(rs.getLong(FieldDefine.ID), rs.getLong(FieldDefine.ENTITY),
+                            getFieldTable(entityClass), rs.getString(FieldDefine.ATTRIBUTE)),
             new EntityFamily(rs.getLong(FieldDefine.PREF), rs.getLong(FieldDefine.CREF)),
             rs.getInt(FieldDefine.VERSION)
         );
 
         return Optional.of(entity);
+    }
+
+    private Map<String, IEntityField> getFieldTable(IEntityClass entityClass) {
+        // 以字段逻辑名称为 key, 字段信息为 value.
+        return entityClass.fields()
+                .stream().collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0));
     }
 
     private Optional<IEntity> buildEntityFromStorageEntity(StorageEntity se, IEntityClass entityClass) throws SQLException {
@@ -483,7 +487,7 @@ public class SQLMasterStorage implements MasterStorage {
         Entity entity = new Entity(
             id,
             entityClass,
-            toEntityValue(se.getId(), entityClass, se.getAttribute()),
+            toEntityValue(se.getId(), se.getEntity(), getFieldTable(entityClass), se.getAttribute()),
             new EntityFamily(se.getPref(), se.getCref()),
             se.getVersion()
         );

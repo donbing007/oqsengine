@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 
 import java.sql.SQLException;
 import java.util.Collection;
@@ -41,4 +42,20 @@ public interface IndexStorage extends Storage {
      */
     void replaceAttribute(IEntityValue attribute) throws SQLException;
 
+
+    /**
+     * Deletes an existing entity.
+     * @param id target entity.
+     * @throws SQLException Storage error.
+     */
+    int delete(long id) throws SQLException;
+
+    /**
+     * Deletes an existing entity.
+     * @param storageEntity
+     * @param entityValue
+     * @param replacement
+     * @throws SQLException Storage error.
+     */
+    int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException;
 }

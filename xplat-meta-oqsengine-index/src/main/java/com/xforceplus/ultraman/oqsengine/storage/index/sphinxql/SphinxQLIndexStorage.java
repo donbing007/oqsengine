@@ -216,6 +216,31 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     }
 
     @Override
+    public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
+        checkId(storageEntity.getId());
+
+        storageEntity.setJsonFields(serializeToMap(entityValue, true)); //  jsonFields
+        storageEntity.setFullFields(serializeSetFull(entityValue));                 // fullTexts
+
+        return doBuildReplaceStorageEntity(storageEntity, replacement);
+    }
+
+    @Override
+    public int delete(long id) throws SQLException {
+        checkId(id);
+
+        return (int) transactionExecutor
+                .execute(new DataSourceShardingTask(writerDataSourceSelector, Long.toString(id)) {
+
+                    @Override
+                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                        return new DeleteStorageCommand(indexTableName).execute(resource, id);
+                    }
+                });
+
+    }
+
+    @Override
     public int delete(IEntity entity) throws SQLException {
         checkId(entity.id());
 
@@ -234,6 +259,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
     }
+
 
     // 搜索数量
     private long count(TransactionResource resource) throws SQLException {
@@ -311,7 +337,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
      * <f>fieldId + fieldvalue(unicode)</f> + <f>fieldId +
      * fieldvalue(unicode)</f>....n
      */
-    private Set<String> serializeSetFull(IEntityValue entityValue) {
+    public Set<String> serializeSetFull(IEntityValue entityValue) {
         Set<String> fullSet = new HashSet<>();
 
         entityValue.values().stream().forEach(v -> {
@@ -332,7 +358,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     /**
      * { "{fieldId}" : fieldValue }
      */
-    private Map<String, Object> serializeToMap(IEntityValue values, boolean encodeString) {
+    public Map<String, Object> serializeToMap(IEntityValue values, boolean encodeString) {
         Map<String, Object> data = new HashMap<>(values.values().size());
         values.values().stream().forEach(v -> {
             StorageValue storageValue = storageStrategyFactory.getStrategy(v.getField().type()).toStorageValue(v);

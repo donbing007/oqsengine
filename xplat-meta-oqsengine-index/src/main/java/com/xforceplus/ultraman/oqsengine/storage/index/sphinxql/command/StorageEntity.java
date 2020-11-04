@@ -20,6 +20,8 @@ public class StorageEntity implements Serializable {
     private long entity;
     private long pref;
     private long cref;
+    private long tx;
+    private long commitid;
     private Map<String, Object> jsonFields;
     private Set<String> fullFields;
 
@@ -35,6 +37,18 @@ public class StorageEntity implements Serializable {
         this.jsonFields = jsonFields;
         this.fullFields = setGlobalFlag(fullFields);
     }
+
+    public StorageEntity(long id, long entity, long pref, long cref, long tx, long commitid, Map<String, Object> jsonFields, Set<String> fullFields) {
+        this.id = id;
+        this.entity = entity;
+        this.pref = pref;
+        this.cref = cref;
+        this.tx = tx;
+        this.commitid = commitid;
+        this.jsonFields = jsonFields;
+        this.fullFields = setGlobalFlag(fullFields);
+    }
+
 
     public long getId() {
         return id;
@@ -82,6 +96,22 @@ public class StorageEntity implements Serializable {
 
     public void setFullFields(Set<String> fullFields) {
         this.fullFields = setGlobalFlag(fullFields);
+    }
+
+    public long getTx() {
+        return tx;
+    }
+
+    public void setTx(long tx) {
+        this.tx = tx;
+    }
+
+    public long getCommitid() {
+        return commitid;
+    }
+
+    public void setCommitid(long commitid) {
+        this.commitid = commitid;
     }
 
     private Set<String> setGlobalFlag(Set<String> fullfields) {
