@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command;
 
-import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 
 import java.io.Serializable;
@@ -20,6 +19,8 @@ public class StorageEntity implements Serializable {
     private long entity;
     private long pref;
     private long cref;
+    private long tx;
+    private long commitId;
     private Map<String, Object> jsonFields;
     private Set<String> fullFields;
 
@@ -27,11 +28,13 @@ public class StorageEntity implements Serializable {
 
     }
 
-    public StorageEntity(long id, long entity, long pref, long cref, Map<String, Object> jsonFields, Set<String> fullFields) {
+    public StorageEntity(long id, long entity, long pref, long cref, long tx, long commitId, Map<String, Object> jsonFields, Set<String> fullFields) {
         this.id = id;
         this.entity = entity;
         this.pref = pref;
         this.cref = cref;
+        this.tx = tx;
+        this.commitId = commitId;
         this.jsonFields = jsonFields;
         this.fullFields = setGlobalFlag(fullFields);
     }
@@ -84,6 +87,22 @@ public class StorageEntity implements Serializable {
         this.fullFields = setGlobalFlag(fullFields);
     }
 
+    public long getTx() {
+        return tx;
+    }
+
+    public void setTx(long tx) {
+        this.tx = tx;
+    }
+
+    public long getCommitId() {
+        return commitId;
+    }
+
+    public void setCommitId(long commitId) {
+        this.commitId = commitId;
+    }
+
     private Set<String> setGlobalFlag(Set<String> fullfields) {
         if (fullfields == null) {
             return fullfields;
@@ -103,8 +122,10 @@ public class StorageEntity implements Serializable {
                 ", entity=" + entity +
                 ", pref=" + pref +
                 ", cref=" + cref +
-                ", jsonFields=" + JSON.toJSONString(jsonFields) +
-                ", fullFields=" + JSON.toJSONString(fullFields) +
+                ", tx=" + tx +
+                ", commitId=" + commitId +
+                ", jsonFields=" + jsonFields +
+                ", fullFields=" + fullFields +
                 '}';
     }
 }

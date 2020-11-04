@@ -30,6 +30,16 @@ public class FieldDefine {
     public static final String CREF = "cref";
 
     /**
+     * transaction id
+     */
+    public static final String TX = "tx";
+
+    /**
+     * transaction commit id
+     */
+    public static final String COMMIT_ID = "commitid";
+
+    /**
      * 属性 json 储存.
      */
     public static final String JSON_FIELDS = "jsonfields";

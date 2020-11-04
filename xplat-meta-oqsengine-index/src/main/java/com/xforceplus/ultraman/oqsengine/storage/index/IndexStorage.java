@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.storage.Storage;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * 索引储存实现.
@@ -31,7 +32,8 @@ public interface IndexStorage extends Storage {
      * @return 搜索结果列表.
      * @throws SQLException
      */
-    Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
+    Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page
+            , List<Long> filterIds, Long commitId)
         throws SQLException;
 
     /**
