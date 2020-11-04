@@ -259,8 +259,8 @@ public class SphinxConsumerService implements ConsumerService {
         private void doBuildOrReplace(List<CanalEntry.Column> columns, boolean isReplace) throws SQLException {
 
             StorageEntity storageEntity = columnsToStorageEntity(columns);
-            IEntityValue entityValue = sqlMasterStorage.toEntityValue(storageEntity.getId(), storageEntity.getEntity(),
-                                                        metaToFieldTypeMap(columns), getStringFromColumn(columns, ATTRIBUTE));
+            IEntityValue entityValue = sqlMasterStorage.toEntityValue(storageEntity.getId(), metaToFieldTypeMap(columns),
+                                                getStringFromColumn(columns, ATTRIBUTE));
 
             sphinxQLIndexStorage.buildOrReplace(storageEntity, entityValue, isReplace);
         }

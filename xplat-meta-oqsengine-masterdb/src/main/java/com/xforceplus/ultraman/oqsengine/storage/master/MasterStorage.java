@@ -53,5 +53,5 @@ public interface MasterStorage extends Storage {
      * @param json attribute
      * @return entityValue
      */
-    IEntityValue toEntityValue(long id, long entity, Map<String, IEntityField> fieldTable, String json) throws SQLException;
+    IEntityValue toEntityValue(long id, Map<String, IEntityField> fieldTable, String json) throws SQLException;
 }

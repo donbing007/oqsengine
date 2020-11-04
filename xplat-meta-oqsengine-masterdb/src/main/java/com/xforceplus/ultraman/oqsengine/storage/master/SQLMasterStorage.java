@@ -245,7 +245,7 @@ public class SQLMasterStorage implements MasterStorage {
      * "stringAttribute": "value" # 普通字符串属性.
      * }
      */
-    public IEntityValue toEntityValue(long id, long entity, Map<String, IEntityField> fieldTable, String json) throws SQLException {
+    public IEntityValue toEntityValue(long id, Map<String, IEntityField> fieldTable, String json) throws SQLException {
         JSONObject object = JSON.parseObject(json);
 
         String logicName;
@@ -427,7 +427,7 @@ public class SQLMasterStorage implements MasterStorage {
         Entity entity = new Entity(
             id,
             entityClass,
-            toEntityValue(se.getId(), se.getEntity(), getFieldTable(entityClass), se.getAttribute()),
+            toEntityValue(se.getId(), getFieldTable(entityClass), se.getAttribute()),
             new EntityFamily(se.getPref(), se.getCref()),
             se.getVersion()
         );
