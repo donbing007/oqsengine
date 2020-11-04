@@ -42,6 +42,11 @@ public class StatusServiceImpl implements StatusService {
         timeTable.insertWithLocalTime(id.toString(), timeInMilli).block();
     }
 
+    @Override
+    public void invalidateIds(List<Long> ids) {
+        timeTable.invalidateIds(ids);
+    }
+
     /**
      *
      * @param windowsTimeRange

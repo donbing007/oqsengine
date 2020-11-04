@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.status;
 
+import java.util.List;
+
 /**
  * Status Service
  */
@@ -23,6 +25,11 @@ public interface StatusService {
      */
     void saveCommitIdWithLocalTime(Long id, Long timeInMilli);
 
+    /**
+     * invalidate id
+     * @param ids
+     */
+    void invalidateIds(List<Long> ids);
 
     Long getCurrentCommitLowBound(Long windowTimeRange);
 

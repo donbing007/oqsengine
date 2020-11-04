@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.status.table;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
 import io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands;
 import io.lettuce.core.api.sync.RedisSetCommands;
@@ -80,19 +81,28 @@ public class TimeTable {
      */
     public Flux<Long> queryByLocalTime(Long startInMilli, Long endInMilli) {
         RedisSortedSetReactiveCommands<String, String> reactive = connection.reactive();
-        return reactive.zrangebyscore(tableName, Range.create(startInMilli  , endInMilli))
+        return reactive.zrangebyscore(tableName, Range.create(startInMilli, endInMilli))
                 .map(Long::parseLong);
     }
 
     public Flux<Long> queryByWindow(Long lessInMilli, Long moreInMilli) {
         RedisScriptingReactiveCommands<String, String> reactive = connection.reactive();
-        String script = String.format(ZRANGE_WITH_TIME, tableName, lessInMilli, moreInMilli );
-        return reactive.eval(script, ScriptOutputType.MULTI).flatMap(x -> Flux.fromIterable((List<String>)x)).map(Long::parseLong);
+        String script = String.format(ZRANGE_WITH_TIME, tableName, lessInMilli, moreInMilli);
+        return reactive.eval(script, ScriptOutputType.MULTI).flatMap(x -> Flux.fromIterable((List<String>) x)).map(Long::parseLong);
     }
 
     public Flux<ScoredValue<String>> queryAllWithScore() {
         RedisSortedSetReactiveCommands<String, String> reactive = connection.reactive();
         Flux<ScoredValue<String>> zrangeAll = reactive.zrangeWithScores(tableName, 0, -1);
         return zrangeAll;
+    }
+
+    public void invalidateIds(List<Long> ids) {
+        RedisReactiveCommands<String, String> reactive = connection.reactive();
+        reactive.multi()
+                .doOnSuccess(s -> {
+                    ids.forEach(id -> reactive.zrem(tableName, id.toString()).subscribe());
+                }).flatMap(s -> reactive.exec())
+                .subscribe();
     }
 }

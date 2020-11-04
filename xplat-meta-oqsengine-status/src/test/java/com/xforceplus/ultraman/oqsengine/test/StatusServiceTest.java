@@ -17,6 +17,7 @@ import org.junit.Test;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -180,6 +181,22 @@ public class StatusServiceTest {
         assertEquals(3L , (long)remoteStatusService.getCurrentCommitLowBound(1500L));
     }
 
+    @Test
+    public void invalidateTest() throws InterruptedException {
+        remoteStatusService.saveCommitId(1L);
+        remoteStatusService.saveCommitId(2L);
+        remoteStatusService.saveCommitId(3L);
+
+        assertTrue(remoteStatusService.getCurrentStatusMetrics().getTransIds().contains(2L));
+
+        remoteStatusService.invalidateIds(Arrays.asList(1L, 2L));
+
+        Thread.sleep(2000);
+
+        assertTrue(!remoteStatusService.getCurrentStatusMetrics().getTransIds().contains(2L));
+        assertTrue(!remoteStatusService.getCurrentStatusMetrics().getTransIds().contains(1L));
+    }
+
 
 
 
@@ -276,8 +293,6 @@ public class StatusServiceTest {
         assertEquals(500L, (long) currentStatusMetrics.getSize());
         concurrentList.stream().forEach(System.out::println);
     }
-
-
 
     @Test
     public void insertAndQueryWithRemoteTime() {
