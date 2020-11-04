@@ -14,14 +14,20 @@ public final class EntityRef implements Serializable {
     private long id;
     private long pref;
     private long cref;
+    private String orderValue;
 
     public EntityRef() {
     }
 
     public EntityRef(long id, long pref, long cref) {
+        this(id, pref, cref, null);
+    }
+
+    public EntityRef(long id, long pref, long cref, String orderValue) {
         this.id = id;
         this.pref = pref;
         this.cref = cref;
+        this.orderValue = orderValue;
     }
 
     public long getId() {
@@ -46,6 +52,14 @@ public final class EntityRef implements Serializable {
 
     public void setCref(long cref) {
         this.cref = cref;
+    }
+
+    public String getOrderValue() {
+        return orderValue;
+    }
+
+    public void setOrderValue(String orderValue) {
+        this.orderValue = orderValue;
     }
 
     @Override

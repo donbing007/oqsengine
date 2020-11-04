@@ -22,6 +22,10 @@ public class Entity implements IEntity, Serializable {
      */
     private long id;
     /**
+     * 时间
+     */
+    private long time;
+    /**
      * 数据结构
      */
     private IEntityClass entityClass;
@@ -73,6 +77,16 @@ public class Entity implements IEntity, Serializable {
     @Override
     public void resetVersion(int version) {
         this.version = version;
+    }
+
+    @Override
+    public long time() {
+        return time;
+    }
+
+    @Override
+    public void markTime(long time) {
+        this.time = time;
     }
 
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue) {
@@ -133,6 +147,7 @@ public class Entity implements IEntity, Serializable {
         }
         Entity entity = (Entity) o;
         return id == entity.id &&
+            time == entity.time &&
             version == entity.version &&
             Objects.equals(entityClass, entity.entityClass) &&
             Objects.equals(entityValue, entity.entityValue) &&
@@ -141,17 +156,19 @@ public class Entity implements IEntity, Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, entityClass, entityValue, family, version);
+        return Objects.hash(id, time, entityClass, entityValue, family, version);
     }
 
     @Override
     public String toString() {
-        return "Entity{" +
-            "id=" + id +
-            ", entityClass=" + entityClass +
-            ", entityValue=" + entityValue +
-            ", family=" + family +
-            ", version=" + version +
-            '}';
+        final StringBuffer sb = new StringBuffer("Entity{");
+        sb.append("id=").append(id);
+        sb.append(", time=").append(time);
+        sb.append(", entityClass=").append(entityClass);
+        sb.append(", entityValue=").append(entityValue);
+        sb.append(", family=").append(family);
+        sb.append(", version=").append(version);
+        sb.append('}');
+        return sb.toString();
     }
 }

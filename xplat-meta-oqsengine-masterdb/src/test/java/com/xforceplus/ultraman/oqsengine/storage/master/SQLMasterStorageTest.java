@@ -4,6 +4,9 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
+import com.xforceplus.ultraman.oqsengine.common.selector.TakeTurnsSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
@@ -14,12 +17,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
-import com.xforceplus.ultraman.oqsengine.storage.executor.AutoShardTransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.storage.selector.SuffixNumberHashSelector;
-import com.xforceplus.ultraman.oqsengine.storage.selector.TakeTurnsSelector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -31,7 +31,9 @@ import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -47,7 +49,7 @@ import static java.util.stream.Collectors.toMap;
  * @version 1.0 02/25/2020
  * @since <pre>Feb 25, 2020</pre>
  */
-public class SQLMasterStorageTest {
+public class SQLMasterStorageTest extends AbstractMysqlTest {
 
     private TransactionManager transactionManager = new DefaultTransactionManager(
         new IncreasingOrderLongIdGenerator(0));
@@ -68,7 +70,7 @@ public class SQLMasterStorageTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        TransactionExecutor executor = new AutoShardTransactionExecutor(
+        TransactionExecutor executor = new AutoJoinTransactionExecutor(
             transactionManager, ConnectionTransactionResource.class);
 
 
@@ -87,6 +89,7 @@ public class SQLMasterStorageTest {
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         ReflectionTestUtils.setField(storage, "threadPool", threadPool);
+        storage.setQueryTimeout(100000000);
         storage.init();
 
         Transaction tx = transactionManager.create();
@@ -98,6 +101,17 @@ public class SQLMasterStorageTest {
     public void after() throws Exception {
 
         transactionManager.finish();
+
+        Connection conn;
+        for (DataSource ds : dataSourcePackage.getMaster()) {
+            conn = ds.getConnection();
+            Statement stat = conn.createStatement();
+            stat.execute("truncate table oqsbigentity0");
+            stat.execute("truncate table oqsbigentity1");
+            stat.execute("truncate table oqsbigentity2");
+            stat.close();
+            conn.close();
+        }
 
         dataSourcePackage.close();
 
@@ -268,19 +282,24 @@ public class SQLMasterStorageTest {
         Collection<IEntityField> fields = buildRandomFields(baseId, 3);
         fields.add(fixStringsField);
 
-        return new Entity(
+        IEntity entity = new Entity(
             baseId,
             new EntityClass(baseId, "test", fields),
             buildRandomValue(baseId, fields)
         );
+        return entity;
     }
 
     private Collection<IEntityField> buildRandomFields(long baseId, int size) {
         List<IEntityField> fields = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             long fieldId = baseId + i;
-            fields.add(new EntityField(fieldId, "c" + fieldId,
-                ("c" + fieldId).hashCode() % 2 == 1 ? FieldType.LONG : FieldType.STRING));
+            fields.add(
+                new EntityField(
+                    fieldId,
+                    "c" + fieldId,
+                    ("c" + fieldId).hashCode() % 2 == 1 ? FieldType.LONG : FieldType.STRING,
+                    FieldConfig.build().searchable(true)));
         }
 
         return fields;
@@ -330,6 +349,5 @@ public class SQLMasterStorageTest {
     private Selector<String> buildTableNameSelector(String base, int size) {
         return new SuffixNumberHashSelector(base, size);
     }
-
 
 }
