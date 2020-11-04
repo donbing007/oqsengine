@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command;
 
+import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 
 import java.io.Serializable;
@@ -124,8 +125,8 @@ public class StorageEntity implements Serializable {
                 ", cref=" + cref +
                 ", tx=" + tx +
                 ", commitId=" + commitId +
-                ", jsonFields=" + jsonFields +
-                ", fullFields=" + fullFields +
+                ", jsonFields=" + JSON.toJSONString(jsonFields) +
+                ", fullFields=" + JSON.toJSONString(fullFields) +
                 '}';
     }
 }

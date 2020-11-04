@@ -164,6 +164,31 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     }
 
     @Override
+    public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
+        checkId(storageEntity.getId());
+
+        storageEntity.setJsonFields(serializeToMap(entityValue, true)); //  jsonFields
+        storageEntity.setFullFields(serializeSetFull(entityValue));                 // fullTexts
+
+        return doBuildReplaceStorageEntity(storageEntity, replacement);
+    }
+
+    @Override
+    public int delete(long id) throws SQLException {
+        checkId(id);
+
+        return (int) transactionExecutor
+                .execute(new DataSourceShardingTask(writerDataSourceSelector, Long.toString(id)) {
+
+                    @Override
+                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                        return new DeleteStorageCommand(indexTableName).execute(resource, id);
+                    }
+                });
+
+    }
+
+    @Override
     public int delete(IEntity entity) throws SQLException {
         checkId(entity.id());
 
@@ -187,19 +212,16 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     private int doBuildOrReplace(IEntity entity, boolean replacement) throws SQLException {
         checkId(entity.id());
 
-        return doBuildReplaceStorageEntity(new StorageEntity(
-                entity.id(), entity.entityClass().id(),
-                entity.family().parent(), entity.family().child(),
-                entity.
-                serializeToMap(entity.entityValue(), true),
-                serializeSetFull(entity.entityValue())), replacement);
+        return doBuildReplaceStorageEntity(new StorageEntity(entity.id(), entity.entityClass().id(),
+            entity.family().parent(), entity.family().child(), serializeToMap(entity.entityValue(), true),
+            serializeSetFull(entity.entityValue())), replacement);
     }
 
     /**
      * <f>fieldId + fieldvalue(unicode)</f> + <f>fieldId +
      * fieldvalue(unicode)</f>....n
      */
-    private Set<String> serializeSetFull(IEntityValue entityValue) {
+    public Set<String> serializeSetFull(IEntityValue entityValue) {
         Set<String> fullSet = new HashSet<>();
 
         entityValue.values().stream().forEach(v -> {
@@ -220,7 +242,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     /**
      * { "{fieldId}" : fieldValue }
      */
-    private Map<String, Object> serializeToMap(IEntityValue values, boolean encodeString) {
+    public Map<String, Object> serializeToMap(IEntityValue values, boolean encodeString) {
         Map<String, Object> data = new HashMap<>(values.values().size());
         values.values().stream().forEach(v -> {
             StorageValue storageValue = storageStrategyFactory.getStrategy(v.getField().type()).toStorageValue(v);
@@ -228,8 +250,8 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             while (storageValue != null) {
                 if (storageValue.type() == StorageType.STRING) {
                     data.put(storageValue.storageName(),
-                            encodeString ? SphinxQLHelper.encodeSpecialCharset((String) storageValue.value())
-                                    : storageValue.value());
+                        encodeString ? SphinxQLHelper.encodeSpecialCharset((String) storageValue.value())
+                            : storageValue.value());
                 } else {
                     data.put(storageValue.storageName(), storageValue.value());
                 }
