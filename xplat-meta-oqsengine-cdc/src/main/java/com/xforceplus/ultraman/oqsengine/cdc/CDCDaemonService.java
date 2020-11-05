@@ -46,10 +46,10 @@ public class CDCDaemonService {
 
         logger.info("current node = {}", nodeId);
         if (nodeId == DAEMON_NODE_ID && null == consumerRunner) {
-            logger.info("node {} 启动CDC守护进程", nodeId);
+            logger.info("node-{} 启动CDC守护进程", nodeId);
             consumerRunner = new ConsumerRunner(consumerService, cdcMetricsCallback, cdcConnector);
             consumerRunner.start();
-            logger.info("node {} 启动CDC守护进程成功", nodeId);
+            logger.info("node-{} 启动CDC守护进程成功", nodeId);
         }
     }
 }

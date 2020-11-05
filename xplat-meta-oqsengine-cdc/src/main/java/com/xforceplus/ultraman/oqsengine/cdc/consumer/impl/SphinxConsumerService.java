@@ -131,9 +131,9 @@ public class SphinxConsumerService implements ConsumerService {
         return getColumnWithoutNull(columns, oqsBigEntityColumns).getValue();
     }
 
-    private Boolean getBooleanFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
+    private boolean getBooleanFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
         String booleanValue = getColumnWithoutNull(columns, oqsBigEntityColumns).getValue();
-        return booleanValue.isEmpty() ? null : (booleanValue.equals("true") || !booleanValue.equals("0"));
+        return booleanValue.equals("true") || !booleanValue.equals("0");
     }
 
     private CanalEntry.Column getColumnWithoutNull(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
@@ -179,10 +179,12 @@ public class SphinxConsumerService implements ConsumerService {
         return Long.parseLong(column.getValue()) < Long.MAX_VALUE;
     }
 
+    /*
+        由于OQS主库的删除都是逻辑删除，实际上是进行了UPDATE操作
+     */
     private boolean supportEventType(CanalEntry.EventType eventType) {
         return eventType.equals(CanalEntry.EventType.INSERT) ||
-                eventType.equals(CanalEntry.EventType.UPDATE) ||
-                eventType.equals(CanalEntry.EventType.DELETE);
+                eventType.equals(CanalEntry.EventType.UPDATE);
     }
 
     private void multiConsume(Map<Long, RawEntry> batches, CDCMetrics currentMetrics) throws SQLException {
@@ -221,16 +223,10 @@ public class SphinxConsumerService implements ConsumerService {
         @Override
         public Boolean call() throws Exception {
             try {
-                switch (rawEntry.getEventType()) {
-                    case INSERT:
-                        doBuildOrReplace(rawEntry.getColumns(), false);
-                        break;
-                    case UPDATE:
-                        doBuildOrReplace(rawEntry.getColumns(), true);
-                        break;
-                    case DELETE:
-                        doDelete(rawEntry.getColumns());
-                        break;
+                if (isDelete(rawEntry.getColumns())) {
+                    doDelete(rawEntry.getColumns());
+                } else {
+                    doBuildOrReplace(rawEntry.getColumns(), true);
                 }
 
                 syncMetrics(Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
@@ -247,8 +243,11 @@ public class SphinxConsumerService implements ConsumerService {
         }
 
         private void doDelete(List<CanalEntry.Column> columns) throws SQLException {
-            long id = Long.parseLong(columns.get(0).getValue());
-            sphinxQLIndexStorage.delete(id);
+            sphinxQLIndexStorage.delete(getLongFromColumn(columns, ID));
+        }
+
+        private boolean isDelete(List<CanalEntry.Column> columns) throws SQLException {
+            return getBooleanFromColumn(columns, DELETED);
         }
 
         private void doBuildOrReplace(List<CanalEntry.Column> columns, boolean isReplace) throws SQLException {
