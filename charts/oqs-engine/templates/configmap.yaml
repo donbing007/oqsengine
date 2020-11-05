@@ -66,6 +66,16 @@ data:
             maxQueryTimeMs: {{ .Values.storage.index.maxQueryTimeMs | default "0" | quote }}
           undo:
             store: {{ .Values.storage.undo.store | default "simple" |quote }}
+        cdc:
+          connect:
+            type: {{ .Values.cdc.connect.type }}
+            string: {{ .Values.cdc.connect.string }}
+            port: {{ .Values.cdc.connect.port }}
+            destination: {{ .Values.cdc.connect.destination }}
+            username: {{ .Values.cdc.connect.username }}
+            password: {{ .Values.cdc.connect.password }}
+            subscribeFilter: {{ .Values.cdc.connect.subscribeFilter | default ".*\.oqsbigentity.*" | quote }}
+            batchSize: {{ .Values.cdc.connect.batchSize | default "2048" | quote }}
     oqsengine-ds.conf: |
         {
           "dataSources": {

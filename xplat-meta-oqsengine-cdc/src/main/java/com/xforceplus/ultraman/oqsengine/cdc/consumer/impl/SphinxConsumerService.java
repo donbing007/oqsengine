@@ -3,9 +3,10 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 import com.alibaba.fastjson.JSON;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Maps;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntry;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -51,48 +52,37 @@ public class SphinxConsumerService implements ConsumerService {
 
     private int executionTimeout = 30 * 1000;
 
-    private static final List<Long> successCommitIds = new ArrayList<>();
-    private static Long maxUseTime = 0L;
-
     public void setExecutionTimeout(int executionTimeout) {
         this.executionTimeout = executionTimeout;
     }
 
     @Override
-    public boolean consume(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
-        clear();
+    public CDCMetrics consume(List<CanalEntry.Entry> entries) throws SQLException {
 
-        Set<RawEntry> syncDataList = filterSyncData(entries);
+        CDCMetrics currentMetrics = new CDCMetrics(CDCStatus.CONNECTED);
+
+        // 1.数据清洗
+        Map<Long, RawEntry> syncDataList = filterSyncData(entries, currentMetrics);
         if (!syncDataList.isEmpty()) {
-            multiConsume(syncDataList);
+            //  2.数据消费, 由于数据清洗后保证不会存在同一行记录重复的情况,所以可以采用多线程的方式进行同步
+            multiConsume(syncDataList, currentMetrics);
         }
-        sync(cdcMetrics);
-        return true;
+        return currentMetrics;
     }
 
-    private void clear() {
-        successCommitIds.clear();
-        maxUseTime = 0L;
-    }
-
-    private void sync(CDCMetrics cdcMetrics) {
-        if (!successCommitIds.isEmpty()) {
-            cdcMetrics.setCommitList(successCommitIds);
-        }
-        if (maxUseTime > 0) {
-            cdcMetrics.setMaxSyncUseTime(maxUseTime);
-        }
-    }
-
-    private Set<RawEntry> filterSyncData(List<CanalEntry.Entry> entries) throws SQLException {
+    /*  数据清洗
+    * */
+    private Map<Long, RawEntry> filterSyncData(List<CanalEntry.Entry> entries,  CDCMetrics currentMetrics) throws SQLException {
         long commitId = 0;
-        Set<RawEntry> datas = Sets.newLinkedHashSet();
+        Map<Long, RawEntry> datas = Maps.newLinkedHashMap();
         for (CanalEntry.Entry entry : entries) {
-            //  当前为一个事务的开始或结束
-            if (entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONBEGIN) {
-                continue;
-            } else if (entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONEND && commitId > 0) {
-                successCommitIds.add(commitId);
+            //  不是RowData类型数据,将被过滤
+            if (entry.getEntryType() != CanalEntry.EntryType.ROWDATA) {
+                if (entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONEND && commitId > 0) {
+                    //  事务结束时，必须将上一个事务的Commit_id加入到successCommitIds中
+                    currentMetrics.getCommitList().add(commitId);
+                }
+
                 continue;
             }
 
@@ -106,20 +96,24 @@ public class SphinxConsumerService implements ConsumerService {
 
             CanalEntry.EventType eventType = rowChange.getEventType();
 
-            //  只能支持INSERT/UPDATE/DELETE
+            //  支持的EventType类型为: [INSERT/UPDATE/DELETE]
             if (supportEventType(eventType)) {
+                //  遍历RowData
                 for (CanalEntry.RowData rowData : rowChange.getRowDatasList()) {
-
-                    //  check need sync
+                    //  获取一条完整的Row，只关心变化后的数据
                     List<CanalEntry.Column> columns = rowData.getAfterColumnsList();
+                    //  check need sync
+                    //  由于主库同步后会在最后commit时再更新一次commit_id，所以对于binlog同步来说，
+                    //  只需同步commit_id小于Long.MAX_VALUE的row
                     if(needSyncRow(columns)) {
                         //  更新
                         commitId = getLongFromColumn(columns, COMMITID);
 
-                        RawEntry rawEntry = new RawEntry(getLongFromColumn(columns, ID),
+                        RawEntry rawEntry = new RawEntry(
                                 entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList());
 
-                        datas.add(rawEntry);
+                        //  由于Binlog数据是全量有序同步, 同一个ID多次更新, 只会取最后一次的数据进行同步
+                        datas.put(getLongFromColumn(columns, ID), rawEntry);
                     }
                 }
             }
@@ -127,6 +121,7 @@ public class SphinxConsumerService implements ConsumerService {
 
         return datas;
     }
+
 
     private long getLongFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
         return Long.parseLong(getColumnWithoutNull(columns, oqsBigEntityColumns).getValue());
@@ -190,19 +185,17 @@ public class SphinxConsumerService implements ConsumerService {
                 eventType.equals(CanalEntry.EventType.DELETE);
     }
 
-    private void multiConsume(Set<RawEntry> batches) throws SQLException {
+    private void multiConsume(Map<Long, RawEntry> batches, CDCMetrics currentMetrics) throws SQLException {
         CountDownLatch latch = new CountDownLatch(batches.size());
-        List<Future> futures = new ArrayList(batches.size());
+        List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>(batches.size());
 
-        for (RawEntry rawEntry : batches) {
-            futures.add(consumerPool.submit(
-                    new syncCallable(rawEntry, latch)));
-        }
+        batches.forEach((key, value) -> futures.add(consumerPool.submit(
+                new syncCallable(value, currentMetrics, latch))));
 
         try {
             if (!latch.await(executionTimeout, TimeUnit.MILLISECONDS)) {
 
-                for (Future f : futures) {
+                for (Future<Boolean> f : futures) {
                     f.cancel(true);
                 }
 
@@ -217,10 +210,12 @@ public class SphinxConsumerService implements ConsumerService {
 
         private CountDownLatch latch;
         private RawEntry rawEntry;
+        private CDCMetrics currentMetrics;
 
-        public syncCallable(RawEntry rawEntry, CountDownLatch latch) {
+        public syncCallable(RawEntry rawEntry, CDCMetrics currentMetrics, CountDownLatch latch) {
             this.rawEntry = rawEntry;
             this.latch = latch;
+            this.currentMetrics = currentMetrics;
         }
 
         @Override
@@ -246,8 +241,8 @@ public class SphinxConsumerService implements ConsumerService {
         }
 
         private synchronized void syncMetrics(long useTime) {
-            if (maxUseTime < useTime) {
-                maxUseTime = useTime;
+            if (currentMetrics.getMaxSyncUseTime() < useTime) {
+                currentMetrics.setMaxSyncUseTime(useTime);
             }
         }
 

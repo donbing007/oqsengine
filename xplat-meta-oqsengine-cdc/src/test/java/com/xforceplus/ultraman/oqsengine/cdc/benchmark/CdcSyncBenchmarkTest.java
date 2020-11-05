@@ -1,3 +1,5 @@
+package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
+
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.client.CanalConnectors;
 import com.alibaba.otter.canal.protocol.CanalEntry;
@@ -6,6 +8,9 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
+import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
@@ -15,7 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
-import com.xforceplus.ultraman.oqsengine.storage.executor.AutoShardTransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
@@ -23,9 +28,6 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.S
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.selector.HashSelector;
-import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.storage.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -120,7 +122,7 @@ public class CdcSyncBenchmarkTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        TransactionExecutor executor = new AutoShardTransactionExecutor(transactionManager,
+        TransactionExecutor executor = new AutoJoinTransactionExecutor(transactionManager,
                 SphinxQLTransactionResource.class);
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
@@ -147,7 +149,7 @@ public class CdcSyncBenchmarkTest {
 
         Selector<DataSource> dataSourceSelector = buildDataSourceSelectorMaster("./src/test/resources/oqsengine-ds.conf");
 
-        TransactionExecutor executor = new AutoShardTransactionExecutor(
+        TransactionExecutor executor = new AutoJoinTransactionExecutor(
                 transactionManager, ConnectionTransactionResource.class);
 
 
