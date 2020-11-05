@@ -150,7 +150,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
 
         String whereCondition = conditionsBuilderFactory.getBuilder(conditions).build(conditions);
 
-        if (!filterIds.isEmpty()) {
+        if ( filterIds != null && !filterIds.isEmpty()) {
             String ids = filterIds.stream().map(Object::toString).collect(joining(","));
             String filterCondition = String.format(SQLConstant.FILTER_IDS, ids);
             if (StringUtils.isEmpty(whereCondition)) {
