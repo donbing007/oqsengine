@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
@@ -11,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
+import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -40,8 +43,6 @@ import java.util.stream.Collectors;
 public class SQLMasterStorage implements MasterStorage {
 
     final Logger logger = LoggerFactory.getLogger(SQLMasterStorage.class);
-
-    private final static String ATTRIBUTE_PREFIX = "F";
 
     @Resource(name = "masterDataSourceSelector")
     private Selector<DataSource> dataSourceSelector;
@@ -74,7 +75,12 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public Optional<IEntity> select(long id, IEntityClass entityClass) throws SQLException {
+    public Collection<EntityRef> select(long commitid, Conditions conditions, IEntityClass entityClass) {
+        return null;
+    }
+
+    @Override
+    public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
         return (Optional<IEntity>) transactionExecutor.execute(
             new DataSourceShardingTask(dataSourceSelector, Long.toString(id)) {
 
@@ -341,7 +347,7 @@ public class SQLMasterStorage implements MasterStorage {
             storageStrategy = storageStrategyFactory.getStrategy(logicValue.getField().type());
             storageValue = storageStrategy.toStorageValue(logicValue);
             while (storageValue != null) {
-                object.put(ATTRIBUTE_PREFIX + storageValue.storageName(), storageValue.value());
+                object.put(FieldDefine.ATTRIBUTE_PREFIX + storageValue.storageName(), storageValue.value());
                 storageValue = storageValue.next();
             }
         }
@@ -461,7 +467,7 @@ public class SQLMasterStorage implements MasterStorage {
      * @return
      */
     private String compatibleStorageName(String name) {
-        if (name.startsWith(ATTRIBUTE_PREFIX)) {
+        if (name.startsWith(FieldDefine.ATTRIBUTE_PREFIX)) {
             return name.substring(1);
         } else {
             return name;
