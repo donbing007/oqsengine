@@ -18,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -414,6 +415,11 @@ public class EntityManagementServiceImplTest {
         }
 
         @Override
+        public IEntityValue toEntityValue(long id, Map<String, IEntityField> fieldTable, String json) throws SQLException {
+            return null;
+        }
+
+        @Override
         public int build(IEntity entity) throws SQLException {
             data.put(entity.id(), copyEntity(entity));
             return 1;
@@ -459,10 +465,15 @@ public class EntityManagementServiceImplTest {
             return Optional.ofNullable(copyEntity(data.get(id)));
         }
 
+//        @Override
+//        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
+//            throws SQLException {
+//            throw new UnsupportedOperationException();
+//        }
+
         @Override
-        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
-            throws SQLException {
-            throw new UnsupportedOperationException();
+        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, Long commitId) throws SQLException {
+            return null;
         }
 
         @Override
@@ -471,6 +482,16 @@ public class EntityManagementServiceImplTest {
             attribute.values().stream().forEach(a -> {
                 target.entityValue().addValue(a);
             });
+        }
+
+        @Override
+        public int delete(long id) throws SQLException {
+            return 0;
+        }
+
+        @Override
+        public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
+            return 0;
         }
 
         @Override

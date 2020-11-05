@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import org.junit.After;
 import org.junit.Assert;
@@ -558,6 +559,11 @@ public class EntitySearchServiceImplTest {
         }
 
         @Override
+        public IEntityValue toEntityValue(long id, Map<String, IEntityField> fieldTable, String json) throws SQLException {
+            return null;
+        }
+
+        @Override
         public int build(IEntity entity) throws SQLException {
             return 0;
         }
@@ -591,27 +597,42 @@ public class EntitySearchServiceImplTest {
             histories.clear();
         }
 
+//        @Override
+//        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
+//            throws SQLException {
+//            histories.add(new SelectHistory(conditions, entityClass, sort, page));
+//
+//            Collection<EntityRef> refs = pool.get(entityClass);
+//            if (refs == null) {
+//                page.setTotalCount(0);
+//            } else {
+//                page.setTotalCount(refs.size());
+//            }
+//            if (page.isEmptyPage()) {
+//                refs = null;
+//            }
+//
+//            return refs == null ? Collections.emptyList() : refs;
+//        }
+
         @Override
-        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
-            throws SQLException {
-            histories.add(new SelectHistory(conditions, entityClass, sort, page));
-
-            Collection<EntityRef> refs = pool.get(entityClass);
-            if (refs == null) {
-                page.setTotalCount(0);
-            } else {
-                page.setTotalCount(refs.size());
-            }
-            if (page.isEmptyPage()) {
-                refs = null;
-            }
-
-            return refs == null ? Collections.emptyList() : refs;
+        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, Long commitId) throws SQLException {
+            return null;
         }
 
         @Override
         public void replaceAttribute(IEntityValue attribute) throws SQLException {
 
+        }
+
+        @Override
+        public int delete(long id) throws SQLException {
+            return 0;
+        }
+
+        @Override
+        public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
+            return 0;
         }
 
         @Override

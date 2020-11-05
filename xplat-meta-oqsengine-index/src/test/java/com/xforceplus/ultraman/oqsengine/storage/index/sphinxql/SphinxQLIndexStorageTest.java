@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
+import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -20,8 +22,6 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.selector.HashSelector;
-import com.xforceplus.ultraman.oqsengine.storage.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -39,6 +39,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -245,7 +246,7 @@ public class SphinxQLIndexStorageTest {
             new StringsValue(stringsField, "\\\'新的字段,会有特殊字符.\'\\")));
 
         Collection<EntityRef> refs = storage.select(conditions, expectedEntity.entityClass(), null,
-            Page.newSinglePage(100));
+            Page.newSinglePage(100), Collections.emptyList(), null);
 
         Assert.assertEquals(1, refs.size());
         Assert.assertEquals(expectedEntity.id(), refs.stream().findFirst().get().getId());
@@ -269,7 +270,7 @@ public class SphinxQLIndexStorageTest {
         Collection<EntityRef> refs = storage.select(
             Conditions.buildEmtpyConditions()
                 .addAnd(new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 1L))),
-            entityClass, null, Page.newSinglePage(100));
+            entityClass, null, Page.newSinglePage(100), Collections.emptyList(), null);
 
         Assert.assertEquals(0, refs.size());
     }
@@ -284,7 +285,7 @@ public class SphinxQLIndexStorageTest {
 
             Collection<EntityRef> refs = null;
             try {
-                refs = storage.select(c.conditions, c.entityClass, c.sort, c.page);
+                refs = storage.select(c.conditions, c.entityClass, c.sort, c.page, Collections.emptyList(), null);
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
@@ -604,7 +605,7 @@ public class SphinxQLIndexStorageTest {
         try {
             Arrays.stream(entityes).forEach(e -> {
                 try {
-                    storage.build(e);
+                    storage.buildOrReplace(e);
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex.getMessage(), ex);
                 }
