@@ -16,7 +16,7 @@ public class SQLConstant {
     /**
      * %s 顺序为 where 条件, 排序.
      */
-    public static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? %s %s limit ?,? option max_matches=?,max_query_time=?,ranker=none";
+    public static final String SELECT_SQL = "select id, pref, cref %s from %s where entity = ? %s %s limit ?,? option max_matches=?,max_query_time=?,ranker=none";
     public static final String FILTER_IDS = "id not in (%s)";
 
     public static final String FILTER_COMMIT = "commitid < %s";

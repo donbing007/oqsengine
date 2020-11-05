@@ -41,6 +41,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -302,9 +303,11 @@ public class SphinxQLIndexStorageTest {
     }
 
     @Test
-    public void testSelectCaseWithTestCase() throws Exception {
+    public void testSelectCaseWithTxAndFilterId() throws Exception {
         // 确认没有事务.
         Assert.assertFalse(transactionManager.getCurrent().isPresent());
+
+        List<Long> ids = Arrays.asList(1L, 2L);
 
         // 每一个都以独立事务运行.
         buildSelectCase().stream().forEach(c -> {
@@ -312,14 +315,13 @@ public class SphinxQLIndexStorageTest {
             Collection<EntityRef> refs = null;
             try {
                 //  todo fixed
-                refs = storage.select(c.conditions, c.entityClass, c.sort, c.page, null, null);
+                refs = storage.select(c.conditions, c.entityClass, c.sort, c.page, ids, 1000L);
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
 
             c.check.test(new Result(refs, c.page));
         });
-
     }
 
     private Collection<Case> buildSelectCase() {
@@ -587,10 +589,10 @@ public class SphinxQLIndexStorageTest {
             new Case(Conditions.buildEmtpyConditions()
                 .addAnd(new Condition(stringsField, ConditionOperator.MULTIPLE_EQUALS,
                     new StringsValue(stringsField, "UNKNOWN"), new StringsValue(stringsField, "value3"))),
-                entityClass, limitOnePage, result -> {
-                Assert.assertEquals(1, result.refs.size());
+                entityClass, Page.newSinglePage(100), result -> {
+                Assert.assertEquals(4, result.refs.size());
                 long[] expectedIds = new long[]{Long.MAX_VALUE - 4};
-                Assert.assertEquals(0, result.refs.stream()
+                Assert.assertEquals(3, result.refs.stream()
                     .filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
                 return true;
             }),
@@ -625,7 +627,19 @@ public class SphinxQLIndexStorageTest {
                 entityClass, Page.newSinglePage(100), result -> {
                 Assert.assertEquals(0, result.refs.size());
                 return true;
-            }));
+            }),
+            // order by
+            new Case(
+                    Conditions.buildEmtpyConditions()
+                            .addAnd(new Condition(stringField141, ConditionOperator.EQUALS,
+                                    new StringValue(stringField141, "B")))
+                            .addAnd(new Condition(stringField142, ConditionOperator.EQUALS,
+                                    new StringValue(stringField142, "0"))),
+                    entityClass, Page.newSinglePage(100), result -> {
+                Assert.assertEquals(0, result.refs.size());
+                return true;
+            }, Sort.buildAscSort(stringField141))
+        );
     }
 
     private StorageEntity create(Long id, Long entityId, Long commitId, Long tx){
