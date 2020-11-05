@@ -46,6 +46,12 @@ public class ConsumerRunner extends Thread {
         this.cdcMetricsCallback = cdcMetricsCallback;
         this.cdcConnector = cdcConnector;
 
+        initCdcSyncPool();
+
+        cdcMetrics = new CDCMetrics(CDCStatus.CONNECTED);
+    }
+
+    private void initCdcSyncPool() {
         //  启动一个线程数大小为1线程池进行CDC指标的同步
         cdcSyncPool = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE,
                 0L, TimeUnit.MILLISECONDS,
@@ -53,27 +59,15 @@ public class ConsumerRunner extends Thread {
                 ExecutorHelper.buildNameThreadFactory(POOL_NAME, true),
                 new ThreadPoolExecutor.AbortPolicy()
         );
-
-        cdcMetrics = new CDCMetrics(CDCStatus.CONNECTED);
     }
 
     private boolean connectAndReset() {
-        boolean isConnected = false;
         try {
-            cdcConnector.getCanalConnector().connect();
-            isConnected = true;
-            //监听的表，    格式为：数据库.表名,数据库.表名
-            cdcConnector.getCanalConnector().subscribe(cdcConnector.getSubscribeFilter());
-            cdcConnector.getCanalConnector().rollback();
-
+            cdcConnector.open(true);
             return true;
         } catch (Exception e) {
-            if (isConnected) {
-                cdcConnector.getCanalConnector().disconnect();
-                logger.error("consumer/canal-server connection prepare error.");
-            } else {
-                logger.error("consumer/canal-server connection error.");
-            }
+            cdcConnector.close(true);
+            logger.error("canal-server/canal-client connection error, cause : {}", e.getMessage());
         }
         return false;
     }
@@ -84,7 +78,7 @@ public class ConsumerRunner extends Thread {
                 try {
                     consume();
                 } catch (Exception e) {
-                    cdcConnector.getCanalConnector().disconnect();
+                    cdcConnector.close(true);
                 }
             }
 
@@ -98,10 +92,8 @@ public class ConsumerRunner extends Thread {
             Message message = null;
             try {
                 //获取指定数量的数据
-                message = cdcConnector.getCanalConnector().getWithoutAck(cdcConnector.getBatchSize());
+                message = cdcConnector.getMessageWithoutAck();
             } catch (Exception e) {
-                cdcConnector.getCanalConnector().rollback();
-
                 String error = String.format("get message error, %s", e);
                 logger.error(error);
                 throw new SQLException(error);
@@ -117,7 +109,7 @@ public class ConsumerRunner extends Thread {
                     CDCMetrics currentMetrics = consumerService.consume(message.getEntries());
 
                     //  必须先ACK，才能进行回调
-                    cdcConnector.getCanalConnector().ack(batchId);
+                    cdcConnector.ack(batchId);
 
                     //  回调
                     callBackSuccess(currentMetrics);
@@ -126,10 +118,11 @@ public class ConsumerRunner extends Thread {
                     threadSleep(FREE_MESSAGE_WAIT_IN_SECONDS);
 
                     //  同步状态
-                    cdcConnector.getCanalConnector().ack(batchId);
+                    cdcConnector.ack(batchId);
                 }
             } catch (Exception e) {
-                cdcConnector.getCanalConnector().rollback();
+                cdcConnector.rollback();
+
                 logger.error("consume message error, {}", e.getMessage());
                 //  同步出错信息，回滚到上次成功的的Sync信息
                 callBackError(lastMaxSyncUseTime);
