@@ -68,7 +68,118 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
         return new QueryConditionExecutor(indexTableName, resource, conditionsBuilderFactory, storageStrategyFactory, maxQueryTimeMs);
     }
 
+
+    // 排序中间结果.
+    private static class SortField {
+        private String fieldName;
+        private String alias;
+        private boolean number;
+
+        public SortField(String fieldName, String alias, boolean number) {
+            this.fieldName = fieldName;
+            this.alias = alias;
+            this.number = number;
+        }
+
+        public String getFieldName() {
+            return fieldName;
+        }
+
+        public String getAlias() {
+            return alias;
+        }
+
+        public boolean isNumber() {
+            return number;
+        }
+    }
+
+
+    // 构造排序查询语句段.
+    private String buildOrderBySqlSegment(List<SortField> sortFields, boolean desc) {
+        StringBuilder buff = new StringBuilder();
+
+        for (SortField field : sortFields) {
+            if (buff.length() > 0) {
+                buff.append(',');
+            }
+
+            buff.append(SqlKeywordDefine.ORDER)
+                    .append(' ')
+                    .append(field.getAlias())
+                    .append(' ')
+                    .append(desc ? SqlKeywordDefine.ORDER_TYPE_DESC : SqlKeywordDefine.ORDER_TYPE_ASC);
+        }
+        return buff.toString();
+    }
+
+    // 构造排序要用到的字段在select段.
+    // select id,cref,pref, jsonfields.123123L as sort1 from
+    private String buildSortSelectValuesSegment(List<SortField> sortFields) {
+        StringBuilder buff = new StringBuilder();
+        String fieldName;
+        for (SortField field : sortFields) {
+            if (buff.length() > 0) {
+                buff.append(',');
+            }
+
+            if (field.isNumber()) {
+                fieldName = "bigint(" + field.getFieldName() + ")";
+            } else {
+                fieldName = field.getFieldName();
+            }
+
+            buff.append(fieldName)
+                    .append(' ').append(SqlKeywordDefine.ALIAS_LINK).append(' ')
+                    .append(field.getAlias());
+        }
+
+        if (buff.length() > 0) {
+            // 为首个增加一个','分隔.
+            buff.insert(0, ',');
+        }
+        return buff.toString();
+    }
+
+    // 构造排序字段信息.
+    private List<SortField> buildSortValues(Sort sort) {
+        List<SortField> sortFields;
+        if (!sort.isOutOfOrder()) {
+            StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
+            Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField());
+
+            String fieldName;
+            String alias;
+            boolean number;
+            int aliasIndex = 0;
+            sortFields = new ArrayList<>();
+            StringBuilder buff = new StringBuilder();
+            for (String storageName : storageNames) {
+                buff.delete(0, buff.length());
+                buff.append(FieldDefine.JSON_FIELDS).append(".").append(storageName);
+                fieldName = buff.toString();
+
+                buff.delete(0, buff.length());
+                buff.append("sort").append(aliasIndex++);
+                alias = buff.toString();
+
+                if (storageStrategy.storageType() == StorageType.LONG) {
+                    number = true;
+                } else {
+                    number = false;
+                }
+
+                sortFields.add(new SortField(fieldName, alias, number));
+            }
+        } else {
+            sortFields = Collections.emptyList();
+        }
+
+        return sortFields;
+    }
+
     /**
+     * maybe deprecated
      * order by str builder
      *
      * @param sort
@@ -150,7 +261,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
 
         String whereCondition = conditionsBuilderFactory.getBuilder(conditions).build(conditions);
 
-        if (!filterIds.isEmpty()) {
+        if ( filterIds != null && !filterIds.isEmpty()) {
             String ids = filterIds.stream().map(Object::toString).collect(joining(","));
             String filterCondition = String.format(SQLConstant.FILTER_IDS, ids);
             if (StringUtils.isEmpty(whereCondition)) {
@@ -191,8 +302,13 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
             useSort = Sort.buildOutOfSort();
         }
 
-        String orderBy = buildOrderBy(useSort);
-        String sql = String.format(SQLConstant.SELECT_SQL, indexTableName, whereCondition, orderBy);
+        //using new sort builder
+        List<SortField> sortFields = buildSortValues(useSort);
+        String sortSelectValuesSegment = buildSortSelectValuesSegment(sortFields);
+        String orderBySqlSegment = buildOrderBySqlSegment(sortFields, useSort.isDes());
+
+//        String orderBy = buildOrderBy(useSort);
+        String sql = String.format(SQLConstant.SELECT_SQL, sortSelectValuesSegment, indexTableName, whereCondition, orderBySqlSegment);
 
         PreparedStatement st = null;
         ResultSet rs = null;

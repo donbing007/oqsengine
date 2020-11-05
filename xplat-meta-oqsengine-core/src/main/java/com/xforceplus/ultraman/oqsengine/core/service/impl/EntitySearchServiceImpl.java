@@ -306,7 +306,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             }
 
-            Collection<EntityRef> refs = indexStorage.select(useConditions, entityClass, useSort, usePage);
+            Collection<EntityRef> refs = indexStorage.select(useConditions, entityClass, useSort, usePage, Collections.emptyList(), null);
 
             return buildEntities(refs, entityClass);
 
@@ -607,14 +607,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Page driverPage = Page.newSinglePage(maxJoinDriverLineNumber);
             driverPage.setVisibleTotalCount(maxJoinDriverLineNumber);
             Collection<EntityRef> refs = indexStorage.select(
-                    conditions, key.getEntityClass(), Sort.buildOutOfSort(), driverPage);
+                    conditions, key.getEntityClass(), Sort.buildOutOfSort(), driverPage, Collections.emptyList(), null);
             return new AbstractMap.SimpleEntry<>(key, refs);
         }
 
         // 检查命中数据集大小.
         private long checkLineNumber() throws SQLException {
             Page page = new Page(1, 1);
-            indexStorage.select(conditions, key.getEntityClass(), Sort.buildOutOfSort(), page);
+            indexStorage.select(conditions, key.getEntityClass(), Sort.buildOutOfSort(), page, Collections.emptyList(), null);
             if (page.getTotalCount() > maxJoinDriverLineNumber) {
                 throw new SQLException(String.format("Drives entity(%s) data exceeding %d.",
                         key.getEntityClass().code(), maxJoinDriverLineNumber));
