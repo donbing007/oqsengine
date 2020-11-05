@@ -18,7 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
-import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 
 
 import javax.annotation.Resource;
@@ -47,8 +47,8 @@ public class SphinxConsumerService implements ConsumerService {
     @Resource(name = "cdcConsumerPool")
     private ExecutorService consumerPool;
 
-    @Resource(name = "masterStorage")
-    private MasterStorage sqlMasterStorage;
+    @Resource(name = "entityValueBuilder")
+    private IEntityValueBuilder<String> entityValueBuilder;
 
     private int executionTimeout = 30 * 1000;
 
@@ -133,7 +133,7 @@ public class SphinxConsumerService implements ConsumerService {
 
     private Boolean getBooleanFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
         String booleanValue = getColumnWithoutNull(columns, oqsBigEntityColumns).getValue();
-        return !booleanValue.isEmpty() && (booleanValue.equals("true") || !booleanValue.equals("0"));
+        return booleanValue.isEmpty() ? null : (booleanValue.equals("true") || !booleanValue.equals("0"));
     }
 
     private CanalEntry.Column getColumnWithoutNull(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
@@ -254,15 +254,16 @@ public class SphinxConsumerService implements ConsumerService {
         private void doBuildOrReplace(List<CanalEntry.Column> columns, boolean isReplace) throws SQLException {
 
             StorageEntity storageEntity = columnsToStorageEntity(columns);
-            IEntityValue entityValue = sqlMasterStorage.toEntityValue(storageEntity.getId(), metaToFieldTypeMap(columns),
-                                                getStringFromColumn(columns, ATTRIBUTE));
+
+            IEntityValue entityValue = entityValueBuilder.build(storageEntity.getId(), metaToFieldTypeMap(columns),
+                    getStringFromColumn(columns, ATTRIBUTE));
 
             sphinxQLIndexStorage.buildOrReplace(storageEntity, entityValue, isReplace);
         }
 
         private StorageEntity columnsToStorageEntity(List<CanalEntry.Column> columns) throws SQLException {
 
-            StorageEntity storageEntity = new StorageEntity(
+            return new StorageEntity(
                     getLongFromColumn(columns, ID),                   //  id
                     getLongFromColumn(columns, ENTITY),               //  entity
                     getLongFromColumn(columns, PREF),                 //  pref
@@ -270,9 +271,8 @@ public class SphinxConsumerService implements ConsumerService {
                     getLongFromColumn(columns, TX),                   //  tx
                     getLongFromColumn(columns, COMMITID),             //  commitid
                     null,                                   //  由sphinxQLIndexStorage内部转换  entityValue
-                    null                                    //  由sphinxQLIndexStorage内部转换  entityValue
+                    null                                     //  由sphinxQLIndexStorage内部转换  entityValue
             );
-            return storageEntity;
         }
 
         private Map<String, IEntityField> metaToFieldTypeMap(List<CanalEntry.Column> columns) throws SQLException {
