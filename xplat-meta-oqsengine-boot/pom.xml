@@ -57,6 +57,18 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>xplat-meta-oqsengine-status</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>xplat-meta-oqsengine-cdc</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-sdk-server</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -135,7 +147,11 @@
             <artifactId>testcontainers</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>xplat-meta-oqsengine-cdc</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

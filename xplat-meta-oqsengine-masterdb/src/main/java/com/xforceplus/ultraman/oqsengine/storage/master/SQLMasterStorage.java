@@ -251,12 +251,8 @@ public class SQLMasterStorage implements MasterStorage {
      * "stringAttribute": "value" # 普通字符串属性.
      * }
      */
-    private IEntityValue toEntityValue(long id, IEntityClass entityClass, String json) throws SQLException {
+    public IEntityValue toEntityValue(long id, Map<String, IEntityField> fieldTable, String json) throws SQLException {
         JSONObject object = JSON.parseObject(json);
-
-        // 以字段逻辑名称为 key, 字段信息为 value.
-        Map<String, IEntityField> fieldTable = entityClass.fields()
-            .stream().collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0));
 
         String logicName;
         IEntityField field = null;
@@ -437,11 +433,17 @@ public class SQLMasterStorage implements MasterStorage {
         Entity entity = new Entity(
             id,
             entityClass,
-            toEntityValue(se.getId(), entityClass, se.getAttribute()),
+            toEntityValue(se.getId(), getFieldTable(entityClass), se.getAttribute()),
             new EntityFamily(se.getPref(), se.getCref()),
             se.getVersion()
         );
         return Optional.of(entity);
+    }
+
+    private Map<String, IEntityField> getFieldTable(IEntityClass entityClass) {
+        // 以字段逻辑名称为 key, 字段信息为 value.
+        return entityClass.fields()
+                .stream().collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0));
     }
 
     /**

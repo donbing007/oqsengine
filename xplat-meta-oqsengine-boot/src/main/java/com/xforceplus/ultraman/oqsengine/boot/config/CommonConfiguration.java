@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.xforceplus.ultraman.oqsengine.boot.cdc.CDCMetricsCallbackToEvent;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
@@ -10,14 +12,22 @@ import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
+import com.xforceplus.ultraman.oqsengine.status.StatusServiceImpl;
+import com.xforceplus.ultraman.oqsengine.status.id.RedisIdGenerator;
+import com.xforceplus.ultraman.oqsengine.status.table.TableCleaner;
+import com.xforceplus.ultraman.oqsengine.status.table.TimeTable;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.DecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -124,5 +134,40 @@ public class CommonConfiguration {
             ExecutorHelper.buildNameThreadFactory(namePrefix, daemon),
             new ThreadPoolExecutor.AbortPolicy()
         );
+    }
+
+    @Bean("redisClient")
+    public RedisClient redisClient(@Value("${redis.uri:redis://localhost:6379}") String uri){
+
+        RedisClient redisClient = RedisClient
+                .create(uri);
+        return redisClient;
+    }
+
+    @Bean("redisIdGenerator")
+    public RedisIdGenerator redisIdGenerator(RedisClient redisClient, @Value("${redis.gen-key:gen}") String key){
+        return new RedisIdGenerator(redisClient, key);
+    }
+
+    @Bean("redisTableCleaner")
+    public TableCleaner cleaner(RedisClient redisClient, @Value("${redis.cleaner.period:10}") Long period
+            , @Value("${redis.cleaner.delay:10}") Long delay
+            , @Value("${redis.cleaner.window:10}") Long window){
+        return new TableCleaner(redisClient, period, delay, window);
+    }
+
+    @Bean("timeTable")
+    public TimeTable timeTable(RedisClient redisClient, @Value("${redis.table:cdc}") String tableName){
+        return new TimeTable(redisClient, tableName);
+    }
+
+    @Bean("statusService")
+    public StatusService statusService(RedisIdGenerator redisIdGenerator, TimeTable timeTable){
+        return new StatusServiceImpl(redisIdGenerator, timeTable);
+    }
+
+    @Bean("cdcCallback")
+    public CDCMetricsCallback cdcMetricsCallback(ApplicationEventPublisher publisher){
+        return new CDCMetricsCallbackToEvent(publisher);
     }
 }

@@ -11,13 +11,17 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefi
  */
 public class SQLConstant {
 
-    public static final String WRITER_SQL = "%s into %s (%s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?)";
+    public static final String WRITER_SQL = "%s into %s (%s, %s, %s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?,?,?)";
     public static final String DELETE_SQL = "delete from %s where id = ?";
     /**
      * %s 顺序为 where 条件, 排序.
      */
     public static final String SELECT_SQL = "select id, pref, cref from %s where entity = ? %s %s limit ?,? option max_matches=?,max_query_time=?,ranker=none";
+    public static final String FILTER_IDS = "id not in (%s)";
+
+    public static final String FILTER_COMMIT = "commitid < %s";
+
     public static final String SELECT_COUNT_SQL = "show meta";
-    public static final String SELECT_FROM_ID_SQL = "select id, pref, cref, entity, jsonfields from %s where id = ? option max_matches=1,ranker=none";
+    public static final String SELECT_FROM_ID_SQL = "select id, pref, cref, entity, tx, commitid, jsonfields from %s where id = ? option max_matches=1,ranker=none";
 
 }
