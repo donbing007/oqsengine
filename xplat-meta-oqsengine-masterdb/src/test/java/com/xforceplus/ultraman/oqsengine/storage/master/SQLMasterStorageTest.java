@@ -127,7 +127,7 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
 
         List<IEntity> queryEntitys = expectedEntitys.stream().map(e -> {
             try {
-                Optional<IEntity> entity = storage.select(e.id(), e.entityClass());
+                Optional<IEntity> entity = storage.selectOne(e.id(), e.entityClass());
                 if (entity.isPresent()) {
                     return entity.get();
                 } else {
@@ -200,22 +200,22 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
     @Test
     public void testSync() throws Exception {
         IEntity expectedEntity = expectedEntitys.stream().findFirst().get();
-        IEntity source = storage.select(expectedEntity.id(), expectedEntity.entityClass()).get();
+        IEntity source = storage.selectOne(expectedEntity.id(), expectedEntity.entityClass()).get();
         Assert.assertEquals(0, source.version());
 
         storage.replace(source);
-        source = storage.select(expectedEntity.id(), expectedEntity.entityClass()).get();
+        source = storage.selectOne(expectedEntity.id(), expectedEntity.entityClass()).get();
 
         Assert.assertEquals(1, source.version());
 
 
         IEntity target = expectedEntitys.stream().skip(1).findFirst().get();
-        target = storage.select(target.id(), target.entityClass()).get();
+        target = storage.selectOne(target.id(), target.entityClass()).get();
 
         Assert.assertEquals(0, target.version());
 
         storage.synchronize(source.id(), target.id());
-        target = storage.select(target.id(), target.entityClass()).get();
+        target = storage.selectOne(target.id(), target.entityClass()).get();
 
         Assert.assertEquals(source.version(), target.version());
 
@@ -241,13 +241,13 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         IEntity targetEntity = expectedEntitys.get(0);
         storage.replace(targetEntity);
 
-        targetEntity = storage.select(targetEntity.id(), targetEntity.entityClass()).get();
+        targetEntity = storage.selectOne(targetEntity.id(), targetEntity.entityClass()).get();
         Assert.assertEquals(1, targetEntity.version());
 
         targetEntity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
         Assert.assertEquals(1, storage.delete(targetEntity));
 
-        Assert.assertFalse(storage.select(targetEntity.id(), targetEntity.entityClass()).isPresent());
+        Assert.assertFalse(storage.selectOne(targetEntity.id(), targetEntity.entityClass()).isPresent());
     }
 
     // 初始化数据

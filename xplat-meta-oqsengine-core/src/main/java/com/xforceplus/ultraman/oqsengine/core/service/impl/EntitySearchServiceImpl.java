@@ -125,7 +125,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
         try {
-            Optional<IEntity> entityOptional = masterStorage.select(id, entityClass);
+            Optional<IEntity> entityOptional = masterStorage.selectOne(id, entityClass);
 
             if (entityOptional.isPresent()) {
 
@@ -149,7 +149,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     }
 
                     Optional<IEntity> parentOptional =
-                            masterStorage.select(child.family().parent(), entityClass.extendEntityClass());
+                        masterStorage.selectOne(child.family().parent(), entityClass.extendEntityClass());
 
                     if (parentOptional.isPresent()) {
 
