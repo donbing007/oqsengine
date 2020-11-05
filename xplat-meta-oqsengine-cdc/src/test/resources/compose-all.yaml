@@ -2,7 +2,7 @@ version: '3'
 
 services:
   mysql:
-    image: mysql
+    image: mysql:5.7
 
     environment:
       - MYSQL_DATABASE=oqsengine
@@ -10,8 +10,11 @@ services:
       - MYSQL_ROOT_PASSWORD=xplat
     volumes:
       - "./mastdb.sql:/docker-entrypoint-initdb.d/1.sql"
+      - "./mysql.cnf:/etc/my.cnf"
   canal-server:
     image: canal/canal-server:v1.1.4
+    depends_on:
+      - mysql
     environment:
       - canal.instance.mysql.slaveId=12
       - canal.auto.scan=false
@@ -20,4 +23,4 @@ services:
       - canal.instance.dbUsername=root
       - canal.instance.dbPassword=xplat
       - canal.mq.topic=nly-v1
-      - canal.instance.filter.regex=esen_approval.apt_approval
+      - canal.instance.filter.regex=.*\\..*
