@@ -1,19 +1,20 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
-import com.alibaba.otter.canal.client.CanalConnector;
-import com.alibaba.otter.canal.client.CanalConnectors;
 import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
-import com.xforceplus.ultraman.oqsengine.cdc.config.CDCConsumerProperties;
+import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
+import java.sql.SQLException;
+import java.util.concurrent.*;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
+import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCMetricsConstant.*;
 
 /**
  * desc :
@@ -27,27 +28,31 @@ public class ConsumerRunner extends Thread {
 
     final Logger logger = LoggerFactory.getLogger(CDCDaemonService.class);
 
-    private CanalConnector canalConnector;
-
     private ConsumerService consumerService;
-    private CDCConsumerProperties cdcConsumerProperties;
 
     private CDCMetricsCallback cdcMetricsCallback;
 
     private CDCMetrics cdcMetrics;
 
+    private ExecutorService cdcSyncPool;
+
+    private CDCConnector cdcConnector;
+
     public ConsumerRunner(ConsumerService consumerService,
                           CDCMetricsCallback cdcMetricsCallback,
-                          CDCConsumerProperties cdcConsumerProperties) {
+                          CDCConnector cdcConnector) {
 
         this.consumerService = consumerService;
-        this.cdcConsumerProperties = cdcConsumerProperties;
         this.cdcMetricsCallback = cdcMetricsCallback;
+        this.cdcConnector = cdcConnector;
 
-        canalConnector = CanalConnectors.newSingleConnector(
-                new InetSocketAddress(cdcConsumerProperties.getCdcConnectString(),
-                                        cdcConsumerProperties.getCdcConnectPort()), cdcConsumerProperties.getCdcDestination(),
-                                        cdcConsumerProperties.getCdcUserName(), cdcConsumerProperties.getCdcPassword());
+        //  启动一个线程数大小为1线程池进行CDC指标的同步
+        cdcSyncPool = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE,
+                0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(MAX_QUEUE_SIZE),
+                ExecutorHelper.buildNameThreadFactory(POOL_NAME, true),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
 
         cdcMetrics = new CDCMetrics(CDCStatus.CONNECTED);
     }
@@ -55,16 +60,16 @@ public class ConsumerRunner extends Thread {
     private boolean connectAndReset() {
         boolean isConnected = false;
         try {
-            canalConnector.connect();
+            cdcConnector.getCanalConnector().connect();
             isConnected = true;
             //监听的表，    格式为：数据库.表名,数据库.表名
-            canalConnector.subscribe(cdcConsumerProperties.getSubscribeFilter());
-            canalConnector.rollback();
+            cdcConnector.getCanalConnector().subscribe(cdcConnector.getSubscribeFilter());
+            cdcConnector.getCanalConnector().rollback();
 
             return true;
         } catch (Exception e) {
             if (isConnected) {
-                canalConnector.disconnect();
+                cdcConnector.getCanalConnector().disconnect();
                 logger.error("consumer/canal-server connection prepare error.");
             } else {
                 logger.error("consumer/canal-server connection error.");
@@ -74,32 +79,32 @@ public class ConsumerRunner extends Thread {
     }
 
     public void run() {
-
         while (true) {
             if (connectAndReset()) {
                 try {
                     consume();
                 } catch (Exception e) {
-                    canalConnector.disconnect();
+                    cdcConnector.getCanalConnector().disconnect();
                 }
             }
 
-            //  wait for reconnected
-            callConnectError(cdcConsumerProperties.getReconnectWaitInSeconds());
+            //  这里将进行睡眠->同步错误信息->进入下次循环
+            callConnectError(RECONNECT_WAIT_IN_SECONDS);
         }
     }
 
-    public void consume() {
+    public void consume() throws SQLException {
         while (true) {
             Message message = null;
             try {
                 //获取指定数量的数据
-                message = canalConnector.getWithoutAck(cdcConsumerProperties.getBatchSize());
+                message = cdcConnector.getCanalConnector().getWithoutAck(cdcConnector.getBatchSize());
             } catch (Exception e) {
-                logger.error("get message error, {}", e.getMessage());
-                canalConnector.rollback();
-                canalConnector.disconnect();
-                break;
+                cdcConnector.getCanalConnector().rollback();
+
+                String error = String.format("get message error, %s", e);
+                logger.error(error);
+                throw new SQLException(error);
             }
 
             long lastMaxSyncUseTime = cdcMetrics.getMaxSyncUseTime();
@@ -108,33 +113,40 @@ public class ConsumerRunner extends Thread {
                 long batchId = message.getId();
                 if (batchId != EMPTY_BATCH_ID || message.getEntries().size() != EMPTY_BATCH_SIZE) {
 
-                    //  这里会设置最大消费间隔
-                    consumerService.consume(message.getEntries(), cdcMetrics);
+                    //  binlog处理，同步指标到cdcMetrics中
+                    CDCMetrics currentMetrics = consumerService.consume(message.getEntries());
 
-                    //  回写ACK
-                    canalConnector.ack(batchId);
+                    //  必须先ACK，才能进行回调
+                    cdcConnector.getCanalConnector().ack(batchId);
 
                     //  回调
-                    callBackSuccess();
+                    callBackSuccess(currentMetrics);
                 } else {
-                    try {
-                        //  当前没有Binlog消费
-                        Thread.sleep(DEFAULT_FREE_MESSAGE_WAIT_IN_SECONDS * 1000);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    canalConnector.ack(batchId);
+                    //  没有新的同步信息，睡眠1秒进入下次轮训
+                    threadSleep(FREE_MESSAGE_WAIT_IN_SECONDS);
+
+                    //  同步状态
+                    cdcConnector.getCanalConnector().ack(batchId);
                 }
             } catch (Exception e) {
+                cdcConnector.getCanalConnector().rollback();
                 logger.error("consume message error, {}", e.getMessage());
-                canalConnector.rollback();
-
+                //  同步出错信息，回滚到上次成功的的Sync信息
                 callBackError(lastMaxSyncUseTime);
             }
         }
     }
 
+
     private void callConnectError(int waitInSeconds) {
+        threadSleep(waitInSeconds);
+
+        cdcMetrics.setCdcConsumerStatus(CDCStatus.DIS_CONNECTED);
+
+        callback();
+    }
+
+    private void threadSleep(int waitInSeconds) {
         try {
             //  当前没有Binlog消费
             Thread.sleep(waitInSeconds * 1000);
@@ -142,10 +154,6 @@ public class ConsumerRunner extends Thread {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-        cdcMetrics.setCdcConsumerStatus(CDCStatus.DIS_CONNECTED);
-
-        callback();
     }
 
     private void callBackError(long lastMaxSyncUseTime) {
@@ -155,18 +163,31 @@ public class ConsumerRunner extends Thread {
         callback();
     }
 
-    private void callBackSuccess() {
+    private void callBackSuccess(CDCMetrics currentMetrics) {
         cdcMetrics.setLastConsumerTime(System.currentTimeMillis());
+
+        if (!currentMetrics.getCommitList().isEmpty()) {
+            cdcMetrics.setCommitList(currentMetrics.getCommitList());
+        }
+
+        if (currentMetrics.getMaxSyncUseTime() > ZERO) {
+            cdcMetrics.setMaxSyncUseTime(currentMetrics.getMaxSyncUseTime());
+        }
+
         callback();
     }
 
     private void callback() {
+        //  设置本次callback的时间
         cdcMetrics.setLastUpdateTime(System.currentTimeMillis());
-        try {
-            cdcMetricsCallback.cdcCallBack(cdcMetrics);
-        } catch (Exception e) {
-            logger.error("callback error, metrics : {}", cdcMetrics.toString());
-            e.printStackTrace();
-        }
+        //  异步执行回调
+        cdcSyncPool.submit(() -> {
+            try {
+                cdcMetricsCallback.cdcCallBack(cdcMetrics);
+            } catch (Exception e) {
+                logger.error("callback error, metrics : {}", cdcMetrics.toString());
+                e.printStackTrace();
+            }
+        });
     }
 }

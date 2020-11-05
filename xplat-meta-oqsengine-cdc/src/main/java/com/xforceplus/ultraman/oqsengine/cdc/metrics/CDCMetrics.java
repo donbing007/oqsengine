@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.metrics;
 
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.CDCStatus;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -13,7 +14,6 @@ import java.util.List;
  * @since : 1.8
  */
 public class CDCMetrics {
-
 
     //  表示当前的cdc消费端连接是否正常(true代表正常)
     private CDCStatus cdcConsumerStatus;
@@ -35,6 +35,7 @@ public class CDCMetrics {
 
     public CDCMetrics(CDCStatus cdcConsumerStatus) {
         this.cdcConsumerStatus = cdcConsumerStatus;
+        this.commitList = new ArrayList<>();
     }
 
     public long getLastUpdateTime() {
