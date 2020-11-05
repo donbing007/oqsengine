@@ -23,4 +23,4 @@ services:
       - canal.instance.dbUsername=root
       - canal.instance.dbPassword=xplat
       - canal.mq.topic=nly-v1
-      - canal.instance.filter.regex=.*\\..*
+      - canal.instance.filter.regex=.*\.oqsbigentity.*

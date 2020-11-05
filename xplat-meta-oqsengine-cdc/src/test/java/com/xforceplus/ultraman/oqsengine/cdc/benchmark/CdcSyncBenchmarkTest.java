@@ -16,6 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -64,7 +65,7 @@ public class CdcSyncBenchmarkTest extends AbstractContainer {
         initData();
 
         // 等待加载完毕
-        TimeUnit.SECONDS.sleep(1L);
+        TimeUnit.SECONDS.sleep(2L);
     }
 
     private void initData() throws SQLException {
@@ -72,11 +73,14 @@ public class CdcSyncBenchmarkTest extends AbstractContainer {
         transactionManager.bind(tx.id());
         try {
             initData(masterStorage, batchSize);
+
+            //将事务正常提交,并从事务管理器中销毁事务.
+            tx.commit();
         } catch (Exception e) {
             //将事务正常提交,并从事务管理器中销毁事务.
-            Transaction tx1 = transactionManager.getCurrent().get();
-            tx1.rollback();
-            transactionManager.finish(tx1);
+            tx.rollback();
+        } finally {
+            transactionManager.finish(tx);
         }
     }
 
@@ -165,12 +169,16 @@ public class CdcSyncBenchmarkTest extends AbstractContainer {
     private void replace(List<CanalEntry.Column> columns) throws SQLException {
 
         IEntityValue entityValue = new EntityValue(Long.parseLong(columns.get(1).getValue()));
-        IEntityClass entityClass = new EntityClass(Long.parseLong(columns.get(1).getValue()));
-        IEntity entity = new Entity(Long.parseLong(columns.get(0).getValue()),
-                entityClass,
-                entityValue);
 
-        indexStorage.build(entity);
+        StorageEntity storageEntity = new StorageEntity(
+                Long.parseLong(columns.get(0).getValue()),
+                Long.parseLong(columns.get(1).getValue()),
+                Long.parseLong(columns.get(7).getValue()),
+                Long.parseLong(columns.get(8).getValue()),
+                Long.parseLong(columns.get(2).getValue()),
+                Long.parseLong(columns.get(3).getValue()), null, null);
+
+        indexStorage.buildOrReplace(storageEntity, entityValue, true);
     }
 
     private static void printColumn(List<CanalEntry.Column> columns) {
@@ -191,12 +199,6 @@ public class CdcSyncBenchmarkTest extends AbstractContainer {
     private List<IEntity> initData(SQLMasterStorage storage, int size) throws Exception {
         List<IEntity> expectedEntitys = new ArrayList<>(size);
 
-//        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(1, 1,
-//                0L, TimeUnit.MILLISECONDS,
-//                new ArrayBlockingQueue<>(2000),
-//                ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
-//                new ThreadPoolExecutor.AbortPolicy()
-//        );
 
         for (int i = 1; i <= size; i++) {
             expectedEntitys.add(buildEntity(i * size));
@@ -209,35 +211,6 @@ public class CdcSyncBenchmarkTest extends AbstractContainer {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
         });
-
-//        CountDownLatch countDownLatch = new CountDownLatch(expectedEntitys.size());
-//        List<Future> futures = new ArrayList<>(expectedEntitys.size());
-//        expectedEntitys.stream().forEach(e -> {
-//            futures.add(threadPool.submit(() -> {
-//                try {
-//                    storage.build(e);
-//                } catch (SQLException ex) {
-//                    throw new RuntimeException(ex.getMessage(), ex);
-//                }
-//            }));
-//        });
-//
-//        try {
-//            if (!countDownLatch.await(60, TimeUnit.MILLISECONDS)) {
-//                for (Future f : futures) {
-//                    f.cancel(true);
-//                }
-//                throw new SQLException("init data failed", "init data failed");
-//            }
-//        } catch (InterruptedException e) {
-//            throw new SQLException(e.getMessage(), e);
-//        }
-
-
-        //将事务正常提交,并从事务管理器中销毁事务.
-        Transaction tx = transactionManager.getCurrent().get();
-        tx.commit();
-        transactionManager.finish();
 
         return expectedEntitys;
     }
