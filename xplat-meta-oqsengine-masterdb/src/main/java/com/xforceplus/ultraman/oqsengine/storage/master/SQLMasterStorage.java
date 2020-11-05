@@ -1,14 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -17,9 +18,8 @@ import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
-import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.slf4j.Logger;
@@ -58,6 +58,9 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Resource(name = "ioThreadPool")
     private ExecutorService threadPool;
+
+    @Resource(name = "entityValueBuilder")
+    private IEntityValueBuilder<String> entityValueBuilder;
 
     private long queryTimeout;
 
@@ -245,92 +248,14 @@ public class SQLMasterStorage implements MasterStorage {
         }
     }
 
-    /**
-     * {
-     * "numberAttribute": 1, # 普通数字属性
-     * "stringAttribute": "value" # 普通字符串属性.
-     * }
-     */
-    public IEntityValue toEntityValue(long id, Map<String, IEntityField> fieldTable, String json) throws SQLException {
-        JSONObject object = JSON.parseObject(json);
+    private IEntityValue toEntityValue(long id, IEntityClass entityClass, String json) throws SQLException {
 
-        String logicName;
-        IEntityField field = null;
-        FieldType fieldType;
-        StorageStrategy storageStrategy;
-        StorageValue newStorageValue;
-        StorageValue oldStorageValue;
-        // key 为物理储存名称,值为构造出的储存值.
-        Map<String, EntityValuePack> storageValueCache = new HashMap<>(object.size());
+        // 以字段逻辑名称为 key, 字段信息为 value.
+        Map<String, IEntityField> fieldTable = entityClass.fields()
+            .stream().collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0));
 
-        String sn;
-        for (String storageName : object.keySet()) {
-            sn = compatibleStorageName(storageName);
-//            try {
+        return entityValueBuilder.build(id, fieldTable, json);
 
-                // 为了找出物理名称中的逻辑字段名称.
-            logicName = AnyStorageValue.getInstance(sn).logicName();
-                field = fieldTable.get(logicName);
-
-                if (field == null) {
-                    continue;
-                }
-
-                fieldType = field.type();
-
-                storageStrategy = this.storageStrategyFactory.getStrategy(fieldType);
-                newStorageValue = StorageValueFactory.buildStorageValue(
-                    storageStrategy.storageType(), sn, object.get(storageName));
-
-                // 如果是多值.使用 stick 追加.
-                if (storageStrategy.isMultipleStorageValue()) {
-                    Optional<StorageValue> oldStorageValueOp = Optional.ofNullable(
-                        storageValueCache.get(String.valueOf(field.id()))
-                    ).map(x -> x.storageValue);
-
-                    if (oldStorageValueOp.isPresent()) {
-                        oldStorageValue = oldStorageValueOp.get();
-                        storageValueCache.put(
-                            String.valueOf(field.id()),
-                            new EntityValuePack(field, oldStorageValue.stick(newStorageValue), storageStrategy));
-                    } else {
-                        storageValueCache.put(
-                            String.valueOf(field.id()),
-                            new EntityValuePack(field, newStorageValue, storageStrategy));
-                    }
-                } else {
-                    // 单值
-                    storageValueCache.put(String.valueOf(field.id()),
-                        new EntityValuePack(field, newStorageValue, storageStrategy));
-                }
-
-//            } catch (Exception ex) {
-//                throw new SQLException(
-//                    String.format("Something wrong has occured.[entity:%d, class: %d, fieldId: %d, msg:%s]",
-//                        id, entityClass.id(), field.id(), ex.getClass().getName() + ":" + ex.getMessage()));
-//            }
-        }
-
-        IEntityValue values = new EntityValue(id);
-        storageValueCache.values().stream().forEach(e -> {
-            values.addValue(e.strategy.toLogicValue(e.logicField, e.storageValue));
-        });
-
-
-        return values;
-    }
-
-    // toEntity 临时解析结果.
-    static class EntityValuePack {
-        private IEntityField logicField;
-        private StorageValue storageValue;
-        private StorageStrategy strategy;
-
-        public EntityValuePack(IEntityField logicField, StorageValue storageValue, StorageStrategy strategy) {
-            this.logicField = logicField;
-            this.storageValue = storageValue;
-            this.strategy = strategy;
-        }
     }
 
     // 属性名称使用的是属性 F + {id}.
@@ -433,17 +358,11 @@ public class SQLMasterStorage implements MasterStorage {
         Entity entity = new Entity(
             id,
             entityClass,
-            toEntityValue(se.getId(), getFieldTable(entityClass), se.getAttribute()),
+            toEntityValue(se.getId(), entityClass, se.getAttribute()),
             new EntityFamily(se.getPref(), se.getCref()),
             se.getVersion()
         );
         return Optional.of(entity);
-    }
-
-    private Map<String, IEntityField> getFieldTable(IEntityClass entityClass) {
-        // 以字段逻辑名称为 key, 字段信息为 value.
-        return entityClass.fields()
-                .stream().collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0));
     }
 
     /**
@@ -459,20 +378,5 @@ public class SQLMasterStorage implements MasterStorage {
             .filter(f -> f.config().isSearchable())
             .map(f -> "\"" + String.join("-", Long.toString(f.id()), f.type().getType()) + "\"")
             .collect(Collectors.joining(",")) + "]";
-    }
-
-    /**
-     * 兼容旧版本属性名称.
-     * 如果首字母是
-     *
-     * @param name
-     * @return
-     */
-    private String compatibleStorageName(String name) {
-        if (name.startsWith(FieldDefine.ATTRIBUTE_PREFIX)) {
-            return name.substring(1);
-        } else {
-            return name;
-        }
     }
 }

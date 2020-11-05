@@ -20,9 +20,10 @@ import com.xforceplus.ultraman.oqsengine.status.table.TimeTable;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.DecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -170,4 +171,10 @@ public class CommonConfiguration {
     public CDCMetricsCallback cdcMetricsCallback(ApplicationEventPublisher publisher){
         return new CDCMetricsCallbackToEvent(publisher);
     }
+
+    @Bean("entityValueBuilder")
+    public IEntityValueBuilder entityValueBuilder() {
+        return new SQLJsonIEntityValueBuilder();
+    }
+
 }

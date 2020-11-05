@@ -4,8 +4,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
 
 import java.sql.SQLException;
@@ -64,5 +62,5 @@ public interface MasterStorage extends Storage {
      * @param json attribute
      * @return entityValue
      */
-    IEntityValue toEntityValue(long id, Map<String, IEntityField> fieldTable, String json) throws SQLException;
+//    IEntityValue toEntityValue(long id, Map<String, IEntityField> fieldTable, String json) throws SQLException;
 }
