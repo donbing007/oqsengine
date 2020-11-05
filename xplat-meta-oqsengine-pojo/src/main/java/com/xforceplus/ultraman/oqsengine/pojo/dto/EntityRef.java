@@ -64,25 +64,32 @@ public final class EntityRef implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof EntityRef)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof EntityRef)) {
+            return false;
+        }
         EntityRef entityRef = (EntityRef) o;
         return getId() == entityRef.getId() &&
             getPref() == entityRef.getPref() &&
-            getCref() == entityRef.getCref();
+            getCref() == entityRef.getCref() &&
+            Objects.equals(getOrderValue(), entityRef.getOrderValue());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getPref(), getCref());
+        return Objects.hash(getId(), getPref(), getCref(), getOrderValue());
     }
 
     @Override
     public String toString() {
-        return "EntityRef{" +
-            "id=" + id +
-            ", pref=" + pref +
-            ", cref=" + cref +
-            '}';
+        final StringBuffer sb = new StringBuffer("EntityRef{");
+        sb.append("id=").append(id);
+        sb.append(", pref=").append(pref);
+        sb.append(", cref=").append(cref);
+        sb.append(", orderValue='").append(orderValue).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }

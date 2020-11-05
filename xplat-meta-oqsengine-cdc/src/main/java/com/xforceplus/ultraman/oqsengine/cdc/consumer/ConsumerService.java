@@ -18,5 +18,5 @@ public interface ConsumerService {
     /*
         消费当前批次的Binlog
      */
-    boolean consume(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException;
+    CDCMetrics consume(List<CanalEntry.Entry> entries) throws SQLException;
 }

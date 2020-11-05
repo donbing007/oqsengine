@@ -141,7 +141,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Override
     public ResultStatus replace(IEntity entity) throws SQLException {
 
-        if (!masterStorage.select(entity.id(), entity.entityClass()).isPresent()) {
+        if (!masterStorage.selectOne(entity.id(), entity.entityClass()).isPresent()) {
             failCountTotal.increment();
             throw new SQLException(String.format("An Entity that does not exist cannot be updated (%d).", entity.id()));
         }

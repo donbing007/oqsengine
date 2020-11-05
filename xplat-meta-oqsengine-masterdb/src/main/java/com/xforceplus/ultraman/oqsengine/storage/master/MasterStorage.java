@@ -1,9 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
 
 import java.sql.SQLException;
@@ -27,7 +27,7 @@ public interface MasterStorage extends Storage {
      * @param entityClass 目标实例类型.
      * @return 目标实例.
      */
-    Optional<IEntity> select(long id, IEntityClass entityClass) throws SQLException;
+    Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException;
 
     /**
      * 同时查找多个不同类型的不同实例.
@@ -36,6 +36,15 @@ public interface MasterStorage extends Storage {
      * @return 多个实例列表.
      */
     Collection<IEntity> selectMultiple(Map<Long, IEntityClass> ids) throws SQLException;
+
+    /**
+     * 条件搜索数据.
+     *
+     * @param commitid   所有查询必须大于等于此提交号.
+     * @param conditions 搜索条件.
+     * @return 搜索结果列表.
+     */
+    Collection<EntityRef> select(long commitid, Conditions conditions, IEntityClass entityClass);
 
     /**
      * 同步两个 id 表示的信息.实际需要同步的信息由实现定义.
@@ -53,5 +62,5 @@ public interface MasterStorage extends Storage {
      * @param json attribute
      * @return entityValue
      */
-    IEntityValue toEntityValue(long id, Map<String, IEntityField> fieldTable, String json) throws SQLException;
+//    IEntityValue toEntityValue(long id, Map<String, IEntityField> fieldTable, String json) throws SQLException;
 }

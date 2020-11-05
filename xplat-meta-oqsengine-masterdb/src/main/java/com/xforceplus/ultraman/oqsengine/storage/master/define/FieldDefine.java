@@ -10,6 +10,8 @@ public class FieldDefine {
 
     private FieldDefine() {}
 
+    public final static String ATTRIBUTE_PREFIX = "F";
+
     /**
      * 数据标识.
      */

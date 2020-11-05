@@ -124,7 +124,7 @@ public class EntityManagementServiceImplTest {
         Assert.assertEquals(new EntityFamily(0, 0), expectedEntity.family());
 
         // 检查是否成功写入主库和索引库.
-        IEntity masterEntity = masterStorage.select(expectedEntity.id(), fatherEntityClass).get();
+        IEntity masterEntity = masterStorage.selectOne(expectedEntity.id(), fatherEntityClass).get();
         Assert.assertEquals(expectedEntity.id(), masterEntity.id());
         Assert.assertEquals(expectedEntity.entityValue(), masterEntity.entityValue());
         Assert.assertEquals(expectedEntity.family(), masterEntity.family());
@@ -155,7 +155,7 @@ public class EntityManagementServiceImplTest {
             expectedEntity.entityValue().values().stream().filter(v -> fatherFieldTable.containsKey(v.getField().id()))
                 .collect(Collectors.toMap(IValue::getField, v -> v));
 
-        IEntity fatherMasterEntity = masterStorage.select(expectedEntity.family().parent(), fatherEntityClass).get();
+        IEntity fatherMasterEntity = masterStorage.selectOne(expectedEntity.family().parent(), fatherEntityClass).get();
         Assert.assertEquals(new EntityFamily(0, expectedEntity.id()), fatherMasterEntity.family());
         Assert.assertEquals(0, fatherMasterEntity.version());
         Assert.assertEquals(fatherEntityClass, fatherMasterEntity.entityClass());
@@ -184,7 +184,7 @@ public class EntityManagementServiceImplTest {
         Map<IEntityField, IValue> expectedChildValues =
             expectedEntity.entityValue().values().stream().filter(v -> childFieldTable.containsKey(v.getField().id()))
                 .collect(Collectors.toMap(IValue::getField, v -> v));
-        IEntity childMasterEntity = masterStorage.select(expectedEntity.id(), childEntityClass).get();
+        IEntity childMasterEntity = masterStorage.selectOne(expectedEntity.id(), childEntityClass).get();
         Assert.assertEquals(new EntityFamily(expectedEntity.family().parent(), 0), childMasterEntity.family());
         Assert.assertEquals(0, childMasterEntity.version());
         Assert.assertEquals(childEntityClass, childMasterEntity.entityClass());
@@ -219,7 +219,7 @@ public class EntityManagementServiceImplTest {
 
         Assert.assertEquals(ResultStatus.SUCCESS, service.replace(expectedEntity));
 
-        IEntity masterEntity = masterStorage.select(expectedEntity.id(), fatherEntityClass).get();
+        IEntity masterEntity = masterStorage.selectOne(expectedEntity.id(), fatherEntityClass).get();
         Assert.assertEquals(
             fatherEntityClass.fields().stream().filter(f -> f.id() != removeField.id()).count(),
             masterEntity.entityValue().values().stream().filter(v -> v.getField().id() != removeField.id()).count()
@@ -246,7 +246,7 @@ public class EntityManagementServiceImplTest {
         Assert.assertEquals(ResultStatus.SUCCESS, service.replace(expectedEntity));
 
         // 验证父类
-        IEntity masterEntity = masterStorage.select(expectedEntity.family().parent(), fatherEntityClass).get();
+        IEntity masterEntity = masterStorage.selectOne(expectedEntity.family().parent(), fatherEntityClass).get();
         Assert.assertEquals("8888.8888", masterEntity.entityValue().getValue("f3").get().valueToString());
         // 验证父类索引
         masterEntity = indexStorage.select(expectedEntity.family().parent()).get();
@@ -278,7 +278,7 @@ public class EntityManagementServiceImplTest {
 
                 IEntity finalExpectedEntity = null;
                 try {
-                    finalExpectedEntity = copyEntity(masterStorage.select(expectedEntity.id(), fatherEntityClass).get());
+                    finalExpectedEntity = copyEntity(masterStorage.selectOne(expectedEntity.id(), fatherEntityClass).get());
                 } catch (SQLException e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
@@ -318,7 +318,7 @@ public class EntityManagementServiceImplTest {
         }
 
         LongValue oldLongValue = (LongValue) expectedEntity.entityValue().getValue("f1").get();
-        IEntity newEntity = masterStorage.select(expectedEntity.id(), fatherEntityClass).get();
+        IEntity newEntity = masterStorage.selectOne(expectedEntity.id(), fatherEntityClass).get();
         Assert.assertEquals(oldLongValue.valueToLong() + successSize,
             newEntity.entityValue().getValue("f1").get().valueToLong());
     }
@@ -386,7 +386,7 @@ public class EntityManagementServiceImplTest {
         private ConcurrentMap<Long, IEntity> data = new ConcurrentHashMap<>();
 
         @Override
-        public Optional<IEntity> select(long id, IEntityClass entityClass) throws SQLException {
+        public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
             return Optional.ofNullable(data.get(id));
         }
 

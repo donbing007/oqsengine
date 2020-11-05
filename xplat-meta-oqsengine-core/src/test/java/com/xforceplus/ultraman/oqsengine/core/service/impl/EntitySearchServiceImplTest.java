@@ -538,7 +538,7 @@ public class EntitySearchServiceImplTest {
         }
 
         @Override
-        public Optional<IEntity> select(long id, IEntityClass entityClass) throws SQLException {
+        public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
             return entities.stream().filter(e -> e.id() == id && e.entityClass().equals(entityClass)).findFirst();
         }
 

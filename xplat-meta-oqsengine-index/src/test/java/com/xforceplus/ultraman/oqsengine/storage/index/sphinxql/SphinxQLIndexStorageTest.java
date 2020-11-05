@@ -39,7 +39,6 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -245,8 +244,9 @@ public class SphinxQLIndexStorageTest {
         conditions.addAnd(new Condition(stringsField, ConditionOperator.EQUALS,
             new StringsValue(stringsField, "\\\'新的字段,会有特殊字符.\'\\")));
 
+        // todo fixed
         Collection<EntityRef> refs = storage.select(conditions, expectedEntity.entityClass(), null,
-            Page.newSinglePage(100), Collections.emptyList(), null);
+            Page.newSinglePage(100), null, null);
 
         Assert.assertEquals(1, refs.size());
         Assert.assertEquals(expectedEntity.id(), refs.stream().findFirst().get().getId());
@@ -267,10 +267,11 @@ public class SphinxQLIndexStorageTest {
         transactionManager.getCurrent().get().commit();
         transactionManager.finish();
 
+        //  todo fixed
         Collection<EntityRef> refs = storage.select(
             Conditions.buildEmtpyConditions()
                 .addAnd(new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 1L))),
-            entityClass, null, Page.newSinglePage(100), Collections.emptyList(), null);
+            entityClass, null, Page.newSinglePage(100), null, null);
 
         Assert.assertEquals(0, refs.size());
     }
@@ -285,7 +286,8 @@ public class SphinxQLIndexStorageTest {
 
             Collection<EntityRef> refs = null;
             try {
-                refs = storage.select(c.conditions, c.entityClass, c.sort, c.page, Collections.emptyList(), null);
+                //  todo fixed
+                refs = storage.select(c.conditions, c.entityClass, c.sort, c.page, null, null);
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
@@ -605,7 +607,7 @@ public class SphinxQLIndexStorageTest {
         try {
             Arrays.stream(entityes).forEach(e -> {
                 try {
-                    storage.buildOrReplace(e);
+                    storage.build(e);
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex.getMessage(), ex);
                 }
