@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 import com.alibaba.fastjson.JSON;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.google.common.collect.Maps;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntry;
 
@@ -27,8 +26,6 @@ import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.*;
-
 
 import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns.*;
@@ -50,49 +47,35 @@ public class SphinxConsumerService implements ConsumerService {
     @Resource(name = "masterStorage")
     private MasterStorage masterStorage;
 
-    @Resource(name = "cdcConsumerPool")
-    private ExecutorService consumerPool;
-
     @Resource(name = "entityValueBuilder")
     private IEntityValueBuilder<String> entityValueBuilder;
 
     @Resource
     private CDCMetricsService cdcMetricsService;
 
-    private int executionTimeout = 30 * 1000;
-
-    private static long commitId = INIT_ID;
-
     //  保证蓄水池中以事务分割成不同的键值对。每个健值对以PREF为Key,以PREF对应的EntityValue为值,在一个批次结束时必须对该Map进行清理，
     //  删除当前所有的TransactionEnd commitId所对应的健值对
-    private static Map<Long, Map<Long, IEntityValue>> relationPool = new ConcurrentHashMap<>();
-
-    public void setExecutionTimeout(int executionTimeout) {
-        this.executionTimeout = executionTimeout;
-    }
+    private Map<Long, IEntityValue> relationPool;
 
     @Override
     public CDCMetrics consume(List<CanalEntry.Entry> entries, CDCUnCommitMetrics cdcUnCommitMetrics) throws SQLException, CloneNotSupportedException {
         CDCMetrics cdcMetrics = init(cdcUnCommitMetrics);
-        // 1.数据清洗
-        Map<Long, RawEntry> syncDataList = filterSyncData(entries, cdcMetrics);
-        if (!syncDataList.isEmpty()) {
-            //  2.数据消费, 由于数据清洗后保证不会存在同一行记录重复的情况,所以可以采用多线程的方式进行同步
-            multiConsume(syncDataList, cdcMetrics);
-        }
+
+        filterSyncData(entries, cdcMetrics);
+
         return cdcMetrics;
     }
 
+    //  将上一次的剩余信息设置回来
     private CDCMetrics init(CDCUnCommitMetrics cdcUnCommitMetrics) throws CloneNotSupportedException {
+
+        //  clone一个CDCMetrics
         CDCMetrics cdcMetrics = new CDCMetrics(cdcUnCommitMetrics);
 
-        //  在TRANSACTIONEND标志位升级为CommitId
-        commitId = INIT_ID;
+        reset();
 
-        if (cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId() > INIT_ID &&
-                cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValueFs().size() > EMPTY_BATCH_SIZE) {
-            relationPool.putIfAbsent(cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId(),
-                                        cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValueFs());
+        if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValueFs().size() > EMPTY_BATCH_SIZE) {
+            relationPool.putAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValueFs());
         }
 
         return cdcMetrics;
@@ -101,64 +84,85 @@ public class SphinxConsumerService implements ConsumerService {
     /*
         数据清洗
     * */
-    private Map<Long, RawEntry> filterSyncData(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
-        Map<Long, RawEntry> datas = Maps.newLinkedHashMap();
-
+    private void filterSyncData(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
         for (CanalEntry.Entry entry : entries) {
             //  不是RowData类型数据,将被过滤
-            if (entry.getEntryType() != CanalEntry.EntryType.ROWDATA) {
-                if (entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONEND &&
-                                    cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId() > INIT_ID) {
-                    //  事务结束时，必须将上一个事务的Commit_id加入到successCommitIds中
-                    cdcMetrics.getCdcAckMetrics().getCommitList().add(cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId());
-
-                    commitId = cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId();
-
-                    //这里必须使用putIfAbsent，因为可能存在上个批次未结束的
-                    relationPool.putIfAbsent(commitId, new ConcurrentHashMap<>());
-                }
-
-                continue;
-            }
-
-            CanalEntry.RowChange rowChange = null;
-            try {
-                rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
-
-            } catch (Exception e) {
-                throw new SQLException(String.format("parse entry value failed, [%s], [%s]", entry.getStoreValue(), e));
-            }
-
-            CanalEntry.EventType eventType = rowChange.getEventType();
-
-            //  支持的EventType类型为: [INSERT/UPDATE/DELETE]
-            if (supportEventType(eventType)) {
-                //  遍历RowData
-                for (CanalEntry.RowData rowData : rowChange.getRowDatasList()) {
-                    //  获取一条完整的Row，只关心变化后的数据
-                    List<CanalEntry.Column> columns = rowData.getAfterColumnsList();
-                    //  check need sync
-                    //  由于主库同步后会在最后commit时再更新一次commit_id，所以对于binlog同步来说，
-                    //  只需同步commit_id小于Long.MAX_VALUE的row
-                    if (needSyncRow(columns)) {
-                        //  更新
-                        cdcMetrics.getCdcUnCommitMetrics().setLastUnCommitId(getLongFromColumn(columns, COMMITID));
-
-                        RawEntry rawEntry = new RawEntry(
-                                entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList());
-
-                        //  由于Binlog数据是全量有序同步, 同一个ID多次更新, 只会取最后一次的数据进行同步
-                        datas.put(getLongFromColumn(columns, ID), rawEntry);
-                    }
-                }
+            switch (entry.getEntryType()) {
+                case TRANSACTIONBEGIN:
+                                reset();
+                                break;
+                case TRANSACTIONEND:
+                                syncCommitList(cdcMetrics);
+                                break;
+                case ROWDATA:
+                                internalDataSync(entry, cdcMetrics);
+                                break;
             }
         }
 
-        //  保证最后一个unCommitId也加入到relationPool中
-        if (cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId() > commitId) {
-            relationPool.put(cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId(), new ConcurrentHashMap<>());
+        //  当所有的数据都处理完，需要将relationPool同步到cdcMetrics中
+        if (relationPool.size() > 0) {
+            cdcMetrics.getCdcUnCommitMetrics().setUnCommitEntityValueFs(relationPool);
         }
-        return datas;
+    }
+    //  每个Transaction的开始需要将relationPool清空
+    private void reset() {
+        relationPool = new HashMap<>();
+    }
+
+    private void syncCommitList(CDCMetrics cdcMetrics) {
+        if (cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId() > INIT_ID) {
+            //  事务结束时，将上一个事务的Commit_id加入到successCommitIds中
+            cdcMetrics.getCdcAckMetrics().getCommitList().add(cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId());
+        }
+    }
+
+    private void internalDataSync(CanalEntry.Entry entry, CDCMetrics cdcMetrics) throws SQLException {
+        CanalEntry.RowChange rowChange = null;
+        try {
+            rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
+
+        } catch (Exception e) {
+            throw new SQLException(String.format("parse entry value failed, [%s], [%s]", entry.getStoreValue(), e));
+        }
+        CanalEntry.EventType eventType = rowChange.getEventType();
+        if (supportEventType(eventType)) {
+            //  遍历RowData
+            for (CanalEntry.RowData rowData : rowChange.getRowDatasList()) {
+                //  获取一条完整的Row，只关心变化后的数据
+                List<CanalEntry.Column> columns = rowData.getAfterColumnsList();
+                //  check need sync
+                //  由于主库同步后会在最后commit时再更新一次commit_id，所以对于binlog同步来说，
+                //  只需同步commit_id小于Long.MAX_VALUE的row
+                if (needSyncRow(columns)) {
+                    //  更新
+                    cdcMetrics.getCdcUnCommitMetrics().setLastUnCommitId(getLongFromColumn(columns, COMMITID));
+                    RawEntry rawEntry = new RawEntry(
+                            entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList());
+
+                    singleConsume(rawEntry, cdcMetrics);
+                } else {
+                    addPrefEntityValue(columns);
+                }
+            }
+        }
+    }
+
+    /*
+        当存在子类时,将父类信息缓存在蓄水池中，等待子类进行合并
+        蓄水池在每一次事务结束时进行判断，必须为空(代表一个事务中的父子类已全部同步完毕)
+        父类会扔自己的EntityValue进去,子类会取出自己父类的EntityValue进行合并
+    */
+    private void addPrefEntityValue(List<CanalEntry.Column> columns) throws SQLException {
+        //  有子类, 将父类的EntityValue存入的relationMap中
+        if (getLongFromColumn(columns, CREF) > ZERO) {
+            long id = getLongFromColumn(columns, ID);
+
+            IEntityValue entityValue = entityValueBuilder.build(id, metaToFieldTypeMap(columns),
+                    getStringFromColumn(columns, ATTRIBUTE));
+
+            relationPool.put(id, entityValue);
+        }
     }
 
 
@@ -226,156 +230,98 @@ public class SphinxConsumerService implements ConsumerService {
                 eventType.equals(CanalEntry.EventType.UPDATE);
     }
 
-    private void multiConsume(Map<Long, RawEntry> batches, CDCMetrics cdcMetrics) throws SQLException {
-        CountDownLatch latch = new CountDownLatch(batches.size());
-        List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>(batches.size());
+    private void singleConsume(RawEntry rawEntry, CDCMetrics cdcMetrics) throws SQLException {
+        if (isDelete(rawEntry.getColumns())) {
+            doDelete(rawEntry.getColumns());
+        } else {
+            doBuildOrReplace(rawEntry.getColumns(), true);
+        }
 
-        batches.forEach((key, value) -> futures.add(consumerPool.submit(
-                new syncCallable(value, cdcMetrics, latch))));
+        syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
+    }
 
-        try {
-            if (!latch.await(executionTimeout, TimeUnit.MILLISECONDS)) {
-
-                for (Future<Boolean> f : futures) {
-                    f.cancel(true);
-                }
-
-                throw new SQLException("Query failed, timeout.");
-            }
-        } catch (InterruptedException e) {
-            throw new SQLException(e.getMessage(), e);
+    private synchronized void syncMetrics(CDCMetrics cdcMetrics, long useTime) {
+        if (cdcMetrics.getCdcAckMetrics().getMaxSyncUseTime() < useTime) {
+            cdcMetrics.getCdcAckMetrics().setMaxSyncUseTime(useTime);
         }
     }
 
-    private class syncCallable implements Callable<Boolean> {
+    private void doDelete(List<CanalEntry.Column> columns) throws SQLException {
+        sphinxQLIndexStorage.delete(getLongFromColumn(columns, ID));
+    }
 
-        private CountDownLatch latch;
-        private RawEntry rawEntry;
-        private CDCMetrics cdcMetrics;
+    private boolean isDelete(List<CanalEntry.Column> columns) throws SQLException {
+        return getBooleanFromColumn(columns, DELETED);
+    }
 
-        public syncCallable(RawEntry rawEntry, CDCMetrics cdcMetrics, CountDownLatch latch) {
-            this.rawEntry = rawEntry;
-            this.latch = latch;
-            this.cdcMetrics = cdcMetrics;
-        }
+    private void doBuildOrReplace(List<CanalEntry.Column> columns, boolean isReplace) throws SQLException {
 
-        @Override
-        public Boolean call() throws Exception {
-            try {
-                if (isDelete(rawEntry.getColumns())) {
-                    doDelete(rawEntry.getColumns());
-                } else {
-                    doBuildOrReplace(rawEntry.getColumns(), true);
-                }
+        long id = getLongFromColumn(columns, ID);
+        long cref = getLongFromColumn(columns, CREF);
+        long pref = getLongFromColumn(columns, PREF);
+        long commitid = getLongFromColumn(columns, COMMITID);             //  commitid
 
-                syncMetrics(Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
-                return true;
-            } finally {
-                latch.countDown();
-            }
-        }
+        StorageEntity storageEntity = new StorageEntity(
+                id,                                               //  id
+                getLongFromColumn(columns, ENTITY),               //  entity
+                pref,                                             //  pref
+                cref,                                             //  cref
+                getLongFromColumn(columns, TX),                   //  tx
+                commitid,                                         //  commitid
+                null,                                   //  由sphinxQLIndexStorage内部转换  entityValue
+                null                                     //  由sphinxQLIndexStorage内部转换  entityValue
+        );
 
-        private synchronized void syncMetrics(long useTime) {
-            if (cdcMetrics.getCdcAckMetrics().getMaxSyncUseTime() < useTime) {
-                cdcMetrics.getCdcAckMetrics().setMaxSyncUseTime(useTime);
-            }
-        }
+        IEntityValue entityValue = null;
 
-        private void doDelete(List<CanalEntry.Column> columns) throws SQLException {
-            sphinxQLIndexStorage.delete(getLongFromColumn(columns, ID));
-        }
-
-        private boolean isDelete(List<CanalEntry.Column> columns) throws SQLException {
-            return getBooleanFromColumn(columns, DELETED);
-        }
-
-        private void doBuildOrReplace(List<CanalEntry.Column> columns, boolean isReplace) throws SQLException {
-
-            long id = getLongFromColumn(columns, ID);
-            long cref = getLongFromColumn(columns, CREF);
-            long pref = getLongFromColumn(columns, PREF);
-            long commitid = getLongFromColumn(columns, COMMITID);             //  commitid
-
-            StorageEntity storageEntity = new StorageEntity(
-                    id,                                               //  id
-                    getLongFromColumn(columns, ENTITY),               //  entity
-                    pref,                                             //  pref
-                    cref,                                             //  cref
-                    getLongFromColumn(columns, TX),                   //  tx
-                    commitid,                                         //  commitid
-                    null,                                   //  由sphinxQLIndexStorage内部转换  entityValue
-                    null                                     //  由sphinxQLIndexStorage内部转换  entityValue
-            );
-
-            IEntityValue entityValue = entityValueBuilder.build(storageEntity.getId(), metaToFieldTypeMap(columns),
+        //  是父类
+        if (cref > 0) {
+            //  通过自己的ID拿到对应的EntityValue
+            entityValue = entityValueGet(id);
+        } else {
+            entityValue = entityValueBuilder.build(storageEntity.getId(), metaToFieldTypeMap(columns),
                     getStringFromColumn(columns, ATTRIBUTE));
+        }
+//        entityValue = entityValueBuilder.build(storageEntity.getId(), metaToFieldTypeMap(columns),
+//                getStringFromColumn(columns, ATTRIBUTE));
 
-            /*
-              当存在子类时,将父类信息缓存在蓄水池中，等待子类进行合并
-              蓄水池在每一次事务结束时进行判断，必须为空(代表一个事务中的父子类已全部同步完毕)
-              父类会扔自己的EntityValue进去,子类会取出自己父类的EntityValue进行合并
-             */
-            if (cref > 0) {
-                entityValuePrefAdd(commitid, id, entityValue);
-            }
-
-            /*
-                取父类ID所对应的entityValueF，进行合并
-             */
-            if (pref > 0) {
-                IEntityValue entityValueF = entityValuePrefGet(commitid, pref);
-                entityValue.addValues(entityValueF.values());
-            }
-
-            sphinxQLIndexStorage.buildOrReplace(storageEntity, entityValue, isReplace);
-
-            if (pref > 0) {
-                relationPool.remove(id);
-            }
+        /*
+            有父类, 合并父类entityValue
+        */
+        if (pref > 0) {
+            //  通过pref拿到父类的EntityValue
+            IEntityValue entityValueF = entityValueGet(pref);
+            entityValue.addValues(entityValueF.values());
         }
 
-        private void entityValuePrefAdd(long commitid, long id, IEntityValue entityValue) throws SQLException {
-            Map<Long, IEntityValue> entityValueMap = relationPool.get(commitid);
-            if (null == entityValueMap) {
-                throw new SQLException("pref-cref entityValue pool must not be init during add.");
+        sphinxQLIndexStorage.buildOrReplace(storageEntity, entityValue, isReplace);
+    }
+
+    private Map<String, IEntityField> metaToFieldTypeMap(List<CanalEntry.Column> columns) throws SQLException {
+        String meta = getStringFromColumn(columns, META);
+
+        Map<String, IEntityField> results = new HashMap<>();
+        for (String metas : JSON.parseArray(meta, String.class)) {
+            String[] sMetas = metas.split(SPLITTER);
+            if (sMetas.length != SPLIT_META_LENGTH) {
+                throw new SQLException(
+                        String.format("parse meta failed. meta value length error, should be [%d], actual [%d], meta [%s]",
+                                SPLIT_META_LENGTH, sMetas.length, metas));
             }
 
-            if (null != entityValueMap.putIfAbsent(id, entityValue)) {
-                throw new SQLException("pref-cref entityValue not be duplicated in relation pool");
-            }
+            Long id = Long.parseLong(sMetas[0]);
+            FieldType fieldType = fromRawType(sMetas[1]);
+
+            results.put(sMetas[0], new EntityField(id, null, fieldType));
         }
+        return results;
+    }
 
-        private IEntityValue entityValuePrefGet(long commitid, long pref) throws SQLException {
-            Map<Long, IEntityValue> entityValueMap = relationPool.get(commitid);
-            //  代表宕机或重启
-            if (null == entityValueMap) {
-                throw new SQLException("pref-cref entityValue pool must not be init during query.");
-            }
-            IEntityValue entityValue = entityValueMap.get(pref);
-            if (null == entityValue) {
-                throw new SQLException("pref's entityValue could not be null in relation pool when have cref.");
-            }
-            return entityValue;
+    private IEntityValue entityValueGet(long pref) throws SQLException {
+        IEntityValue entityValue = relationPool.get(pref);
+        if (null == entityValue) {
+            throw new SQLException("pref's entityValue could not be null in relation pool when have cref.");
         }
-
-        private Map<String, IEntityField> metaToFieldTypeMap(List<CanalEntry.Column> columns) throws SQLException {
-            String meta = getStringFromColumn(columns, META);
-
-            Map<String, IEntityField> results = new HashMap<>();
-            for (String metas : JSON.parseArray(meta, String.class)) {
-                String[] sMetas = metas.split(SPLITTER);
-                if (sMetas.length != SPLIT_META_LENGTH) {
-                    throw new SQLException(
-                            String.format("parse meta failed. meta value length error, should be [%d], actual [%d], meta [%s]",
-                                    SPLIT_META_LENGTH, sMetas.length, metas));
-                }
-
-                Long id = Long.parseLong(sMetas[0]);
-                FieldType fieldType = fromRawType(sMetas[1]);
-
-                results.put(sMetas[0], new EntityField(id, null, fieldType));
-            }
-            return results;
-        }
+        return entityValue;
     }
 }

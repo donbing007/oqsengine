@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.metrics.dto;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
