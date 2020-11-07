@@ -58,24 +58,19 @@ public class SphinxConsumerService implements ConsumerService {
     private Map<Long, IEntityValue> relationPool;
 
     @Override
-    public CDCMetrics consume(List<CanalEntry.Entry> entries, CDCUnCommitMetrics cdcUnCommitMetrics) throws SQLException, CloneNotSupportedException {
-        CDCMetrics cdcMetrics = init(cdcUnCommitMetrics);
+    public void consume(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
+        init(cdcMetrics);
 
         filterSyncData(entries, cdcMetrics);
-
-        return cdcMetrics;
     }
 
     //  将上一次的剩余信息设置回来
-    private CDCMetrics init(CDCUnCommitMetrics cdcUnCommitMetrics) throws CloneNotSupportedException {
-
-        //  clone一个CDCMetrics
-        CDCMetrics cdcMetrics = new CDCMetrics(cdcUnCommitMetrics);
+    private CDCMetrics init(CDCMetrics cdcMetrics) {
 
         reset();
 
-        if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValueFs().size() > EMPTY_BATCH_SIZE) {
-            relationPool.putAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValueFs());
+        if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues().size() > EMPTY_BATCH_SIZE) {
+            relationPool.putAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues());
         }
 
         return cdcMetrics;
@@ -86,35 +81,33 @@ public class SphinxConsumerService implements ConsumerService {
     * */
     private void filterSyncData(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
         for (CanalEntry.Entry entry : entries) {
-            //  不是RowData类型数据,将被过滤
+            //  不是TransactionEnd/RowData类型数据, 将被过滤
             switch (entry.getEntryType()) {
-                case TRANSACTIONBEGIN:
-                                reset();
-                                break;
                 case TRANSACTIONEND:
-                                syncCommitList(cdcMetrics);
-                                break;
+                    syncCommitListAndRestRelation(cdcMetrics); break;
                 case ROWDATA:
-                                internalDataSync(entry, cdcMetrics);
-                                break;
+                    internalDataSync(entry, cdcMetrics); break;
             }
         }
 
         //  当所有的数据都处理完，需要将relationPool同步到cdcMetrics中
         if (relationPool.size() > 0) {
-            cdcMetrics.getCdcUnCommitMetrics().setUnCommitEntityValueFs(relationPool);
+            cdcMetrics.getCdcUnCommitMetrics().setUnCommitEntityValues(relationPool);
         }
     }
-    //  每个Transaction的开始需要将relationPool清空
-    private void reset() {
-        relationPool = new HashMap<>();
-    }
 
-    private void syncCommitList(CDCMetrics cdcMetrics) {
+    private void syncCommitListAndRestRelation(CDCMetrics cdcMetrics) {
         if (cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId() > INIT_ID) {
             //  事务结束时，将上一个事务的Commit_id加入到successCommitIds中
             cdcMetrics.getCdcAckMetrics().getCommitList().add(cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId());
         }
+
+        reset();
+    }
+
+    //  每个Transaction的开始需要将relationPool清空
+    private void reset() {
+        relationPool = new HashMap<>();
     }
 
     private void internalDataSync(CanalEntry.Entry entry, CDCMetrics cdcMetrics) throws SQLException {

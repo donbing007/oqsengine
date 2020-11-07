@@ -19,5 +19,5 @@ public interface ConsumerService {
     /*
         消费当前批次的Binlog
      */
-    CDCMetrics consume(List<CanalEntry.Entry> entries, CDCUnCommitMetrics cdcUnCommitMetrics) throws SQLException, CloneNotSupportedException;
+    void consume(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException;
 }

@@ -17,31 +17,21 @@ import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.INIT_ID
  */
 public class CDCUnCommitMetrics implements Cloneable {
     private long lastUnCommitId;
-    private Map<Long, IEntityValue> unCommitEntityValueFs;
+    private Map<Long, IEntityValue> unCommitEntityValues;
+
+    public CDCUnCommitMetrics() {
+        lastUnCommitId = INIT_ID;
+        unCommitEntityValues = new ConcurrentHashMap<>();
+    }
 
     @Override
     public Object clone() throws CloneNotSupportedException {
         CDCUnCommitMetrics cdcUnCommitMetrics = new CDCUnCommitMetrics();
         cdcUnCommitMetrics.setLastUnCommitId(this.lastUnCommitId);
-        for (Map.Entry<Long, IEntityValue> e : unCommitEntityValueFs.entrySet()) {
-            cdcUnCommitMetrics.getUnCommitEntityValueFs().put(e.getKey(), (IEntityValue) e.getValue().clone());
+        for (Map.Entry<Long, IEntityValue> e : unCommitEntityValues.entrySet()) {
+            cdcUnCommitMetrics.getUnCommitEntityValues().put(e.getKey(), (IEntityValue) e.getValue().clone());
         }
         return cdcUnCommitMetrics;
-    }
-
-    public CDCUnCommitMetrics() {
-        lastUnCommitId = INIT_ID;
-        unCommitEntityValueFs = new ConcurrentHashMap<>();
-    }
-
-    public CDCUnCommitMetrics(long lastUnCommitId, Map<Long, IEntityValue> unCommitEntityValueFs) {
-        this.lastUnCommitId = lastUnCommitId;
-        this.unCommitEntityValueFs = unCommitEntityValueFs;
-    }
-
-    public void reset(long lastUnCommitId, Map<Long, IEntityValue> unCommitEntityValueFs) {
-        this.lastUnCommitId = lastUnCommitId;
-        this.unCommitEntityValueFs = unCommitEntityValueFs;
     }
 
     public long getLastUnCommitId() {
@@ -52,11 +42,11 @@ public class CDCUnCommitMetrics implements Cloneable {
         this.lastUnCommitId = lastUnCommitId;
     }
 
-    public Map<Long, IEntityValue> getUnCommitEntityValueFs() {
-        return unCommitEntityValueFs;
+    public Map<Long, IEntityValue> getUnCommitEntityValues() {
+        return unCommitEntityValues;
     }
 
-    public void setUnCommitEntityValueFs(Map<Long, IEntityValue> unCommitEntityValueFs) {
-        this.unCommitEntityValueFs = unCommitEntityValueFs;
+    public void setUnCommitEntityValues(Map<Long, IEntityValue> unCommitEntityValues) {
+        this.unCommitEntityValues = unCommitEntityValues;
     }
 }

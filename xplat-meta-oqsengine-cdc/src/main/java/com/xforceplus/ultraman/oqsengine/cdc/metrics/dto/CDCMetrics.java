@@ -15,17 +15,16 @@ public class CDCMetrics {
     private CDCAckMetrics cdcAckMetrics;
     private CDCUnCommitMetrics cdcUnCommitMetrics;
 
-
     public CDCMetrics() {
         this.cdcAckMetrics = new CDCAckMetrics(CDCStatus.CONNECTED);
+        this.cdcUnCommitMetrics = new CDCUnCommitMetrics();
     }
 
     public CDCMetrics(CDCUnCommitMetrics cdcUnCommitMetrics) throws CloneNotSupportedException {
         this.cdcAckMetrics = new CDCAckMetrics(CDCStatus.CONNECTED);
-
+        //  必须深copy
         this.cdcUnCommitMetrics = (CDCUnCommitMetrics) cdcUnCommitMetrics.clone();
     }
-
 
     public long getBatchId() {
         return batchId;

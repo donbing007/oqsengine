@@ -55,10 +55,6 @@ public class CDCMetricsService {
         return cdcMetrics;
     }
 
-    public void setCdcMetrics(CDCMetrics cdcMetrics) {
-        this.cdcMetrics = cdcMetrics;
-    }
-
     public void backup(CDCMetrics cdcMetrics) {
         cdcSyncPool.submit(() -> {
             try {

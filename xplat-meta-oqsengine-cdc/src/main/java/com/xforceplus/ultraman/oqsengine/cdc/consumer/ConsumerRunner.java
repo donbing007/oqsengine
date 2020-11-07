@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
 
@@ -89,14 +91,15 @@ public class ConsumerRunner extends Thread {
                 throw new SQLException(error);
             }
 
-            //  缓存上一次最大消耗时间
-            long lastMaxSyncUseTime = cdcMetricsService.getCdcMetrics().getCdcAckMetrics().getMaxSyncUseTime();
             try {
                 long batchId = message.getId();
                 if (batchId != EMPTY_BATCH_ID || message.getEntries().size() != EMPTY_BATCH_SIZE) {
+
+                    //  clone一个CDCMetrics
+                    CDCMetrics cdcMetrics = new CDCMetrics(cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
+
                     //  binlog处理，同步指标到cdcMetrics中
-                    CDCMetrics cdcMetrics = consumerService.consume(message.getEntries(),
-                                            cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
+                    consumerService.consume(message.getEntries(), cdcMetrics);
 
                     //  notice: canal状态确认、指标同步
                     sync(cdcMetrics, batchId);
@@ -112,9 +115,17 @@ public class ConsumerRunner extends Thread {
 
                 logger.error("consume message error, {}", e.getMessage());
                 //  同步出错信息，回滚到上次成功的的Sync信息
-                callBackError(lastMaxSyncUseTime);
+                callBackError();
             }
         }
+    }
+
+    private List<Long> getLastCommit(List<Long> commitIds) {
+        List<Long> backUp = new ArrayList<>();
+        if (!commitIds.isEmpty()) {
+            backUp.addAll(commitIds);
+        }
+        return backUp;
     }
 
     private void syncLastBatch() throws SQLException {
@@ -174,9 +185,8 @@ public class ConsumerRunner extends Thread {
         }
     }
 
-    private void callBackError(long lastMaxSyncUseTime) {
+    private void callBackError() {
         cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setCdcConsumerStatus(CDCStatus.CONSUME_FAILED);
-        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setMaxSyncUseTime(lastMaxSyncUseTime);
 
         cdcMetricsService.callback();
     }
