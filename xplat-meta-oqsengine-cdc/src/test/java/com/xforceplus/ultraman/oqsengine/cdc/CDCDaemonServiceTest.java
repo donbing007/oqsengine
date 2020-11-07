@@ -1,23 +1,22 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
-import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.TestCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import javax.annotation.Resource;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -38,8 +37,14 @@ public class CDCDaemonServiceTest extends AbstractContainer {
     private CDCDaemonService cdcDaemonService;
 
     @Before
-    public void before() throws SQLException, InterruptedException {
+    public void before() throws Exception {
 
+        initMaster();
+
+        initDaemonService();
+    }
+
+    private void initDaemonService() throws SQLException, InterruptedException {
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
         singleCDCConnector.init("localhost",
                 environment.getServicePort("canal-server_1", 11111),
@@ -55,7 +60,9 @@ public class CDCDaemonServiceTest extends AbstractContainer {
     }
 
     @Test
-    public void cDCDaemonServiceTest() {
+    public void binlogSyncTest() {
+        List<IEntity> syncList = new ArrayList<>();
+
 
     }
 

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.callback;
 
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 
 /**
  * desc :
@@ -11,8 +12,19 @@ import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetrics;
  * @since : 1.8
  */
 public class TestCallbackService implements CDCMetricsCallback {
+
     @Override
-    public void cdcCallBack(CDCMetrics cdcMetrics) {
-        System.out.println(cdcMetrics.toString());
+    public void cdcAck(CDCAckMetrics ackMetrics) {
+
+    }
+
+    @Override
+    public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
+
+    }
+
+    @Override
+    public CDCMetrics queryLastUnCommit() {
+        return null;
     }
 }

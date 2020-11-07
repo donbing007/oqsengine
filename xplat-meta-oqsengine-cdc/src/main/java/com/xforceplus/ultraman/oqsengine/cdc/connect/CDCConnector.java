@@ -4,9 +4,9 @@ import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.protocol.Message;
 
 import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.DEFAULT_BATCH_SIZE;
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.DEFAULT_SUBSCRIBE_FILTER;
+import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
 
 /**
  * desc :
@@ -27,17 +27,13 @@ public class CDCConnector {
     /**
      * 打开canal连接
      */
-    public void open(boolean withRollbackLast) {
+    public void open() {
         if (null != canalConnector) {
 
             //  连接CanalServer
             canalConnector.connect();
             //  订阅destination
             canalConnector.subscribe(subscribeFilter);
-
-            if (withRollbackLast) {
-                canalConnector.rollback();
-            }
         }
     }
 
@@ -77,7 +73,8 @@ public class CDCConnector {
         if (null == canalConnector) {
             notInitException();
         }
-        return canalConnector.getWithoutAck(batchSize);
+        //  获取2048条数据或等待1秒
+        return canalConnector.getWithoutAck(batchSize, Long.parseLong(FREE_MESSAGE_WAIT_IN_SECONDS + ""), TimeUnit.SECONDS);
     }
 
     private void notInitException() throws SQLException {

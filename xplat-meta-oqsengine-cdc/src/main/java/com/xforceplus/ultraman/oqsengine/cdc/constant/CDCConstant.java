@@ -13,6 +13,7 @@ public class CDCConstant {
     public static final int EMPTY_BATCH_ID = -1;
     public static final int EMPTY_BATCH_SIZE = 0;
     public static final int EMPTY_COLUMN_SIZE = 0;
+    public static final int INIT_ID = -1;
     public static final int ZERO = 0;
 
     //  当前CDC connection连接失败后的重连间隔 (默认3S)

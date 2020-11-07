@@ -1,7 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.boot.cdc;
 
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 import org.springframework.context.ApplicationEventPublisher;
 
 /**
@@ -15,8 +16,19 @@ public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
         this.publisher = publisher;
     }
 
+
     @Override
-    public void cdcCallBack(CDCMetrics cdcMetrics) {
-        publisher.publishEvent(cdcMetrics);
+    public void cdcAck(CDCAckMetrics ackMetrics) {
+        publisher.publishEvent(ackMetrics);
+    }
+
+    @Override
+    public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
+
+    }
+
+    @Override
+    public CDCMetrics queryLastUnCommit() {
+        return null;
     }
 }

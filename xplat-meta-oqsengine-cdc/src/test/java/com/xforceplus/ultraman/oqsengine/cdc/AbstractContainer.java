@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerService;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
@@ -16,8 +18,10 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.S
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.Ignore;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -28,6 +32,7 @@ import javax.sql.DataSource;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -206,7 +211,24 @@ public abstract class AbstractContainer {
         masterStorage.init();
     }
 
+    protected ConsumerService initConsumerService() throws SQLException, InterruptedException {
+        initIndex();
 
+        ExecutorService consumerPool = new ThreadPoolExecutor(10, 10,
+                0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(2048),
+                ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
+                new ThreadPoolExecutor.AbortPolicy());
+
+        IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
+
+        ConsumerService consumerService = new SphinxConsumerService();
+        ReflectionTestUtils.setField(consumerService, "sphinxQLIndexStorage", indexStorage);
+        ReflectionTestUtils.setField(consumerService, "consumerPool", consumerPool);
+        ReflectionTestUtils.setField(consumerService, "entityValueBuilder", entityValueBuilder);
+
+        return consumerService;
+    }
 
     private Selector<DataSource> buildWriteDataSourceSelector(String file) {
         System.setProperty(DataSourceFactory.CONFIG_FILE, file);

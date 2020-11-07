@@ -69,7 +69,6 @@
         <dependency>
             <groupId>com.xforceplus.ultraman</groupId>
             <artifactId>xplat-meta-oqsengine-masterdb</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.lettuce</groupId>
