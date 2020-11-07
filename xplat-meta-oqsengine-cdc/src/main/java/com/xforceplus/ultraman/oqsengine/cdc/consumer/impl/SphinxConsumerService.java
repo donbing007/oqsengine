@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -26,6 +25,7 @@ import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.*;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns.*;
@@ -53,9 +53,20 @@ public class SphinxConsumerService implements ConsumerService {
     @Resource
     private CDCMetricsService cdcMetricsService;
 
+    @Resource(name = "cdcConsumerPool")
+    private ExecutorService consumerPool;
+
+    private int executionTimeout = 30 * 1000;
+
+    public void setExecutionTimeout(int executionTimeout) {
+        this.executionTimeout = executionTimeout;
+    }
+
     //  保证蓄水池中以事务分割成不同的键值对。每个健值对以PREF为Key,以PREF对应的EntityValue为值,在一个批次结束时必须对该Map进行清理，
     //  删除当前所有的TransactionEnd commitId所对应的健值对
     private Map<Long, IEntityValue> relationPool;
+    //  job entries;
+    private List<RawEntry> rawEntries;
 
     @Override
     public void consume(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
@@ -80,14 +91,28 @@ public class SphinxConsumerService implements ConsumerService {
         数据清洗
     * */
     private void filterSyncData(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
+
         for (CanalEntry.Entry entry : entries) {
             //  不是TransactionEnd/RowData类型数据, 将被过滤
             switch (entry.getEntryType()) {
+
                 case TRANSACTIONEND:
-                    syncCommitListAndRestRelation(cdcMetrics); break;
+                    multiSyncSphinx(rawEntries, cdcMetrics);
+                    syncCommitListAndRestRelation(cdcMetrics);
+
+                    reset();
+                    break;
                 case ROWDATA:
-                    internalDataSync(entry, cdcMetrics); break;
+                    rawEntries.addAll(internalDataSync(entry, cdcMetrics)); break;
             }
+        }
+        handleLastUnCommit(rawEntries, cdcMetrics);
+    }
+
+    private void handleLastUnCommit(List<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
+        //  unCommit raw should sync to sphinx
+        if (!rawEntries.isEmpty()) {
+            multiSyncSphinx(rawEntries, cdcMetrics);
         }
 
         //  当所有的数据都处理完，需要将relationPool同步到cdcMetrics中
@@ -101,16 +126,47 @@ public class SphinxConsumerService implements ConsumerService {
             //  事务结束时，将上一个事务的Commit_id加入到successCommitIds中
             cdcMetrics.getCdcAckMetrics().getCommitList().add(cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId());
         }
+    }
 
-        reset();
+    private void multiSyncSphinx(List<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
+        if (!rawEntries.isEmpty()) {
+            if (rawEntries.size() == 1) {
+                sphinxConsume(rawEntries.get(0), cdcMetrics);
+            } else {
+                multiConsume(rawEntries, cdcMetrics);
+            }
+        }
+    }
+
+    private void multiConsume(List<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
+        CountDownLatch latch = new CountDownLatch(rawEntries.size());
+        List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>(rawEntries.size());
+
+        rawEntries.forEach((value) -> futures.add(consumerPool.submit(
+                new SyncSphinxCallable(value, cdcMetrics, latch))));
+
+        try {
+            if (!latch.await(executionTimeout, TimeUnit.MILLISECONDS)) {
+
+                for (Future<Boolean> f : futures) {
+                    f.cancel(true);
+                }
+
+                throw new SQLException("Query failed, timeout.");
+            }
+        } catch (InterruptedException e) {
+            throw new SQLException(e.getMessage(), e);
+        }
     }
 
     //  每个Transaction的开始需要将relationPool清空
     private void reset() {
         relationPool = new HashMap<>();
+        rawEntries = new ArrayList<>();
     }
 
-    private void internalDataSync(CanalEntry.Entry entry, CDCMetrics cdcMetrics) throws SQLException {
+    private List<RawEntry> internalDataSync(CanalEntry.Entry entry, CDCMetrics cdcMetrics) throws SQLException {
+        List<RawEntry> rawEntries = new ArrayList<>();
         CanalEntry.RowChange rowChange = null;
         try {
             rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
@@ -132,13 +188,14 @@ public class SphinxConsumerService implements ConsumerService {
                     cdcMetrics.getCdcUnCommitMetrics().setLastUnCommitId(getLongFromColumn(columns, COMMITID));
                     RawEntry rawEntry = new RawEntry(
                             entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList());
-
-                    singleConsume(rawEntry, cdcMetrics);
+                    rawEntries.add(rawEntry);
                 } else {
                     addPrefEntityValue(columns);
                 }
             }
         }
+
+        return rawEntries;
     }
 
     /*
@@ -223,7 +280,30 @@ public class SphinxConsumerService implements ConsumerService {
                 eventType.equals(CanalEntry.EventType.UPDATE);
     }
 
-    private void singleConsume(RawEntry rawEntry, CDCMetrics cdcMetrics) throws SQLException {
+
+    private class SyncSphinxCallable implements Callable<Boolean> {
+        private CountDownLatch latch;
+        private RawEntry rawEntry;
+        private CDCMetrics cdcMetrics;
+
+        public SyncSphinxCallable(RawEntry rawEntry, CDCMetrics cdcMetrics, CountDownLatch latch) {
+            this.rawEntry = rawEntry;
+            this.latch = latch;
+            this.cdcMetrics = cdcMetrics;
+        }
+
+        @Override
+        public Boolean call() throws Exception {
+            try {
+                sphinxConsume(rawEntry, cdcMetrics);
+            } finally {
+                latch.countDown();
+            }
+            return true;
+        }
+    }
+
+    private void sphinxConsume(RawEntry rawEntry, CDCMetrics cdcMetrics) throws SQLException {
         if (isDelete(rawEntry.getColumns())) {
             doDelete(rawEntry.getColumns());
         } else {
