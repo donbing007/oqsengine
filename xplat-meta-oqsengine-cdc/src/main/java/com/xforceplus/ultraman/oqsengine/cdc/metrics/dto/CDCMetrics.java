@@ -22,8 +22,7 @@ public class CDCMetrics {
 
     public CDCMetrics(CDCUnCommitMetrics cdcUnCommitMetrics) throws CloneNotSupportedException {
         this.cdcAckMetrics = new CDCAckMetrics(CDCStatus.CONNECTED);
-        //  必须深copy
-        this.cdcUnCommitMetrics = (CDCUnCommitMetrics) cdcUnCommitMetrics.clone();
+        this.cdcUnCommitMetrics = cdcUnCommitMetrics;
     }
 
     public long getBatchId() {

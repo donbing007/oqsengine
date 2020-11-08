@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCUnCommitMetrics;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -18,5 +19,5 @@ public interface ConsumerService {
     /*
         消费当前批次的Binlog
      */
-    void consume(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException;
+    CDCMetrics consume(List<CanalEntry.Entry> entries, CDCUnCommitMetrics cdcUnCommitMetrics) throws SQLException;
 }

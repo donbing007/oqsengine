@@ -95,11 +95,9 @@ public class ConsumerRunner extends Thread {
                 long batchId = message.getId();
                 if (batchId != EMPTY_BATCH_ID || message.getEntries().size() != EMPTY_BATCH_SIZE) {
 
-                    //  clone一个CDCMetrics
-                    CDCMetrics cdcMetrics = new CDCMetrics(cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
-
                     //  binlog处理，同步指标到cdcMetrics中
-                    consumerService.consume(message.getEntries(), cdcMetrics);
+                    CDCMetrics cdcMetrics =
+                            consumerService.consume(message.getEntries(), cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
 
                     //  notice: canal状态确认、指标同步
                     sync(cdcMetrics, batchId);
@@ -118,14 +116,6 @@ public class ConsumerRunner extends Thread {
                 callBackError();
             }
         }
-    }
-
-    private List<Long> getLastCommit(List<Long> commitIds) {
-        List<Long> backUp = new ArrayList<>();
-        if (!commitIds.isEmpty()) {
-            backUp.addAll(commitIds);
-        }
-        return backUp;
     }
 
     private void syncLastBatch() throws SQLException {
