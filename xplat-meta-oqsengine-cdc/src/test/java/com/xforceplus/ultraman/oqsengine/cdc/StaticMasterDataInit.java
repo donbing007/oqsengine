@@ -14,10 +14,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -28,12 +25,10 @@ import java.util.stream.Collectors;
  * date : 2020/11/6
  * @since : 1.8
  */
-public class staticMasterDataInit {
+public class StaticMasterDataInit {
 
     private IEntityField fixStringsField = new EntityField(105001, "strings", FieldType.STRINGS);
     private StringsValue fixStringsValue = new StringsValue(fixStringsField, "1,2,3,500002,测试".split(","));
-
-
 
     // 初始化数据
     public List<IEntity> initData(SQLMasterStorage storage, TransactionManager transactionManager, int size) throws Exception {
@@ -51,14 +46,18 @@ public class staticMasterDataInit {
                 }
             });
         } catch (Exception ex) {
-            transactionManager.getCurrent().get().rollback();
+            if (transactionManager.getCurrent().isPresent()) {
+                transactionManager.getCurrent().get().rollback();
+            }
             throw ex;
         }
 
         //将事务正常提交,并从事务管理器中销毁事务.
-        Transaction tx = transactionManager.getCurrent().get();
-        tx.commit();
-        transactionManager.finish();
+        if (transactionManager.getCurrent().isPresent()) {
+            Transaction tx = transactionManager.getCurrent().get();
+            tx.commit();
+            transactionManager.finish();
+        }
 
         return expectedEntitys;
     }

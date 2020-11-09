@@ -12,8 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
 
@@ -97,10 +95,10 @@ public class ConsumerRunner extends Thread {
 
                     //  binlog处理，同步指标到cdcMetrics中
                     CDCMetrics cdcMetrics =
-                            consumerService.consume(message.getEntries(), cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
+                            consumerService.consume(message.getEntries(), batchId, cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
 
                     //  notice: canal状态确认、指标同步
-                    sync(cdcMetrics, batchId);
+                    sync(cdcMetrics);
                 } else {
                     //  没有新的同步信息，睡眠1秒进入下次轮训
                     threadSleep(FREE_MESSAGE_WAIT_IN_SECONDS);
@@ -118,6 +116,7 @@ public class ConsumerRunner extends Thread {
         }
     }
 
+
     private void syncLastBatch() throws SQLException {
         CDCMetrics cdcMetrics = cdcMetricsService.query();
 
@@ -126,9 +125,7 @@ public class ConsumerRunner extends Thread {
     /*
         关键步骤
      */
-    private void sync(CDCMetrics cdcMetrics, long batchId) throws SQLException {
-
-        cdcMetrics.setBatchId(batchId);
+    private void sync(CDCMetrics cdcMetrics) throws SQLException {
 
         //  首先保存本次消费完时未提交的数据
         cdcMetricsService.backup(cdcMetrics);
@@ -140,7 +137,9 @@ public class ConsumerRunner extends Thread {
     private void syncCanalAndCallback(CDCMetrics cdcMetrics) throws SQLException {
 
         //  ack canal-server 当前位点
-        cdcConnector.ack(cdcMetrics.getBatchId());
+        if (cdcMetrics.getBatchId() != EMPTY_BATCH_ID) {
+            cdcConnector.ack(cdcMetrics.getBatchId());
+        }
 
         //  重置cdcUnCommit信息
         syncUnCommit(cdcMetrics.getCdcUnCommitMetrics());
@@ -148,7 +147,6 @@ public class ConsumerRunner extends Thread {
         //  回调告知当前成功信息
         callBackSuccess(cdcMetrics.getCdcAckMetrics());
     }
-
 
     private void syncUnCommit(CDCUnCommitMetrics unCommitMetrics) {
         if (null == unCommitMetrics) {

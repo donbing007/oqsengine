@@ -17,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.DecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
@@ -51,6 +52,9 @@ public abstract class AbstractContainer {
     protected static GenericContainer searchManticore;
 
     protected static DockerComposeContainer environment;
+
+
+    protected StorageStrategyFactory masterStorageStrategyFactory;
 
     static {
         Network network = Network.newNetwork();
@@ -193,7 +197,7 @@ public abstract class AbstractContainer {
                 transactionManager, ConnectionTransactionResource.class);
 
 
-        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
 
         ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 10,
                 0L, TimeUnit.MILLISECONDS,
@@ -202,12 +206,16 @@ public abstract class AbstractContainer {
                 new ThreadPoolExecutor.AbortPolicy()
         );
 
+        IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
+        ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", masterStorageStrategyFactory);
+
         masterStorage = new SQLMasterStorage();
         ReflectionTestUtils.setField(masterStorage, "dataSourceSelector", dataSourceSelector);
         ReflectionTestUtils.setField(masterStorage, "tableNameSelector", tableNameSelector);
         ReflectionTestUtils.setField(masterStorage, "transactionExecutor", executor);
-        ReflectionTestUtils.setField(masterStorage, "storageStrategyFactory", storageStrategyFactory);
+        ReflectionTestUtils.setField(masterStorage, "storageStrategyFactory", masterStorageStrategyFactory);
         ReflectionTestUtils.setField(masterStorage, "threadPool", threadPool);
+        ReflectionTestUtils.setField(masterStorage, "entityValueBuilder", entityValueBuilder);
         masterStorage.init();
     }
 
@@ -220,7 +228,10 @@ public abstract class AbstractContainer {
                 ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
                 new ThreadPoolExecutor.AbortPolicy());
 
+        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        storageStrategyFactory.register(FieldType.DECIMAL, new DecimalStorageStrategy());
         IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
+        ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
 
         ConsumerService consumerService = new SphinxConsumerService();
         ReflectionTestUtils.setField(consumerService, "sphinxQLIndexStorage", indexStorage);

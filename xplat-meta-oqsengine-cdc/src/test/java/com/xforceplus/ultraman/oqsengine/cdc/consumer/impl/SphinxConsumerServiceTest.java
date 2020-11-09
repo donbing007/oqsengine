@@ -1,305 +1,218 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.google.protobuf.ByteString;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntry;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.CDCStatus;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
-
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.*;
 
 /**
  * desc :
  * name : SphinxConsumerServiceTest
  *
  * @author : xujia
- * date : 2020/11/6
+ * date : 2020/11/9
  * @since : 1.8
  */
 public class SphinxConsumerServiceTest extends AbstractContainer {
-
-    private static final int batchSize = 10;
-
-    private static final int attrMaxSize = 3;
-
-    private static final long PCREF_ID = 0;
-
-
     private ConsumerService sphinxConsumerService;
 
-    private Set<Long> expectedIds = new HashSet<>();
+    private static final Long EXPECTED_PREF = Long.MAX_VALUE - 1;
+    private static final Long EXPECTED_CREF = Long.MAX_VALUE - 2;
 
-    List<CanalEntry.Entry> entries;
+    private static final Long EXPECTED_DELETED = Long.MAX_VALUE / 2;
+
+    private static final Long RANDOM_INSERT_1 = Long.MAX_VALUE - 3;
+    private static final Long RANDOM_INSERT_2 = Long.MAX_VALUE - 4;
+
+    private static final int EXPECTED_ATTR_INDEX_0 = 0;
+    private static final int EXPECTED_ATTR_INDEX_1 = 1;
+    private static final int EXPECTED_ATTR_INDEX_2 = 2;
+
+    private int expectedSize = 0;
 
     @Before
-    public void before() throws SQLException, InterruptedException {
+    public void before() throws Exception {
         sphinxConsumerService = initConsumerService();
-
-        entries = initData(batchSize);
     }
 
+    /*
+        存在父子类变更
+     */
     @Test
-    public void testFilter() throws Exception {
+    public void havePrefCrefTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
-        CDCAckMetrics currentMetrics = new CDCAckMetrics(CDCStatus.CONNECTED);
+        expectedSize = 0;
 
-        Method m = sphinxConsumerService.getClass().getDeclaredMethod("filterSyncData", new Class[]{List.class, CDCAckMetrics.class});
-        m.setAccessible(true);
-
-
-        Map<Long, RawEntry> result = (Map<Long, RawEntry>) m.invoke(sphinxConsumerService, new Object[]{entries, currentMetrics});
-
-        Assert.assertEquals(expectedIds.size(), result.size());
-    }
-
-    @Test
-    public void testGetColumn() throws Exception {
-
-        Method mLong = sphinxConsumerService.getClass().getDeclaredMethod("getLongFromColumn", new Class[]{List.class, OqsBigEntityColumns.class});
-        mLong.setAccessible(true);
-
-        Method mString = sphinxConsumerService.getClass().getDeclaredMethod("getStringFromColumn", new Class[]{List.class, OqsBigEntityColumns.class});
-        mString.setAccessible(true);
-
-        Method mBoolean = sphinxConsumerService.getClass().getDeclaredMethod("getBooleanFromColumn", new Class[]{List.class, OqsBigEntityColumns.class});
-        mBoolean.setAccessible(true);
-
-        for (CanalEntry.Entry e : entries) {
-            if (e.getEntryType().equals(CanalEntry.EntryType.ROWDATA)) {
-                CanalEntry.RowChange rowChange = null;
-                ByteString byteString = e.getStoreValue();
-                try {
-                    rowChange = CanalEntry.RowChange.parseFrom(byteString);
-
-                } catch (Exception ex) {
-                    throw new SQLException(String.format("parse entry value failed, [%s], [%s]", byteString, ex));
-                }
-
-                for (CanalEntry.RowData rowData : rowChange.getRowDatasList()) {
-                    Long id = (Long) mLong.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.ID});
-                    Assert.assertTrue(expectedIds.contains(id));
-
-                    Long entity = (Long) mLong.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.ENTITY});
-                    Assert.assertNotNull(entity);
-
-                    Long tx = (Long) mLong.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.TX});
-                    Assert.assertNotNull(tx);
-
-                    Long commitid = (Long) mLong.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.COMMITID});
-                    Assert.assertNotNull(commitid);
-
-                    Long pref = (Long) mLong.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.PREF});
-                    Assert.assertEquals(PCREF_ID, (long) pref);
-
-                    Long cref = (Long) mLong.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.CREF});
-                    Assert.assertEquals(PCREF_ID, (long) cref);
-
-                    Boolean deleted = (Boolean) mBoolean.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.DELETED});
-                    Assert.assertNotNull(deleted);
-
-                    String attr = (String) mString.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.ATTRIBUTE});
-                    Assert.assertNotNull(attr);
-
-                    String meta = (String) mString.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.META});
-                    Assert.assertNotNull(meta);
-                }
-            }
-        }
-    }
-
-    private List<CanalEntry.Entry> initData(int size) {
-        long tx = 0;
         List<CanalEntry.Entry> entries = new ArrayList<>();
 
-        for (int i = 0; i < size; i ++) {
-            CanalEntry.Entry.Builder builder = CanalEntry.Entry.newBuilder();
-            if (0 == i) {
-                builder.setEntryType(CanalEntry.EntryType.TRANSACTIONBEGIN);
-                tx ++;
-                entries.add(builder.build());
-                continue;
-            } else if (i == size - 1) {
-                builder.setEntryType(CanalEntry.EntryType.TRANSACTIONEND);
-                entries.add(builder.build());
-                continue;
-            }
+        CanalEntry.Entry entryTStart = buildTransactionStart();
+        entries.add(entryTStart);
 
-            builder.setEntryType(CanalEntry.EntryType.ROWDATA);
+        build(entries, Long.MAX_VALUE);
 
-            builder.setHeader(buildHeader());
+        build(entries, Long.MAX_VALUE - 1);
 
-            builder.setStoreValue(buildRowChange(i, i % 2 == 0, tx).toByteString());
+        CanalEntry.Entry entryTEnd = buildTransactionEnd();
+        entries.add(entryTEnd);
 
-            entries.add(builder.build());
 
-            expectedIds.add(Long.parseLong(i + ""));
+        CDCMetrics cdcMetrics = new CDCMetrics();
+
+        Method m = sphinxConsumerService.getClass().getDeclaredMethod("filterAndSyncData", new Class[]{List.class, CDCMetrics.class});
+        m.setAccessible(true);
+
+        m.invoke(sphinxConsumerService, new Object[]{entries, cdcMetrics});
+
+        Assert.assertEquals(expectedSize, cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitCount());
+    }
+
+
+    /*
+        测试跨批次的Transaction
+        所有的CommitID = Long.MAX_VALUE在一个批次
+        CommitID < Long.MAX_VALUE在另一个批次
+     */
+    @Test
+    public void overBatchTest1() throws SQLException {
+        expectedSize = 0;
+
+        List<CanalEntry.Entry> entries = new ArrayList<>();
+
+        CanalEntry.Entry entryTStart = buildTransactionStart();
+        entries.add(entryTStart);
+
+        build(entries, Long.MAX_VALUE);
+
+        CDCMetrics cdcMetrics = new CDCMetrics();
+
+        CDCMetrics after_1 = sphinxConsumerService.consume(entries, 1, cdcMetrics.getCdcUnCommitMetrics());
+
+        Assert.assertEquals(expectedSize, after_1.getCdcUnCommitMetrics().getLastUnCommitCount());
+
+        build(entries, Long.MAX_VALUE - 1);
+
+        CanalEntry.Entry entryTEnd = buildTransactionEnd();
+        entries.add(entryTEnd);
+
+        CDCMetrics after_2 = sphinxConsumerService.consume(entries, 2, after_1.getCdcUnCommitMetrics());
+
+        Assert.assertEquals(expectedSize, after_2.getCdcUnCommitMetrics().getLastUnCommitCount());
+    }
+
+    /*
+        测试跨批次的Transaction
+        所有的CommitID = Long.MAX_VALUE在一个批次, 同时包含2条CommitID < Long.MAX_VALUE数据
+        其他CommitID < Long.MAX_VALUE在另一个批次
+     */
+    @Test
+    public void overBatchTest2() throws SQLException {
+        expectedSize = 0;
+
+        List<CanalEntry.Entry> entries = new ArrayList<>();
+
+        CanalEntry.Entry entryTStart = buildTransactionStart();
+        entries.add(entryTStart);
+
+        build(entries, Long.MAX_VALUE);
+
+        //  random 1
+        long commitId = Long.MAX_VALUE - 1;
+        CanalEntry.Entry fRanDom_1 = buildRow(RANDOM_INSERT_1, true, 1, commitId, "false", RANDOM_INSERT_1, EXPECTED_ATTR_INDEX_2, 0, 0);
+        entries.add(fRanDom_1);
+
+        addExpectCount(commitId);
+
+        //  build child
+        CanalEntry.Entry cEntryUnCommit = buildRow(EXPECTED_CREF, true, 1, commitId, "false", EXPECTED_CREF, EXPECTED_ATTR_INDEX_1, EXPECTED_PREF, 0);
+        entries.add(cEntryUnCommit);
+
+        addExpectCount(commitId);
+
+        CDCMetrics cdcMetrics = new CDCMetrics();
+
+        CDCMetrics after_1 = sphinxConsumerService.consume(entries, 1, cdcMetrics.getCdcUnCommitMetrics());
+
+        Assert.assertEquals(expectedSize, after_1.getCdcUnCommitMetrics().getLastUnCommitCount());
+
+        expectedSize = 0;
+        entries.clear();
+        /*
+            这里将子类设定为比父类先到，在批次1中，父类在批次二中，模拟了真实情况的不确定性
+         */
+        //  build father
+        CanalEntry.Entry fEntryUnCommit = buildRow(EXPECTED_PREF, true, 1, commitId, "false", EXPECTED_PREF, EXPECTED_ATTR_INDEX_2, 0, EXPECTED_CREF);
+        entries.add(fEntryUnCommit);
+
+        addExpectCount(commitId);
+
+        //  build delete
+        CanalEntry.Entry cDeleted = buildRow(EXPECTED_DELETED, true, 1, commitId, "true", EXPECTED_DELETED, EXPECTED_ATTR_INDEX_0, 0, 0);
+        entries.add(cDeleted);
+
+        addExpectCount(commitId);
+
+        //  random 2
+        CanalEntry.Entry fRanDom_2 = buildRow(RANDOM_INSERT_2, true, 1, commitId, "false", RANDOM_INSERT_2, EXPECTED_ATTR_INDEX_1, 0, 0);
+        entries.add(fRanDom_2);
+
+        addExpectCount(commitId);
+
+
+        CanalEntry.Entry entryTEnd = buildTransactionEnd();
+        entries.add(entryTEnd);
+
+        CDCMetrics after_2 = sphinxConsumerService.consume(entries, 2, after_1.getCdcUnCommitMetrics());
+
+        Assert.assertEquals(expectedSize, after_2.getCdcUnCommitMetrics().getLastUnCommitCount());
+    }
+
+    private void build(List<CanalEntry.Entry> entries, long commitId) {
+        //  random 1
+        CanalEntry.Entry fRanDom_1 = buildRow(RANDOM_INSERT_1, true, 1, commitId, "false", RANDOM_INSERT_1, EXPECTED_ATTR_INDEX_2, 0, 0);
+        entries.add(fRanDom_1);
+
+        addExpectCount(commitId);
+
+        //  build father
+        CanalEntry.Entry fEntryUnCommit = buildRow(EXPECTED_PREF, true, 1, commitId, "false", EXPECTED_PREF, EXPECTED_ATTR_INDEX_2, 0, EXPECTED_CREF);
+        entries.add(fEntryUnCommit);
+
+        addExpectCount(commitId);
+
+        //  build child
+        CanalEntry.Entry cEntryUnCommit = buildRow(EXPECTED_CREF, true, 1, commitId, "false", EXPECTED_CREF, EXPECTED_ATTR_INDEX_1, EXPECTED_PREF, 0);
+        entries.add(cEntryUnCommit);
+
+        addExpectCount(commitId);
+
+        //  build delete
+        CanalEntry.Entry cDeleted = buildRow(EXPECTED_DELETED, true, 1, commitId, "true", EXPECTED_DELETED, EXPECTED_ATTR_INDEX_0, 0, 0);
+        entries.add(cDeleted);
+
+        addExpectCount(commitId);
+
+        //  random 2
+        CanalEntry.Entry fRanDom_2 = buildRow(RANDOM_INSERT_2, true, 1, commitId, "false", RANDOM_INSERT_2, EXPECTED_ATTR_INDEX_1, 0, 0);
+        entries.add(fRanDom_2);
+
+        addExpectCount(commitId);
+    }
+
+    private void addExpectCount(Long commitId) {
+        if (commitId != Long.MAX_VALUE) {
+            expectedSize ++;
         }
-
-        for (int i = size; i > 0; i --) {
-            CanalEntry.Entry.Builder builder = CanalEntry.Entry.newBuilder();
-            if (i == size || i == size / 2 - 1 ) {
-                builder.setEntryType(CanalEntry.EntryType.TRANSACTIONBEGIN);
-                tx ++;
-                entries.add(builder.build());
-                continue;
-            } else if (i == size / 2) {
-                builder.setEntryType(CanalEntry.EntryType.TRANSACTIONEND);
-                entries.add(builder.build());
-                continue;
-            }
-
-            builder.setEntryType(CanalEntry.EntryType.ROWDATA);
-
-            builder.setHeader(buildHeader());
-
-            builder.setStoreValue(buildRowChange(i,i % 2 == 0, tx).toByteString());
-
-            entries.add(builder.build());
-
-            expectedIds.add(Long.parseLong(i + ""));
-        }
-
-        return entries;
-    }
-
-    private CanalEntry.Header buildHeader() {
-        CanalEntry.Header.Builder builder = CanalEntry.Header.newBuilder();
-        builder.setExecuteTime(System.currentTimeMillis() - 1024);
-        return builder.build();
-    }
-
-    private CanalEntry.RowChange buildRowChange(long id, boolean replacement, long tx) {
-        CanalEntry.RowChange.Builder builder = CanalEntry.RowChange.newBuilder();
-
-        CanalEntry.EventType eventType = replacement ? CanalEntry.EventType.UPDATE : CanalEntry.EventType.INSERT;
-        builder.setEventType(eventType);
-
-        builder.addRowDatas(buildRowData(id, eventType, tx));
-
-        return builder.build();
-    }
-
-    private CanalEntry.RowData buildRowData(long id, CanalEntry.EventType eventType, long tx) {
-        int attrId = Math.abs(new Random(1024).nextInt());
-        CanalEntry.RowData.Builder builder = CanalEntry.RowData.newBuilder();
-        for (OqsBigEntityColumns v : OqsBigEntityColumns.values()) {
-            CanalEntry.Column column = buildColumn(id, v, eventType, attrId, tx);
-            if (null != column) {
-                builder.addAfterColumns(column);
-            }
-        }
-
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildColumn(long id, OqsBigEntityColumns v, CanalEntry.EventType eventType, int attrId, long tx) {
-
-        switch (v) {
-            case ID:
-                return buildId(id, v);
-            case ENTITY:
-                return buildEntity(v);
-            case PREF:
-            case CREF:
-                return buildPCREF(v);
-            case TX:
-                return buildTX(v, tx);
-            case COMMITID:
-                return buildCommitid(v, tx);
-            case DELETED:
-                return buildDeleted(v);
-            case ATTRIBUTE:
-                return buildAttribute(v, attrId);
-            case META:
-                return buildMeta(v, attrId);
-        }
-
-        return null;
-    }
-    private CanalEntry.Column.Builder getBuilder(OqsBigEntityColumns v) {
-        CanalEntry.Column.Builder builder = CanalEntry.Column.newBuilder();
-        builder.setIndex(v.ordinal());
-        builder.setName(v.name().toLowerCase());
-        return builder;
-    }
-
-    private CanalEntry.Column buildId(long id, OqsBigEntityColumns v) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue(Long.toString(id));
-
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildEntity(OqsBigEntityColumns v) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        Random r = new Random();
-        long id = Math.abs(r.nextLong()) % batchSize;
-        builder.setValue(Long.toString(id));
-
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildPCREF(OqsBigEntityColumns v) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue(Long.toString(PCREF_ID));
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildTX(OqsBigEntityColumns v, long tx) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue(Long.toString(tx));
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildCommitid(OqsBigEntityColumns v, long tx) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue(Long.toString(tx));
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildDeleted(OqsBigEntityColumns v) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue("false");
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildAttribute(OqsBigEntityColumns v, int attrId) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        int id = attrId % attrMaxSize;
-        builder.setValue(Prepared.attrs[id]);
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildMeta(OqsBigEntityColumns v, int metaId) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        int id = metaId % attrMaxSize;
-        builder.setValue(Prepared.metas[id]);
-        return builder.build();
-    }
-
-
-    private static class Prepared {
-        static String[] attrs = {
-                "{\"8194L\":73550,\"100000S0\":\"1\",\"100000S1\":\"2\",\"8192L\":38478,\"100000S2\":\"3\",\"100000S3\":\"500002\",\"100000S4\":\"测试\",\"8193S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\"}",
-                "{\"12289S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\",\"100000S0\":\"1\",\"100000S1\":\"2\",\"100000S2\":\"3\",\"12288S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\",\"100000S3\":\"500002\",\"100000S4\":\"测试\",\"12290S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\"}",
-                "{\"258048S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\",\"100000S0\":\"1\",\"100000S1\":\"2\",\"100000S2\":\"3\",\"258049S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\",\"100000S3\":\"500002\",\"100000S4\":\"测试\",\"258050S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\"}"
-        };
-        static String[] metas = {
-                "[\"8194-Long\", \"100000-Strings\",\"8192-Long\"\",\"8193-String\"]",
-                "[\"12290-String\",\"12288-String\",\"100000_Strings\",\"12289-String\"]",
-                "[\"258048-String\",\"100000-Strings\",\"258049-String\",\"258050-String\"]"
-        };
     }
 
 }

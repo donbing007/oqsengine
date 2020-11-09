@@ -16,6 +16,8 @@ public class CDCConstant {
     public static final int INIT_ID = -1;
     public static final int ZERO = 0;
 
+    public static final int SINGLE_CONSUMER = 1;
+
     //  当前CDC connection连接失败后的重连间隔 (默认3S)
     public static final int RECONNECT_WAIT_IN_SECONDS = 3;
 
