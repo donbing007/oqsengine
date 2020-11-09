@@ -2,6 +2,9 @@ package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.protocol.Message;
+import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +19,9 @@ import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
  * date : 2020/11/5
  * @since : 1.8
  */
-public class CDCConnector {
+public abstract class CDCConnector {
+
+    final Logger logger = LoggerFactory.getLogger(CDCConnector.class);
 
     private String subscribeFilter = DEFAULT_SUBSCRIBE_FILTER;
 
@@ -24,12 +29,21 @@ public class CDCConnector {
 
     protected CanalConnector canalConnector;
 
+    public void shutdown() {
+        try {
+            if (canalConnector.checkValid()) {
+                close(true);
+            }
+        } catch (Exception e) {
+            logger.warn("shutdown error.");
+            e.printStackTrace();
+        }
+    }
     /**
      * 打开canal连接
      */
     public void open() {
         if (null != canalConnector) {
-
             //  连接CanalServer
             canalConnector.connect();
             //  订阅destination

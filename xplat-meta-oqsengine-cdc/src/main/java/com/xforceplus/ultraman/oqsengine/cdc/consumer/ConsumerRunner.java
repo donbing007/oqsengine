@@ -4,10 +4,12 @@ import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.CDCStatus;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.RunningStatus;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCUnCommitMetrics;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,8 @@ public class ConsumerRunner extends Thread {
 
     private CDCConnector cdcConnector;
 
+    private RunningStatus runningStatus;
+
     public ConsumerRunner(ConsumerService consumerService,
                           CDCMetricsService cdcMetricsService,
                           CDCConnector cdcConnector) {
@@ -55,14 +59,23 @@ public class ConsumerRunner extends Thread {
         cdcConnector.rollback();
     }
 
+    public void shutdown() {
+        runningStatus = RunningStatus.STOP;
+    }
+
     public void run() {
+        runningStatus = RunningStatus.RUN;
+
         boolean isFirstCycle = true;
+        boolean needReconnect = false;
         while (true) {
             try {
                 connectAndReset(isFirstCycle);
             } catch (Exception e) {
                 cdcConnector.close(!isFirstCycle);
                 logger.error("canal-server/canal-client connection error, cause : {}", e.getMessage());
+
+                needReconnect = true;
             }
 
             isFirstCycle = false;
@@ -70,11 +83,34 @@ public class ConsumerRunner extends Thread {
                 consume();
             } catch (Exception e) {
                 cdcConnector.close(true);
+
+                needReconnect = true;
             }
 
-            //  这里将进行睡眠->同步错误信息->进入下次循环
-            callConnectError(RECONNECT_WAIT_IN_SECONDS);
+            if (needReconnect) {
+                //  这里将进行睡眠->同步错误信息->进入下次循环
+                callConnectError(RECONNECT_WAIT_IN_SECONDS);
+                needReconnect = false;
+            }
+
+            if (checkForStop()) {
+                break;
+            }
         }
+    }
+
+    private boolean checkForStop() {
+        if (runningStatus.equals(RunningStatus.STOP)) {
+            try {
+                cdcConnector.shutdown();
+                consumerService.shutdown();
+            } catch (Exception e) {
+                //  ignore
+                e.printStackTrace();
+            }
+            return true;
+        }
+        return false;
     }
 
     public void consume() throws SQLException {
@@ -112,6 +148,11 @@ public class ConsumerRunner extends Thread {
                 logger.error("consume message error, {}", e.getMessage());
                 //  同步出错信息，回滚到上次成功的的Sync信息
                 callBackError();
+            }
+
+            //  服务被终止
+            if (runningStatus.equals(RunningStatus.STOP)) {
+                break;
             }
         }
     }

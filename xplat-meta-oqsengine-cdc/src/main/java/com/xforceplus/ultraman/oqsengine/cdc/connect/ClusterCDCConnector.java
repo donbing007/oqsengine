@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.connect;
 import com.alibaba.otter.canal.client.CanalConnectors;
 
 
+
 /**
  * desc :
  * name : ClusterCanalConnector

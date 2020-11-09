@@ -20,4 +20,6 @@ public interface ConsumerService {
         消费当前批次的Binlog
      */
     CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCUnCommitMetrics cdcUnCommitMetrics) throws SQLException;
+
+    void shutdown();
 }

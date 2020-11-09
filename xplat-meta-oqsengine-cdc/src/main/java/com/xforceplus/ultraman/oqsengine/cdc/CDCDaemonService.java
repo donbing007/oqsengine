@@ -39,6 +39,10 @@ public class CDCDaemonService {
 
     private ConsumerRunner consumerRunner;
 
+    public void stopDaemon() {
+        consumerRunner.shutdown();
+    }
+
     @PostConstruct
     public void startDaemon() {
 

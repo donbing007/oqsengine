@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCUnCommitMetrics;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -69,6 +70,12 @@ public class SphinxConsumerService implements ConsumerService {
                 cdcMetrics.getBatchId(), cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitCount());
 
         return cdcMetrics;
+    }
+
+    @Override
+    public void shutdown() {
+        logger.info("Start closing the consumer worker thread.....");
+        ExecutorHelper.shutdownAndAwaitTermination(consumerPool, 3600);
     }
 
     private CDCMetrics init(CDCUnCommitMetrics cdcUnCommitMetrics, long batchId) {

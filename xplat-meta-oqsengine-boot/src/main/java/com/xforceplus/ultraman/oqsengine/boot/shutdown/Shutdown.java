@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.shutdown;
 
+import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.slf4j.Logger;
@@ -36,12 +37,17 @@ public class Shutdown {
     @Resource(name = "callThreadPool")
     private ExecutorService callThreadPool;
 
+    @Resource
+    private CDCDaemonService cdcDaemonService;
+
     @PreDestroy
     public void destroy() throws Exception {
 
         logger.info("Start closing the process....");
 
         tm.freeze();
+
+        cdcDaemonService.stopDaemon();
 
         // wait shutdown
         logger.info("Start closing the IO worker thread.....");
