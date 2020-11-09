@@ -87,8 +87,8 @@ public abstract class CDCConnector {
         if (null == canalConnector) {
             notInitException();
         }
-        //  获取2048条数据或等待1秒
-        return canalConnector.getWithoutAck(batchSize, Long.parseLong(FREE_MESSAGE_WAIT_IN_SECONDS + ""), TimeUnit.SECONDS);
+        //  获取2048条数据
+        return canalConnector.getWithoutAck(batchSize);
     }
 
     private void notInitException() throws SQLException {
