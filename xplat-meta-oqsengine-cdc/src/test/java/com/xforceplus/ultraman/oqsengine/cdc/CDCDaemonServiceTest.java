@@ -30,6 +30,8 @@ public class CDCDaemonServiceTest extends AbstractContainer {
 
     private CDCDaemonService cdcDaemonService;
 
+    private TestCallbackService testCallbackService;
+
     @Before
     public void before() throws Exception {
 
@@ -40,7 +42,8 @@ public class CDCDaemonServiceTest extends AbstractContainer {
 
     private void initDaemonService() throws SQLException, InterruptedException {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
-        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", new TestCallbackService());
+        testCallbackService = new TestCallbackService();
+        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", testCallbackService);
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
         singleCDCConnector.init("localhost",

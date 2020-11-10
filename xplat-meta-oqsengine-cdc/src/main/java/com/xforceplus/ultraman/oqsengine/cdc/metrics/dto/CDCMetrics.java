@@ -17,11 +17,13 @@ public class CDCMetrics {
 
     public CDCMetrics() {
         this.cdcAckMetrics = new CDCAckMetrics(CDCStatus.CONNECTED);
+        this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
         this.cdcUnCommitMetrics = new CDCUnCommitMetrics();
     }
 
-    public CDCMetrics(CDCUnCommitMetrics cdcUnCommitMetrics) throws CloneNotSupportedException {
-        this.cdcAckMetrics = new CDCAckMetrics(CDCStatus.CONNECTED);
+    public CDCMetrics(long batchId, CDCAckMetrics cdcAckMetrics, CDCUnCommitMetrics cdcUnCommitMetrics) {
+        this.batchId = batchId;
+        this.cdcAckMetrics = cdcAckMetrics;
         this.cdcUnCommitMetrics = cdcUnCommitMetrics;
     }
 

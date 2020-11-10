@@ -129,7 +129,9 @@ public abstract class AbstractContainer {
     protected DataSourcePackage dataSourcePackage;
 
     protected SQLMasterStorage masterStorage;
-
+    protected Selector<DataSource> dataSourceSelector;
+    protected TransactionExecutor masterTransactionExecutor;
+    protected Selector<String> tableNameSelector;
 
     protected Selector<DataSource> buildDataSourceSelectorMaster(String file) {
         if (dataSourcePackage == null) {
@@ -189,15 +191,16 @@ public abstract class AbstractContainer {
 
     protected void initMaster() throws Exception {
 
-        Selector<String> tableNameSelector = buildTableNameSelector("oqsbigentity", 3);
+        tableNameSelector = buildTableNameSelector("oqsbigentity", 3);
 
-        Selector<DataSource> dataSourceSelector = buildDataSourceSelectorMaster("./src/test/resources/oqsengine-ds.conf");
+        dataSourceSelector = buildDataSourceSelectorMaster("./src/test/resources/oqsengine-ds.conf");
 
-        TransactionExecutor executor = new AutoJoinTransactionExecutor(
+        masterTransactionExecutor = new AutoJoinTransactionExecutor(
                 transactionManager, ConnectionTransactionResource.class);
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        masterStorageStrategyFactory.register(FieldType.DECIMAL, new DecimalStorageStrategy());
 
         ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 10,
                 0L, TimeUnit.MILLISECONDS,
@@ -212,7 +215,7 @@ public abstract class AbstractContainer {
         masterStorage = new SQLMasterStorage();
         ReflectionTestUtils.setField(masterStorage, "dataSourceSelector", dataSourceSelector);
         ReflectionTestUtils.setField(masterStorage, "tableNameSelector", tableNameSelector);
-        ReflectionTestUtils.setField(masterStorage, "transactionExecutor", executor);
+        ReflectionTestUtils.setField(masterStorage, "transactionExecutor", masterTransactionExecutor);
         ReflectionTestUtils.setField(masterStorage, "storageStrategyFactory", masterStorageStrategyFactory);
         ReflectionTestUtils.setField(masterStorage, "threadPool", threadPool);
         ReflectionTestUtils.setField(masterStorage, "entityValueBuilder", entityValueBuilder);

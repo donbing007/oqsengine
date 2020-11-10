@@ -67,7 +67,7 @@ public class SphinxConsumerService implements ConsumerService {
         filterAndSyncData(entries, cdcMetrics);
 
         logger.info("batchId {}, success sync raw data : {}",
-                cdcMetrics.getBatchId(), cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitCount());
+                cdcMetrics.getBatchId(), cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
 
         return cdcMetrics;
     }
@@ -82,8 +82,10 @@ public class SphinxConsumerService implements ConsumerService {
         //  将上一次的剩余信息设置回来
         CDCMetrics cdcMetrics = new CDCMetrics();
 
-        cdcMetrics.getCdcUnCommitMetrics().setLastUnCommitId(cdcUnCommitMetrics.getLastUnCommitId());
-        cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues().putAll(cdcUnCommitMetrics.getUnCommitEntityValues());
+        if (null != cdcUnCommitMetrics) {
+            cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(cdcUnCommitMetrics.getUnCommitId());
+            cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues().putAll(cdcUnCommitMetrics.getUnCommitEntityValues());
+        }
         cdcMetrics.setBatchId(batchId);
 
         return cdcMetrics;
@@ -105,9 +107,9 @@ public class SphinxConsumerService implements ConsumerService {
                     multiSyncSphinx(rawEntries, cdcMetrics);
 
                     //  每次Transaction结束,将unCommitId加入到commitList中
-                    if (cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId() > INIT_ID) {
-                        cdcMetrics.getCdcAckMetrics().getCommitList().add(cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitId());
-                        cdcMetrics.getCdcUnCommitMetrics().setLastUnCommitCount(INIT_ID);
+                    if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitId() > INIT_ID) {
+                        cdcMetrics.getCdcAckMetrics().getCommitList().add(cdcMetrics.getCdcUnCommitMetrics().getUnCommitId());
+                        cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(INIT_ID);
                     }
 
                     //  统计同步的数量
@@ -131,7 +133,7 @@ public class SphinxConsumerService implements ConsumerService {
             syncSize += rawEntries.size();
         }
 
-        cdcMetrics.getCdcUnCommitMetrics().setLastUnCommitCount(syncSize);
+        cdcMetrics.getCdcUnCommitMetrics().setExecuteJobCount(syncSize);
     }
 
     private void multiSyncSphinx(List<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
@@ -185,7 +187,7 @@ public class SphinxConsumerService implements ConsumerService {
                 //  只需同步commit_id小于Long.MAX_VALUE的row
                 if (needSyncRow(columns)) {
                     //  更新
-                    cdcMetrics.getCdcUnCommitMetrics().setLastUnCommitId(getLongFromColumn(columns, COMMITID));
+                    cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(getLongFromColumn(columns, COMMITID));
                     RawEntry rawEntry = new RawEntry(
                             entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList());
                     rawEntries.add(rawEntry);

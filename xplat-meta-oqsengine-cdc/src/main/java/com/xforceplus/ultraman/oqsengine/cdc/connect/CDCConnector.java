@@ -2,12 +2,10 @@ package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.protocol.Message;
-import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.concurrent.TimeUnit;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
 

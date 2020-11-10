@@ -74,7 +74,7 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         m.invoke(sphinxConsumerService, new Object[]{entries, cdcMetrics});
 
-        Assert.assertEquals(expectedSize, cdcMetrics.getCdcUnCommitMetrics().getLastUnCommitCount());
+        Assert.assertEquals(expectedSize, cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
     }
 
 
@@ -98,7 +98,7 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         CDCMetrics after_1 = sphinxConsumerService.consume(entries, 1, cdcMetrics.getCdcUnCommitMetrics());
 
-        Assert.assertEquals(expectedSize, after_1.getCdcUnCommitMetrics().getLastUnCommitCount());
+        Assert.assertEquals(expectedSize, after_1.getCdcUnCommitMetrics().getExecuteJobCount());
 
         build(entries, Long.MAX_VALUE - 1);
 
@@ -107,7 +107,7 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         CDCMetrics after_2 = sphinxConsumerService.consume(entries, 2, after_1.getCdcUnCommitMetrics());
 
-        Assert.assertEquals(expectedSize, after_2.getCdcUnCommitMetrics().getLastUnCommitCount());
+        Assert.assertEquals(expectedSize, after_2.getCdcUnCommitMetrics().getExecuteJobCount());
     }
 
     /*
@@ -143,7 +143,7 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         CDCMetrics after_1 = sphinxConsumerService.consume(entries, 1, cdcMetrics.getCdcUnCommitMetrics());
 
-        Assert.assertEquals(expectedSize, after_1.getCdcUnCommitMetrics().getLastUnCommitCount());
+        Assert.assertEquals(expectedSize, after_1.getCdcUnCommitMetrics().getExecuteJobCount());
 
         expectedSize = 0;
         entries.clear();
@@ -174,7 +174,7 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         CDCMetrics after_2 = sphinxConsumerService.consume(entries, 2, after_1.getCdcUnCommitMetrics());
 
-        Assert.assertEquals(expectedSize, after_2.getCdcUnCommitMetrics().getLastUnCommitCount());
+        Assert.assertEquals(expectedSize, after_2.getCdcUnCommitMetrics().getExecuteJobCount());
     }
 
     private void build(List<CanalEntry.Entry> entries, long commitId) {

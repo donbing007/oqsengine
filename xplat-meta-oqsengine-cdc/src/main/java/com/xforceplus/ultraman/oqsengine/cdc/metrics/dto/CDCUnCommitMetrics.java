@@ -18,22 +18,14 @@ import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.ZERO;
  * @since : 1.8
  */
 public class CDCUnCommitMetrics {
-    private long lastUnCommitId;
-    private long lastUnCommitCount;
+    private long unCommitId;
+    private long executeJobCount;
     private Map<Long, IEntityValue> unCommitEntityValues;
 
     public CDCUnCommitMetrics() {
-        lastUnCommitId = INIT_ID;
-        lastUnCommitCount = ZERO;
+        unCommitId = INIT_ID;
+        executeJobCount = ZERO;
         unCommitEntityValues = new ConcurrentHashMap<>();
-    }
-
-    public long getLastUnCommitId() {
-        return lastUnCommitId;
-    }
-
-    public void setLastUnCommitId(long lastUnCommitId) {
-        this.lastUnCommitId = lastUnCommitId;
     }
 
     public Map<Long, IEntityValue> getUnCommitEntityValues() {
@@ -44,11 +36,19 @@ public class CDCUnCommitMetrics {
         this.unCommitEntityValues = unCommitEntityValues;
     }
 
-    public long getLastUnCommitCount() {
-        return lastUnCommitCount;
+    public long getUnCommitId() {
+        return unCommitId;
     }
 
-    public void setLastUnCommitCount(long lastUnCommitCount) {
-        this.lastUnCommitCount = lastUnCommitCount;
+    public void setUnCommitId(long unCommitId) {
+        this.unCommitId = unCommitId;
+    }
+
+    public long getExecuteJobCount() {
+        return executeJobCount;
+    }
+
+    public void setExecuteJobCount(long executeJobCount) {
+        this.executeJobCount = executeJobCount;
     }
 }

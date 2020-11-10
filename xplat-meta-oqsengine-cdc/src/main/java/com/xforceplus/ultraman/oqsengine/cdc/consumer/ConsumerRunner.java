@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCUnCommitMetrics;
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,8 +138,7 @@ public class ConsumerRunner extends Thread {
                     //  没有新的同步信息，睡眠1秒进入下次轮训
                     threadSleep(FREE_MESSAGE_WAIT_IN_SECONDS);
 
-                    //  同步状态
-                    cdcConnector.ack(batchId);
+                    syncFree(batchId);
                 }
             } catch (Exception e) {
                 cdcConnector.rollback();
@@ -157,22 +155,37 @@ public class ConsumerRunner extends Thread {
         }
     }
 
+    private void syncFree(long batchId) throws SQLException {
+        CDCMetrics cdcMetrics = new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
+                                    cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
+
+        cdcMetricsService.backup(cdcMetrics);
+
+        //  同步状态
+        cdcConnector.ack(batchId);
+
+        cdcMetricsService.getCdcMetrics().setBatchId(batchId);
+        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setLastConnectedTime(System.currentTimeMillis());
+        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setLastUpdateTime(System.currentTimeMillis());
+    }
 
     private void syncLastBatch() throws SQLException {
         CDCMetrics cdcMetrics = cdcMetricsService.query();
-
-        syncCanalAndCallback(cdcMetrics);
+        if (null != cdcMetrics) {
+            syncCanalAndCallback(cdcMetrics);
+        }
     }
     /*
         关键步骤
      */
     private void sync(CDCMetrics cdcMetrics) throws SQLException {
+        if (null != cdcMetrics) {
+            //  首先保存本次消费完时未提交的数据
+            cdcMetricsService.backup(cdcMetrics);
 
-        //  首先保存本次消费完时未提交的数据
-        cdcMetricsService.backup(cdcMetrics);
-
-        //  canal ack确认，同步CDC确认信息，
-        syncCanalAndCallback(cdcMetrics);
+            //  canal ack确认，同步CDC确认信息，
+            syncCanalAndCallback(cdcMetrics);
+        }
     }
 
     private void syncCanalAndCallback(CDCMetrics cdcMetrics) throws SQLException {
