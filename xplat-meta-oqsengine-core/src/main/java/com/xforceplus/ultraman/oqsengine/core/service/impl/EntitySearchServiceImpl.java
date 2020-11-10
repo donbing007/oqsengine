@@ -222,13 +222,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "condition"})
     @Override
-    public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Page page) throws SQLException {
-        return selectByConditions(conditions, entityClass, Sort.buildOutOfSort(), page);
+    public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Page page, long commitId) throws SQLException {
+        return selectByConditions(conditions, entityClass, Sort.buildOutOfSort(), page, commitId);
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "condition"})
     @Override
-    public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
+    public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Sort sort, Page page, long commitId)
             throws SQLException {
 
         if (conditions == null) {
@@ -303,13 +303,19 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 if (useConditions.size() == 0) {
                     return Collections.emptyList();
                 }
-
             }
+
+            Collection<EntityRef> masterRefs = Collections.emptyList();
+            if(commitId > 0) {
+                //trigger master search
+                masterRefs = masterStorage.select(0, useConditions, entityClass);
+            }
+
+            masterRefs.
 
             Collection<EntityRef> refs = indexStorage.select(useConditions, entityClass, useSort, usePage, Collections.emptyList(), null);
 
-            return buildEntities(refs, entityClass);
-
+            return buildEntities(masterRefs, refs, entityClass, sort, page);
 
         } catch (Exception ex) {
             failCountTotal.increment();
@@ -337,14 +343,20 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         return entityClasses;
     }
 
-
-    private Collection<IEntity> buildEntities(Collection<EntityRef> refs, IEntityClass entityClass) throws SQLException {
-        if (refs.isEmpty()) {
+    private Collection<IEntity> buildEntities(Collection<EntityRef> masterRefs, Collection<EntityRef> refs, IEntityClass entityClass, Sort sort, Page page) throws SQLException {
+        if (refs.isEmpty() && masterRefs.isEmpty()) {
             return Collections.emptyList();
         }
+
+
+
+        //TODO warning using default
         Map<Long, IEntityClass> batchSelect =
                 refs.parallelStream().filter(e -> e.getId() > 0)
-                        .collect(toMap(EntityRef::getId, e -> entityClass, (e0, e1) -> e0));
+                        .collect(toMap(EntityRef::getId, e -> entityClass, (e0, e1) -> {
+                            e0.
+                            return e0;
+                        }));
 
         // 有继承
         if (entityClass.extendEntityClass() != null) {

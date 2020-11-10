@@ -24,7 +24,7 @@ public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
 
     @Override
     public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
-
+        //cdcMetrics.
     }
 
     @Override
