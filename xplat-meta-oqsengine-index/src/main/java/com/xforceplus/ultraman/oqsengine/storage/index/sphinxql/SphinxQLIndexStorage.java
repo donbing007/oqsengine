@@ -101,8 +101,13 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             .execute(new DataSourceShardingStorageTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                    return QueryConditionExecutor.build(indexTableName, resource, sphinxQLConditionsBuilderFactory, storageStrategyFactory, maxQueryTimeMs)
-                        .execute(Tuple.of(entityClass.id(), conditions, page, sort, filterIds, commitId));
+                    return QueryConditionExecutor.build(
+                        indexTableName,
+                        resource,
+                        sphinxQLConditionsBuilderFactory,
+                        storageStrategyFactory,
+                        maxQueryTimeMs).execute(
+                        Tuple.of(entityClass.id(), conditions, page, sort, filterIds, commitId));
                 }
             });
     }
@@ -151,12 +156,12 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     @Override
     public int build(IEntity entity) throws SQLException {
-        throw new RuntimeException("Deprecated");
+        throw new UnsupportedOperationException("Deprecated");
     }
 
     @Override
     public int replace(IEntity entity) throws SQLException {
-        throw new RuntimeException("Deprecated");
+        throw new UnsupportedOperationException("Deprecated");
     }
 
     @Override
@@ -188,18 +193,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     @Override
     public int delete(IEntity entity) throws SQLException {
-        checkId(entity.id());
-
-        return (int) transactionExecutor
-            .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, Long.toString(entity.id())) {
-
-                @Override
-                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                    return DeleteExecutor.build(resource, indexTableName)
-                        .execute(entity.id());
-                }
-            });
-
+        return delete(entity.id());
     }
 
     @Override
@@ -302,29 +296,4 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                 }
             });
     }
-
-
-    //    // 查询原始数据.
-//    private Optional<StorageEntity> doSelectStorageEntity(long id) throws SQLException {
-//        return (Optional<StorageEntity>) transactionExecutor
-//                .execute(new DataSourceShardingTask(searchDataSourceSelector, Long.toString(id)) {
-//
-//                    @Override
-//                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-//                        StorageEntity storageEntity = new SelectByIdStorageCommand(indexTableName).execute(resource,
-//                                id);
-//
-//                        return Optional.ofNullable(storageEntity);
-//                    }
-//                });
-//    }
-
-//    private int doBuildOrReplace(IEntity entity, boolean replacement) throws SQLException {
-//        checkId(entity.id());
-//
-//        return doBuildReplaceStorageEntity(new StorageEntity(entity.id(), entity.entityClass().id(),
-//            entity.family().parent(), entity.family().child(), serializeToMap(entity.entityValue(), true),
-//            serializeSetFull(entity.entityValue())), replacement);
-//    }
-
 }
