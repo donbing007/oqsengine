@@ -9,7 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
-import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
+import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingStorageTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -98,7 +98,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             throws SQLException {
 
         return (Collection<EntityRef>) transactionExecutor
-                .execute(new DataSourceShardingTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
+            .execute(new DataSourceShardingStorageTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
                     @Override
                     public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                         return QueryConditionExecutor.build(indexTableName, resource, sphinxQLConditionsBuilderFactory, storageStrategyFactory, maxQueryTimeMs)
@@ -112,7 +112,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         checkId(attribute.id());
 
         transactionExecutor
-                .execute(new DataSourceShardingTask(writerDataSourceSelector, Long.toString(attribute.id())) {
+            .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, Long.toString(attribute.id())) {
 
                     @Override
                     public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -176,7 +176,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         checkId(id);
 
         return (int) transactionExecutor
-                .execute(new DataSourceShardingTask(writerDataSourceSelector, Long.toString(id)) {
+            .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, Long.toString(id)) {
 
                     @Override
                     public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -191,7 +191,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         checkId(entity.id());
 
         return (int) transactionExecutor
-                .execute(new DataSourceShardingTask(writerDataSourceSelector, Long.toString(entity.id())) {
+            .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, Long.toString(entity.id())) {
 
                     @Override
                     public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -292,7 +292,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 //    // 更新原始数据.
     private int doBuildReplaceStorageEntity(StorageEntity storageEntity, boolean replacement) throws SQLException {
         return (int) transactionExecutor
-                .execute(new DataSourceShardingTask(writerDataSourceSelector, Long.toString(storageEntity.getId())) {
+            .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, Long.toString(storageEntity.getId())) {
 
                     @Override
                     public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {

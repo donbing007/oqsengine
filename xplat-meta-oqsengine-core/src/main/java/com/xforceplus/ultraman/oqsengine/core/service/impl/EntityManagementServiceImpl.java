@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.storage.executor.Task;
+import com.xforceplus.ultraman.oqsengine.storage.executor.StorageTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -70,7 +70,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         try {
 
-            return (IEntity) transactionExecutor.execute(new Task() {
+            return (IEntity) transactionExecutor.execute(new StorageTask() {
                 @Override
                 public Object run(Object resource, ExecutorHint hint) throws SQLException {
 
@@ -156,7 +156,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
 
         try {
-            return (ResultStatus) transactionExecutor.execute(new Task() {
+            return (ResultStatus) transactionExecutor.execute(new StorageTask() {
                 @Override
                 public Object run(Object resource, ExecutorHint hint) throws SQLException {
 
@@ -226,7 +226,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public ResultStatus delete(IEntity entity) throws SQLException {
 
         try {
-            return (ResultStatus) transactionExecutor.execute(new Task() {
+            return (ResultStatus) transactionExecutor.execute(new StorageTask() {
                 @Override
                 public Object run(Object resource, ExecutorHint hint) throws SQLException {
 

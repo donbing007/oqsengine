@@ -1,13 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,27 +17,25 @@ import java.sql.SQLException;
  * @version 0.1 2020/11/3 12:02
  * @since 1.8
  */
-public class UpdateVersionAndTxExecutor implements Executor<StorageEntity, Integer> {
-
-    final Logger logger = LoggerFactory.getLogger(ReplaceExecutor.class);
-
-    private Selector<String> tableNameSelector;
-    private TransactionResource<Connection> resource;
+public class UpdateVersionAndTxExecutor extends AbstractMasterExecutor<StorageEntity, Integer> {
 
     public static Executor<StorageEntity, Integer> build(
-        Selector<String> tableNameSelector, TransactionResource<Connection> resource) {
-        return new UpdateVersionAndTxExecutor(tableNameSelector, resource);
+        String tableName, TransactionResource<Connection> resource, long timeoutMs) {
+        return new UpdateVersionAndTxExecutor(tableName, resource, timeoutMs);
     }
 
-    public UpdateVersionAndTxExecutor(Selector<String> tableNameSelector, TransactionResource<Connection> resource) {
-        this.tableNameSelector = tableNameSelector;
-        this.resource = resource;
+    public UpdateVersionAndTxExecutor(String tableName, TransactionResource<Connection> resource) {
+        super(tableName, resource);
+    }
+
+    public UpdateVersionAndTxExecutor(String tableName, TransactionResource<Connection> resource, long timeoutMs) {
+        super(tableName, resource, timeoutMs);
     }
 
     @Override
     public Integer execute(StorageEntity storageEntity) throws SQLException {
         String sql = buildSQL(storageEntity);
-        PreparedStatement st = resource.value().prepareStatement(sql);
+        PreparedStatement st = getResource().value().prepareStatement(sql);
         st.setInt(1, storageEntity.getVersion());
         st.setLong(2, storageEntity.getTime());
         st.setLong(3, storageEntity.getTx());
@@ -48,9 +43,7 @@ public class UpdateVersionAndTxExecutor implements Executor<StorageEntity, Integ
         st.setLong(5, OperationType.UPDATE.getValue());
         st.setLong(6, storageEntity.getId());
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
+        checkTimeout(st);
 
         try {
             return st.executeUpdate();
@@ -64,7 +57,7 @@ public class UpdateVersionAndTxExecutor implements Executor<StorageEntity, Integ
     private String buildSQL(StorageEntity storageEntity) {
         // update table set version=?,time=?,tx=?,commitid=?,op = ? where id=?
         StringBuilder sql = new StringBuilder();
-        sql.append("UPDATE ").append(tableNameSelector.select(Long.toString(storageEntity.getId())))
+        sql.append("UPDATE ").append(getTableName())
             .append(" SET ")
             .append(FieldDefine.VERSION).append("=").append("?, ")
             .append(FieldDefine.TIME).append("=").append("?, ")

@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.metrics.dto;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntityValue;
 
 
 import java.util.Map;
@@ -20,7 +20,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.ZERO;
 public class CDCUnCommitMetrics {
     private long unCommitId;
     private long executeJobCount;
-    private Map<Long, IEntityValue> unCommitEntityValues;
+    private Map<Long, RawEntityValue> unCommitEntityValues;
 
     public CDCUnCommitMetrics() {
         unCommitId = INIT_ID;
@@ -28,11 +28,11 @@ public class CDCUnCommitMetrics {
         unCommitEntityValues = new ConcurrentHashMap<>();
     }
 
-    public Map<Long, IEntityValue> getUnCommitEntityValues() {
+    public Map<Long, RawEntityValue> getUnCommitEntityValues() {
         return unCommitEntityValues;
     }
 
-    public void setUnCommitEntityValues(Map<Long, IEntityValue> unCommitEntityValues) {
+    public void setUnCommitEntityValues(Map<Long, RawEntityValue> unCommitEntityValues) {
         this.unCommitEntityValues = unCommitEntityValues;
     }
 

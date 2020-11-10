@@ -21,7 +21,7 @@ import java.math.BigDecimal;
  * @version 1.0 04/08/2020
  * @since <pre>Apr 8, 2020</pre>
  */
-public class DecimalStorageStrategyTest {
+public class MasterDecimalStorageStrategyTest {
 
     @Before
     public void before() throws Exception {
@@ -33,7 +33,7 @@ public class DecimalStorageStrategyTest {
 
     @Test
     public void test() throws Exception {
-        DecimalStorageStrategy storageStrategy = new DecimalStorageStrategy();
+        MasterDecimalStorageStrategy storageStrategy = new MasterDecimalStorageStrategy();
 
         Assert.assertEquals(FieldType.DECIMAL, storageStrategy.fieldType());
         Assert.assertFalse(storageStrategy.isMultipleStorageValue());

@@ -37,15 +37,8 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
     }
 
     @Override
-    public Object execute(Task task) throws SQLException {
-        DataSourceShardingTask shardTask;
-        if (DataSourceShardingTask.class.isInstance(task)) {
-            shardTask = (DataSourceShardingTask) task;
-        } else {
-            throw new SQLException("Task types other than DataSourceShardingTask are not supported.");
-        }
-
-        DataSource targetDataSource = shardTask.getDataSourceSelector().select(shardTask.getShardKey());
+    public Object execute(StorageTask storageTask) throws SQLException {
+        DataSource targetDataSource = storageTask.getDataSource();
 
         String dbKey = buildResourceKey(targetDataSource);
 
@@ -85,7 +78,7 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
 
         ExecutorHint hint = new DefaultExecutorHint();
         try {
-            return task.run(resource, hint);
+            return storageTask.run(resource, hint);
         } finally {
             if (!tx.isPresent()) {
                 resource.destroy();

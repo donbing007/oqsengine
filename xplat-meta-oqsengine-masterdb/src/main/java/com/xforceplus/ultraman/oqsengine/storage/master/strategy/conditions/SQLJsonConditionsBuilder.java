@@ -20,10 +20,6 @@ public class SQLJsonConditionsBuilder implements ConditionsBuilder<String>, Stor
     private StorageStrategyFactory storageStrategyFactory;
     private SQLConditionQueryBuilderFactory sqlConditionQueryBuilderFactory;
 
-    public SQLJsonConditionsBuilder() {
-        this.sqlConditionQueryBuilderFactory = new SQLConditionQueryBuilderFactory(storageStrategyFactory);
-    }
-
     @Override
     public String build(Conditions conditions) {
         StringBuilder sql = new StringBuilder();
@@ -44,5 +40,7 @@ public class SQLJsonConditionsBuilder implements ConditionsBuilder<String>, Stor
     @Override
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
+
+        this.sqlConditionQueryBuilderFactory = new SQLConditionQueryBuilderFactory(storageStrategyFactory);
     }
 }

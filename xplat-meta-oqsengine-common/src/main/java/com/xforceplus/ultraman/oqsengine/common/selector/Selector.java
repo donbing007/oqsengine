@@ -10,5 +10,12 @@ package com.xforceplus.ultraman.oqsengine.common.selector;
  */
 public interface Selector<V> {
 
+    /**
+     * 选择预定的某个值.
+     *
+     * @param key 目标key.
+     * @return 选择的值.
+     */
     public V select(String key);
+
 }

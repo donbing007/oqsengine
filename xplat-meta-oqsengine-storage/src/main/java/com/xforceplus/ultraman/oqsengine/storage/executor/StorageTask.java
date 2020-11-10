@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor;
 
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 
+import javax.sql.DataSource;
 import java.sql.SQLException;
 
 /**
@@ -12,7 +14,7 @@ import java.sql.SQLException;
  * @version 0.1 2020/2/17 15:22
  * @since 1.8
  */
-public interface Task<V> {
+public interface StorageTask {
 
     /**
      * 执行任务.
@@ -20,6 +22,13 @@ public interface Task<V> {
      * @return
      * @throws SQLException
      */
-    Object run(V resource, ExecutorHint hint) throws SQLException;
+    Object run(TransactionResource resource, ExecutorHint hint) throws SQLException;
+
+    /**
+     * 获取数据源.
+     *
+     * @return
+     */
+    DataSource getDataSource();
 
 }

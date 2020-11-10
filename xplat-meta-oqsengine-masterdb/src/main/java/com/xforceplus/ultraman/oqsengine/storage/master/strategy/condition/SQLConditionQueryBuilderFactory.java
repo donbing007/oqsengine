@@ -7,6 +7,9 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.decim
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.decimal.GtEqDecimalJsonConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.decimal.LtDecimalJsonConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.decimal.LtEqDecimalJsonConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.strings.EqJsonStringsConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.strings.MeqJsonStringsConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.strings.NotEqJsonStringsConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
@@ -32,23 +35,40 @@ public class SQLConditionQueryBuilderFactory {
 
         builders.put(
             buildKey(FieldType.DECIMAL, ConditionOperator.GREATER_THAN),
-            new GtDecimalJsonConditionBuilder(ConditionOperator.GREATER_THAN, storageStrategyFactory)
+            new GtDecimalJsonConditionBuilder(storageStrategyFactory)
         );
 
         builders.put(
             buildKey(FieldType.DECIMAL, ConditionOperator.GREATER_THAN_EQUALS),
-            new GtEqDecimalJsonConditionBuilder(ConditionOperator.GREATER_THAN_EQUALS, storageStrategyFactory)
+            new GtEqDecimalJsonConditionBuilder(storageStrategyFactory)
         );
 
         builders.put(
             buildKey(FieldType.DECIMAL, ConditionOperator.LESS_THAN),
-            new LtDecimalJsonConditionBuilder(ConditionOperator.LESS_THAN, storageStrategyFactory)
+            new LtDecimalJsonConditionBuilder(storageStrategyFactory)
         );
 
         builders.put(
             buildKey(FieldType.DECIMAL, ConditionOperator.LESS_THAN_EQUALS),
-            new LtEqDecimalJsonConditionBuilder(ConditionOperator.LESS_THAN_EQUALS, storageStrategyFactory)
+            new LtEqDecimalJsonConditionBuilder(storageStrategyFactory)
         );
+
+        //  strings
+        builders.put(
+            buildKey(FieldType.STRINGS, ConditionOperator.EQUALS),
+            new EqJsonStringsConditionBuilder(storageStrategyFactory)
+        );
+
+        builders.put(
+            buildKey(FieldType.STRINGS, ConditionOperator.NOT_EQUALS),
+            new NotEqJsonStringsConditionBuilder(storageStrategyFactory)
+        );
+
+        builders.put(
+            buildKey(FieldType.STRINGS, ConditionOperator.MULTIPLE_EQUALS),
+            new MeqJsonStringsConditionBuilder(storageStrategyFactory)
+        );
+
     }
 
     public ConditionBuilder getQueryBuilder(Condition condition) {

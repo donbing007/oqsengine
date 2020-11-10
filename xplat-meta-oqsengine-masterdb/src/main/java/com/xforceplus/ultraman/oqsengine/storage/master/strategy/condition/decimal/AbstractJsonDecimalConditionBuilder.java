@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.query.AbstractConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -15,16 +15,14 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  * @version 0.1 2020/11/4 17:28
  * @since 1.8
  */
-public abstract class AbstractJsonDecimalConditionBuilder implements ConditionBuilder<String> {
-
-    private ConditionOperator operator;
+public abstract class AbstractJsonDecimalConditionBuilder extends AbstractConditionBuilder<String> {
     /**
      * 物理逻辑转换策略工厂.
      */
     private StorageStrategyFactory storageStrategyFactory;
 
     public AbstractJsonDecimalConditionBuilder(ConditionOperator operator, StorageStrategyFactory storageStrategyFactory) {
-        this.operator = operator;
+        super(operator);
         this.storageStrategyFactory = storageStrategyFactory;
     }
 
@@ -34,12 +32,7 @@ public abstract class AbstractJsonDecimalConditionBuilder implements ConditionBu
     }
 
     @Override
-    public ConditionOperator operator() {
-        return operator;
-    }
-
-    @Override
-    public String build(Condition condition) {
+    public String doBuild(Condition condition) {
         IValue logicValue = condition.getFirstValue();
         StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(logicValue.getField().type());
         StorageValue storageValue = storageStrategy.toStorageValue(logicValue);

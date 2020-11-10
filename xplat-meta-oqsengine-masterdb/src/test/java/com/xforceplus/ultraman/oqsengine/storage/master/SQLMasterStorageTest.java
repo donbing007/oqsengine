@@ -2,11 +2,9 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
+import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPreciseShardingAlgorithm;
+import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
-import com.xforceplus.ultraman.oqsengine.common.selector.TakeTurnsSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
@@ -19,11 +17,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
+import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
+import org.apache.shardingsphere.api.config.sharding.strategy.StandardShardingStrategyConfiguration;
+import org.apache.shardingsphere.shardingjdbc.api.ShardingDataSourceFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,9 +39,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toMap;
@@ -54,7 +57,7 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
     private TransactionManager transactionManager = new DefaultTransactionManager(
         new IncreasingOrderLongIdGenerator(0));
 
-    private DataSourcePackage dataSourcePackage;
+    private DataSource dataSource;
     private SQLMasterStorage storage;
     private List<IEntity> expectedEntitys;
     private IEntityField fixStringsField = new EntityField(100000, "strings", FieldType.STRINGS);
@@ -63,9 +66,7 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
     @Before
     public void before() throws Exception {
 
-        Selector<String> tableNameSelector = buildTableNameSelector("oqsbigentity", 3);
-
-        Selector<DataSource> dataSourceSelector = buildDataSourceSelector("./src/test/resources/sql_master_storage_build.conf");
+        DataSource ds = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
@@ -75,20 +76,16 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-
-        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(1, 1,
-            0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(500),
-            ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
-            new ThreadPoolExecutor.AbortPolicy()
-        );
+        storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
+        SQLJsonIEntityValueBuilder entityValueBuilder = new SQLJsonIEntityValueBuilder();
+        ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
 
         storage = new SQLMasterStorage();
-        ReflectionTestUtils.setField(storage, "dataSourceSelector", dataSourceSelector);
-        ReflectionTestUtils.setField(storage, "tableNameSelector", tableNameSelector);
+        ReflectionTestUtils.setField(storage, "masterDataSource", ds);
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
-        ReflectionTestUtils.setField(storage, "threadPool", threadPool);
+        ReflectionTestUtils.setField(storage, "entityValueBuilder", entityValueBuilder);
+        storage.setTableName("oqsbigentity");
         storage.setQueryTimeout(100000000);
         storage.init();
 
@@ -102,19 +99,11 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
 
         transactionManager.finish();
 
-        Connection conn;
-        for (DataSource ds : dataSourcePackage.getMaster()) {
-            conn = ds.getConnection();
-            Statement stat = conn.createStatement();
-            stat.execute("truncate table oqsbigentity0");
-            stat.execute("truncate table oqsbigentity1");
-            stat.execute("truncate table oqsbigentity2");
-            stat.close();
-            conn.close();
-        }
-
-        dataSourcePackage.close();
-
+        Connection conn = dataSource.getConnection();
+        Statement stat = conn.createStatement();
+        stat.execute("truncate table oqsbigentity");
+        stat.close();
+        conn.close();
     }
 
     /**
@@ -337,17 +326,31 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         return random.nextInt(max) % (max - min + 1) + min;
     }
 
-    private Selector<DataSource> buildDataSourceSelector(String file) {
+    private DataSource buildDataSource(String file) throws SQLException {
         System.setProperty(DataSourceFactory.CONFIG_FILE, file);
+        DataSourcePackage dataSourcePackage = DataSourceFactory.build();
 
-        dataSourcePackage = DataSourceFactory.build();
+        AtomicInteger index = new AtomicInteger(0);
+        Map<String, DataSource> dsMap = dataSourcePackage.getMaster().stream().collect(Collectors.toMap(
+            d -> "ds" + index.getAndIncrement(), d -> d));
 
-        return new TakeTurnsSelector<>(dataSourcePackage.getMaster());
+        int dsSize = dsMap.size();
 
-    }
+        TableRuleConfiguration tableRuleConfiguration = new TableRuleConfiguration(
+            "oqsbigentity", "ds${0..1}.oqsbigentity${0..2}");
+        tableRuleConfiguration.setDatabaseShardingStrategyConfig(
+            new StandardShardingStrategyConfiguration("id", new HashPreciseShardingAlgorithm()));
+        tableRuleConfiguration.setTableShardingStrategyConfig(
+            new StandardShardingStrategyConfiguration("id", new SuffixNumberHashPreciseShardingAlgorithm()));
 
-    private Selector<String> buildTableNameSelector(String base, int size) {
-        return new SuffixNumberHashSelector(base, size);
+
+        ShardingRuleConfiguration shardingRuleConfig = new ShardingRuleConfiguration();
+        shardingRuleConfig.getTableRuleConfigs().add(tableRuleConfiguration);
+
+        Properties prop = new Properties();
+        prop.put("sql.show", "true");
+        dataSource = ShardingDataSourceFactory.createDataSource(dsMap, shardingRuleConfig, prop);
+        return dataSource;
     }
 
 }

@@ -4,6 +4,7 @@ package com.xforceplus.ultraman.oqsengine.common.selector;
 import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -18,7 +19,7 @@ public class HashSelector<V> implements Selector<V> {
 
     private List<V> targets;
 
-    public HashSelector(List<V> targets) {
+    public HashSelector(Collection<V> targets) {
         if (targets.isEmpty()) {
             throw new IllegalArgumentException("There are no optional elements.");
         }

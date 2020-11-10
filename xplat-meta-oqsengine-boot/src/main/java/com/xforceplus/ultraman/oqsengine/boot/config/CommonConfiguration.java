@@ -19,7 +19,7 @@ import com.xforceplus.ultraman.oqsengine.status.table.TableCleaner;
 import com.xforceplus.ultraman.oqsengine.status.table.TimeTable;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.DecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -85,7 +85,7 @@ public class CommonConfiguration {
     @Bean
     public StorageStrategyFactory masterStorageStrategy() {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new DecimalStorageStrategy());
+        storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
         return storageStrategyFactory;
     }
 
@@ -94,22 +94,6 @@ public class CommonConfiguration {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
         return storageStrategyFactory;
-    }
-
-    @Bean("ioThreadPool")
-    public ExecutorService ioThreadPool(
-        @Value("${threadPool.io.worker:0}") int worker, @Value("${threadPool.io.queue:500}") int queue) {
-        int useWorker = worker;
-        int useQueue = queue;
-        if (useWorker == 0) {
-            useWorker = Runtime.getRuntime().availableProcessors() + 1;
-        }
-
-        if (useQueue < 500) {
-            useQueue = 500;
-        }
-
-        return buildThreadPool(useWorker, useQueue, "oqsengine-io", false);
     }
 
     @Bean("callThreadPool")

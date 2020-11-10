@@ -12,15 +12,15 @@ import java.sql.SQLException;
  * @version 0.1 2020/2/17 14:18
  * @since 1.8
  */
-public interface TransactionExecutor extends Executor<Task, Object> {
+public interface TransactionExecutor extends Executor<StorageTask, Object> {
 
     /**
      * 事务执行任务.
      *
-     * @param task 目标任务.
+     * @param storageTask 目标任务.
      * @return 执行结果.
      * @throws SQLException 执行异常.
      */
     @Override
-    Object execute(Task task) throws SQLException;
+    Object execute(StorageTask storageTask) throws SQLException;
 }

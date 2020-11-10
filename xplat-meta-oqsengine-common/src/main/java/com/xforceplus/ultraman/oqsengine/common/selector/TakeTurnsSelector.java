@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.common.selector;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -15,8 +17,8 @@ public class TakeTurnsSelector<V> implements Selector<V> {
     private List<V> targets;
     private int point = 0;
 
-    public TakeTurnsSelector(List<V> targets) {
-        this.targets = targets;
+    public TakeTurnsSelector(Collection<V> targets) {
+        this.targets = new ArrayList<>(targets);
     }
 
     @Override

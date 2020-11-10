@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.TestCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
@@ -15,6 +16,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.ReplaceExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -22,6 +24,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
+
+import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.INIT_ID;
 
 
 /**
@@ -65,11 +69,11 @@ public class ConsumerRunnerTest extends AbstractContainer {
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
         try {
-            initData(EntityGenerateToolBar.generateFixedEntities(0), 1, Long.MAX_VALUE, false);
+            initData(EntityGenerateToolBar.generateFixedEntities(0,0), 1, Long.MAX_VALUE, false);
 
             Thread.sleep(1000);
 
-            initData(EntityGenerateToolBar.generateFixedEntities(1), 1, 1, true);
+            initData(EntityGenerateToolBar.generateFixedEntities(0, 1), 1, 1, true);
 
         } catch (Exception ex) {
             tx.rollback();
@@ -80,9 +84,52 @@ public class ConsumerRunnerTest extends AbstractContainer {
         tx.commit();
         transactionManager.finish();
 
-        Thread.sleep(300000);
+        Thread.sleep(10000);
+
+        CDCMetrics cdcMetrics = testCallbackService.queryLastUnCommit();
+        Assert.assertNotNull(cdcMetrics);
+        Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
+        Assert.assertEquals(1, cdcMetrics.getCdcAckMetrics().getCommitList().size());
+
+        Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
+        Assert.assertEquals(10, cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
     }
 
+    @Test
+    public void loopTest() throws  InterruptedException, SQLException {
+        int t = 100;
+        while (t < 10000) {
+            Transaction tx = transactionManager.create();
+            transactionManager.bind(tx.id());
+            try {
+                initData(EntityGenerateToolBar.generateFixedEntities(t,0), 1, Long.MAX_VALUE, false);
+
+                Thread.sleep(1000);
+
+                initData(EntityGenerateToolBar.generateFixedEntities(t, 1), 1, 1, true);
+
+            } catch (Exception ex) {
+                tx.rollback();
+                throw ex;
+            }
+
+            //将事务正常提交,并从事务管理器中销毁事务.
+            tx.commit();
+            transactionManager.finish();
+
+            t = t + 100;
+        }
+
+        Thread.sleep(10000);
+
+        CDCMetrics cdcMetrics = testCallbackService.queryLastUnCommit();
+        Assert.assertNotNull(cdcMetrics);
+        Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
+        Assert.assertEquals(1, cdcMetrics.getCdcAckMetrics().getCommitList().size());
+
+        Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
+        Assert.assertEquals(10, cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
+    }
 
     private void initData(IEntity[] datas, long tx, long commit, boolean replacement) {
         for (IEntity entity : datas) {
@@ -93,7 +140,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
             }
         }
     }
-
 
     private int build(IEntity entity, long tx)  {
         try {
