@@ -51,6 +51,8 @@ data:
           call:
             worker: {{ .Values.storage.threadPool.call.worker | default "0" }}
             queue: {{ .Values.storage.threadPool.call.queue | default "500" }}
+          cdc:
+            worker: {{ .Values.storage.threadPool.call.worker | default "0" }}
         maxVisibleNumber: {{ .Values.storage.maxVisibleNumber | default "10000" }}
         storage:
           timeoutMs:
@@ -76,6 +78,8 @@ data:
             password: {{ .Values.cdc.connect.password }}
             subscribeFilter: {{ .Values.cdc.connect.subscribeFilter | default ".*\.oqsbigentity.*" | quote }}
             batchSize: {{ .Values.cdc.connect.batchSize | default "2048" | quote }}
+          execution:
+            timeoutMs: {{ .Values.cdc.execution.timeoutMs | default "30000" | quote }}
     oqsengine-ds.conf: |
         {
           "dataSources": {

@@ -39,7 +39,7 @@ public class CDCConfiguration {
             @Value("${cdc.connect.username}") String userName,
             @Value("${cdc.connect.password}") String password,
             @Value("${cdc.connect.subscribeFilter}") String subscribeFilter,
-            @Value("${cdc.connect.batchSize}") int batchSize) {
+            @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
 
         ClusterCDCConnector clusterCanalConnector = new ClusterCDCConnector();
@@ -58,7 +58,7 @@ public class CDCConfiguration {
             @Value("${cdc.connect.username}") String userName,
             @Value("${cdc.connect.password}") String password,
             @Value("${cdc.connect.subscribeFilter}") String subscribeFilter,
-            @Value("${cdc.connect.batchSize}") int batchSize) {
+            @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
         singleCDCConnector.init(connectString, port, destination, userName, password);

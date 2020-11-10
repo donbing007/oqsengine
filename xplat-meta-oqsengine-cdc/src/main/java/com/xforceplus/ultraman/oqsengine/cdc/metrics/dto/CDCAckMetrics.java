@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.cdc.metrics;
+package com.xforceplus.ultraman.oqsengine.cdc.metrics.dto;
 
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.CDCStatus;
 
@@ -13,7 +13,7 @@ import java.util.List;
  * date : 2020/11/3
  * @since : 1.8
  */
-public class CDCMetrics {
+public class CDCAckMetrics {
 
     //  表示当前的cdc消费端连接是否正常(true代表正常)
     private CDCStatus cdcConsumerStatus;
@@ -33,7 +33,7 @@ public class CDCMetrics {
     //  上一次成功消费后的tx事务列表
     private List<Long> commitList;
 
-    public CDCMetrics(CDCStatus cdcConsumerStatus) {
+    public CDCAckMetrics(CDCStatus cdcConsumerStatus) {
         this.cdcConsumerStatus = cdcConsumerStatus;
         this.commitList = new ArrayList<>();
     }

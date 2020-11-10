@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,12 +32,16 @@ public class CDCDaemonService {
     private ConsumerService consumerService;
 
     @Resource
-    private CDCMetricsCallback cdcMetricsCallback;
+    private CDCMetricsService cdcMetricsService;
 
     @Resource
     private CDCConnector cdcConnector;
 
     private ConsumerRunner consumerRunner;
+
+    public void stopDaemon() {
+        consumerRunner.shutdown();
+    }
 
     @PostConstruct
     public void startDaemon() {
@@ -46,10 +50,10 @@ public class CDCDaemonService {
 
         logger.info("current node = {}", nodeId);
         if (nodeId == DAEMON_NODE_ID && null == consumerRunner) {
-            logger.info("node {} 启动CDC守护进程", nodeId);
-            consumerRunner = new ConsumerRunner(consumerService, cdcMetricsCallback, cdcConnector);
+            logger.info("node-{} 启动CDC守护进程", nodeId);
+            consumerRunner = new ConsumerRunner(consumerService, cdcMetricsService, cdcConnector);
             consumerRunner.start();
-            logger.info("node {} 启动CDC守护进程成功", nodeId);
+            logger.info("node-{} 启动CDC守护进程成功", nodeId);
         }
     }
 }

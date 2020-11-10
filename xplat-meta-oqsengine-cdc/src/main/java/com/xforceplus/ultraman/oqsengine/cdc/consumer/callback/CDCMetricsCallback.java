@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.callback;
 
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 
 /**
  * desc :
@@ -12,5 +13,18 @@ import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetrics;
  */
 public interface CDCMetricsCallback {
 
-    void cdcCallBack(CDCMetrics cdcMetrics);
+    /*
+        提交确认信息
+     */
+    void cdcAck(CDCAckMetrics ackMetrics);
+
+    /*
+        需要在一个原子操作时保证一致性的信息，保证在宕机后从redis恢复的完整性
+     */
+    void cdcSaveLastUnCommit(CDCMetrics cdcMetrics);
+
+    /*
+        需要在一个原子操作时保证一致性的信息，保证在宕机后从redis恢复的完整性
+    */
+    CDCMetrics queryLastUnCommit();
 }

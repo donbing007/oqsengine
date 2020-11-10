@@ -102,7 +102,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                     @Override
                     public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                         return QueryConditionExecutor.build(indexTableName, resource, sphinxQLConditionsBuilderFactory, storageStrategyFactory, maxQueryTimeMs)
-                                .execute(Tuple.of(entityClass.id(), conditions, page, sort, filterIds));
+                                .execute(Tuple.of(entityClass.id(), conditions, page, sort, filterIds, commitId));
                     }
                 });
     }

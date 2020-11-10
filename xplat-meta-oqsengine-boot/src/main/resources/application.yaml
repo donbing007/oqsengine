@@ -25,6 +25,8 @@ threadPool:
   call:
     worker: 0
     queue: 1000
+  cdc:
+    worker: 0
 
 maxVisibleNumber: 10000
 
@@ -77,3 +79,5 @@ cdc:
     password: root
     subscribeFilter: .*\.oqsbigentity.*
     batchSize: 2048
+  execution:
+    timeoutMs: 30000

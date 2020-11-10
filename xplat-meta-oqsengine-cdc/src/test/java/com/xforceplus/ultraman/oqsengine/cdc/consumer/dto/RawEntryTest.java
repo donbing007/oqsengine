@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.dto;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.CDCStatus;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,7 +33,7 @@ public class RawEntryTest {
     }
 
     @Test
-    public void testHashSetRecover() {
+    public void testHashMapRecover() {
         for(int i = 0; i < size; i++) {
             rawEntries.put(Long.valueOf(i % expectedSize + ""), rawLists.get(i));
         }
@@ -51,16 +50,5 @@ public class RawEntryTest {
     private RawEntry buildRawEntry(int i) {
         return new RawEntry(System.currentTimeMillis(),
                 i % 2 == 0 ? CanalEntry.EventType.UPDATE : CanalEntry.EventType.DELETE, new ArrayList<>());
-    }
-
-    private CDCStatus getCDCStatus() {
-        Random random = new Random();
-        int finalRandom = random.nextInt() % CDCStatus.values().length;
-        for (CDCStatus v : CDCStatus.values()) {
-            if (finalRandom == v.ordinal()) {
-                return v;
-            }
-        }
-        return null;
     }
 }
