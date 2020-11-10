@@ -33,8 +33,8 @@ public interface IndexStorage extends Storage {
      * @return 搜索结果列表.
      * @throws SQLException
      */
-    Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page
-            , List<Long> filterIds, Long commitId)
+    Collection<EntityRef> select(
+        Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, long commitId)
         throws SQLException;
 
     /**

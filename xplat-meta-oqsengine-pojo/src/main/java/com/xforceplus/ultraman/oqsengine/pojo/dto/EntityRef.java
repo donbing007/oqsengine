@@ -15,6 +15,7 @@ public final class EntityRef implements Serializable {
     private long pref;
     private long cref;
     private String orderValue;
+    private int op;
 
     public EntityRef() {
     }
@@ -62,6 +63,14 @@ public final class EntityRef implements Serializable {
         this.orderValue = orderValue;
     }
 
+    public int getOp() {
+        return op;
+    }
+
+    public void setOp(int op) {
+        this.op = op;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -89,6 +98,7 @@ public final class EntityRef implements Serializable {
         sb.append(", pref=").append(pref);
         sb.append(", cref=").append(cref);
         sb.append(", orderValue='").append(orderValue).append('\'');
+        sb.append(", op=").append(op);
         sb.append('}');
         return sb.toString();
     }
