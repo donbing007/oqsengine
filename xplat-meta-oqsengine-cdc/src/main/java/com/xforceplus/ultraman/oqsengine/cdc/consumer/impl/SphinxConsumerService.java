@@ -3,7 +3,9 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 import com.alibaba.fastjson.JSON;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.google.common.collect.Maps;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntityValue;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntry;
 
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns;
@@ -22,6 +24,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageE
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StopWatch;
 
 
 import javax.annotation.Resource;
@@ -103,8 +106,14 @@ public class SphinxConsumerService implements ConsumerService {
             switch (entry.getEntryType()) {
 
                 case TRANSACTIONEND:
+                    StopWatch stopWatch = new StopWatch();
+                    stopWatch.start();
+                    Map<Long, IEntityValue> prefEntityValueMaps =
+                            convertToEntityValueMap(cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues());
+                    stopWatch.stop();
+                    logger.debug("convert use time : {}", stopWatch.getLastTaskTimeMillis());
                     //  同步rawEntries到Sphinx
-                    multiSyncSphinx(rawEntries, cdcMetrics);
+                    multiSyncSphinx(rawEntries, prefEntityValueMaps, cdcMetrics);
 
                     //  每次Transaction结束,将unCommitId加入到commitList中
                     if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitId() > INIT_ID) {
@@ -129,29 +138,40 @@ public class SphinxConsumerService implements ConsumerService {
 
         //  unCommit RawEntry should sync to sphinx
         if (!rawEntries.isEmpty()) {
-            multiSyncSphinx(rawEntries, cdcMetrics);
+            Map<Long, IEntityValue> prefEntityValueMaps =
+                    convertToEntityValueMap(cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues());
+            multiSyncSphinx(rawEntries, prefEntityValueMaps, cdcMetrics);
             syncSize += rawEntries.size();
         }
 
         cdcMetrics.getCdcUnCommitMetrics().setExecuteJobCount(syncSize);
     }
 
-    private void multiSyncSphinx(List<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
+    private Map<Long, IEntityValue> convertToEntityValueMap(Map<Long, RawEntityValue> rawEntityValueMap) throws SQLException {
+        Map<Long, IEntityValue> valueMap = Maps.newHashMap();
+        for (Map.Entry<Long, RawEntityValue> vEntry : rawEntityValueMap.entrySet()) {
+
+            valueMap.put(vEntry.getKey(), buildEntityValue(vEntry.getKey(), vEntry.getValue().getMeta(), vEntry.getValue().getAttr()));
+        }
+        return valueMap;
+    }
+
+    private void multiSyncSphinx(List<RawEntry> rawEntries, Map<Long, IEntityValue> prefEntityValueMaps, CDCMetrics cdcMetrics) throws SQLException {
         if (!rawEntries.isEmpty()) {
             if (rawEntries.size() == SINGLE_CONSUMER) {
-                sphinxConsume(rawEntries.get(0), cdcMetrics);
+                sphinxConsume(rawEntries.get(0), prefEntityValueMaps, cdcMetrics);
             } else {
-                multiConsume(rawEntries, cdcMetrics);
+                multiConsume(rawEntries, prefEntityValueMaps, cdcMetrics);
             }
         }
     }
 
-    private void multiConsume(List<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
+    private void multiConsume(List<RawEntry> rawEntries, Map<Long, IEntityValue> prefEntityValueMaps, CDCMetrics cdcMetrics) throws SQLException {
         CountDownLatch latch = new CountDownLatch(rawEntries.size());
         List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>(rawEntries.size());
 
         rawEntries.forEach((value) -> futures.add(consumerPool.submit(
-                new SyncSphinxCallable(value, cdcMetrics, latch))));
+                new SyncSphinxCallable(value, cdcMetrics, prefEntityValueMaps, latch))));
 
         try {
             if (!latch.await(executionTimeout, TimeUnit.MILLISECONDS)) {
@@ -208,13 +228,9 @@ public class SphinxConsumerService implements ConsumerService {
     private void addPrefEntityValue(List<CanalEntry.Column> columns, CDCMetrics cdcMetrics) throws SQLException {
         //  有子类, 将父类的EntityValue存入的relationMap中
         if (getLongFromColumn(columns, CREF) > ZERO) {
-            long id = getLongFromColumn(columns, ID);
-
-            IEntityValue entityValue = buildEntityValue(
-                    id, getStringFromColumn(columns, META), getStringFromColumn(columns, ATTRIBUTE));
-
-
-            cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues().put(id, entityValue);
+            cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues()
+                    .put(getLongFromColumn(columns, ID),
+                            new RawEntityValue(getStringFromColumn(columns, ATTRIBUTE), getStringFromColumn(columns, META)));
         }
     }
 
@@ -283,11 +299,11 @@ public class SphinxConsumerService implements ConsumerService {
                 eventType.equals(CanalEntry.EventType.UPDATE);
     }
 
-    private void sphinxConsume(RawEntry rawEntry, CDCMetrics cdcMetrics) throws SQLException {
+    private void sphinxConsume(RawEntry rawEntry, Map<Long, IEntityValue> prefEntityValueMaps, CDCMetrics cdcMetrics) throws SQLException {
         if (isDelete(rawEntry.getColumns())) {
             doDelete(rawEntry.getColumns());
         } else {
-            doReplace(rawEntry.getColumns(), cdcMetrics);
+            doReplace(rawEntry.getColumns(), prefEntityValueMaps);
         }
 
         syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
@@ -307,7 +323,7 @@ public class SphinxConsumerService implements ConsumerService {
         return getBooleanFromColumn(columns, DELETED);
     }
 
-    private void doReplace(List<CanalEntry.Column> columns, CDCMetrics cdcMetrics) throws SQLException {
+    private void doReplace(List<CanalEntry.Column> columns, Map<Long, IEntityValue> prefEntityValueMaps) throws SQLException {
 
         long id = getLongFromColumn(columns, ID);
         long cref = getLongFromColumn(columns, CREF);
@@ -330,7 +346,7 @@ public class SphinxConsumerService implements ConsumerService {
         //  是父类
         if (cref > 0) {
             //  通过自己的ID拿到对应的EntityValue
-            entityValue = entityValueGet(id, cdcMetrics);
+            entityValue = entityValueGet(pref, prefEntityValueMaps);
         } else {
             entityValue = buildEntityValue(
                     storageEntity.getId(), getStringFromColumn(columns, META), getStringFromColumn(columns, ATTRIBUTE));
@@ -341,7 +357,7 @@ public class SphinxConsumerService implements ConsumerService {
         */
         if (pref > 0) {
             //  通过pref拿到父类的EntityValue
-            IEntityValue entityValueF = entityValueGet(pref, cdcMetrics);
+            IEntityValue entityValueF = entityValueGet(pref, prefEntityValueMaps);
             entityValue.addValues(entityValueF.values());
         }
 
@@ -382,8 +398,8 @@ public class SphinxConsumerService implements ConsumerService {
         return results;
     }
 
-    private IEntityValue entityValueGet(long pref, CDCMetrics cdcMetrics) throws SQLException {
-        IEntityValue entityValue = cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues().get(pref);
+    private IEntityValue entityValueGet(long pref, Map<Long, IEntityValue> prefEntityValueMaps) throws SQLException {
+        IEntityValue entityValue = prefEntityValueMaps.get(pref);
         if (null == entityValue) {
             throw new SQLException("pref's entityValue could not be null in relation pool when have cref.");
         }
@@ -394,17 +410,19 @@ public class SphinxConsumerService implements ConsumerService {
         private CountDownLatch latch;
         private RawEntry rawEntry;
         private CDCMetrics cdcMetrics;
+        private Map<Long, IEntityValue> prefEntityValueMaps;
 
-        public SyncSphinxCallable(RawEntry rawEntry, CDCMetrics cdcMetrics, CountDownLatch latch) {
+        public SyncSphinxCallable(RawEntry rawEntry, CDCMetrics cdcMetrics, Map<Long, IEntityValue> prefEntityValueMaps, CountDownLatch latch) {
             this.rawEntry = rawEntry;
             this.latch = latch;
             this.cdcMetrics = cdcMetrics;
+            this.prefEntityValueMaps = prefEntityValueMaps;
         }
 
         @Override
         public Boolean call() throws Exception {
             try {
-                sphinxConsume(rawEntry, cdcMetrics);
+                sphinxConsume(rawEntry, prefEntityValueMaps, cdcMetrics);
             } finally {
                 latch.countDown();
             }
