@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import com.alibaba.fastjson.JSONObject;
-import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -10,13 +9,15 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
+import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardStorageTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.*;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
@@ -29,8 +30,9 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -44,11 +46,8 @@ public class SQLMasterStorage implements MasterStorage {
 
     final Logger logger = LoggerFactory.getLogger(SQLMasterStorage.class);
 
-    @Resource(name = "masterDataSourceSelector")
-    private Selector<DataSource> dataSourceSelector;
-
-    @Resource(name = "tableNameSelector")
-    private Selector<String> tableNameSelector;
+    @Resource(name = "masterDataSource")
+    private DataSource masterDataSource;
 
     @Resource(name = "storageJDBCTransactionExecutor")
     private TransactionExecutor transactionExecutor;
@@ -56,16 +55,22 @@ public class SQLMasterStorage implements MasterStorage {
     @Resource(name = "masterStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
 
-    @Resource(name = "ioThreadPool")
-    private ExecutorService threadPool;
-
     @Resource(name = "entityValueBuilder")
     private IEntityValueBuilder<String> entityValueBuilder;
+
+    @Resource(name = "masterConditionsBuilderFactory")
+    private SQLJsonConditionsBuilderFactory conditionsBuilderFactory;
+
+    private String tableName;
 
     private long queryTimeout;
 
     public void setQueryTimeout(long queryTimeout) {
         this.queryTimeout = queryTimeout;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 
     @Override
@@ -78,86 +83,91 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public Collection<EntityRef> select(long commitid, Conditions conditions, IEntityClass entityClass) {
-        return null;
+    public Collection<EntityRef> select(long commitid, Conditions conditions, IEntityClass entityClass, Sort sort)
+        throws SQLException {
+        return (Collection<EntityRef>) transactionExecutor.execute(new DataSourceNoShardStorageTask(masterDataSource) {
+            @Override
+            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                return QueryLimitCommitidByConditionsExecutor.build(
+                    tableName,
+                    resource,
+                    entityClass,
+                    sort,
+                    commitid,
+                    queryTimeout,
+                    conditionsBuilderFactory,
+                    storageStrategyFactory).execute(conditions);
+            }
+        });
     }
 
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
         return (Optional<IEntity>) transactionExecutor.execute(
-            new DataSourceShardingTask(dataSourceSelector, Long.toString(id)) {
+            new DataSourceNoShardStorageTask(masterDataSource) {
 
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                    Optional<StorageEntity> seOP = QueryExecutor.buildHaveDetail(tableNameSelector, resource).execute(id);
+                    Optional<StorageEntity> seOP = QueryExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
                     if (seOP.isPresent()) {
                         return buildEntityFromStorageEntity(seOP.get(), entityClass);
                     } else {
                         return Optional.empty();
                     }
                 }
+
             });
     }
 
     @Override
     public Collection<IEntity> selectMultiple(Map<Long, IEntityClass> ids) throws SQLException {
-        Map<DataSource, List<Long>> groupedMap = ids.keySet().stream().collect(
-            Collectors.groupingBy(id -> dataSourceSelector.select(Long.toString(id))));
 
-        CountDownLatch latch = new CountDownLatch(groupedMap.keySet().size());
-        List<Future> futures = new ArrayList(groupedMap.keySet().size());
+        Collection<StorageEntity> storageEntities = (Collection<StorageEntity>) transactionExecutor.execute(
+            new DataSourceNoShardStorageTask(masterDataSource) {
+                @Override
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
 
-        for (List<Long> groupedIds : groupedMap.values()) {
-            futures.add(threadPool.submit(new MultipleSelectCallable(latch, groupedIds, ids)));
-        }
-
-        try {
-            if (!latch.await(queryTimeout, TimeUnit.MILLISECONDS)) {
-
-                for (Future f : futures) {
-                    f.cancel(true);
+                    return MultipleQueryExecutor.build(tableName, resource, queryTimeout).execute(ids.keySet());
                 }
-
-                throw new SQLException("Query failed, timeout.");
             }
-        } catch (InterruptedException e) {
-            throw new SQLException(e.getMessage(), e);
-        }
+        );
 
-        List<IEntity> results = new ArrayList<>(ids.size());
-        for (Future<Collection<IEntity>> f : futures) {
+        return storageEntities.parallelStream().filter(se -> ids.containsKey(se.getId())).map(se -> {
+            IEntityClass entityClass = ids.get(se.getId());
+            Optional<IEntity> op;
             try {
-                results.addAll(f.get());
-            } catch (Exception e) {
-                throw new SQLException(e.getMessage(), e);
+                op = buildEntityFromStorageEntity(se, entityClass);
+            } catch (SQLException e) {
+                throw new RuntimeException(e.getMessage(), e);
             }
-        }
 
-        return results;
+            // 不可能为空.
+            return op.get();
+
+        }).collect(Collectors.toList());
+
     }
 
     @Override
     public int synchronize(long sourceId, long targetId) throws SQLException {
-        // 需要在内部类中修改,所以使用了引用类型.
-
         Optional<StorageEntity> oldOp = (Optional<StorageEntity>) transactionExecutor.execute(
-            new DataSourceShardingTask(dataSourceSelector, Long.toString(sourceId)) {
+            new DataSourceNoShardStorageTask(masterDataSource) {
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                    return QueryExecutor.buildNoDetail(tableNameSelector, resource).execute(sourceId);
+                    return QueryExecutor.buildNoDetail(tableName, resource, queryTimeout).execute(sourceId);
                 }
             }
         );
         if (oldOp.isPresent()) {
 
             return (int) transactionExecutor.execute(
-                new DataSourceShardingTask(dataSourceSelector, Long.toString(targetId)) {
+                new DataSourceNoShardStorageTask(masterDataSource) {
                     @Override
                     public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                         StorageEntity targetEntity = oldOp.get();
                         targetEntity.setId(targetId);
 
-                        return UpdateVersionAndTxExecutor.build(tableNameSelector, resource).execute(targetEntity);
+                        return UpdateVersionAndTxExecutor.build(tableName, resource, queryTimeout).execute(targetEntity);
                     }
                 }
 
@@ -174,8 +184,7 @@ public class SQLMasterStorage implements MasterStorage {
         checkId(entity);
 
         return (int) transactionExecutor.execute(
-            new DataSourceShardingTask(
-                dataSourceSelector, Long.toString(entity.id())) {
+            new DataSourceNoShardStorageTask(masterDataSource) {
 
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -188,7 +197,7 @@ public class SQLMasterStorage implements MasterStorage {
                     storageEntity.setAttribute(toJson(entity.entityValue()));
                     storageEntity.setMeta(buildSearchAbleSyncMeta(entity.entityClass()));
 
-                    return BuildExecutor.build(tableNameSelector, resource).execute(storageEntity);
+                    return BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
                 }
             });
     }
@@ -198,8 +207,7 @@ public class SQLMasterStorage implements MasterStorage {
         checkId(entity);
 
         return (int) transactionExecutor.execute(
-            new DataSourceShardingTask(
-                dataSourceSelector, Long.toString(entity.id())) {
+            new DataSourceNoShardStorageTask(masterDataSource) {
 
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -213,7 +221,7 @@ public class SQLMasterStorage implements MasterStorage {
                     storageEntity.setAttribute(toJson(entity.entityValue()));
                     storageEntity.setMeta(buildSearchAbleSyncMeta(entity.entityClass()));
 
-                    return ReplaceExecutor.build(tableNameSelector, resource).execute(storageEntity);
+                    return ReplaceExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
 
                 }
             });
@@ -224,8 +232,7 @@ public class SQLMasterStorage implements MasterStorage {
         checkId(entity);
 
         return (int) transactionExecutor.execute(
-            new DataSourceShardingTask(
-                dataSourceSelector, Long.toString(entity.id())) {
+            new DataSourceNoShardStorageTask(masterDataSource) {
 
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -237,7 +244,7 @@ public class SQLMasterStorage implements MasterStorage {
                      * 删除数据时不再关心字段信息.
                      */
 
-                    return DeleteExecutor.build(tableNameSelector, resource).execute(storageEntity);
+                    return DeleteExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
                 }
             });
     }
@@ -274,72 +281,6 @@ public class SQLMasterStorage implements MasterStorage {
         }
         return object.toJSONString();
 
-    }
-
-    /**
-     * 多重 id 查询任务,每一个任务表示一个分库的查询任务.
-     */
-    private class MultipleSelectCallable implements Callable<Collection<IEntity>> {
-
-        private CountDownLatch latch;
-        // 按照表名分区的 id.
-        private Map<String, List<Long>> ids;
-        // 目标 id总量.
-        private int size;
-        // id 对应 entityClass 速查表.
-        private Map<Long, IEntityClass> entityTable;
-
-        private String dataSourceShardKey;
-
-        public MultipleSelectCallable(CountDownLatch latch, List<Long> ids, Map<Long, IEntityClass> entityTable) {
-            this.latch = latch;
-            this.entityTable = entityTable;
-            // 按表区分.
-            this.ids = ids.stream().collect(Collectors.groupingBy(id -> tableNameSelector.select(id.toString())));
-            size = ids.size();
-
-            dataSourceShardKey = Long.toString(ids.get(0));
-        }
-
-        @Override
-        public Collection<IEntity> call() throws Exception {
-            try {
-                return (Collection<IEntity>) transactionExecutor.execute(
-                    new DataSourceShardingTask(
-                        dataSourceSelector, dataSourceShardKey) {
-
-                        @Override
-                        public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                            List<IEntity> entities = new ArrayList(size);
-                            for (String table : ids.keySet()) {
-                                entities.addAll(select(table, ids.get(table), resource));
-                            }
-
-                            return entities;
-                        }
-
-                        private Collection<IEntity> select(
-                            String tableName, List<Long> partitionTableIds, TransactionResource res)
-                            throws SQLException {
-
-                            List<StorageEntity> storageEntities =
-                                (List<StorageEntity>) MultipleQueryExecutor.build(tableName, res).execute(partitionTableIds);
-                            List<IEntity> entities = new ArrayList<>(storageEntities.size());
-                            Optional<IEntity> enOp;
-                            for (StorageEntity storageEntity : storageEntities) {
-                                enOp = buildEntityFromStorageEntity(storageEntity, entityTable.get(storageEntity.getId()));
-                                if (enOp.isPresent()) {
-                                    entities.add(enOp.get());
-                                }
-                            }
-
-                            return entities;
-                        }
-                    });
-            } finally {
-                latch.countDown();
-            }
-        }
     }
 
     private Optional<IEntity> buildEntityFromStorageEntity(StorageEntity se, IEntityClass entityClass) throws SQLException {

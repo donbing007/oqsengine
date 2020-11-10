@@ -1,13 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,27 +18,25 @@ import java.util.Collections;
  * @version 0.1 2020/11/2 14:41
  * @since 1.8
  */
-public class BuildExecutor implements Executor<StorageEntity, Integer> {
-
-    final Logger logger = LoggerFactory.getLogger(BuildExecutor.class);
-
-    private Selector<String> tableNameSelector;
-    private TransactionResource<Connection> resource;
+public class BuildExecutor extends AbstractMasterExecutor<StorageEntity, Integer> {
 
     public static Executor<StorageEntity, Integer> build(
-        Selector<String> tableNameSelector, TransactionResource resource) {
-        return new BuildExecutor(tableNameSelector, resource);
+        String tableName, TransactionResource resource, long timeout) {
+        return new BuildExecutor(tableName, resource, timeout);
     }
 
-    public BuildExecutor(Selector<String> tableNameSelector, TransactionResource resource) {
-        this.tableNameSelector = tableNameSelector;
-        this.resource = resource;
+    public BuildExecutor(String tableName, TransactionResource<Connection> resource) {
+        super(tableName, resource);
+    }
+
+    public BuildExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
+        super(tableName, resource, timeout);
     }
 
     @Override
     public Integer execute(StorageEntity storageEntity) throws SQLException {
         String sql = buildSQL(storageEntity);
-        PreparedStatement st = resource.value().prepareStatement(sql);
+        PreparedStatement st = getResource().value().prepareStatement(sql);
         st.setLong(1, storageEntity.getId());
         st.setLong(2, storageEntity.getEntity());
         st.setLong(3, storageEntity.getTx());
@@ -55,9 +50,7 @@ public class BuildExecutor implements Executor<StorageEntity, Integer> {
         st.setString(11, storageEntity.getAttribute());
         st.setString(12, storageEntity.getMeta());
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
+        checkTimeout(st);
 
         try {
             return st.executeUpdate();
@@ -71,7 +64,7 @@ public class BuildExecutor implements Executor<StorageEntity, Integer> {
     private String buildSQL(StorageEntity storageEntity) {
         StringBuilder buff = new StringBuilder();
         // insert into ${table} (id, entity, tx, commitid, version, op, time, pref, cref, deleted, attribute,meta) values(?,?,?,?,?,?,?,?,?,?)
-        buff.append("INSERT INTO ").append(tableNameSelector.select(Long.toString(storageEntity.getId())))
+        buff.append("INSERT INTO ").append(getTableName())
             .append(' ')
             .append("(").append(String.join(",",
             FieldDefine.ID,

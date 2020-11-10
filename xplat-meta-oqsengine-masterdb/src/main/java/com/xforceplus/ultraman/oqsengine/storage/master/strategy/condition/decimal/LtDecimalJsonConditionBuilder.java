@@ -10,8 +10,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  */
 public class LtDecimalJsonConditionBuilder extends AbstractJsonDecimalConditionBuilder {
 
-    public LtDecimalJsonConditionBuilder(ConditionOperator operator, StorageStrategyFactory storageStrategyFactory) {
-        super(operator, storageStrategyFactory);
+    public LtDecimalJsonConditionBuilder(StorageStrategyFactory storageStrategyFactory) {
+        super(ConditionOperator.LESS_THAN, storageStrategyFactory);
     }
 
     @Override

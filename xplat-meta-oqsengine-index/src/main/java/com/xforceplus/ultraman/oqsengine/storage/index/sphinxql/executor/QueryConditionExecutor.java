@@ -45,11 +45,11 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
     private Long maxQueryTimeMs;
 
     public QueryConditionExecutor(
-            String indexTableName
-            , TransactionResource<Connection> resource
-            , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
-            , StorageStrategyFactory storageStrategyFactory
-            , Long maxQueryTimeMs
+        String indexTableName
+        , TransactionResource<Connection> resource
+        , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
+        , StorageStrategyFactory storageStrategyFactory
+        , Long maxQueryTimeMs
     ) {
         this.indexTableName = indexTableName;
         this.resource = resource;
@@ -59,11 +59,11 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
     }
 
     public static Executor<Tuple6<Long, Conditions, Page, Sort, List<Long>, Long>, List<EntityRef>> build(
-            String indexTableName
-            , TransactionResource<Connection> resource
-            , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
-            , StorageStrategyFactory storageStrategyFactory
-            , Long maxQueryTimeMs
+        String indexTableName
+        , TransactionResource<Connection> resource
+        , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
+        , StorageStrategyFactory storageStrategyFactory
+        , Long maxQueryTimeMs
     ) {
         return new QueryConditionExecutor(indexTableName, resource, conditionsBuilderFactory, storageStrategyFactory, maxQueryTimeMs);
     }
@@ -202,8 +202,8 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
             st.setLong(2, 0);
             st.setLong(3, page.getPageSize() * page.getIndex());
             st.setLong(4, page.hasVisibleTotalCountLimit() ?
-                    page.getVisibleTotalCount()
-                    : page.getPageSize() * page.getIndex());
+                page.getVisibleTotalCount()
+                : page.getPageSize() * page.getIndex());
             // add max query timeout.
             st.setLong(5, maxQueryTimeMs);
             if (logger.isDebugEnabled()) {
@@ -214,7 +214,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
             List<EntityRef> refs = new ArrayList((int) page.getPageSize());
             while (rs.next()) {
                 refs.add(new EntityRef(rs.getLong(FieldDefine.ID), rs.getLong(FieldDefine.PREF),
-                        rs.getLong(FieldDefine.CREF)));
+                    rs.getLong(FieldDefine.CREF)));
             }
 
             if (!page.isSinglePage()) {

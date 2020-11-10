@@ -21,4 +21,5 @@ public class NoSelector<V> implements Selector<V> {
     public V select(String key) {
         return fixed;
     }
+
 }

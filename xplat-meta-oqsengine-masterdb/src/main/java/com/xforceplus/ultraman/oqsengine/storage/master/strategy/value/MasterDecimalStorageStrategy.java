@@ -4,9 +4,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.common.StringStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 
 import java.math.BigDecimal;
 
@@ -17,10 +18,16 @@ import java.math.BigDecimal;
  * @version 0.1 2020/3/4 18:08
  * @since 1.8
  */
-public class DecimalStorageStrategy extends StringStorageStrategy {
+public class MasterDecimalStorageStrategy implements StorageStrategy {
+
     @Override
     public FieldType fieldType() {
         return FieldType.DECIMAL;
+    }
+
+    @Override
+    public StorageType storageType() {
+        return StorageType.STRING;
     }
 
     @Override
@@ -30,6 +37,18 @@ public class DecimalStorageStrategy extends StringStorageStrategy {
 
     @Override
     public StorageValue toStorageValue(IValue value) {
-        return new StringStorageValue(Long.toString(value.getField().id()), value.getValue().toString(), true);
+        String decValue = value.valueToString();
+
+        // Ensure correct formatting.
+        if (decValue.indexOf('.') < 0) {
+            return new StringStorageValue(Long.toString(value.getField().id()), decValue + ".0", true);
+        } else {
+            return new StringStorageValue(Long.toString(value.getField().id()), decValue, true);
+        }
+    }
+
+    @Override
+    public boolean isMultipleStorageValue() {
+        return false;
     }
 }

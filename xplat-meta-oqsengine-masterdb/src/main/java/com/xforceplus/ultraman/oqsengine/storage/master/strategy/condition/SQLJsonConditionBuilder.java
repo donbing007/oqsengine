@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
@@ -46,25 +47,86 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
     public String build(Condition condition) {
         IEntityField field = condition.getField();
         StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(field.type());
-        StorageValue storageValue = storageStrategy.toStorageValue(condition.getFirstValue());
-
         StringBuilder sql = new StringBuilder();
-        while (storageValue != null) {
-            sql.append(FieldDefine.ATTRIBUTE)
-                .append("->>'$.")
-                .append(FieldDefine.ATTRIBUTE_PREFIX).append(storageValue.storageName())
-                .append("\' ")
-                .append(condition.getOperator().getSymbol())
-                .append(' ');
-            if (storageValue.type() == StorageType.STRING) {
-                sql.append("\"").append(storageValue.value()).append("\"");
-            } else {
-                sql.append(storageValue.value());
+
+        sql.append(FieldDefine.ATTRIBUTE)
+            .append("->>'$.")
+            .append(FieldDefine.ATTRIBUTE_PREFIX).append(
+            storageStrategy.toStorageNames(field).stream().findFirst().get())
+            .append("\' ")
+            .append(condition.getOperator().getSymbol())
+            .append(' ');
+
+        StorageValue storageValue = null;
+        if (ConditionOperator.MULTIPLE_EQUALS == condition.getOperator()) {
+
+            sql.append("(");
+            final int emptySize = sql.length();
+            for (IValue value : condition.getValues()) {
+                if (sql.length() > emptySize) {
+                    sql.append(",");
+                }
+                storageValue = storageStrategy.toStorageValue(value);
+                appendValue(sql, storageValue);
             }
 
-            storageValue = storageValue.next();
+            sql.append(")");
+
+        } else if (ConditionOperator.LIKE == condition.getOperator()) {
+            // like 不会操作数值,一定是字符串.
+            storageValue = storageStrategy.toStorageValue(condition.getFirstValue());
+            sql.append("\"%").append(storageValue.value()).append("%\"");
+        } else {
+            storageValue = storageStrategy.toStorageValue(condition.getFirstValue());
+            appendValue(sql, storageValue);
         }
 
         return sql.toString();
+    }
+
+    private void appendValue(StringBuilder sql, StorageValue value) {
+        if (value.type() == StorageType.STRING) {
+            sql.append("\"").append(encode((String) value.value())).append("\"");
+        } else {
+            sql.append(value.value());
+        }
+    }
+
+    private static char[] ESCAPE_CHARACTER = {
+        '\n',
+        '\t',
+        '\r',
+        '\b',
+        '\'',
+        '\"',
+        '\\',
+        '%',
+        '_',
+    };
+
+    /**
+     * 处理sql中的需要转义字符.
+     *
+     * @param value
+     * @return
+     */
+    private String encode(String value) {
+        StringBuilder buff = new StringBuilder();
+        boolean needEncode = false;
+        for (char c : value.toCharArray()) {
+            needEncode = false;
+            for (char escapeC : ESCAPE_CHARACTER) {
+                if (c == escapeC) {
+                    needEncode = true;
+                    buff.append('\\').append(c);
+                    break;
+                }
+            }
+
+            if (!needEncode) {
+                buff.append(c);
+            }
+        }
+        return buff.toString();
     }
 }

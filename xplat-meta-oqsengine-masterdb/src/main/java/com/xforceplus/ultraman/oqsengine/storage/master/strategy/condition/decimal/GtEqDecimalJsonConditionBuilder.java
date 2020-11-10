@@ -10,8 +10,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  */
 public class GtEqDecimalJsonConditionBuilder extends AbstractJsonDecimalConditionBuilder {
 
-    public GtEqDecimalJsonConditionBuilder(ConditionOperator operator, StorageStrategyFactory storageStrategyFactory) {
-        super(operator, storageStrategyFactory);
+    public GtEqDecimalJsonConditionBuilder(StorageStrategyFactory storageStrategyFactory) {
+        super(ConditionOperator.GREATER_THAN_EQUALS, storageStrategyFactory);
     }
 
     @Override

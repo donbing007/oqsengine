@@ -1,12 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,55 +18,54 @@ import java.util.Optional;
  * @version 0.1 2020/11/2 16:32
  * @since 1.8
  */
-public class QueryExecutor implements Executor<Long, Optional<StorageEntity>> {
+public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<StorageEntity>> {
 
-    final Logger logger = LoggerFactory.getLogger(QueryExecutor.class);
-
-    private Selector<String> tableNameSelector;
-    private TransactionResource<Connection> resource;
     private boolean noDetail;
 
     /**
      * 查询包含详细信息
      *
-     * @param tableNameSelector
+     * @param tableName
      * @param resource
      * @return
      */
     public static Executor<Long, Optional<StorageEntity>> buildHaveDetail(
-        Selector<String> tableNameSelector, TransactionResource resource) {
-        return new QueryExecutor(tableNameSelector, resource, false);
+        String tableName, TransactionResource resource, long timeoutMs) {
+        return new QueryExecutor(tableName, resource, false, timeoutMs);
     }
 
     /**
      * 查询不包含详细信息.只有版本和事务信息.
      *
-     * @param tableNameSelector
+     * @param tableName
      * @param resource
      * @return
      */
     public static Executor<Long, Optional<StorageEntity>> buildNoDetail(
-        Selector<String> tableNameSelector, TransactionResource resource) {
-        return new QueryExecutor(tableNameSelector, resource, true);
+        String tableName, TransactionResource resource, long timeoutMs) {
+        return new QueryExecutor(tableName, resource, true, timeoutMs);
     }
 
-    public QueryExecutor(
-        Selector<String> tableNameSelector, TransactionResource<Connection> resource, boolean noDetail) {
-        this.tableNameSelector = tableNameSelector;
-        this.resource = resource;
+    public QueryExecutor(String tableName, TransactionResource<Connection> resource, boolean noDetail) {
+        super(tableName, resource);
+        this.noDetail = noDetail;
+    }
+
+    public QueryExecutor(String tableName, TransactionResource<Connection> resource, boolean noDetail, long timeoutMs) {
+        super(tableName, resource, timeoutMs);
         this.noDetail = noDetail;
     }
 
     @Override
     public Optional<StorageEntity> execute(Long id) throws SQLException {
         String sql = buildSQL(id);
-        PreparedStatement st = resource.value().prepareStatement(sql);
+        PreparedStatement st = getResource().value().prepareStatement(
+            sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+        st.setFetchSize(Integer.MIN_VALUE);
         st.setLong(1, id);
         st.setBoolean(2, false);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
+        checkTimeout(st);
 
         StorageEntity entity = null;
         ResultSet rs = null;
@@ -128,7 +124,7 @@ public class QueryExecutor implements Executor<Long, Optional<StorageEntity>> {
         }
 
         sql.append(" FROM ")
-            .append(tableNameSelector.select(Long.toString(id)))
+            .append(getTableName())
             .append(" WHERE ")
             .append(FieldDefine.ID).append("=").append("?")
             .append(" AND ")

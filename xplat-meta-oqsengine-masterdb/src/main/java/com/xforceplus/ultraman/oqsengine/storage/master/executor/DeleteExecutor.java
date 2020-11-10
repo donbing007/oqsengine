@@ -1,14 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
-import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,20 +18,19 @@ import java.sql.SQLException;
  * @version 0.1 2020/11/2 16:03
  * @since 1.8
  */
-public class DeleteExecutor implements Executor<StorageEntity, Integer> {
-    final Logger logger = LoggerFactory.getLogger(DeleteExecutor.class);
-
-    private Selector<String> tableNameSelector;
-    private TransactionResource<Connection> resource;
+public class DeleteExecutor extends AbstractMasterExecutor<StorageEntity, Integer> {
 
     public static Executor<StorageEntity, Integer> build(
-        Selector<String> tableNameSelector, TransactionResource resource) {
-        return new DeleteExecutor(tableNameSelector, resource);
+        String tableName, TransactionResource resource, long timeout) {
+        return new DeleteExecutor(tableName, resource, timeout);
     }
 
-    public DeleteExecutor(Selector<String> tableNameSelector, TransactionResource<Connection> resource) {
-        this.tableNameSelector = tableNameSelector;
-        this.resource = resource;
+    public DeleteExecutor(String tableName, TransactionResource<Connection> resource) {
+        super(tableName, resource);
+    }
+
+    public DeleteExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
+        super(tableName, resource, timeout);
     }
 
     @Override
@@ -43,7 +39,7 @@ public class DeleteExecutor implements Executor<StorageEntity, Integer> {
         if (VersionHelp.isOmnipotence(storageEntity.getVersion())) {
 
             String sql = buildForceSQL(storageEntity);
-            st = resource.value().prepareStatement(sql);
+            st = getResource().value().prepareStatement(sql);
             st.setInt(1, storageEntity.getVersion());
             st.setBoolean(2, true);
             st.setLong(3, storageEntity.getTime());
@@ -54,7 +50,7 @@ public class DeleteExecutor implements Executor<StorageEntity, Integer> {
         } else {
 
             String sql = buildSQl(storageEntity);
-            st = resource.value().prepareStatement(sql);
+            st = getResource().value().prepareStatement(sql);
             st.setBoolean(1, true);
             st.setLong(2, storageEntity.getTime());
             st.setLong(3, storageEntity.getTx());
@@ -64,9 +60,7 @@ public class DeleteExecutor implements Executor<StorageEntity, Integer> {
             st.setInt(7, storageEntity.getVersion());
         }
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
+        checkTimeout(st);
 
         try {
             return st.executeUpdate();
@@ -81,7 +75,7 @@ public class DeleteExecutor implements Executor<StorageEntity, Integer> {
     private String buildForceSQL(StorageEntity storageEntity) {
         //"update %s set version = ?, deleted = ?, time = ?, tx = ?, commitid = ?, op = ? where id = ?";
         StringBuilder sql = new StringBuilder();
-        sql.append("UPDATE ").append(tableNameSelector.select(Long.toString(storageEntity.getId())))
+        sql.append("UPDATE ").append(getTableName())
             .append(" SET ")
             .append(FieldDefine.VERSION).append("=").append("?, ")
             .append(FieldDefine.DELETED).append("=").append("?, ")
@@ -98,7 +92,7 @@ public class DeleteExecutor implements Executor<StorageEntity, Integer> {
     private String buildSQl(StorageEntity storageEntity) {
         //"update %s set version = version + 1, deleted = ?, time = ?, tx = ?, commitid = ?, op = ? where id = ? and version = ?";
         StringBuilder sql = new StringBuilder();
-        sql.append("UPDATE ").append(tableNameSelector.select(Long.toString(storageEntity.getId())))
+        sql.append("UPDATE ").append(getTableName())
             .append(" SET ")
             .append(FieldDefine.DELETED).append("=").append("?, ")
             .append(FieldDefine.TIME).append("=").append("?, ")

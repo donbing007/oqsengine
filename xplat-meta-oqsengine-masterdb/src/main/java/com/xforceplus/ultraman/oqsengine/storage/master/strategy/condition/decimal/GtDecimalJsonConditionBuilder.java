@@ -10,8 +10,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  */
 public class GtDecimalJsonConditionBuilder extends AbstractJsonDecimalConditionBuilder {
 
-    public GtDecimalJsonConditionBuilder(ConditionOperator operator, StorageStrategyFactory storageStrategyFactory) {
-        super(operator, storageStrategyFactory);
+    public GtDecimalJsonConditionBuilder(StorageStrategyFactory storageStrategyFactory) {
+        super(ConditionOperator.GREATER_THAN, storageStrategyFactory);
     }
 
     @Override

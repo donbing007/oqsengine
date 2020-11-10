@@ -4,14 +4,13 @@ import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -22,34 +21,32 @@ import java.util.List;
  * @version 0.1 2020/11/3 14:37
  * @since 1.8
  */
-public class MultipleQueryExecutor implements Executor<List<Long>, List<StorageEntity>> {
+public class MultipleQueryExecutor extends AbstractMasterExecutor<Collection<Long>, Collection<StorageEntity>> {
 
-    final Logger logger = LoggerFactory.getLogger(QueryExecutor.class);
-
-    private String tableName;
-    private TransactionResource<Connection> resource;
-
-    public static Executor<List<Long>, List<StorageEntity>> build(String tableName, TransactionResource<Connection> resource) {
-        return new MultipleQueryExecutor(tableName, resource);
+    public static Executor<Collection<Long>, Collection<StorageEntity>> build(
+        String tableName, TransactionResource<Connection> resource, long timeout) {
+        return new MultipleQueryExecutor(tableName, resource, timeout);
     }
 
     public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource) {
-        this.tableName = tableName;
-        this.resource = resource;
+        super(tableName, resource);
+    }
+
+    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
+        super(tableName, resource, timeout);
     }
 
     @Override
-    public List<StorageEntity> execute(List<Long> ids) throws SQLException {
+    public Collection<StorageEntity> execute(Collection<Long> ids) throws SQLException {
         String sql = buildSQL(ids.size());
-        PreparedStatement st = resource.value().prepareStatement(sql);
-        for (int i = 0; i < ids.size(); i++) {
-            st.setLong(i + 1, ids.get(i));
+        PreparedStatement st = getResource().value().prepareStatement(sql);
+        int index = 1;
+        for (long id : ids) {
+            st.setLong(index++, id);
         }
         st.setBoolean(ids.size() + 1, false);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
+        checkTimeout(st);
 
         ResultSet rs = null;
         List<StorageEntity> entities = new ArrayList<>(ids.size());
@@ -102,7 +99,7 @@ public class MultipleQueryExecutor implements Executor<List<Long>, List<StorageE
             )
         )
             .append(" FROM ")
-            .append(tableName)
+            .append(getTableName())
             .append(" WHERE ")
             .append(FieldDefine.ID).append(" IN (").append(String.join(",", Collections.nCopies(size, "?")))
             .append(") AND ")

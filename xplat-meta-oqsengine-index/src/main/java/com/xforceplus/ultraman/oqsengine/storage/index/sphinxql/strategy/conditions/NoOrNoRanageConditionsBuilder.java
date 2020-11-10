@@ -69,6 +69,7 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
                     // issue #14
                     secondaryFilterConditions.add(condition);
 
+                    // 如果全部都是否定条件需要标示出来.
                     switch (condition.getOperator()) {
                         case EQUALS:
                         case MULTIPLE_EQUALS:
