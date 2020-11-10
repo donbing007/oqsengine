@@ -12,7 +12,7 @@ public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
 
     private ApplicationEventPublisher publisher;
 
-    public CDCMetricsCallbackToEvent(ApplicationEventPublisher publisher){
+    public CDCMetricsCallbackToEvent(ApplicationEventPublisher publisher) {
         this.publisher = publisher;
     }
 

@@ -10,7 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
+import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.EMPTY_BATCH_SIZE;
 
 /**
  * desc :
@@ -24,7 +24,8 @@ import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
 public class CDCConfiguration {
 
     @Bean("sphinxConsumerService")
-    public ConsumerService sphinxConsumerService(@Value("${cdc.execution.timeoutMs:30000}") int executionTimeout) {
+    public ConsumerService sphinxConsumerService(
+        @Value("${cdc.execution.timeoutMs:30000}") int executionTimeout) {
         SphinxConsumerService consumerService = new SphinxConsumerService();
         consumerService.setExecutionTimeout(executionTimeout);
 
@@ -34,12 +35,12 @@ public class CDCConfiguration {
     @ConditionalOnExpression("'${cdc.connect.type}'.equals('cluster')")
     @Bean("clusterCDCConnector")
     public CDCConnector clusterCDCConnector(
-            @Value("${cdc.connect.string}") String connectString,
-            @Value("${cdc.connect.destination}") String destination,
-            @Value("${cdc.connect.username}") String userName,
-            @Value("${cdc.connect.password}") String password,
-            @Value("${cdc.connect.subscribeFilter}") String subscribeFilter,
-            @Value("${cdc.connect.batchSize:2048}") int batchSize) {
+        @Value("${cdc.connect.string}") String connectString,
+        @Value("${cdc.connect.destination}") String destination,
+        @Value("${cdc.connect.username}") String userName,
+        @Value("${cdc.connect.password}") String password,
+        @Value("${cdc.connect.subscribeFilter}") String subscribeFilter,
+        @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
 
         ClusterCDCConnector clusterCanalConnector = new ClusterCDCConnector();
@@ -52,13 +53,13 @@ public class CDCConfiguration {
     @ConditionalOnExpression("'${cdc.connect.type}'.equals('single')")
     @Bean("singleCDCConnector")
     public CDCConnector singleCDCConnector(
-            @Value("${cdc.connect.string}") String connectString,       //  general with ip
-            @Value("${cdc.connect.port}") int port,
-            @Value("${cdc.connect.destination}") String destination,
-            @Value("${cdc.connect.username}") String userName,
-            @Value("${cdc.connect.password}") String password,
-            @Value("${cdc.connect.subscribeFilter}") String subscribeFilter,
-            @Value("${cdc.connect.batchSize:2048}") int batchSize) {
+        @Value("${cdc.connect.string}") String connectString,       //  general with ip
+        @Value("${cdc.connect.port}") int port,
+        @Value("${cdc.connect.destination}") String destination,
+        @Value("${cdc.connect.username}") String userName,
+        @Value("${cdc.connect.password}") String password,
+        @Value("${cdc.connect.subscribeFilter}") String subscribeFilter,
+        @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
         singleCDCConnector.init(connectString, port, destination, userName, password);

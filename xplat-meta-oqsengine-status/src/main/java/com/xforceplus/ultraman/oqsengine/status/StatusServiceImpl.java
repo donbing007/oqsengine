@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.status.id.RedisIdGenerator;
 import com.xforceplus.ultraman.oqsengine.status.table.TimeTable;
 import io.lettuce.core.ScoredValue;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -48,26 +47,24 @@ public class StatusServiceImpl implements StatusService {
     }
 
     /**
-     *
      * @param windowsTimeRange
      * @return will return -1
      */
     @Override
-    public Long getCurrentCommitLowBound(Long windowsTimeRange){
+    public Long getCurrentCommitLowBound(Long windowsTimeRange) {
         //10 is the fixed buff
         return timeTable.queryByWindow(windowsTimeRange, timeBuff).toStream().min(Long::compareTo)
-                .orElse(-1L);
+            .orElse(-1L);
     }
 
     /**
-     *
      * @param
      * @return will return -1
      */
     @Override
     public Long getCurrentCommitLowBoundWithLocalTime(Long start, Long end) {
         return timeTable.queryByLocalTime(start, end).toStream().min(Long::compareTo)
-                .orElse(-1L);
+            .orElse(-1L);
     }
 
     @Override
@@ -81,7 +78,7 @@ public class StatusServiceImpl implements StatusService {
 
         StatusMetrics statusMetrics = new StatusMetrics();
 
-        if(!snapshotList.isEmpty()){
+        if (!snapshotList.isEmpty()) {
             ScoredValue<String> first = snapshotList.get(0);
             ScoredValue<String> last = snapshotList.get(snapshotList.size() - 1);
 
@@ -97,7 +94,7 @@ public class StatusServiceImpl implements StatusService {
 
         statusMetrics.setSize((long) snapshotList.size());
         statusMetrics.setTransIds(snapshotList.stream()
-                .map(x -> Long.parseLong(x.getValue())).collect(Collectors.toList()));
+            .map(x -> Long.parseLong(x.getValue())).collect(Collectors.toList()));
 
         return statusMetrics;
     }

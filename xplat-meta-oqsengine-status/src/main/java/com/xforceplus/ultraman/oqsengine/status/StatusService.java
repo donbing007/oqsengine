@@ -9,6 +9,7 @@ public interface StatusService {
 
     /**
      * get commit Id
+     *
      * @return
      */
     Long getCommitId();
@@ -20,6 +21,7 @@ public interface StatusService {
 
     /**
      * save commit id with localtime
+     *
      * @param id
      * @param timeInMilli
      */
@@ -27,6 +29,7 @@ public interface StatusService {
 
     /**
      * invalidate id
+     *
      * @param ids
      */
     void invalidateIds(List<Long> ids);
