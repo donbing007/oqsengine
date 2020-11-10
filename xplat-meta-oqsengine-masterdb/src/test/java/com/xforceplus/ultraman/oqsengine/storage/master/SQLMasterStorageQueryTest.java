@@ -532,6 +532,7 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
                         .count());
 
+                    Assert.assertEquals(3, result.stream().filter(e -> e.getOrderValue() != null).count());
 
                     return true;
                 },

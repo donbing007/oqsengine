@@ -93,18 +93,18 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
      * @throws SQLException
      */
     @Override
-    public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page
-            , List<Long> filterIds, Long commitId)
-            throws SQLException {
+    public Collection<EntityRef> select(
+        Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, long commitId)
+        throws SQLException {
 
         return (Collection<EntityRef>) transactionExecutor
             .execute(new DataSourceShardingStorageTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
-                    @Override
-                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                        return QueryConditionExecutor.build(indexTableName, resource, sphinxQLConditionsBuilderFactory, storageStrategyFactory, maxQueryTimeMs)
-                                .execute(Tuple.of(entityClass.id(), conditions, page, sort, filterIds, commitId));
-                    }
-                });
+                @Override
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                    return QueryConditionExecutor.build(indexTableName, resource, sphinxQLConditionsBuilderFactory, storageStrategyFactory, maxQueryTimeMs)
+                        .execute(Tuple.of(entityClass.id(), conditions, page, sort, filterIds, commitId));
+                }
+            });
     }
 
     @Override
@@ -114,39 +114,39 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         transactionExecutor
             .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, Long.toString(attribute.id())) {
 
-                    @Override
-                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                        long dataId = attribute.id();
+                @Override
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                    long dataId = attribute.id();
 
-                        Optional<StorageEntity> oldStorageEntityOptional = QueryExecutor.build(resource, indexTableName).execute(dataId);
+                    Optional<StorageEntity> oldStorageEntityOptional = QueryExecutor.build(resource, indexTableName).execute(dataId);
 
-                        if (oldStorageEntityOptional.isPresent()) {
+                    if (oldStorageEntityOptional.isPresent()) {
 
-                            StorageEntity storageEntity = oldStorageEntityOptional.get();
+                        StorageEntity storageEntity = oldStorageEntityOptional.get();
 
-                            /**
-                             * 把新的属性插入旧属性集中替换已有,或新增.
-                             */
-                            Map<String, Object> completeAttribues = storageEntity.getJsonFields();
-                            Map<String, Object> modifiedAttributes = serializeToMap(attribute, true);
-                            completeAttribues.putAll(modifiedAttributes);
+                        /**
+                         * 把新的属性插入旧属性集中替换已有,或新增.
+                         */
+                        Map<String, Object> completeAttribues = storageEntity.getJsonFields();
+                        Map<String, Object> modifiedAttributes = serializeToMap(attribute, true);
+                        completeAttribues.putAll(modifiedAttributes);
 
-                            // 处理 fulltext
-                            storageEntity.setJsonFields(completeAttribues);
-                            storageEntity.setFullFields(convertJsonToFull(completeAttribues));
+                        // 处理 fulltext
+                        storageEntity.setJsonFields(completeAttribues);
+                        storageEntity.setFullFields(convertJsonToFull(completeAttribues));
 
-                            doBuildReplaceStorageEntity(storageEntity, true);
+                        doBuildReplaceStorageEntity(storageEntity, true);
 
-                        } else {
+                    } else {
 
-                            throw new SQLException(String
-                                    .format("Attempt to update a property on a data that does not exist.[%d]", dataId));
+                        throw new SQLException(String
+                            .format("Attempt to update a property on a data that does not exist.[%d]", dataId));
 
-                        }
-
-                        return null;
                     }
-                });
+
+                    return null;
+                }
+            });
     }
 
     @Override
@@ -178,12 +178,12 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         return (int) transactionExecutor
             .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, Long.toString(id)) {
 
-                    @Override
-                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                        return DeleteExecutor.build(resource, indexTableName)
-                                .execute(id);
-                    }
-                });
+                @Override
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                    return DeleteExecutor.build(resource, indexTableName)
+                        .execute(id);
+                }
+            });
     }
 
     @Override
@@ -193,12 +193,12 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         return (int) transactionExecutor
             .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, Long.toString(entity.id())) {
 
-                    @Override
-                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                        return DeleteExecutor.build(resource, indexTableName)
-                                .execute(entity.id());
-                    }
-                });
+                @Override
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                    return DeleteExecutor.build(resource, indexTableName)
+                        .execute(entity.id());
+                }
+            });
 
     }
 
@@ -206,8 +206,6 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
     }
-
-
 
 
     /**
@@ -289,20 +287,20 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     }
 
 
-//    // 更新原始数据.
+    //    // 更新原始数据.
     private int doBuildReplaceStorageEntity(StorageEntity storageEntity, boolean replacement) throws SQLException {
         return (int) transactionExecutor
             .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, Long.toString(storageEntity.getId())) {
 
-                    @Override
-                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                        if (replacement) {
-                            return ReplaceExecutor.build(resource, indexTableName).execute(storageEntity);
-                        } else {
-                            return BuildExecutor.build(resource, indexTableName).execute(storageEntity);
-                        }
+                @Override
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                    if (replacement) {
+                        return ReplaceExecutor.build(resource, indexTableName).execute(storageEntity);
+                    } else {
+                        return BuildExecutor.build(resource, indexTableName).execute(storageEntity);
                     }
-                });
+                }
+            });
     }
 
 
