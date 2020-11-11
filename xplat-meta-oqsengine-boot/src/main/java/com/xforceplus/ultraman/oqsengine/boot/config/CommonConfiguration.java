@@ -19,7 +19,9 @@ import com.xforceplus.ultraman.oqsengine.status.table.TableCleaner;
 import com.xforceplus.ultraman.oqsengine.status.table.TimeTable;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -83,9 +85,15 @@ public class CommonConfiguration {
     }
 
     @Bean
+    public SQLJsonConditionsBuilderFactory masterConditionsBuilderFactory() {
+        return new SQLJsonConditionsBuilderFactory();
+    }
+
+    @Bean
     public StorageStrategyFactory masterStorageStrategy() {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
+        storageStrategyFactory.register(FieldType.STRINGS, new MasterStringsStorageStrategy());
         return storageStrategyFactory;
     }
 
