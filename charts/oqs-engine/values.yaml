@@ -73,7 +73,8 @@ cdc:
     batchSize: 2048
   execution:
     timeoutMs: 30000
-
+    single:
+      consumer: true
 storage:
   # Maximum amount of visible data.
   maxVisibleNumber: 10000

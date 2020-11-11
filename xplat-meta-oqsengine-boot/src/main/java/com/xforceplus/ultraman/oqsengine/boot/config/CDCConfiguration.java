@@ -25,9 +25,11 @@ public class CDCConfiguration {
 
     @Bean("sphinxConsumerService")
     public ConsumerService sphinxConsumerService(
-        @Value("${cdc.execution.timeoutMs:30000}") int executionTimeout) {
+        @Value("${cdc.execution.timeoutMs:30000}") int executionTimeout,
+        @Value("${cdc.execution.single.consumer:true}") boolean singleConsumer) {
         SphinxConsumerService consumerService = new SphinxConsumerService();
         consumerService.setExecutionTimeout(executionTimeout);
+        consumerService.setSingleSyncConsumer(singleConsumer);
 
         return consumerService;
     }

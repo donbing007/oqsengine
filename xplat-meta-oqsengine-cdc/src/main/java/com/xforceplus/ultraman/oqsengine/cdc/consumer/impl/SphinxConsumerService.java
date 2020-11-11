@@ -56,10 +56,16 @@ public class SphinxConsumerService implements ConsumerService {
     @Resource(name = "cdcConsumerPool")
     private ExecutorService consumerPool;
 
+    private boolean isSingleSyncConsumer = true;
+
     private int executionTimeout = 30 * 1000;
 
     public void setExecutionTimeout(int executionTimeout) {
         this.executionTimeout = executionTimeout;
+    }
+
+    public void setSingleSyncConsumer(boolean singleSyncConsumer) {
+        isSingleSyncConsumer = singleSyncConsumer;
     }
 
     @Override
@@ -149,8 +155,10 @@ public class SphinxConsumerService implements ConsumerService {
 
     private void multiSyncSphinx(List<RawEntry> rawEntries, Map<Long, IEntityValue> prefEntityValueMaps, CDCMetrics cdcMetrics) throws SQLException {
         if (!rawEntries.isEmpty()) {
-            if (rawEntries.size() == SINGLE_CONSUMER) {
-                sphinxConsume(rawEntries.get(0), prefEntityValueMaps, cdcMetrics);
+            if (isSingleSyncConsumer || rawEntries.size() <= SINGLE_CONSUMER_MAX_ROW) {
+                for (RawEntry rawEntry : rawEntries) {
+                    sphinxConsume(rawEntry, prefEntityValueMaps, cdcMetrics);
+                }
             } else {
                 multiConsume(rawEntries, prefEntityValueMaps, cdcMetrics);
             }
