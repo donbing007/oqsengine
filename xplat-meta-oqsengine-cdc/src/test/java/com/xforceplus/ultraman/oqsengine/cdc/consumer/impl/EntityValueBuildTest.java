@@ -70,8 +70,8 @@ public class EntityValueBuildTest extends AbstractContainer {
                          Object v = value.getValue();
                          Optional<IValue> f =
                                  expectedEntities[index].entityValue().values().stream().filter(ev -> ev.getField().id() == fieldId).findFirst();
-//
-//                         Assert.assertTrue(f.isPresent());
+
+                         Assert.assertTrue(f.isPresent());
 //                         if (!(v instanceof BigDecimal) || ((BigDecimal) v).doubleValue() != 0.0) {
 //                             Assert.assertEquals(v, f.get().getValue());
 //                         }

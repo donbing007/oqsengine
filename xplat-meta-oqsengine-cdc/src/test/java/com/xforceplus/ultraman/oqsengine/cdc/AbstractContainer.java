@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
+
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -147,20 +147,6 @@ public abstract class AbstractContainer {
         return dataSourcePackage.getMaster().get(0);
     }
 
-    protected Selector<DataSource> buildDataSourceSelectorIndex(String file) {
-        if (dataSourcePackage == null) {
-            System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-
-            dataSourcePackage = DataSourceFactory.build();
-        }
-
-        return new HashSelector<>(dataSourcePackage.getIndexWriter());
-    }
-
-    protected Selector<String> buildTableNameSelector(String base, int size) {
-
-        return new SuffixNumberHashSelector(base, size);
-    }
 
 
     protected void initIndex() throws SQLException, InterruptedException {
