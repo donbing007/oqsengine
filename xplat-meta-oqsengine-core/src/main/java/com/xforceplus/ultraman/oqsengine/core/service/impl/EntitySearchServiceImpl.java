@@ -19,7 +19,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
-import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -76,10 +75,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Resource
     private IndexStorage indexStorage;
 
-    @Resource
-    private StorageStrategyFactory storageStrategyFactory;
-
-    @Resource(name = "ioThreadPool")
+    @Resource(name = "callThreadPool")
     private ExecutorService threadPool;
 
     private long maxVisibleTotalCount;
@@ -105,13 +101,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         logger.info("Search service startup:[maxVisibleTotal:{}, maxJoinEntityNumber:{}, maxJoinDriverLineNumber:{}]",
                 maxVisibleTotalCount, maxJoinEntityNumber, maxJoinDriverLineNumber);
 
-        refMapping.put(FieldType.BOOLEAN, new EntityRefComparator(FieldType.BOOLEAN, storageStrategyFactory));
-        refMapping.put(FieldType.DATETIME, new EntityRefComparator(FieldType.DATETIME, storageStrategyFactory));
-        refMapping.put(FieldType.DECIMAL, new EntityRefComparator(FieldType.DECIMAL, storageStrategyFactory));
-        refMapping.put(FieldType.ENUM, new EntityRefComparator(FieldType.ENUM, storageStrategyFactory));
-        refMapping.put(FieldType.LONG, new EntityRefComparator(FieldType.LONG, storageStrategyFactory));
-        refMapping.put(FieldType.STRING, new EntityRefComparator(FieldType.STRING, storageStrategyFactory));
-        refMapping.put(FieldType.STRINGS, new EntityRefComparator(FieldType.STRINGS, storageStrategyFactory));
+        refMapping.put(FieldType.BOOLEAN, new EntityRefComparator(FieldType.BOOLEAN));
+        refMapping.put(FieldType.DATETIME, new EntityRefComparator(FieldType.DATETIME));
+        refMapping.put(FieldType.DECIMAL, new EntityRefComparator(FieldType.DECIMAL));
+        refMapping.put(FieldType.ENUM, new EntityRefComparator(FieldType.ENUM));
+        refMapping.put(FieldType.LONG, new EntityRefComparator(FieldType.LONG));
+        refMapping.put(FieldType.STRING, new EntityRefComparator(FieldType.STRING));
+        refMapping.put(FieldType.STRINGS, new EntityRefComparator(FieldType.STRINGS));
     }
 
     public int getMaxJoinEntityNumber() {
@@ -166,7 +162,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     }
 
                     Optional<IEntity> parentOptional =
-                        masterStorage.selectOne(child.family().parent(), entityClass.extendEntityClass());
+                            masterStorage.selectOne(child.family().parent(), entityClass.extendEntityClass());
 
                     if (parentOptional.isPresent()) {
 
@@ -323,7 +319,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
 
             Collection<EntityRef> masterRefs = Collections.emptyList();
-            if(commitId > 0) {
+            if (commitId > 0) {
                 //trigger master search
                 masterRefs = masterStorage.select(commitId, useConditions, entityClass, sort);
             }
@@ -367,7 +363,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         return entityClasses;
     }
 
-    private List<EntityRef> merge(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs, Sort sort){
+    private List<EntityRef> merge(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs, Sort sort) {
         StreamMerger<EntityRef> streamMerger = new StreamMerger<>();
         FieldType type = sort.getField().type();
         return streamMerger.merge(masterRefs.stream(), indexRefs.stream(), refMapping.get(type), sort.isAsc()).collect(toList());
@@ -385,9 +381,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         List<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().filter(x -> x.getOp() == OperationType.DELETE.getValue()).collect(toList());
 
-        if(!sort.isOutOfOrder()) {
+        if (!sort.isOutOfOrder()) {
             refs.addAll(merge(masterRefs, indexRefs, sort));
-        }else{
+        } else {
             //first master then manticore
             refs.addAll(masterRefsWithoutDeleted);
             refs.addAll(indexRefs);

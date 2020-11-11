@@ -6,6 +6,10 @@ import java.util.Spliterator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+/**
+ * stream merger
+ * @param <T>
+ */
 public class StreamMerger<T> {
 
     public Stream<T> merge(Stream<T> stream1, Stream<T> stream2, Comparator<T> comparator, boolean isAsc) {

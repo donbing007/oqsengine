@@ -192,7 +192,7 @@ public enum FieldType {
     }
 
     public int compare(String o1, String o2) {
-        if(comparator == null){
+        if (comparator == null) {
             return 0;
         }
 

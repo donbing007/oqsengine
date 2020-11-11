@@ -3,6 +3,11 @@ package com.xforceplus.ultraman.oqsengine.core.service.utils;
 import java.util.Comparator;
 import java.util.Iterator;
 
+/**
+ * merged iterator
+ *
+ * @param <T>
+ */
 public class MergedIterator<T> implements Iterator<T> {
 
     private Iterator<T> s1;
@@ -34,14 +39,13 @@ public class MergedIterator<T> implements Iterator<T> {
     @Override
     public T next() {
         boolean useStream1 = next1 != null && next2 == null ||
-                next1 != null && (isAsc == (comparator.compare(next1, next2) <= 0)) ;
+                next1 != null && (isAsc == (comparator.compare(next1, next2) <= 0));
 
-        if(useStream1) {
+        if (useStream1) {
             T returnObject = next1;
             next1 = s1.hasNext() ? s1.next() : null;
             return returnObject;
-        }
-        else {
+        } else {
             T returnObject = next2;
             next2 = s2.hasNext() ? s2.next() : null;
             return returnObject;
