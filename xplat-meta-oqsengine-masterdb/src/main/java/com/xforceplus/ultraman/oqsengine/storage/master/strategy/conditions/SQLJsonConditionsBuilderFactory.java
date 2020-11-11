@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 
 /**
  * @author dongbin
@@ -14,6 +15,7 @@ import javax.annotation.PostConstruct;
 public class SQLJsonConditionsBuilderFactory implements StorageStrategyFactoryAble {
 
 
+    @Resource(name = "masterStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
     private ConditionsBuilder<String> conditionsBuilder;
 
