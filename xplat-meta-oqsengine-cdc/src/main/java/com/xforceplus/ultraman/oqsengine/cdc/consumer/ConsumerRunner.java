@@ -46,6 +46,35 @@ public class ConsumerRunner extends Thread {
         this.cdcConnector = cdcConnector;
     }
 
+    public void shutdown() {
+        runningStatus = RunningStatus.STOP;
+    }
+
+    public void run() {
+        runningStatus = RunningStatus.RUN;
+
+        boolean isFirstCycle = true;
+        while (true) {
+            try {
+                connectAndReset(isFirstCycle);
+            } catch (Exception e) {
+                closeToNextReconnect(!isFirstCycle, String.format("%s, %s", "canal-server connection error, {}", e.getMessage()));
+            }
+            //  设置标志位，只有在第一次Loop时会从缓存中读取cdcMetrics信息
+            isFirstCycle = false;
+
+            try {
+                consume();
+            } catch (Exception e) {
+                closeToNextReconnect(true, String.format("%s, %s", "canal-client consume error, ", e.getMessage()));
+            }
+
+            if (checkForStop()) {
+                break;
+            }
+        }
+    }
+
     private void connectAndReset(boolean isFirstTime) throws SQLException {
 
         cdcConnector.open();
@@ -59,44 +88,12 @@ public class ConsumerRunner extends Thread {
         cdcConnector.rollback();
     }
 
-    public void shutdown() {
-        runningStatus = RunningStatus.STOP;
-    }
+    private void closeToNextReconnect(boolean needRollback, String errorMessage) {
+        cdcConnector.close(needRollback);
+        logger.error(errorMessage);
 
-    public void run() {
-        runningStatus = RunningStatus.RUN;
-
-        boolean isFirstCycle = true;
-        boolean needReconnect = false;
-        while (true) {
-            try {
-                connectAndReset(isFirstCycle);
-            } catch (Exception e) {
-                cdcConnector.close(!isFirstCycle);
-                logger.error("canal-server/canal-client connection error, cause : {}", e.getMessage());
-
-                needReconnect = true;
-            }
-
-            isFirstCycle = false;
-            try {
-                consume();
-            } catch (Exception e) {
-                cdcConnector.close(true);
-
-                needReconnect = true;
-            }
-
-            if (needReconnect) {
-                //  这里将进行睡眠->同步错误信息->进入下次循环
-                callConnectError(RECONNECT_WAIT_IN_SECONDS);
-                needReconnect = false;
-            }
-
-            if (checkForStop()) {
-                break;
-            }
-        }
+        //  这里将进行睡眠->同步错误信息->进入下次循环
+        callConnectError(RECONNECT_WAIT_IN_SECONDS);
     }
 
     private boolean checkForStop() {

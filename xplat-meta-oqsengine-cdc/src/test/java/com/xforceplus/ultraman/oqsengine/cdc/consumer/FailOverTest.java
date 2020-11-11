@@ -101,7 +101,11 @@ public class FailOverTest extends AbstractContainer {
 
                 cdcDaemonService.stopDaemon();
 
+                cdcDaemonService = null;
+
                 Thread.sleep(10 * 1000);
+
+                initDaemonService();
             }
             System.out.println("stop CDCDamonServiceCall thread.");
             return null;
