@@ -476,7 +476,7 @@ public class EntityManagementServiceImplTest {
 //        }
 
         @Override
-        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, long commitId) throws SQLException {
+        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, Long commitId) throws SQLException {
             return null;
         }
 

@@ -22,18 +22,8 @@ import java.util.concurrent.ExecutorService;
 @Configuration
 public class MetricsConfiguration {
 
-    @Resource(name = "ioThreadPool")
-    private ExecutorService ioThreadPool;
-
     @Resource(name = "callThreadPool")
     private ExecutorService callThreadPool;
-
-    @Bean
-    public ExecutorServiceMetrics ioExecutorServiceMetrics() {
-        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(ioThreadPool, MetricsDefine.PREFIX + ".io", Tags.empty());
-        esm.bindTo(Metrics.globalRegistry);
-        return esm;
-    }
 
     @Bean
     public ExecutorServiceMetrics callExecutorServiceMetrics() {
