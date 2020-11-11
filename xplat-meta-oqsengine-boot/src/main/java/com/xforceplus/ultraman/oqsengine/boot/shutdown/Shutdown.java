@@ -35,6 +35,9 @@ public class Shutdown {
     @Resource(name = "callThreadPool")
     private ExecutorService callThreadPool;
 
+    @Resource(name = "cdcConsumerPool")
+    private ExecutorService cdcConsumerPool;
+
     @Autowired(required = false)
     private CDCDaemonService cdcDaemonService;
 
@@ -51,6 +54,10 @@ public class Shutdown {
         logger.info("Start closing the IO worker thread.....");
         ExecutorHelper.shutdownAndAwaitTermination(callThreadPool, 3600);
         logger.info("Start closing the IO worker thread.....ok!");
+
+        logger.info("Start closing the consumer worker thread.....");
+        ExecutorHelper.shutdownAndAwaitTermination(cdcConsumerPool, 3600);
+        logger.info("Start closing the consumer worker thread.....ok!");
 
         // 每次等待时间(秒)
         final int waitTimeSec = 30;

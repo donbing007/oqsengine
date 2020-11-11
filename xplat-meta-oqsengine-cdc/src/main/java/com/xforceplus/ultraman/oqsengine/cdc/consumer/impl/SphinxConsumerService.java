@@ -76,8 +76,6 @@ public class SphinxConsumerService implements ConsumerService {
 
     @Override
     public void shutdown() {
-        logger.info("Start closing the consumer worker thread.....");
-        ExecutorHelper.shutdownAndAwaitTermination(consumerPool, 3600);
     }
 
     private CDCMetrics init(CDCUnCommitMetrics cdcUnCommitMetrics, long batchId) {

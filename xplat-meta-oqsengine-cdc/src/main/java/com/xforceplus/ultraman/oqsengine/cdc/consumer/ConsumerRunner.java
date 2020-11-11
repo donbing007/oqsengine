@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
@@ -173,6 +174,7 @@ public class ConsumerRunner extends Thread {
         CDCMetrics cdcMetrics = cdcMetricsService.query();
         if (null != cdcMetrics) {
             syncCanalAndCallback(cdcMetrics);
+            logger.debug("CDC启动Recover同步/回调成功, {}", JSON.toJSON(cdcMetrics));
         }
     }
     /*
