@@ -15,10 +15,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -44,6 +46,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toMap;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * SQLMasterStorage Tester.
@@ -54,8 +58,7 @@ import static java.util.stream.Collectors.toMap;
  */
 public class SQLMasterStorageTest extends AbstractMysqlTest {
 
-    private TransactionManager transactionManager = new DefaultTransactionManager(
-        new IncreasingOrderLongIdGenerator(0));
+    private TransactionManager transactionManager;
 
     private DataSource dataSource;
     private SQLMasterStorage storage;
@@ -71,8 +74,14 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
+        long commitId = 0;
+        StatusService statusService = mock(StatusService.class);
+        when(statusService.getCommitId()).thenReturn(commitId++);
+
+        transactionManager = new DefaultTransactionManager(new IncreasingOrderLongIdGenerator(0), statusService);
+
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, ConnectionTransactionResource.class);
+            transactionManager, new ConnectionTransactionResourceFactory("oqsbigentity"));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

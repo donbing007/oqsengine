@@ -1,13 +1,20 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * MultiLocalTransaction Tester.
@@ -28,7 +35,11 @@ public class MultiLocalTransactionTest {
 
     @Test
     public void testCommit() throws Exception {
-        MultiLocalTransaction tx = new MultiLocalTransaction(1);
+        long commitId = 0;
+        StatusService statusService = mock(StatusService.class);
+        when(statusService.getCommitId()).thenReturn(commitId++);
+
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, statusService);
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -44,7 +55,10 @@ public class MultiLocalTransactionTest {
 
     @Test
     public void testRollback() throws Exception {
-        MultiLocalTransaction tx = new MultiLocalTransaction(1);
+        long commitId = 0;
+        StatusService statusService = mock(StatusService.class);
+        when(statusService.getCommitId()).thenReturn(commitId++);
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, statusService);
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -60,7 +74,10 @@ public class MultiLocalTransactionTest {
 
     @Test
     public void testCommitEx() throws Exception {
-        MultiLocalTransaction tx = new MultiLocalTransaction(1);
+        long commitId = 0;
+        StatusService statusService = mock(StatusService.class);
+        when(statusService.getCommitId()).thenReturn(commitId++);
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, statusService);
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交
@@ -92,7 +109,10 @@ public class MultiLocalTransactionTest {
 
     @Test
     public void testRollbackEx() throws Exception {
-        MultiLocalTransaction tx = new MultiLocalTransaction(1);
+        long commitId = 0;
+        StatusService statusService = mock(StatusService.class);
+        when(statusService.getCommitId()).thenReturn(commitId++);
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, statusService);
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交
@@ -162,7 +182,7 @@ public class MultiLocalTransactionTest {
         }
 
         @Override
-        public void commit() throws SQLException {
+        public void commit(long commitId) throws SQLException {
             if (exception) {
                 throw new SQLException("Expected SQLException.");
             }
@@ -189,6 +209,16 @@ public class MultiLocalTransactionTest {
 
         public boolean isRollback() {
             return rollback;
+        }
+
+        @Override
+        public void bind(Transaction transaction) {
+
+        }
+
+        @Override
+        public Optional<Transaction> getTransaction() {
+            return Optional.empty();
         }
 
         @Override

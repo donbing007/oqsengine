@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Constructor;
@@ -24,16 +25,16 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
 
     private TransactionManager transactionManager;
 
-    private Class<? extends TransactionResource> resourceClass;
+    private TransactionResourceFactory transactionResourceFactory;
 
     /**
      * 构造一个事务执行器,需要一个事务管理器.
      *
      * @param transactionManager 事务管理器.
      */
-    public AutoJoinTransactionExecutor(TransactionManager transactionManager, Class<? extends TransactionResource> resourceClass) {
+    public AutoJoinTransactionExecutor(TransactionManager transactionManager, TransactionResourceFactory transactionResourceFactory) {
         this.transactionManager = transactionManager;
-        this.resourceClass = resourceClass;
+        this.transactionResourceFactory = transactionResourceFactory;
     }
 
     @Override
@@ -59,7 +60,7 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
                 Connection conn = targetDataSource.getConnection();
 
                 try {
-                    resource = buildResource(dbKey, conn, false);
+                    resource = this.transactionResourceFactory.build(dbKey, conn, false);
                 } catch (Exception ex) {
                     throw new SQLException(ex.getMessage(), ex);
                 }
@@ -70,7 +71,7 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
             // 无事务运行.
             Connection conn = targetDataSource.getConnection();
             try {
-                resource = buildResource(dbKey, conn, true);
+                resource = this.transactionResourceFactory.build(dbKey, conn, true);
             } catch (Exception ex) {
                 throw new SQLException(ex.getMessage(), ex);
             }
@@ -84,14 +85,6 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
                 resource.destroy();
             }
         }
-    }
-
-    private TransactionResource buildResource(String key, Connection value, boolean autocommit)
-            throws Exception {
-
-        Constructor<? extends TransactionResource> constructor =
-                resourceClass.getConstructor(String.class, Connection.class, Boolean.TYPE);
-        return constructor.newInstance(key, value, autocommit);
     }
 
     private String buildResourceKey(DataSource dataSource) {

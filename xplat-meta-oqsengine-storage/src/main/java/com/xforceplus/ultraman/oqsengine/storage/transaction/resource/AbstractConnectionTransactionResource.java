@@ -1,7 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.resource;
 
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Optional;
 
 /**
  * 基于 java.sql.Connection 的资源.
@@ -11,6 +16,8 @@ import java.sql.SQLException;
  * @since 1.8
  */
 public abstract class AbstractConnectionTransactionResource extends AbstractTransactionResource<Connection> {
+
+    final Logger logger = LoggerFactory.getLogger(AbstractConnectionTransactionResource.class);
 
     private boolean autoCommit;
 
@@ -23,13 +30,33 @@ public abstract class AbstractConnectionTransactionResource extends AbstractTran
     }
 
     @Override
-    public void commit() throws SQLException {
-        value().commit();
+    public void commit(long commitId) throws SQLException {
+        if (!isAutoCommit()) {
+            value().commit();
+
+            Optional<Transaction> transactionOp = getTransaction();
+            if (transactionOp.isPresent()) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The transaction resource ({}) commits in the transaction ({}) using the ({}) commit id.",
+                        key(), transactionOp.get().id(), commitId);
+                }
+            }
+        }
     }
 
     @Override
     public void rollback() throws SQLException {
-        value().rollback();
+        if (!isAutoCommit()) {
+            value().rollback();
+
+            Optional<Transaction> transactionOp = getTransaction();
+            if (transactionOp.isPresent()) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The transaction resource ({}) rollback in the transaction ({}).",
+                        key(), transactionOp.get().id());
+                }
+            }
+        }
     }
 
     @Override

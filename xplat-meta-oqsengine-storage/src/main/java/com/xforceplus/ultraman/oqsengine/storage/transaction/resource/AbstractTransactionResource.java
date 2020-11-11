@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.resource;
 
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 
 import java.sql.SQLException;
+import java.util.Optional;
 
 /**
  * 所有事务资源的抽像.
@@ -14,12 +16,23 @@ import java.sql.SQLException;
  */
 public abstract class AbstractTransactionResource<T> implements TransactionResource<T> {
 
+    private Transaction transaction;
     private String key;
     private T value;
 
     public AbstractTransactionResource(String key, T value) throws SQLException {
         this.key = key;
         this.value = value;
+    }
+
+    @Override
+    public void bind(Transaction transaction) {
+        this.transaction = transaction;
+    }
+
+    @Override
+    public Optional<Transaction> getTransaction() {
+        return Optional.ofNullable(transaction);
     }
 
     @Override

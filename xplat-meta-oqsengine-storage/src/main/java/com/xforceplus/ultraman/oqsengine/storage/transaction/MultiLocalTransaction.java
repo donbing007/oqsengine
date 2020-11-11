@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,13 +31,15 @@ public class MultiLocalTransaction implements Transaction {
     private boolean committed;
     private boolean rollback;
     private Lock lock = new ReentrantLock();
+    private StatusService statusService;
 
 
-    public MultiLocalTransaction(long id) {
+    public MultiLocalTransaction(long id, StatusService statusService) {
         transactionResourceHolder = new LinkedList<>();
         committed = false;
         rollback = false;
         this.id = id;
+        this.statusService = statusService;
     }
 
     @Override
@@ -86,6 +89,7 @@ public class MultiLocalTransaction implements Transaction {
         check();
 
         transactionResourceHolder.add(transactionResource);
+        transactionResource.bind(this);
     }
 
     @Override
@@ -162,10 +166,14 @@ public class MultiLocalTransaction implements Transaction {
 
         }
         List<SQLException> exHolder = new LinkedList<>();
+        long commitId = statusService.getCommitId();
+        if (logger.isDebugEnabled()) {
+            logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
+        }
         for (TransactionResource transactionResource : transactionResourceHolder) {
             try {
                 if (commit) {
-                    transactionResource.commit();
+                    transactionResource.commit(commitId);
                 } else {
                     transactionResource.rollback();
                 }
@@ -173,9 +181,6 @@ public class MultiLocalTransaction implements Transaction {
                 transactionResource.destroy();
             } catch (SQLException ex) {
                 exHolder.add(0, ex);
-
-                //TODO: 发生了异常,需要 rollback, 这里需要 undo 日志.by dongbin 2020/02/17
-
             }
 
         }

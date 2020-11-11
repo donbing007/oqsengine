@@ -44,9 +44,6 @@ storage:
     name: "oqsindex"
     # The maximum query time for the index, in milliseconds.
     maxQueryTimeMs: 6000
-  undo:
-    # simple | redis
-    store: "simple"
 
 
 management:

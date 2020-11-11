@@ -45,7 +45,7 @@ public class DeleteExecutor extends AbstractMasterExecutor<StorageEntity, Intege
             st.setLong(3, storageEntity.getTime());
             st.setLong(4, storageEntity.getTx());
             st.setLong(5, storageEntity.getCommitid());
-            st.setInt(6, OperationType.DELETE.getValue());
+            st.setInt(6, storageEntity.getOp());
             st.setLong(7, storageEntity.getId());
         } else {
 
@@ -55,7 +55,7 @@ public class DeleteExecutor extends AbstractMasterExecutor<StorageEntity, Intege
             st.setLong(2, storageEntity.getTime());
             st.setLong(3, storageEntity.getTx());
             st.setLong(4, storageEntity.getCommitid());
-            st.setInt(5, OperationType.DELETE.getValue());
+            st.setInt(5, storageEntity.getOp());
             st.setLong(6, storageEntity.getId());
             st.setInt(7, storageEntity.getVersion());
         }

@@ -39,7 +39,7 @@ public class ReplaceExecutor extends AbstractMasterExecutor<StorageEntity, Integ
         st.setLong(1, storageEntity.getTime());
         st.setLong(2, storageEntity.getTx());
         st.setLong(3, storageEntity.getCommitid());
-        st.setInt(4, OperationType.UPDATE.getValue());
+        st.setInt(4, storageEntity.getOp());
         st.setString(5, storageEntity.getAttribute());
         st.setString(6, storageEntity.getMeta());
         st.setLong(7, storageEntity.getId());
