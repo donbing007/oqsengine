@@ -2,11 +2,13 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
+import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -16,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -72,12 +75,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Resource
     private IndexStorage indexStorage;
 
-    @Resource(name = "ioThreadPool")
+    @Resource(name = "callThreadPool")
     private ExecutorService threadPool;
 
     private long maxVisibleTotalCount;
     private int maxJoinEntityNumber;
     private int maxJoinDriverLineNumber;
+
+    private Map<FieldType, EntityRefComparator> refMapping = new HashMap<>();
 
     @PostConstruct
     public void init() {
@@ -95,6 +100,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         logger.info("Search service startup:[maxVisibleTotal:{}, maxJoinEntityNumber:{}, maxJoinDriverLineNumber:{}]",
                 maxVisibleTotalCount, maxJoinEntityNumber, maxJoinDriverLineNumber);
+
+        refMapping.put(FieldType.BOOLEAN, new EntityRefComparator(FieldType.BOOLEAN));
+        refMapping.put(FieldType.DATETIME, new EntityRefComparator(FieldType.DATETIME));
+        refMapping.put(FieldType.DECIMAL, new EntityRefComparator(FieldType.DECIMAL));
+        refMapping.put(FieldType.ENUM, new EntityRefComparator(FieldType.ENUM));
+        refMapping.put(FieldType.LONG, new EntityRefComparator(FieldType.LONG));
+        refMapping.put(FieldType.STRING, new EntityRefComparator(FieldType.STRING));
+        refMapping.put(FieldType.STRINGS, new EntityRefComparator(FieldType.STRINGS));
     }
 
     public int getMaxJoinEntityNumber() {
@@ -149,7 +162,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     }
 
                     Optional<IEntity> parentOptional =
-                        masterStorage.selectOne(child.family().parent(), entityClass.extendEntityClass());
+                            masterStorage.selectOne(child.family().parent(), entityClass.extendEntityClass());
 
                     if (parentOptional.isPresent()) {
 
@@ -222,13 +235,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "condition"})
     @Override
-    public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Page page) throws SQLException {
-        return selectByConditions(conditions, entityClass, Sort.buildOutOfSort(), page);
+    public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Page page, long commitId) throws SQLException {
+        return selectByConditions(conditions, entityClass, Sort.buildOutOfSort(), page, commitId);
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "condition"})
     @Override
-    public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
+    public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Sort sort, Page page, long commitId)
             throws SQLException {
 
         if (conditions == null) {
@@ -289,7 +302,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
                 for (ConditionNode safeNode : safeNodes) {
 
-                    subConditions.add(buildSafeNodeConditions(safeNode, entityClassReader));
+                    subConditions.add(buildSafeNodeConditions(safeNode, entityClassReader, commitId));
 
                 }
 
@@ -303,13 +316,26 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 if (useConditions.size() == 0) {
                     return Collections.emptyList();
                 }
-
             }
 
-            Collection<EntityRef> refs = indexStorage.select(useConditions, entityClass, useSort, usePage, Collections.emptyList(), null);
+            Collection<EntityRef> masterRefs = Collections.emptyList();
+            if (commitId > 0) {
+                //trigger master search
+                masterRefs = masterStorage.select(commitId, useConditions, entityClass, sort);
+            }
 
-            return buildEntities(refs, entityClass);
+            /**
+             * filter ids
+             */
+            List<Long> filterIds = masterRefs.stream()
+                    .filter(x -> x.getOp() == OperationType.DELETE.getValue() || x.getOp() == OperationType.UPDATE.getValue())
+                    .map(EntityRef::getId)
+                    .collect(toList());
 
+            Collection<EntityRef> refs = indexStorage.select(useConditions, entityClass, useSort, usePage, filterIds, commitId);
+
+
+            return buildEntities(masterRefs, refs, entityClass, sort, page);
 
         } catch (Exception ex) {
             failCountTotal.increment();
@@ -337,23 +363,57 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         return entityClasses;
     }
 
+    private List<EntityRef> merge(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs, Sort sort) {
+        StreamMerger<EntityRef> streamMerger = new StreamMerger<>();
+        FieldType type = sort.getField().type();
+        return streamMerger.merge(masterRefs.stream(), indexRefs.stream(), refMapping.get(type), sort.isAsc()).collect(toList());
+    }
 
-    private Collection<IEntity> buildEntities(Collection<EntityRef> refs, IEntityClass entityClass) throws SQLException {
-        if (refs.isEmpty()) {
+    private Collection<IEntity> buildEntities(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs, IEntityClass entityClass, Sort sort, Page page) throws SQLException {
+
+        if (indexRefs.isEmpty() && masterRefs.isEmpty()) {
             return Collections.emptyList();
         }
-        Map<Long, IEntityClass> batchSelect =
-                refs.parallelStream().filter(e -> e.getId() > 0)
-                        .collect(toMap(EntityRef::getId, e -> entityClass, (e0, e1) -> e0));
+
+        IEntityField sortField;
+
+        List<EntityRef> refs = new LinkedList<>();
+
+        List<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().filter(x -> x.getOp() == OperationType.DELETE.getValue()).collect(toList());
+
+        if (!sort.isOutOfOrder()) {
+            refs.addAll(merge(masterRefs, indexRefs, sort));
+        } else {
+            //first master then manticore
+            refs.addAll(masterRefsWithoutDeleted);
+            refs.addAll(indexRefs);
+        }
+
+        long start = page.getIndex();
+        long pageSize = page.getPageSize();
+
+        //update totalCount
+        long totalCount = page.getTotalCount();
+        page.setTotalCount(totalCount + masterRefsWithoutDeleted.size());
+
+        List<EntityRef> limitedSelect = refs.stream().skip(start * pageSize).limit(pageSize).collect(toList());
+
+
+        Map<Long, IEntityClass> select =
+                limitedSelect.parallelStream().filter(e -> e.getId() > 0)
+                        .collect(toMap(EntityRef::getId, e -> entityClass, (e0, e1) -> {
+                            return e0;
+                        }));
 
         // 有继承
         if (entityClass.extendEntityClass() != null) {
-            batchSelect.putAll(
-                    refs.parallelStream().filter(e -> e.getPref() > 0)
+            select.putAll(
+                    limitedSelect.parallelStream().filter(e -> e.getPref() > 0)
                             .collect(toMap(EntityRef::getPref, e -> entityClass.extendEntityClass(), (e0, e1) -> e0)));
         }
 
-        Collection<IEntity> entities = masterStorage.selectMultiple(batchSelect);
+
+        Collection<IEntity> entities = masterStorage.selectMultiple(select);
 
         //生成 entity 速查表
         Map<Long, IEntity> entityTable =
@@ -425,7 +485,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      * 将安全条件结点处理成可查询的 Conditions 实例.
      * ignoreEntityClass 表示不需要处理的条件.
      */
-    private Conditions buildSafeNodeConditions(ConditionNode safeNode, IEntityClassReader entityClassReader)
+    private Conditions buildSafeNodeConditions(ConditionNode safeNode, IEntityClassReader entityClassReader, long commitId)
             throws SQLException {
 
         Conditions processConditions = new Conditions(safeNode);
@@ -448,7 +508,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
          * 并将剩余的构造成 DriverEntityTask 实例交由线程池执行.
          */
         driverEntityConditionsGroup.entrySet().stream()
-                .map(entry -> new DriverEntityTask(entry.getKey(), entry.getValue()))
+                .map(entry -> new DriverEntityTask(entry.getKey(), entry.getValue(), commitId))
                 .forEach(driverEntityTask -> futures.add(threadPool.submit(driverEntityTask)));
 
         Conditions conditions = Conditions.buildEmtpyConditions();
@@ -591,10 +651,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         private DriverEntityKey key;
         private Conditions conditions;
+        private long commitId;
 
-        public DriverEntityTask(DriverEntityKey key, Conditions conditions) {
+        public DriverEntityTask(DriverEntityKey key, Conditions conditions, long commitId) {
             this.key = key;
             this.conditions = conditions;
+            this.commitId = commitId;
         }
 
         @Override
@@ -607,14 +669,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Page driverPage = Page.newSinglePage(maxJoinDriverLineNumber);
             driverPage.setVisibleTotalCount(maxJoinDriverLineNumber);
             Collection<EntityRef> refs = indexStorage.select(
-                    conditions, key.getEntityClass(), Sort.buildOutOfSort(), driverPage, Collections.emptyList(), null);
+                    conditions, key.getEntityClass(), Sort.buildOutOfSort(), driverPage, Collections.emptyList(), commitId);
             return new AbstractMap.SimpleEntry<>(key, refs);
         }
 
         // 检查命中数据集大小.
         private long checkLineNumber() throws SQLException {
             Page page = new Page(1, 1);
-            indexStorage.select(conditions, key.getEntityClass(), Sort.buildOutOfSort(), page, Collections.emptyList(), null);
+            indexStorage.select(conditions, key.getEntityClass(), Sort.buildOutOfSort(), page, Collections.emptyList(), commitId);
             if (page.getTotalCount() > maxJoinDriverLineNumber) {
                 throw new SQLException(String.format("Drives entity(%s) data exceeding %d.",
                         key.getEntityClass().code(), maxJoinDriverLineNumber));

@@ -290,8 +290,17 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
             rs = st.executeQuery();
             List<EntityRef> refs = new ArrayList((int) page.getPageSize());
             while (rs.next()) {
-                refs.add(new EntityRef(rs.getLong(FieldDefine.ID), rs.getLong(FieldDefine.PREF),
-                    rs.getLong(FieldDefine.CREF)));
+
+                EntityRef entityRef = new EntityRef();
+                entityRef.setId(rs.getLong(FieldDefine.ID));
+                entityRef.setCref(rs.getLong(FieldDefine.CREF));
+                entityRef.setPref(rs.getLong(FieldDefine.PREF));
+
+                if (sort != null && !sort.isOutOfOrder()) {
+                    entityRef.setOrderValue(rs.getString("sort0"));
+                }
+
+                refs.add(entityRef);
             }
 
             if (!page.isSinglePage()) {
