@@ -78,3 +78,5 @@ cdc:
     batchSize: 2048
   execution:
     timeoutMs: 30000
+    single:
+      consumer: true
