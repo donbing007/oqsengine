@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.fastjson.JSON;
 
+import com.alibaba.google.common.collect.Maps;
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.google.common.collect.Maps;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntityValue;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntry;
