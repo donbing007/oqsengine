@@ -53,33 +53,37 @@ public class ConsumerRunner extends Thread {
     public void run() {
         runningStatus = RunningStatus.RUN;
 
-        boolean isFirstCycle = true;
+        boolean isFirstLoop = true;
         while (true) {
-            try {
-                connectAndReset(isFirstCycle);
-            } catch (Exception e) {
-                closeToNextReconnect(!isFirstCycle, String.format("%s, %s", "canal-server connection error, {}", e.getMessage()));
+            //  判断当前服务状态是否可运行
+            if (checkForStop()) {
+                break;
             }
-            //  设置标志位，只有在第一次Loop时会从缓存中读取cdcMetrics信息
-            isFirstCycle = false;
 
             try {
+                //  连接CanalServer，如果是服务启动(isFirstCycle = true),则同步缓存中cdcMetrics信息
+                connectAndReset(isFirstLoop);
+            } catch (Exception e) {
+                closeToNextReconnect(!isFirstLoop, String.format("%s, %s", "canal-server connection error, {}", e.getMessage()));
+                continue;
+            }
+            //  连接成功，重置标志位
+            isFirstLoop = false;
+
+            try {
+                //  开始消费
                 consume();
             } catch (Exception e) {
                 closeToNextReconnect(true, String.format("%s, %s", "canal-client consume error, ", e.getMessage()));
             }
-
-            if (checkForStop()) {
-                break;
-            }
         }
     }
 
-    private void connectAndReset(boolean isFirstTime) throws SQLException {
+    private void connectAndReset(boolean isFirstLoop) throws SQLException {
 
         cdcConnector.open();
 
-        if (isFirstTime) {
+        if (isFirstLoop) {
             //  首先将上次记录完整的信息(batchID)确认到Canal中
             syncLastBatch();
         }
@@ -100,7 +104,6 @@ public class ConsumerRunner extends Thread {
         if (runningStatus.equals(RunningStatus.STOP)) {
             try {
                 cdcConnector.shutdown();
-                consumerService.shutdown();
             } catch (Exception e) {
                 //  ignore
                 e.printStackTrace();
