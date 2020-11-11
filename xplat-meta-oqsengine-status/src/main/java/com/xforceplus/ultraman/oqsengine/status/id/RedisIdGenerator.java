@@ -17,14 +17,14 @@ public class RedisIdGenerator implements IdGenerator<Long> {
 
     private String keyName;
 
-    public RedisIdGenerator(RedisClient redisClient, String key){
+    public RedisIdGenerator(RedisClient redisClient, String key) {
 
         this.redisClient = redisClient;
         this.keyName = key;
         this.connection = redisClient.connect();
         //do init will block startup
         RedisStringCommands<String, String> sync = connection.sync();
-        if(StringUtils.isEmpty(key)){
+        if (StringUtils.isEmpty(key)) {
             key = "gen";
         }
         sync.setnx(key, "0");

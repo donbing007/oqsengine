@@ -34,7 +34,7 @@ public interface IndexStorage extends Storage {
      * @throws SQLException
      */
     Collection<EntityRef> select(
-        Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, long commitId)
+        Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, Long commitId)
         throws SQLException;
 
     /**

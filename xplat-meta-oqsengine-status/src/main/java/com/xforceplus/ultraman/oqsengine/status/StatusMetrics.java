@@ -50,10 +50,10 @@ public class StatusMetrics {
     @Override
     public String toString() {
         return "StatusMetrics{" +
-                "lowBound='" + lowBound + '\'' +
-                ", upBound='" + upBound + '\'' +
-                ", size=" + size +
-                ", transIds=" + transIds +
-                '}';
+            "lowBound='" + lowBound + '\'' +
+            ", upBound='" + upBound + '\'' +
+            ", size=" + size +
+            ", transIds=" + transIds +
+            '}';
     }
 }

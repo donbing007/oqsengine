@@ -23,13 +23,13 @@ public class TimeTable {
 
     private String tableName;
 
-    private final static String ZDD_WITH_TIME_AND_ID =
-            "local t = redis.call('TIME') \n" +
-                    "return redis.call('ZADD', '%s', 'ch',  t[1] * 1000 + (t[2] / 1000 ), '%s')";
+    private static final String ZDD_WITH_TIME_AND_ID =
+        "local t = redis.call('TIME') \n" +
+            "return redis.call('ZADD', '%s', 'ch',  t[1] * 1000 + (t[2] / 1000 ), '%s')";
 
-    private final static String ZRANGE_WITH_TIME =
-            "local t = redis.call('TIME') \n" +
-                    "return redis.call('ZRANGEBYSCORE', '%s', (t[1] * 1000 + (t[2] / 1000)) - %s , (t[1] * 1000 + (t[2] / 1000)) + %s)";
+    private static final String ZRANGE_WITH_TIME =
+        "local t = redis.call('TIME') \n" +
+            "return redis.call('ZRANGEBYSCORE', '%s', (t[1] * 1000 + (t[2] / 1000)) - %s , (t[1] * 1000 + (t[2] / 1000)) + %s)";
 
 
     private Logger logger = LoggerFactory.getLogger(TimeTable.class);
@@ -82,7 +82,7 @@ public class TimeTable {
     public Flux<Long> queryByLocalTime(Long startInMilli, Long endInMilli) {
         RedisSortedSetReactiveCommands<String, String> reactive = connection.reactive();
         return reactive.zrangebyscore(tableName, Range.create(startInMilli, endInMilli))
-                .map(Long::parseLong);
+            .map(Long::parseLong);
     }
 
     public Flux<Long> queryByWindow(Long lessInMilli, Long moreInMilli) {
@@ -100,9 +100,9 @@ public class TimeTable {
     public void invalidateIds(List<Long> ids) {
         RedisReactiveCommands<String, String> reactive = connection.reactive();
         reactive.multi()
-                .doOnSuccess(s -> {
-                    ids.forEach(id -> reactive.zrem(tableName, id.toString()).subscribe());
-                }).flatMap(s -> reactive.exec())
-                .subscribe();
+            .doOnSuccess(s -> {
+                ids.forEach(id -> reactive.zrem(tableName, id.toString()).subscribe());
+            }).flatMap(s -> reactive.exec())
+            .subscribe();
     }
 }

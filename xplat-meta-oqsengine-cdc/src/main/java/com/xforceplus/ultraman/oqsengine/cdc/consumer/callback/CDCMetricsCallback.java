@@ -13,18 +13,25 @@ import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
  */
 public interface CDCMetricsCallback {
 
-    /*
-        提交确认信息
+    /**
+     * 提交确认信息
+     *
+     * @param ackMetrics
      */
     void cdcAck(CDCAckMetrics ackMetrics);
 
-    /*
-        需要在一个原子操作时保证一致性的信息，保证在宕机后从redis恢复的完整性
+    /**
+     * 需要在一个原子操作时保证一致性的信息，保证在宕机后从redis恢复的完整性
+     *
+     * @param cdcMetrics 指标.
      */
     void cdcSaveLastUnCommit(CDCMetrics cdcMetrics);
 
-    /*
-        需要在一个原子操作时保证一致性的信息，保证在宕机后从redis恢复的完整性
-    */
+    /**
+     * 需要在一个原子操作时保证一致性的信息，保证在宕机后从redis恢复的完整性.
+     * 查询由 cdcSaveLastUnCommit保存的信息.
+     *
+     * @return 查询结果.
+     */
     CDCMetrics queryLastUnCommit();
 }

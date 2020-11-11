@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.status;
 
+/**
+ * 状态异常.
+ */
 public class StatusException extends RuntimeException {
 
     public StatusException() {

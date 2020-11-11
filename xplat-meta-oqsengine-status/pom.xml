@@ -11,6 +11,10 @@
 
     <artifactId>xplat-meta-oqsengine-status</artifactId>
 
+    <properties>
+        <checkstyle.skip>false</checkstyle.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

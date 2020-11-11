@@ -9,6 +9,7 @@ import java.util.Map;
 /**
  * entityValue构造.
  *
+ * @param <SOURCE> 数据源类型.
  * @author dongbin
  * @version 0.1 2020/11/5 15:36
  * @since 1.8

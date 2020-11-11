@@ -178,45 +178,6 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
         return sortFields;
     }
 
-    /**
-     * maybe deprecated
-     * order by str builder
-     *
-     * @param sort
-     * @return
-     */
-    private String buildOrderBy(Sort sort) {
-
-        StringBuilder buff = new StringBuilder(SqlKeywordDefine.ORDER).append(" ");
-        if (!sort.isOutOfOrder()) {
-            StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
-            Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField());
-            //表示还没有排序字段时的长度.
-            int emptyLen = buff.length();
-
-            for (String storageName : storageNames) {
-                if (buff.length() > emptyLen) {
-                    buff.append(", ");
-                }
-                if (storageStrategy.storageType() == StorageType.LONG) {
-                    buff.append("bigint(").append(FieldDefine.JSON_FIELDS).append(".").append(storageName).append(")");
-                } else {
-                    buff.append(FieldDefine.JSON_FIELDS).append(".").append(storageName);
-                }
-
-                if (sort.isAsc()) {
-                    buff.append(" ").append(SqlKeywordDefine.ORDER_TYPE_ASC);
-                } else {
-                    buff.append(" ").append(SqlKeywordDefine.ORDER_TYPE_DESC);
-                }
-            }
-
-        } else {
-            buff.append("id ").append(SqlKeywordDefine.ORDER_TYPE_ASC);
-        }
-        return buff.toString();
-    }
-
     // 搜索数量
     private long count(TransactionResource resource) throws SQLException {
 
