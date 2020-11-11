@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.fastjson.JSON;
 
+import com.alibaba.google.common.collect.Maps;
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.google.common.collect.Maps;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntityValue;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntry;
@@ -24,13 +24,13 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageE
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StopWatch;
 
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns.*;
@@ -59,6 +59,8 @@ public class SphinxConsumerService implements ConsumerService {
 
     private int executionTimeout = 30 * 1000;
 
+    private static AtomicInteger syncCount = new AtomicInteger(0);
+
     public void setExecutionTimeout(int executionTimeout) {
         this.executionTimeout = executionTimeout;
     }
@@ -75,12 +77,6 @@ public class SphinxConsumerService implements ConsumerService {
         return cdcMetrics;
     }
 
-    @Override
-    public void shutdown() {
-        logger.info("Start closing the consumer worker thread.....");
-        ExecutorHelper.shutdownAndAwaitTermination(consumerPool, 3600);
-    }
-
     private CDCMetrics init(CDCUnCommitMetrics cdcUnCommitMetrics, long batchId) {
         //  将上一次的剩余信息设置回来
         CDCMetrics cdcMetrics = new CDCMetrics();
@@ -91,6 +87,8 @@ public class SphinxConsumerService implements ConsumerService {
         }
         cdcMetrics.setBatchId(batchId);
 
+        syncCount.set(ZERO);
+
         return cdcMetrics;
     }
 
@@ -98,7 +96,6 @@ public class SphinxConsumerService implements ConsumerService {
         数据清洗、同步
     * */
     private void filterAndSyncData(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
-        int syncSize = ZERO;
         //  需要同步的列表
         List<RawEntry> rawEntries = new ArrayList<>();
         for (CanalEntry.Entry entry : entries) {
@@ -106,23 +103,14 @@ public class SphinxConsumerService implements ConsumerService {
             switch (entry.getEntryType()) {
 
                 case TRANSACTIONEND:
-                    StopWatch stopWatch = new StopWatch();
-                    stopWatch.start();
-                    Map<Long, IEntityValue> prefEntityValueMaps =
-                            convertToEntityValueMap(cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues());
-                    stopWatch.stop();
-                    logger.debug("convert use time : {}", stopWatch.getLastTaskTimeMillis());
                     //  同步rawEntries到Sphinx
-                    multiSyncSphinx(rawEntries, prefEntityValueMaps, cdcMetrics);
+                    sync(rawEntries, cdcMetrics);
 
                     //  每次Transaction结束,将unCommitId加入到commitList中
                     if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitId() > INIT_ID) {
                         cdcMetrics.getCdcAckMetrics().getCommitList().add(cdcMetrics.getCdcUnCommitMetrics().getUnCommitId());
                         cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(INIT_ID);
                     }
-
-                    //  统计同步的数量
-                    syncSize += rawEntries.size();
 
                     //  每个Transaction的结束需要将rawEntries清空
                     rawEntries.clear();
@@ -136,15 +124,18 @@ public class SphinxConsumerService implements ConsumerService {
             }
         }
 
-        //  unCommit RawEntry should sync to sphinx
+        //  最后一个unCommitId的数据也需要同步一次
         if (!rawEntries.isEmpty()) {
-            Map<Long, IEntityValue> prefEntityValueMaps =
-                    convertToEntityValueMap(cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues());
-            multiSyncSphinx(rawEntries, prefEntityValueMaps, cdcMetrics);
-            syncSize += rawEntries.size();
+            sync(rawEntries, cdcMetrics);
         }
 
-        cdcMetrics.getCdcUnCommitMetrics().setExecuteJobCount(syncSize);
+        cdcMetrics.getCdcUnCommitMetrics().setExecuteJobCount(syncCount.get());
+    }
+
+    private void sync(List<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
+        Map<Long, IEntityValue> prefEntityValueMaps =
+                convertToEntityValueMap(cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues());
+        multiSyncSphinx(rawEntries, prefEntityValueMaps, cdcMetrics);
     }
 
     private Map<Long, IEntityValue> convertToEntityValueMap(Map<Long, RawEntityValue> rawEntityValueMap) throws SQLException {
@@ -208,9 +199,8 @@ public class SphinxConsumerService implements ConsumerService {
                 if (needSyncRow(columns)) {
                     //  更新
                     cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(getLongFromColumn(columns, COMMITID));
-                    RawEntry rawEntry = new RawEntry(
-                            entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList());
-                    rawEntries.add(rawEntry);
+                    rawEntries.add(new RawEntry(
+                            entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
                 } else {
                     addPrefEntityValue(columns, cdcMetrics);
                 }
@@ -313,6 +303,7 @@ public class SphinxConsumerService implements ConsumerService {
         if (cdcMetrics.getCdcAckMetrics().getMaxSyncUseTime() < useTime) {
             cdcMetrics.getCdcAckMetrics().setMaxSyncUseTime(useTime);
         }
+        syncCount.incrementAndGet();
     }
 
     private void doDelete(List<CanalEntry.Column> columns) throws SQLException {

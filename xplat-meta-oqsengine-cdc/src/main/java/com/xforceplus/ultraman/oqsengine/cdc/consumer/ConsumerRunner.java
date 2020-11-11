@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
@@ -45,11 +46,44 @@ public class ConsumerRunner extends Thread {
         this.cdcConnector = cdcConnector;
     }
 
-    private void connectAndReset(boolean isFirstTime) throws SQLException {
+    public void shutdown() {
+        runningStatus = RunningStatus.STOP;
+    }
+
+    public void run() {
+        runningStatus = RunningStatus.RUN;
+
+        boolean isFirstLoop = true;
+        while (true) {
+            //  判断当前服务状态是否可运行
+            if (checkForStop()) {
+                break;
+            }
+
+            try {
+                //  连接CanalServer，如果是服务启动(isFirstCycle = true),则同步缓存中cdcMetrics信息
+                connectAndReset(isFirstLoop);
+            } catch (Exception e) {
+                closeToNextReconnect(!isFirstLoop, String.format("%s, %s", "canal-server connection error, {}", e.getMessage()));
+                continue;
+            }
+            //  连接成功，重置标志位
+            isFirstLoop = false;
+
+            try {
+                //  开始消费
+                consume();
+            } catch (Exception e) {
+                closeToNextReconnect(true, String.format("%s, %s", "canal-client consume error, ", e.getMessage()));
+            }
+        }
+    }
+
+    private void connectAndReset(boolean isFirstLoop) throws SQLException {
 
         cdcConnector.open();
 
-        if (isFirstTime) {
+        if (isFirstLoop) {
             //  首先将上次记录完整的信息(batchID)确认到Canal中
             syncLastBatch();
         }
@@ -58,51 +92,18 @@ public class ConsumerRunner extends Thread {
         cdcConnector.rollback();
     }
 
-    public void shutdown() {
-        runningStatus = RunningStatus.STOP;
-    }
+    private void closeToNextReconnect(boolean needRollback, String errorMessage) {
+        cdcConnector.close(needRollback);
+        logger.error(errorMessage);
 
-    public void run() {
-        runningStatus = RunningStatus.RUN;
-
-        boolean isFirstCycle = true;
-        boolean needReconnect = false;
-        while (true) {
-            try {
-                connectAndReset(isFirstCycle);
-            } catch (Exception e) {
-                cdcConnector.close(!isFirstCycle);
-                logger.error("canal-server/canal-client connection error, cause : {}", e.getMessage());
-
-                needReconnect = true;
-            }
-
-            isFirstCycle = false;
-            try {
-                consume();
-            } catch (Exception e) {
-                cdcConnector.close(true);
-
-                needReconnect = true;
-            }
-
-            if (needReconnect) {
-                //  这里将进行睡眠->同步错误信息->进入下次循环
-                callConnectError(RECONNECT_WAIT_IN_SECONDS);
-                needReconnect = false;
-            }
-
-            if (checkForStop()) {
-                break;
-            }
-        }
+        //  这里将进行睡眠->同步错误信息->进入下次循环
+        callConnectError(RECONNECT_WAIT_IN_SECONDS);
     }
 
     private boolean checkForStop() {
         if (runningStatus.equals(RunningStatus.STOP)) {
             try {
                 cdcConnector.shutdown();
-                consumerService.shutdown();
             } catch (Exception e) {
                 //  ignore
                 e.printStackTrace();
@@ -173,6 +174,7 @@ public class ConsumerRunner extends Thread {
         CDCMetrics cdcMetrics = cdcMetricsService.query();
         if (null != cdcMetrics) {
             syncCanalAndCallback(cdcMetrics);
+            logger.debug("CDC启动Recover同步/回调成功, {}", JSON.toJSON(cdcMetrics));
         }
     }
     /*

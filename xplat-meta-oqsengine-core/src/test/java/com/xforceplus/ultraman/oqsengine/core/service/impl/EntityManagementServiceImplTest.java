@@ -396,6 +396,11 @@ public class EntityManagementServiceImplTest {
         }
 
         @Override
+        public Collection<EntityRef> select(long commitid, Conditions conditions, IEntityClass entityClass, Sort sort) throws SQLException {
+            return null;
+        }
+
+        @Override
         public synchronized int synchronize(long id, long child) throws SQLException {
             IEntity source = data.get(id);
             IEntity target = data.get(child);
@@ -414,7 +419,6 @@ public class EntityManagementServiceImplTest {
             return 1;
         }
 
-        @Override
         public IEntityValue toEntityValue(long id, Map<String, IEntityField> fieldTable, String json) throws SQLException {
             return null;
         }

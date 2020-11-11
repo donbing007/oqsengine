@@ -54,17 +54,20 @@ public abstract class CDCConnector {
      */
     public void close(boolean withRollbackLast) {
         if (null != canalConnector) {
+            try {
+                //  先rollback再关闭
+                if (withRollbackLast) {
+                    canalConnector.rollback();
+                }
 
-            //  先rollback再关闭
-            if (withRollbackLast) {
-                canalConnector.rollback();
+                //  注销订阅destination
+//                canalConnector.unsubscribe();
+            } catch (Exception e) {
+               logger.error("close error, ex : {}", e.getMessage());
+            } finally {
+                //  关闭连接CanalServer
+                canalConnector.disconnect();
             }
-
-            //  注销订阅destination
-            canalConnector.unsubscribe();
-
-            //  关闭连接CanalServer
-            canalConnector.disconnect();
         }
     }
 

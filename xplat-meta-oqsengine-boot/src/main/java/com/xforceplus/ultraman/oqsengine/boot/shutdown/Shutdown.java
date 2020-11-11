@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -31,13 +32,13 @@ public class Shutdown {
     @Resource
     private TransactionManager tm;
 
-    @Resource(name = "ioThreadPool")
-    private ExecutorService ioThreadPool;
-
     @Resource(name = "callThreadPool")
     private ExecutorService callThreadPool;
 
-    @Resource
+    @Resource(name = "cdcConsumerPool")
+    private ExecutorService cdcConsumerPool;
+
+    @Autowired(required = false)
     private CDCDaemonService cdcDaemonService;
 
     @PreDestroy
@@ -54,9 +55,9 @@ public class Shutdown {
         ExecutorHelper.shutdownAndAwaitTermination(callThreadPool, 3600);
         logger.info("Start closing the IO worker thread.....ok!");
 
-        logger.info("Start closing the call worker thread.....");
-        ExecutorHelper.shutdownAndAwaitTermination(ioThreadPool, 3600);
-        logger.info("Start closing the call worker thread.....ok!");
+        logger.info("Start closing the consumer worker thread.....");
+        ExecutorHelper.shutdownAndAwaitTermination(cdcConsumerPool, 3600);
+        logger.info("Start closing the consumer worker thread.....ok!");
 
         // 每次等待时间(秒)
         final int waitTimeSec = 30;

@@ -17,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,11 +57,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Autowired(required = false)
     private TransactionManagementService transactionManagementService;
 
+    @Autowired
+    private StatusService statusService;
+
     @Resource(name = "callThreadPool")
     private ExecutorService asyncDispatcher;
 
     @Autowired
     private TransactionManager transactionManager;
+
+    private Long buffer = 10_000L;
 
     private Logger logger = LoggerFactory.getLogger(EntityServicePowerApi.class);
 
@@ -273,10 +279,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 if (!sortField.isPresent()) {
                     Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
+                    Long commitId = statusService.getCurrentCommitLowBound(buffer);
                     if (consOp.isPresent()) {
-                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page, commitId);
                     } else {
-                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page, commitId);
                     }
                 } else {
                     FieldSortUp sortUp = sort.get(0);
@@ -288,11 +295,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
 
                     Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
+                    Long commitId = statusService.getCurrentCommitLowBound(buffer);
                     if (consOp.isPresent()) {
-                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
+
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page, commitId);
 
                     } else {
-                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page, commitId);
                     }
                 }
 
@@ -599,10 +608,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 if (!sortField.isPresent()) {
                     Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
+                    Long currentCommitLowBound = statusService.getCurrentCommitLowBound(buffer);
                     if (consOp.isPresent()) {
-                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page, currentCommitLowBound);
                     } else {
-                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page);
+                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page, currentCommitLowBound);
                     }
                 } else {
                     FieldSortUp sortUp = sort.get(0);
@@ -614,11 +624,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
 
                     Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
+                    Long currentCommitLowBound = statusService.getCurrentCommitLowBound(buffer);
                     if (consOp.isPresent()) {
-                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
-
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page, currentCommitLowBound);
                     } else {
-                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, sortParam, page);
+                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, sortParam, page, currentCommitLowBound);
                     }
                 }
 
@@ -696,7 +706,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                                         , values.stream().map(x -> new LongValue(idField, x)).toArray(IValue[]::new)));
 
                                         try {
-                                            Collection<IEntity> iEntities = entitySearchService.selectByConditions(conditionsIds, searchableRelatedEntity.get(), new Page(0, values.size()));
+
+                                            Long currentCommitLowBound = statusService.getCurrentCommitLowBound(buffer);
+                                            Collection<IEntity> iEntities = entitySearchService.selectByConditions(conditionsIds, searchableRelatedEntity.get(), new Page(0, values.size()), currentCommitLowBound);
 
                                             //append value
 

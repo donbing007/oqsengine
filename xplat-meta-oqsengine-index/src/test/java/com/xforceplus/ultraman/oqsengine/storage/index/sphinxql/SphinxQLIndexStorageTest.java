@@ -258,7 +258,7 @@ public class SphinxQLIndexStorageTest {
 
         // todo fixed
         Collection<EntityRef> refs = storage.select(conditions, expectedEntity.entityClass(), null,
-            Page.newSinglePage(100), null, null);
+            Page.newSinglePage(100), null, 1000L);
 
         Assert.assertEquals(1, refs.size());
         Assert.assertEquals(expectedEntity.id(), refs.stream().findFirst().get().getId());
@@ -283,7 +283,7 @@ public class SphinxQLIndexStorageTest {
         Collection<EntityRef> refs = storage.select(
             Conditions.buildEmtpyConditions()
                 .addAnd(new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 1L))),
-            entityClass, null, Page.newSinglePage(100), null, null);
+            entityClass, null, Page.newSinglePage(100), null, 0L);
 
         Assert.assertEquals(0, refs.size());
     }
@@ -299,7 +299,7 @@ public class SphinxQLIndexStorageTest {
             Collection<EntityRef> refs = null;
             try {
                 //  todo fixed
-                refs = storage.select(c.conditions, c.entityClass, c.sort, c.page, null, null);
+                refs = storage.select(c.conditions, c.entityClass, c.sort, c.page, null, 1000L);
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }

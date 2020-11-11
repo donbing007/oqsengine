@@ -39,8 +39,15 @@ public class CDCDaemonService {
 
     private ConsumerRunner consumerRunner;
 
+    private static boolean isStart = false;
+
     public void stopDaemon() {
-        consumerRunner.shutdown();
+        if (isStart) {
+            logger.info("开始关闭CDC守护进程...");
+            consumerRunner.shutdown();
+            isStart = false;
+            logger.info("关闭CDC守护进程成功...");
+        }
     }
 
     @PostConstruct
@@ -49,10 +56,11 @@ public class CDCDaemonService {
         Integer nodeId = nodeIdGenerator.next();
 
         logger.info("current node = {}", nodeId);
-        if (nodeId == DAEMON_NODE_ID && null == consumerRunner) {
+        if (nodeId == DAEMON_NODE_ID) {
             logger.info("node-{} 启动CDC守护进程", nodeId);
             consumerRunner = new ConsumerRunner(consumerService, cdcMetricsService, cdcConnector);
             consumerRunner.start();
+            isStart = true;
             logger.info("node-{} 启动CDC守护进程成功", nodeId);
         }
     }
