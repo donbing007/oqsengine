@@ -17,7 +17,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.DecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
@@ -200,7 +200,7 @@ public abstract class AbstractContainer {
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        masterStorageStrategyFactory.register(FieldType.DECIMAL, new DecimalStorageStrategy());
+        masterStorageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
 
         ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 10,
                 0L, TimeUnit.MILLISECONDS,
@@ -232,7 +232,7 @@ public abstract class AbstractContainer {
                 new ThreadPoolExecutor.AbortPolicy());
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new DecimalStorageStrategy());
+        storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
         IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
         ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
 

@@ -9,7 +9,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
+import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingStorageTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
@@ -41,6 +41,8 @@ public class ConsumerRunnerTest extends AbstractContainer {
     private ConsumerRunner consumerRunner;
 
     private TestCallbackService testCallbackService;
+
+    private Long timeout = 10000l;
 
     @Before
     public void before() throws Exception {
@@ -152,7 +154,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             m2.setAccessible(true);
 
             return (int) masterTransactionExecutor.execute(
-                    new DataSourceShardingTask(
+                    new DataSourceShardingStorageTask(
                             dataSourceSelector, Long.toString(entity.id())) {
 
                         @Override
@@ -181,7 +183,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
                                 throw new SQLException(e.getMessage());
                             }
 
-                            return BuildExecutor.build(tableNameSelector, resource).execute(storageEntity);
+                            return BuildExecutor.build(tableNameSelector.select(Long.toString(entity.id())), resource, timeout).execute(storageEntity);
                         }
                     });
         } catch (Exception e) {
@@ -200,7 +202,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             m2.setAccessible(true);
 
             return (int) masterTransactionExecutor.execute(
-                    new DataSourceShardingTask(
+                    new DataSourceShardingStorageTask(
                             dataSourceSelector, Long.toString(entity.id())) {
 
                         @Override

@@ -18,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -56,8 +57,12 @@ public class JoinSelectTest {
 
     @Resource
     private EntityManagementService managementService;
+
     @Resource
     private EntitySearchService entitySearchService;
+
+    @Resource
+    private StatusService statusService;
 
     @Resource
     private TransactionManagementService transactionManagementService;
@@ -119,8 +124,9 @@ public class JoinSelectTest {
                     new StringValue(driverFields.stream().findFirst().get(), "name0"))
             );
 
+        Long commitId = statusService.getCommitId();
         Collection<IEntity> results =
-            entitySearchService.selectByConditions(conditions, mainEntityClass, Page.newSinglePage(100));
+            entitySearchService.selectByConditions(conditions, mainEntityClass, Page.newSinglePage(100), commitId);
         Assert.assertEquals(2, results.size());
         long[] expectedIds = new long[]{
             entities.stream().findFirst().get().id(),
@@ -142,7 +148,7 @@ public class JoinSelectTest {
                     new LongValue(driverFields.stream().skip(1).findFirst().get(), Long.MAX_VALUE)
                 )
             );
-        results = entitySearchService.selectByConditions(conditions, mainEntityClass, Page.newSinglePage(100));
+        results = entitySearchService.selectByConditions(conditions, mainEntityClass, Page.newSinglePage(100), commitId);
         Assert.assertEquals(1, results.size());
         Assert.assertEquals(bigDriverSelectEntityId, results.stream().findFirst().get().id());
 
