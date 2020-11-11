@@ -54,6 +54,7 @@ public class CdcSyncBenchmarkTest extends AbstractContainer {
 
     @Before
     public void before() throws Exception {
+        initTransactionManager();
 
         initMaster();
 
