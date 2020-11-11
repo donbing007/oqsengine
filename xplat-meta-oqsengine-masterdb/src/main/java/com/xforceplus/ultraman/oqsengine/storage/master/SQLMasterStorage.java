@@ -15,10 +15,13 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardStora
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.*;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
@@ -194,8 +197,14 @@ public class SQLMasterStorage implements MasterStorage {
                     storageEntity.setPref(entity.family().parent());
                     storageEntity.setCref(entity.family().child());
                     storageEntity.setTime(entity.time());
+                    storageEntity.setDeleted(false);
                     storageEntity.setAttribute(toJson(entity.entityValue()));
                     storageEntity.setMeta(buildSearchAbleSyncMeta(entity.entityClass()));
+
+                    storageEntity.setOp(OperationType.CREATE.getValue());
+                    Optional<Transaction> tOp = resource.getTransaction();
+                    storageEntity.setTx(tOp.get().id());
+                    storageEntity.setCommitid(CommitHelper.getUncommitId());
 
                     return BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
                 }
@@ -221,6 +230,11 @@ public class SQLMasterStorage implements MasterStorage {
                     storageEntity.setAttribute(toJson(entity.entityValue()));
                     storageEntity.setMeta(buildSearchAbleSyncMeta(entity.entityClass()));
 
+                    storageEntity.setOp(OperationType.UPDATE.getValue());
+                    Optional<Transaction> tOp = resource.getTransaction();
+                    storageEntity.setTx(tOp.get().id());
+                    storageEntity.setCommitid(CommitHelper.getUncommitId());
+
                     return ReplaceExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
 
                 }
@@ -236,13 +250,18 @@ public class SQLMasterStorage implements MasterStorage {
 
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                    /**
+                     * 删除数据时不再关心字段信息.
+                     */
                     StorageEntity storageEntity = new StorageEntity();
                     storageEntity.setId(entity.id());
                     storageEntity.setVersion(entity.version());
                     storageEntity.setTime(entity.time());
-                    /**
-                     * 删除数据时不再关心字段信息.
-                     */
+
+                    storageEntity.setOp(OperationType.UPDATE.getValue());
+                    Optional<Transaction> tOp = resource.getTransaction();
+                    storageEntity.setTx(tOp.get().id());
+                    storageEntity.setCommitid(CommitHelper.getUncommitId());
 
                     return DeleteExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
                 }

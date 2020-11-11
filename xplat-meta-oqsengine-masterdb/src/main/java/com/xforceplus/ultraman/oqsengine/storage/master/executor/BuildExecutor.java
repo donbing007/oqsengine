@@ -42,11 +42,11 @@ public class BuildExecutor extends AbstractMasterExecutor<StorageEntity, Integer
         st.setLong(3, storageEntity.getTx());
         st.setLong(4, storageEntity.getCommitid());
         st.setInt(5, storageEntity.getVersion());
-        st.setInt(6, OperationType.CREATE.getValue());
+        st.setInt(6, storageEntity.getOp());
         st.setLong(7, storageEntity.getTime());
         st.setLong(8, storageEntity.getPref());
         st.setLong(9, storageEntity.getCref());
-        st.setBoolean(10, false);
+        st.setBoolean(10, storageEntity.getDeleted());
         st.setString(11, storageEntity.getAttribute());
         st.setString(12, storageEntity.getMeta());
 

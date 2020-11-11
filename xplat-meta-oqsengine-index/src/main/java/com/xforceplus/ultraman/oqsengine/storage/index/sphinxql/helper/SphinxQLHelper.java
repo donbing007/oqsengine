@@ -184,6 +184,8 @@ public class SphinxQLHelper {
             buff.append(value.value().toString());
         }
         buff.append("*");
+
+        // TODO: 这里的暂时换成了非精确的模糊搜索方式,原有的ZONESPAN对于性能消耗很大.
 //        buff.append(ATTRIBUTE_FULL_FIELD_PREFIX);
 //        if (useGroupName) {
 //            buff.append(value.groupStorageName()).append("*");

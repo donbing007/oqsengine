@@ -16,12 +16,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -52,6 +53,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 /**
  * @author dongbin
  * @version 0.1 2020/11/6 16:16
@@ -59,8 +63,7 @@ import java.util.stream.Collectors;
  */
 public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
 
-    private TransactionManager transactionManager = new DefaultTransactionManager(
-        new IncreasingOrderLongIdGenerator(0));
+    private TransactionManager transactionManager;
 
     private DataSource dataSource;
     private SQLMasterStorage storage;
@@ -132,11 +135,17 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
 
         DataSource ds = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
 
+        long commitId = 0;
+        StatusService statusService = mock(StatusService.class);
+        when(statusService.getCommitId()).thenReturn(commitId++);
+
+        transactionManager = new DefaultTransactionManager(new IncreasingOrderLongIdGenerator(0), statusService);
+
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, ConnectionTransactionResource.class);
+            transactionManager, new ConnectionTransactionResourceFactory("oqsbigentity"));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

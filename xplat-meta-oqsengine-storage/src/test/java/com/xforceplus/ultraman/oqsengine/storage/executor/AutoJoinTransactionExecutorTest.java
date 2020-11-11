@@ -3,9 +3,11 @@ package com.xforceplus.ultraman.oqsengine.storage.executor;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,8 +34,12 @@ public class AutoJoinTransactionExecutorTest {
 
     @Before
     public void before() throws Exception {
+        long commitId = 0;
+        StatusService statusService = mock(StatusService.class);
+        when(statusService.getCommitId()).thenReturn(commitId++);
+
         idGenerator = new IncreasingOrderLongIdGenerator();
-        tm = new DefaultTransactionManager(idGenerator);
+        tm = new DefaultTransactionManager(idGenerator, statusService);
     }
 
     @After
@@ -60,7 +66,9 @@ public class AutoJoinTransactionExecutorTest {
 
         Selector<DataSource> dataSourceSelector = key -> mockDataSource;
 
-        AutoJoinTransactionExecutor te = new AutoJoinTransactionExecutor(tm, MockConnectionTransactionResource.class);
+        AutoJoinTransactionExecutor te = new AutoJoinTransactionExecutor(tm,
+            (TransactionResourceFactory<Connection>) (key, resource, autocommit) ->
+                new MockConnectionTransactionResource(key, resource, autocommit));
         // 分片键不关心
         te.execute(new DataSourceShardingStorageTask(dataSourceSelector, "") {
             @Override
@@ -87,7 +95,9 @@ public class AutoJoinTransactionExecutorTest {
         Transaction tx = tm.create();
         tm.bind(tx.id());
 
-        AutoJoinTransactionExecutor te = new AutoJoinTransactionExecutor(tm, MockConnectionTransactionResource.class);
+        AutoJoinTransactionExecutor te = new AutoJoinTransactionExecutor(tm,
+            (TransactionResourceFactory<Connection>) (key, resource, autocommit) ->
+                new MockConnectionTransactionResource(key, resource, autocommit));
         // 分片键不关心
         te.execute(new DataSourceShardingStorageTask(dataSourceSelector, "") {
             @Override
@@ -120,7 +130,9 @@ public class AutoJoinTransactionExecutorTest {
         tm.bind(currentT.id());
         currentT.join(new MockConnectionTransactionResource(mockDataSource.toString(), expectedConn, false));
 
-        AutoJoinTransactionExecutor te = new AutoJoinTransactionExecutor(tm, MockConnectionTransactionResource.class);
+        AutoJoinTransactionExecutor te = new AutoJoinTransactionExecutor(tm,
+            (TransactionResourceFactory<Connection>) (key, resource, autocommit) ->
+                new MockConnectionTransactionResource(key, resource, autocommit));
         // 分片键不关心
         te.execute(new DataSourceShardingStorageTask(dataSourceSelector, "") {
             @Override

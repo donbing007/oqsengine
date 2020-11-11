@@ -30,15 +30,19 @@ public class SphinxQLTransactionResource extends AbstractConnectionTransactionRe
     }
 
     @Override
-    public void commit() throws SQLException {
-        execute("commit");
-        value().commit();
+    public void commit(long commitId) throws SQLException {
+        if (!isAutoCommit()) {
+            execute("commit");
+            value().commit();
+        }
     }
 
     @Override
     public void rollback() throws SQLException {
-        execute("rollback");
-        value().rollback();
+        if (!isAutoCommit()) {
+            execute("rollback");
+            value().rollback();
+        }
     }
 
     private void execute(String command) throws SQLException {

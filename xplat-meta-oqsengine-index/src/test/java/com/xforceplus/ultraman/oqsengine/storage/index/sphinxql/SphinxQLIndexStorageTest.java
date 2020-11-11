@@ -17,12 +17,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -46,6 +47,9 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 /**
  * SphinxQLIndexStorage Tester.
  *
@@ -61,12 +65,9 @@ public class SphinxQLIndexStorageTest {
     private static GenericContainer manticore1;
     private static GenericContainer searchManticore;
 
-    private TransactionManager transactionManager = new DefaultTransactionManager(
-        new IncreasingOrderLongIdGenerator(0));
+    private TransactionManager transactionManager;
     private SphinxQLIndexStorage storage;
     private DataSourcePackage dataSourcePackage;
-
-    private IEntityValueBuilder<String> entityValueBuilder;
 
     private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
     private static IEntityField stringField = new EntityField(Long.MAX_VALUE - 1, "string", FieldType.STRING);
@@ -158,8 +159,14 @@ public class SphinxQLIndexStorageTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        TransactionExecutor executor = new AutoJoinTransactionExecutor(transactionManager,
-            SphinxQLTransactionResource.class);
+        long commitId = 0;
+        StatusService statusService = mock(StatusService.class);
+        when(statusService.getCommitId()).thenReturn(commitId++);
+
+        transactionManager = new DefaultTransactionManager(new IncreasingOrderLongIdGenerator(0), statusService);
+
+        TransactionExecutor executor =
+            new AutoJoinTransactionExecutor(transactionManager, new SphinxQLTransactionResourceFactory());
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
@@ -630,19 +637,19 @@ public class SphinxQLIndexStorageTest {
             }),
             // order by
             new Case(
-                    Conditions.buildEmtpyConditions()
-                            .addAnd(new Condition(stringField141, ConditionOperator.EQUALS,
-                                    new StringValue(stringField141, "B")))
-                            .addAnd(new Condition(stringField142, ConditionOperator.EQUALS,
-                                    new StringValue(stringField142, "0"))),
-                    entityClass, Page.newSinglePage(100), result -> {
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(stringField141, ConditionOperator.EQUALS,
+                        new StringValue(stringField141, "B")))
+                    .addAnd(new Condition(stringField142, ConditionOperator.EQUALS,
+                        new StringValue(stringField142, "0"))),
+                entityClass, Page.newSinglePage(100), result -> {
                 Assert.assertEquals(0, result.refs.size());
                 return true;
             }, Sort.buildAscSort(stringField141))
         );
     }
 
-    private StorageEntity create(Long id, Long entityId, Long commitId, Long tx){
+    private StorageEntity create(Long id, Long entityId, Long commitId, Long tx) {
         StorageEntity entity = new StorageEntity();
         entity.setId(id);
         entity.setEntity(entityId);
