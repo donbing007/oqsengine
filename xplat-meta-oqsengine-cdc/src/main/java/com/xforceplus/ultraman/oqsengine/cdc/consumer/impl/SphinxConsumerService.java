@@ -199,9 +199,8 @@ public class SphinxConsumerService implements ConsumerService {
                 if (needSyncRow(columns)) {
                     //  更新
                     cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(getLongFromColumn(columns, COMMITID));
-                    RawEntry rawEntry = new RawEntry(
-                            entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList());
-                    rawEntries.add(rawEntry);
+                    rawEntries.add(new RawEntry(
+                            entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
                 } else {
                     addPrefEntityValue(columns, cdcMetrics);
                 }
