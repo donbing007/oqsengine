@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.xforceplus.ultraman.oqsengine.core.service.impl.CombinedStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
@@ -35,5 +36,14 @@ public class StorageConfiguration {
         storage.setIndexTableName(indexTableName);
         storage.setMaxQueryTimeMs(maxQueryTimeMs);
         return storage;
+    }
+
+    @Bean
+    public CombinedStorage combinedStorage(
+                MasterStorage masterStorage,
+                IndexStorage indexStorage
+            ) {
+        CombinedStorage combinedStorage = new CombinedStorage(masterStorage, indexStorage);
+        return combinedStorage;
     }
 }

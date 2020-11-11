@@ -45,11 +45,11 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
     private Long maxQueryTimeMs;
 
     public QueryConditionExecutor(
-        String indexTableName
-        , TransactionResource<Connection> resource
-        , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
-        , StorageStrategyFactory storageStrategyFactory
-        , Long maxQueryTimeMs
+            String indexTableName
+            , TransactionResource<Connection> resource
+            , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
+            , StorageStrategyFactory storageStrategyFactory
+            , Long maxQueryTimeMs
     ) {
         this.indexTableName = indexTableName;
         this.resource = resource;
@@ -59,11 +59,11 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
     }
 
     public static Executor<Tuple6<Long, Conditions, Page, Sort, List<Long>, Long>, List<EntityRef>> build(
-        String indexTableName
-        , TransactionResource<Connection> resource
-        , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
-        , StorageStrategyFactory storageStrategyFactory
-        , Long maxQueryTimeMs
+            String indexTableName
+            , TransactionResource<Connection> resource
+            , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
+            , StorageStrategyFactory storageStrategyFactory
+            , Long maxQueryTimeMs
     ) {
         return new QueryConditionExecutor(indexTableName, resource, conditionsBuilderFactory, storageStrategyFactory, maxQueryTimeMs);
     }
@@ -99,16 +99,20 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
     private String buildOrderBySqlSegment(List<SortField> sortFields, boolean desc) {
         StringBuilder buff = new StringBuilder();
 
-        for (SortField field : sortFields) {
-            if (buff.length() > 0) {
-                buff.append(',');
-            }
+        buff.append(SqlKeywordDefine.ORDER);
 
-            buff.append(SqlKeywordDefine.ORDER)
-                    .append(' ')
+        boolean first = true;
+        for (SortField field : sortFields) {
+
+            if (!first && buff.length() > 0) {
+                buff.append(",");
+            }
+            first = false;
+            buff.append(' ')
                     .append(field.getAlias())
                     .append(' ')
                     .append(desc ? SqlKeywordDefine.ORDER_TYPE_DESC : SqlKeywordDefine.ORDER_TYPE_ASC);
+
         }
         return buff.toString();
     }
@@ -222,7 +226,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
 
         String whereCondition = conditionsBuilderFactory.getBuilder(conditions).build(conditions);
 
-        if ( filterIds != null && !filterIds.isEmpty()) {
+        if (filterIds != null && !filterIds.isEmpty()) {
             String ids = filterIds.stream().map(Object::toString).collect(joining(","));
             String filterCondition = String.format(SQLConstant.FILTER_IDS, ids);
             if (StringUtils.isEmpty(whereCondition)) {
@@ -232,7 +236,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
             }
         }
 
-        if (commitId != null) {
+        if (commitId != null && commitId > 0) {
             String commitFilterId = String.format(SQLConstant.FILTER_COMMIT, commitId);
 
             if (StringUtils.isEmpty(whereCondition)) {
@@ -279,8 +283,8 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
             st.setLong(2, 0);
             st.setLong(3, page.getPageSize() * page.getIndex());
             st.setLong(4, page.hasVisibleTotalCountLimit() ?
-                page.getVisibleTotalCount()
-                : page.getPageSize() * page.getIndex());
+                    page.getVisibleTotalCount()
+                    : page.getPageSize() * page.getIndex());
             // add max query timeout.
             st.setLong(5, maxQueryTimeMs);
             if (logger.isDebugEnabled()) {
