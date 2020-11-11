@@ -24,7 +24,6 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageE
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StopWatch;
 
 
 import javax.annotation.Resource;
@@ -106,12 +105,10 @@ public class SphinxConsumerService implements ConsumerService {
             switch (entry.getEntryType()) {
 
                 case TRANSACTIONEND:
-                    StopWatch stopWatch = new StopWatch();
-                    stopWatch.start();
+
                     Map<Long, IEntityValue> prefEntityValueMaps =
                             convertToEntityValueMap(cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues());
-                    stopWatch.stop();
-                    logger.debug("convert use time : {}", stopWatch.getLastTaskTimeMillis());
+
                     //  同步rawEntries到Sphinx
                     multiSyncSphinx(rawEntries, prefEntityValueMaps, cdcMetrics);
 

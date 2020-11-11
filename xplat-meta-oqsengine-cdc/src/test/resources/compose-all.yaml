@@ -11,6 +11,7 @@ services:
     volumes:
       - "./mastdb.sql:/docker-entrypoint-initdb.d/1.sql"
       - "./mysql.cnf:/etc/my.cnf"
+
   canal-server:
     image: canal/canal-server:v1.1.4
     depends_on:

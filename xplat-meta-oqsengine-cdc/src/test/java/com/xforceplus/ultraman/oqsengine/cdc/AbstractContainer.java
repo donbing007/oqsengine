@@ -135,7 +135,7 @@ public abstract class AbstractContainer {
     protected SQLMasterStorage masterStorage;
     protected DataSource dataSource;
     protected TransactionExecutor masterTransactionExecutor;
-    protected Selector<String> tableNameSelector;
+    protected String tableName = "oqsbigentity";
 
     protected DataSource buildDataSourceSelectorMaster(String file) {
         if (dataSourcePackage == null) {
@@ -195,8 +195,6 @@ public abstract class AbstractContainer {
 
     protected void initMaster() throws Exception {
 
-        tableNameSelector = buildTableNameSelector("oqsbigentity", 3);
-
         dataSource = buildDataSourceSelectorMaster("./src/test/resources/oqsengine-ds.conf");
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
@@ -205,13 +203,6 @@ public abstract class AbstractContainer {
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         masterStorageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
-
-        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 10,
-            0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(500),
-            ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
-            new ThreadPoolExecutor.AbortPolicy()
-        );
 
         IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
         ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", masterStorageStrategyFactory);
@@ -230,7 +221,7 @@ public abstract class AbstractContainer {
         ReflectionTestUtils.setField(masterStorage, "storageStrategyFactory", masterStorageStrategyFactory);
         ReflectionTestUtils.setField(masterStorage, "entityValueBuilder", entityValueBuilder);
         ReflectionTestUtils.setField(masterStorage, "conditionsBuilderFactory", sqlJsonConditionsBuilderFactory);
-        masterStorage.setTableName("oqsbigentity");
+        masterStorage.setTableName(tableName);
         masterStorage.init();
     }
 

@@ -12,11 +12,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardStorageTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.ReplaceExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -41,7 +43,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
     @Before
     public void before() throws Exception {
-
         initMaster();
 
         initConsumerRunner();
@@ -61,16 +62,19 @@ public class ConsumerRunnerTest extends AbstractContainer {
         consumerRunner.start();
     }
 
+    private long t = 0;
+
     @Test
     public void syncTest() throws InterruptedException, SQLException {
+
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
         try {
-            initData(EntityGenerateToolBar.generateFixedEntities(0,0), 1, Long.MAX_VALUE, false);
+            initData(EntityGenerateToolBar.generateFixedEntities(t, 0), 1, Long.MAX_VALUE, false);
 
             Thread.sleep(1000);
 
-            initData(EntityGenerateToolBar.generateFixedEntities(0, 1), 1, 1, true);
+            initData(EntityGenerateToolBar.generateFixedEntities(t, 1), 1, 1, true);
 
         } catch (Exception ex) {
             tx.rollback();
@@ -86,20 +90,21 @@ public class ConsumerRunnerTest extends AbstractContainer {
         CDCMetrics cdcMetrics = testCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
         Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
-        Assert.assertEquals(1, cdcMetrics.getCdcAckMetrics().getCommitList().size());
 
         Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
-        Assert.assertEquals(10, cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
     }
 
     @Test
-    public void loopTest() throws  InterruptedException, SQLException {
-        int t = 100;
-        while (t < 10000) {
+    public void loopTest() throws InterruptedException, SQLException {
+        t = 50;
+        int gap = 10;
+        long loops = 2;
+        int i = 0;
+        while (i < loops) {
             Transaction tx = transactionManager.create();
             transactionManager.bind(tx.id());
             try {
-                initData(EntityGenerateToolBar.generateFixedEntities(t,0), 1, Long.MAX_VALUE, false);
+                initData(EntityGenerateToolBar.generateFixedEntities(t, 0), 1, Long.MAX_VALUE, false);
 
                 Thread.sleep(1000);
 
@@ -114,7 +119,8 @@ public class ConsumerRunnerTest extends AbstractContainer {
             tx.commit();
             transactionManager.finish();
 
-            t = t + 100;
+            i++;
+            t += gap;
         }
 
         Thread.sleep(10000);
@@ -122,11 +128,76 @@ public class ConsumerRunnerTest extends AbstractContainer {
         CDCMetrics cdcMetrics = testCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
         Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
-        Assert.assertEquals(1, cdcMetrics.getCdcAckMetrics().getCommitList().size());
 
         Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
-        Assert.assertEquals(10, cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
     }
+
+    @Test
+    public void loopTransactionOverBatches() throws SQLException, InterruptedException {
+        t = 15000;
+        int gap = 10;
+        int size = 250;
+        Transaction tx = transactionManager.create();
+        transactionManager.bind(tx.id());
+        try {
+            for (long i = t; i < t + gap * size; i += gap) {
+                initData(EntityGenerateToolBar.generateFixedEntities(i, 0), t, Long.MAX_VALUE, false);
+            }
+
+            for (long i = t; i < t + gap * size; i += gap) {
+                initData(EntityGenerateToolBar.generateFixedEntities(i, 1), t, t, true);
+            }
+        } catch (Exception ex) {
+            tx.rollback();
+            throw ex;
+        }
+
+        tx.commit();
+        transactionManager.finish();
+
+        Thread.sleep(30000);
+
+        CDCMetrics cdcMetrics = testCallbackService.queryLastUnCommit();
+        Assert.assertNotNull(cdcMetrics);
+        Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
+
+        Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
+    }
+
+
+    @Test
+    public void loopSmallTransactionBatches() throws SQLException, InterruptedException {
+        t = 50000;
+        int gap = 10;
+        int loops = 100;
+
+        long i = t;
+        long limits = t + gap * loops;
+
+        while (i < limits) {
+            Transaction tx = transactionManager.create();
+            transactionManager.bind(tx.id());
+            try {
+                initData(EntityGenerateToolBar.generateFixedEntities(i, 0), t + i, Long.MAX_VALUE, false);
+                initData(EntityGenerateToolBar.generateFixedEntities(i, 1), t + i, t + i, true);
+            } catch (Exception ex) {
+                tx.rollback();
+                throw ex;
+            }
+            tx.commit();
+            transactionManager.finish();
+            i += gap;
+        }
+
+        Thread.sleep(10000);
+
+        CDCMetrics cdcMetrics = testCallbackService.queryLastUnCommit();
+        Assert.assertNotNull(cdcMetrics);
+        Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
+
+        Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
+    }
+
 
     private void initData(IEntity[] datas, long tx, long commit, boolean replacement) {
         for (IEntity entity : datas) {
@@ -138,7 +209,8 @@ public class ConsumerRunnerTest extends AbstractContainer {
         }
     }
 
-    private int build(IEntity entity, long tx)  {
+
+    private int build(IEntity entity, long tx) {
         try {
             Method m1 = masterStorage.getClass()
                     .getDeclaredMethod("toJson", new Class[]{IEntityValue.class});
@@ -177,8 +249,8 @@ public class ConsumerRunnerTest extends AbstractContainer {
                                 throw new SQLException(e.getMessage());
                             }
 
-                            return ReplaceExecutor.build(
-                                tableNameSelector.select(Long.toString(entity.id())), resource, 0)
+                            return BuildExecutor.build(
+                                    tableName, resource, 0)
                                 .execute(storageEntity);
                         }
                     });
@@ -227,7 +299,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
                             }
 
                             return ReplaceExecutor.build(
-                                tableNameSelector.select(Long.toString(entity.id())), resource, 0)
+                                    tableName, resource, 0)
                                 .execute(storageEntity);
                         }
                     });
