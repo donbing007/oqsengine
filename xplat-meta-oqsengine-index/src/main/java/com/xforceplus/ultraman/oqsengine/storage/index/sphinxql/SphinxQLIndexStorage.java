@@ -94,7 +94,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
      */
     @Override
     public Collection<EntityRef> select(
-        Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, long commitId)
+        Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, Long commitId)
         throws SQLException {
 
         return (Collection<EntityRef>) transactionExecutor

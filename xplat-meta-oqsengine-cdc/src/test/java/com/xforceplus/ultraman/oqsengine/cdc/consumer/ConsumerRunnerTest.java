@@ -9,10 +9,9 @@ import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingTask;
+import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardStorageTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.ReplaceExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -24,8 +23,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
-
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.INIT_ID;
 
 
 /**
@@ -152,8 +149,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             m2.setAccessible(true);
 
             return (int) masterTransactionExecutor.execute(
-                    new DataSourceShardingTask(
-                            dataSourceSelector, Long.toString(entity.id())) {
+                new DataSourceNoShardStorageTask(dataSource) {
 
                         @Override
                         public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -181,7 +177,9 @@ public class ConsumerRunnerTest extends AbstractContainer {
                                 throw new SQLException(e.getMessage());
                             }
 
-                            return BuildExecutor.build(tableNameSelector, resource).execute(storageEntity);
+                            return ReplaceExecutor.build(
+                                tableNameSelector.select(Long.toString(entity.id())), resource, 0)
+                                .execute(storageEntity);
                         }
                     });
         } catch (Exception e) {
@@ -200,8 +198,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             m2.setAccessible(true);
 
             return (int) masterTransactionExecutor.execute(
-                    new DataSourceShardingTask(
-                            dataSourceSelector, Long.toString(entity.id())) {
+                new DataSourceNoShardStorageTask(dataSource) {
 
                         @Override
                         public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -229,7 +226,9 @@ public class ConsumerRunnerTest extends AbstractContainer {
                                 throw new SQLException(e.getMessage());
                             }
 
-                            return ReplaceExecutor.build(tableNameSelector, resource).execute(storageEntity);
+                            return ReplaceExecutor.build(
+                                tableNameSelector.select(Long.toString(entity.id())), resource, 0)
+                                .execute(storageEntity);
                         }
                     });
         } catch (Exception e) {

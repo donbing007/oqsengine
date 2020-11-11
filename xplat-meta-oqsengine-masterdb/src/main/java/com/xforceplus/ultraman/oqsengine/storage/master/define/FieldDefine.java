@@ -2,15 +2,17 @@ package com.xforceplus.ultraman.oqsengine.storage.master.define;
 
 /**
  * 字段定义.
+ *
  * @author dongbin
  * @version 0.1 2020/3/1 20:22
  * @since 1.8
  */
 public class FieldDefine {
 
-    private FieldDefine() {}
+    private FieldDefine() {
+    }
 
-    public final static String ATTRIBUTE_PREFIX = "F";
+    public static final String ATTRIBUTE_PREFIX = "F";
 
     /**
      * 数据标识.

@@ -17,7 +17,9 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.DecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
+import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
@@ -26,7 +28,10 @@ import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.Ignore;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.containers.*;
+import org.testcontainers.containers.BindMode;
+import org.testcontainers.containers.DockerComposeContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import javax.sql.DataSource;
@@ -64,15 +69,15 @@ public abstract class AbstractContainer {
 
     private static void initDockerCompose() {
         environment =
-                new DockerComposeContainer(new File("src/test/resources/compose-all.yaml"))
-                        .withExposedService("mysql_1", 3306)
-                        .withExposedService("canal-server_1", 11111);
+            new DockerComposeContainer(new File("src/test/resources/compose-all.yaml"))
+                .withExposedService("mysql_1", 3306)
+                .withExposedService("canal-server_1", 11111);
 
         environment.start();
 
         String mysqlUrl = String.format(
-                "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
-                environment.getServiceHost("mysql_1", 3306), environment.getServicePort("mysql_1", 3306));
+            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+            environment.getServiceHost("mysql_1", 3306), environment.getServicePort("mysql_1", 3306));
 
         System.setProperty("MYSQL_JDBC_URL", mysqlUrl);
     }
@@ -81,40 +86,40 @@ public abstract class AbstractContainer {
     private static void initManticore(Network network) {
 
         manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.0").withExposedPorts(9306)
-                .withNetwork(network)
-                .withNetworkAliases("manticore0")
-                .withClasspathResourceMapping("manticore0.conf", "/manticore.conf", BindMode.READ_ONLY)
-                .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-                .waitingFor(Wait.forListeningPort());
+            .withNetwork(network)
+            .withNetworkAliases("manticore0")
+            .withClasspathResourceMapping("manticore0.conf", "/manticore.conf", BindMode.READ_ONLY)
+            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+            .waitingFor(Wait.forListeningPort());
         manticore0.start();
 
         manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.0").withExposedPorts(9306)
-                .withNetwork(network)
-                .withNetworkAliases("manticore1")
-                .withClasspathResourceMapping("manticore1.conf", "/manticore.conf", BindMode.READ_ONLY)
-                .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-                .waitingFor(Wait.forListeningPort());
+            .withNetwork(network)
+            .withNetworkAliases("manticore1")
+            .withClasspathResourceMapping("manticore1.conf", "/manticore.conf", BindMode.READ_ONLY)
+            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+            .waitingFor(Wait.forListeningPort());
         manticore1.start();
 
         searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.0").withExposedPorts(9306)
-                .withNetwork(network)
-                .withNetworkAliases("searchManticore")
-                .withClasspathResourceMapping("search-manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
-                .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-                .dependsOn(manticore0, manticore1)
-                .waitingFor(Wait.forListeningPort());
+            .withNetwork(network)
+            .withNetworkAliases("searchManticore")
+            .withClasspathResourceMapping("search-manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
+            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+            .dependsOn(manticore0, manticore1)
+            .waitingFor(Wait.forListeningPort());
         searchManticore.start();
 
         String write0Jdbc = String.format(
-                "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
-                manticore0.getContainerIpAddress(), manticore0.getFirstMappedPort());
+            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+            manticore0.getContainerIpAddress(), manticore0.getFirstMappedPort());
         String write1Jdbc = String.format(
-                "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
-                manticore1.getContainerIpAddress(), manticore1.getFirstMappedPort());
+            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+            manticore1.getContainerIpAddress(), manticore1.getFirstMappedPort());
 
         String searchJdbc = String.format(
-                "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
-                searchManticore.getContainerIpAddress(), searchManticore.getFirstMappedPort());
+            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+            searchManticore.getContainerIpAddress(), searchManticore.getFirstMappedPort());
 
         System.setProperty("MANTICORE_WRITE0_JDBC_URL", write0Jdbc);
         System.setProperty("MANTICORE_WRITE1_JDBC_URL", write1Jdbc);
@@ -122,25 +127,24 @@ public abstract class AbstractContainer {
     }
 
 
-
     protected TransactionManager transactionManager = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0));
+        new IncreasingOrderLongIdGenerator(0));
     protected SphinxQLIndexStorage indexStorage;
     protected DataSourcePackage dataSourcePackage;
 
     protected SQLMasterStorage masterStorage;
-    protected Selector<DataSource> dataSourceSelector;
+    protected DataSource dataSource;
     protected TransactionExecutor masterTransactionExecutor;
     protected Selector<String> tableNameSelector;
 
-    protected Selector<DataSource> buildDataSourceSelectorMaster(String file) {
+    protected DataSource buildDataSourceSelectorMaster(String file) {
         if (dataSourcePackage == null) {
             System.setProperty(DataSourceFactory.CONFIG_FILE, file);
 
             dataSourcePackage = DataSourceFactory.build();
         }
 
-        return new HashSelector<>(dataSourcePackage.getMaster());
+        return dataSourcePackage.getMaster().get(0);
     }
 
     protected Selector<DataSource> buildDataSourceSelectorIndex(String file) {
@@ -161,15 +165,15 @@ public abstract class AbstractContainer {
 
     protected void initIndex() throws SQLException, InterruptedException {
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector(
-                "./src/test/resources/sql_index_storage.conf");
+            "./src/test/resources/sql_index_storage.conf");
         Selector<DataSource> searchDataSourceSelector = buildSearchDataSourceSelector(
-                "./src/test/resources/sql_index_storage.conf");
+            "./src/test/resources/sql_index_storage.conf");
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(transactionManager,
-                SphinxQLTransactionResource.class);
+            SphinxQLTransactionResource.class);
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
@@ -193,32 +197,40 @@ public abstract class AbstractContainer {
 
         tableNameSelector = buildTableNameSelector("oqsbigentity", 3);
 
-        dataSourceSelector = buildDataSourceSelectorMaster("./src/test/resources/oqsengine-ds.conf");
+        dataSource = buildDataSourceSelectorMaster("./src/test/resources/oqsengine-ds.conf");
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-                transactionManager, ConnectionTransactionResource.class);
+            transactionManager, ConnectionTransactionResource.class);
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        masterStorageStrategyFactory.register(FieldType.DECIMAL, new DecimalStorageStrategy());
+        masterStorageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
 
         ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 10,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(500),
-                ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
-                new ThreadPoolExecutor.AbortPolicy()
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(500),
+            ExecutorHelper.buildNameThreadFactory("oqs-engine", false),
+            new ThreadPoolExecutor.AbortPolicy()
         );
 
         IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
         ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", masterStorageStrategyFactory);
 
+        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
+        storageStrategyFactory.register(FieldType.STRINGS, new MasterStringsStorageStrategy());
+
+        SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
+        sqlJsonConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sqlJsonConditionsBuilderFactory.init();
+
         masterStorage = new SQLMasterStorage();
-        ReflectionTestUtils.setField(masterStorage, "dataSourceSelector", dataSourceSelector);
-        ReflectionTestUtils.setField(masterStorage, "tableNameSelector", tableNameSelector);
+        ReflectionTestUtils.setField(masterStorage, "masterDataSource", dataSource);
         ReflectionTestUtils.setField(masterStorage, "transactionExecutor", masterTransactionExecutor);
         ReflectionTestUtils.setField(masterStorage, "storageStrategyFactory", masterStorageStrategyFactory);
-        ReflectionTestUtils.setField(masterStorage, "threadPool", threadPool);
         ReflectionTestUtils.setField(masterStorage, "entityValueBuilder", entityValueBuilder);
+        ReflectionTestUtils.setField(masterStorage, "conditionsBuilderFactory", sqlJsonConditionsBuilderFactory);
+        masterStorage.setTableName("oqsbigentity");
         masterStorage.init();
     }
 
@@ -226,13 +238,13 @@ public abstract class AbstractContainer {
         initIndex();
 
         ExecutorService consumerPool = new ThreadPoolExecutor(10, 10,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(2048),
-                ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
-                new ThreadPoolExecutor.AbortPolicy());
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(2048),
+            ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
+            new ThreadPoolExecutor.AbortPolicy());
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new DecimalStorageStrategy());
+        storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
         IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
         ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
 

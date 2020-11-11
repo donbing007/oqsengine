@@ -12,6 +12,8 @@ import java.sql.SQLException;
 /**
  * master库执行器统抽像.
  *
+ * @param <RES> 请求资源.
+ * @param <REQ> 响应结果.
  * @author dongbin
  * @version 0.1 2020/11/6 14:13
  * @since 1.8
