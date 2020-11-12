@@ -202,7 +202,7 @@ public abstract class AbstractContainer {
         }
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-            transactionManager, new ConnectionTransactionResourceFactory(tableName));
+            transactionManager, new ConnectionTransactionResourceFactory(tableName, null));
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

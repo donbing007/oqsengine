@@ -13,6 +13,8 @@ import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -30,6 +32,8 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
 
     private Map<FieldType, EntityRefComparator> refMapping = new HashMap<>();
 
+    private Logger logger = LoggerFactory.getLogger(CombinedStorage.class);
+
     public CombinedStorage(MasterStorage masterStorage, IndexStorage indexStorage) {
         this.masterStorage = masterStorage;
         this.indexStorage = indexStorage;
@@ -46,13 +50,25 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
     private List<EntityRef> merge(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs, Sort sort) {
         StreamMerger<EntityRef> streamMerger = new StreamMerger<>();
         FieldType type = sort.getField().type();
-        return streamMerger.merge(masterRefs.stream(), indexRefs.stream(), refMapping.get(type), sort.isAsc()).collect(toList());
+
+        EntityRefComparator entityRefComparator = refMapping.get(type);
+
+        if(entityRefComparator == null) {
+            //default
+            logger.error("unknown field type !! fallback to string");
+            entityRefComparator = new EntityRefComparator(FieldType.STRING);
+        }
+
+        //sort masterRefs first
+        List<EntityRef> sortedMasterRefs = masterRefs.stream().sorted(sort.isAsc() ? entityRefComparator : entityRefComparator.reversed()).collect(toList());
+        return streamMerger.merge(sortedMasterRefs.stream(), indexRefs.stream(), refMapping.get(type), sort.isAsc()).collect(toList());
+
     }
 
     @Deprecated
     @Override
     public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, Long commitId) throws SQLException {
-        return null;
+        throw new RuntimeException("");
     }
 
     @Deprecated
@@ -108,10 +124,15 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
 
         Collection<EntityRef> refs = indexStorage.select(conditions, entityClass, sort, page, filterIdsFromMaster, commitId);
 
+        //check if refs is in order
+
+
+
         //TODO sort transform
 
 
-        List<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().filter(x -> x.getOp() == OperationType.DELETE.getValue()).collect(toList());
+        List<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());
+
 
 
         List<EntityRef> retRefs = new LinkedList<>();

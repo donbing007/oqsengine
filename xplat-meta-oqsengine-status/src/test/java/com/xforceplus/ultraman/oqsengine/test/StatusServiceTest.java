@@ -91,11 +91,11 @@ public class StatusServiceTest {
 
         RedisIdGenerator tempIdGenerator = new RedisIdGenerator(redisClient, "tempKey");
 
-        CountDownLatch latch = new CountDownLatch(50000);
+        CountDownLatch latch = new CountDownLatch(5000);
 
         CopyOnWriteArrayList<Long> list = new CopyOnWriteArrayList<>();
 
-        IntStream.range(0 , 50000)
+        IntStream.range(0 , 5000)
                 .mapToObj(i -> new Thread(() -> {
                     Long id = tempIdGenerator.next();
                     list.add(id);
@@ -108,7 +108,7 @@ public class StatusServiceTest {
         assertTrue("there is no duplicated id",
                 list.stream()
                         .distinct()
-                        .collect(Collectors.toList()).size() == 50000);
+                        .collect(Collectors.toList()).size() == 5000);
 
 
         redisClient.connect().sync().del("tempKey");
