@@ -20,7 +20,7 @@ public interface IEntityValueBuilder<SOURCE> {
      * 构造一个新的IEntityValue.
      *
      * @param id         所属于的entity实例id.
-     * @param fieldTable 字段速查表.
+     * @param fieldTable 字段速查表.key为逻辑字段名称,值为字段定义.
      * @param source     数据源.
      * @return 实例.
      * @throws SQLException 产生异常.
