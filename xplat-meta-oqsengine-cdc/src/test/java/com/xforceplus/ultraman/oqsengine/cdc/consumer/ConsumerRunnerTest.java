@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.TestCallbackService;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -11,11 +11,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardStorageTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
+import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.ReplaceExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,6 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
+import java.util.Optional;
 
 
 /**
@@ -38,7 +41,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
     private ConsumerRunner consumerRunner;
 
-    private TestCallbackService testCallbackService;
+    private MockRedisCallbackService mockRedisCallbackService;
 
     @Before
     public void before() throws Exception {
@@ -49,8 +52,8 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
     private void initConsumerRunner() throws SQLException, InterruptedException {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
-        testCallbackService = new TestCallbackService();
-        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", testCallbackService);
+        mockRedisCallbackService = new MockRedisCallbackService();
+        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
         singleCDCConnector.init("localhost",
@@ -61,36 +64,39 @@ public class ConsumerRunnerTest extends AbstractContainer {
         consumerRunner.start();
     }
 
-    private long t = 0;
+    private long t = 1;
 
     @Test
     public void syncTest() throws InterruptedException, SQLException {
 
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
+        int expectedCount = 0;
         try {
-            initData(EntityGenerateToolBar.generateFixedEntities(t, 0), 1, Long.MAX_VALUE, false);
+            initData(EntityGenerateToolBar.generateFixedEntities(t, 0), false);
 
             Thread.sleep(1000);
 
-            initData(EntityGenerateToolBar.generateFixedEntities(t, 1), 1, 1, true);
+            IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
+            initData(entities, true);
+            expectedCount = entities.length;
 
+            //将事务正常提交,并从事务管理器中销毁事务.
+            tx.commit();
+            transactionManager.finish();
         } catch (Exception ex) {
             tx.rollback();
             throw ex;
         }
 
-        //将事务正常提交,并从事务管理器中销毁事务.
-        tx.commit();
-        transactionManager.finish();
+        Thread.sleep(1000 * 1000);
 
-        Thread.sleep(10000);
-
-        CDCMetrics cdcMetrics = testCallbackService.queryLastUnCommit();
+        CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
         Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
 
         Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
+        Assert.assertEquals(expectedCount, cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
     }
 
     @Test
@@ -99,15 +105,16 @@ public class ConsumerRunnerTest extends AbstractContainer {
         int gap = 10;
         long loops = 2;
         int i = 0;
+        mockRedisCallbackService.reset();
         while (i < loops) {
             Transaction tx = transactionManager.create();
             transactionManager.bind(tx.id());
             try {
-                initData(EntityGenerateToolBar.generateFixedEntities(t, 0), 1, Long.MAX_VALUE, false);
+                initData(EntityGenerateToolBar.generateFixedEntities(t, 0), false);
 
                 Thread.sleep(1000);
 
-                initData(EntityGenerateToolBar.generateFixedEntities(t, 1), 1, 1, true);
+                initData(EntityGenerateToolBar.generateFixedEntities(t, 1), true);
 
             } catch (Exception ex) {
                 tx.rollback();
@@ -124,7 +131,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
         Thread.sleep(10000);
 
-        CDCMetrics cdcMetrics = testCallbackService.queryLastUnCommit();
+        CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
         Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
 
@@ -138,13 +145,14 @@ public class ConsumerRunnerTest extends AbstractContainer {
         int size = 250;
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
+        mockRedisCallbackService.reset();
         try {
             for (long i = t; i < t + gap * size; i += gap) {
-                initData(EntityGenerateToolBar.generateFixedEntities(i, 0), t, Long.MAX_VALUE, false);
+                initData(EntityGenerateToolBar.generateFixedEntities(i, 0), false);
             }
 
             for (long i = t; i < t + gap * size; i += gap) {
-                initData(EntityGenerateToolBar.generateFixedEntities(i, 1), t, t, true);
+                initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true);
             }
         } catch (Exception ex) {
             tx.rollback();
@@ -156,7 +164,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
         Thread.sleep(30000);
 
-        CDCMetrics cdcMetrics = testCallbackService.queryLastUnCommit();
+        CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
         Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
 
@@ -177,8 +185,8 @@ public class ConsumerRunnerTest extends AbstractContainer {
             Transaction tx = transactionManager.create();
             transactionManager.bind(tx.id());
             try {
-                initData(EntityGenerateToolBar.generateFixedEntities(i, 0), t + i, Long.MAX_VALUE, false);
-                initData(EntityGenerateToolBar.generateFixedEntities(i, 1), t + i, t + i, true);
+                initData(EntityGenerateToolBar.generateFixedEntities(i, 0),  false);
+                initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true);
             } catch (Exception ex) {
                 tx.rollback();
                 throw ex;
@@ -190,7 +198,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
         Thread.sleep(10000);
 
-        CDCMetrics cdcMetrics = testCallbackService.queryLastUnCommit();
+        CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
         Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
 
@@ -198,18 +206,18 @@ public class ConsumerRunnerTest extends AbstractContainer {
     }
 
 
-    private void initData(IEntity[] datas, long tx, long commit, boolean replacement) {
+    private void initData(IEntity[] datas, boolean replacement) {
         for (IEntity entity : datas) {
             if (!replacement) {
-                build(entity, tx);
+                build(entity);
             } else {
-                replace(entity, tx, commit, 0);
+                replace(entity,0);
             }
         }
     }
 
 
-    private int build(IEntity entity, long tx) {
+    private int build(IEntity entity) {
         try {
             Method m1 = masterStorage.getClass()
                     .getDeclaredMethod("toJson", new Class[]{IEntityValue.class});
@@ -233,10 +241,13 @@ public class ConsumerRunnerTest extends AbstractContainer {
                                 storageEntity.setCref(entity.family().child());
                             }
                             storageEntity.setTime(entity.time());
+                            storageEntity.setCommitid(CommitHelper.getUncommitId());
 
-                            storageEntity.setTx(tx);
+                            storageEntity.setOp(OperationType.CREATE.getValue());
+                            Optional<Transaction> tOp = resource.getTransaction();
+                            storageEntity.setTx(tOp.get().id());
+
                             storageEntity.setDeleted(false);
-                            storageEntity.setCommitid(Long.MAX_VALUE);
                             try {
                                 storageEntity.setAttribute(
                                         (String) m1.invoke(masterStorage, new Object[]{entity.entityValue()}));
@@ -258,7 +269,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         }
     }
 
-    private int replace(IEntity entity, long tx, long commit, int version) {
+    private int replace(IEntity entity, int version) {
         try {
             Method m1 = masterStorage.getClass()
                     .getDeclaredMethod("toJson", new Class[]{IEntityValue.class});
@@ -283,9 +294,13 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
                             storageEntity.setVersion(version);
 
-                            storageEntity.setTx(tx);
+                            storageEntity.setOp(OperationType.UPDATE.getValue());
+                            Optional<Transaction> tOp = resource.getTransaction();
+
+                            storageEntity.setTx(tOp.get().id());
+                            storageEntity.setCommitid(CommitHelper.getUncommitId());
+
                             storageEntity.setDeleted(false);
-                            storageEntity.setCommitid(commit);
                             try {
                                 storageEntity.setAttribute(
                                         (String) m1.invoke(masterStorage, new Object[]{entity.entityValue()}));

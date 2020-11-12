@@ -19,6 +19,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,18 +108,18 @@ public class SphinxConsumerService implements ConsumerService {
 
                 case TRANSACTIONEND:
                     //  同步rawEntries到Sphinx
-                    sync(rawEntries, cdcMetrics);
+                    if (rawEntries.size() > 0) {
+                        sync(rawEntries, cdcMetrics);
+                        syncCount += rawEntries.size();
+                        //  每个Transaction的结束需要将rawEntries清空
+                        rawEntries.clear();
+                    }
 
                     //  每次Transaction结束,将unCommitId加入到commitList中
                     if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitId() > INIT_ID) {
                         cdcMetrics.getCdcAckMetrics().getCommitList().add(cdcMetrics.getCdcUnCommitMetrics().getUnCommitId());
                         cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(INIT_ID);
                     }
-
-                    syncCount += rawEntries.size();
-
-                    //  每个Transaction的结束需要将rawEntries清空
-                    rawEntries.clear();
 
                     //  每个Transaction的结束需要将unCommitEntityValues清空
                     cdcMetrics.getCdcUnCommitMetrics().setUnCommitEntityValues(new ConcurrentHashMap<>());
@@ -242,7 +243,7 @@ public class SphinxConsumerService implements ConsumerService {
         if (null == column) {
             throw new SQLException("sync row failed, unknown column commitid.");
         }
-        return Long.parseLong(column.getValue()) < Long.MAX_VALUE;
+        return Long.parseLong(column.getValue()) != CommitHelper.getUncommitId();
     }
 
     /*
