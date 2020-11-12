@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.status.StatusService;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class MultiLocalTransaction implements Transaction {
 
-    final Logger logger = LoggerFactory.getLogger(MultiLocalTransaction.class);
+    private final Logger logger = LoggerFactory.getLogger(MultiLocalTransaction.class);
 
     private long id;
     private long attachment;
@@ -167,6 +168,10 @@ public class MultiLocalTransaction implements Transaction {
         }
         List<SQLException> exHolder = new LinkedList<>();
         long commitId = statusService.getCommitId();
+        if (!CommitHelper.isLegal(commitId)) {
+            throw new SQLException(String.format("The submission number obtained is invalid.[%d]", commitId));
+        }
+
         if (logger.isDebugEnabled()) {
             logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
         }
