@@ -31,6 +31,11 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
     }
 
     @Override
+    public boolean compareByString() {
+        return false;
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(getField(), getValue());
     }

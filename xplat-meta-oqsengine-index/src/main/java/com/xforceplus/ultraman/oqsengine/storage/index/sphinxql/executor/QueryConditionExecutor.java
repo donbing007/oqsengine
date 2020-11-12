@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
@@ -262,21 +263,19 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
         }
 
         Sort useSort = sort;
+        StorageStrategy storageStrategy = null;
+        String orderBySqlSegment = "";
+        String sortSelectValuesSegment = "";
+        List<SortField> sortFields = null;
         if (useSort == null) {
             useSort = Sort.buildOutOfSort();
+        } else {
+            storageStrategy = storageStrategyFactory.getStrategy(useSort.getField().type());
+            sortFields = buildSortValues(useSort);
+            orderBySqlSegment = buildOrderBySqlSegment(sortFields, useSort.isDes());
+            sortSelectValuesSegment = buildSortSelectValuesSegment(sortFields);
         }
 
-        //TODO get storageStrategy and to logical value`
-
-        StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(useSort.getField().type());
-
-
-        //using new sort builder
-        List<SortField> sortFields = buildSortValues(useSort);
-
-
-        String sortSelectValuesSegment = buildSortSelectValuesSegment(sortFields);
-        String orderBySqlSegment = buildOrderBySqlSegment(sortFields, useSort.isDes());
 
 //        String orderBy = buildOrderBy(useSort);
         String sql = String.format(SQLConstant.SELECT_SQL, sortSelectValuesSegment, indexTableName, whereCondition, orderBySqlSegment);
@@ -311,14 +310,15 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
                     ResultSet finalRs = rs;
                     AtomicInteger index = new AtomicInteger(0);
 
+                    StorageStrategy finalStorageStrategy = storageStrategy;
                     Optional<StorageValue> reduce = sortFields.stream().map(x -> {
                         //get sort value
                         try {
-                            switch (storageStrategy.storageType()){
+                            switch (finalStorageStrategy.storageType()) {
                                 case LONG:
-                                    return StorageValueFactory.buildStorageValue(storageStrategy.storageType(), x.fieldName, finalRs.getLong("sort" + index.getAndIncrement()));
+                                    return StorageValueFactory.buildStorageValue(finalStorageStrategy.storageType(), x.fieldName, finalRs.getLong("sort" + index.getAndIncrement()));
                                 case STRING:
-                                    return StorageValueFactory.buildStorageValue(storageStrategy.storageType(), x.fieldName, finalRs.getString("sort" + index.getAndIncrement()));
+                                    return StorageValueFactory.buildStorageValue(finalStorageStrategy.storageType(), x.fieldName, finalRs.getString("sort" + index.getAndIncrement()));
                                 default:
                                     return null;
                             }
@@ -329,7 +329,15 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
                     }).filter(Objects::nonNull).reduce(StorageValue::stick);
 
                     if (reduce.isPresent()) {
-                        entityRef.setOrderValue(storageStrategy.toLogicValue(useSort.getField(), reduce.get()).valueToString());
+
+                        IValue iValue = storageStrategy.toLogicValue(useSort.getField(), reduce.get());
+
+                        if(iValue.compareByString()) {
+                            entityRef.setOrderValue(iValue.valueToString());
+                        }else{
+                            entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
+                        }
+
                     }
                 }
 

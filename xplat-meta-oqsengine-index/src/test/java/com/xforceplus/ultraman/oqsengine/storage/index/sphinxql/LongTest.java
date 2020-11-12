@@ -2,6 +2,10 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
 import org.junit.Test;
 
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Random;
+
 public class LongTest {
 
     private int bitLength(String longStr){
@@ -62,6 +66,36 @@ public class LongTest {
 
     @Test
     public void stringOrder(){
+        Arrays.asList("a", "z", "b").stream().sorted(String::compareTo).forEach(System.out::println);
+    }
 
+    @Test
+    public void test(){
+
+        String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        // create random string builder
+        StringBuilder sb = new StringBuilder();
+
+        // create an object of Random class
+        Random random = new Random();
+
+        // specify length of random string
+        int length = 7;
+
+        for(int i = 0; i < length; i++) {
+
+            // generate random index number
+            int index = random.nextInt(alphabet.length());
+
+            // get character specified by index
+            // from the string
+            char randomChar = alphabet.charAt(index);
+
+            // append the character to string builder
+            sb.append(randomChar);
+        }
+
+        System.out.println(sb.toString());
     }
 }

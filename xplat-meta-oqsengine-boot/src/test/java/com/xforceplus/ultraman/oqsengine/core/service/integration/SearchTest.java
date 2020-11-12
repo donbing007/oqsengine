@@ -194,9 +194,10 @@ public class SearchTest extends AbstractMysqlTest {
 
         LocalDateTime start = LocalDateTime.now();
 
-        byte[] array = new byte[7]; // length is bounded by 7
-        new Random().nextBytes(array);
-        String generatedString = new String(array, Charset.forName("UTF-8"));
+        String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        // create random string builder
+
 
         Random random = new Random();
 
@@ -206,13 +207,25 @@ public class SearchTest extends AbstractMysqlTest {
                     int nextInt = random.nextInt(max - min) + min;
                     Double nextD = Math.random() * maxD - minD;
 
+                    StringBuilder sb = new StringBuilder();
+                    int length = 7;
+                    for(int y = 0; y < length; y++) {
+                        // generate random index number
+                        int index = random.nextInt(alphabet.length());
+                        // get character specified by index
+                        // from the string
+                        char randomChar = alphabet.charAt(index);
+                        // append the character to string builder
+                        sb.append(randomChar);
+                    }
+
                     LocalDateTime randomDate = start.plusDays(new Random().nextInt(1000 + 1));
 
                     return new Entity(
                             idGenerator.next(),
                             mainEntityClass,
                             new EntityValue(0).addValues(Arrays.asList(
-                                    new StringValue(mainFields.stream().findFirst().get(), generatedString),
+                                    new StringValue(mainFields.stream().findFirst().get(), sb.toString()),
                                     new LongValue(mainFields.stream().skip(1).findFirst().get(), nextInt),
                                     new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextD.toString())),
                                     new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), randomDate)
@@ -261,13 +274,25 @@ public class SearchTest extends AbstractMysqlTest {
                     int nextInt = random.nextInt(max - min) + min;
                     Double nextD = Math.random() * maxD - minD;
 
+                    StringBuilder sb = new StringBuilder();
+                    int length = 7;
+                    for(int y = 0; y < length; y++) {
+                        // generate random index number
+                        int index = random.nextInt(alphabet.length());
+                        // get character specified by index
+                        // from the string
+                        char randomChar = alphabet.charAt(index);
+                        // append the character to string builder
+                        sb.append(randomChar);
+                    }
+
                     LocalDateTime randomDate = start.plusDays(new Random().nextInt(1000 + 1));
 
                     return new Entity(
                             idGenerator.next(),
                             mainEntityClass,
                             new EntityValue(0).addValues(Arrays.asList(
-                                    new StringValue(mainFields.stream().findFirst().get(), "main.c1.value0"),
+                                    new StringValue(mainFields.stream().findFirst().get(), sb.toString()),
                                     new LongValue(mainFields.stream().skip(1).findFirst().get(), nextInt),
                                     new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextD.toString())),
                                     new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), randomDate)
@@ -363,7 +388,7 @@ public class SearchTest extends AbstractMysqlTest {
 
         //initData(100, 100);
 
-        initData();
+        //initData();
 
         initialization = true;
     }
@@ -410,6 +435,8 @@ public class SearchTest extends AbstractMysqlTest {
     @Test
     public void basicSearch() throws SQLException {
 
+        initData();
+
         Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
 
         Page page = new Page(0, 100);
@@ -425,20 +452,82 @@ public class SearchTest extends AbstractMysqlTest {
         Comparator<BigDecimal> bigDecimalComparator = (o1, o2) -> o1.compareTo(o2);
 
         assertTrue(Comparators.isInOrder(bigDecimals, bigDecimalComparator));
+    }
 
-       // assertTrue(page.getTotalCount() == 200);
+    @Test
+    public void stringOrderSearch()  throws SQLException {
+        initData(100, 100);
 
-//        Page page2 = new Page(2, 100);
-//        Sort sort2 = Sort.buildDescSort(mainEntityClass.fields().get(1));
-//
-//        Collection<IEntity> iEntities2 = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, sort2, page2, currentCommitLowBound);
-//
-//        List<String> stringList = iEntities2.stream().map(x -> {
-//            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof StringValue).findFirst().get();
-//            return ((StringValue) iValue).getValue();
-//        }).collect(Collectors.toList());
-//
-//        Comparator<String> comparator = String::compareTo;
-//        assertTrue(Comparators.isInOrder(stringList, comparator.reversed()));
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
+
+        Page page = new Page(0, 100);
+        Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(0));
+
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, sort, page, currentCommitLowBound);
+
+        List<String> stringList = iEntities.stream().map(x -> {
+            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof StringValue).findFirst().get();
+            return ((StringValue) iValue).getValue();
+        }).collect(Collectors.toList());
+
+
+        Comparator<String> stringComparator = (o1, o2) -> o1.compareTo(o2);
+
+        assertTrue(Comparators.isInOrder(stringList, stringComparator));
+    }
+
+    @Test
+    public void dateTimeOrderSearch()  throws SQLException {
+        initData(100, 100);
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
+
+        Page page = new Page(0, 100);
+        Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(3));
+
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, sort, page, currentCommitLowBound);
+
+        List<LocalDateTime> dateList = iEntities.stream().map(x -> {
+            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DateTimeValue).findFirst().get();
+            return ((DateTimeValue) iValue).getValue();
+        }).collect(Collectors.toList());
+
+
+        Comparator<LocalDateTime> stringComparator = (o1, o2) -> o1.compareTo(o2);
+
+        assertTrue(Comparators.isInOrder(dateList, stringComparator));
+    }
+
+    @Test
+    public void longOrderSearch()  throws SQLException {
+        initData(100, 100);
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
+
+        Page page = new Page(0, 100);
+        Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(1));
+
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, sort, page, currentCommitLowBound);
+
+        List<Long> dateList = iEntities.stream().map(x -> {
+            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof LongValue).findFirst().get();
+            return ((LongValue) iValue).getValue();
+        }).collect(Collectors.toList());
+
+        Comparator<Long> longComparator = (o1, o2) -> o1.compareTo(o2);
+        assertTrue(Comparators.isInOrder(dateList, longComparator));
+    }
+
+    @Test
+    public void noSortSearch()  throws SQLException {
+        initData(100, 100);
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
+
+        Page page = new Page(0, 100);
+
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, null, page, currentCommitLowBound);
+
+        assertTrue(page.getTotalCount() == 200);
     }
 }
