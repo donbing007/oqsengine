@@ -64,6 +64,8 @@ public abstract class AbstractContainer {
 
     protected StorageStrategyFactory masterStorageStrategyFactory;
 
+    private StatusService statusService;
+
     static {
         Network network = Network.newNetwork();
         initDockerCompose();
@@ -160,7 +162,7 @@ public abstract class AbstractContainer {
 
         if (transactionManager == null) {
             long commitId = 0;
-            StatusService statusService = mock(StatusService.class);
+            statusService = mock(StatusService.class);
             when(statusService.getCommitId()).thenReturn(commitId++);
 
             transactionManager = new DefaultTransactionManager(
@@ -194,7 +196,7 @@ public abstract class AbstractContainer {
 
         if (transactionManager == null) {
             long commitId = 0;
-            StatusService statusService = mock(StatusService.class);
+            statusService = mock(StatusService.class);
             when(statusService.getCommitId()).thenReturn(commitId++);
 
             transactionManager = new DefaultTransactionManager(
@@ -202,7 +204,7 @@ public abstract class AbstractContainer {
         }
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-            transactionManager, new ConnectionTransactionResourceFactory(tableName));
+            transactionManager, new ConnectionTransactionResourceFactory(tableName, statusService));
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

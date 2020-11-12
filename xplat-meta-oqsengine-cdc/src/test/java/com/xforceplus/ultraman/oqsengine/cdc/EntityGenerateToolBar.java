@@ -34,7 +34,6 @@ public class EntityGenerateToolBar {
 
         IEntity[] entityes = new IEntity[10];
 
-
         long id = startId;
         IEntityValue values = new EntityValue(id);
         values.addValues(Arrays.asList(new LongValue(longField, 1L), new StringValue(stringField, "v1"),
