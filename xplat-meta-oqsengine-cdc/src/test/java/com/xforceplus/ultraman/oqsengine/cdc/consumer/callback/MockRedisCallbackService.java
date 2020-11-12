@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * desc :
  * name : MockRedisCallbackService
@@ -16,12 +18,18 @@ import org.slf4j.LoggerFactory;
  */
 public class MockRedisCallbackService implements CDCMetricsCallback {
 
-    final Logger logger = LoggerFactory.getLogger(TestCallbackService.class);
+    final Logger logger = LoggerFactory.getLogger(MockRedisCallbackService.class);
 
-    private static int executed = 0;
+    private static AtomicInteger executed = new AtomicInteger(0);
 
     private CDCAckMetrics ackMetrics;
     private CDCMetrics cdcMetrics;
+
+    public void reset() {
+        ackMetrics = null;
+        cdcMetrics = null;
+        executed = new AtomicInteger(0);
+    }
 
     @Override
     public void cdcAck(CDCAckMetrics ackMetrics) {
@@ -33,6 +41,7 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
     public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
         this.cdcMetrics = cdcMetrics;
         logger.info("mock cdcUnCommitMetrics info : {}", JSON.toJSON(cdcMetrics));
+        executed.addAndGet(cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
     }
 
     @Override

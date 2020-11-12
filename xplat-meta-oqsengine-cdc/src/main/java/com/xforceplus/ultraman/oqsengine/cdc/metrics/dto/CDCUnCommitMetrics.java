@@ -19,7 +19,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.ZERO;
  */
 public class CDCUnCommitMetrics {
     private long unCommitId;
-    private long executeJobCount;
+    private int executeJobCount;
     private Map<Long, RawEntityValue> unCommitEntityValues;
 
     public CDCUnCommitMetrics() {
@@ -44,11 +44,11 @@ public class CDCUnCommitMetrics {
         this.unCommitId = unCommitId;
     }
 
-    public long getExecuteJobCount() {
+    public int getExecuteJobCount() {
         return executeJobCount;
     }
 
-    public void setExecuteJobCount(long executeJobCount) {
+    public void setExecuteJobCount(int executeJobCount) {
         this.executeJobCount = executeJobCount;
     }
 }

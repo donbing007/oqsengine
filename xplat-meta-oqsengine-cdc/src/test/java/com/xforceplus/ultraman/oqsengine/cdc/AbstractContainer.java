@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
-
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
@@ -16,13 +15,11 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
@@ -152,16 +149,7 @@ public abstract class AbstractContainer {
         return dataSourcePackage.getMaster().get(0);
     }
 
-    protected void initTransactionManager() {
-        long commitId = 0;
-        StatusService statusService = mock(StatusService.class);
-        when(statusService.getCommitId()).thenReturn(commitId++);
-
-        transactionManager = new DefaultTransactionManager(new IncreasingOrderLongIdGenerator(0), statusService);
-    }
-
     protected void initIndex() throws SQLException, InterruptedException {
-
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector(
             "./src/test/resources/sql_index_storage.conf");
         Selector<DataSource> searchDataSourceSelector = buildSearchDataSourceSelector(
@@ -169,6 +157,15 @@ public abstract class AbstractContainer {
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
+
+        if (transactionManager == null) {
+            long commitId = 0;
+            StatusService statusService = mock(StatusService.class);
+            when(statusService.getCommitId()).thenReturn(commitId++);
+
+            transactionManager = new DefaultTransactionManager(
+                new IncreasingOrderLongIdGenerator(0), statusService);
+        }
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(transactionManager,
             new SphinxQLTransactionResourceFactory());
@@ -195,23 +192,28 @@ public abstract class AbstractContainer {
 
         dataSource = buildDataSourceSelectorMaster("./src/test/resources/oqsengine-ds.conf");
 
-        ///TODO
+        if (transactionManager == null) {
+            long commitId = 0;
+            StatusService statusService = mock(StatusService.class);
+            when(statusService.getCommitId()).thenReturn(commitId++);
+
+            transactionManager = new DefaultTransactionManager(
+                new IncreasingOrderLongIdGenerator(0), statusService);
+        }
+
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-            transactionManager, new ConnectionTransactionResourceFactory(tableName, null));
+            transactionManager, new ConnectionTransactionResourceFactory(tableName));
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         masterStorageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
+        masterStorageStrategyFactory.register(FieldType.STRINGS, new MasterStringsStorageStrategy());
 
         IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
         ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", masterStorageStrategyFactory);
 
-        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
-        storageStrategyFactory.register(FieldType.STRINGS, new MasterStringsStorageStrategy());
-
         SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
-        sqlJsonConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sqlJsonConditionsBuilderFactory.setStorageStrategy(masterStorageStrategyFactory);
         sqlJsonConditionsBuilderFactory.init();
 
         masterStorage = new SQLMasterStorage();
@@ -225,7 +227,6 @@ public abstract class AbstractContainer {
     }
 
     protected ConsumerService initConsumerService() throws SQLException, InterruptedException {
-        initTransactionManager();
         initIndex();
 
         ExecutorService consumerPool = new ThreadPoolExecutor(10, 10,

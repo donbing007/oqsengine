@@ -24,6 +24,9 @@ public class CDCConstant {
     //  当前CDC 中没有同步message时的休眠间隔 (默认1S)
     public static final int FREE_MESSAGE_WAIT_IN_SECONDS = 1;
 
+    //  当前CDC 中错误的同步message时的休眠间隔 (默认1S)
+    public static final int ERROR_MESSAGE_WAIT_IN_SECONDS = 1;
+
     //  一次获得的binlog最大量
     public static final int DEFAULT_BATCH_SIZE = 2048;
 

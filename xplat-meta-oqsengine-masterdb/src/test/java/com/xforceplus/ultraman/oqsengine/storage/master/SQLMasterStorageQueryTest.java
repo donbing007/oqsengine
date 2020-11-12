@@ -203,6 +203,42 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
         conn.close();
     }
 
+    /**
+     * 测试事务内查询,以测试事务隔离.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testUncommittedTransactionSelect() throws Exception {
+        IEntityValue uncommitEntityValue = new EntityValue(100L);
+        uncommitEntityValue.addValues(Arrays.asList(new LongValue(longField, 2L), new StringValue(stringField, "\"@带有符号的中文@\"\'"),
+            new BooleanValue(boolField, false),
+            new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
+            new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
+            new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN")));
+        IEntity uncommitEntity = new Entity(100L, entityClass, uncommitEntityValue);
+        Transaction tx = transactionManager.create();
+        transactionManager.bind(tx.id());
+        storage.build(uncommitEntity);
+
+        Collection<EntityRef> refs = storage.select(
+            0L, // 每一个测试准备的数据中提交号都为0.
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 2L))
+            ),
+            entityClass,
+            Sort.buildOutOfSort());
+        transactionManager.getCurrent().get().rollback();
+        transactionManager.finish();
+
+        Assert.assertEquals(3, refs.size());
+    }
+
+    /**
+     * 功能性查询测试.
+     *
+     * @throws Exception
+     */
     @Test
     public void testSelect() throws Exception {
         // 确认没有事务.
@@ -597,8 +633,6 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
         AtomicInteger index = new AtomicInteger(0);
         Map<String, DataSource> dsMap = dataSourcePackage.getMaster().stream().collect(Collectors.toMap(
             d -> "ds" + index.getAndIncrement(), d -> d));
-
-        int dsSize = dsMap.size();
 
         TableRuleConfiguration tableRuleConfiguration = new TableRuleConfiguration(
             "oqsbigentity", "ds${0..1}.oqsbigentity${0..2}");

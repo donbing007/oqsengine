@@ -145,7 +145,7 @@ public class ConsumerRunner extends Thread {
 
                 logger.error("consume message error, {}", e.getMessage());
                 //  同步出错信息，回滚到上次成功的的Sync信息
-                callBackError();
+                callBackError(ERROR_MESSAGE_WAIT_IN_SECONDS);
             }
 
             //  服务被终止
@@ -228,7 +228,8 @@ public class ConsumerRunner extends Thread {
         }
     }
 
-    private void callBackError() {
+    private void callBackError(int waitInSeconds) {
+        threadSleep(waitInSeconds);
         cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setCdcConsumerStatus(CDCStatus.CONSUME_FAILED);
 
         cdcMetricsService.callback();

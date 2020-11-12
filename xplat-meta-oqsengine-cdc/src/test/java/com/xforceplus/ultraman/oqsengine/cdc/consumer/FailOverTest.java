@@ -12,11 +12,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardStorageTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
+import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.BuildExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.ReplaceExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -24,6 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.ZERO;
@@ -124,12 +127,12 @@ public class FailOverTest extends AbstractContainer {
                 try {
                     int j = 0;
                     while (j < max) {
-                        initData(EntityGenerateToolBar.generateFixedEntities(i + j * 10, 0), i, Long.MAX_VALUE, false);
+                        initData(EntityGenerateToolBar.generateFixedEntities(i + j * 10, 0), false);
                         j ++;
                     }
                     j = 0;
                     while (j < max) {
-                        initData(EntityGenerateToolBar.generateFixedEntities(i + j * 10, 1), i, i, true);
+                        initData(EntityGenerateToolBar.generateFixedEntities(i + j * 10, 1), true);
                         j ++;
                     }
                     Thread.sleep(1000);
@@ -149,18 +152,18 @@ public class FailOverTest extends AbstractContainer {
 
 
 
-    private void initData(IEntity[] datas, long tx, long commit, boolean replacement) {
+    private void initData(IEntity[] datas, boolean replacement) {
         for (IEntity entity : datas) {
             if (!replacement) {
-                build(entity, tx);
+                build(entity);
             } else {
-                replace(entity, tx, commit, 0);
+                replace(entity, 0);
             }
         }
     }
 
 
-    private int build(IEntity entity, long tx) {
+    private int build(IEntity entity) {
         try {
             Method m1 = masterStorage.getClass()
                     .getDeclaredMethod("toJson", new Class[]{IEntityValue.class});
@@ -185,9 +188,12 @@ public class FailOverTest extends AbstractContainer {
                             }
                             storageEntity.setTime(entity.time());
 
-                            storageEntity.setTx(tx);
-                            storageEntity.setDeleted(false);
-                            storageEntity.setCommitid(Long.MAX_VALUE);
+                            storageEntity.setCommitid(CommitHelper.getUncommitId());
+
+                            storageEntity.setOp(OperationType.CREATE.getValue());
+                            Optional<Transaction> tOp = resource.getTransaction();
+                            storageEntity.setTx(tOp.get().id());
+
                             try {
                                 storageEntity.setAttribute(
                                         (String) m1.invoke(masterStorage, new Object[]{entity.entityValue()}));
@@ -209,7 +215,7 @@ public class FailOverTest extends AbstractContainer {
         }
     }
 
-    private int replace(IEntity entity, long tx, long commit, int version) {
+    private int replace(IEntity entity, int version) {
         try {
             Method m1 = masterStorage.getClass()
                     .getDeclaredMethod("toJson", new Class[]{IEntityValue.class});
@@ -234,9 +240,12 @@ public class FailOverTest extends AbstractContainer {
 
                             storageEntity.setVersion(version);
 
-                            storageEntity.setTx(tx);
-                            storageEntity.setDeleted(false);
-                            storageEntity.setCommitid(commit);
+                            storageEntity.setOp(OperationType.UPDATE.getValue());
+                            Optional<Transaction> tOp = resource.getTransaction();
+
+                            storageEntity.setTx(tOp.get().id());
+                            storageEntity.setCommitid(CommitHelper.getUncommitId());
+
                             try {
                                 storageEntity.setAttribute(
                                         (String) m1.invoke(masterStorage, new Object[]{entity.entityValue()}));

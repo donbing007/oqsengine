@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.cdc;
 
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.TestCallbackService;
 
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 
@@ -30,7 +30,7 @@ public class CDCDaemonServiceTest extends AbstractContainer {
 
     private CDCDaemonService cdcDaemonService;
 
-    private TestCallbackService testCallbackService;
+    private MockRedisCallbackService testCallbackService;
 
     @Before
     public void before() throws Exception {
@@ -42,7 +42,7 @@ public class CDCDaemonServiceTest extends AbstractContainer {
 
     private void initDaemonService() throws SQLException, InterruptedException {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
-        testCallbackService = new TestCallbackService();
+        testCallbackService = new MockRedisCallbackService();
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", testCallbackService);
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();

@@ -54,8 +54,6 @@ public class CdcSyncBenchmarkTest extends AbstractContainer {
 
     @Before
     public void before() throws Exception {
-        initTransactionManager();
-
         initMaster();
 
         // 等待加载完毕
