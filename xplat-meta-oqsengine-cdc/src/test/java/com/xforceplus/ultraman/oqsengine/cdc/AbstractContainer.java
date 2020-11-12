@@ -8,19 +8,19 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -41,6 +41,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * desc :
@@ -127,8 +130,7 @@ public abstract class AbstractContainer {
     }
 
 
-    protected TransactionManager transactionManager = new DefaultTransactionManager(
-        new IncreasingOrderLongIdGenerator(0));
+    protected TransactionManager transactionManager;
     protected SphinxQLIndexStorage indexStorage;
     protected DataSourcePackage dataSourcePackage;
 
@@ -147,22 +149,6 @@ public abstract class AbstractContainer {
         return dataSourcePackage.getMaster().get(0);
     }
 
-    protected Selector<DataSource> buildDataSourceSelectorIndex(String file) {
-        if (dataSourcePackage == null) {
-            System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-
-            dataSourcePackage = DataSourceFactory.build();
-        }
-
-        return new HashSelector<>(dataSourcePackage.getIndexWriter());
-    }
-
-    protected Selector<String> buildTableNameSelector(String base, int size) {
-
-        return new SuffixNumberHashSelector(base, size);
-    }
-
-
     protected void initIndex() throws SQLException, InterruptedException {
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector(
             "./src/test/resources/sql_index_storage.conf");
@@ -172,8 +158,17 @@ public abstract class AbstractContainer {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
+        if (transactionManager == null) {
+            long commitId = 0;
+            StatusService statusService = mock(StatusService.class);
+            when(statusService.getCommitId()).thenReturn(commitId++);
+
+            transactionManager = new DefaultTransactionManager(
+                new IncreasingOrderLongIdGenerator(0), statusService);
+        }
+
         TransactionExecutor executor = new AutoJoinTransactionExecutor(transactionManager,
-            SphinxQLTransactionResource.class);
+            new SphinxQLTransactionResourceFactory());
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
@@ -197,22 +192,28 @@ public abstract class AbstractContainer {
 
         dataSource = buildDataSourceSelectorMaster("./src/test/resources/oqsengine-ds.conf");
 
+        if (transactionManager == null) {
+            long commitId = 0;
+            StatusService statusService = mock(StatusService.class);
+            when(statusService.getCommitId()).thenReturn(commitId++);
+
+            transactionManager = new DefaultTransactionManager(
+                new IncreasingOrderLongIdGenerator(0), statusService);
+        }
+
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-            transactionManager, ConnectionTransactionResource.class);
+            transactionManager, new ConnectionTransactionResourceFactory(tableName));
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         masterStorageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
+        masterStorageStrategyFactory.register(FieldType.STRINGS, new MasterStringsStorageStrategy());
 
         IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
         ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", masterStorageStrategyFactory);
 
-        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
-        storageStrategyFactory.register(FieldType.STRINGS, new MasterStringsStorageStrategy());
-
         SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
-        sqlJsonConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sqlJsonConditionsBuilderFactory.setStorageStrategy(masterStorageStrategyFactory);
         sqlJsonConditionsBuilderFactory.init();
 
         masterStorage = new SQLMasterStorage();
