@@ -124,16 +124,9 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
 
         Collection<EntityRef> refs = indexStorage.select(conditions, entityClass, sort, page, filterIdsFromMaster, commitId);
 
-        //check if refs is in order
-
-
-
         //TODO sort transform
 
-
         List<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());
-
-
 
         List<EntityRef> retRefs = new LinkedList<>();
         //combine two refs
