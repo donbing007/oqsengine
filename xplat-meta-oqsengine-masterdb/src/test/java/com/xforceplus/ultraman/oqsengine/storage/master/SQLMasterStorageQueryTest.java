@@ -145,7 +145,7 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
         TimeUnit.SECONDS.sleep(1L);
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new ConnectionTransactionResourceFactory("oqsbigentity"));
+            transactionManager, new ConnectionTransactionResourceFactory("oqsbigentity", statusService));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

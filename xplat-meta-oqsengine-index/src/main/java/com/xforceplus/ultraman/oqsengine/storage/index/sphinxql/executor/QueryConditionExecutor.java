@@ -12,6 +12,8 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefi
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import io.vavr.Tuple6;
@@ -20,10 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.stream.Collectors.joining;
 
@@ -93,7 +93,6 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
             return number;
         }
     }
-
 
     // 构造排序查询语句段.
     private String buildOrderBySqlSegment(List<SortField> sortFields, boolean desc) {
@@ -267,8 +266,15 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
             useSort = Sort.buildOutOfSort();
         }
 
+        //TODO get storageStrategy and to logical value`
+
+        StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(useSort.getField().type());
+
+
         //using new sort builder
         List<SortField> sortFields = buildSortValues(useSort);
+
+
         String sortSelectValuesSegment = buildSortSelectValuesSegment(sortFields);
         String orderBySqlSegment = buildOrderBySqlSegment(sortFields, useSort.isDes());
 
@@ -293,15 +299,38 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
 
             rs = st.executeQuery();
             List<EntityRef> refs = new ArrayList((int) page.getPageSize());
-            while (rs.next()) {
 
+            while (rs.next()) {
                 EntityRef entityRef = new EntityRef();
                 entityRef.setId(rs.getLong(FieldDefine.ID));
                 entityRef.setCref(rs.getLong(FieldDefine.CREF));
                 entityRef.setPref(rs.getLong(FieldDefine.PREF));
 
                 if (sort != null && !sort.isOutOfOrder()) {
-                    entityRef.setOrderValue(rs.getString("sort0"));
+                    //TODO generator multi
+                    ResultSet finalRs = rs;
+                    AtomicInteger index = new AtomicInteger(0);
+
+                    Optional<StorageValue> reduce = sortFields.stream().map(x -> {
+                        //get sort value
+                        try {
+                            switch (storageStrategy.storageType()){
+                                case LONG:
+                                    return StorageValueFactory.buildStorageValue(storageStrategy.storageType(), x.fieldName, finalRs.getLong("sort" + index.getAndIncrement()));
+                                case STRING:
+                                    return StorageValueFactory.buildStorageValue(storageStrategy.storageType(), x.fieldName, finalRs.getString("sort" + index.getAndIncrement()));
+                                default:
+                                    return null;
+                            }
+                        } catch (Exception ex) {
+                            logger.error("{}", ex);
+                            return null;
+                        }
+                    }).filter(Objects::nonNull).reduce(StorageValue::stick);
+
+                    if(reduce.isPresent()) {
+                        entityRef.setOrderValue(storageStrategy.toLogicValue(useSort.getField(), reduce.get()).valueToString());
+                    }
                 }
 
                 refs.add(entityRef);

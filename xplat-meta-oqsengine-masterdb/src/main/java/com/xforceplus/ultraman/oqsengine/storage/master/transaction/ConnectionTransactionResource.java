@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.transaction;
 
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
@@ -23,9 +24,13 @@ public class ConnectionTransactionResource extends AbstractConnectionTransaction
         "update %s set " + FieldDefine.COMMITID + " = ? where " + FieldDefine.TX + " = ?";
     private String updateCommitIdSql;
 
-    public ConnectionTransactionResource(String key, Connection conn, boolean autocommit, String tableName) throws SQLException {
+    private StatusService statusService;
+
+    public ConnectionTransactionResource(String key, Connection conn, boolean autocommit, String tableName, StatusService statusService) throws SQLException {
         super(key, conn, autocommit);
         updateCommitIdSql = String.format(UPDATE_COMMITID_SQL, tableName);
+
+        this.statusService = statusService;
     }
 
     @Override
@@ -39,6 +44,10 @@ public class ConnectionTransactionResource extends AbstractConnectionTransaction
         if (transactionOp.isPresent()) {
             updateCommitId(transactionOp.get().id(), commitId);
             super.commit(commitId);
+
+            //update redis
+            statusService.saveCommitId(commitId);
+
         } else {
             throw new SQLException("Is not bound to any transaction.");
         }

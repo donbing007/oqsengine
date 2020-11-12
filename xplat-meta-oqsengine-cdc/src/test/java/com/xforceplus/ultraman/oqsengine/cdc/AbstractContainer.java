@@ -195,8 +195,9 @@ public abstract class AbstractContainer {
 
         dataSource = buildDataSourceSelectorMaster("./src/test/resources/oqsengine-ds.conf");
 
+        ///TODO
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-            transactionManager, new ConnectionTransactionResourceFactory(tableName));
+            transactionManager, new ConnectionTransactionResourceFactory(tableName, null));
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

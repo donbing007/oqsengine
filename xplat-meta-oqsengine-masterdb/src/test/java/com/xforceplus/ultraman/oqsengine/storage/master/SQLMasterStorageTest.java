@@ -81,7 +81,7 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         transactionManager = new DefaultTransactionManager(new IncreasingOrderLongIdGenerator(0), statusService);
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new ConnectionTransactionResourceFactory("oqsbigentity"));
+            transactionManager, new ConnectionTransactionResourceFactory("oqsbigentity", statusService));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

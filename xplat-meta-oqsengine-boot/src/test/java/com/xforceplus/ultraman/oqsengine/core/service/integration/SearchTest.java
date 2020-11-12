@@ -151,10 +151,48 @@ public class SearchTest extends AbstractMysqlTest {
                                 new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
                                 new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-1232.32"))
                         )))
+
         ));
 
         buildEntities(entities);
 
+
+        ArrayList entities2 = new ArrayList(Arrays.asList(
+                new Entity(
+                        idGenerator.next(),
+                        mainEntityClass,
+                        new EntityValue(0).addValues(Arrays.asList(
+                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value4"),
+                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
+                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-0.32"))
+                        )))
+                , new Entity(
+                        idGenerator.next(),
+                        mainEntityClass,
+                        new EntityValue(0).addValues(Arrays.asList(
+                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value5"),
+                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
+                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-0.46"))
+                        )))
+                , new Entity(
+                        idGenerator.next(),
+                        mainEntityClass,
+                        new EntityValue(0).addValues(Arrays.asList(
+                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value6"),
+                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
+                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("0.32"))
+                        )))
+                , new Entity(
+                        idGenerator.next(),
+                        mainEntityClass,
+                        new EntityValue(0).addValues(Arrays.asList(
+                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value7"),
+                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
+                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("0.46"))
+                        )))
+        ));
+
+        buildEntities(entities2);
         bigDriverSelectEntityId = entities.get(entities.size() - 1).id();
     }
 
@@ -162,16 +200,18 @@ public class SearchTest extends AbstractMysqlTest {
         long txId = transactionManagementService.begin();
         for (IEntity e : entities) {
             transactionManagementService.restore(txId);
-            managementService.build(e);
-            StorageEntity storageEntity = new StorageEntity();
 
+            Long commitId = statusService.getCommitId();
+            StorageEntity storageEntity = new StorageEntity();
             storageEntity.setId(e.id());
             storageEntity.setEntity(e.entityClass().id());
             storageEntity.setTx(txId);
-            storageEntity.setCommitId(100L);
+            storageEntity.setCommitId(commitId);
 
             indexStorage.buildOrReplace(storageEntity, e.entityValue(), false);
+            managementService.build(e);
         }
+
         transactionManagementService.restore(txId);
         transactionManagementService.commit();
     }
@@ -186,11 +226,9 @@ public class SearchTest extends AbstractMysqlTest {
                 new EntityField(idGenerator.next(), "c2", FieldType.DECIMAL, FieldConfig.build().searchable(true))
         );
 
-
         mainEntityClass = new EntityClass(idGenerator.next(), "main", null, null, null, mainFields);
 
         initData();
-        statusService.saveCommitId(101L);
 
         initialization = true;
     }
@@ -236,7 +274,7 @@ public class SearchTest extends AbstractMysqlTest {
     @Test
     public void basicSearch() throws SQLException {
 
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(10_000L);
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(10_0000L);
 
         Page page = new Page(0, 100);
         Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(2));

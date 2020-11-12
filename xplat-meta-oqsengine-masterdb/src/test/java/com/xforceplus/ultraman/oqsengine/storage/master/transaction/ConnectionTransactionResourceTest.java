@@ -49,7 +49,9 @@ public class ConnectionTransactionResourceTest {
             "update test set " + FieldDefine.COMMITID + " = ? where " + FieldDefine.TX + " = ?")).thenReturn(ps);
         Transaction transaction = mock(Transaction.class);
         when(transaction.id()).thenReturn(1L);
-        ConnectionTransactionResource resource = new ConnectionTransactionResource("test", connection, true, "test");
+
+        //TODO
+        ConnectionTransactionResource resource = new ConnectionTransactionResource("test", connection, true, "test", null);
         resource.bind(transaction);
         resource.commit(2);
         verify(ps).setLong(1, 2);

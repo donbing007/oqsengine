@@ -33,7 +33,6 @@ public class CustomTransactionConfiguration {
     @Autowired
     private StatusService statusService;
 
-
     @Bean
     public TransactionManager transactionManager(
         @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs) {
@@ -53,7 +52,7 @@ public class CustomTransactionConfiguration {
     @Bean
     public ConnectionTransactionResourceFactory connectionTransactionResourceFactory(
         @Value("${storage.master.name:oqsbigentity}") String tableName) {
-        return new ConnectionTransactionResourceFactory(tableName);
+        return new ConnectionTransactionResourceFactory(tableName, statusService);
     }
 
     @Bean

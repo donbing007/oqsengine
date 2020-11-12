@@ -22,6 +22,8 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
 
     private static final String DIVIDE = ".";
 
+    private static final String NEG = "-";
+
     @Override
     public FieldType fieldType() {
         return FieldType.DECIMAL;
@@ -34,7 +36,20 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
 
     @Override
     public IValue toLogicValue(IEntityField field, StorageValue storageValue) {
-        String value = storageValue.value().toString() + DIVIDE + storageValue.next().value().toString();
+
+        String firstStr = storageValue.value().toString();
+        String secondStr = storageValue.next().value().toString();
+
+        boolean isNeg = false;
+        if(firstStr.trim().startsWith(NEG) || secondStr.trim().startsWith(NEG)){
+            isNeg = true;
+
+            firstStr = firstStr.trim().startsWith(NEG) ? firstStr.substring(1) : firstStr;
+            secondStr = secondStr.trim().startsWith(NEG) ? secondStr.substring(1) : secondStr;
+        }
+
+
+        String value = isNeg ? NEG + firstStr + DIVIDE + secondStr : firstStr + DIVIDE + secondStr;
         return new DecimalValue(field, new BigDecimal(value));
     }
 
@@ -44,8 +59,20 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
 
         String[] numberArr = number.split("\\" + DIVIDE);
 
+
+        String firstNumStr = numberArr[0];
+
+        boolean isNeg = false;
+        if(firstNumStr.trim().startsWith("-")){
+            isNeg = true;
+        }
+
         long first = Long.parseLong(numberArr[0]);
         long second = Long.parseLong(numberArr[1]);
+
+        if(first < 0 || isNeg){
+            second = 0 - second;
+        }
 
         StorageValue<Long> storageValue = new LongStorageValue(Long.toString(value.getField().id()), first, true);
         storageValue.locate(0);
