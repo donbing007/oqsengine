@@ -2,9 +2,9 @@ package com.xforceplus.ultraman.oqsengine.storage.master.transaction;
 
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import org.junit.Test;
-import org.junit.Before;
 import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
  * @version 1.0 11/11/2020
  * @since <pre>Nov 11, 2020</pre>
  */
-public class ConnectionTransactionResourceTest {
+public class SqlConnectionTransactionResourceTest {
 
     @Before
     public void before() throws Exception {
@@ -51,7 +51,7 @@ public class ConnectionTransactionResourceTest {
         when(transaction.id()).thenReturn(1L);
 
         //TODO
-        ConnectionTransactionResource resource = new ConnectionTransactionResource("test", connection, true, "test", null);
+        SqlConnectionTransactionResource resource = new SqlConnectionTransactionResource("test", connection, true, "test", null);
         resource.bind(transaction);
         resource.commit(2);
         verify(ps).setLong(1, 2);

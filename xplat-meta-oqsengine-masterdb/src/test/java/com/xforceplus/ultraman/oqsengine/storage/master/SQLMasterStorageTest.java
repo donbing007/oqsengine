@@ -19,8 +19,7 @@ import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResourceFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -81,7 +80,7 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         transactionManager = new DefaultTransactionManager(new IncreasingOrderLongIdGenerator(0), statusService);
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new ConnectionTransactionResourceFactory("oqsbigentity", statusService));
+            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity", statusService));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

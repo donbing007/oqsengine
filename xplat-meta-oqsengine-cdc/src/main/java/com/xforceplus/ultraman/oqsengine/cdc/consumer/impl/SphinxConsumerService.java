@@ -301,7 +301,7 @@ public class SphinxConsumerService implements ConsumerService {
         //  是父类
         if (cref > 0) {
             //  通过自己的ID拿到对应的EntityValue
-            entityValue = entityValueGet(pref, prefEntityValueMaps);
+            entityValue = entityValueGet(id, prefEntityValueMaps);
         } else {
             entityValue = buildEntityValue(
                     storageEntity.getId(), getStringFromColumn(columns, META), getStringFromColumn(columns, ATTRIBUTE));

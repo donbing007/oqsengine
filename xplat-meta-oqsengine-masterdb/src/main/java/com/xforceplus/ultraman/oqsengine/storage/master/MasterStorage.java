@@ -40,6 +40,8 @@ public interface MasterStorage extends Storage {
 
     /**
      * 条件搜索数据.
+     * 注意,是否对最终结果排序由实现决定.
+     * sort只是指定在返回结果中需要返回排序的依据值.
      *
      * @param commitid   所有查询必须大于等于此提交号.
      * @param conditions 搜索条件.

@@ -113,6 +113,7 @@ public class SQLJsonIEntityValueBuilder implements IEntityValueBuilder<String> {
         }
     }
 
+    // 兼容老版本数据.
     private String compatibleStorageName(String name) {
         if (name.startsWith(FieldDefine.ATTRIBUTE_PREFIX)) {
             return name.substring(1);

@@ -10,7 +10,6 @@ import com.xforceplus.ultraman.oqsengine.status.table.TimeTable;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,7 +26,7 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class StatusServiceTest {
+public class StatusServiceTest extends AbstractRedisContainerTest {
 
     StatusService remoteStatusService;
     StatusService localStatusService;
@@ -39,7 +38,9 @@ public class StatusServiceTest {
     @Before
     public void setUp(){
 
-        redisClient = RedisClient.create(RedisURI.Builder.redis("localhost", 6379).build());
+        String redisIp = System.getProperty("status.redis.ip");
+        int redisPort = Integer.parseInt(System.getProperty("status.redis.port"));
+        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
         redisIdGenerator = new RedisIdGenerator(redisClient, "testKey");
         TimeTable remoteTimeTable = new TimeTable(redisClient, "testTable");
         TimeTable localTimeTable = new TimeTable(redisClient, "testLocalTable");
@@ -91,11 +92,12 @@ public class StatusServiceTest {
 
         RedisIdGenerator tempIdGenerator = new RedisIdGenerator(redisClient, "tempKey");
 
-        CountDownLatch latch = new CountDownLatch(5000);
+        int concurrencyLevel = 500;
+        CountDownLatch latch = new CountDownLatch(concurrencyLevel);
 
         CopyOnWriteArrayList<Long> list = new CopyOnWriteArrayList<>();
 
-        IntStream.range(0 , 5000)
+        IntStream.range(0, concurrencyLevel)
                 .mapToObj(i -> new Thread(() -> {
                     Long id = tempIdGenerator.next();
                     list.add(id);
@@ -108,7 +110,7 @@ public class StatusServiceTest {
         assertTrue("there is no duplicated id",
                 list.stream()
                         .distinct()
-                        .collect(Collectors.toList()).size() == 5000);
+                    .collect(Collectors.toList()).size() == concurrencyLevel);
 
 
         redisClient.connect().sync().del("tempKey");

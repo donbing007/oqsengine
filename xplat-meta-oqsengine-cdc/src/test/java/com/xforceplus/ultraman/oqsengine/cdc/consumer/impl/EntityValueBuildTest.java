@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -72,9 +73,18 @@ public class EntityValueBuildTest extends AbstractContainer {
                                  expectedEntities[index].entityValue().values().stream().filter(ev -> ev.getField().id() == fieldId).findFirst();
 
                          Assert.assertTrue(f.isPresent());
-//                         if (!(v instanceof BigDecimal) || ((BigDecimal) v).doubleValue() != 0.0) {
-//                             Assert.assertEquals(v, f.get().getValue());
-//                         }
+                         if(v instanceof String[]) {
+//                             Assert.assertTrue(f.get().getValue() instanceof String[]);
+//                             String[] vTemp = (String[]) v;
+//                             String[] fTemp = (String[]) f.get().getValue();
+//
+//                             Assert.assertEquals(vTemp.length, fTemp.length);
+//                             for (int j = 0; j < vTemp.length; j++) {
+//                                 Assert.assertEquals(vTemp[j], fTemp[j]);
+//                             }
+                         } else {
+                             Assert.assertEquals(v, f.get().getValue());
+                         }
                     }
             );
         }
