@@ -29,10 +29,8 @@ public class CustomTransactionConfiguration {
     @Resource
     private LongIdGenerator longIdGenerator;
 
-    @Resource
-    private TransactionManager tm;
 
-    @Resource
+    @Autowired
     private StatusService statusService;
 
 
@@ -48,7 +46,7 @@ public class CustomTransactionConfiguration {
     }
 
     @Bean
-    public TransactionExecutor storageSphinxQLTransactionExecutor(SphinxQLTransactionResourceFactory factory) {
+    public TransactionExecutor storageSphinxQLTransactionExecutor(SphinxQLTransactionResourceFactory factory, TransactionManager tm) {
         return new AutoJoinTransactionExecutor(tm, factory);
     }
 
@@ -59,12 +57,12 @@ public class CustomTransactionConfiguration {
     }
 
     @Bean
-    public TransactionExecutor storageJDBCTransactionExecutor(ConnectionTransactionResourceFactory factory) {
+    public TransactionExecutor storageJDBCTransactionExecutor(ConnectionTransactionResourceFactory factory, TransactionManager tm) {
         return new AutoJoinTransactionExecutor(tm, factory);
     }
 
     @Bean
-    public TransactionExecutor serviceTransactionExecutor() {
+    public TransactionExecutor serviceTransactionExecutor(TransactionManager tm) {
         return new AutoCreateTransactionExecutor(tm);
     }
 

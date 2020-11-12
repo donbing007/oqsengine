@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.boot;
 
-import org.redisson.spring.starter.RedissonAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -16,8 +15,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication(exclude = {
         DataSourceAutoConfiguration.class,
         DataSourceTransactionManagerAutoConfiguration.class,
-        HibernateJpaAutoConfiguration.class,
-        RedissonAutoConfiguration.class})
+        HibernateJpaAutoConfiguration.class})
 public class OqsengineBootApplication {
 
     public static void main(String[] args) throws Exception {

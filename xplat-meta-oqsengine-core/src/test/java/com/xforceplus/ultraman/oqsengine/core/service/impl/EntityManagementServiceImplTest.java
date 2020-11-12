@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -50,6 +51,7 @@ public class EntityManagementServiceImplTest {
     private LongIdGenerator idGenerator;
     private MockMasterStorage masterStorage;
     private MockIndexStorage indexStorage;
+    private StatusService statusService;
 
     @Before
     public void before() throws Exception {
@@ -74,7 +76,7 @@ public class EntityManagementServiceImplTest {
         );
 
 
-        TransactionManager tm = new DefaultTransactionManager(idGenerator);
+        TransactionManager tm = new DefaultTransactionManager(idGenerator, statusService);
         TransactionExecutor te = new AutoCreateTransactionExecutor(tm);
 
         masterStorage = new MockMasterStorage();
