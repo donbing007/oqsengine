@@ -20,7 +20,7 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     final Logger logger = LoggerFactory.getLogger(MockRedisCallbackService.class);
 
-    private static AtomicInteger executed = new AtomicInteger(0);
+    private AtomicInteger executed = new AtomicInteger(0);
 
     private CDCAckMetrics ackMetrics;
     private CDCMetrics cdcMetrics;
@@ -39,13 +39,18 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     @Override
     public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
-        this.cdcMetrics = cdcMetrics;
+
         logger.info("mock cdcUnCommitMetrics info : {}", JSON.toJSON(cdcMetrics));
         executed.addAndGet(cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
+        this.cdcMetrics = cdcMetrics;
     }
 
     @Override
     public CDCMetrics queryLastUnCommit() {
         return cdcMetrics;
+    }
+
+    public AtomicInteger getExecuted() {
+        return executed;
     }
 }

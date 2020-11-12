@@ -328,7 +328,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
                         }
                     }).filter(Objects::nonNull).reduce(StorageValue::stick);
 
-                    if(reduce.isPresent()) {
+                    if (reduce.isPresent()) {
                         entityRef.setOrderValue(storageStrategy.toLogicValue(useSort.getField(), reduce.get()).valueToString());
                     }
                 }
