@@ -70,10 +70,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     private Counter failCountTotal = Metrics.counter(MetricsDefine.FAIL_COUNT_TOTAL);
 
     @Resource
-    private MasterStorage masterStorage;
+    private CombinedStorage combinedStorage;
 
-    @Resource
-    private IndexStorage indexStorage;
+//    @Resource
+//    private IndexStorage indexStorage;
 
     @Resource(name = "callThreadPool")
     private ExecutorService threadPool;
@@ -82,7 +82,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     private int maxJoinEntityNumber;
     private int maxJoinDriverLineNumber;
 
-    private Map<FieldType, EntityRefComparator> refMapping = new HashMap<>();
+
 
     @PostConstruct
     public void init() {
@@ -101,13 +101,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         logger.info("Search service startup:[maxVisibleTotal:{}, maxJoinEntityNumber:{}, maxJoinDriverLineNumber:{}]",
                 maxVisibleTotalCount, maxJoinEntityNumber, maxJoinDriverLineNumber);
 
-        refMapping.put(FieldType.BOOLEAN, new EntityRefComparator(FieldType.BOOLEAN));
-        refMapping.put(FieldType.DATETIME, new EntityRefComparator(FieldType.DATETIME));
-        refMapping.put(FieldType.DECIMAL, new EntityRefComparator(FieldType.DECIMAL));
-        refMapping.put(FieldType.ENUM, new EntityRefComparator(FieldType.ENUM));
-        refMapping.put(FieldType.LONG, new EntityRefComparator(FieldType.LONG));
-        refMapping.put(FieldType.STRING, new EntityRefComparator(FieldType.STRING));
-        refMapping.put(FieldType.STRINGS, new EntityRefComparator(FieldType.STRINGS));
+
     }
 
     public int getMaxJoinEntityNumber() {
@@ -138,7 +132,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
         try {
-            Optional<IEntity> entityOptional = masterStorage.selectOne(id, entityClass);
+            Optional<IEntity> entityOptional = combinedStorage.selectOne(id, entityClass);
 
             if (entityOptional.isPresent()) {
 
@@ -162,7 +156,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     }
 
                     Optional<IEntity> parentOptional =
-                            masterStorage.selectOne(child.family().parent(), entityClass.extendEntityClass());
+                            combinedStorage.selectOne(child.family().parent(), entityClass.extendEntityClass());
 
                     if (parentOptional.isPresent()) {
 
@@ -198,7 +192,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
 
         try {
-            Collection<IEntity> entities = masterStorage.selectMultiple(request);
+            Collection<IEntity> entities = combinedStorage.selectMultiple(request);
 
             // 如果有继承关系.
             if (entityClass.extendEntityClass() != null) {
@@ -206,7 +200,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                         toMap(c -> c.family().parent(), c -> c.entityClass().extendEntityClass(), (c0, c1) -> c0)
                 );
 
-                Collection<IEntity> parentEntities = masterStorage.selectMultiple(request);
+                Collection<IEntity> parentEntities = combinedStorage.selectMultiple(request);
                 Map<Long, IEntity> parentEntityMap =
                         parentEntities.stream().collect(toMap(p -> p.id(), p -> p, (p0, p1) -> p0));
 
@@ -318,25 +312,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 }
             }
 
-            Collection<EntityRef> masterRefs = Collections.emptyList();
-            if (commitId > 0) {
-                //trigger master search
-                masterRefs = masterStorage.select(commitId, useConditions, entityClass, sort);
-            }
+            Collection<EntityRef> refs = combinedStorage.select(commitId, conditions, entityClass, sort, page);
 
-            /**
-             * filter ids
-             */
-            List<Long> filterIds = masterRefs.stream()
-                    .filter(x -> x.getOp() == OperationType.DELETE.getValue() || x.getOp() == OperationType.UPDATE.getValue())
-                    .map(EntityRef::getId)
-                    .collect(toList());
-
-            Collection<EntityRef> refs = indexStorage.select(useConditions, entityClass, useSort, usePage, filterIds, commitId);
-
-
-            return buildEntities(masterRefs, refs, entityClass, sort, page);
-
+            return buildEntities(refs, entityClass);
         } catch (Exception ex) {
             failCountTotal.increment();
             throw ex;
@@ -363,44 +341,17 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         return entityClasses;
     }
 
-    private List<EntityRef> merge(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs, Sort sort) {
-        StreamMerger<EntityRef> streamMerger = new StreamMerger<>();
-        FieldType type = sort.getField().type();
-        return streamMerger.merge(masterRefs.stream(), indexRefs.stream(), refMapping.get(type), sort.isAsc()).collect(toList());
-    }
+    //TODO check
+    private Collection<IEntity> buildEntities(Collection<EntityRef> refs, IEntityClass entityClass) throws SQLException {
 
-    private Collection<IEntity> buildEntities(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs, IEntityClass entityClass, Sort sort, Page page) throws SQLException {
-
-        if (indexRefs.isEmpty() && masterRefs.isEmpty()) {
+        if (refs.isEmpty()) {
             return Collections.emptyList();
         }
 
         IEntityField sortField;
 
-        List<EntityRef> refs = new LinkedList<>();
-
-        List<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().filter(x -> x.getOp() == OperationType.DELETE.getValue()).collect(toList());
-
-        if (!sort.isOutOfOrder()) {
-            refs.addAll(merge(masterRefs, indexRefs, sort));
-        } else {
-            //first master then manticore
-            refs.addAll(masterRefsWithoutDeleted);
-            refs.addAll(indexRefs);
-        }
-
-        long start = page.getIndex();
-        long pageSize = page.getPageSize();
-
-        //update totalCount
-        long totalCount = page.getTotalCount();
-        page.setTotalCount(totalCount + masterRefsWithoutDeleted.size());
-
-        List<EntityRef> limitedSelect = refs.stream().skip(start * pageSize).limit(pageSize).collect(toList());
-
-
         Map<Long, IEntityClass> select =
-                limitedSelect.parallelStream().filter(e -> e.getId() > 0)
+                refs.parallelStream().filter(e -> e.getId() > 0)
                         .collect(toMap(EntityRef::getId, e -> entityClass, (e0, e1) -> {
                             return e0;
                         }));
@@ -408,12 +359,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         // 有继承
         if (entityClass.extendEntityClass() != null) {
             select.putAll(
-                    limitedSelect.parallelStream().filter(e -> e.getPref() > 0)
+                    refs.parallelStream().filter(e -> e.getPref() > 0)
                             .collect(toMap(EntityRef::getPref, e -> entityClass.extendEntityClass(), (e0, e1) -> e0)));
         }
 
 
-        Collection<IEntity> entities = masterStorage.selectMultiple(select);
+        Collection<IEntity> entities = combinedStorage.selectMultiple(select);
 
         //生成 entity 速查表
         Map<Long, IEntity> entityTable =
@@ -668,15 +619,15 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             Page driverPage = Page.newSinglePage(maxJoinDriverLineNumber);
             driverPage.setVisibleTotalCount(maxJoinDriverLineNumber);
-            Collection<EntityRef> refs = indexStorage.select(
-                    conditions, key.getEntityClass(), Sort.buildOutOfSort(), driverPage, Collections.emptyList(), commitId);
+            Collection<EntityRef> refs = combinedStorage.select(
+                    commitId, conditions, key.getEntityClass(), Sort.buildOutOfSort(), driverPage);
             return new AbstractMap.SimpleEntry<>(key, refs);
         }
 
         // 检查命中数据集大小.
         private long checkLineNumber() throws SQLException {
             Page page = new Page(1, 1);
-            indexStorage.select(conditions, key.getEntityClass(), Sort.buildOutOfSort(), page, Collections.emptyList(), commitId);
+            combinedStorage.select(commitId, conditions, key.getEntityClass(), Sort.buildOutOfSort(), page);
             if (page.getTotalCount() > maxJoinDriverLineNumber) {
                 throw new SQLException(String.format("Drives entity(%s) data exceeding %d.",
                         key.getEntityClass().code(), maxJoinDriverLineNumber));

@@ -69,7 +69,7 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         CDCMetrics cdcMetrics = new CDCMetrics();
 
-        Method m = sphinxConsumerService.getClass().getDeclaredMethod("filterAndSyncData", new Class[]{List.class, CDCMetrics.class});
+        Method m = sphinxConsumerService.getClass().getDeclaredMethod("mapAndReduce", new Class[]{List.class, CDCMetrics.class});
         m.setAccessible(true);
 
         m.invoke(sphinxConsumerService, new Object[]{entries, cdcMetrics});

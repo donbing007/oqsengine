@@ -80,6 +80,8 @@ data:
             batchSize: {{ .Values.cdc.connect.batchSize | default "2048" | quote }}
           execution:
             timeoutMs: {{ .Values.cdc.execution.timeoutMs | default "30000" | quote }}
+            single:
+              consumer: {{ .Values.cdc.execution.single.consumer | default "true" | quote }}
     oqsengine-ds.conf: |
         {
           "dataSources": {

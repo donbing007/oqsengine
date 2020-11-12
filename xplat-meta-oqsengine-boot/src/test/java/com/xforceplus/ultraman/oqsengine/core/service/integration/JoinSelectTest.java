@@ -50,6 +50,7 @@ public class JoinSelectTest {
 
     private static GenericContainer manticore;
 
+
     final Logger logger = LoggerFactory.getLogger(JoinSelectTest.class);
 
     @Resource
@@ -124,7 +125,7 @@ public class JoinSelectTest {
                     new StringValue(driverFields.stream().findFirst().get(), "name0"))
             );
 
-        Long commitId = statusService.getCommitId();
+        Long commitId = statusService.getCurrentCommitLowBound(10_000L);
         Collection<IEntity> results =
             entitySearchService.selectByConditions(conditions, mainEntityClass, Page.newSinglePage(100), commitId);
         Assert.assertEquals(2, results.size());
@@ -289,5 +290,4 @@ public class JoinSelectTest {
 
         System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
     }
-
 }

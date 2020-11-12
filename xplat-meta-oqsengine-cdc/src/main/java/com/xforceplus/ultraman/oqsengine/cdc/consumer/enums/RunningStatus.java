@@ -9,6 +9,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.enums;
  * @since : 1.8
  */
 public enum RunningStatus {
+    INIT,
     RUN,
     STOP
 }

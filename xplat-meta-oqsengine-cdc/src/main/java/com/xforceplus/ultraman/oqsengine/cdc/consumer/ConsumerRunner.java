@@ -35,7 +35,7 @@ public class ConsumerRunner extends Thread {
 
     private CDCConnector cdcConnector;
 
-    private RunningStatus runningStatus;
+    private static volatile RunningStatus runningStatus;
 
     public ConsumerRunner(ConsumerService consumerService,
                           CDCMetricsService cdcMetricsService,
@@ -51,9 +51,7 @@ public class ConsumerRunner extends Thread {
     }
 
     public void run() {
-        runningStatus = RunningStatus.RUN;
-
-        boolean isFirstLoop = true;
+        runningStatus = RunningStatus.INIT;
         while (true) {
             //  判断当前服务状态是否可运行
             if (checkForStop()) {
@@ -62,13 +60,14 @@ public class ConsumerRunner extends Thread {
 
             try {
                 //  连接CanalServer，如果是服务启动(isFirstCycle = true),则同步缓存中cdcMetrics信息
-                connectAndReset(isFirstLoop);
+                connectAndReset(runningStatus.equals(RunningStatus.INIT));
             } catch (Exception e) {
-                closeToNextReconnect(!isFirstLoop, String.format("%s, %s", "canal-server connection error, {}", e.getMessage()));
+                closeToNextReconnect(!runningStatus.equals(RunningStatus.INIT)
+                        , String.format("%s, %s", "canal-server connection error, {}", e.getMessage()));
                 continue;
             }
             //  连接成功，重置标志位
-            isFirstLoop = false;
+            runningStatus = RunningStatus.RUN;
 
             try {
                 //  开始消费

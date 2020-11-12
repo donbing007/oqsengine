@@ -8,10 +8,8 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntityValue;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntry;
 
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCUnCommitMetrics;
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -34,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns.*;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType.fromRawType;
 
 /**
@@ -57,19 +56,23 @@ public class SphinxConsumerService implements ConsumerService {
     @Resource(name = "cdcConsumerPool")
     private ExecutorService consumerPool;
 
-    private int executionTimeout = 30 * 1000;
+    private boolean isSingleSyncConsumer = true;
 
-    private static AtomicInteger syncCount = new AtomicInteger(0);
+    private int executionTimeout = 30 * 1000;
 
     public void setExecutionTimeout(int executionTimeout) {
         this.executionTimeout = executionTimeout;
+    }
+
+    public void setSingleSyncConsumer(boolean singleSyncConsumer) {
+        isSingleSyncConsumer = singleSyncConsumer;
     }
 
     @Override
     public CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCUnCommitMetrics cdcUnCommitMetrics) throws SQLException {
         CDCMetrics cdcMetrics = init(cdcUnCommitMetrics, batchId);
 
-        filterAndSyncData(entries, cdcMetrics);
+        mapAndReduce(entries, cdcMetrics);
 
         logger.info("batchId {}, success sync raw data : {}",
                 cdcMetrics.getBatchId(), cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
@@ -78,6 +81,7 @@ public class SphinxConsumerService implements ConsumerService {
     }
 
     private CDCMetrics init(CDCUnCommitMetrics cdcUnCommitMetrics, long batchId) {
+
         //  将上一次的剩余信息设置回来
         CDCMetrics cdcMetrics = new CDCMetrics();
 
@@ -87,15 +91,14 @@ public class SphinxConsumerService implements ConsumerService {
         }
         cdcMetrics.setBatchId(batchId);
 
-        syncCount.set(ZERO);
-
         return cdcMetrics;
     }
 
     /*
         数据清洗、同步
     * */
-    private void filterAndSyncData(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
+    private void mapAndReduce(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
+        int syncCount = ZERO;
         //  需要同步的列表
         List<RawEntry> rawEntries = new ArrayList<>();
         for (CanalEntry.Entry entry : entries) {
@@ -112,6 +115,8 @@ public class SphinxConsumerService implements ConsumerService {
                         cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(INIT_ID);
                     }
 
+                    syncCount += rawEntries.size();
+
                     //  每个Transaction的结束需要将rawEntries清空
                     rawEntries.clear();
 
@@ -127,9 +132,10 @@ public class SphinxConsumerService implements ConsumerService {
         //  最后一个unCommitId的数据也需要同步一次
         if (!rawEntries.isEmpty()) {
             sync(rawEntries, cdcMetrics);
+            syncCount += rawEntries.size();
         }
 
-        cdcMetrics.getCdcUnCommitMetrics().setExecuteJobCount(syncCount.get());
+        cdcMetrics.getCdcUnCommitMetrics().setExecuteJobCount(syncCount);
     }
 
     private void sync(List<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
@@ -149,8 +155,10 @@ public class SphinxConsumerService implements ConsumerService {
 
     private void multiSyncSphinx(List<RawEntry> rawEntries, Map<Long, IEntityValue> prefEntityValueMaps, CDCMetrics cdcMetrics) throws SQLException {
         if (!rawEntries.isEmpty()) {
-            if (rawEntries.size() == SINGLE_CONSUMER) {
-                sphinxConsume(rawEntries.get(0), prefEntityValueMaps, cdcMetrics);
+            if (isSingleSyncConsumer || rawEntries.size() <= SINGLE_CONSUMER_MAX_ROW) {
+                for (RawEntry rawEntry : rawEntries) {
+                    sphinxConsume(rawEntry, prefEntityValueMaps, cdcMetrics);
+                }
             } else {
                 multiConsume(rawEntries, prefEntityValueMaps, cdcMetrics);
             }
@@ -224,50 +232,6 @@ public class SphinxConsumerService implements ConsumerService {
         }
     }
 
-
-    private long getLongFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
-        return Long.parseLong(getColumnWithoutNull(columns, oqsBigEntityColumns).getValue());
-    }
-
-    private String getStringFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
-        return getColumnWithoutNull(columns, oqsBigEntityColumns).getValue();
-    }
-
-    private boolean getBooleanFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
-        String booleanValue = getColumnWithoutNull(columns, oqsBigEntityColumns).getValue();
-        return booleanValue.equals("true");
-    }
-
-    private CanalEntry.Column getColumnWithoutNull(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
-        CanalEntry.Column column = existsColumn(columns, oqsBigEntityColumns);
-        if (null == column || column.getValue().isEmpty()) {
-            throw new SQLException(String.format("%s must not be null.", oqsBigEntityColumns.name()));
-        }
-        return column;
-    }
-
-    private CanalEntry.Column existsColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns compare) {
-        CanalEntry.Column column = null;
-        try {
-            //  通过下标找一次，如果名字相同，则返回当前column
-            column = columns.get(compare.ordinal());
-            if (column.getName().toLowerCase().equals(compare.name().toLowerCase())) {
-                return column;
-            }
-        } catch (Exception e) {
-            //  out of band, logger error?
-        }
-
-        //  binlog记录在columns中顺序不对，需要遍历再找一次(通过名字)
-        for (CanalEntry.Column value : columns) {
-            if (compare.name().toLowerCase().equals(value.getName().toLowerCase())) {
-                return value;
-            }
-        }
-
-        return null;
-    }
-
     //  只同步小于MAX_VALUE数据
     private boolean needSyncRow(List<CanalEntry.Column> columns) throws SQLException {
         if (null == columns || columns.size() == EMPTY_COLUMN_SIZE) {
@@ -303,7 +267,6 @@ public class SphinxConsumerService implements ConsumerService {
         if (cdcMetrics.getCdcAckMetrics().getMaxSyncUseTime() < useTime) {
             cdcMetrics.getCdcAckMetrics().setMaxSyncUseTime(useTime);
         }
-        syncCount.incrementAndGet();
     }
 
     private void doDelete(List<CanalEntry.Column> columns) throws SQLException {

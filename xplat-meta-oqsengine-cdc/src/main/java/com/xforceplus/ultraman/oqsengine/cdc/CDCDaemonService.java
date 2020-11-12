@@ -56,7 +56,7 @@ public class CDCDaemonService {
         Integer nodeId = nodeIdGenerator.next();
 
         logger.info("current node = {}", nodeId);
-        if (nodeId == DAEMON_NODE_ID) {
+        if (nodeId == DAEMON_NODE_ID && !isStart) {
             logger.info("node-{} 启动CDC守护进程", nodeId);
             consumerRunner = new ConsumerRunner(consumerService, cdcMetricsService, cdcConnector);
             consumerRunner.start();
