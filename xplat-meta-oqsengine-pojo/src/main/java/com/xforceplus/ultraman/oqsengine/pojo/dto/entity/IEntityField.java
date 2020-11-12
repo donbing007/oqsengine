@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 /**
  * 表示entity 的字段信息.
+ *
  * @author dongbin
  * @version 0.1 2020/2/22 16:29
  * @since 1.8
@@ -10,47 +11,60 @@ public interface IEntityField {
 
     /**
      * 字段标识.
+     *
      * @return 标识.
      */
     long id();
 
     /**
      * 字段的名称.
+     *
      * @return 名称.
      */
     String name();
 
     /**
      * 字段的中文名
+     *
      * @return
      */
     String cnName();
 
     /**
      * 字段的类型.
+     *
      * @return 类型.
      */
     FieldType type();
 
     /**
      * 获取字段配置.
+     *
      * @return 配置.
      */
     FieldConfig config();
 
     /**
      * 获取枚举类型的字典id
+     *
      * @return 配置
      */
     String dictId();
 
     /**
      * 获取默认值信息
+     *
      * @return 配置
      */
     String defaultValue();
 
-    default Boolean acceptName(String name){
+    /**
+     * 名称是否等于当前名称.
+     *
+     * @param name 被检测的名称.
+     * @return true 一致, false不一致.
+     */
+    default boolean acceptName(String name) {
         return name().equals(name);
     }
 }

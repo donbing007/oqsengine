@@ -4,10 +4,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -114,6 +111,12 @@ public class SQLJsonIEntityValueBuilderTest {
                 Long.MAX_VALUE - 1,
                 String.format("{\"%dS\":\"test\"}", Long.MAX_VALUE - 1),
                 new StringValue(stringField, "test")
+            )
+            ,
+            new Case(
+                Long.MAX_VALUE - 6,
+                String.format("{\"%dS\":\"[v1][v2]\"}", Long.MAX_VALUE - 6),
+                new StringsValue(stringsField, "v1", "v2")
             )
         );
     }
