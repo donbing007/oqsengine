@@ -5,8 +5,10 @@ import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import org.junit.Assert;
 import org.junit.Before;
@@ -14,10 +16,11 @@ import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar.stringsField;
 
 
 /**
@@ -74,20 +77,39 @@ public class EntityValueBuildTest extends AbstractContainer {
 
                          Assert.assertTrue(f.isPresent());
                          if(v instanceof String[]) {
-//                             Assert.assertTrue(f.get().getValue() instanceof String[]);
-//                             String[] vTemp = (String[]) v;
-//                             String[] fTemp = (String[]) f.get().getValue();
-//
-//                             Assert.assertEquals(vTemp.length, fTemp.length);
-//                             for (int j = 0; j < vTemp.length; j++) {
-//                                 Assert.assertEquals(vTemp[j], fTemp[j]);
-//                             }
+
+                             String[] vs =  (String[]) doNewStyleToLogicValue(stringsField, ((String[]) v)[0]).getValue();
+                             String[] fTemp = (String[]) f.get().getValue();
+
+                             Assert.assertEquals(vs.length, fTemp.length);
+                             for (int j = 0; j < vs.length; j++) {
+                                 Assert.assertEquals(vs[j], fTemp[j]);
+                             }
                          } else {
                              Assert.assertEquals(v, f.get().getValue());
                          }
                     }
             );
         }
+    }
+
+    private IValue doNewStyleToLogicValue(IEntityField field, String value) {
+        List<String> list = new ArrayList<>();
+        StringBuffer buff = new StringBuffer();
+        boolean watch = false;
+        for (char v : value.toCharArray()) {
+            if (v == '[') {
+                watch = true;
+            } else if (v == ']' && watch) {
+                list.add(buff.toString());
+                buff.delete(0, buff.length());
+                watch = false;
+            } else {
+                buff.append(v);
+            }
+        }
+
+        return new StringsValue(field, list.toArray(new String[0]));
     }
 
     private void initStorageEntities() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
