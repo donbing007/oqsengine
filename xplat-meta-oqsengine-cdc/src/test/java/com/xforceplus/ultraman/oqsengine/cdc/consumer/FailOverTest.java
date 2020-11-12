@@ -145,6 +145,8 @@ public class FailOverTest extends AbstractContainer {
 
                 i += 1200 + 10;
             }
+
+
             System.out.println("stop MysqlInitCall thread.");
             return null;
         }

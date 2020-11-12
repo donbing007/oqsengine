@@ -17,16 +17,16 @@ import java.util.Arrays;
  * @since : 1.8
  */
 public class EntityGenerateToolBar {
-    private static final IEntityField stringField = new EntityField(Long.MAX_VALUE - 1, "string", FieldType.STRING, FieldConfig.build().searchable(true), null, null);
-    private static final IEntityField longField = new EntityField(Long.MAX_VALUE - 2, "long", FieldType.LONG, FieldConfig.build().searchable(true), null, null);
-    private static final IEntityField boolField = new EntityField(Long.MAX_VALUE - 3, "bool", FieldType.BOOLEAN, FieldConfig.build().searchable(true), null, null);
-    private static final IEntityField dateTimeField = new EntityField(Long.MAX_VALUE - 4, "datetime", FieldType.DATETIME, FieldConfig.build().searchable(true), null, null);
-    private static final IEntityField decimalField = new EntityField(Long.MAX_VALUE - 5, "decimal", FieldType.DECIMAL, FieldConfig.build().searchable(true), null, null);
-    private static final IEntityField enumField = new EntityField(Long.MAX_VALUE - 6, "enum", FieldType.ENUM, FieldConfig.build().searchable(true), null, null);
-    private static final IEntityField stringsField = new EntityField(Long.MAX_VALUE - 7, "strings", FieldType.STRINGS, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField stringField = new EntityField(Long.MAX_VALUE - 1, "string", FieldType.STRING, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField longField = new EntityField(Long.MAX_VALUE - 2, "long", FieldType.LONG, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField boolField = new EntityField(Long.MAX_VALUE - 3, "bool", FieldType.BOOLEAN, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField dateTimeField = new EntityField(Long.MAX_VALUE - 4, "datetime", FieldType.DATETIME, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField decimalField = new EntityField(Long.MAX_VALUE - 5, "decimal", FieldType.DECIMAL, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField enumField = new EntityField(Long.MAX_VALUE - 6, "enum", FieldType.ENUM, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField stringsField = new EntityField(Long.MAX_VALUE - 7, "strings", FieldType.STRINGS, FieldConfig.build().searchable(true), null, null);
 
 
-    private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "t1",
+    public static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "t1",
             Arrays.asList(longField, stringField, boolField, dateTimeField, decimalField, enumField, stringsField));
 
 
