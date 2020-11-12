@@ -19,7 +19,7 @@ import java.util.Optional;
  * @version 0.1 2020/2/15 21:57
  * @since 1.8
  */
-public class ConnectionTransactionResource extends AbstractConnectionTransactionResource {
+public class SqlConnectionTransactionResource extends AbstractConnectionTransactionResource {
 
     private static final String UPDATE_COMMITID_SQL =
         "update %s set " + FieldDefine.COMMITID + " = ? where " + FieldDefine.TX + " = ?";
@@ -27,7 +27,7 @@ public class ConnectionTransactionResource extends AbstractConnectionTransaction
 
     private StatusService statusService;
 
-    public ConnectionTransactionResource(String key, Connection conn, boolean autocommit, String tableName, StatusService statusService) throws SQLException {
+    public SqlConnectionTransactionResource(String key, Connection conn, boolean autocommit, String tableName, StatusService statusService) throws SQLException {
         super(key, conn, autocommit);
         conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         updateCommitIdSql = String.format(UPDATE_COMMITID_SQL, tableName);
@@ -47,7 +47,9 @@ public class ConnectionTransactionResource extends AbstractConnectionTransaction
             updateCommitId(transactionOp.get().id(), commitId);
             super.commit(commitId);
 
-            //update redis
+            /**
+             * 记录下最后产生的commitid,这个值决定了从主库搜索的数据范围.
+             */
             statusService.saveCommitId(commitId);
 
         } else {

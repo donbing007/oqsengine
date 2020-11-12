@@ -5,10 +5,8 @@ import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResource;
-import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResourceFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,18 +43,20 @@ public class CustomTransactionConfiguration {
     }
 
     @Bean
-    public TransactionExecutor storageSphinxQLTransactionExecutor(SphinxQLTransactionResourceFactory factory, TransactionManager tm) {
+    public TransactionExecutor storageSphinxQLTransactionExecutor(
+        SphinxQLTransactionResourceFactory factory, TransactionManager tm) {
         return new AutoJoinTransactionExecutor(tm, factory);
     }
 
     @Bean
-    public ConnectionTransactionResourceFactory connectionTransactionResourceFactory(
+    public SqlConnectionTransactionResourceFactory connectionTransactionResourceFactory(
         @Value("${storage.master.name:oqsbigentity}") String tableName) {
-        return new ConnectionTransactionResourceFactory(tableName, statusService);
+        return new SqlConnectionTransactionResourceFactory(tableName, statusService);
     }
 
     @Bean
-    public TransactionExecutor storageJDBCTransactionExecutor(ConnectionTransactionResourceFactory factory, TransactionManager tm) {
+    public TransactionExecutor storageJDBCTransactionExecutor(
+        SqlConnectionTransactionResourceFactory factory, TransactionManager tm) {
         return new AutoJoinTransactionExecutor(tm, factory);
     }
 

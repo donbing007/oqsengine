@@ -39,10 +39,7 @@ public class StorageConfiguration {
     }
 
     @Bean
-    public CombinedStorage combinedStorage(
-                MasterStorage masterStorage,
-                IndexStorage indexStorage
-            ) {
+    public CombinedStorage combinedStorage(MasterStorage masterStorage, IndexStorage indexStorage) {
         CombinedStorage combinedStorage = new CombinedStorage(masterStorage, indexStorage);
         return combinedStorage;
     }
