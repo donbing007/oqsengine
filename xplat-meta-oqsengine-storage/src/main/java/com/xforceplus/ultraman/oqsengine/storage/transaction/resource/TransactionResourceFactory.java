@@ -6,6 +6,7 @@ import java.sql.SQLException;
 
 /**
  * 事务资源创建工厂.
+ * @param <T> 实际资源.
  * @author dongbin
  * @version 0.1 2020/11/11 15:53
  * @since 1.8

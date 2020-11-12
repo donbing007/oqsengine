@@ -12,6 +12,7 @@ import java.util.Optional;
 
 /**
  * 基于普通 JDBC connection 规范的资源实现.
+ * 强制事务以READ_COMMITTED运行.
  *
  * @author dongbin
  * @version 0.1 2020/2/15 21:57
@@ -25,6 +26,7 @@ public class ConnectionTransactionResource extends AbstractConnectionTransaction
 
     public ConnectionTransactionResource(String key, Connection conn, boolean autocommit, String tableName) throws SQLException {
         super(key, conn, autocommit);
+        conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         updateCommitIdSql = String.format(UPDATE_COMMITID_SQL, tableName);
     }
 
