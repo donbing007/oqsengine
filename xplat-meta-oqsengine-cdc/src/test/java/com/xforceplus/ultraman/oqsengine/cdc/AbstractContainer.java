@@ -20,7 +20,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
-import com.xforceplus.ultraman.oqsengine.storage.master.transaction.ConnectionTransactionResourceFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -204,7 +204,7 @@ public abstract class AbstractContainer {
         }
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-            transactionManager, new ConnectionTransactionResourceFactory(tableName, statusService));
+            transactionManager, new SqlConnectionTransactionResourceFactory(tableName, statusService));
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

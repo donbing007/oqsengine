@@ -54,11 +54,13 @@ public class ConsumerRunnerTest extends AbstractContainer {
         consumerRunner.start();
     }
 
-    private long t = 1;
+    private long t = 0;
+    private int expectedCount = 0;
 
     @Test
     public void syncTest() throws InterruptedException, SQLException {
-
+        t = 1;
+        expectedCount = 0;
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
         int expectedCount = 0;
@@ -88,7 +90,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
 
         Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
-        Assert.assertEquals(expectedCount, cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
+        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
     }
 
     @Test
@@ -97,17 +99,21 @@ public class ConsumerRunnerTest extends AbstractContainer {
         int gap = 10;
         long loops = 2;
         int i = 0;
+        expectedCount = 0;
+
         mockRedisCallbackService.reset();
         while (i < loops) {
             Transaction tx = transactionManager.create();
             transactionManager.bind(tx.id());
             try {
-                initData(EntityGenerateToolBar.generateFixedEntities(t, 0), false);
+                IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
+                initData(entities, false);
 
                 Thread.sleep(1000);
 
-                initData(EntityGenerateToolBar.generateFixedEntities(t, 1), true);
-
+                entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
+                initData(entities, true);
+                expectedCount += entities.length;
             } catch (Exception ex) {
                 tx.rollback();
                 throw ex;
@@ -128,6 +134,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
 
         Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
+        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
     }
 
     @Test
@@ -135,12 +142,20 @@ public class ConsumerRunnerTest extends AbstractContainer {
         t = 15000;
         int gap = 10;
         int size = 250;
+
+        mockRedisCallbackService.reset();
+        expectedCount = 0;
+
+
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
-        mockRedisCallbackService.reset();
+
         try {
+            IEntity[] entities;
             for (long i = t; i < t + gap * size; i += gap) {
-                initData(EntityGenerateToolBar.generateFixedEntities(i, 0), false);
+                entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
+                initData(entities, false);
+                expectedCount += entities.length;
             }
 
             for (long i = t; i < t + gap * size; i += gap) {
@@ -161,6 +176,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
 
         Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
+        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
     }
 
 
@@ -173,12 +189,18 @@ public class ConsumerRunnerTest extends AbstractContainer {
         long i = t;
         long limits = t + gap * loops;
 
+        mockRedisCallbackService.reset();
+        expectedCount = 0;
+
         while (i < limits) {
             Transaction tx = transactionManager.create();
             transactionManager.bind(tx.id());
             try {
-                initData(EntityGenerateToolBar.generateFixedEntities(i, 0),  false);
+                IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
+                initData(entities,  false);
                 initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true);
+
+                expectedCount += entities.length;
             } catch (Exception ex) {
                 tx.rollback();
                 throw ex;
@@ -195,6 +217,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
 
         Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
+        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
     }
 
 
@@ -211,110 +234,11 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
     private int build(IEntity entity) throws SQLException {
         return masterStorage.build(entity);
-//        try {
-//            Method m1 = masterStorage.getClass()
-//                    .getDeclaredMethod("toJson", new Class[]{IEntityValue.class});
-//            m1.setAccessible(true);
-//
-//            Method m2 = masterStorage.getClass()
-//                    .getDeclaredMethod("buildSearchAbleSyncMeta", new Class[]{IEntityClass.class});
-//            m2.setAccessible(true);
-//
-//            return (int) masterTransactionExecutor.execute(
-//                new DataSourceNoShardStorageTask(dataSource) {
-//
-//                        @Override
-//                        public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-//                            StorageEntity storageEntity = new StorageEntity();
-//
-//                            storageEntity.setId(entity.id());
-//                            storageEntity.setEntity(entity.entityClass().id());
-//                            if (null != entity.family()) {
-//                                storageEntity.setPref(entity.family().parent());
-//                                storageEntity.setCref(entity.family().child());
-//                            }
-//                            storageEntity.setTime(entity.time());
-//                            storageEntity.setCommitid(CommitHelper.getUncommitId());
-//
-//                            storageEntity.setOp(OperationType.CREATE.getValue());
-//                            Optional<Transaction> tOp = resource.getTransaction();
-//                            storageEntity.setTx(tOp.get().id());
-//
-//                            storageEntity.setDeleted(false);
-//                            try {
-//                                storageEntity.setAttribute(
-//                                        (String) m1.invoke(masterStorage, new Object[]{entity.entityValue()}));
-//
-//                                storageEntity.setMeta(
-//                                        (String) m2.invoke(masterStorage, new Object[]{entity.entityClass()}));
-//
-//                            } catch (IllegalAccessException | InvocationTargetException e) {
-//                                throw new SQLException(e.getMessage());
-//                            }
-//
-//                            return BuildExecutor.build(
-//                                    tableName, resource, 0)
-//                                .execute(storageEntity);
-//                        }
-//                    });
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
     }
 
     private int replace(IEntity entity, int version) throws SQLException {
         entity.resetVersion(version);
         return masterStorage.replace(entity);
-//        try {
-//            Method m1 = masterStorage.getClass()
-//                    .getDeclaredMethod("toJson", new Class[]{IEntityValue.class});
-//            m1.setAccessible(true);
-//
-//            Method m2 = masterStorage.getClass()
-//                    .getDeclaredMethod("buildSearchAbleSyncMeta", new Class[]{IEntityClass.class});
-//            m2.setAccessible(true);
-//
-//            return (int) masterTransactionExecutor.execute(
-//                new DataSourceNoShardStorageTask(dataSource) {
-//
-//                        @Override
-//                        public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-//                            StorageEntity storageEntity = new StorageEntity();
-//
-//                            storageEntity.setId(entity.id());
-//                            storageEntity.setEntity(entity.entityClass().id());
-//                            storageEntity.setPref(entity.family().parent());
-//                            storageEntity.setCref(entity.family().child());
-//                            storageEntity.setTime(entity.time());
-//
-//                            storageEntity.setVersion(version);
-//
-//                            storageEntity.setOp(OperationType.UPDATE.getValue());
-//                            Optional<Transaction> tOp = resource.getTransaction();
-//
-//                            storageEntity.setTx(tOp.get().id());
-//                            storageEntity.setCommitid(CommitHelper.getUncommitId());
-//
-//                            storageEntity.setDeleted(false);
-//                            try {
-//                                storageEntity.setAttribute(
-//                                        (String) m1.invoke(masterStorage, new Object[]{entity.entityValue()}));
-//
-//                                storageEntity.setMeta(
-//                                        (String) m2.invoke(masterStorage, new Object[]{entity.entityClass()}));
-//
-//                            } catch (IllegalAccessException | InvocationTargetException e) {
-//                                throw new SQLException(e.getMessage());
-//                            }
-//
-//                            return ReplaceExecutor.build(
-//                                    tableName, resource, 0)
-//                                .execute(storageEntity);
-//                        }
-//                    });
-//        } catch (Exception e) {
-//            throw new RuntimeException(e.getMessage());
-//        }
     }
 
 

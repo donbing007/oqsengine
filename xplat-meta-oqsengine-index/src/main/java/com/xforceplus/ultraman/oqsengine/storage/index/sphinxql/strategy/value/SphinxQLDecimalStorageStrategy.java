@@ -41,7 +41,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         String secondStr = storageValue.next().value().toString();
 
         boolean isNeg = false;
-        if(firstStr.trim().startsWith(NEG) || secondStr.trim().startsWith(NEG)){
+        if (firstStr.trim().startsWith(NEG) || secondStr.trim().startsWith(NEG)){
             isNeg = true;
 
             firstStr = firstStr.trim().startsWith(NEG) ? firstStr.substring(1) : firstStr;
@@ -63,14 +63,14 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         String firstNumStr = numberArr[0];
 
         boolean isNeg = false;
-        if(firstNumStr.trim().startsWith("-")){
+        if (firstNumStr.trim().startsWith("-")){
             isNeg = true;
         }
 
         long first = Long.parseLong(numberArr[0]);
         long second = Long.parseLong(numberArr[1]);
 
-        if(first < 0 || isNeg){
+        if (first < 0 || isNeg){
             second = 0 - second;
         }
 

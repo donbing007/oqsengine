@@ -156,6 +156,7 @@ public class ConsumerRunner extends Thread {
     }
 
     private void syncFree(long batchId) throws SQLException {
+        cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics().setExecuteJobCount(ZERO);
         CDCMetrics cdcMetrics = new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
                                     cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
 
