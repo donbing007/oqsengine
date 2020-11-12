@@ -9,22 +9,22 @@ import java.sql.SQLException;
 
 /**
  * @author dongbin
- * @version 0.1 2020/11/11 15:59
+ * @version 0.1 2020/11/12 15:26
  * @since 1.8
  */
-public class ConnectionTransactionResourceFactory implements TransactionResourceFactory<Connection> {
+public class SqlConnectionTransactionResourceFactory implements TransactionResourceFactory<Connection> {
 
     private String tableName;
 
     private StatusService statusService;
 
-    public ConnectionTransactionResourceFactory(String tableName, StatusService statusService) {
+    public SqlConnectionTransactionResourceFactory(String tableName, StatusService statusService) {
         this.tableName = tableName;
         this.statusService = statusService;
     }
 
     @Override
-    public TransactionResource build(String key, Connection resource,  boolean autocommit) throws SQLException {
-        return new ConnectionTransactionResource(key, resource, autocommit, tableName, statusService);
+    public TransactionResource build(String key, Connection resource, boolean autocommit) throws SQLException {
+        return new SqlConnectionTransactionResource(key, resource, autocommit, tableName, statusService);
     }
 }
