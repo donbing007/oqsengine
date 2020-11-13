@@ -42,7 +42,7 @@ public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
     @Override
     public CDCMetrics queryLastUnCommit() {
         String rawStr = statusService.getCDCMetrics(key);
-        if(!StringUtils.isEmpty(rawStr)) {
+        if (!StringUtils.isEmpty(rawStr)) {
             try {
 
                 return mapper.readValue(rawStr, CDCMetrics.class);

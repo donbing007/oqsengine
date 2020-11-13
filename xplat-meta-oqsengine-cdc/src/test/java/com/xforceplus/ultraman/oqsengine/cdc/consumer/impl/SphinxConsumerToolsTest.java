@@ -15,6 +15,8 @@ import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.*;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
+
 
 /**
  * desc :
@@ -30,14 +32,6 @@ public class SphinxConsumerToolsTest extends AbstractContainer {
 
     private static final long PCREF_ID = 0;
 
-
-    private ConsumerService sphinxConsumerService;
-
-    @Before
-    public void before() throws SQLException, InterruptedException {
-        sphinxConsumerService = initConsumerService();
-    }
-
     @Test
     public void columnToolsTest() throws Exception {
 
@@ -46,15 +40,6 @@ public class SphinxConsumerToolsTest extends AbstractContainer {
         Set<Long> expectedIds = new HashSet<>();
 
         List<CanalEntry.Entry> entries = initData(batchSize, expectedIds);
-
-        Method mLong = sphinxConsumerService.getClass().getDeclaredMethod("getLongFromColumn", new Class[]{List.class, OqsBigEntityColumns.class});
-        mLong.setAccessible(true);
-
-        Method mString = sphinxConsumerService.getClass().getDeclaredMethod("getStringFromColumn", new Class[]{List.class, OqsBigEntityColumns.class});
-        mString.setAccessible(true);
-
-        Method mBoolean = sphinxConsumerService.getClass().getDeclaredMethod("getBooleanFromColumn", new Class[]{List.class, OqsBigEntityColumns.class});
-        mBoolean.setAccessible(true);
 
         for (CanalEntry.Entry e : entries) {
             if (e.getEntryType().equals(CanalEntry.EntryType.ROWDATA)) {
@@ -68,31 +53,31 @@ public class SphinxConsumerToolsTest extends AbstractContainer {
                 }
 
                 for (CanalEntry.RowData rowData : rowChange.getRowDatasList()) {
-                    Long id = (Long) mLong.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.ID});
+                    Long id = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ID);
                     Assert.assertTrue(expectedIds.contains(id));
 
-                    Long entity = (Long) mLong.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.ENTITY});
+                    Long entity = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ENTITY);
                     Assert.assertNotNull(entity);
 
-                    Long tx = (Long) mLong.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.TX});
+                    Long tx = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.TX);
                     Assert.assertNotNull(tx);
 
-                    Long commitid = (Long) mLong.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.COMMITID});
+                    Long commitid = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.COMMITID);
                     Assert.assertNotNull(commitid);
 
-                    Long pref = (Long) mLong.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.PREF});
+                    Long pref = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.PREF);
                     Assert.assertEquals(PCREF_ID, (long) pref);
 
-                    Long cref = (Long) mLong.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.CREF});
+                    Long cref = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.CREF);
                     Assert.assertEquals(PCREF_ID, (long) cref);
 
-                    Boolean deleted = (Boolean) mBoolean.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.DELETED});
+                    Boolean deleted = getBooleanFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.DELETED);
                     Assert.assertNotNull(deleted);
 
-                    String attr = (String) mString.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.ATTRIBUTE});
+                    String attr = getStringFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ATTRIBUTE);
                     Assert.assertNotNull(attr);
 
-                    String meta = (String) mString.invoke(sphinxConsumerService, new Object[]{rowData.getAfterColumnsList(), OqsBigEntityColumns.META});
+                    String meta = getStringFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.META);
                     Assert.assertNotNull(meta);
                 }
             }

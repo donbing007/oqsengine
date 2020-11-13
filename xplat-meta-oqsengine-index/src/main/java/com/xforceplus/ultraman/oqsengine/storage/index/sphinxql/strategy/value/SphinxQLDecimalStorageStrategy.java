@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Collection;
 
 /**
@@ -44,7 +43,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         String secondStr = storageValue.next().value().toString();
 
         boolean isNeg = false;
-        if (firstStr.trim().startsWith(NEG) || secondStr.trim().startsWith(NEG)){
+        if (firstStr.trim().startsWith(NEG) || secondStr.trim().startsWith(NEG)) {
             isNeg = true;
 
             firstStr = firstStr.trim().startsWith(NEG) ? firstStr.substring(1) : firstStr;
@@ -59,16 +58,16 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
     }
 
 
-    private int bitLength(String longStr){
+    private int bitLength(String longStr) {
         int bitLength = longStr.length();
 
         /**
          * omit all tail zeros
          */
-        for(int i = longStr.length() - 1 ; i > 0 ; i -- ){
+        for (int i = longStr.length() - 1; i > 0; i--) {
             char c = longStr.charAt(i);
-            if(c == '0'){
-                bitLength --;
+            if (c == '0') {
+                bitLength--;
             } else {
                 break;
             }
@@ -77,10 +76,10 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         return bitLength;
     }
 
-    private String leftPaddingZero(String longStr, int padding){
+    private String leftPaddingZero(String longStr, int padding) {
         StringBuffer sb = new StringBuffer();
 
-        while(padding --> 0){
+        while (padding-- > 0) {
             sb.append(0);
         }
 
@@ -89,13 +88,13 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         return sb.toString();
     }
 
-    private String paddingZero(String longStr, int padding){
+    private String paddingZero(String longStr, int padding) {
 
         StringBuffer sb = new StringBuffer();
 
         sb.append(longStr);
 
-        while(padding --> 0){
+        while (padding-- > 0) {
             sb.append(0);
         }
         return sb.toString();
@@ -111,7 +110,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         String firstNumStr = numberArr[0];
 
         boolean isNeg = false;
-        if (firstNumStr.trim().startsWith("-")){
+        if (firstNumStr.trim().startsWith("-")) {
             isNeg = true;
         }
 
@@ -127,7 +126,7 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         long first = Long.parseLong(numberArr[0]);
         long second = Long.parseLong(paddingZero(secondStr.substring(0, i), FIXED - i));
 
-        if (first < 0 || isNeg){
+        if (first < 0 || isNeg) {
             second = 0 - second;
         }
 
@@ -143,8 +142,8 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         String logicName = Long.toString(field.id());
 
         return Arrays.asList(
-            logicName + storageType().getType() + "0",
-            logicName + storageType().getType() + "1"
+                logicName + storageType().getType() + "0",
+                logicName + storageType().getType() + "1"
         );
     }
 

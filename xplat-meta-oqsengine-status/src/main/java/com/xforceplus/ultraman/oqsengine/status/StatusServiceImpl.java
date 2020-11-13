@@ -9,6 +9,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.micrometer.core.instrument.Metrics;
 import reactor.core.publisher.Flux;
 
+import javax.annotation.PreDestroy;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -43,6 +44,13 @@ public class StatusServiceImpl implements StatusService {
     }
 
     @Override
+    public void closeConnection() {
+        if (connect != null) {
+            connect.close();
+        }
+    }
+
+    @Override
     public Long getCommitId() {
         return idGenerator.next();
     }
@@ -73,7 +81,7 @@ public class StatusServiceImpl implements StatusService {
     public Long getCurrentCommitLowBound(Long windowsTimeRange) {
         //10 is the fixed buff
         return timeTable.queryByWindow(windowsTimeRange, timeBuff).toStream().min(Long::compareTo)
-            .orElse(-1L);
+                .orElse(-1L);
     }
 
     /**
@@ -83,7 +91,7 @@ public class StatusServiceImpl implements StatusService {
     @Override
     public Long getCurrentCommitLowBoundWithLocalTime(Long start, Long end) {
         return timeTable.queryByLocalTime(start, end).toStream().min(Long::compareTo)
-            .orElse(-1L);
+                .orElse(-1L);
     }
 
     @Override
@@ -113,7 +121,7 @@ public class StatusServiceImpl implements StatusService {
 
         statusMetrics.setSize((long) snapshotList.size());
         statusMetrics.setTransIds(snapshotList.stream()
-            .map(x -> Long.parseLong(x.getValue())).collect(Collectors.toList()));
+                .map(x -> Long.parseLong(x.getValue())).collect(Collectors.toList()));
 
         return statusMetrics;
     }

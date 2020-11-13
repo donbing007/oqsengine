@@ -25,6 +25,7 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.junit.*;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -65,8 +66,8 @@ public class SearchTest extends AbstractCDCTest {
     @Resource
     private EntityManagementService managementService;
 
-    @Resource
-    private LongIdGenerator idGenerator;
+    @Autowired
+    private LongIdGenerator snowflakeIdGenerator;
 
     @Resource
     private IndexStorage indexStorage;
@@ -97,7 +98,7 @@ public class SearchTest extends AbstractCDCTest {
 
         entities = Arrays.asList(
                 new Entity(
-                        idGenerator.next(),
+                        snowflakeIdGenerator.next(),
                         mainEntityClass,
                         new EntityValue(0).addValues(Arrays.asList(
                                 new StringValue(mainFields.stream().findFirst().get(), "1"),
@@ -106,7 +107,7 @@ public class SearchTest extends AbstractCDCTest {
                                 new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
                         ))),
                 new Entity(
-                        idGenerator.next(),
+                        snowflakeIdGenerator.next(),
                         mainEntityClass,
                         new EntityValue(0).addValues(Arrays.asList(
                                 new StringValue(mainFields.stream().findFirst().get(), "1"),
@@ -115,7 +116,7 @@ public class SearchTest extends AbstractCDCTest {
                                 new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
                         ))),
                 new Entity(
-                        idGenerator.next(),
+                        snowflakeIdGenerator.next(),
                         mainEntityClass,
                         new EntityValue(0).addValues(Arrays.asList(
                                 new StringValue(mainFields.stream().findFirst().get(), "1"),
@@ -124,7 +125,7 @@ public class SearchTest extends AbstractCDCTest {
                                 new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
                         ))),
                 new Entity(
-                        idGenerator.next(),
+                        snowflakeIdGenerator.next(),
                         mainEntityClass,
                         new EntityValue(0).addValues(Arrays.asList(
                                 new StringValue(mainFields.stream().findFirst().get(), "1"),
@@ -133,7 +134,7 @@ public class SearchTest extends AbstractCDCTest {
                                 new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
                         ))),
                 new Entity(
-                        idGenerator.next(),
+                        snowflakeIdGenerator.next(),
                         mainEntityClass,
                         new EntityValue(0).addValues(Arrays.asList(
                                 new StringValue(mainFields.stream().findFirst().get(), "1"),
@@ -142,7 +143,7 @@ public class SearchTest extends AbstractCDCTest {
                                 new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
                         ))),
                 new Entity(
-                        idGenerator.next(),
+                        snowflakeIdGenerator.next(),
                         mainEntityClass,
                         new EntityValue(0).addValues(Arrays.asList(
                                 new StringValue(mainFields.stream().findFirst().get(), "1"),
@@ -262,7 +263,7 @@ public class SearchTest extends AbstractCDCTest {
 
         entities = IntStream.range(0, masterSize).mapToObj(
                 i -> {
-                    Long id = idGenerator.next();
+                    Long id = snowflakeIdGenerator.next();
                     return new Entity(
                             id,
                             mainEntityClass,
@@ -320,13 +321,13 @@ public class SearchTest extends AbstractCDCTest {
 
         initialization = false;
         mainFields = Arrays.asList(
-                new EntityField(idGenerator.next(), "c1", FieldType.STRING, FieldConfig.build().searchable(true)),
-                new EntityField(idGenerator.next(), "c2", FieldType.LONG, FieldConfig.build().searchable(true)),
-                new EntityField(idGenerator.next(), "c3", FieldType.DECIMAL, FieldConfig.build().searchable(true)),
-                new EntityField(idGenerator.next(), "c4", FieldType.DATETIME, FieldConfig.build().searchable(true))
+                new EntityField(snowflakeIdGenerator.next(), "c1", FieldType.STRING, FieldConfig.build().searchable(true)),
+                new EntityField(snowflakeIdGenerator.next(), "c2", FieldType.LONG, FieldConfig.build().searchable(true)),
+                new EntityField(snowflakeIdGenerator.next(), "c3", FieldType.DECIMAL, FieldConfig.build().searchable(true)),
+                new EntityField(snowflakeIdGenerator.next(), "c4", FieldType.DATETIME, FieldConfig.build().searchable(true))
         );
 
-        mainEntityClass = new EntityClass(idGenerator.next(), "main", null, null, null, mainFields);
+        mainEntityClass = new EntityClass(snowflakeIdGenerator.next(), "main", null, null, null, mainFields);
 
         //initData(100, 100);
 
@@ -502,7 +503,7 @@ public class SearchTest extends AbstractCDCTest {
 
     @Test
     public void mixedOperationSearch() throws SQLException, InterruptedException {
-        List<Long> longs = initData(10);
+        List<Long> longs = initData(50);
 
         Thread.sleep(10000);
 
