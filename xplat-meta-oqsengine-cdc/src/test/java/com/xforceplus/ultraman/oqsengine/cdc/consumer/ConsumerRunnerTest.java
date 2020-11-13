@@ -33,10 +33,13 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
     private MockRedisCallbackService mockRedisCallbackService;
 
+    private long t = 0;
+
+    private int expectedCount = 0;
+
     @Before
     public void before() throws Exception {
         initMaster();
-
         initConsumerRunner();
     }
 
@@ -51,27 +54,34 @@ public class ConsumerRunnerTest extends AbstractContainer {
                 "nly-v1", "root", "xplat");
 
         consumerRunner = new ConsumerRunner(initConsumerService(), cdcMetricsService, singleCDCConnector);
+    }
+
+    private void startConsumerRunner(long partitionId) {
+        t = partitionId;
+        expectedCount = 0;
+        mockRedisCallbackService.reset();
         consumerRunner.start();
     }
 
-    private long t = 0;
-    private int expectedCount = 0;
+    private void stopConsumerRunner() {
+        consumerRunner.shutdown();
+    }
 
     @Test
     public void syncTest() throws InterruptedException, SQLException {
-        t = 1;
-        expectedCount = 0;
+
+        startConsumerRunner(1);
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
-        int expectedCount = 0;
+
         try {
             IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
-            initData(entities, false);
+            initData(entities, false, false);
 
             Thread.sleep(1000);
 
             entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
-            initData(entities, true);
+            initData(entities, true, false);
             expectedCount = entities.length;
 
         } catch (Exception ex) {
@@ -91,28 +101,70 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
         Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
         Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
+
+        stopConsumerRunner();
+
+        Thread.sleep(10 * 1000);
+    }
+
+    @Test
+    public void SyncDeleteTest() throws SQLException, InterruptedException {
+        startConsumerRunner(1000000);
+        Transaction tx = transactionManager.create();
+        transactionManager.bind(tx.id());
+
+        try {
+            IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
+            initData(entities, false, false);
+
+            Thread.sleep(1000);
+
+            initData(entities, true, true);
+            expectedCount += entities.length;
+        } catch (Exception ex) {
+            tx.rollback();
+            throw ex;
+        }
+
+        //将事务正常提交,并从事务管理器中销毁事务.
+        tx.commit();
+        transactionManager.finish();
+
+        Thread.sleep(10 * 1000);
+
+        CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
+        Assert.assertNotNull(cdcMetrics);
+        Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
+
+        Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
+        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
+
+
+        stopConsumerRunner();
+
+        Thread.sleep(10 * 1000);
+
     }
 
     @Test
     public void loopTest() throws InterruptedException, SQLException {
-        t = 50;
         int gap = 10;
         long loops = 2;
         int i = 0;
-        expectedCount = 0;
 
-        mockRedisCallbackService.reset();
+        startConsumerRunner(50);
+
         while (i < loops) {
             Transaction tx = transactionManager.create();
             transactionManager.bind(tx.id());
             try {
                 IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
-                initData(entities, false);
+                initData(entities, false, false);
 
                 Thread.sleep(1000);
 
                 entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
-                initData(entities, true);
+                initData(entities, true, false);
                 expectedCount += entities.length;
             } catch (Exception ex) {
                 tx.rollback();
@@ -127,7 +179,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             t += gap;
         }
 
-        Thread.sleep(10000);
+        Thread.sleep(20 * 1000);
 
         CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
@@ -135,17 +187,19 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
         Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
         Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
+
+
+        stopConsumerRunner();
+
+        Thread.sleep(10 * 1000);
     }
 
     @Test
     public void loopTransactionOverBatches() throws SQLException, InterruptedException {
-        t = 15000;
         int gap = 10;
         int size = 250;
 
-        mockRedisCallbackService.reset();
-        expectedCount = 0;
-
+        startConsumerRunner(15000);
 
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
@@ -154,12 +208,12 @@ public class ConsumerRunnerTest extends AbstractContainer {
             IEntity[] entities;
             for (long i = t; i < t + gap * size; i += gap) {
                 entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
-                initData(entities, false);
+                initData(entities, false, false);
                 expectedCount += entities.length;
             }
 
             for (long i = t; i < t + gap * size; i += gap) {
-                initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true);
+                initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true, false);
             }
         } catch (Exception ex) {
             tx.rollback();
@@ -169,7 +223,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         tx.commit();
         transactionManager.finish();
 
-        Thread.sleep(30000);
+        Thread.sleep(50 * 1000);
 
         CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
@@ -177,28 +231,30 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
         Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
         Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
+
+        stopConsumerRunner();
+
+        Thread.sleep(10 * 1000);
     }
 
 
     @Test
     public void loopSmallTransactionBatches() throws SQLException, InterruptedException {
-        t = 50000;
         int gap = 10;
         int loops = 100;
 
         long i = t;
         long limits = t + gap * loops;
 
-        mockRedisCallbackService.reset();
-        expectedCount = 0;
+        startConsumerRunner(50000);
 
         while (i < limits) {
             Transaction tx = transactionManager.create();
             transactionManager.bind(tx.id());
             try {
                 IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
-                initData(entities,  false);
-                initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true);
+                initData(entities,  false, false);
+                initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true, false);
 
                 expectedCount += entities.length;
             } catch (Exception ex) {
@@ -210,7 +266,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             i += gap;
         }
 
-        Thread.sleep(10000);
+        Thread.sleep(10 * 1000);
 
         CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
@@ -218,19 +274,24 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
         Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
         Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
+
+        stopConsumerRunner();
+
+        Thread.sleep(10 * 1000);
     }
 
 
-    private void initData(IEntity[] datas, boolean replacement) throws SQLException {
+    private void initData(IEntity[] datas, boolean replacement, boolean delete) throws SQLException {
         for (IEntity entity : datas) {
-            if (!replacement) {
-                build(entity);
+            if (delete) {
+                delete(entity);
+            } else if (replacement) {
+                replace(entity, 0);
             } else {
-                replace(entity,0);
+                build(entity);
             }
         }
     }
-
 
     private int build(IEntity entity) throws SQLException {
         return masterStorage.build(entity);
@@ -239,6 +300,10 @@ public class ConsumerRunnerTest extends AbstractContainer {
     private int replace(IEntity entity, int version) throws SQLException {
         entity.resetVersion(version);
         return masterStorage.replace(entity);
+    }
+
+    private int delete(IEntity entity) throws SQLException {
+        return masterStorage.delete(entity);
     }
 
 

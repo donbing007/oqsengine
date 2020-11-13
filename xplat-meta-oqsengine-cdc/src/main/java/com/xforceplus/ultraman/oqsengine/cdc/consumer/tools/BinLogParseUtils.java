@@ -2,9 +2,12 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.tools;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.SQLException;
 import java.util.List;
+
+import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.ZERO;
 
 /**
  * desc :
@@ -27,7 +30,25 @@ public class BinLogParseUtils {
 
     public static boolean getBooleanFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
         String booleanValue = getColumnWithoutNull(columns, oqsBigEntityColumns).getValue();
-        return booleanValue.equals("true");
+
+        return convertStringToBoolean(booleanValue);
+    }
+
+    public static boolean convertStringToBoolean(String str) {
+        try {
+            if (str.equalsIgnoreCase("true")) {
+                return true;
+            }
+            //  判断是否为 > 0的数字
+            boolean is = StringUtils.isNumeric(str);
+            if (is) {
+                int vIs = Integer.parseInt(str);
+                return vIs > ZERO;
+            }
+        } catch (Exception e) {
+            //  ignore
+        }
+        return false;
     }
 
     public static CanalEntry.Column getColumnWithoutNull(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {

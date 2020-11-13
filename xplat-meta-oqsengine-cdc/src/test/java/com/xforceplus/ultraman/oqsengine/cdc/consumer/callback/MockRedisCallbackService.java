@@ -28,7 +28,7 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
     public void reset() {
         ackMetrics = null;
         cdcMetrics = null;
-        executed = new AtomicInteger(0);
+        executed.set(0);
     }
 
     @Override
