@@ -46,7 +46,7 @@ public class FailOverTest extends AbstractContainer {
 
     private static final int partition = 1000000;
 
-    private static final int max = 120;
+    private static final int max = 200;
 
     private boolean isTetOver = false;
 
@@ -104,11 +104,11 @@ public class FailOverTest extends AbstractContainer {
 
                 cdcDaemonService.stopDaemon();
 
-                cdcDaemonService = null;
+//                cdcDaemonService = null;
 
                 Thread.sleep(10 * 1000);
 
-                initDaemonService();
+//                initDaemonService();
             }
             System.out.println("stop CDCDamonServiceCall thread.");
             return null;

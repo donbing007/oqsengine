@@ -186,7 +186,7 @@ public abstract class AbstractContainer {
         ReflectionTestUtils.setField(indexStorage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(indexStorage, "storageStrategyFactory", storageStrategyFactory);
         indexStorage.setIndexTableName("oqsindex");
-        indexStorage.setMaxQueryTimeMs(1000);
+        indexStorage.setMaxSearchTimeoutMs(1000);
         indexStorage.init();
     }
 

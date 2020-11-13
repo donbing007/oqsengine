@@ -47,6 +47,7 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     @Override
     public CDCMetrics queryLastUnCommit() {
+        logger.info("mock queryLastUnCommit info : {}", JSON.toJSON(cdcMetrics));
         return cdcMetrics;
     }
 

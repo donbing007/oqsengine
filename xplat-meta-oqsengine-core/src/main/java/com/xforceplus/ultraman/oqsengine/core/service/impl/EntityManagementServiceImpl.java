@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
@@ -39,7 +38,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     final Logger logger = LoggerFactory.getLogger(EntityManagementServiceImpl.class);
 
-    @Resource
+    @Resource(name = "snowflakeIdGenerator")
     private LongIdGenerator idGenerator;
 
     @Resource(name = "serviceTransactionExecutor")

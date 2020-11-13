@@ -64,10 +64,16 @@ data:
                 enabled: {{ .Values.storage.master.shard.table.enabled | default "false" }}
                 size: {{ .Values.storage.master.shard.table.size | default "3" }}
           index:
-            name: {{ .Values.storage.index.name | default "oqsindex" | quote }}
-            maxQueryTimeMs: {{ .Values.storage.index.maxQueryTimeMs | default "0" | quote }}
-          undo:
-            store: {{ .Values.storage.undo.store | default "simple" |quote }}
+            search:
+              name: {{ .Values.storage.index.search.name | default "oqsindex" | quote }}
+              maxQueryTimeMs: {{ .Values.storage.index.search.maxQueryTimeMs | default "0" }}
+            write:
+              name: {{ .Values.storage.index.write.name | default "oqsindex" | quote }}
+              shard:
+                enabled: {{ .Values.storage.index.write.shard.enabled | default "false" }}
+                size: {{ .Values.storage.index.write.shard.size | default "1" }}
+        redis:
+          uri: {{ .Values.redis.uri | default "redis://localhost:6379" | quote}}
         cdc:
           connect:
             type: {{ .Values.cdc.connect.type }}

@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Map;
@@ -31,9 +30,7 @@ import java.util.stream.Collectors;
  */
 @Configuration
 public class DataSourceConfiguration {
-
-    @Resource
-    private DataSourcePackage dataSourcePackage;
+    ;
 
     @Bean
     public DataSourcePackage dataSourcePackage() {
@@ -41,20 +38,20 @@ public class DataSourceConfiguration {
     }
 
     @Bean
-    public Selector<DataSource> indexWriteDataSourceSelector() {
+    public Selector<DataSource> indexWriteDataSourceSelector(DataSourcePackage dataSourcePackage) {
         return new HashSelector(dataSourcePackage.getIndexWriter());
     }
 
     @Bean
-    public Selector<DataSource> indexSearchDataSourceSelector() {
-        return new HashSelector(dataSourcePackage.getIndexSearch());
+    public DataSource indexSearchDataSource(DataSourcePackage dataSourcePackage) {
+        return dataSourcePackage.getIndexSearch().get(0);
     }
 
     @Bean
-    public DataSource masterDataSource(
-        @Value("${storage.master.name:oqsbigentity}") String baseName,
-        @Value("${storage.master.shard.table.enabled:false}") boolean shard,
-        @Value("${storage.master.shard.table.size:1}") int shardSize
+    public DataSource masterDataSource(DataSourcePackage dataSourcePackage,
+                                       @Value("${storage.master.name:oqsbigentity}") String baseName,
+                                       @Value("${storage.master.shard.table.enabled:false}") boolean shard,
+                                       @Value("${storage.master.shard.table.size:1}") int shardSize
     ) throws SQLException {
         if (!shard) {
             return dataSourcePackage.getMaster().get(0);
