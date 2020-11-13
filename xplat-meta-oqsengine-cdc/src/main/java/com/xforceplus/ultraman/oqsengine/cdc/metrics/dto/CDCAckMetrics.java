@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc.metrics.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.CDCStatus;
 
 import java.util.ArrayList;
@@ -33,7 +35,8 @@ public class CDCAckMetrics {
     //  上一次成功消费后的tx事务列表
     private List<Long> commitList;
 
-    public CDCAckMetrics(CDCStatus cdcConsumerStatus) {
+    @JsonCreator
+    public CDCAckMetrics(@JsonProperty("cdcConsumerStatus")CDCStatus cdcConsumerStatus) {
         this.cdcConsumerStatus = cdcConsumerStatus;
         this.commitList = new ArrayList<>();
     }
