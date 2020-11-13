@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.List;
 
 /**
@@ -37,13 +39,21 @@ public class TimeTable {
     public TimeTable(RedisClient redisClient, String tableName) {
         this.redisClient = redisClient;
         this.tableName = tableName;
-        connection = redisClient.connect();
+    }
 
-        //register table in redis
-        //TODO
+    @PostConstruct
+    public void init() {
+        connection = redisClient.connect();
         RedisSetCommands<String, String> sync = connection.sync();
         Long added = sync.sadd("tables", tableName);
         logger.info("Register table ret {}", added);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (connection != null) {
+            connection.close();
+        }
     }
 
     /**

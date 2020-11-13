@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.status;
 
-import com.xforceplus.ultraman.oqsengine.status.id.RedisIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.status.table.TimeTable;
 import io.lettuce.core.ScoredValue;
 import reactor.core.publisher.Flux;
@@ -14,21 +14,21 @@ import java.util.stream.Collectors;
  */
 public class StatusServiceImpl implements StatusService {
 
-    private RedisIdGenerator redisIdGenerator;
+    private LongIdGenerator idGenerator;
 
     private TimeTable timeTable;
 
-    private Long timeBuff = 10L;
+    private long timeBuff = 10L;
 
 
-    public StatusServiceImpl(RedisIdGenerator redisIdGenerator, TimeTable timeTable) {
-        this.redisIdGenerator = redisIdGenerator;
+    public StatusServiceImpl(LongIdGenerator idGenerator, TimeTable timeTable) {
+        this.idGenerator = idGenerator;
         this.timeTable = timeTable;
     }
 
     @Override
     public Long getCommitId() {
-        return redisIdGenerator.next();
+        return idGenerator.next();
     }
 
     @Override
