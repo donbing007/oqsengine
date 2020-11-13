@@ -47,7 +47,30 @@ public class ConsumerRunner extends Thread {
     }
 
     public void shutdown() {
-        runningStatus = RunningStatus.STOP;
+        runningStatus = RunningStatus.TRY_STOP;
+
+        int useTime = 0;
+        while (useTime < MAX_STOP_WAIT_LOOPS) {
+            try {
+                Thread.sleep(MAX_STOP_WAIT_TIME * 1000);
+            } catch (Exception e) {
+                //  ignore
+                e.printStackTrace();
+            }
+            if (isShutdown()) {
+                logger.info("cdc consumer success stop.");
+                break;
+            }
+
+            useTime ++;
+        }
+        if (useTime >= MAX_STOP_WAIT_LOOPS) {
+            logger.warn("cdc consumer force stop after {} seconds.", useTime * MAX_STOP_WAIT_TIME);
+        }
+    }
+
+    public boolean isShutdown() {
+        return runningStatus.equals(RunningStatus.STOP_SUCCESS);
     }
 
     public void run() {
@@ -100,13 +123,14 @@ public class ConsumerRunner extends Thread {
     }
 
     private boolean checkForStop() {
-        if (runningStatus.equals(RunningStatus.STOP)) {
+        if (runningStatus.ordinal() >= RunningStatus.TRY_STOP.ordinal()) {
             try {
                 cdcConnector.shutdown();
             } catch (Exception e) {
                 //  ignore
                 e.printStackTrace();
             }
+            runningStatus = RunningStatus.STOP_SUCCESS;
             return true;
         }
         return false;
@@ -114,6 +138,13 @@ public class ConsumerRunner extends Thread {
 
     public void consume() throws SQLException {
         while (true) {
+
+            //  服务被终止
+            if (runningStatus.ordinal() >= RunningStatus.TRY_STOP.ordinal()) {
+                runningStatus = RunningStatus.STOP_SUCCESS;
+                break;
+            }
+
             Message message = null;
             try {
                 //获取指定数量的数据
@@ -147,16 +178,10 @@ public class ConsumerRunner extends Thread {
                 //  同步出错信息，回滚到上次成功的的Sync信息
                 callBackError(ERROR_MESSAGE_WAIT_IN_SECONDS);
             }
-
-            //  服务被终止
-            if (runningStatus.equals(RunningStatus.STOP)) {
-                break;
-            }
         }
     }
 
     private void syncFree(long batchId) throws SQLException {
-        cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics().setExecuteJobCount(ZERO);
         CDCMetrics cdcMetrics = new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
                                     cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
 
@@ -238,7 +263,8 @@ public class ConsumerRunner extends Thread {
 
     private void callBackSuccess(CDCAckMetrics currentMetrics) {
         cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setLastConsumerTime(System.currentTimeMillis());
-
+        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setExecuteRows(currentMetrics.getExecuteRows());
+        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setTotalUseTime(currentMetrics.getTotalUseTime());
         if (!currentMetrics.getCommitList().isEmpty()) {
             cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setCommitList(currentMetrics.getCommitList());
         }
@@ -246,6 +272,7 @@ public class ConsumerRunner extends Thread {
         if (currentMetrics.getMaxSyncUseTime() > ZERO) {
             cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setMaxSyncUseTime(currentMetrics.getMaxSyncUseTime());
         }
+
 
         cdcMetricsService.callback();
     }

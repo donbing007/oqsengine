@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.connect.ClusterCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -26,14 +27,21 @@ import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.EMPTY_B
 public class CDCConfiguration {
 
     @Bean("sphinxConsumerService")
-    public ConsumerService sphinxConsumerService(
-        @Value("${cdc.execution.timeoutMs:30000}") int executionTimeout,
-        @Value("${cdc.execution.single.consumer:true}") boolean singleConsumer) {
+    public ConsumerService sphinxConsumerService() {
         SphinxConsumerService consumerService = new SphinxConsumerService();
-        consumerService.setExecutionTimeout(executionTimeout);
-        consumerService.setSingleSyncConsumer(singleConsumer);
 
         return consumerService;
+    }
+
+    @Bean("sphinxSyncExecutor")
+    public SphinxSyncExecutor sphinxSyncExecutor(
+        @Value("${cdc.execution.timeoutMs:30000}") int executionTimeout,
+        @Value("${cdc.execution.single.consumer:true}") boolean singleConsumer) {
+        SphinxSyncExecutor sphinxSyncService = new SphinxSyncExecutor();
+        sphinxSyncService.setExecutionTimeout(executionTimeout);
+        sphinxSyncService.setSingleSyncConsumer(singleConsumer);
+
+        return sphinxSyncService;
     }
 
     @ConditionalOnExpression("'${cdc.connect.type}'.equals('cluster')")

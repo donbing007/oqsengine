@@ -243,10 +243,12 @@ public class ConsumerRunnerTest extends AbstractContainer {
         int gap = 10;
         int loops = 100;
 
-        long i = t;
-        long limits = t + gap * loops;
+
 
         startConsumerRunner(50000);
+
+        long i = t;
+        long limits = t + gap * loops;
 
         while (i < limits) {
             Transaction tx = transactionManager.create();

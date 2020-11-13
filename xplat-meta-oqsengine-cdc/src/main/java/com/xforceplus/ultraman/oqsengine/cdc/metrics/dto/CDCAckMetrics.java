@@ -32,6 +32,12 @@ public class CDCAckMetrics {
     //  表示当前批次数据中最大耗时时间(单位为毫秒)
     private long maxSyncUseTime;
 
+    //  当前批次的总耗时
+    private long totalUseTime;
+
+    //  当前批次落库条数
+    private int executeRows;
+
     //  上一次成功消费后的tx事务列表
     private List<Long> commitList;
 
@@ -87,5 +93,21 @@ public class CDCAckMetrics {
 
     public void setCommitList(List<Long> commitList) {
         this.commitList = commitList;
+    }
+
+    public long getTotalUseTime() {
+        return totalUseTime;
+    }
+
+    public void setTotalUseTime(long totalUseTime) {
+        this.totalUseTime = totalUseTime;
+    }
+
+    public int getExecuteRows() {
+        return executeRows;
+    }
+
+    public void setExecuteRows(int executeRows) {
+        this.executeRows = executeRows;
     }
 }

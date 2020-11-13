@@ -2,12 +2,14 @@ package com.xforceplus.ultraman.oqsengine.cdc;
 
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
@@ -91,40 +93,40 @@ public abstract class AbstractContainer {
     private static void initManticore(Network network) {
 
         manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.0").withExposedPorts(9306)
-            .withNetwork(network)
-            .withNetworkAliases("manticore0")
-            .withClasspathResourceMapping("manticore0.conf", "/manticore.conf", BindMode.READ_ONLY)
-            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-            .waitingFor(Wait.forListeningPort());
+                .withNetwork(network)
+                .withNetworkAliases("manticore0")
+                .withClasspathResourceMapping("manticore0.conf", "/manticore.conf", BindMode.READ_ONLY)
+                .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+                .waitingFor(Wait.forListeningPort());
         manticore0.start();
 
         manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.0").withExposedPorts(9306)
-            .withNetwork(network)
-            .withNetworkAliases("manticore1")
-            .withClasspathResourceMapping("manticore1.conf", "/manticore.conf", BindMode.READ_ONLY)
-            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-            .waitingFor(Wait.forListeningPort());
+                .withNetwork(network)
+                .withNetworkAliases("manticore1")
+                .withClasspathResourceMapping("manticore1.conf", "/manticore.conf", BindMode.READ_ONLY)
+                .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+                .waitingFor(Wait.forListeningPort());
         manticore1.start();
 
         searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.0").withExposedPorts(9306)
-            .withNetwork(network)
-            .withNetworkAliases("searchManticore")
-            .withClasspathResourceMapping("search-manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
-            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-            .dependsOn(manticore0, manticore1)
-            .waitingFor(Wait.forListeningPort());
+                .withNetwork(network)
+                .withNetworkAliases("searchManticore")
+                .withClasspathResourceMapping("search-manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
+                .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+                .dependsOn(manticore0, manticore1)
+                .waitingFor(Wait.forListeningPort());
         searchManticore.start();
 
         String write0Jdbc = String.format(
-            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
-            manticore0.getContainerIpAddress(), manticore0.getFirstMappedPort());
+                "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+                manticore0.getContainerIpAddress(), manticore0.getFirstMappedPort());
         String write1Jdbc = String.format(
-            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
-            manticore1.getContainerIpAddress(), manticore1.getFirstMappedPort());
+                "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+                manticore1.getContainerIpAddress(), manticore1.getFirstMappedPort());
 
         String searchJdbc = String.format(
-            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
-            searchManticore.getContainerIpAddress(), searchManticore.getFirstMappedPort());
+                "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+                searchManticore.getContainerIpAddress(), searchManticore.getFirstMappedPort());
 
         System.setProperty("MANTICORE_WRITE0_JDBC_URL", write0Jdbc);
         System.setProperty("MANTICORE_WRITE1_JDBC_URL", write1Jdbc);
@@ -154,8 +156,8 @@ public abstract class AbstractContainer {
     protected void initIndex() throws SQLException, InterruptedException {
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector(
             "./src/test/resources/sql_index_storage.conf");
-        Selector<DataSource> searchDataSourceSelector = buildSearchDataSourceSelector(
-            "./src/test/resources/sql_index_storage.conf");
+        DataSource searchDataSource = buildSearchDataSource(
+                "./src/test/resources/sql_index_storage.conf");
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
@@ -179,12 +181,16 @@ public abstract class AbstractContainer {
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
         sphinxQLConditionsBuilderFactory.init();
 
+        Selector<String> indexWriteIndexNameSelector =
+                new SuffixNumberHashSelector("oqsindex", 3);
+
         indexStorage = new SphinxQLIndexStorage();
         ReflectionTestUtils.setField(indexStorage, "writerDataSourceSelector", writeDataSourceSelector);
-        ReflectionTestUtils.setField(indexStorage, "searchDataSourceSelector", searchDataSourceSelector);
+        ReflectionTestUtils.setField(indexStorage, "searchDataSource", searchDataSource);
         ReflectionTestUtils.setField(indexStorage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(indexStorage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(indexStorage, "storageStrategyFactory", storageStrategyFactory);
+        ReflectionTestUtils.setField(indexStorage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
         indexStorage.setSearchIndexName("oqsindex");
         indexStorage.setMaxSearchTimeoutMs(1000);
         indexStorage.init();
@@ -229,6 +235,7 @@ public abstract class AbstractContainer {
     }
 
     protected ConsumerService initConsumerService() throws SQLException, InterruptedException {
+
         initIndex();
 
         ExecutorService consumerPool = new ThreadPoolExecutor(10, 10,
@@ -242,10 +249,14 @@ public abstract class AbstractContainer {
         IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
         ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
 
+        SphinxSyncExecutor sphinxSyncExecutor = new SphinxSyncExecutor();
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "sphinxQLIndexStorage", indexStorage);
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "consumerPool", consumerPool);
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "entityValueBuilder", entityValueBuilder);
+
         ConsumerService consumerService = new SphinxConsumerService();
-        ReflectionTestUtils.setField(consumerService, "sphinxQLIndexStorage", indexStorage);
-        ReflectionTestUtils.setField(consumerService, "consumerPool", consumerPool);
-        ReflectionTestUtils.setField(consumerService, "entityValueBuilder", entityValueBuilder);
+
+        ReflectionTestUtils.setField(consumerService, "sphinxSyncExecutor", sphinxSyncExecutor);
 
         return consumerService;
     }
@@ -259,13 +270,13 @@ public abstract class AbstractContainer {
 
     }
 
-    private Selector<DataSource> buildSearchDataSourceSelector(String file) {
+    private DataSource buildSearchDataSource(String file) {
         if (dataSourcePackage == null) {
             System.setProperty(DataSourceFactory.CONFIG_FILE, file);
 
             dataSourcePackage = DataSourceFactory.build();
         }
 
-        return new HashSelector<>(dataSourcePackage.getIndexSearch());
+        return dataSourcePackage.getIndexSearch().get(0);
     }
 }
