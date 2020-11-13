@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -27,7 +28,6 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.Sphi
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.*;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -153,7 +153,7 @@ public class SphinxQLIndexStorageTest {
 
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector(
             "./src/test/resources/sql_index_storage.conf");
-        Selector<DataSource> searchDataSourceSelector = buildSearchDataSourceSelector(
+        DataSource searchDataSource = buildSearchDataSourceSelector(
             "./src/test/resources/sql_index_storage.conf");
 
         // 等待加载完毕
@@ -175,38 +175,43 @@ public class SphinxQLIndexStorageTest {
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
         sphinxQLConditionsBuilderFactory.init();
 
+        Selector<String> indexWriteIndexNameSelector =
+            new SuffixNumberHashSelector("oqsindex", 3);
+
         storage = new SphinxQLIndexStorage();
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
-        ReflectionTestUtils.setField(storage, "searchDataSourceSelector", searchDataSourceSelector);
+        ReflectionTestUtils.setField(storage, "searchDataSource", searchDataSource);
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
-        storage.setIndexTableName("oqsindex");
-        storage.setMaxQueryTimeMs(1000);
+        ReflectionTestUtils.setField(storage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
+        storage.setSearchIndexName("oqsindex");
+        storage.setMaxSearchTimeoutMs(1000);
         storage.init();
 
         truncate();
 
-        Transaction tx = transactionManager.create();
-        transactionManager.bind(tx.id());
-
-        try {
-            initData(storage);
-            tx.commit();
-        } catch (Exception ex) {
-
-            if (!tx.isCompleted()) {
-                tx.rollback();
-            }
-
-            throw ex;
-
-        } finally {
-            transactionManager.finish();
-        }
-
-        // 确认没有事务.
-        Assert.assertFalse(transactionManager.getCurrent().isPresent());
+        initData(storage);
+//        Transaction tx = transactionManager.create();
+//        transactionManager.bind(tx.id());
+//
+//        try {
+//
+//            tx.commit();
+//        } catch (Exception ex) {
+//
+//            if (!tx.isCompleted()) {
+//                tx.rollback();
+//            }
+//
+//            throw ex;
+//
+//        } finally {
+//            transactionManager.finish();
+//        }
+//
+//        // 确认没有事务.
+//        Assert.assertFalse(transactionManager.getCurrent().isPresent());
 
     }
 
@@ -689,14 +694,14 @@ public class SphinxQLIndexStorageTest {
 
     }
 
-    private Selector<DataSource> buildSearchDataSourceSelector(String file) {
+    private DataSource buildSearchDataSourceSelector(String file) {
         if (dataSourcePackage == null) {
             System.setProperty(DataSourceFactory.CONFIG_FILE, file);
 
             dataSourcePackage = DataSourceFactory.build();
         }
 
-        return new HashSelector<>(dataSourcePackage.getIndexSearch());
+        return dataSourcePackage.getIndexSearch().get(0);
 
     }
 

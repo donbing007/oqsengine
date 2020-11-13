@@ -9,12 +9,9 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.Sphi
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import javax.annotation.Resource;
 
 /**
  * @author dongbin
@@ -24,17 +21,12 @@ import javax.annotation.Resource;
 @Configuration
 public class CustomTransactionConfiguration {
 
-    @Resource
-    private LongIdGenerator longIdGenerator;
-
-
-    @Autowired
-    private StatusService statusService;
-
     @Bean
     public TransactionManager transactionManager(
+        LongIdGenerator snowflakeIdGenerator,
+        StatusService statusService,
         @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs) {
-        return new DefaultTransactionManager(transactionTimeoutMs, longIdGenerator, statusService);
+        return new DefaultTransactionManager(transactionTimeoutMs, snowflakeIdGenerator, statusService);
     }
 
     @Bean
@@ -50,6 +42,7 @@ public class CustomTransactionConfiguration {
 
     @Bean
     public SqlConnectionTransactionResourceFactory connectionTransactionResourceFactory(
+        StatusService statusService,
         @Value("${storage.master.name:oqsbigentity}") String tableName) {
         return new SqlConnectionTransactionResourceFactory(tableName, statusService);
     }

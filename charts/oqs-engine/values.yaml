@@ -80,13 +80,11 @@ storage:
   maxVisibleNumber: 10000
   threadPool:
     # 0 or not exist use cpu core + 1
-    io:
-      worker: 32
-      queue: 1000
-    # 0 or not exist use cpu core + 1
     call:
       worker: 32
       queue: 1000
+    cdc:
+      worker: 1
   transaction:
     # The transaction is valid for a period of time that will be rollback.
     timeoutMs: 3000
@@ -100,9 +98,16 @@ storage:
         enabled: false
         size: 1
   index:
-    name: "oqsindex"
-    maxQueryTimeMs: 6000
-
+    search:
+      name: "oqsindex"
+      maxQueryTimeMs: 0
+    write:
+      name: "oqsindex"
+      shard:
+        enabled: false
+        size: 1
+redis:
+  uri: "redis://localhost:6379"
 
 # datasource json config
 # Multiple data sources are separated by Numbers.

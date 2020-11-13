@@ -18,10 +18,6 @@ transaction:
 
 threadPool:
   # 0 or not exist use cpu core + 1
-  io:
-    worker: 0
-    queue: 500
-  # 0 or not exist use cpu core + 1
   call:
     worker: 0
     queue: 1000
@@ -40,11 +36,16 @@ storage:
         enabled: false
         size: 1
   index:
-    # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
-    name: "oqsindex"
-    # The maximum query time for the index, in milliseconds.
-    maxQueryTimeMs: 6000
-
+    search:
+      name: "oqsindex"
+      maxQueryTimeMs: 0
+    write:
+      name: "oqsindex"
+      shard:
+        enabled: false
+        size: 1
+redis:
+  uri: "redis://localhost:6379"
 
 management:
   health:
@@ -75,7 +76,7 @@ cdc:
     username: root
     password: root
     subscribeFilter: .*\.oqsbigentity.*
-    batchSize: 2048
+    batchSize: 1
   execution:
     timeoutMs: 30000
     single:

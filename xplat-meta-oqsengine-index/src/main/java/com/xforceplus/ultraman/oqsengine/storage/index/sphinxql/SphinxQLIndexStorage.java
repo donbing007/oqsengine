@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceShardingStorageTask;
+import com.xforceplus.ultraman.oqsengine.storage.executor.StorageTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -52,8 +53,8 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     @Resource(name = "indexWriteDataSourceSelector")
     private Selector<DataSource> writerDataSourceSelector;
 
-    @Resource(name = "indexSearchDataSourceSelector")
-    private Selector<DataSource> searchDataSourceSelector;
+    @Resource(name = "indexSearchDataSource")
+    private DataSource searchDataSource;
 
     @Resource(name = "storageSphinxQLTransactionExecutor")
     private TransactionExecutor transactionExecutor;
@@ -61,25 +62,28 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     @Resource(name = "indexStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
 
-    private String indexTableName;
+    @Resource(name = "indexWriteIndexNameSelector")
+    private Selector<String> indexWriteIndexNameSelector;
+
+    private String searchIndexName;
 
     // 最大查询超时时间,默认为无限.
-    private long maxQueryTimeMs = 0;
+    private long maxSearchTimeoutMs = 0;
 
-    public long getMaxQueryTimeMs() {
-        return maxQueryTimeMs;
+    public long getMaxSearchTimeoutMs() {
+        return maxSearchTimeoutMs;
     }
 
-    public void setMaxQueryTimeMs(long maxQueryTimeMs) {
-        this.maxQueryTimeMs = maxQueryTimeMs;
+    public void setMaxSearchTimeoutMs(long maxSearchTimeoutMs) {
+        this.maxSearchTimeoutMs = maxSearchTimeoutMs;
     }
 
-    public void setIndexTableName(String indexTableName) {
-        this.indexTableName = indexTableName;
+    public String getSearchIndexName() {
+        return searchIndexName;
     }
 
-    public String getIndexTableName() {
-        return indexTableName;
+    public void setSearchIndexName(String searchIndexName) {
+        this.searchIndexName = searchIndexName;
     }
 
     /**
@@ -97,61 +101,65 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, Long commitId)
         throws SQLException {
 
-        return (Collection<EntityRef>) transactionExecutor
-            .execute(new DataSourceShardingStorageTask(searchDataSourceSelector, Long.toString(entityClass.id())) {
-                @Override
-                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                    return QueryConditionExecutor.build(
-                        indexTableName,
-                        resource,
-                        sphinxQLConditionsBuilderFactory,
-                        storageStrategyFactory,
-                        maxQueryTimeMs).execute(
-                        Tuple.of(entityClass.id(), conditions, page, sort, filterIds, commitId));
-                }
-            });
+        return (Collection<EntityRef>) transactionExecutor.execute(new StorageTask() {
+            @Override
+            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                return QueryConditionExecutor.build(
+                    searchIndexName,
+                    resource,
+                    sphinxQLConditionsBuilderFactory,
+                    storageStrategyFactory,
+                    maxSearchTimeoutMs).execute(
+                    Tuple.of(entityClass.id(), conditions, page, sort, filterIds, commitId));
+            }
+
+            @Override
+            public DataSource getDataSource() {
+                return searchDataSource;
+            }
+        });
     }
 
     @Override
     public void replaceAttribute(IEntityValue attribute) throws SQLException {
         checkId(attribute.id());
 
-        transactionExecutor
-            .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, Long.toString(attribute.id())) {
-
-                @Override
-                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                    long dataId = attribute.id();
-
-                    Optional<StorageEntity> oldStorageEntityOptional = QueryExecutor.build(resource, indexTableName).execute(dataId);
-
-                    if (oldStorageEntityOptional.isPresent()) {
-
-                        StorageEntity storageEntity = oldStorageEntityOptional.get();
-
-                        /**
-                         * 把新的属性插入旧属性集中替换已有,或新增.
-                         */
-                        Map<String, Object> completeAttribues = storageEntity.getJsonFields();
-                        Map<String, Object> modifiedAttributes = serializeToMap(attribute, true);
-                        completeAttribues.putAll(modifiedAttributes);
-
-                        // 处理 fulltext
-                        storageEntity.setJsonFields(completeAttribues);
-                        storageEntity.setFullFields(convertJsonToFull(completeAttribues));
-
-                        doBuildReplaceStorageEntity(storageEntity, true);
-
-                    } else {
-
-                        throw new SQLException(String
-                            .format("Attempt to update a property on a data that does not exist.[%d]", dataId));
-
-                    }
-
+        final StorageEntity oldStorageEntity;
+        oldStorageEntity = (StorageEntity) transactionExecutor.execute(new StorageTask() {
+            @Override
+            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                long dataId = attribute.id();
+                Optional<StorageEntity> oldStorageEntityOptional =
+                    QueryExecutor.build(resource, searchIndexName).execute(dataId);
+                if (oldStorageEntityOptional.isPresent()) {
+                    return oldStorageEntityOptional.get();
+                } else {
                     return null;
                 }
-            });
+            }
+
+            @Override
+            public DataSource getDataSource() {
+                return searchDataSource;
+            }
+        });
+
+        if (oldStorageEntity != null) {
+            /**
+             * 把新的属性插入旧属性集中替换已有,或新增.
+             */
+            Map<String, Object> completeAttribues = oldStorageEntity.getJsonFields();
+            Map<String, Object> modifiedAttributes = serializeToMap(attribute, true);
+            completeAttribues.putAll(modifiedAttributes);
+            // 处理 fulltext
+            oldStorageEntity.setJsonFields(completeAttribues);
+            oldStorageEntity.setFullFields(convertJsonToFull(completeAttribues));
+            doBuildReplaceStorageEntity(oldStorageEntity, true);
+        } else {
+            throw new SQLException(String
+                .format("Attempt to update a property on a data that does not exist.[%d]", attribute.id()));
+        }
+
     }
 
     @Override
@@ -180,12 +188,13 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     public int delete(long id) throws SQLException {
         checkId(id);
 
+        String shardKey = Long.toString(id);
         return (int) transactionExecutor
-            .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, Long.toString(id)) {
+            .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, shardKey) {
 
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                    return DeleteExecutor.build(resource, indexTableName)
+                    return DeleteExecutor.build(resource, indexWriteIndexNameSelector.select(shardKey))
                         .execute(id);
                 }
             });
@@ -283,15 +292,18 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     //    // 更新原始数据.
     private int doBuildReplaceStorageEntity(StorageEntity storageEntity, boolean replacement) throws SQLException {
+        String shardKey = Long.toString(storageEntity.getId());
         return (int) transactionExecutor
-            .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, Long.toString(storageEntity.getId())) {
+            .execute(new DataSourceShardingStorageTask(writerDataSourceSelector, shardKey) {
 
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                     if (replacement) {
-                        return ReplaceExecutor.build(resource, indexTableName).execute(storageEntity);
+                        return ReplaceExecutor.build(
+                            resource, indexWriteIndexNameSelector.select(shardKey)).execute(storageEntity);
                     } else {
-                        return BuildExecutor.build(resource, indexTableName).execute(storageEntity);
+                        return BuildExecutor.build(
+                            resource, indexWriteIndexNameSelector.select(shardKey)).execute(storageEntity);
                     }
                 }
             });
