@@ -36,14 +36,8 @@ public class BinLogParseUtils {
 
     public static boolean convertStringToBoolean(String str) {
         try {
-            if (str.equalsIgnoreCase("true")) {
-                return true;
-            }
-            //  判断是否为 > 0的数字
-            boolean is = StringUtils.isNumeric(str);
-            if (is) {
-                return Integer.parseInt(str) > ZERO;
-            }
+            return str.equalsIgnoreCase("true") ||
+                    (StringUtils.isNumeric(str) && Integer.parseInt(str) > ZERO);
         } catch (Exception e) {
             //  ignore
         }
