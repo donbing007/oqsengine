@@ -44,8 +44,8 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
         redisIdGenerator = new RedisIdGenerator(redisClient, "testKey");
         TimeTable remoteTimeTable = new TimeTable(redisClient, "testTable");
         TimeTable localTimeTable = new TimeTable(redisClient, "testLocalTable");
-        remoteStatusService = new StatusServiceImpl(redisIdGenerator, remoteTimeTable);
-        localStatusService = new StatusServiceImpl(redisIdGenerator, localTimeTable);
+        remoteStatusService = new StatusServiceImpl(redisIdGenerator, remoteTimeTable, redisClient);
+        localStatusService = new StatusServiceImpl(redisIdGenerator, localTimeTable, redisClient);
         tableCleaner = new TableCleaner(redisClient, 1L, 1L, 1000L);
     }
 

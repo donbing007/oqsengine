@@ -2,7 +2,9 @@ package com.xforceplus.ultraman.oqsengine.status;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.status.table.TimeTable;
+import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScoredValue;
+import io.lettuce.core.api.StatefulRedisConnection;
 import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
@@ -18,12 +20,17 @@ public class StatusServiceImpl implements StatusService {
 
     private TimeTable timeTable;
 
-    private long timeBuff = 10L;
+    private RedisClient redisClient;
 
+    private Long timeBuff = 10L;
 
-    public StatusServiceImpl(LongIdGenerator idGenerator, TimeTable timeTable) {
+    StatefulRedisConnection<String, String> connect;
+
+    public StatusServiceImpl(LongIdGenerator idGenerator, TimeTable timeTable, RedisClient redisClient) {
         this.idGenerator = idGenerator;
         this.timeTable = timeTable;
+        this.redisClient = redisClient;
+        this.connect = redisClient.connect();
     }
 
     @Override
@@ -97,5 +104,16 @@ public class StatusServiceImpl implements StatusService {
             .map(x -> Long.parseLong(x.getValue())).collect(Collectors.toList()));
 
         return statusMetrics;
+    }
+
+    @Override
+    public void saveCDCMetrics(String key, String cdcMetricsJson) {
+
+        connect.sync().set(key, cdcMetricsJson);
+    }
+
+    @Override
+    public String getCDCMetrics(String key) {
+        return connect.sync().get(key);
     }
 }
