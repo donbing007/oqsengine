@@ -1,9 +1,17 @@
 package com.xforceplus.ultraman.oqsengine.boot.cdc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntityValue;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCUnCommitMetrics;
+import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.util.StringUtils;
+
+import java.util.Map;
 
 /**
  * cdc metrics callback
@@ -12,10 +20,18 @@ public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
 
     private ApplicationEventPublisher publisher;
 
-    public CDCMetricsCallbackToEvent(ApplicationEventPublisher publisher) {
-        this.publisher = publisher;
-    }
+    private StatusService statusService;
 
+    private String key;
+
+    private ObjectMapper mapper;
+
+    public CDCMetricsCallbackToEvent(ApplicationEventPublisher publisher, StatusService statusService, String key, ObjectMapper mapper) {
+        this.publisher = publisher;
+        this.statusService = statusService;
+        this.key = key;
+        this.mapper = mapper;
+    }
 
     @Override
     public void cdcAck(CDCAckMetrics ackMetrics) {
@@ -24,11 +40,21 @@ public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
 
     @Override
     public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
-        //cdcMetrics.
+        publisher.publishEvent(cdcMetrics);
     }
 
     @Override
     public CDCMetrics queryLastUnCommit() {
+        String rawStr = statusService.getCDCMetrics(key);
+        if(!StringUtils.isEmpty(rawStr)) {
+            try {
+
+                return mapper.readValue(rawStr, CDCMetrics.class);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        }
+
         return null;
     }
 }

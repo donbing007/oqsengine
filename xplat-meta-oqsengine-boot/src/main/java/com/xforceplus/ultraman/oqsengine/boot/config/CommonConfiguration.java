@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.boot.cdc.CDCMetricsCallbackToEvent;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
@@ -171,13 +172,14 @@ public class CommonConfiguration {
     }
 
     @Bean("statusService")
-    public StatusService statusService(RedisIdGenerator redisIdGenerator, TimeTable timeTable){
-        return new StatusServiceImpl(redisIdGenerator, timeTable);
+    public StatusService statusService(RedisIdGenerator redisIdGenerator, TimeTable timeTable, RedisClient redisClient){
+        return new StatusServiceImpl(redisIdGenerator, timeTable, redisClient);
     }
 
     @Bean("cdcCallback")
-    public CDCMetricsCallback cdcMetricsCallback(ApplicationEventPublisher publisher){
-        return new CDCMetricsCallbackToEvent(publisher);
+    public CDCMetricsCallback cdcMetricsCallback(ApplicationEventPublisher publisher, StatusService statusService
+            , @Value("${redis.cdc.key:cdcmetric}") String key, ObjectMapper mapper){
+        return new CDCMetricsCallbackToEvent(publisher, statusService, key, mapper);
     }
 
     @Bean("entityValueBuilder")
