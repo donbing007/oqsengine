@@ -47,7 +47,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.EMPTY_B
  */
 public class CdcSyncBenchmarkTest extends AbstractContainer {
 
-    int batchSize = 100;
+    int batchSize = 1024;
 
     private IEntityField fixStringsField = new EntityField(100000, "strings", FieldType.STRINGS);
     private StringsValue fixStringsValue = new StringsValue(fixStringsField, "1,2,3,500002,测试".split(","));
@@ -180,16 +180,9 @@ public class CdcSyncBenchmarkTest extends AbstractContainer {
         indexStorage.buildOrReplace(storageEntity, entityValue, true);
     }
 
-    private static void printColumn(List<CanalEntry.Column> columns) {
-        for (CanalEntry.Column column : columns) {
-            System.out.println(column.getName() + " : " + column.getValue() + "   update=" + column.getUpdated());
-        }
-    }
-
     @After
     public void after() throws Exception {
         transactionManager.finish();
-
         dataSourcePackage.close();
 
     }
@@ -197,7 +190,6 @@ public class CdcSyncBenchmarkTest extends AbstractContainer {
     // 初始化数据
     private List<IEntity> initData(SQLMasterStorage storage, int size) throws Exception {
         List<IEntity> expectedEntitys = new ArrayList<>(size);
-
 
         for (int i = 1; i <= size; i++) {
             expectedEntitys.add(buildEntity(i * size));
