@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,7 +25,6 @@ public class CDCListener {
     @Value("redis.cdc.key:cdcmetrics")
     private String key;
 
-    @Async
     @EventListener
     public void invalidateCommitIds(CDCAckMetrics cdcAckMetrics) {
         statusService.invalidateIds(cdcAckMetrics.getCommitList());

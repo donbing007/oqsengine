@@ -3,15 +3,11 @@ package com.xforceplus.ultraman.oqsengine.boot.cdc;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntityValue;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.StringUtils;
-
-import java.util.Map;
 
 /**
  * cdc metrics callback
@@ -46,7 +42,7 @@ public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
     @Override
     public CDCMetrics queryLastUnCommit() {
         String rawStr = statusService.getCDCMetrics(key);
-        if(!StringUtils.isEmpty(rawStr)) {
+        if (!StringUtils.isEmpty(rawStr)) {
             try {
 
                 return mapper.readValue(rawStr, CDCMetrics.class);

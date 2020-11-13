@@ -7,6 +7,7 @@ import io.lettuce.core.ScoredValue;
 import io.lettuce.core.api.StatefulRedisConnection;
 import reactor.core.publisher.Flux;
 
+import javax.annotation.PreDestroy;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,6 +32,13 @@ public class StatusServiceImpl implements StatusService {
         this.timeTable = timeTable;
         this.redisClient = redisClient;
         this.connect = redisClient.connect();
+    }
+
+    @PreDestroy
+    public void preDestroy() {
+        if (connect != null) {
+            connect.close();
+        }
     }
 
     @Override
@@ -61,7 +69,7 @@ public class StatusServiceImpl implements StatusService {
     public Long getCurrentCommitLowBound(Long windowsTimeRange) {
         //10 is the fixed buff
         return timeTable.queryByWindow(windowsTimeRange, timeBuff).toStream().min(Long::compareTo)
-            .orElse(-1L);
+                .orElse(-1L);
     }
 
     /**
@@ -71,7 +79,7 @@ public class StatusServiceImpl implements StatusService {
     @Override
     public Long getCurrentCommitLowBoundWithLocalTime(Long start, Long end) {
         return timeTable.queryByLocalTime(start, end).toStream().min(Long::compareTo)
-            .orElse(-1L);
+                .orElse(-1L);
     }
 
     @Override
@@ -101,7 +109,7 @@ public class StatusServiceImpl implements StatusService {
 
         statusMetrics.setSize((long) snapshotList.size());
         statusMetrics.setTransIds(snapshotList.stream()
-            .map(x -> Long.parseLong(x.getValue())).collect(Collectors.toList()));
+                .map(x -> Long.parseLong(x.getValue())).collect(Collectors.toList()));
 
         return statusMetrics;
     }

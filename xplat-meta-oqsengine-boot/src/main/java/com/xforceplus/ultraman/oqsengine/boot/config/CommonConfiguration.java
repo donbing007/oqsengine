@@ -43,15 +43,15 @@ public class CommonConfiguration {
     @ConditionalOnExpression("${storage.index.write.shard.enabled} == true")
     @Bean("indexWriteIndexNameSelector")
     public Selector<String> shardingIndexWriteIndexNameSelector(
-        @Value("{storage.index.write.name:oqsindex}") String baseIndexName,
-        @Value("{storage.index.write.shard.size:1}") int shardSize) {
+        @Value("${storage.index.write.name:oqsindex}") String baseIndexName,
+        @Value("${storage.index.write.shard.size:1}") int shardSize) {
         return new SuffixNumberHashSelector(baseIndexName, shardSize);
     }
 
     @ConditionalOnExpression("${storage.index.write.shard.enabled} == false")
     @Bean("indexWriteIndexNameSelector")
     public Selector<String> noShardingIndexWriteIndexNameSelector(
-        @Value("{storage.index.write.name:oqsindex}") String baseIndexName) {
+        @Value("${storage.index.write.name:oqsindex}") String baseIndexName) {
         return new NoSelector(baseIndexName);
     }
 
@@ -121,7 +121,7 @@ public class CommonConfiguration {
         );
     }
 
-    @Bean("redisClient")
+    @Bean(value = "redisClient", destroyMethod = "shutdown")
     public RedisClient redisClient(@Value("${redis.uri:redis://localhost:6379}") String uri) {
 
         RedisClient redisClient = RedisClient

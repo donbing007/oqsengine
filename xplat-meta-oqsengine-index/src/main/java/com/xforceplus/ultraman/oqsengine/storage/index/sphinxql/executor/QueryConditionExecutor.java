@@ -332,9 +332,9 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
 
                         IValue iValue = storageStrategy.toLogicValue(useSort.getField(), reduce.get());
 
-                        if(iValue.compareByString()) {
+                        if (iValue.compareByString()) {
                             entityRef.setOrderValue(iValue.valueToString());
-                        }else{
+                        } else {
                             entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
                         }
 

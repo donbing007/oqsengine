@@ -1,10 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.test;
 
 
+import com.xforceplus.ultraman.oqsengine.common.id.RedisOrderContinuousLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.status.StatusMetrics;
 import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.status.StatusServiceImpl;
-import com.xforceplus.ultraman.oqsengine.status.id.RedisIdGenerator;
 import com.xforceplus.ultraman.oqsengine.status.table.TableCleaner;
 import com.xforceplus.ultraman.oqsengine.status.table.TimeTable;
 import io.lettuce.core.RedisClient;
@@ -33,7 +33,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
     RedisClient redisClient;
     TableCleaner tableCleaner;
 
-    private RedisIdGenerator redisIdGenerator;
+    private RedisOrderContinuousLongIdGenerator redisIdGenerator;
 
     @Before
     public void setUp(){
@@ -41,7 +41,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
         String redisIp = System.getProperty("status.redis.ip");
         int redisPort = Integer.parseInt(System.getProperty("status.redis.port"));
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
-        redisIdGenerator = new RedisIdGenerator(redisClient, "testKey");
+        redisIdGenerator = new RedisOrderContinuousLongIdGenerator(redisClient, "testKey");
         TimeTable remoteTimeTable = new TimeTable(redisClient, "testTable");
         TimeTable localTimeTable = new TimeTable(redisClient, "testLocalTable");
         remoteStatusService = new StatusServiceImpl(redisIdGenerator, remoteTimeTable, redisClient);
@@ -90,7 +90,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
     @Test
     public void testGenID() throws InterruptedException {
 
-        RedisIdGenerator tempIdGenerator = new RedisIdGenerator(redisClient, "tempKey");
+        RedisOrderContinuousLongIdGenerator tempIdGenerator = new RedisOrderContinuousLongIdGenerator(redisClient, "tempKey");
 
         int concurrencyLevel = 500;
         CountDownLatch latch = new CountDownLatch(concurrencyLevel);

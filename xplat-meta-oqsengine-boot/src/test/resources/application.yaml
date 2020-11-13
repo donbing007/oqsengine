@@ -39,12 +39,21 @@ storage:
   index:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
     name: "oqsindex"
+    write:
+      shard:
+        enabled: false
   undo:
     # simple | redis
     store: "simple"
 
 redis:
   uri: ${REDIS_URI}
+
+
+
+
+
+
 
 
 cdc:

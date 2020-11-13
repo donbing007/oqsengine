@@ -53,7 +53,7 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
 
         EntityRefComparator entityRefComparator = refMapping.get(type);
 
-        if(entityRefComparator == null) {
+        if (entityRefComparator == null) {
             //default
             logger.error("unknown field type !! fallback to string");
             entityRefComparator = new EntityRefComparator(FieldType.STRING);
