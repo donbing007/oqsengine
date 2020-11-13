@@ -21,19 +21,16 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
-import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -46,10 +43,9 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class SearchTest extends AbstractMysqlTest {
-
-    private static GenericContainer manticore;
+@SpringBootTest(classes = OqsengineBootApplication.class
+        , webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+public class SearchTest extends AbstractCDCTest {
 
     private boolean initialization;
 
@@ -60,6 +56,8 @@ public class SearchTest extends AbstractMysqlTest {
     private List<IEntity> entities;
     private List<IEntity> driverEntities;
     private long bigDriverSelectEntityId;
+
+    private Random random = new Random();
 
     @Resource
     private EntitySearchService entitySearchService;
@@ -74,9 +72,6 @@ public class SearchTest extends AbstractMysqlTest {
     private IndexStorage indexStorage;
 
     @Resource
-    private MasterStorage masterStorage;
-
-    @Resource
     private StatusService statusService;
 
     @Resource(name = "indexWriteDataSourceSelector")
@@ -87,32 +82,11 @@ public class SearchTest extends AbstractMysqlTest {
 
     @AfterClass
     public static void cleanEnvironment() throws Exception {
-        if (manticore != null) {
-            manticore.close();
-        }
+
     }
 
     @BeforeClass
     public static void prepareEnvironment() throws Exception {
-        manticore = new GenericContainer<>("manticoresearch/manticore:3.4.2")
-                .withExposedPorts(9306)
-                .withNetworkAliases("manticore")
-                .withClasspathResourceMapping("manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
-                .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-                .waitingFor(Wait.forListeningPort());
-        manticore.start();
-
-        String jdbcUrl = String.format(
-                "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
-                manticore.getContainerIpAddress(),
-                manticore.getFirstMappedPort());
-
-        System.setProperty("MANTICORE_JDBC_URL", jdbcUrl);
-
-        String mysqlJdbc = String.format("jdbc:mysql://%s:%d/oqsengine", mysql0.getContainerIpAddress(), mysql0.getFirstMappedPort());
-
-        System.setProperty("MYSQL_JDBC_URL", mysqlJdbc);
-
         System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
     }
 
@@ -182,163 +156,131 @@ public class SearchTest extends AbstractMysqlTest {
     }
 
 
-    private void initData(int masterSize, int indexSize) throws SQLException {
-
-        long driverId = 1000L;
-
+    private Integer nextId() {
         int max = 1000;
         int min = -1000;
+        int nextInt = random.nextInt(max - min) + min;
+        return nextInt;
+    }
 
+    private Double nextDouble() {
         double minD = 400.0;
-        double maxD = 2 * min;
+        double maxD = 2 * minD;
+        Double nextD = Math.random() * maxD - minD;
+        return nextD;
+    }
 
-        LocalDateTime start = LocalDateTime.now();
-
+    private String nextStr() {
         String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        StringBuilder sb = new StringBuilder();
+        int length = 7;
+        for (int y = 0; y < length; y++) {
+            // generate random index number
+            int index = random.nextInt(alphabet.length());
+            // get character specified by index
+            // from the string
+            char randomChar = alphabet.charAt(index);
+            // append the character to string builder
+            sb.append(randomChar);
+        }
+        return sb.toString();
+    }
+
+    private LocalDateTime nextLocalDateTime() {
+        LocalDateTime start = LocalDateTime.now();
+        LocalDateTime randomDate = start.plusDays(random.nextInt(1000 + 1));
+        return randomDate;
+    }
+
+    private Tuple2<List<Long>, List<Long>> randomOperation(List<Long> ids) throws SQLException {
+
+        List<Long> deleteIds = new LinkedList<>();
+
+        List<Long> updateIds = new LinkedList<>();
+
+
+        long txId = transactionManagementService.begin();
+
+
+        ids.stream().forEach(x -> {
+            try {
+                transactionManagementService.restore(txId);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            int i = random.nextInt(3);
+            if (i == 1) {
+                //update
+                try {
+
+                    Entity entity = new Entity(
+                            x,
+                            mainEntityClass,
+                            new EntityValue(0).addValues(Arrays.asList(
+                                    new StringValue(mainFields.stream().findFirst().get(), nextStr()),
+                                    new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
+                                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextDouble().toString())),
+                                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), nextLocalDateTime())
+                            )));
+                    managementService.replace(entity);
+                    updateIds.add(x);
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } else if (i == 2) {
+                //delete
+                try {
+                    transactionManagementService.restore(txId);
+                    Entity entity = new Entity(x, mainEntityClass, new EntityValue(0).addValues(Arrays.asList(
+                            new StringValue(mainFields.stream().findFirst().get(), nextStr()),
+                            new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
+                            new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextDouble().toString())),
+                            new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), nextLocalDateTime())
+                    )));
+                    managementService.delete(entity);
+                    deleteIds.add(x);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        });
+
+        transactionManagementService.restore(txId);
+        transactionManagementService.commit();
+
+        return Tuple.of(deleteIds, updateIds);
+    }
+
+
+    private List<Long> initData(int masterSize) throws SQLException {
 
         // create random string builder
 
-
-        Random random = new Random();
-
         entities = IntStream.range(0, masterSize).mapToObj(
                 i -> {
-
-                    int nextInt = random.nextInt(max - min) + min;
-                    Double nextD = Math.random() * maxD - minD;
-
-                    StringBuilder sb = new StringBuilder();
-                    int length = 7;
-                    for(int y = 0; y < length; y++) {
-                        // generate random index number
-                        int index = random.nextInt(alphabet.length());
-                        // get character specified by index
-                        // from the string
-                        char randomChar = alphabet.charAt(index);
-                        // append the character to string builder
-                        sb.append(randomChar);
-                    }
-
-                    LocalDateTime randomDate = start.plusDays(new Random().nextInt(1000 + 1));
-
+                    Long id = idGenerator.next();
                     return new Entity(
-                            idGenerator.next(),
+                            id,
                             mainEntityClass,
                             new EntityValue(0).addValues(Arrays.asList(
-                                    new StringValue(mainFields.stream().findFirst().get(), sb.toString()),
-                                    new LongValue(mainFields.stream().skip(1).findFirst().get(), nextInt),
-                                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextD.toString())),
-                                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), randomDate)
+                                    new StringValue(mainFields.stream().findFirst().get(), nextStr()),
+                                    new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
+                                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextDouble().toString())),
+                                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), nextLocalDateTime())
                             )));
                 }
         ).collect(Collectors.toList());
 
 
-//        entities = new ArrayList(Arrays.asList(
-//
-//                ,
-//                new Entity(
-//                        idGenerator.next(),
-//                        mainEntityClass,
-//                        new EntityValue(0).addValues(Arrays.asList(
-//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value1"),
-//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("1232.12"))
-//                        )))
-//                ,
-//                new Entity(
-//                        idGenerator.next(),
-//                        mainEntityClass,
-//                        new EntityValue(0).addValues(Arrays.asList(
-//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value2"),
-//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-1232.12"))
-//                        )))
-//                , new Entity(
-//                        idGenerator.next(),
-//                        mainEntityClass,
-//                        new EntityValue(0).addValues(Arrays.asList(
-//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value3"),
-//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-1232.32"))
-//                        )))
-//
-//        ));
+        buildEntities(entities, false);
 
-        buildEntities(entities, true);
-
-
-        List<IEntity> entities2 = IntStream.range(0, masterSize).mapToObj(
-                i -> {
-
-                    int nextInt = random.nextInt(max - min) + min;
-                    Double nextD = Math.random() * maxD - minD;
-
-                    StringBuilder sb = new StringBuilder();
-                    int length = 7;
-                    for(int y = 0; y < length; y++) {
-                        // generate random index number
-                        int index = random.nextInt(alphabet.length());
-                        // get character specified by index
-                        // from the string
-                        char randomChar = alphabet.charAt(index);
-                        // append the character to string builder
-                        sb.append(randomChar);
-                    }
-
-                    LocalDateTime randomDate = start.plusDays(new Random().nextInt(1000 + 1));
-
-                    return new Entity(
-                            idGenerator.next(),
-                            mainEntityClass,
-                            new EntityValue(0).addValues(Arrays.asList(
-                                    new StringValue(mainFields.stream().findFirst().get(), sb.toString()),
-                                    new LongValue(mainFields.stream().skip(1).findFirst().get(), nextInt),
-                                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextD.toString())),
-                                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), randomDate)
-                            )));
-                }
-        ).collect(Collectors.toList());
-
-
-//        ArrayList entities2 = new ArrayList(Arrays.asList(
-//                new Entity(
-//                        idGenerator.next(),
-//                        mainEntityClass,
-//                        new EntityValue(0).addValues(Arrays.asList(
-//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value4"),
-//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-0.32"))
-//                        )))
-//                , new Entity(
-//                        idGenerator.next(),
-//                        mainEntityClass,
-//                        new EntityValue(0).addValues(Arrays.asList(
-//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value5"),
-//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-0.46"))
-//                        )))
-//                , new Entity(
-//                        idGenerator.next(),
-//                        mainEntityClass,
-//                        new EntityValue(0).addValues(Arrays.asList(
-//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value6"),
-//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("0.32"))
-//                        )))
-//                , new Entity(
-//                        idGenerator.next(),
-//                        mainEntityClass,
-//                        new EntityValue(0).addValues(Arrays.asList(
-//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value7"),
-//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("0.46"))
-//                        )))
-//        ));
-
-        buildEntities(entities2, false);
-        bigDriverSelectEntityId = entities.get(entities.size() - 1).id();
+        return entities.stream().map(x -> x.id()).collect(Collectors.toList());
     }
+
 
     private void buildEntities(List<IEntity> entities, boolean insertIndex) throws SQLException {
         long txId = transactionManagementService.begin();
@@ -396,7 +338,7 @@ public class SearchTest extends AbstractMysqlTest {
     @After
     public void after() throws Exception {
         if (initialization) {
-            clear();
+            //clear();
         }
 
         initialization = false;
@@ -405,7 +347,6 @@ public class SearchTest extends AbstractMysqlTest {
     private void clear() throws SQLException {
         Collection<IEntity> iEntities = new ArrayList<>();
         iEntities.addAll(entities != null ? entities : Collections.emptyList());
-        iEntities.addAll(driverEntities != null ? driverEntities : Collections.emptyList());
 
         long txId = transactionManagementService.begin();
 
@@ -433,11 +374,13 @@ public class SearchTest extends AbstractMysqlTest {
     }
 
     @Test
-    public void basicSearch() throws SQLException {
+    public void basicSearch() throws SQLException, InterruptedException {
 
         initData();
 
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
+        Thread.sleep(10000);
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L);
 
         Page page = new Page(0, 100);
         Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(2));
@@ -455,10 +398,12 @@ public class SearchTest extends AbstractMysqlTest {
     }
 
     @Test
-    public void stringOrderSearch()  throws SQLException {
-        initData(100, 100);
+    public void stringOrderSearch() throws SQLException, InterruptedException {
+        initData(100);
 
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
+        Thread.sleep(10000);
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L);
 
         Page page = new Page(0, 100);
         Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(0));
@@ -477,10 +422,13 @@ public class SearchTest extends AbstractMysqlTest {
     }
 
     @Test
-    public void dateTimeOrderSearch()  throws SQLException {
-        initData(100, 100);
+    public void dateTimeOrderSearch() throws SQLException, InterruptedException {
 
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
+        initData(100);
+
+        Thread.sleep(10000);
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L);
 
         Page page = new Page(0, 100);
         Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(3));
@@ -499,8 +447,9 @@ public class SearchTest extends AbstractMysqlTest {
     }
 
     @Test
-    public void longOrderSearch()  throws SQLException {
-        initData(100, 100);
+    public void longOrderSearch() throws SQLException {
+        initData(100);
+
 
         Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
 
@@ -519,15 +468,58 @@ public class SearchTest extends AbstractMysqlTest {
     }
 
     @Test
-    public void noSortSearch()  throws SQLException {
-        initData(100, 100);
+    public void noSortSearch() throws SQLException, InterruptedException {
+        initData(100);
 
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
+        Thread.sleep(10000);
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L);
+
+        Page page = new Page(0, 100);
+
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, null, page, currentCommitLowBound);
+
+        assertTrue(page.getTotalCount() == 100);
+    }
+
+    @Test
+    public void mixedSearch() throws SQLException, InterruptedException {
+
+        initData(100);
+
+        Thread.sleep(10000);
+
+        initData(100);
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L);
 
         Page page = new Page(0, 100);
 
         Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, null, page, currentCommitLowBound);
 
         assertTrue(page.getTotalCount() == 200);
+    }
+
+    @Test
+    public void mixedOperationSearch() throws SQLException, InterruptedException {
+        List<Long> longs = initData(10);
+
+        Thread.sleep(10000);
+
+        Tuple2<List<Long>, List<Long>> listListTuple2 = randomOperation(longs);
+
+        System.out.println("DELETED :" + listListTuple2._1().size());
+        System.out.println("UPDATED :" + listListTuple2._2().size());
+
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L);
+        Page page = new Page(0, 100);
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, null, page, currentCommitLowBound);
+
+
+        assertTrue(page.getTotalCount() == (50 - listListTuple2._1().size()));
+        assertTrue(iEntities.stream().map(x -> x.id()).distinct().collect(Collectors.toList()).size() == iEntities.size());
+        assertTrue(iEntities.stream().filter(x -> listListTuple2._2().contains(x.id())).filter(x -> x.version() > 0).collect(Collectors.toList()).size() ==  listListTuple2._2().size());
+        assertTrue(iEntities.stream().map(x -> x.id()).filter(x -> listListTuple2._1().contains(x)).collect(Collectors.toList()).isEmpty());
     }
 }

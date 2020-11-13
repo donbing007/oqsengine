@@ -1,6 +1,6 @@
 instance:
   type: static
-  id: 500
+  id: 0
 
 grpc:
   server:
@@ -43,7 +43,19 @@ storage:
     # simple | redis
     store: "simple"
 
-management:
+redis:
+  uri: ${REDIS_URI}
+
+
+cdc:
+  connect:
+    type: single
+    string: ${CDC_CONNECT}
+    port: ${CDC_PORT}
+    destination: nly-v1
+    username: root
+    password: xplat
+    subscribeFilter: .*\.oqsbigentity.*
   endpoint:
     health:
       show-details: never
