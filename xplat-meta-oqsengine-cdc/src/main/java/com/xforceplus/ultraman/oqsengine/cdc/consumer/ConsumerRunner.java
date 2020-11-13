@@ -48,6 +48,11 @@ public class ConsumerRunner extends Thread {
 
     public void shutdown() {
         runningStatus = RunningStatus.STOP;
+        try {
+            Thread.sleep(10_000L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void run() {
