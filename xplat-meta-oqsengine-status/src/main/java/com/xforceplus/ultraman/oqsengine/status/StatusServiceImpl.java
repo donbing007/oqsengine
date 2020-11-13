@@ -39,7 +39,7 @@ public class StatusServiceImpl implements StatusService {
 
 
         unSyncCommitIdSize = Metrics.gauge(
-            MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(timeTable.size()));
+            MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(0));
     }
 
     @Override
