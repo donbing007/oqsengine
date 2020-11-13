@@ -40,7 +40,7 @@ storage:
     # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
     name: "oqsindex"
     write:
-      shard:
+        shard:
         enabled: false
   undo:
     # simple | redis

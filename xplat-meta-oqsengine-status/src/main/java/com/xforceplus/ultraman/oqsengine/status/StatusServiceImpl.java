@@ -43,8 +43,8 @@ public class StatusServiceImpl implements StatusService {
             MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(0));
     }
 
-    @PreDestroy
-    public void preDestroy() {
+    @Override
+    public void closeConnection() {
         if (connect != null) {
             connect.close();
         }

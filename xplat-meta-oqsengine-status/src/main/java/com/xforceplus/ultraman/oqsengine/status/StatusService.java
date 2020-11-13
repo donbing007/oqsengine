@@ -43,4 +43,6 @@ public interface StatusService {
     void saveCDCMetrics(String key, String cdcMetricsJson);
 
     String getCDCMetrics(String key);
+
+    void closeConnection();
 }

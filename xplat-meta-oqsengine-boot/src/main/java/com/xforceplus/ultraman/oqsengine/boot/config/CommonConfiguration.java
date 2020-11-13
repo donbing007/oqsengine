@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class CommonConfiguration {
 
-    @ConditionalOnExpression("${storage.index.write.shard.enabled} == true")
+    @ConditionalOnExpression("${storage.index.write.shard.enabled:false} == true")
     @Bean("indexWriteIndexNameSelector")
     public Selector<String> shardingIndexWriteIndexNameSelector(
         @Value("${storage.index.write.name:oqsindex}") String baseIndexName,
@@ -48,7 +48,7 @@ public class CommonConfiguration {
         return new SuffixNumberHashSelector(baseIndexName, shardSize);
     }
 
-    @ConditionalOnExpression("${storage.index.write.shard.enabled} == false")
+    @ConditionalOnExpression("${storage.index.write.shard.enabled:false} == false")
     @Bean("indexWriteIndexNameSelector")
     public Selector<String> noShardingIndexWriteIndexNameSelector(
         @Value("${storage.index.write.name:oqsindex}") String baseIndexName) {
@@ -121,7 +121,7 @@ public class CommonConfiguration {
         );
     }
 
-    @Bean(value = "redisClient", destroyMethod = "shutdown")
+    @Bean(value = "redisClient")
     public RedisClient redisClient(@Value("${redis.uri:redis://localhost:6379}") String uri) {
 
         RedisClient redisClient = RedisClient

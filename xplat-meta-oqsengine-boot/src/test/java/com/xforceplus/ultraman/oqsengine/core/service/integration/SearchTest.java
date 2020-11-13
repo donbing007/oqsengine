@@ -503,7 +503,7 @@ public class SearchTest extends AbstractCDCTest {
 
     @Test
     public void mixedOperationSearch() throws SQLException, InterruptedException {
-        List<Long> longs = initData(10);
+        List<Long> longs = initData(50);
 
         Thread.sleep(10000);
 
