@@ -1,12 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.boot.cdc.CDCMetricsCallbackToEvent;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.id.node.kubernetesStatefulsetNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
@@ -14,8 +11,6 @@ import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelecto
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.status.StatusServiceImpl;
-import com.xforceplus.ultraman.oqsengine.status.id.RedisIdGenerator;
-import com.xforceplus.ultraman.oqsengine.status.table.TableCleaner;
 import com.xforceplus.ultraman.oqsengine.status.table.TimeTable;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
@@ -26,10 +21,8 @@ import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValu
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import io.lettuce.core.RedisClient;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -149,13 +142,13 @@ public class CommonConfiguration {
     }
 
     @Bean("statusService")
-    public StatusService statusService(LongIdGenerator redisIdGenerator, TimeTable timeTable, RedisClient redisClient){
+    public StatusService statusService(LongIdGenerator redisIdGenerator, TimeTable timeTable, RedisClient redisClient) {
         return new StatusServiceImpl(redisIdGenerator, timeTable, redisClient);
     }
 
     @Bean("cdcCallback")
     public CDCMetricsCallback cdcMetricsCallback(ApplicationEventPublisher publisher, StatusService statusService
-            , @Value("${redis.cdc.key:cdcmetric}") String key, ObjectMapper mapper){
+        , @Value("${redis.cdc.key:cdcmetric}") String key, ObjectMapper mapper) {
         return new CDCMetricsCallbackToEvent(publisher, statusService, key, mapper);
     }
 
