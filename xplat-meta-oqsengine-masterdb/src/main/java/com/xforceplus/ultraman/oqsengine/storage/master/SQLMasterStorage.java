@@ -258,7 +258,7 @@ public class SQLMasterStorage implements MasterStorage {
                     storageEntity.setVersion(entity.version());
                     storageEntity.setTime(entity.time());
 
-                    storageEntity.setOp(OperationType.UPDATE.getValue());
+                    storageEntity.setOp(OperationType.DELETE.getValue());
                     Optional<Transaction> tOp = resource.getTransaction();
                     storageEntity.setTx(tOp.get().id());
                     storageEntity.setCommitid(CommitHelper.getUncommitId());

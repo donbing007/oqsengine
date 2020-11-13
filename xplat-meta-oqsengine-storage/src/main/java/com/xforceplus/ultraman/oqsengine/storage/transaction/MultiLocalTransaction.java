@@ -1,7 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +37,7 @@ public class MultiLocalTransaction implements Transaction {
     private Lock lock = new ReentrantLock();
     private StatusService statusService;
 
+    private Timer.Sample durationMetrics;
 
     public MultiLocalTransaction(long id, StatusService statusService) {
         transactionResourceHolder = new LinkedList<>();
@@ -41,6 +45,8 @@ public class MultiLocalTransaction implements Transaction {
         rollback = false;
         this.id = id;
         this.statusService = statusService;
+
+        durationMetrics = Timer.start(Metrics.globalRegistry);
     }
 
     @Override
@@ -166,31 +172,35 @@ public class MultiLocalTransaction implements Transaction {
             rollback = true;
 
         }
-        List<SQLException> exHolder = new LinkedList<>();
-        long commitId = statusService.getCommitId();
-        if (!CommitHelper.isLegal(commitId)) {
-            throw new SQLException(String.format("The submission number obtained is invalid.[%d]", commitId));
-        }
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
-        }
-        for (TransactionResource transactionResource : transactionResourceHolder) {
-            try {
-                if (commit) {
-                    transactionResource.commit(commitId);
-                } else {
-                    transactionResource.rollback();
-                }
-
-                transactionResource.destroy();
-            } catch (SQLException ex) {
-                exHolder.add(0, ex);
+        try {
+            List<SQLException> exHolder = new LinkedList<>();
+            long commitId = statusService.getCommitId();
+            if (!CommitHelper.isLegal(commitId)) {
+                throw new SQLException(String.format("The submission number obtained is invalid.[%d]", commitId));
             }
 
-        }
+            if (logger.isDebugEnabled()) {
+                logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
+            }
+            for (TransactionResource transactionResource : transactionResourceHolder) {
+                try {
+                    if (commit) {
+                        transactionResource.commit(commitId);
+                    } else {
+                        transactionResource.rollback();
+                    }
 
-        throwSQLExceptionIfNecessary(exHolder);
+                    transactionResource.destroy();
+                } catch (SQLException ex) {
+                    exHolder.add(0, ex);
+                }
+
+            }
+
+            throwSQLExceptionIfNecessary(exHolder);
+        } finally {
+            durationMetrics.stop(Metrics.globalRegistry.timer(MetricsDefine.TRANSACTION_DURATION_SECONDS));
+        }
     }
 
     @Override

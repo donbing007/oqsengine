@@ -45,4 +45,9 @@ public class MetricsDefine {
      * 事务持续时间分布.
      */
     public static final String TRANSACTION_DURATION_SECONDS = PREFIX + ".transaction.duration.seconds";
+
+    /**
+     * 未同步的提交号数量.
+     */
+    public static final String UN_SYNC_COMMIT_ID_COUNT_TOTAL = PREFIX + ".unsync.commitid.count.total";
 }
