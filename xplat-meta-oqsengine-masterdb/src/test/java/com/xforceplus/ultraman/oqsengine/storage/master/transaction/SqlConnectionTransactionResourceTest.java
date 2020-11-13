@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.transaction;
 
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import org.junit.After;
@@ -50,8 +51,11 @@ public class SqlConnectionTransactionResourceTest {
         Transaction transaction = mock(Transaction.class);
         when(transaction.id()).thenReturn(1L);
 
-        //TODO
-        SqlConnectionTransactionResource resource = new SqlConnectionTransactionResource("test", connection, true, "test", null);
+        long commitId = 0;
+        CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
+        when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
+        SqlConnectionTransactionResource resource = new SqlConnectionTransactionResource(
+            "test", connection, true, "test", commitIdStatusService);
         resource.bind(transaction);
         resource.commit(2);
         verify(ps).setLong(1, 2);

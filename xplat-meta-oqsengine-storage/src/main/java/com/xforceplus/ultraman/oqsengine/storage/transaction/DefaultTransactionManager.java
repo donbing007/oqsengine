@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
 
 /**
  * 默认的事务管理器.
@@ -12,24 +11,34 @@ import com.xforceplus.ultraman.oqsengine.status.StatusService;
  */
 public class DefaultTransactionManager extends AbstractTransactionManager {
 
-    private LongIdGenerator idGenerator;
-    private StatusService statusService;
+    private LongIdGenerator txIdGenerator;
+    private LongIdGenerator commitIdGenerator;
 
-    public DefaultTransactionManager(LongIdGenerator idGenerator, StatusService statusService) {
-        this(3000, idGenerator, statusService);
+    public DefaultTransactionManager(LongIdGenerator txIdGenerator, LongIdGenerator commitIdGenerator) {
+        this(3000, txIdGenerator, commitIdGenerator);
     }
 
-    public DefaultTransactionManager(int survivalTimeMs, LongIdGenerator idGenerator, StatusService statusService) {
+    public DefaultTransactionManager(int survivalTimeMs, LongIdGenerator txIdGenerator, LongIdGenerator commitIdGenerator) {
         super(survivalTimeMs);
-        this.idGenerator = idGenerator;
-        this.statusService = statusService;
+        this.txIdGenerator = txIdGenerator;
+        this.commitIdGenerator = commitIdGenerator;
+
+        if (!txIdGenerator.isPartialOrder()) {
+            throw new IllegalArgumentException(
+                "The generator of the transaction number requires a partial order implementation.");
+        }
+
+        if (!this.commitIdGenerator.isContinuous() && !this.commitIdGenerator.isPartialOrder()) {
+            throw new IllegalArgumentException(
+                "The commit number of the transaction needs to support continuous and partial ID generation implementations.");
+        }
     }
 
     @Override
     public Transaction doCreate() {
-        long id = idGenerator.next();
+        long txId = txIdGenerator.next();
 
-        Transaction tx = new MultiLocalTransaction(id, statusService);
+        Transaction tx = new MultiLocalTransaction(txId, commitIdGenerator);
 
         return tx;
     }

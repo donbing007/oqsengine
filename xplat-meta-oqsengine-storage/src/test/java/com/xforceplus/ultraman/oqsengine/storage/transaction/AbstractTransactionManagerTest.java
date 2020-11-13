@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -10,12 +9,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.sql.SQLException;
-import java.text.Format;
-import java.util.Optional;
 import java.util.concurrent.*;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * AbstractTransactionManager Tester.
@@ -197,7 +191,7 @@ public class AbstractTransactionManagerTest {
     static class MockTransactionManager extends AbstractTransactionManager {
 
         private LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        private StatusService statusService;
+        private LongIdGenerator commitIdGenerator = new IncreasingOrderLongIdGenerator();
         private long waitMs = 0;
 
         public MockTransactionManager() {
@@ -211,17 +205,13 @@ public class AbstractTransactionManagerTest {
         public MockTransactionManager(int survivalTimeMs, long waitMs) {
             super(survivalTimeMs);
             this.waitMs = waitMs;
-
-            long commitId = 0;
-            statusService = mock(StatusService.class);
-            when(statusService.getCommitId()).thenReturn(commitId++);
         }
 
         @Override
         public Transaction doCreate() {
 
             long id = idGenerator.next();
-            return new MockTransaction(id, waitMs, statusService);
+            return new MockTransaction(id, waitMs, commitIdGenerator);
 
         }
     }
@@ -232,8 +222,8 @@ public class AbstractTransactionManagerTest {
         private int commitNumber;
         private int rollbackNumber;
 
-        public MockTransaction(long id, long watiMs, StatusService statusService) {
-            super(id, statusService);
+        public MockTransaction(long id, long watiMs, LongIdGenerator longIdGenerator) {
+            super(id, longIdGenerator);
             this.waitMs = watiMs;
         }
 

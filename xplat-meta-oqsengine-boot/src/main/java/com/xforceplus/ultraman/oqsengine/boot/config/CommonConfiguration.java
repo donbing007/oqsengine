@@ -129,13 +129,6 @@ public class CommonConfiguration {
         return redisClient;
     }
 
-//    @Bean("redisTableCleaner")
-//    public TableCleaner cleaner(RedisClient redisClient, @Value("${redis.cleaner.period:10}") Long period
-//        , @Value("${redis.cleaner.delay:10}") Long delay
-//        , @Value("${redis.cleaner.window:10}") Long window) {
-//        return new TableCleaner(redisClient, period, delay, window);
-//    }
-
     @Bean("timeTable")
     public TimeTable timeTable(RedisClient redisClient, @Value("${redis.table:cdc}") String tableName) {
         return new TimeTable(redisClient, tableName);

@@ -25,4 +25,14 @@ public class IncreasingOrderLongIdGenerator implements LongIdGenerator {
     public Long next() {
         return id.incrementAndGet();
     }
+
+    @Override
+    public boolean isContinuous() {
+        return true;
+    }
+
+    @Override
+    public boolean isPartialOrder() {
+        return true;
+    }
 }

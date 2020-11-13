@@ -55,4 +55,14 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
     public void destroy() {
         connection.close();
     }
+
+    @Override
+    public boolean isContinuous() {
+        return true;
+    }
+
+    @Override
+    public boolean isPartialOrder() {
+        return true;
+    }
 }

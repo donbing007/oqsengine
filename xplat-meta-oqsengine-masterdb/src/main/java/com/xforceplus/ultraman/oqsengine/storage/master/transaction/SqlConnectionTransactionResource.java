@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.transaction;
 
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
@@ -25,14 +25,19 @@ public class SqlConnectionTransactionResource extends AbstractConnectionTransact
         "update %s set " + FieldDefine.COMMITID + " = ? where " + FieldDefine.TX + " = ?";
     private String updateCommitIdSql;
 
-    private StatusService statusService;
+    private CommitIdStatusService commitIdStatusService;
 
-    public SqlConnectionTransactionResource(String key, Connection conn, boolean autocommit, String tableName, StatusService statusService) throws SQLException {
+    public SqlConnectionTransactionResource(
+        String key,
+        Connection conn,
+        boolean autocommit,
+        String tableName,
+        CommitIdStatusService commitIdStatusService) throws SQLException {
         super(key, conn, autocommit);
         conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         updateCommitIdSql = String.format(UPDATE_COMMITID_SQL, tableName);
 
-        this.statusService = statusService;
+        this.commitIdStatusService = commitIdStatusService;
     }
 
     @Override
@@ -50,7 +55,7 @@ public class SqlConnectionTransactionResource extends AbstractConnectionTransact
             /**
              * 记录下最后产生的commitid,这个值决定了从主库搜索的数据范围.
              */
-            statusService.saveCommitId(commitId);
+            commitIdStatusService.save(commitId);
 
         } else {
             throw new SQLException("Is not bound to any transaction.");

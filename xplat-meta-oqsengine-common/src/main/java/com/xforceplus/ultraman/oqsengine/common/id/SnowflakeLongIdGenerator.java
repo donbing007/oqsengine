@@ -87,4 +87,14 @@ public class SnowflakeLongIdGenerator implements LongIdGenerator {
         }
         return timestamp;
     }
+
+    @Override
+    public boolean isContinuous() {
+        return false;
+    }
+
+    @Override
+    public boolean isPartialOrder() {
+        return true;
+    }
 }

@@ -1,7 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -24,9 +25,9 @@ public class CustomTransactionConfiguration {
     @Bean
     public TransactionManager transactionManager(
         LongIdGenerator snowflakeIdGenerator,
-        StatusService statusService,
+        LongIdGenerator redisIdGenerator,
         @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs) {
-        return new DefaultTransactionManager(transactionTimeoutMs, snowflakeIdGenerator, statusService);
+        return new DefaultTransactionManager(transactionTimeoutMs, snowflakeIdGenerator, redisIdGenerator);
     }
 
     @Bean
@@ -42,9 +43,9 @@ public class CustomTransactionConfiguration {
 
     @Bean
     public SqlConnectionTransactionResourceFactory connectionTransactionResourceFactory(
-        StatusService statusService,
+        CommitIdStatusService commitIdStatusService,
         @Value("${storage.master.name:oqsbigentity}") String tableName) {
-        return new SqlConnectionTransactionResourceFactory(tableName, statusService);
+        return new SqlConnectionTransactionResourceFactory(tableName, commitIdStatusService);
     }
 
     @Bean
@@ -56,6 +57,11 @@ public class CustomTransactionConfiguration {
     @Bean
     public TransactionExecutor serviceTransactionExecutor(TransactionManager tm) {
         return new AutoCreateTransactionExecutor(tm);
+    }
+
+    @Bean
+    public CommitIdStatusService commitIdStatusService() {
+        return new CommitIdStatusServiceImpl();
     }
 
 }

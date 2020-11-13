@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
@@ -35,16 +35,16 @@ public class MultiLocalTransaction implements Transaction {
     private boolean committed;
     private boolean rollback;
     private Lock lock = new ReentrantLock();
-    private StatusService statusService;
+    private LongIdGenerator longIdGenerator;
 
     private Timer.Sample durationMetrics;
 
-    public MultiLocalTransaction(long id, StatusService statusService) {
+    public MultiLocalTransaction(long id, LongIdGenerator longIdGenerator) {
         transactionResourceHolder = new LinkedList<>();
         committed = false;
         rollback = false;
         this.id = id;
-        this.statusService = statusService;
+        this.longIdGenerator = longIdGenerator;
 
         durationMetrics = Timer.start(Metrics.globalRegistry);
     }
@@ -174,7 +174,7 @@ public class MultiLocalTransaction implements Transaction {
         }
         try {
             List<SQLException> exHolder = new LinkedList<>();
-            long commitId = statusService.getCommitId();
+            long commitId = longIdGenerator.next();
             if (!CommitHelper.isLegal(commitId)) {
                 throw new SQLException(String.format("The submission number obtained is invalid.[%d]", commitId));
             }

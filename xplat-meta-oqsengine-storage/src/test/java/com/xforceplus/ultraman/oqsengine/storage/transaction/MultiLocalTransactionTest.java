@@ -1,20 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
+import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * MultiLocalTransaction Tester.
@@ -35,11 +31,9 @@ public class MultiLocalTransactionTest {
 
     @Test
     public void testCommit() throws Exception {
-        long commitId = 0;
-        StatusService statusService = mock(StatusService.class);
-        when(statusService.getCommitId()).thenReturn(commitId++);
+        LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, statusService);
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator);
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -55,10 +49,8 @@ public class MultiLocalTransactionTest {
 
     @Test
     public void testRollback() throws Exception {
-        long commitId = 0;
-        StatusService statusService = mock(StatusService.class);
-        when(statusService.getCommitId()).thenReturn(commitId++);
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, statusService);
+        LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator);
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -74,10 +66,8 @@ public class MultiLocalTransactionTest {
 
     @Test
     public void testCommitEx() throws Exception {
-        long commitId = 0;
-        StatusService statusService = mock(StatusService.class);
-        when(statusService.getCommitId()).thenReturn(commitId++);
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, statusService);
+        LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator);
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交
@@ -109,10 +99,8 @@ public class MultiLocalTransactionTest {
 
     @Test
     public void testRollbackEx() throws Exception {
-        long commitId = 0;
-        StatusService statusService = mock(StatusService.class);
-        when(statusService.getCommitId()).thenReturn(commitId++);
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, statusService);
+        LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator);
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交
