@@ -20,11 +20,6 @@ import java.util.List;
  */
 public class TimeTable {
 
-    private RedisClient redisClient;
-    private StatefulRedisConnection<String, String> connection;
-
-    private String tableName;
-
     private static final String ZDD_WITH_TIME_AND_ID =
         "local t = redis.call('TIME') \n" +
             "return redis.call('ZADD', '%s', 'ch',  t[1] * 1000 + (t[2] / 1000 ), '%s')";
@@ -33,8 +28,10 @@ public class TimeTable {
         "local t = redis.call('TIME') \n" +
             "return redis.call('ZRANGEBYSCORE', '%s', (t[1] * 1000 + (t[2] / 1000)) - %s , (t[1] * 1000 + (t[2] / 1000)) + %s)";
 
-
-    private Logger logger = LoggerFactory.getLogger(TimeTable.class);
+    private final Logger logger = LoggerFactory.getLogger(TimeTable.class);
+    private RedisClient redisClient;
+    private StatefulRedisConnection<String, String> connection;
+    private String tableName;
 
     public TimeTable(RedisClient redisClient, String tableName) {
         this.redisClient = redisClient;
@@ -114,5 +111,11 @@ public class TimeTable {
                 ids.forEach(id -> reactive.zrem(tableName, id.toString()).subscribe());
             }).flatMap(s -> reactive.exec())
             .subscribe();
+    }
+
+    public long size() {
+        RedisReactiveCommands<String, String> reactive = connection.reactive();
+        Mono<Long> size = reactive.zcard(tableName);
+        return size.block();
     }
 }

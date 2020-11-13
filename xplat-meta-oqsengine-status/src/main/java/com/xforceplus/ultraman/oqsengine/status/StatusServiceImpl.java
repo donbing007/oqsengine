@@ -1,15 +1,18 @@
 package com.xforceplus.ultraman.oqsengine.status;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.status.table.TimeTable;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.micrometer.core.instrument.Metrics;
 import reactor.core.publisher.Flux;
 
 import javax.annotation.PreDestroy;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
@@ -25,13 +28,19 @@ public class StatusServiceImpl implements StatusService {
 
     private Long timeBuff = 10L;
 
-    StatefulRedisConnection<String, String> connect;
+    private StatefulRedisConnection<String, String> connect;
+
+    private AtomicLong unSyncCommitIdSize;
 
     public StatusServiceImpl(LongIdGenerator idGenerator, TimeTable timeTable, RedisClient redisClient) {
         this.idGenerator = idGenerator;
         this.timeTable = timeTable;
         this.redisClient = redisClient;
         this.connect = redisClient.connect();
+
+
+        unSyncCommitIdSize = Metrics.gauge(
+            MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(0));
     }
 
     @PreDestroy
@@ -53,12 +62,15 @@ public class StatusServiceImpl implements StatusService {
 
     @Override
     public void saveCommitIdWithLocalTime(Long id, Long timeInMilli) {
+
         timeTable.insertWithLocalTime(id.toString(), timeInMilli).block();
+        unSyncCommitIdSize.incrementAndGet();
     }
 
     @Override
     public void invalidateIds(List<Long> ids) {
         timeTable.invalidateIds(ids);
+        unSyncCommitIdSize.addAndGet(ids.size() * -1);
     }
 
     /**
