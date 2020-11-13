@@ -47,9 +47,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private MasterStorage masterStorage;
 
-    @Resource
-    private IndexStorage indexStorage;
-
     private Counter inserCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "build");
     private Counter replaceCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "replace");
     private Counter deleteCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "delete");
@@ -197,8 +194,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             return ResultStatus.CONFLICT;
                         }
 
-                        IEntity indexEntity = buildIndexEntity(target);
-                        indexStorage.replace(indexEntity);
+//                        IEntity indexEntity = buildIndexEntity(target);
+//                        indexStorage.replace(indexEntity);
 
                         // 有子类
                         if (target.family().child() > 0) {

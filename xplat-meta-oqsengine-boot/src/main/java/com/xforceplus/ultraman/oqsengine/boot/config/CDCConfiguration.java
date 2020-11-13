@@ -1,10 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.ClusterCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
@@ -68,6 +70,16 @@ public class CDCConfiguration {
 
         initProperties(singleCDCConnector, subscribeFilter, batchSize);
         return singleCDCConnector;
+    }
+
+    @Bean(destroyMethod = "stopDaemon")
+    public CDCDaemonService cdcDaemonService(){
+        return new CDCDaemonService();
+    }
+
+    @Bean
+    CDCMetricsService cdcMetricsService(){
+        return new CDCMetricsService();
     }
 
     private void initProperties(CDCConnector cdcConnector, String subscribeFilter, int batchSize) {
