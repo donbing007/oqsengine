@@ -42,8 +42,7 @@ public class BinLogParseUtils {
             //  判断是否为 > 0的数字
             boolean is = StringUtils.isNumeric(str);
             if (is) {
-                int vIs = Integer.parseInt(str);
-                return vIs > ZERO;
+                return Integer.parseInt(str) > ZERO;
             }
         } catch (Exception e) {
             //  ignore

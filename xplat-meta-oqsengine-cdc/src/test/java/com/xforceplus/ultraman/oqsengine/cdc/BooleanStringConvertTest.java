@@ -27,5 +27,7 @@ public class BooleanStringConvertTest {
         Assert.assertFalse(convertStringToBoolean("-1"));
 
         Assert.assertTrue(convertStringToBoolean("2"));
+
+        Assert.assertFalse(convertStringToBoolean("-1asa424412xxa"));
     }
 }
