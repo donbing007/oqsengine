@@ -37,4 +37,7 @@ public interface IValue<T> {
      */
     public long valueToLong();
 
+    default boolean compareByString(){
+        return true;
+    }
 }

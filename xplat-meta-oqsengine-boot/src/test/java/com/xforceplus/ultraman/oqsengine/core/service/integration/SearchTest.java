@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 
+import com.google.common.collect.Comparators;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
@@ -15,9 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -34,11 +33,17 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -111,109 +116,261 @@ public class SearchTest extends AbstractMysqlTest {
         System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
     }
 
+
     private void initData() throws SQLException {
 
+        LocalDateTime now = LocalDateTime.now();
+
+        entities = Arrays.asList(
+                new Entity(
+                        idGenerator.next(),
+                        mainEntityClass,
+                        new EntityValue(0).addValues(Arrays.asList(
+                                new StringValue(mainFields.stream().findFirst().get(), "1"),
+                                new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
+                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("11.03")),
+                                new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
+                        ))),
+                new Entity(
+                        idGenerator.next(),
+                        mainEntityClass,
+                        new EntityValue(0).addValues(Arrays.asList(
+                                new StringValue(mainFields.stream().findFirst().get(), "1"),
+                                new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
+                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("11.3")),
+                                new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
+                        ))),
+                new Entity(
+                        idGenerator.next(),
+                        mainEntityClass,
+                        new EntityValue(0).addValues(Arrays.asList(
+                                new StringValue(mainFields.stream().findFirst().get(), "1"),
+                                new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
+                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-11.3")),
+                                new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
+                        ))),
+                new Entity(
+                        idGenerator.next(),
+                        mainEntityClass,
+                        new EntityValue(0).addValues(Arrays.asList(
+                                new StringValue(mainFields.stream().findFirst().get(), "1"),
+                                new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
+                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-11.03")),
+                                new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
+                        ))),
+                new Entity(
+                        idGenerator.next(),
+                        mainEntityClass,
+                        new EntityValue(0).addValues(Arrays.asList(
+                                new StringValue(mainFields.stream().findFirst().get(), "1"),
+                                new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
+                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-11.30")),
+                                new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
+                        ))),
+                new Entity(
+                        idGenerator.next(),
+                        mainEntityClass,
+                        new EntityValue(0).addValues(Arrays.asList(
+                                new StringValue(mainFields.stream().findFirst().get(), "1"),
+                                new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
+                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("11.30")),
+                                new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
+                        )))
+        );
+
+        buildEntities(entities, true);
+    }
+
+
+    private void initData(int masterSize, int indexSize) throws SQLException {
 
         long driverId = 1000L;
 
-        entities = new ArrayList(Arrays.asList(
-                new Entity(
-                        idGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value0"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("100.50"))
-                        )))
-                ,
-                new Entity(
-                        idGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value1"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("1232.12"))
-                        )))
-                ,
-                new Entity(
-                        idGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value2"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-1232.12"))
-                        )))
-                , new Entity(
-                        idGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value3"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-1232.32"))
-                        )))
+        int max = 1000;
+        int min = -1000;
 
-        ));
+        double minD = 400.0;
+        double maxD = 2 * min;
 
-        buildEntities(entities);
+        LocalDateTime start = LocalDateTime.now();
+
+        String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        // create random string builder
 
 
-        ArrayList entities2 = new ArrayList(Arrays.asList(
-                new Entity(
-                        idGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value4"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-0.32"))
-                        )))
-                , new Entity(
-                        idGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value5"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-0.46"))
-                        )))
-                , new Entity(
-                        idGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value6"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("0.32"))
-                        )))
-                , new Entity(
-                        idGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value7"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("0.46"))
-                        )))
-        ));
+        Random random = new Random();
 
-        buildEntities(entities2);
+        entities = IntStream.range(0, masterSize).mapToObj(
+                i -> {
+
+                    int nextInt = random.nextInt(max - min) + min;
+                    Double nextD = Math.random() * maxD - minD;
+
+                    StringBuilder sb = new StringBuilder();
+                    int length = 7;
+                    for(int y = 0; y < length; y++) {
+                        // generate random index number
+                        int index = random.nextInt(alphabet.length());
+                        // get character specified by index
+                        // from the string
+                        char randomChar = alphabet.charAt(index);
+                        // append the character to string builder
+                        sb.append(randomChar);
+                    }
+
+                    LocalDateTime randomDate = start.plusDays(new Random().nextInt(1000 + 1));
+
+                    return new Entity(
+                            idGenerator.next(),
+                            mainEntityClass,
+                            new EntityValue(0).addValues(Arrays.asList(
+                                    new StringValue(mainFields.stream().findFirst().get(), sb.toString()),
+                                    new LongValue(mainFields.stream().skip(1).findFirst().get(), nextInt),
+                                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextD.toString())),
+                                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), randomDate)
+                            )));
+                }
+        ).collect(Collectors.toList());
+
+
+//        entities = new ArrayList(Arrays.asList(
+//
+//                ,
+//                new Entity(
+//                        idGenerator.next(),
+//                        mainEntityClass,
+//                        new EntityValue(0).addValues(Arrays.asList(
+//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value1"),
+//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
+//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("1232.12"))
+//                        )))
+//                ,
+//                new Entity(
+//                        idGenerator.next(),
+//                        mainEntityClass,
+//                        new EntityValue(0).addValues(Arrays.asList(
+//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value2"),
+//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
+//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-1232.12"))
+//                        )))
+//                , new Entity(
+//                        idGenerator.next(),
+//                        mainEntityClass,
+//                        new EntityValue(0).addValues(Arrays.asList(
+//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value3"),
+//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
+//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-1232.32"))
+//                        )))
+//
+//        ));
+
+        buildEntities(entities, true);
+
+
+        List<IEntity> entities2 = IntStream.range(0, masterSize).mapToObj(
+                i -> {
+
+                    int nextInt = random.nextInt(max - min) + min;
+                    Double nextD = Math.random() * maxD - minD;
+
+                    StringBuilder sb = new StringBuilder();
+                    int length = 7;
+                    for(int y = 0; y < length; y++) {
+                        // generate random index number
+                        int index = random.nextInt(alphabet.length());
+                        // get character specified by index
+                        // from the string
+                        char randomChar = alphabet.charAt(index);
+                        // append the character to string builder
+                        sb.append(randomChar);
+                    }
+
+                    LocalDateTime randomDate = start.plusDays(new Random().nextInt(1000 + 1));
+
+                    return new Entity(
+                            idGenerator.next(),
+                            mainEntityClass,
+                            new EntityValue(0).addValues(Arrays.asList(
+                                    new StringValue(mainFields.stream().findFirst().get(), sb.toString()),
+                                    new LongValue(mainFields.stream().skip(1).findFirst().get(), nextInt),
+                                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextD.toString())),
+                                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), randomDate)
+                            )));
+                }
+        ).collect(Collectors.toList());
+
+
+//        ArrayList entities2 = new ArrayList(Arrays.asList(
+//                new Entity(
+//                        idGenerator.next(),
+//                        mainEntityClass,
+//                        new EntityValue(0).addValues(Arrays.asList(
+//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value4"),
+//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
+//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-0.32"))
+//                        )))
+//                , new Entity(
+//                        idGenerator.next(),
+//                        mainEntityClass,
+//                        new EntityValue(0).addValues(Arrays.asList(
+//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value5"),
+//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
+//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-0.46"))
+//                        )))
+//                , new Entity(
+//                        idGenerator.next(),
+//                        mainEntityClass,
+//                        new EntityValue(0).addValues(Arrays.asList(
+//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value6"),
+//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
+//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("0.32"))
+//                        )))
+//                , new Entity(
+//                        idGenerator.next(),
+//                        mainEntityClass,
+//                        new EntityValue(0).addValues(Arrays.asList(
+//                                new StringValue(mainFields.stream().findFirst().get(), "main.c1.value7"),
+//                                new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId),
+//                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("0.46"))
+//                        )))
+//        ));
+
+        buildEntities(entities2, false);
         bigDriverSelectEntityId = entities.get(entities.size() - 1).id();
     }
 
-    private void buildEntities(List<IEntity> entities) throws SQLException {
+    private void buildEntities(List<IEntity> entities, boolean insertIndex) throws SQLException {
         long txId = transactionManagementService.begin();
+
         for (IEntity e : entities) {
             transactionManagementService.restore(txId);
-
-            Long commitId = statusService.getCommitId();
-            StorageEntity storageEntity = new StorageEntity();
-            storageEntity.setId(e.id());
-            storageEntity.setEntity(e.entityClass().id());
-            storageEntity.setTx(txId);
-            storageEntity.setCommitId(commitId);
-
-            indexStorage.buildOrReplace(storageEntity, e.entityValue(), false);
             managementService.build(e);
         }
 
+
         transactionManagementService.restore(txId);
         transactionManagementService.commit();
+
+
+        if (insertIndex) {
+
+            long txId2 = transactionManagementService.begin();
+            Long commitId = statusService.getCurrentCommitLowBound(50_000L);
+
+            for (IEntity e : entities) {
+                transactionManagementService.restore(txId2);
+                StorageEntity storageEntity = new StorageEntity();
+                storageEntity.setId(e.id());
+                storageEntity.setEntity(e.entityClass().id());
+                storageEntity.setTx(txId);
+                storageEntity.setCommitId(commitId);
+                indexStorage.buildOrReplace(storageEntity, e.entityValue(), false);
+            }
+
+            transactionManagementService.restore(txId2);
+            transactionManagementService.commit();
+        }
     }
 
     @Before
@@ -222,13 +379,16 @@ public class SearchTest extends AbstractMysqlTest {
         initialization = false;
         mainFields = Arrays.asList(
                 new EntityField(idGenerator.next(), "c1", FieldType.STRING, FieldConfig.build().searchable(true)),
-                new EntityField(idGenerator.next(), "rel0.id", FieldType.LONG, FieldConfig.build().searchable(true)),
-                new EntityField(idGenerator.next(), "c2", FieldType.DECIMAL, FieldConfig.build().searchable(true))
+                new EntityField(idGenerator.next(), "c2", FieldType.LONG, FieldConfig.build().searchable(true)),
+                new EntityField(idGenerator.next(), "c3", FieldType.DECIMAL, FieldConfig.build().searchable(true)),
+                new EntityField(idGenerator.next(), "c4", FieldType.DATETIME, FieldConfig.build().searchable(true))
         );
 
         mainEntityClass = new EntityClass(idGenerator.next(), "main", null, null, null, mainFields);
 
-        initData();
+        //initData(100, 100);
+
+        //initData();
 
         initialization = true;
     }
@@ -252,6 +412,7 @@ public class SearchTest extends AbstractMysqlTest {
         for (IEntity e : iEntities) {
             transactionManagementService.restore(txId);
             managementService.delete(e);
+            indexStorage.delete(e);
         }
         transactionManagementService.restore(txId);
         transactionManagementService.commit();
@@ -274,13 +435,99 @@ public class SearchTest extends AbstractMysqlTest {
     @Test
     public void basicSearch() throws SQLException {
 
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(10_0000L);
+        initData();
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
 
         Page page = new Page(0, 100);
         Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(2));
 
         Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, sort, page, currentCommitLowBound);
 
-        iEntities.stream().forEach(System.out::println);
+        List<BigDecimal> bigDecimals = iEntities.stream().map(x -> {
+            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DecimalValue).findFirst().get();
+            return ((DecimalValue) iValue).getValue();
+        }).collect(Collectors.toList());
+
+        Comparator<BigDecimal> bigDecimalComparator = (o1, o2) -> o1.compareTo(o2);
+
+        assertTrue(Comparators.isInOrder(bigDecimals, bigDecimalComparator));
+    }
+
+    @Test
+    public void stringOrderSearch()  throws SQLException {
+        initData(100, 100);
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
+
+        Page page = new Page(0, 100);
+        Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(0));
+
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, sort, page, currentCommitLowBound);
+
+        List<String> stringList = iEntities.stream().map(x -> {
+            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof StringValue).findFirst().get();
+            return ((StringValue) iValue).getValue();
+        }).collect(Collectors.toList());
+
+
+        Comparator<String> stringComparator = (o1, o2) -> o1.compareTo(o2);
+
+        assertTrue(Comparators.isInOrder(stringList, stringComparator));
+    }
+
+    @Test
+    public void dateTimeOrderSearch()  throws SQLException {
+        initData(100, 100);
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
+
+        Page page = new Page(0, 100);
+        Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(3));
+
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, sort, page, currentCommitLowBound);
+
+        List<LocalDateTime> dateList = iEntities.stream().map(x -> {
+            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DateTimeValue).findFirst().get();
+            return ((DateTimeValue) iValue).getValue();
+        }).collect(Collectors.toList());
+
+
+        Comparator<LocalDateTime> stringComparator = (o1, o2) -> o1.compareTo(o2);
+
+        assertTrue(Comparators.isInOrder(dateList, stringComparator));
+    }
+
+    @Test
+    public void longOrderSearch()  throws SQLException {
+        initData(100, 100);
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
+
+        Page page = new Page(0, 100);
+        Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(1));
+
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, sort, page, currentCommitLowBound);
+
+        List<Long> dateList = iEntities.stream().map(x -> {
+            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof LongValue).findFirst().get();
+            return ((LongValue) iValue).getValue();
+        }).collect(Collectors.toList());
+
+        Comparator<Long> longComparator = (o1, o2) -> o1.compareTo(o2);
+        assertTrue(Comparators.isInOrder(dateList, longComparator));
+    }
+
+    @Test
+    public void noSortSearch()  throws SQLException {
+        initData(100, 100);
+
+        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
+
+        Page page = new Page(0, 100);
+
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, null, page, currentCommitLowBound);
+
+        assertTrue(page.getTotalCount() == 200);
     }
 }

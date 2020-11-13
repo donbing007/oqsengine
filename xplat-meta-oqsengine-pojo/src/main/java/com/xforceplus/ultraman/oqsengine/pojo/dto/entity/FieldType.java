@@ -169,14 +169,15 @@ public enum FieldType {
         this.accepts = accepts;
         this.iValueConverter = iValueConverter;
         this.javaType = javaType;
+        this.comparator = comparator;
     }
 
     FieldType(String type, Predicate<String> tester, BiFunction<IEntityField, String, IValue> iValueConverter) {
-        this(type, String.class, tester, new String[]{}, iValueConverter, null);
+        this(type, String.class, tester, new String[]{}, iValueConverter, (v1, v2) -> v1.valueToString().compareTo(v2.valueToString()));
     }
 
     FieldType(String type, String[] accepts, BiFunction<IEntityField, String, IValue> iValueConverter) {
-        this(type, String.class, s -> true, accepts, iValueConverter, null);
+        this(type, String.class, s -> true, accepts, iValueConverter, (v1, v2) -> v1.valueToString().compareTo(v2.valueToString()));
     }
 
     public String getType() {

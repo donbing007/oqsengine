@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
 
 /**
@@ -23,6 +24,8 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
     private static final String DIVIDE = ".";
 
     private static final String NEG = "-";
+
+    private static final int FIXED = 18;
 
     @Override
     public FieldType fieldType() {
@@ -49,8 +52,53 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
         }
 
 
-        String value = isNeg ? NEG + firstStr + DIVIDE + secondStr : firstStr + DIVIDE + secondStr;
+        String paddingStr = leftPaddingZero(secondStr, FIXED - secondStr.length());
+
+        String value = isNeg ? NEG + firstStr + DIVIDE + paddingStr : firstStr + DIVIDE + paddingStr;
         return new DecimalValue(field, new BigDecimal(value));
+    }
+
+
+    private int bitLength(String longStr){
+        int bitLength = longStr.length();
+
+        /**
+         * omit all tail zeros
+         */
+        for(int i = longStr.length() - 1 ; i > 0 ; i -- ){
+            char c = longStr.charAt(i);
+            if(c == '0'){
+                bitLength --;
+            } else {
+                break;
+            }
+        }
+
+        return bitLength;
+    }
+
+    private String leftPaddingZero(String longStr, int padding){
+        StringBuffer sb = new StringBuffer();
+
+        while(padding --> 0){
+            sb.append(0);
+        }
+
+        sb.append(longStr);
+
+        return sb.toString();
+    }
+
+    private String paddingZero(String longStr, int padding){
+
+        StringBuffer sb = new StringBuffer();
+
+        sb.append(longStr);
+
+        while(padding --> 0){
+            sb.append(0);
+        }
+        return sb.toString();
     }
 
     @Override
@@ -67,8 +115,17 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
             isNeg = true;
         }
 
+        /**
+         * 14.0303503943
+         * 0303503943
+         * 030450303400000
+         */
+        String secondStr = numberArr[1];
+
+        int i = bitLength(secondStr);
+
         long first = Long.parseLong(numberArr[0]);
-        long second = Long.parseLong(numberArr[1]);
+        long second = Long.parseLong(paddingZero(secondStr.substring(0, i), FIXED - i));
 
         if (first < 0 || isNeg){
             second = 0 - second;
