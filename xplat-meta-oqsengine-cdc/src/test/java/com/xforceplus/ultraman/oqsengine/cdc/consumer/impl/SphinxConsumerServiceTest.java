@@ -72,9 +72,9 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
         Method m = sphinxConsumerService.getClass().getDeclaredMethod("mapAndReduce", new Class[]{List.class, CDCMetrics.class});
         m.setAccessible(true);
 
-        m.invoke(sphinxConsumerService, new Object[]{entries, cdcMetrics});
+        int count = (int) m.invoke(sphinxConsumerService, new Object[]{entries, cdcMetrics});
 
-        Assert.assertEquals(expectedSize, cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
+        Assert.assertEquals(expectedSize, count);
     }
 
 
@@ -98,7 +98,7 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         CDCMetrics after_1 = sphinxConsumerService.consume(entries, 1, cdcMetrics.getCdcUnCommitMetrics());
 
-        Assert.assertEquals(expectedSize, after_1.getCdcUnCommitMetrics().getExecuteJobCount());
+        Assert.assertEquals(expectedSize, after_1.getCdcAckMetrics().getExecuteRows());
 
         build(entries, Long.MAX_VALUE - 1);
 
@@ -107,7 +107,7 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         CDCMetrics after_2 = sphinxConsumerService.consume(entries, 2, after_1.getCdcUnCommitMetrics());
 
-        Assert.assertEquals(expectedSize, after_2.getCdcUnCommitMetrics().getExecuteJobCount());
+        Assert.assertEquals(expectedSize, after_2.getCdcAckMetrics().getExecuteRows());
     }
 
     /*
@@ -143,7 +143,7 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         CDCMetrics after_1 = sphinxConsumerService.consume(entries, 1, cdcMetrics.getCdcUnCommitMetrics());
 
-        Assert.assertEquals(expectedSize, after_1.getCdcUnCommitMetrics().getExecuteJobCount());
+        Assert.assertEquals(expectedSize, after_1.getCdcAckMetrics().getExecuteRows());
 
         expectedSize = 0;
         entries.clear();
@@ -174,7 +174,7 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         CDCMetrics after_2 = sphinxConsumerService.consume(entries, 2, after_1.getCdcUnCommitMetrics());
 
-        Assert.assertEquals(expectedSize, after_2.getCdcUnCommitMetrics().getExecuteJobCount());
+        Assert.assertEquals(expectedSize, after_2.getCdcAckMetrics().getExecuteRows());
     }
 
     private void build(List<CanalEntry.Entry> entries, long commitId) {

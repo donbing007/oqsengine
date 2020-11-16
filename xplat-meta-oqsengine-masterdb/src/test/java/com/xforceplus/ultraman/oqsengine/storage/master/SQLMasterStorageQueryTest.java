@@ -16,7 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
@@ -135,17 +135,17 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
 
         DataSource ds = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
 
-        long commitId = 0;
-        StatusService statusService = mock(StatusService.class);
-        when(statusService.getCommitId()).thenReturn(commitId++);
-
-        transactionManager = new DefaultTransactionManager(new IncreasingOrderLongIdGenerator(0), statusService);
+        transactionManager = new DefaultTransactionManager(
+            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
+        long commitId = 0;
+        CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
+        when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity", statusService));
+            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity", commitIdStatusService));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

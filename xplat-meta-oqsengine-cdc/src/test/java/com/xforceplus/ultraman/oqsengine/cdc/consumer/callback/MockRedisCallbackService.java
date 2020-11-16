@@ -22,26 +22,30 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     private AtomicInteger executed = new AtomicInteger(0);
 
-    private CDCAckMetrics ackMetrics;
     private CDCMetrics cdcMetrics;
 
     public void reset() {
-        ackMetrics = null;
         cdcMetrics = null;
         executed.set(0);
     }
 
+    private long lastConsumerTime = 0;
+
     @Override
     public void cdcAck(CDCAckMetrics ackMetrics) {
-        this.ackMetrics = ackMetrics;
-        logger.info("mock cdcAck info : {}", JSON.toJSON(ackMetrics));
+        cdcMetrics.setCdcAckMetrics(ackMetrics);
+
+        if (cdcMetrics.getCdcAckMetrics().getLastConsumerTime() > lastConsumerTime) {
+            executed.addAndGet(cdcMetrics.getCdcAckMetrics().getExecuteRows());
+            lastConsumerTime = cdcMetrics.getCdcAckMetrics().getLastConsumerTime();
+        }
+
+        logger.info("mock cdcAck info : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
     }
 
     @Override
     public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
-
         logger.info("mock cdcUnCommitMetrics info : {}", JSON.toJSON(cdcMetrics));
-        executed.addAndGet(cdcMetrics.getCdcUnCommitMetrics().getExecuteJobCount());
         this.cdcMetrics = cdcMetrics;
     }
 

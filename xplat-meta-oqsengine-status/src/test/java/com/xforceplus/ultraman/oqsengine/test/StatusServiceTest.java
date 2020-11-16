@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.test;
 
 
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.RedisOrderContinuousLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.status.AbstractRedisContainerTest;
 import com.xforceplus.ultraman.oqsengine.status.StatusMetrics;
 import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.status.StatusServiceImpl;
@@ -33,10 +35,10 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
     RedisClient redisClient;
     TableCleaner tableCleaner;
 
-    private RedisOrderContinuousLongIdGenerator redisIdGenerator;
+    private LongIdGenerator redisIdGenerator;
 
     @Before
-    public void setUp(){
+    public void setUp() {
 
         String redisIp = System.getProperty("status.redis.ip");
         int redisPort = Integer.parseInt(System.getProperty("status.redis.port"));
@@ -53,7 +55,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
     }
 
     @After
-    public void shutDown(){
+    public void shutDown() {
         redisClient.connect().sync().del("testTable");
         redisClient.connect().sync().del("testLocalTable");
         redisClient.connect().sync().del("testKey");
@@ -61,7 +63,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
     }
 
     @Test
-    public void test(){
+    public void test() {
         System.out.println(localStatusService.getCurrentStatusMetrics());
     }
 
@@ -71,12 +73,12 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
         localStatusService.saveCommitId(1L);
         localStatusService.saveCommitId(2L);
         StatusMetrics currentStatusMetrics = localStatusService.getCurrentStatusMetrics();
-        assertEquals(2L , (long)currentStatusMetrics.getSize());
+        assertEquals(2L, (long) currentStatusMetrics.getSize());
         Thread.sleep(1000);
         tableCleaner.clean();
         Thread.sleep(1000);
         currentStatusMetrics = localStatusService.getCurrentStatusMetrics();
-        assertEquals(0, (long)currentStatusMetrics.getSize());
+        assertEquals(0, (long) currentStatusMetrics.getSize());
 
         localStatusService.saveCommitId(1L);
         localStatusService.saveCommitId(2L);
@@ -86,14 +88,15 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
         tableCleaner.clean();
         currentStatusMetrics = localStatusService.getCurrentStatusMetrics();
 
-        assertEquals(4, (long)currentStatusMetrics.getSize());
+        assertEquals(4, (long) currentStatusMetrics.getSize());
 
     }
 
     @Test
     public void testGenID() throws InterruptedException {
 
-        RedisOrderContinuousLongIdGenerator tempIdGenerator = new RedisOrderContinuousLongIdGenerator(redisClient, "tempKey");
+        RedisOrderContinuousLongIdGenerator tempIdGenerator =
+            new RedisOrderContinuousLongIdGenerator(redisClient, "tempKey");
 
         int concurrencyLevel = 500;
         CountDownLatch latch = new CountDownLatch(concurrencyLevel);
@@ -101,19 +104,19 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
         CopyOnWriteArrayList<Long> list = new CopyOnWriteArrayList<>();
 
         IntStream.range(0, concurrencyLevel)
-                .mapToObj(i -> new Thread(() -> {
-                    Long id = tempIdGenerator.next();
-                    list.add(id);
-                    latch.countDown();
-                }))
-                .forEach(Thread::start);
+            .mapToObj(i -> new Thread(() -> {
+                Long id = tempIdGenerator.next();
+                list.add(id);
+                latch.countDown();
+            }))
+            .forEach(Thread::start);
 
         latch.await();
 
         assertTrue("there is no duplicated id",
-                list.stream()
-                        .distinct()
-                    .collect(Collectors.toList()).size() == concurrencyLevel);
+            list.stream()
+                .distinct()
+                .collect(Collectors.toList()).size() == concurrencyLevel);
 
 
         redisClient.connect().sync().del("tempKey");
@@ -128,7 +131,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
         localStatusService.saveCommitIdWithLocalTime(1L, pointA);
         StatusMetrics currentStatusMetrics = localStatusService.getCurrentStatusMetrics();
 
-        assertEquals(1L , (long)currentStatusMetrics.getSize());
+        assertEquals(1L, (long) currentStatusMetrics.getSize());
         assertEquals(Long.toString(pointA), currentStatusMetrics.getLowBound());
         assertEquals(Long.toString(pointA), currentStatusMetrics.getUpBound());
 
@@ -147,7 +150,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
         long pointC = instant.toEpochMilli();
         System.out.println(pointC);
 
-        assertEquals(1L , (long)localStatusService.getCurrentCommitLowBoundWithLocalTime(pointC - 1500, pointC));
+        assertEquals(1L, (long) localStatusService.getCurrentCommitLowBoundWithLocalTime(pointC - 1500, pointC));
 
 
         now = LocalDateTime.now();
@@ -168,7 +171,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
         instant = now.atZone(ZoneId.of("Asia/Shanghai")).toInstant();
         long pointF = instant.toEpochMilli();
 
-        assertEquals(3L , (long)localStatusService.getCurrentCommitLowBoundWithLocalTime(pointF - 1500, pointF));
+        assertEquals(3L, (long) localStatusService.getCurrentCommitLowBoundWithLocalTime(pointF - 1500, pointF));
     }
 
     @Test
@@ -178,12 +181,12 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
         Thread.sleep(500);
         remoteStatusService.saveCommitId(2L);
         Thread.sleep(500);
-        assertEquals(1L , (long)remoteStatusService.getCurrentCommitLowBound(1500L));
+        assertEquals(1L, (long) remoteStatusService.getCurrentCommitLowBound(1500L));
         remoteStatusService.saveCommitId(3L);
         Thread.sleep(500);
         remoteStatusService.saveCommitId(4L);
         Thread.sleep(500);
-        assertEquals(3L , (long)remoteStatusService.getCurrentCommitLowBound(1500L));
+        assertEquals(3L, (long) remoteStatusService.getCurrentCommitLowBound(1500L));
     }
 
     @Test
@@ -203,8 +206,6 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
     }
 
 
-
-
     @Test
     public void insertAndQueryWithLocalTime() {
 
@@ -216,7 +217,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
 
         //start up a query task
 
-        while(readerNum --> 0){
+        while (readerNum-- > 0) {
             new Thread(() -> {
 
                 Random random = new Random();
@@ -228,14 +229,14 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
 
                 int readTask = 10;
 
-                while(readTask --> 0){
+                while (readTask-- > 0) {
                     LocalDateTime now = LocalDateTime.now();
                     Instant instant = now.atZone(ZoneId.of("Asia/Shanghai")).toInstant();
                     long current = instant.toEpochMilli();
                     long start = current - 2000;
                     //System.out.println("start:" + start + ", end:" + (current + 1));
                     Long currentCommitLowBound = localStatusService.getCurrentCommitLowBoundWithLocalTime(start, current + 1000);
-                   // System.out.println("current:" + System.nanoTime() + ":" + currentCommitLowBound);
+                    // System.out.println("current:" + System.nanoTime() + ":" + currentCommitLowBound);
                     //System.out.println(localStatusService.getCurrentStatusMetrics());
                     concurrentList.add(currentCommitLowBound);
                     latch.countDown();
@@ -253,7 +254,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
 
         int num = 50;
 
-        while(num --> 0) {
+        while (num-- > 0) {
 
             //mock task worker
             new Thread(() -> {
@@ -261,7 +262,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
 
                 Random random = new Random();
 
-                while(taskNum --> 0) {
+                while (taskNum-- > 0) {
                     //get id
                     Long commitId = localStatusService.getCommitId();
 
@@ -310,7 +311,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
 
         //start up a query task
 
-        while(readerNum --> 0){
+        while (readerNum-- > 0) {
             new Thread(() -> {
 
                 Random random = new Random();
@@ -322,7 +323,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
 
                 int readTask = 10;
 
-                while(readTask --> 0){
+                while (readTask-- > 0) {
                     Long currentCommitLowBound = remoteStatusService.getCurrentCommitLowBound(2000L);
                     //System.out.println("current:" + System.nanoTime() + ":" + currentCommitLowBound);
                     concurrentList.add(currentCommitLowBound);
@@ -339,7 +340,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
 
         int num = 50;
 
-        while(num --> 0) {
+        while (num-- > 0) {
 
             //mock task worker
             new Thread(() -> {
@@ -347,7 +348,7 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
 
                 Random random = new Random();
 
-                while(taskNum --> 0) {
+                while (taskNum-- > 0) {
                     //get id
                     Long commitId = remoteStatusService.getCommitId();
 

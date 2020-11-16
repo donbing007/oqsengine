@@ -203,7 +203,12 @@ public class SQLMasterStorage implements MasterStorage {
 
                     storageEntity.setOp(OperationType.CREATE.getValue());
                     Optional<Transaction> tOp = resource.getTransaction();
-                    storageEntity.setTx(tOp.get().id());
+                    if (tOp.isPresent()) {
+                        storageEntity.setTx(tOp.get().id());
+                    } else {
+                        logger.warn("Build run with no transaction, unable to get the transaction ID.");
+                        storageEntity.setTx(0);
+                    }
                     storageEntity.setCommitid(CommitHelper.getUncommitId());
 
                     return BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
@@ -232,7 +237,12 @@ public class SQLMasterStorage implements MasterStorage {
 
                     storageEntity.setOp(OperationType.UPDATE.getValue());
                     Optional<Transaction> tOp = resource.getTransaction();
-                    storageEntity.setTx(tOp.get().id());
+                    if (tOp.isPresent()) {
+                        storageEntity.setTx(tOp.get().id());
+                    } else {
+                        logger.warn("Replace run with no transaction, unable to get the transaction ID.");
+                        storageEntity.setTx(0);
+                    }
                     storageEntity.setCommitid(CommitHelper.getUncommitId());
 
                     return ReplaceExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
@@ -260,7 +270,12 @@ public class SQLMasterStorage implements MasterStorage {
 
                     storageEntity.setOp(OperationType.DELETE.getValue());
                     Optional<Transaction> tOp = resource.getTransaction();
-                    storageEntity.setTx(tOp.get().id());
+                    if (tOp.isPresent()) {
+                        storageEntity.setTx(tOp.get().id());
+                    } else {
+                        logger.warn("Delete run with no transaction, unable to get the transaction ID.");
+                        storageEntity.setTx(0);
+                    }
                     storageEntity.setCommitid(CommitHelper.getUncommitId());
 
                     return DeleteExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);

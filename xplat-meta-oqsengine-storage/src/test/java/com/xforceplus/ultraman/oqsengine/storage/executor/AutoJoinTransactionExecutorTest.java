@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.storage.executor;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
@@ -30,16 +29,15 @@ import static org.mockito.Mockito.*;
 public class AutoJoinTransactionExecutorTest {
 
     private LongIdGenerator idGenerator;
+    private LongIdGenerator commitIdGenerator;
     private TransactionManager tm;
 
     @Before
     public void before() throws Exception {
-        long commitId = 0;
-        StatusService statusService = mock(StatusService.class);
-        when(statusService.getCommitId()).thenReturn(commitId++);
 
         idGenerator = new IncreasingOrderLongIdGenerator();
-        tm = new DefaultTransactionManager(idGenerator, statusService);
+        commitIdGenerator = new IncreasingOrderLongIdGenerator();
+        tm = new DefaultTransactionManager(idGenerator, commitIdGenerator);
     }
 
     @After

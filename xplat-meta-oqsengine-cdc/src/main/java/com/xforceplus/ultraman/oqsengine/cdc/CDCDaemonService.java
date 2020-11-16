@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.RunningStatus;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
 import org.slf4j.Logger;
@@ -11,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.DAEMON_NODE_ID;
+import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
 
 /**
  * desc :
