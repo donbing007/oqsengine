@@ -3,15 +3,12 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.ByteString;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns;
 
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 
-import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.*;
 

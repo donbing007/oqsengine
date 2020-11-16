@@ -1,14 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.tools;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import org.apache.commons.lang3.StringUtils;
 
 import java.sql.SQLException;
 import java.util.List;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.ZERO;
-
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
 /**
  * desc :
  * name : BinLogParseUtils

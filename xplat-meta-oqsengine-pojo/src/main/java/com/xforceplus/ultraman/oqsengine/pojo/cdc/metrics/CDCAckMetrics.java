@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.CDCStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.cdc.consumer.enums;
+package com.xforceplus.ultraman.oqsengine.pojo.cdc.enums;
 
 /**
  * desc :

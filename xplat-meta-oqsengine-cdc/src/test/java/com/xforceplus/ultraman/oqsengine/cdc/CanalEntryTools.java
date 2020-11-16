@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 
 import java.util.Random;
 

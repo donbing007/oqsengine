@@ -29,7 +29,8 @@ import java.sql.SQLException;
 import java.util.Optional;
 import java.util.concurrent.*;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.ZERO;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
+
 
 /**
  * desc :

@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -82,7 +82,8 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
             entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
             initData(entities, true, false);
-            expectedCount = entities.length;
+
+            
 
         } catch (Exception ex) {
             tx.rollback();

@@ -2,12 +2,11 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntityValue;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntry;
-
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetricsRecorder;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCUnCommitMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 
 
@@ -18,9 +17,9 @@ import java.util.*;
 import java.util.concurrent.*;
 
 
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
-import static com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns.*;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
 
 /**
  * desc :
@@ -41,7 +40,7 @@ public class SphinxConsumerService implements ConsumerService {
         CDCMetricsRecorder cdcMetricsRecorder = init(cdcUnCommitMetrics, batchId);
 
         //  同步逻辑
-        int syncs = mapAndReduce(entries, cdcMetricsRecorder.getCdcMetrics());
+        int syncs = syncAfterDataFilter(entries, cdcMetricsRecorder.getCdcMetrics());
 
         //  完成指标记录器
         return cdcMetricsRecorder.finishRecord(syncs).getCdcMetrics();
@@ -56,7 +55,7 @@ public class SphinxConsumerService implements ConsumerService {
     /*
         数据清洗、同步
     * */
-    private int mapAndReduce(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
+    private int syncAfterDataFilter(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
         int syncCount = ZERO;
         //  需要同步的列表
         List<RawEntry> rawEntries = new ArrayList<>();

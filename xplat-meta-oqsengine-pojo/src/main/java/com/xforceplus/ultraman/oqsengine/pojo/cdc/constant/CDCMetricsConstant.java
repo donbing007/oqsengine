@@ -1,6 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.cdc.constant;
-
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.DEFAULT_FREE_MESSAGE_MAX_REPORT_THRESHOLD;
+package com.xforceplus.ultraman.oqsengine.pojo.cdc.constant;
 
 /**
  * desc :
@@ -16,7 +14,4 @@ public class CDCMetricsConstant {
     public static final int THREAD_POOL_SIZE = 1;
 
     public static final int MAX_QUEUE_SIZE = 1024;
-
-
-    private static final int FREE_MESSAGE_MAX_REPORT_THRESHOLD = DEFAULT_FREE_MESSAGE_MAX_REPORT_THRESHOLD;
 }

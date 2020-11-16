@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,7 +69,7 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         CDCMetrics cdcMetrics = new CDCMetrics();
 
-        Method m = sphinxConsumerService.getClass().getDeclaredMethod("mapAndReduce", new Class[]{List.class, CDCMetrics.class});
+        Method m = sphinxConsumerService.getClass().getDeclaredMethod("syncAfterDataFilter", new Class[]{List.class, CDCMetrics.class});
         m.setAccessible(true);
 
         int count = (int) m.invoke(sphinxConsumerService, new Object[]{entries, cdcMetrics});

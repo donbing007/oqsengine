@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.cdc.consumer.enums;
+package com.xforceplus.ultraman.oqsengine.pojo.cdc.enums;
 
 /**
  * 这里的顺序和主库中字段顺序严格一一对应，可保证每次checkColumn都是O(1)时间复杂度
