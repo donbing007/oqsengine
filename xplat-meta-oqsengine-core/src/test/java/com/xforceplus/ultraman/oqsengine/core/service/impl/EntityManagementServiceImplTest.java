@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
@@ -15,7 +16,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -51,7 +51,6 @@ public class EntityManagementServiceImplTest {
     private LongIdGenerator idGenerator;
     private MockMasterStorage masterStorage;
     private MockIndexStorage indexStorage;
-    private StatusService statusService;
 
     @Before
     public void before() throws Exception {
@@ -76,7 +75,7 @@ public class EntityManagementServiceImplTest {
         );
 
 
-        TransactionManager tm = new DefaultTransactionManager(idGenerator, statusService);
+        TransactionManager tm = new DefaultTransactionManager(idGenerator, new IncreasingOrderLongIdGenerator(0));
         TransactionExecutor te = new AutoCreateTransactionExecutor(tm);
 
         masterStorage = new MockMasterStorage();

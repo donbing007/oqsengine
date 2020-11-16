@@ -18,7 +18,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
@@ -46,9 +45,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * SphinxQLIndexStorage Tester.
@@ -159,11 +155,8 @@ public class SphinxQLIndexStorageTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        long commitId = 0;
-        StatusService statusService = mock(StatusService.class);
-        when(statusService.getCommitId()).thenReturn(commitId++);
-
-        transactionManager = new DefaultTransactionManager(new IncreasingOrderLongIdGenerator(0), statusService);
+        transactionManager = new DefaultTransactionManager(
+            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
 
         TransactionExecutor executor =
             new AutoJoinTransactionExecutor(transactionManager, new SphinxQLTransactionResourceFactory());

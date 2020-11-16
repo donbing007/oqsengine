@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
@@ -39,9 +39,7 @@ public class HealthCheck implements HealthIndicator {
     private EntitySearchService entitySearchService;
 
     @Resource
-    private StatusService statusService;
-
-    private Long timeout = 10_000L;
+    private CommitIdStatusService commitIdStatusService;
 
     private IEntityField notExistField = new EntityField(1, "test", FieldType.STRING);
     private IEntityClass notExistClass = new EntityClass(1, "test", Arrays.asList(notExistField));
@@ -67,13 +65,17 @@ public class HealthCheck implements HealthIndicator {
         );
 
         try {
-            Long currentCommitLowBound = statusService.getCurrentCommitLowBound(timeout);
-            entitySearchService.selectByConditions(conditions, notExistClass, Page.newSinglePage(1), currentCommitLowBound);
+            entitySearchService.selectByConditions(conditions, notExistClass, Page.newSinglePage(1));
         } catch (SQLException e) {
             logger.error(e.getMessage(), e);
             return Health.down(e).build();
         }
 
+        try {
+            commitIdStatusService.getMin();
+        } catch (Exception ex) {
+            return Health.down(ex).build();
+        }
 
         return Health.up().build();
     }

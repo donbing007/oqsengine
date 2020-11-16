@@ -2,9 +2,8 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.CDCStatus;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import org.junit.Test;
 
 import static org.springframework.test.util.AssertionErrors.assertTrue;

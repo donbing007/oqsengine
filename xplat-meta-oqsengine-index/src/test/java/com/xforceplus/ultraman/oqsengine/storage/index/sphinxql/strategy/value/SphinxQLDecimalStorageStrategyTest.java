@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import org.junit.After;
@@ -40,12 +39,12 @@ public class SphinxQLDecimalStorageStrategyTest {
 
         StorageValue value = new LongStorageValue("test", 12354435L, true);
         value.locate(0);
-        value.stick(new LongStorageValue("test", 878783434L, true));
+        value.stick(new LongStorageValue("test", 878783434000000000L, true));
 
         IValue logicValue =
             sphinxQLDecimalStorageStrategy.toLogicValue(new EntityField(1, "test", FieldType.DECIMAL), value);
 
-        Assert.assertEquals("12354435.878783434", logicValue.valueToString());
+        Assert.assertEquals("12354435.878783434000000000", logicValue.valueToString());
 
     }
 
@@ -60,7 +59,16 @@ public class SphinxQLDecimalStorageStrategyTest {
         Assert.assertEquals(StorageType.LONG, storageValue.type());
 
         storageValue = storageValue.next();
-        Assert.assertEquals(78887788L, storageValue.value());
+        Assert.assertEquals(788877880000000000L, storageValue.value());
+        Assert.assertEquals(StorageType.LONG, storageValue.type());
+
+        logicValue = new DecimalValue(new EntityField(1, "test", FieldType.DECIMAL), new BigDecimal("123.03"));
+        storageValue = sphinxQLDecimalStorageStrategy.toStorageValue(logicValue);
+
+        Assert.assertEquals(123L, storageValue.value());
+        Assert.assertEquals(StorageType.LONG, storageValue.type());
+        storageValue = storageValue.next();
+        Assert.assertEquals(30000000000000000L, storageValue.value());
         Assert.assertEquals(StorageType.LONG, storageValue.type());
     }
 

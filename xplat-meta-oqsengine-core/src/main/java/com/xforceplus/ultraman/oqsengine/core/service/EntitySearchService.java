@@ -45,7 +45,7 @@ public interface EntitySearchService {
      * @param page        分页信息.
      * @return 目标 entity 列表.
      */
-    Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Page page, long commitId)
+    Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Page page)
         throws SQLException;
 
     /**
@@ -57,7 +57,7 @@ public interface EntitySearchService {
      * @param page        分页信息.
      * @return 目标 entity 列表.
      */
-    Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Sort sort, Page page, long commitId)
+    Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
         throws SQLException;
 }
 

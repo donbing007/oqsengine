@@ -18,7 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import io.vavr.Tuple;
@@ -45,18 +45,14 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = OqsengineBootApplication.class
-        , webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+    , webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class SearchTest extends AbstractCDCTest {
 
     private boolean initialization;
 
     private Collection<IEntityField> mainFields;
-    private Collection<IEntityField> driverFields;
     private IEntityClass mainEntityClass;
-    private IEntityClass driverEntityClass;
     private List<IEntity> entities;
-    private List<IEntity> driverEntities;
-    private long bigDriverSelectEntityId;
 
     private Random random = new Random();
 
@@ -73,7 +69,7 @@ public class SearchTest extends AbstractCDCTest {
     private IndexStorage indexStorage;
 
     @Resource
-    private StatusService statusService;
+    private CommitIdStatusService commitIdStatusService;
 
     @Resource(name = "indexWriteDataSourceSelector")
     private Selector<DataSource> indexWriteDataSourceSelector;
@@ -97,60 +93,60 @@ public class SearchTest extends AbstractCDCTest {
         LocalDateTime now = LocalDateTime.now();
 
         entities = Arrays.asList(
-                new Entity(
-                        snowflakeIdGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "1"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("11.03")),
-                                new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
-                        ))),
-                new Entity(
-                        snowflakeIdGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "1"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("11.3")),
-                                new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
-                        ))),
-                new Entity(
-                        snowflakeIdGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "1"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-11.3")),
-                                new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
-                        ))),
-                new Entity(
-                        snowflakeIdGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "1"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-11.03")),
-                                new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
-                        ))),
-                new Entity(
-                        snowflakeIdGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "1"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-11.30")),
-                                new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
-                        ))),
-                new Entity(
-                        snowflakeIdGenerator.next(),
-                        mainEntityClass,
-                        new EntityValue(0).addValues(Arrays.asList(
-                                new StringValue(mainFields.stream().findFirst().get(), "1"),
-                                new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
-                                new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("11.30")),
-                                new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
-                        )))
+            new Entity(
+                snowflakeIdGenerator.next(),
+                mainEntityClass,
+                new EntityValue(0).addValues(Arrays.asList(
+                    new StringValue(mainFields.stream().findFirst().get(), "1"),
+                    new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
+                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("11.03")),
+                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
+                ))),
+            new Entity(
+                snowflakeIdGenerator.next(),
+                mainEntityClass,
+                new EntityValue(0).addValues(Arrays.asList(
+                    new StringValue(mainFields.stream().findFirst().get(), "1"),
+                    new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
+                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("11.3")),
+                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
+                ))),
+            new Entity(
+                snowflakeIdGenerator.next(),
+                mainEntityClass,
+                new EntityValue(0).addValues(Arrays.asList(
+                    new StringValue(mainFields.stream().findFirst().get(), "1"),
+                    new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
+                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-11.3")),
+                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
+                ))),
+            new Entity(
+                snowflakeIdGenerator.next(),
+                mainEntityClass,
+                new EntityValue(0).addValues(Arrays.asList(
+                    new StringValue(mainFields.stream().findFirst().get(), "1"),
+                    new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
+                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-11.03")),
+                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
+                ))),
+            new Entity(
+                snowflakeIdGenerator.next(),
+                mainEntityClass,
+                new EntityValue(0).addValues(Arrays.asList(
+                    new StringValue(mainFields.stream().findFirst().get(), "1"),
+                    new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
+                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-11.30")),
+                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
+                ))),
+            new Entity(
+                snowflakeIdGenerator.next(),
+                mainEntityClass,
+                new EntityValue(0).addValues(Arrays.asList(
+                    new StringValue(mainFields.stream().findFirst().get(), "1"),
+                    new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
+                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("11.30")),
+                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
+                )))
         );
 
         buildEntities(entities, true);
@@ -216,14 +212,14 @@ public class SearchTest extends AbstractCDCTest {
                 try {
 
                     Entity entity = new Entity(
-                            x,
-                            mainEntityClass,
-                            new EntityValue(0).addValues(Arrays.asList(
-                                    new StringValue(mainFields.stream().findFirst().get(), nextStr()),
-                                    new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
-                                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextDouble().toString())),
-                                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), nextLocalDateTime())
-                            )));
+                        x,
+                        mainEntityClass,
+                        new EntityValue(0).addValues(Arrays.asList(
+                            new StringValue(mainFields.stream().findFirst().get(), nextStr()),
+                            new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
+                            new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextDouble().toString())),
+                            new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), nextLocalDateTime())
+                        )));
                     managementService.replace(entity);
                     updateIds.add(x);
 
@@ -235,10 +231,10 @@ public class SearchTest extends AbstractCDCTest {
                 try {
                     transactionManagementService.restore(txId);
                     Entity entity = new Entity(x, mainEntityClass, new EntityValue(0).addValues(Arrays.asList(
-                            new StringValue(mainFields.stream().findFirst().get(), nextStr()),
-                            new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
-                            new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextDouble().toString())),
-                            new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), nextLocalDateTime())
+                        new StringValue(mainFields.stream().findFirst().get(), nextStr()),
+                        new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
+                        new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextDouble().toString())),
+                        new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), nextLocalDateTime())
                     )));
                     managementService.delete(entity);
                     deleteIds.add(x);
@@ -262,18 +258,18 @@ public class SearchTest extends AbstractCDCTest {
         // create random string builder
 
         entities = IntStream.range(0, masterSize).mapToObj(
-                i -> {
-                    Long id = snowflakeIdGenerator.next();
-                    return new Entity(
-                            id,
-                            mainEntityClass,
-                            new EntityValue(0).addValues(Arrays.asList(
-                                    new StringValue(mainFields.stream().findFirst().get(), nextStr()),
-                                    new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
-                                    new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextDouble().toString())),
-                                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), nextLocalDateTime())
-                            )));
-                }
+            i -> {
+                Long id = snowflakeIdGenerator.next();
+                return new Entity(
+                    id,
+                    mainEntityClass,
+                    new EntityValue(0).addValues(Arrays.asList(
+                        new StringValue(mainFields.stream().findFirst().get(), nextStr()),
+                        new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
+                        new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextDouble().toString())),
+                        new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), nextLocalDateTime())
+                    )));
+            }
         ).collect(Collectors.toList());
 
 
@@ -299,7 +295,7 @@ public class SearchTest extends AbstractCDCTest {
         if (insertIndex) {
 
             long txId2 = transactionManagementService.begin();
-            Long commitId = statusService.getCurrentCommitLowBound(50_000L);
+            long commitId = commitIdStatusService.getMin().get();
 
             for (IEntity e : entities) {
                 transactionManagementService.restore(txId2);
@@ -321,10 +317,10 @@ public class SearchTest extends AbstractCDCTest {
 
         initialization = false;
         mainFields = Arrays.asList(
-                new EntityField(snowflakeIdGenerator.next(), "c1", FieldType.STRING, FieldConfig.build().searchable(true)),
-                new EntityField(snowflakeIdGenerator.next(), "c2", FieldType.LONG, FieldConfig.build().searchable(true)),
-                new EntityField(snowflakeIdGenerator.next(), "c3", FieldType.DECIMAL, FieldConfig.build().searchable(true)),
-                new EntityField(snowflakeIdGenerator.next(), "c4", FieldType.DATETIME, FieldConfig.build().searchable(true))
+            new EntityField(snowflakeIdGenerator.next(), "c1", FieldType.STRING, FieldConfig.build().searchable(true)),
+            new EntityField(snowflakeIdGenerator.next(), "c2", FieldType.LONG, FieldConfig.build().searchable(true)),
+            new EntityField(snowflakeIdGenerator.next(), "c3", FieldType.DECIMAL, FieldConfig.build().searchable(true)),
+            new EntityField(snowflakeIdGenerator.next(), "c4", FieldType.DATETIME, FieldConfig.build().searchable(true))
         );
 
         mainEntityClass = new EntityClass(snowflakeIdGenerator.next(), "main", null, null, null, mainFields);
@@ -381,12 +377,11 @@ public class SearchTest extends AbstractCDCTest {
 
         Thread.sleep(10000);
 
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L);
-
         Page page = new Page(0, 100);
         Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(2));
 
-        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, sort, page, currentCommitLowBound);
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(), mainEntityClass, sort, page);
 
         List<BigDecimal> bigDecimals = iEntities.stream().map(x -> {
             IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DecimalValue).findFirst().get();
@@ -404,12 +399,11 @@ public class SearchTest extends AbstractCDCTest {
 
         Thread.sleep(10000);
 
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L);
-
         Page page = new Page(0, 100);
         Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(0));
 
-        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, sort, page, currentCommitLowBound);
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(), mainEntityClass, sort, page);
 
         List<String> stringList = iEntities.stream().map(x -> {
             IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof StringValue).findFirst().get();
@@ -429,12 +423,11 @@ public class SearchTest extends AbstractCDCTest {
 
         Thread.sleep(10000);
 
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L);
-
         Page page = new Page(0, 100);
         Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(3));
 
-        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, sort, page, currentCommitLowBound);
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(), mainEntityClass, sort, page);
 
         List<LocalDateTime> dateList = iEntities.stream().map(x -> {
             IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DateTimeValue).findFirst().get();
@@ -451,13 +444,11 @@ public class SearchTest extends AbstractCDCTest {
     public void longOrderSearch() throws SQLException {
         initData(100);
 
-
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L) + 1;
-
         Page page = new Page(0, 100);
         Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(1));
 
-        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, sort, page, currentCommitLowBound);
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(), mainEntityClass, sort, page);
 
         List<Long> dateList = iEntities.stream().map(x -> {
             IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof LongValue).findFirst().get();
@@ -474,11 +465,10 @@ public class SearchTest extends AbstractCDCTest {
 
         Thread.sleep(10000);
 
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L);
-
         Page page = new Page(0, 100);
 
-        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, null, page, currentCommitLowBound);
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(), mainEntityClass, null, page);
 
         assertTrue(page.getTotalCount() == 100);
     }
@@ -492,11 +482,10 @@ public class SearchTest extends AbstractCDCTest {
 
         initData(100);
 
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L);
-
         Page page = new Page(0, 100);
 
-        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, null, page, currentCommitLowBound);
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(), mainEntityClass, null, page);
 
         assertTrue(page.getTotalCount() == 200);
     }
@@ -513,14 +502,14 @@ public class SearchTest extends AbstractCDCTest {
         System.out.println("UPDATED :" + listListTuple2._2().size());
 
 
-        Long currentCommitLowBound = statusService.getCurrentCommitLowBound(50_000L);
         Page page = new Page(0, 100);
-        Collection<IEntity> iEntities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), mainEntityClass, null, page, currentCommitLowBound);
+        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions(), mainEntityClass, null, page);
 
 
         assertTrue(page.getTotalCount() == (50 - listListTuple2._1().size()));
         assertTrue(iEntities.stream().map(x -> x.id()).distinct().collect(Collectors.toList()).size() == iEntities.size());
-        assertTrue(iEntities.stream().filter(x -> listListTuple2._2().contains(x.id())).filter(x -> x.version() > 0).collect(Collectors.toList()).size() ==  listListTuple2._2().size());
+        assertTrue(iEntities.stream().filter(x -> listListTuple2._2().contains(x.id())).filter(x -> x.version() > 0).collect(Collectors.toList()).size() == listListTuple2._2().size());
         assertTrue(iEntities.stream().map(x -> x.id()).filter(x -> listListTuple2._1().contains(x)).collect(Collectors.toList()).isEmpty());
     }
 }

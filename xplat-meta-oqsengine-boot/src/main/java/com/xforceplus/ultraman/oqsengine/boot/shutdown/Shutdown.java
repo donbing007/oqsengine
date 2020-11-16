@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.boot.shutdown;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import io.lettuce.core.RedisClient;
 import org.slf4j.Logger;
@@ -43,9 +42,6 @@ public class Shutdown {
 
     @Resource
     private CDCDaemonService cdcDaemonService;
-
-    @Resource
-    private StatusService statusService;
 
     @Resource
     private RedisClient redisClient;
@@ -89,10 +85,6 @@ public class Shutdown {
         logger.info("Start closing the cdc consumer service...");
         cdcDaemonService.stopDaemon();
         logger.info("Succeed closing thd cdc consumer service...ok!");
-
-        logger.info("Start closing the status connection...");
-        statusService.closeConnection();
-        logger.info("Succeed closing the status service... ok");
 
         logger.info("Start closing the redis client...");
         redisClient.shutdown(Duration.ofMillis(3000), Duration.ofSeconds(3600));

@@ -151,21 +151,21 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
 
     @Override
     public int synchronize(long id, long child) throws SQLException {
-        return masterStorage.synchronize(id, child);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int build(IEntity entity) throws SQLException {
-        return masterStorage.build(entity);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int replace(IEntity entity) throws SQLException {
-        return masterStorage.replace(entity);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int delete(IEntity entity) throws SQLException {
-        return masterStorage.delete(entity);
+        throw new UnsupportedOperationException();
     }
 }

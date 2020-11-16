@@ -1,14 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.boot.cdc.CDCMetricsCallbackToEvent;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CDCStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,8 +30,7 @@ public class StatusConfiguration {
     }
 
     @Bean("cdcCallback")
-    public CDCMetricsCallback cdcMetricsCallback(ApplicationEventPublisher publisher, StatusService statusService
-        , @Value("${redis.cdc.key:cdcmetric}") String key, ObjectMapper mapper) {
-        return new CDCMetricsCallbackToEvent(publisher, statusService, key, mapper);
+    public CDCMetricsCallback cdcMetricsCallback(ApplicationEventPublisher publisher) {
+        return new CDCMetricsCallbackToEvent(publisher);
     }
 }

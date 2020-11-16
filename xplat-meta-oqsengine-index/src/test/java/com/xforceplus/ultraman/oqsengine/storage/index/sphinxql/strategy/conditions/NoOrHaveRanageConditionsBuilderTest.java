@@ -97,7 +97,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                                         new DecimalValue(new EntityField(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
                                 )
                         ),
-                        "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 56789))"
+                    "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 567890000000000000))"
                 )
                 ,
                 new Case(
@@ -114,7 +114,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "test")
                                 )
                         ),
-                        "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 56789)) " + SqlKeywordDefine.AND + " " +
+                    "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 567890000000000000)) " + SqlKeywordDefine.AND + " " +
                                 "MATCH('@" + FieldDefine.FULL_FIELDS + " \"*test*\"')"
                 )
                 ,
@@ -160,7 +160,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                                 )
                         ),
                         "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND "
-                            + FieldDefine.JSON_FIELDS + ".3L1 > 56789)) " + SqlKeywordDefine.AND + " id IN (1,2,3) AND " +
+                            + FieldDefine.JSON_FIELDS + ".3L1 > 567890000000000000)) " + SqlKeywordDefine.AND + " id IN (1,2,3) AND " +
                                 "MATCH('@" + FieldDefine.FULL_FIELDS + " \"*test*\"')"
                 )
         );

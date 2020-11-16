@@ -80,7 +80,7 @@ public class NotMatchConditionBuilderTest {
                     new DecimalValue(new EntityField(Long.MAX_VALUE, "test", FieldType.DECIMAL), new BigDecimal("123.246"))
                 ),
                 FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "L0 = 123 AND " +
-                    FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "L1 = 246"
+                    FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "L1 = 246000000000000000"
             ),
             new Case(
                 new Condition(

@@ -48,7 +48,7 @@ public class GtEqNotMatchDecimalConditionBuilderTest {
 		String conditionSql = builder.build(new Condition(field, ConditionOperator.GREATER_THAN_EQUALS,
 				new DecimalValue(field, new BigDecimal("123.456"))));
 		Assert.assertEquals("((" + FieldDefine.JSON_FIELDS + ".1L0 > 123) OR (" + FieldDefine.JSON_FIELDS
-				+ ".1L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".1L1 >= 456))", conditionSql);
+            + ".1L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".1L1 >= 456000000000000000))", conditionSql);
 
 	}
 

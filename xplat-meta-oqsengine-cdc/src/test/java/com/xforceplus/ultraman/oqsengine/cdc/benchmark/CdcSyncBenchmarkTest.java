@@ -5,8 +5,10 @@ import com.alibaba.otter.canal.client.CanalConnectors;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
-
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -15,16 +17,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
-
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
-
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-
-import org.junit.*;
-
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.testcontainers.shaded.org.apache.commons.lang.time.StopWatch;
-
 
 import java.net.InetSocketAddress;
 import java.sql.SQLException;
@@ -32,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_ID;
@@ -68,19 +67,20 @@ public class CdcSyncBenchmarkTest extends AbstractContainer {
     }
 
     private void initData() throws SQLException {
-        Transaction tx = transactionManager.create();
+        Transaction tx = transactionManager.create(30000L);
         transactionManager.bind(tx.id());
         try {
             initData(masterStorage, batchSize);
 
             //将事务正常提交,并从事务管理器中销毁事务.
-            tx.commit();
         } catch (Exception e) {
             //将事务正常提交,并从事务管理器中销毁事务.
             tx.rollback();
         } finally {
             transactionManager.finish(tx);
         }
+
+        tx.commit();
     }
 
     @Test

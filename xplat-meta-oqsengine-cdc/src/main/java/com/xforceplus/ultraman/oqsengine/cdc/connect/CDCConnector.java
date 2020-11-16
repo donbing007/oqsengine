@@ -39,6 +39,7 @@ public abstract class CDCConnector {
             e.printStackTrace();
         }
     }
+
     /**
      * 打开canal连接
      */
@@ -65,7 +66,7 @@ public abstract class CDCConnector {
                 //  注销订阅destination
 //                canalConnector.unsubscribe();
             } catch (Exception e) {
-               logger.error("close error, ex : {}", e.getMessage());
+                logger.error("close error, ex : {}", e.getMessage());
             } finally {
                 //  关闭连接CanalServer
                 canalConnector.disconnect();

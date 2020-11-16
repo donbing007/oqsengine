@@ -62,7 +62,7 @@ public class ConsumerRunner extends Thread {
                 break;
             }
 
-            useTime ++;
+            useTime++;
         }
         if (useTime >= MAX_STOP_WAIT_LOOPS) {
             logger.warn("cdc consumer force stop after {} seconds.", useTime * MAX_STOP_WAIT_TIME);
@@ -86,7 +86,7 @@ public class ConsumerRunner extends Thread {
                 connectAndReset(runningStatus.equals(RunningStatus.INIT));
             } catch (Exception e) {
                 closeToNextReconnect(!runningStatus.equals(RunningStatus.INIT)
-                        , String.format("%s, %s", "canal-server connection error, {}", e.getMessage()));
+                    , String.format("%s, %s", "canal-server connection error, {}", e.getMessage()));
                 continue;
             }
             //  连接成功，重置标志位
@@ -161,7 +161,7 @@ public class ConsumerRunner extends Thread {
 
                     //  binlog处理，同步指标到cdcMetrics中
                     CDCMetrics cdcMetrics =
-                            consumerService.consume(message.getEntries(), batchId, cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
+                        consumerService.consume(message.getEntries(), batchId, cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
 
                     //  notice: canal状态确认、指标同步
                     sync(cdcMetrics);
@@ -183,7 +183,7 @@ public class ConsumerRunner extends Thread {
 
     private void syncFree(long batchId) throws SQLException {
         CDCMetrics cdcMetrics = new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
-                                    cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
+            cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
 
         cdcMetricsService.backup(cdcMetrics);
 
@@ -202,6 +202,7 @@ public class ConsumerRunner extends Thread {
             logger.debug("CDC Sync->Recover->Callback AckMetrics success, {}", JSON.toJSON(cdcMetrics));
         }
     }
+
     /*
         关键步骤
      */

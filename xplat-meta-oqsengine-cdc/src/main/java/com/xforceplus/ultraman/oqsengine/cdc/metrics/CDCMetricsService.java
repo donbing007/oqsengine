@@ -45,10 +45,10 @@ public class CDCMetricsService {
     private void initCdcSyncPool() {
         //  启动一个线程数大小为1线程池进行CDC指标的同步
         cdcSyncPool = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(MAX_QUEUE_SIZE),
-                ExecutorHelper.buildNameThreadFactory(POOL_NAME, true),
-                new ThreadPoolExecutor.AbortPolicy()
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(MAX_QUEUE_SIZE),
+            ExecutorHelper.buildNameThreadFactory(POOL_NAME, true),
+            new ThreadPoolExecutor.AbortPolicy()
         );
     }
 

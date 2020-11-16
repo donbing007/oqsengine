@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
  * @since 1.8
  */
 @Component
-@ConfigurationProperties(prefix = "redis.config.command")
+@ConfigurationProperties(prefix = "redis")
 public class LettuceConfiguration {
 
     private int maxReqQueue = Integer.MAX_VALUE;

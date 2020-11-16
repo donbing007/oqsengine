@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
-import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getStringFromColumn;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType.fromRawType;
@@ -62,7 +61,7 @@ public class SphinxSyncExecutor {
     //  执行同步到Sphinx操作
     public int sync(List<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
         Map<Long, IEntityValue> prefEntityValueMaps =
-                convertToEntityValueMap(cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues());
+            convertToEntityValueMap(cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues());
 
         return syncSphinx(rawEntries, prefEntityValueMaps, cdcMetrics);
     }
@@ -97,7 +96,7 @@ public class SphinxSyncExecutor {
         List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>(rawEntries.size());
 
         rawEntries.forEach((value) -> futures.add(consumerPool.submit(
-                new SphinxSyncExecutor.SyncSphinxCallable(value, cdcMetrics, prefEntityValueMaps, latch))));
+            new SphinxSyncExecutor.SyncSphinxCallable(value, cdcMetrics, prefEntityValueMaps, latch))));
 
         try {
             if (!latch.await(executionTimeout, TimeUnit.MILLISECONDS)) {
@@ -150,14 +149,14 @@ public class SphinxSyncExecutor {
         long commitid = getLongFromColumn(columns, COMMITID);             //  commitid
 
         StorageEntity storageEntity = new StorageEntity(
-                id,                                               //  id
-                getLongFromColumn(columns, ENTITY),               //  entity
-                pref,                                             //  pref
-                cref,                                             //  cref
-                getLongFromColumn(columns, TX),                   //  tx
-                commitid,                                         //  commitid
-                null,                                   //  由sphinxQLIndexStorage内部转换  entityValue
-                null                                     //  由sphinxQLIndexStorage内部转换  entityValue
+            id,                                               //  id
+            getLongFromColumn(columns, ENTITY),               //  entity
+            pref,                                             //  pref
+            cref,                                             //  cref
+            getLongFromColumn(columns, TX),                   //  tx
+            commitid,                                         //  commitid
+            null,                                   //  由sphinxQLIndexStorage内部转换  entityValue
+            null                                     //  由sphinxQLIndexStorage内部转换  entityValue
         );
 
         IEntityValue entityValue = null;
@@ -168,7 +167,7 @@ public class SphinxSyncExecutor {
             entityValue = entityValueGet(id, prefEntityValueMaps);
         } else {
             entityValue = buildEntityValue(
-                    storageEntity.getId(), getStringFromColumn(columns, META), getStringFromColumn(columns, ATTRIBUTE));
+                storageEntity.getId(), getStringFromColumn(columns, META), getStringFromColumn(columns, ATTRIBUTE));
         }
 
         /*
@@ -200,14 +199,14 @@ public class SphinxSyncExecutor {
             metaList = JSON.parseArray(meta, String.class);
         } catch (Exception e) {
             throw new SQLException(
-                    String.format("parse meta to array failed, [%s]", meta));
+                String.format("parse meta to array failed, [%s]", meta));
         }
         for (String metas : metaList) {
             String[] sMetas = metas.split(SPLITTER);
             if (sMetas.length != SPLIT_META_LENGTH) {
                 throw new SQLException(
-                        String.format("parse meta failed. meta value length error, should be [%d], actual [%d], meta [%s]",
-                                SPLIT_META_LENGTH, sMetas.length, metas));
+                    String.format("parse meta failed. meta value length error, should be [%d], actual [%d], meta [%s]",
+                        SPLIT_META_LENGTH, sMetas.length, metas));
             }
 
             Long id = Long.parseLong(sMetas[0]);
@@ -218,6 +217,7 @@ public class SphinxSyncExecutor {
 
         return results;
     }
+
     //  通过pref获得IEntityValue
     private IEntityValue entityValueGet(long pref, Map<Long, IEntityValue> prefEntityValueMaps) throws SQLException {
         IEntityValue entityValue = prefEntityValueMaps.get(pref);

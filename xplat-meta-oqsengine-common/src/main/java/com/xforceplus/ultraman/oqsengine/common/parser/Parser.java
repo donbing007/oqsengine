@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.common.parser;
 /**
  * 解析器.
  *
+ * @param <IN> 解析目标.
+ * @param <OUT> 解析结果.
  * @author dongbin
  * @version 0.1 2020/11/16 12:00
  * @since 1.8

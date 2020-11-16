@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import org.junit.After;
@@ -152,7 +151,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         )
                     )
                 ),
-                expectPrefix + "(\"123456F1L0\" \"123456F1L1\")" + expectAfter
+                expectPrefix + "(\"123456F1L0\" \"123456000000000000F1L1\")" + expectAfter
             ),
             new Case(
                 Conditions.buildEmtpyConditions()

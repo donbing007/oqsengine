@@ -281,7 +281,7 @@ public class EntitySearchServiceImplTest {
                 );
 
         try {
-            instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100), 0);
+            instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100));
             Assert.fail("An exception \"exceeding the maximum number of driver entities\" error was expected, but it did not.");
         } catch (SQLException ex) {
 
@@ -308,7 +308,7 @@ public class EntitySearchServiceImplTest {
                 );
 
         try {
-            instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100), 0);
+            instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100));
             Assert.fail("The driver entity exceeded the maximum expected to throw an exception, but did not.");
         } catch (SQLException ex) {
 
@@ -319,7 +319,7 @@ public class EntitySearchServiceImplTest {
     public void testJoinSelect() throws Exception {
         buildJoinCase().stream().forEach(j -> {
             try {
-                instance.selectByConditions(j.conditions, j.reusltEntityClass, j.sort, j.page, 0);
+                instance.selectByConditions(j.conditions, j.reusltEntityClass, j.sort, j.page);
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }

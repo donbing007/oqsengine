@@ -75,7 +75,7 @@ public class MatchConditionBuilderTest {
                     ConditionOperator.EQUALS,
                     new DecimalValue(new EntityField(11111, "test", FieldType.DECIMAL), new BigDecimal("123.246"))
                 ),
-                "(\"123F11111L0\" \"246F11111L1\")"
+                "(\"123F11111L0\" \"246000000000000000F11111L1\")"
             ),
             new Case(
                 new Condition(

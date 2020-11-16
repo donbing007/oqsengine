@@ -17,7 +17,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.sdk.*;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,9 +56,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Autowired(required = false)
     private TransactionManagementService transactionManagementService;
 
-    @Autowired
-    private StatusService statusService;
-
     @Resource(name = "callThreadPool")
     private ExecutorService asyncDispatcher;
 
@@ -88,15 +84,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             }
 
             return CompletableFuture.completedFuture(OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.OK)
-                    .setTransactionResult(String.valueOf(transId)).buildPartial());
+                .setCode(OperationResult.Code.OK)
+                .setTransactionResult(String.valueOf(transId)).buildPartial());
         } catch (Exception e) {
             logger.error("{}", e);
             return CompletableFuture.completedFuture(
-                    OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial());
+                OperationResult.newBuilder()
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial());
         }
     }
 
@@ -113,9 +109,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     logger.error("{}", e);
                     //fast fail
                     return OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial();
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
                 }
             }
 
@@ -126,7 +122,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             try {
                 IEntity entity = entityManagementService.build(toEntity(entityClass, in));
                 OperationResult.Builder builder = OperationResult.newBuilder()
-                        .addIds(entity.id());
+                    .addIds(entity.id());
 
                 if (entity.family() != null && entity.family().parent() > 0) {
                     builder.addIds(entity.family().parent());
@@ -136,9 +132,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             } catch (Exception e) {
                 logger.error("{}", e);
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial();
             } finally {
                 extractTransaction(metadata).ifPresent(id -> {
                     transactionManager.unbind();
@@ -160,9 +156,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     logger.error("{}", e);
                     //fast fail
                     return OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial();
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
                 }
             }
 
@@ -188,38 +184,38 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     switch (replaceStatus) {
                         case SUCCESS:
                             result = OperationResult.newBuilder()
-                                    .setAffectedRow(1)
-                                    .setCode(OperationResult.Code.OK)
-                                    .buildPartial();
+                                .setAffectedRow(1)
+                                .setCode(OperationResult.Code.OK)
+                                .buildPartial();
                             break;
                         case CONFLICT:
                             //send to sdk
                             result = OperationResult.newBuilder()
-                                    .setAffectedRow(0)
-                                    .setCode(OperationResult.Code.OTHER)
-                                    .setMessage(ResultStatus.CONFLICT.name())
-                                    .buildPartial();
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.OTHER)
+                                .setMessage(ResultStatus.CONFLICT.name())
+                                .buildPartial();
                             break;
                         default:
                             //unreachable code
                             result = OperationResult.newBuilder()
-                                    .setAffectedRow(0)
-                                    .setCode(OperationResult.Code.FAILED)
-                                    .setMessage("产生了未知的错误")
-                                    .buildPartial();
+                                .setAffectedRow(0)
+                                .setCode(OperationResult.Code.FAILED)
+                                .setMessage("产生了未知的错误")
+                                .buildPartial();
                     }
                 } else {
                     result = OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.FAILED)
-                            .setMessage("没有找到该记录")
-                            .buildPartial();
+                        .setCode(OperationResult.Code.FAILED)
+                        .setMessage("没有找到该记录")
+                        .buildPartial();
                 }
             } catch (Exception e) {
                 logger.error("{}", e);
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial();
             } finally {
                 extractTransaction(metadata).ifPresent(id -> {
                     transactionManager.unbind();
@@ -242,9 +238,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     logger.error("{}", e);
                     //fast fail
                     return OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial();
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
                 }
             }
 
@@ -279,11 +275,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 if (!sortField.isPresent()) {
                     Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
-                    Long commitId = statusService.getCurrentCommitLowBound(buffer);
                     if (consOp.isPresent()) {
-                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page, commitId);
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
                     } else {
-                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page, commitId);
+                        entities = entitySearchService.selectByConditions(
+                            Conditions.buildEmtpyConditions(), entityClass, page);
                     }
                 } else {
                     FieldSortUp sortUp = sort.get(0);
@@ -295,13 +291,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
 
                     Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
-                    Long commitId = statusService.getCurrentCommitLowBound(buffer);
                     if (consOp.isPresent()) {
 
-                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page, commitId);
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page);
 
                     } else {
-                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page, commitId);
+                        entities = entitySearchService.selectByConditions(
+                            Conditions.buildEmtpyConditions(), entityClass, page);
                     }
                 }
 
@@ -333,22 +329,22 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     });
 
                     result = OperationResult.newBuilder()
-                            .setAffectedRow(affected.intValue())
-                            .setCode(OperationResult.Code.OK)
-                            .buildPartial();
+                        .setAffectedRow(affected.intValue())
+                        .setCode(OperationResult.Code.OK)
+                        .buildPartial();
                 } else {
                     result = OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.OK)
-                            .setMessage("没有更新任何记录")
-                            .setAffectedRow(0)
-                            .buildPartial();
+                        .setCode(OperationResult.Code.OK)
+                        .setMessage("没有更新任何记录")
+                        .setAffectedRow(0)
+                        .buildPartial();
                 }
             } catch (Exception e) {
                 logger.error("{}", e);
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial();
             } finally {
                 extractTransaction(metadata).ifPresent(id -> {
                     transactionManager.unbind();
@@ -376,9 +372,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     logger.error("{}", e);
                     //fast fail
                     return OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial();
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
                 }
             }
 
@@ -410,56 +406,56 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         switch (deleteStatus) {
                             case SUCCESS:
                                 result = OperationResult.newBuilder()
-                                        .setAffectedRow(1)
-                                        .setCode(OperationResult.Code.OK)
-                                        .buildPartial();
+                                    .setAffectedRow(1)
+                                    .setCode(OperationResult.Code.OK)
+                                    .buildPartial();
                                 break;
                             case CONFLICT:
                                 //send to sdk
                                 result = OperationResult.newBuilder()
-                                        .setAffectedRow(0)
-                                        .setCode(OperationResult.Code.OTHER)
-                                        .setMessage(ResultStatus.CONFLICT.name())
-                                        .buildPartial();
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.OTHER)
+                                    .setMessage(ResultStatus.CONFLICT.name())
+                                    .buildPartial();
                                 break;
                             default:
                                 //unreachable code
                                 result = OperationResult.newBuilder()
-                                        .setAffectedRow(0)
-                                        .setCode(OperationResult.Code.FAILED)
-                                        .setMessage("产生了未知的错误")
-                                        .buildPartial();
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.FAILED)
+                                    .setMessage("产生了未知的错误")
+                                    .buildPartial();
                         }
                     } else {
                         ResultStatus resultStatus = entityManagementService.deleteForce(entity);
                         switch (resultStatus) {
                             case SUCCESS:
                                 result = OperationResult.newBuilder()
-                                        .setAffectedRow(1)
-                                        .setCode(OperationResult.Code.OK)
-                                        .buildPartial();
+                                    .setAffectedRow(1)
+                                    .setCode(OperationResult.Code.OK)
+                                    .buildPartial();
                                 break;
                             default:
                                 //unreachable code
                                 result = OperationResult.newBuilder()
-                                        .setAffectedRow(0)
-                                        .setCode(OperationResult.Code.FAILED)
-                                        .setMessage("产生了未知的错误")
-                                        .buildPartial();
+                                    .setAffectedRow(0)
+                                    .setCode(OperationResult.Code.FAILED)
+                                    .setMessage("产生了未知的错误")
+                                    .buildPartial();
                         }
                     }
                 } else {
                     result = OperationResult.newBuilder()
-                            .setAffectedRow(0)
-                            .setCode(OperationResult.Code.OK)
-                            .buildPartial();
+                        .setAffectedRow(0)
+                        .setCode(OperationResult.Code.OK)
+                        .buildPartial();
                 }
             } catch (Exception e) {
                 logger.error("{}", e);
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial();
             } finally {
 
                 extractTransaction(metadata).ifPresent(id -> {
@@ -483,9 +479,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     logger.error("{}", e);
                     //fast fail
                     return OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial();
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
                 }
             }
 
@@ -502,38 +498,38 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 if (ds.isPresent()) {
                     if (ds.get().family() != null && ds.get().family().parent() > 0 && entityClass.extendEntityClass() != null) {
                         Optional<IEntity> parentDS = entitySearchService
-                                .selectOne(ds.get().family().parent(), entityClass.extendEntityClass());
+                            .selectOne(ds.get().family().parent(), entityClass.extendEntityClass());
 
                         Optional<IEntity> finalDs = ds;
                         parentDS.ifPresent(x ->
-                                finalDs.ifPresent(y -> leftAppend(y, x)));
+                            finalDs.ifPresent(y -> leftAppend(y, x)));
                     } else if (ds.get().family() != null && ds.get().family().child() > 0 && subEntityClass != null) {
                         Optional<IEntity> childDs = entitySearchService
-                                .selectOne(ds.get().family().child(), subEntityClass);
+                            .selectOne(ds.get().family().child(), subEntityClass);
 
                         Optional<IEntity> finalDs = ds;
                         childDs.ifPresent(x ->
-                                finalDs.ifPresent(y -> leftAppend(x, y)));
+                            finalDs.ifPresent(y -> leftAppend(x, y)));
                         ds = childDs;
                     }
                 }
 
                 result = ds.map(entity -> OperationResult
-                        .newBuilder()
-                        .setCode(OperationResult.Code.OK)
-                        .addQueryResult(toEntityUp(entity))
-                        .setTotalRow(1)
-                        .buildPartial()).orElseGet(() -> OperationResult
-                        .newBuilder()
-                        .setCode(OperationResult.Code.OK)
-                        .setTotalRow(0)
-                        .buildPartial());
+                    .newBuilder()
+                    .setCode(OperationResult.Code.OK)
+                    .addQueryResult(toEntityUp(entity))
+                    .setTotalRow(1)
+                    .buildPartial()).orElseGet(() -> OperationResult
+                    .newBuilder()
+                    .setCode(OperationResult.Code.OK)
+                    .setTotalRow(0)
+                    .buildPartial());
             } catch (Exception e) {
                 logger.error("{}", e);
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial();
             } finally {
 
                 extractTransaction(metadata).ifPresent(id -> {
@@ -564,9 +560,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     logger.error("{}", e);
                     //fast fail
                     return OperationResult.newBuilder()
-                            .setCode(OperationResult.Code.EXCEPTION)
-                            .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                            .buildPartial();
+                        .setCode(OperationResult.Code.EXCEPTION)
+                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                        .buildPartial();
                 }
             }
 
@@ -608,11 +604,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 if (!sortField.isPresent()) {
                     Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
-                    Long currentCommitLowBound = statusService.getCurrentCommitLowBound(buffer);
                     if (consOp.isPresent()) {
-                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page, currentCommitLowBound);
+                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, page);
                     } else {
-                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, page, currentCommitLowBound);
+                        entities = entitySearchService.selectByConditions(
+                            Conditions.buildEmtpyConditions(), entityClass, page);
                     }
                 } else {
                     FieldSortUp sortUp = sort.get(0);
@@ -624,11 +620,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     }
 
                     Optional<Conditions> consOp = toConditions(entityClass, reader, conditions, in.getIdsList());
-                    Long currentCommitLowBound = statusService.getCurrentCommitLowBound(buffer);
                     if (consOp.isPresent()) {
-                        entities = entitySearchService.selectByConditions(consOp.get(), entityClass, sortParam, page, currentCommitLowBound);
+                        entities = entitySearchService.selectByConditions(
+                            consOp.get(), entityClass, sortParam, page);
                     } else {
-                        entities = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions(), entityClass, sortParam, page, currentCommitLowBound);
+                        entities = entitySearchService.selectByConditions(
+                            Conditions.buildEmtpyConditions(), entityClass, sortParam, page);
                     }
                 }
 
@@ -649,108 +646,110 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 //extend entities
                 Map<String, List<QueryFieldsUp>> mappedQueryFields = queryField.stream()
-                        .collect(Collectors.groupingBy(x -> {
-                            String code = x.getCode();
-                            String[] relCode = code.split("\\.");
-                            if (relCode.length > 1) {
-                                return relCode[0];
-                            } else {
-                                return "";
-                            }
-                        }));
+                    .collect(Collectors.groupingBy(x -> {
+                        String code = x.getCode();
+                        String[] relCode = code.split("\\.");
+                        if (relCode.length > 1) {
+                            return relCode[0];
+                        } else {
+                            return "";
+                        }
+                    }));
 
                 /**
                  * find all related field and change all these IEntity to use mixed IValue
                  */
                 Collection<IEntity> finalEntities = entities
-                        .stream()
-                        .map(iEntity -> {
-                            //find fieldName from ientity;
-                            iEntity.entityValue().values().stream()
-                                    .forEach(envValue -> {
-                                        IEntityField field = envValue.getField();
-                                        entityClass.field(field.id()).ifPresent(envValue::setField);
-                                    });
-                            iEntity.resetEntityValue(new MixedEntityValue(iEntity.entityValue()));
-                            return iEntity;
-                        }).collect(Collectors.toList());
+                    .stream()
+                    .map(iEntity -> {
+                        //find fieldName from ientity;
+                        iEntity.entityValue().values().stream()
+                            .forEach(envValue -> {
+                                IEntityField field = envValue.getField();
+                                entityClass.field(field.id()).ifPresent(envValue::setField);
+                            });
+                        iEntity.resetEntityValue(new MixedEntityValue(iEntity.entityValue()));
+                        return iEntity;
+                    }).collect(Collectors.toList());
 
                 if (!entities.isEmpty()) {
                     mappedQueryFields.entrySet().stream()
-                            .filter(x -> !StringUtils.isEmpty(x.getKey()))
-                            .forEach(entry -> {
-                                Optional<IEntityClass> searchableRelatedEntity = reader.getSearchableRelatedEntity(entry.getKey());
-                                String relatedField = entry.getKey() + ".id";
-                                Optional<? extends IEntityField> relationFieldOp = reader.column(relatedField);
+                        .filter(x -> !StringUtils.isEmpty(x.getKey()))
+                        .forEach(entry -> {
+                            Optional<IEntityClass> searchableRelatedEntity = reader.getSearchableRelatedEntity(entry.getKey());
+                            String relatedField = entry.getKey() + ".id";
+                            Optional<? extends IEntityField> relationFieldOp = reader.column(relatedField);
 
-                                if (searchableRelatedEntity.isPresent() && relationFieldOp.isPresent()) {
+                            if (searchableRelatedEntity.isPresent() && relationFieldOp.isPresent()) {
 
-                                    //always assume this is long
-                                    List<Long> values = finalEntities
-                                            .stream()
-                                            .map(entity -> entity.entityValue()
-                                                    .getValue(relatedField).map(IValue::valueToLong))
-                                            .filter(Optional::isPresent)
-                                            .map(Optional::get)
-                                            .distinct()
-                                            .collect(Collectors.toList());
+                                //always assume this is long
+                                List<Long> values = finalEntities
+                                    .stream()
+                                    .map(entity -> entity.entityValue()
+                                        .getValue(relatedField).map(IValue::valueToLong))
+                                    .filter(Optional::isPresent)
+                                    .map(Optional::get)
+                                    .distinct()
+                                    .collect(Collectors.toList());
 
 
-                                    if (!values.isEmpty()) {
-                                        logger.info("Try to find related record for {}", searchableRelatedEntity.get().code());
-                                        //in case idField is not absent build a dummy one;
-                                        IEntityField idField = new EntityField(1, "dummy", FieldType.LONG, new FieldConfig().searchable(true).identifie(true));
-                                        Conditions conditionsIds =
-                                                new Conditions(new Condition(idField
-                                                        , ConditionOperator.MULTIPLE_EQUALS
-                                                        , values.stream().map(x -> new LongValue(idField, x)).toArray(IValue[]::new)));
+                                if (!values.isEmpty()) {
+                                    logger.info("Try to find related record for {}", searchableRelatedEntity.get().code());
+                                    //in case idField is not absent build a dummy one;
+                                    IEntityField idField = new EntityField(1, "dummy", FieldType.LONG, new FieldConfig().searchable(true).identifie(true));
+                                    Conditions conditionsIds =
+                                        new Conditions(new Condition(idField
+                                            , ConditionOperator.MULTIPLE_EQUALS
+                                            , values.stream().map(x -> new LongValue(idField, x)).toArray(IValue[]::new)));
 
-                                        try {
+                                    try {
 
-                                            Long currentCommitLowBound = statusService.getCurrentCommitLowBound(buffer);
-                                            Collection<IEntity> iEntities = entitySearchService.selectByConditions(conditionsIds, searchableRelatedEntity.get(), new Page(0, values.size()), currentCommitLowBound);
+                                        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
+                                            conditionsIds,
+                                            searchableRelatedEntity.get(),
+                                            new Page(0, values.size()));
 
-                                            //append value
+                                        //append value
 
-                                            Map<Long, IEntity> leftEntities = iEntities.stream().collect(Collectors.toMap(IEntity::id, leftEntity -> leftEntity));
+                                        Map<Long, IEntity> leftEntities = iEntities.stream().collect(Collectors.toMap(IEntity::id, leftEntity -> leftEntity));
 
-                                            finalEntities.stream().forEach(originEntity -> {
-                                                Long id = originEntity.entityValue()
-                                                        .getValue(relatedField).map(IValue::valueToLong).orElse(0L);
+                                        finalEntities.stream().forEach(originEntity -> {
+                                            Long id = originEntity.entityValue()
+                                                .getValue(relatedField).map(IValue::valueToLong).orElse(0L);
 
-                                                if (leftEntities.get(id) != null && leftEntities.get(id).entityValue() != null) {
-                                                    entry.getValue().forEach(queryFieldsUp -> {
-                                                        leftEntities.get(id).entityValue().getValue(queryFieldsUp.getId()).ifPresent(value -> {
-                                                            leftAppend(originEntity, entry.getKey(), value);
-                                                        });
+                                            if (leftEntities.get(id) != null && leftEntities.get(id).entityValue() != null) {
+                                                entry.getValue().forEach(queryFieldsUp -> {
+                                                    leftEntities.get(id).entityValue().getValue(queryFieldsUp.getId()).ifPresent(value -> {
+                                                        leftAppend(originEntity, entry.getKey(), value);
                                                     });
-                                                }
-                                            });
+                                                });
+                                            }
+                                        });
 
-                                        } catch (SQLException ex) {
-                                            ex.printStackTrace();
-                                        }
+                                    } catch (SQLException ex) {
+                                        ex.printStackTrace();
                                     }
                                 }
-                            });
+                            }
+                        });
                 }
 
 
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.OK)
-                        .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
-                                .stream().filter(Objects::nonNull).map(this::toEntityUp).collect(Collectors.toList()))
-                        .setTotalRow(page == null ?
-                                Optional.ofNullable(entities).orElseGet(Collections::emptyList).size() :
-                                Long.valueOf(page.getTotalCount()).intValue())
-                        .buildPartial();
+                    .setCode(OperationResult.Code.OK)
+                    .addAllQueryResult(Optional.ofNullable(entities).orElseGet(Collections::emptyList)
+                        .stream().filter(Objects::nonNull).map(this::toEntityUp).collect(Collectors.toList()))
+                    .setTotalRow(page == null ?
+                        Optional.ofNullable(entities).orElseGet(Collections::emptyList).size() :
+                        Long.valueOf(page.getTotalCount()).intValue())
+                    .buildPartial();
 
             } catch (Exception e) {
                 logger.error("{}", e);
                 result = OperationResult.newBuilder()
-                        .setCode(OperationResult.Code.EXCEPTION)
-                        .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                        .buildPartial();
+                    .setCode(OperationResult.Code.EXCEPTION)
+                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                    .buildPartial();
             } finally {
 
                 extractTransaction(metadata).ifPresent(id -> {
@@ -814,15 +813,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             transactionManagementService.restore(id);
             transactionManagementService.commit();
             result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.OK)
-                    .setMessage("事务提交成功")
-                    .buildPartial();
+                .setCode(OperationResult.Code.OK)
+                .setMessage("事务提交成功")
+                .buildPartial();
         } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                    .buildPartial();
+                .setCode(OperationResult.Code.EXCEPTION)
+                .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                .buildPartial();
         }
         return CompletableFuture.completedFuture(result);
     }
@@ -837,15 +836,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             transactionManagementService.restore(id);
             transactionManagementService.rollback();
             result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.OK)
-                    .setMessage("事务提交成功")
-                    .buildPartial();
+                .setCode(OperationResult.Code.OK)
+                .setMessage("事务提交成功")
+                .buildPartial();
         } catch (Exception e) {
             logger.error("{}", e);
             result = OperationResult.newBuilder()
-                    .setCode(OperationResult.Code.EXCEPTION)
-                    .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
-                    .buildPartial();
+                .setCode(OperationResult.Code.EXCEPTION)
+                .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
+                .buildPartial();
         }
         return CompletableFuture.completedFuture(result);
     }
@@ -870,8 +869,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         builder.setObjId(entity.id());
         builder.addAllValues(entity.entityValue().values().stream()
-                .map(this::toValueUp)
-                .collect(Collectors.toList()));
+            .map(this::toValueUp)
+            .collect(Collectors.toList()));
         return builder.build();
     }
 
@@ -879,18 +878,18 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         //TODO format?
         IEntityField field = value.getField();
         return ValueUp.newBuilder()
-                .setValue(toValueStr(value))
-                .setName(field.name())
-                .setFieldId(field.id())
-                .setFieldType(field.type().name())
-                .build();
+            .setValue(toValueStr(value))
+            .setName(field.name())
+            .setFieldId(field.id())
+            .setFieldType(field.type().name())
+            .build();
     }
 
     private String toValueStr(IValue value) {
         String retVal
-                = Match(value)
-                .of(Case($(instanceOf(DateTimeValue.class)), x -> String.valueOf(x.valueToLong())),
-                        Case($(), IValue::valueToString));
+            = Match(value)
+            .of(Case($(instanceOf(DateTimeValue.class)), x -> String.valueOf(x.valueToLong())),
+                Case($(), IValue::valueToString));
         return retVal;
     }
 
@@ -904,7 +903,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     }
 
     private Optional<Conditions> toConditions(IEntityClass mainClass, IEntityClassReader reader
-            , ConditionsUp conditionsUp, List<Long> ids) {
+        , ConditionsUp conditionsUp, List<Long> ids) {
         Optional<Conditions> conditions = conditionsUp.getFieldsList().stream().map(x -> {
             /**
              * turn alias field to columnfield
@@ -921,8 +920,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             Optional<IEntityField> idField = reader.column("id").map(ColumnField::getOriginObject);
             Optional<Conditions> conditionsIds = idField.map(field -> {
                 return new Conditions(new Condition(field
-                        , ConditionOperator.MULTIPLE_EQUALS
-                        , ids.stream().map(x -> new LongValue(field, x)).toArray(IValue[]::new)));
+                    , ConditionOperator.MULTIPLE_EQUALS
+                    , ids.stream().map(x -> new LongValue(field, x)).toArray(IValue[]::new)));
             });
 
             if (conditions.isPresent()) {
@@ -959,10 +958,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             //in order
             List<String> nonNullValueList = fieldCondition
-                    .getValuesList()
-                    .stream()
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                .getValuesList()
+                .stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
             //return if field with invalid
             if (nonNullValueList.isEmpty()) {
@@ -974,79 +973,79 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             switch (op) {
                 case eq:
                     conditions = new Conditions(new Condition(
-                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                            , originField
-                            , ConditionOperator.EQUALS
-                            , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                        isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                        , originField
+                        , ConditionOperator.EQUALS
+                        , toTypedValue(fieldOp.get()
+                        , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case ne:
                     conditions = new Conditions(new Condition(
-                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                            , originField
-                            , ConditionOperator.NOT_EQUALS
-                            , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                        isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                        , originField
+                        , ConditionOperator.NOT_EQUALS
+                        , toTypedValue(fieldOp.get()
+                        , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case ge:
                     conditions = new Conditions(new Condition(
-                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                            , originField
-                            , ConditionOperator.GREATER_THAN_EQUALS
-                            , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                        isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                        , originField
+                        , ConditionOperator.GREATER_THAN_EQUALS
+                        , toTypedValue(fieldOp.get()
+                        , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case gt:
                     conditions = new Conditions(new Condition(
-                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                            , originField
-                            , ConditionOperator.GREATER_THAN
-                            , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                        isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                        , originField
+                        , ConditionOperator.GREATER_THAN
+                        , toTypedValue(fieldOp.get()
+                        , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case ge_le:
                     if (nonNullValueList.size() > 1) {
                         Condition left = new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.GREATER_THAN_EQUALS
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)).toArray(new IValue[]{}));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.GREATER_THAN_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(0)).toArray(new IValue[]{}));
 
                         Condition right = new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.LESS_THAN_EQUALS
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(1)).toArray(new IValue[]{}));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.LESS_THAN_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(1)).toArray(new IValue[]{}));
 
                         conditions = new Conditions(left).addAnd(right);
 
                     } else {
                         logger.warn("required value more then 2, fallback to ge");
                         conditions = new Conditions(new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.GREATER_THAN_EQUALS
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.GREATER_THAN_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
                 case gt_le:
                     if (nonNullValueList.size() > 1) {
                         Condition left = new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.GREATER_THAN
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)).toArray(new IValue[]{}));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.GREATER_THAN
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(0)).toArray(new IValue[]{}));
 
                         Condition right = new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.LESS_THAN_EQUALS
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(1)).toArray(new IValue[]{}));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.LESS_THAN_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(1)).toArray(new IValue[]{}));
 
 
                         conditions = new Conditions(left).addAnd(right);
@@ -1054,28 +1053,28 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     } else {
                         logger.warn("required value more then 2, fallback to gt");
                         conditions = new Conditions(new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.GREATER_THAN
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.GREATER_THAN
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
                 case ge_lt:
                     if (nonNullValueList.size() > 1) {
                         Condition left = new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.GREATER_THAN_EQUALS
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)).toArray(new IValue[]{}));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.GREATER_THAN_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(0)).toArray(new IValue[]{}));
 
                         Condition right = new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.LESS_THAN
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(1)).toArray(new IValue[]{}));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.LESS_THAN
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(1)).toArray(new IValue[]{}));
 
 
                         conditions = new Conditions(left).addAnd(right);
@@ -1083,28 +1082,28 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     } else {
                         logger.warn("required value more then 2, fallback to ge");
                         conditions = new Conditions(new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.GREATER_THAN_EQUALS
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.GREATER_THAN_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
                 case gt_lt:
                     if (nonNullValueList.size() > 1) {
                         Condition left = new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.GREATER_THAN
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)).toArray(new IValue[]{}));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.GREATER_THAN
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(0)).toArray(new IValue[]{}));
 
                         Condition right = new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.LESS_THAN
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(1)).toArray(new IValue[]{}));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.LESS_THAN
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(1)).toArray(new IValue[]{}));
 
 
                         conditions = new Conditions(left).addAnd(right);
@@ -1112,64 +1111,64 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     } else {
                         logger.warn("required value more then 2, fallback to ge");
                         conditions = new Conditions(new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.GREATER_THAN_EQUALS
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.GREATER_THAN_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     }
                     break;
                 case le:
                     conditions = new Conditions(new Condition(
-                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                            , originField
-                            , ConditionOperator.LESS_THAN_EQUALS
-                            , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                        isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                        , originField
+                        , ConditionOperator.LESS_THAN_EQUALS
+                        , toTypedValue(fieldOp.get()
+                        , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case lt:
                     conditions = new Conditions(new Condition(
-                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                            , originField
-                            , ConditionOperator.LESS_THAN
-                            , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                        isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                        , originField
+                        , ConditionOperator.LESS_THAN
+                        , toTypedValue(fieldOp.get()
+                        , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 case in:
                     conditions = new Conditions(
-                            new Condition(
-                                    isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                    , originField
-                                    , ConditionOperator.MULTIPLE_EQUALS
-                                    , nonNullValueList.stream().flatMap(x -> toTypedValue(fieldOp.get(), x).stream())
-                                    .toArray(IValue[]::new)
-                            )
+                        new Condition(
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.MULTIPLE_EQUALS
+                            , nonNullValueList.stream().flatMap(x -> toTypedValue(fieldOp.get(), x).stream())
+                            .toArray(IValue[]::new)
+                        )
                     );
                     break;
                 case ni:
                     if (nonNullValueList.size() == 1) {
                         conditions = new Conditions(new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.NOT_EQUALS
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.NOT_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     } else {
                         conditions = new Conditions(new Condition(
-                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                , originField
-                                , ConditionOperator.NOT_EQUALS
-                                , toTypedValue(fieldOp.get()
-                                , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                            , originField
+                            , ConditionOperator.NOT_EQUALS
+                            , toTypedValue(fieldOp.get()
+                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
 
                         Conditions finalConditions = conditions;
                         nonNullValueList.stream().skip(1).forEach(x -> {
                             finalConditions.addAnd(new Conditions(new Condition(
-                                    isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                                    , originField
-                                    , ConditionOperator.NOT_EQUALS
-                                    , toTypedValue(fieldOp.get()
-                                    , x).toArray(new IValue[]{}))), false);
+                                isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                                , originField
+                                , ConditionOperator.NOT_EQUALS
+                                , toTypedValue(fieldOp.get()
+                                , x).toArray(new IValue[]{}))), false);
                         });
 
                         conditions = finalConditions;
@@ -1177,11 +1176,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     break;
                 case like:
                     conditions = new Conditions(new Condition(
-                            isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
-                            , originField
-                            , ConditionOperator.LIKE
-                            , toTypedValue(fieldOp.get()
-                            , nonNullValueList.get(0)).toArray(new IValue[]{})));
+                        isRelatedField(columnField, mainClass) ? columnField.originEntityClass() : null
+                        , originField
+                        , ConditionOperator.LIKE
+                        , toTypedValue(fieldOp.get()
+                        , nonNullValueList.get(0)).toArray(new IValue[]{})));
                     break;
                 default:
 
@@ -1197,12 +1196,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     private IEntityClass toRawEntityClass(EntityUp entityUp) {
         return new EntityClass(
-                entityUp.getId()
-                , entityUp.getCode()
-                , null
-                , Collections.emptyList()
-                , null
-                , entityUp.getFieldsList().stream().map(this::toEntityField).collect(Collectors.toList())
+            entityUp.getId()
+            , entityUp.getCode()
+            , null
+            , Collections.emptyList()
+            , null
+            , entityUp.getFieldsList().stream().map(this::toEntityField).collect(Collectors.toList())
         );
     }
 
@@ -1211,13 +1210,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         IEntityClassReader reader = new IEntityClassReader(entityClass);
 
         List<IValue> valueList = entityUp.getValuesList().stream()
-                .flatMap(y -> {
-                    Optional<? extends IEntityField> entityFieldOp = reader.field(y.getFieldId()).map(AliasField::getOrigin);
-                    return entityFieldOp
-                            .map(x -> toTypedValue(x, y.getValue()))
-                            .orElseGet(Collections::emptyList)
-                            .stream();
-                }).filter(Objects::nonNull).collect(Collectors.toList());
+            .flatMap(y -> {
+                Optional<? extends IEntityField> entityFieldOp = reader.field(y.getFieldId()).map(AliasField::getOrigin);
+                return entityFieldOp
+                    .map(x -> toTypedValue(x, y.getValue()))
+                    .orElseGet(Collections::emptyList)
+                    .stream();
+            }).filter(Objects::nonNull).collect(Collectors.toList());
         EntityValue entityValue = new EntityValue(entityUp.getId());
         entityValue.addValues(valueList);
         return entityValue;
@@ -1226,29 +1225,29 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     //TODO
     private IEntityField toEntityField(FieldUp fieldUp) {
         return new EntityField(
-                fieldUp.getId()
-                , fieldUp.getCode()
-                , FieldType.valueOf(fieldUp.getFieldType())
-                , FieldConfig.build()
-                .searchable(ofEmptyStr(fieldUp.getSearchable())
-                        .map(Boolean::valueOf).orElse(false))
-                .max(ofEmptyStr(fieldUp.getMaxLength())
-                        .map(String::valueOf)
-                        .map(Long::parseLong).orElse(-1L))
-                .min(ofEmptyStr(fieldUp.getMinLength()).map(String::valueOf)
-                        .map(Long::parseLong).orElse(-1L))
-                .precision(fieldUp.getPrecision())
-                .identifie(fieldUp.getIdentifier())
+            fieldUp.getId()
+            , fieldUp.getCode()
+            , FieldType.valueOf(fieldUp.getFieldType())
+            , FieldConfig.build()
+            .searchable(ofEmptyStr(fieldUp.getSearchable())
+                .map(Boolean::valueOf).orElse(false))
+            .max(ofEmptyStr(fieldUp.getMaxLength())
+                .map(String::valueOf)
+                .map(Long::parseLong).orElse(-1L))
+            .min(ofEmptyStr(fieldUp.getMinLength()).map(String::valueOf)
+                .map(Long::parseLong).orElse(-1L))
+            .precision(fieldUp.getPrecision())
+            .identifie(fieldUp.getIdentifier())
         );
     }
 
 
     private Relation toEntityRelation(RelationUp relationUp) {
         return new Relation(relationUp.getName()
-                , relationUp.getRelatedEntityClassId()
-                , relationUp.getRelationType()
-                , relationUp.getIdentity()
-                , relationUp.hasEntityField() ? toEntityField(relationUp.getEntityField()) : null);
+            , relationUp.getRelatedEntityClassId()
+            , relationUp.getRelationType()
+            , relationUp.getIdentity()
+            , relationUp.hasEntityField() ? toEntityField(relationUp.getEntityField()) : null);
     }
 
     private IEntityClass getSubEntityClass(EntityUp entityUp) {
@@ -1267,16 +1266,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
         //Long id, String code, String relation, List<IEntityClass> entityClasss, IEntityClass extendEntityClass, List<Field> fields
         IEntityClass entityClass = new EntityClass(
-                entityUp.getId()
-                , entityUp.getCode()
-                , entityUp.getRelationList().stream()
-                .map(this::toEntityRelation)
-                .collect(Collectors.toList())
-                , entityUp.getEntityClassesList().stream()
-                .map(this::toRawEntityClass)
-                .collect(Collectors.toList())
-                , hasExtendedClass ? toRawEntityClass(entityUp.getExtendEntityClass()) : null
-                , entityUp.getFieldsList().stream().map(this::toEntityField).collect(Collectors.toList())
+            entityUp.getId()
+            , entityUp.getCode()
+            , entityUp.getRelationList().stream()
+            .map(this::toEntityRelation)
+            .collect(Collectors.toList())
+            , entityUp.getEntityClassesList().stream()
+            .map(this::toRawEntityClass)
+            .collect(Collectors.toList())
+            , hasExtendedClass ? toRawEntityClass(entityUp.getExtendEntityClass()) : null
+            , entityUp.getFieldsList().stream().map(this::toEntityField).collect(Collectors.toList())
         );
         return entityClass;
     }

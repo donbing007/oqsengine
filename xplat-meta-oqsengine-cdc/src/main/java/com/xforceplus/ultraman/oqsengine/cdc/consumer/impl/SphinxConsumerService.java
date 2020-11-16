@@ -9,13 +9,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 
-
-
 import javax.annotation.Resource;
 import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.*;
-
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
@@ -123,7 +121,7 @@ public class SphinxConsumerService implements ConsumerService {
                     //  更新
                     cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(getLongFromColumn(columns, COMMITID));
                     rawEntries.add(new RawEntry(
-                            entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
+                        entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
                 } else {
                     addPrefEntityValue(columns, cdcMetrics);
                 }
@@ -142,8 +140,8 @@ public class SphinxConsumerService implements ConsumerService {
         //  有子类, 将父类的EntityValue存入的relationMap中
         if (getLongFromColumn(columns, CREF) > ZERO) {
             cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues()
-                    .put(getLongFromColumn(columns, ID),
-                            new RawEntityValue(getStringFromColumn(columns, ATTRIBUTE), getStringFromColumn(columns, META)));
+                .put(getLongFromColumn(columns, ID),
+                    new RawEntityValue(getStringFromColumn(columns, ATTRIBUTE), getStringFromColumn(columns, META)));
         }
     }
 
@@ -165,6 +163,6 @@ public class SphinxConsumerService implements ConsumerService {
      */
     private boolean supportEventType(CanalEntry.EventType eventType) {
         return eventType.equals(CanalEntry.EventType.INSERT) ||
-                eventType.equals(CanalEntry.EventType.UPDATE);
+            eventType.equals(CanalEntry.EventType.UPDATE);
     }
 }
