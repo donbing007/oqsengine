@@ -83,7 +83,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
             initData(entities, true, false);
 
-            
+            expectedCount += entities.length;
 
         } catch (Exception ex) {
             tx.rollback();
