@@ -43,7 +43,10 @@ public class StatusServiceTest extends AbstractRedisContainerTest {
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
         redisIdGenerator = new RedisOrderContinuousLongIdGenerator(redisClient, "testKey");
         TimeTable remoteTimeTable = new TimeTable(redisClient, "testTable");
+        remoteTimeTable.init();
+
         TimeTable localTimeTable = new TimeTable(redisClient, "testLocalTable");
+        localTimeTable.init();
         remoteStatusService = new StatusServiceImpl(redisIdGenerator, remoteTimeTable, redisClient);
         localStatusService = new StatusServiceImpl(redisIdGenerator, localTimeTable, redisClient);
         tableCleaner = new TableCleaner(redisClient, 1L, 1L, 1000L);
