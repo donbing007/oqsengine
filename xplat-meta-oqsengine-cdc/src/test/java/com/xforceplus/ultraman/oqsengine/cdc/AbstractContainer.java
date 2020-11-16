@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelecto
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.StatusService;
+import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexStorage;
@@ -165,7 +166,7 @@ public abstract class AbstractContainer {
 
         if (transactionManager == null) {
             long commitId = 0;
-            CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
+            commitIdStatusService = mock(CommitIdStatusServiceImpl.class);
             when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
 
             transactionManager = new DefaultTransactionManager(
@@ -203,15 +204,15 @@ public abstract class AbstractContainer {
 
         if (transactionManager == null) {
             long commitId = 0;
-            CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
+            commitIdStatusService = mock(CommitIdStatusServiceImpl.class);
             when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
 
             transactionManager = new DefaultTransactionManager(
-                new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
+                    new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
         }
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory(tableName, commitIdStatusService));
+                transactionManager, new SqlConnectionTransactionResourceFactory(tableName, commitIdStatusService));
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
@@ -235,6 +236,8 @@ public abstract class AbstractContainer {
         masterStorage.init();
     }
 
+    protected SphinxSyncExecutor sphinxSyncExecutor;
+
     protected ConsumerService initConsumerService() throws SQLException, InterruptedException {
 
         initIndex();
@@ -250,7 +253,7 @@ public abstract class AbstractContainer {
         IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
         ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
 
-        SphinxSyncExecutor sphinxSyncExecutor = new SphinxSyncExecutor();
+        sphinxSyncExecutor = new SphinxSyncExecutor();
         ReflectionTestUtils.setField(sphinxSyncExecutor, "sphinxQLIndexStorage", indexStorage);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "consumerPool", consumerPool);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "entityValueBuilder", entityValueBuilder);

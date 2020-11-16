@@ -48,6 +48,7 @@ public class EntityValueBuildTest extends AbstractContainer {
 
         sphinxConsumerService = initConsumerService();
 
+
         expectedEntities = EntityGenerateToolBar.generateFixedEntities(partitionId, 0);
 
         initStorageEntities();
@@ -55,13 +56,13 @@ public class EntityValueBuildTest extends AbstractContainer {
 
     @Test
     public void compareEntityValueTest() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Method m = sphinxConsumerService.getClass()
+        Method m = sphinxSyncExecutor.getClass()
                 .getDeclaredMethod("buildEntityValue", new Class[]{Long.class, String.class, String.class});
         m.setAccessible(true);
 
         for (int i = 0; i < storageEntities.size(); i++) {
             StorageEntity se = storageEntities.get(i);
-            IEntityValue entityValue = (IEntityValue) m.invoke(sphinxConsumerService, new Object[]{se.getId(), se.getMeta(), se.getAttribute()});
+            IEntityValue entityValue = (IEntityValue) m.invoke(sphinxSyncExecutor, new Object[]{se.getId(), se.getMeta(), se.getAttribute()});
             Assert.assertNotNull(entityValue);
 
             Assert.assertEquals(entityValue.values().size(),
