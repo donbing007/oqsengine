@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.cdc.metrics.dto;
+package com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

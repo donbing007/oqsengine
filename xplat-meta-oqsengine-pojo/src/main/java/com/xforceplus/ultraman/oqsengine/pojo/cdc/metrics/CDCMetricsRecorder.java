@@ -1,6 +1,5 @@
-package com.xforceplus.ultraman.oqsengine.cdc.metrics.dto;
+package com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics;
 
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
@@ -15,7 +14,7 @@ import org.springframework.util.StopWatch;
  */
 public class CDCMetricsRecorder {
 
-    final Logger logger = LoggerFactory.getLogger(SphinxConsumerService.class);
+    final Logger logger = LoggerFactory.getLogger(CDCMetricsRecorder.class);
 
     private CDCMetrics cdcMetrics;
     private StopWatch timeRecorder = new StopWatch();

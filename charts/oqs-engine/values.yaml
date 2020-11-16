@@ -108,6 +108,7 @@ storage:
         size: 1
 redis:
   uri: "redis://localhost:6379"
+  maxReqQueue: 2147483647
 
 # datasource json config
 # Multiple data sources are separated by Numbers.

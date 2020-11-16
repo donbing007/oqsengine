@@ -1,32 +1,27 @@
 package com.xforceplus.ultraman.oqsengine.boot.cdc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.util.StringUtils;
+
+import javax.annotation.Resource;
+import java.util.Optional;
 
 /**
  * cdc metrics callback
  */
 public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
 
+    @Resource
     private ApplicationEventPublisher publisher;
 
-    private StatusService statusService;
+    @Resource
+    private CDCStatusService cdcStatusService;
 
-    private String key;
-
-    private ObjectMapper mapper;
-
-    public CDCMetricsCallbackToEvent(ApplicationEventPublisher publisher, StatusService statusService, String key, ObjectMapper mapper) {
+    public CDCMetricsCallbackToEvent(ApplicationEventPublisher publisher) {
         this.publisher = publisher;
-        this.statusService = statusService;
-        this.key = key;
-        this.mapper = mapper;
     }
 
     @Override
@@ -41,16 +36,11 @@ public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
 
     @Override
     public CDCMetrics queryLastUnCommit() {
-        String rawStr = statusService.getCDCMetrics(key);
-        if (!StringUtils.isEmpty(rawStr)) {
-            try {
-
-                return mapper.readValue(rawStr, CDCMetrics.class);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
+        Optional<CDCMetrics> cdcMetricsOp = cdcStatusService.get();
+        if (cdcMetricsOp.isPresent()) {
+            return cdcMetricsOp.get();
+        } else {
+            return null;
         }
-
-        return null;
     }
 }

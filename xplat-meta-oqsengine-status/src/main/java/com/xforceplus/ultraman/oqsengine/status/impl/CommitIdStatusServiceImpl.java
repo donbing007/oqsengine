@@ -44,6 +44,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     @PostConstruct
     public void init() {
         connect = redisClient.connect();
+        RedisCommands<String, String> commands = connect.sync();
+        commands.clientSetname("oqs.commitid");
     }
 
     @PreDestroy

@@ -1,14 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.boot.cdc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.status.StatusService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * CDC listener
@@ -16,23 +16,21 @@ import org.springframework.stereotype.Component;
 @Component
 public class CDCListener {
 
-    @Autowired
-    private StatusService statusService;
+    @Resource
+    private CDCStatusService cdcStatusService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Value("redis.cdc.key:cdcmetrics")
-    private String key;
+    @Resource
+    private CommitIdStatusService commitIdStatusService;
 
     @EventListener
     public void invalidateCommitIds(CDCAckMetrics cdcAckMetrics) {
-        statusService.invalidateIds(cdcAckMetrics.getCommitList());
+        List<Long> idList = cdcAckMetrics.getCommitList();
+        long[] ids = idList.stream().mapToLong(id -> id).toArray();
+        commitIdStatusService.obsolete(ids);
     }
 
     @EventListener
-    public void saveCDCMetrics(CDCMetrics cdcMetrics) throws JsonProcessingException {
-        String s = objectMapper.writeValueAsString(cdcMetrics);
-        statusService.saveCDCMetrics(key, s);
+    public void saveCDCMetrics(CDCMetrics cdcMetrics) {
+        cdcStatusService.save(cdcMetrics);
     }
 }

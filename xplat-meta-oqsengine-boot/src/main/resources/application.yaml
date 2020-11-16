@@ -45,7 +45,19 @@ storage:
         enabled: false
         size: 1
 redis:
+  # 单机 redis://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
+  # 单机SSL rediss://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
+  # 哨兵: redis-sentinel://[password@]host[:port][,host2[:port2]][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]#sentinelMasterId
+  # 时间单位
+  # d 天
+  # h 小时
+  # m 分钟
+  # s 秒钟
+  # ms 毫秒
+  # us 微秒
+  # ns 纳秒
   uri: "redis://localhost:6379"
+  maxReqQueue: MAX
 
 management:
   health:
