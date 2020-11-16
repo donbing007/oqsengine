@@ -1,7 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.callback;
 
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
+
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 
 /**
  * desc :
