@@ -15,8 +15,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.SQLException;
 
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.ZERO;
 
 /**
  * desc :

@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.cdc.constant;
+package com.xforceplus.ultraman.oqsengine.pojo.cdc.constant;
 
 /**
  * desc :

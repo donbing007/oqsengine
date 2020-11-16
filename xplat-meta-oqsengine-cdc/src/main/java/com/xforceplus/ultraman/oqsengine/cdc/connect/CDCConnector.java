@@ -7,7 +7,9 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.DEFAULT_BATCH_SIZE;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.DEFAULT_SUBSCRIBE_FILTER;
+
 
 /**
  * desc :

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics;
 
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.CDCStatus;
+
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 
 /**
  * desc :

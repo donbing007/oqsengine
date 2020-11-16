@@ -35,7 +35,7 @@ import java.util.Random;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.EMPTY_BATCH_ID;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_ID;
 
 /**
  * desc :

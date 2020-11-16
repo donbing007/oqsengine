@@ -4,18 +4,18 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.CDCStatus;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.RunningStatus;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCUnCommitMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.RunningStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
 
 /**
  * desc :
@@ -199,7 +199,7 @@ public class ConsumerRunner extends Thread {
         CDCMetrics cdcMetrics = cdcMetricsService.query();
         if (null != cdcMetrics) {
             syncCanalAndCallback(cdcMetrics);
-            logger.debug("CDC启动Recover同步/回调成功, {}", JSON.toJSON(cdcMetrics));
+            logger.debug("CDC Sync->Recover->Callback AckMetrics success, {}", JSON.toJSON(cdcMetrics));
         }
     }
     /*

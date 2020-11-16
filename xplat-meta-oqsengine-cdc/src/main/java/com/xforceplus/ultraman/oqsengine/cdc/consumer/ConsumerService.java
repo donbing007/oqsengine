@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCUnCommitMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 
 import java.sql.SQLException;
 import java.util.List;

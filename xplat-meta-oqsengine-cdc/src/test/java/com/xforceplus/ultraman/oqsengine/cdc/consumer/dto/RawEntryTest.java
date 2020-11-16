@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.dto;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.StatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -66,7 +67,7 @@ public abstract class AbstractContainer {
 
     protected StorageStrategyFactory masterStorageStrategyFactory;
 
-    private StatusService statusService;
+    protected CommitIdStatusService commitIdStatusService;
 
     static {
         Network network = Network.newNetwork();
@@ -164,11 +165,11 @@ public abstract class AbstractContainer {
 
         if (transactionManager == null) {
             long commitId = 0;
-            statusService = mock(StatusService.class);
-            when(statusService.getCommitId()).thenReturn(commitId++);
+            CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
+            when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
 
             transactionManager = new DefaultTransactionManager(
-                new IncreasingOrderLongIdGenerator(0), statusService);
+                new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
         }
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(transactionManager,
@@ -202,15 +203,15 @@ public abstract class AbstractContainer {
 
         if (transactionManager == null) {
             long commitId = 0;
-            statusService = mock(StatusService.class);
-            when(statusService.getCommitId()).thenReturn(commitId++);
+            CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
+            when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
 
             transactionManager = new DefaultTransactionManager(
-                new IncreasingOrderLongIdGenerator(0), statusService);
+                new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
         }
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory(tableName, statusService));
+            transactionManager, new SqlConnectionTransactionResourceFactory(tableName, commitIdStatusService));
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

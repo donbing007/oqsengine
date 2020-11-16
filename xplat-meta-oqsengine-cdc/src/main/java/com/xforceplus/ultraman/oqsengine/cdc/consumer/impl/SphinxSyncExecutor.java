@@ -3,9 +3,9 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.google.common.collect.Maps;
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntityValue;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.dto.RawEntry;
-import com.xforceplus.ultraman.oqsengine.cdc.metrics.dto.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
@@ -22,11 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.*;
-import static com.xforceplus.ultraman.oqsengine.cdc.constant.CDCConstant.SPLIT_META_LENGTH;
-import static com.xforceplus.ultraman.oqsengine.cdc.consumer.enums.OqsBigEntityColumns.*;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getStringFromColumn;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType.fromRawType;
 
 /**
