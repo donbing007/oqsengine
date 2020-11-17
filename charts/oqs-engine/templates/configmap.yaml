@@ -83,7 +83,7 @@ data:
             destination: {{ .Values.cdc.connect.destination }}
             username: {{ .Values.cdc.connect.username }}
             password: {{ .Values.cdc.connect.password }}
-            subscribeFilter: {{ .Values.cdc.connect.subscribeFilter | default ".*\.oqsbigentity.*" | quote }}
+            subscribeFilter: {{ .Values.cdc.connect.subscribeFilter | quote }}
             batchSize: {{ .Values.cdc.connect.batchSize | default "2048" | quote }}
           execution:
             timeoutMs: {{ .Values.cdc.execution.timeoutMs | default "30000" | quote }}
