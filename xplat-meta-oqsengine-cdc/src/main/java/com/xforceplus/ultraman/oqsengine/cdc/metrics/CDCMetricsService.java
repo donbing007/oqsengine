@@ -88,7 +88,7 @@ public class CDCMetricsService {
         }
     }
 
-    public void callback() {
+    private void callback() {
         //  设置本次callback的时间
         cdcMetrics.getCdcAckMetrics().setLastUpdateTime(System.currentTimeMillis());
         //  异步执行回调
