@@ -52,7 +52,7 @@ public class ConsumerRunner extends Thread {
         int useTime = 0;
         while (useTime < MAX_STOP_WAIT_LOOPS) {
             try {
-                Thread.sleep(MAX_STOP_WAIT_TIME * 1000);
+                Thread.sleep(MAX_STOP_WAIT_TIME * SECOND);
             } catch (Exception e) {
                 //  ignore
                 e.printStackTrace();
@@ -248,7 +248,7 @@ public class ConsumerRunner extends Thread {
     private void threadSleep(int waitInSeconds) {
         try {
             //  当前没有Binlog消费
-            Thread.sleep(waitInSeconds * 1000);
+            Thread.sleep(waitInSeconds * SECOND);
 
         } catch (InterruptedException e) {
             e.printStackTrace();

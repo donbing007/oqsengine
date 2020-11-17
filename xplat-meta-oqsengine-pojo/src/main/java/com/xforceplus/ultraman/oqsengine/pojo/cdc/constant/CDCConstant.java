@@ -46,4 +46,7 @@ public class CDCConstant {
 
     //  shutdown时单次循环等待时间
     public static final int MAX_STOP_WAIT_TIME = 4;
+
+    //  shutdown时单次循环等待时间
+    public static final int SECOND = 1000;
 }
