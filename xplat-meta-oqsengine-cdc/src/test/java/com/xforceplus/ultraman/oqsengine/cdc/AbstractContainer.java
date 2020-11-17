@@ -78,7 +78,7 @@ public abstract class AbstractContainer {
 
     private static void initDockerCompose() {
         environment =
-            new DockerComposeContainer(new File("./src/test/resources/compose-all.yaml"))
+            new DockerComposeContainer(new File("src/test/resources/compose-all.yaml"))
                 .withExposedService("mysql_1", 3306)
                 .withExposedService("canal-server_1", 11111);
 

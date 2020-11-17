@@ -15,7 +15,7 @@ public abstract class AbstractContainerTest {
 
     static {
         environment =
-            new DockerComposeContainer(new File("./src/test/resources/compose-all.yaml"))
+            new DockerComposeContainer(new File("src/test/resources/compose-all.yaml"))
                 .withExposedService("mysql_1", 3306, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
                 .withExposedService("manticore0_1", 9306, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
                 .withExposedService("manticore1_1", 9306, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
