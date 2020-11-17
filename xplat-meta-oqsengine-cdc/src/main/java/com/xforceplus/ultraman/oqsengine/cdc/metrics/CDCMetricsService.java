@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.cdc.metrics;
 
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +58,16 @@ public class CDCMetricsService {
         return cdcMetrics;
     }
 
+    public void callBackSuccess(CDCAckMetrics temp) {
+        this.getCdcMetrics().consumeSuccess(temp);
+        callback();
+    }
+
+    public void callBackError(CDCStatus cdcStatus) {
+        this.getCdcMetrics().getCdcAckMetrics().setCdcConsumerStatus(cdcStatus);
+        callback();
+    }
+
     public void backup(CDCMetrics cdcMetrics) {
         cdcSyncPool.submit(() -> {
             try {
@@ -76,7 +88,7 @@ public class CDCMetricsService {
         }
     }
 
-    public void callback() {
+    private void callback() {
         //  设置本次callback的时间
         cdcMetrics.getCdcAckMetrics().setLastUpdateTime(System.currentTimeMillis());
         //  异步执行回调

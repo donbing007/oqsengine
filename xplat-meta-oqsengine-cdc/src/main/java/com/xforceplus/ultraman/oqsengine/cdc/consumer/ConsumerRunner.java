@@ -52,7 +52,7 @@ public class ConsumerRunner extends Thread {
         int useTime = 0;
         while (useTime < MAX_STOP_WAIT_LOOPS) {
             try {
-                Thread.sleep(MAX_STOP_WAIT_TIME * 1000);
+                Thread.sleep(MAX_STOP_WAIT_TIME * SECOND);
             } catch (Exception e) {
                 //  ignore
                 e.printStackTrace();
@@ -82,7 +82,7 @@ public class ConsumerRunner extends Thread {
             }
 
             try {
-                //  连接CanalServer，如果是服务启动(isFirstCycle = true),则同步缓存中cdcMetrics信息
+                //  连接CanalServer，如果是服务启动(runningStatus = INIT),则同步缓存中cdcMetrics信息
                 connectAndReset(runningStatus.equals(RunningStatus.INIT));
             } catch (Exception e) {
                 closeToNextReconnect(!runningStatus.equals(RunningStatus.INIT)
@@ -119,7 +119,7 @@ public class ConsumerRunner extends Thread {
         logger.error(errorMessage);
 
         //  这里将进行睡眠->同步错误信息->进入下次循环
-        callConnectError(RECONNECT_WAIT_IN_SECONDS);
+        callBackError(RECONNECT_WAIT_IN_SECONDS, CDCStatus.DIS_CONNECTED);
     }
 
     private boolean checkForStop() {
@@ -176,7 +176,7 @@ public class ConsumerRunner extends Thread {
 
                 logger.error("consume message error, {}", e.getMessage());
                 //  同步出错信息，回滚到上次成功的的Sync信息
-                callBackError(ERROR_MESSAGE_WAIT_IN_SECONDS);
+                callBackError(ERROR_MESSAGE_WAIT_IN_SECONDS, CDCStatus.CONSUME_FAILED);
             }
         }
     }
@@ -190,16 +190,14 @@ public class ConsumerRunner extends Thread {
         //  同步状态
         cdcConnector.ack(batchId);
 
-        cdcMetricsService.getCdcMetrics().setBatchId(batchId);
-        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setLastConnectedTime(System.currentTimeMillis());
-        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setLastUpdateTime(System.currentTimeMillis());
+        cdcMetricsService.getCdcMetrics().heartBeat(batchId);
     }
 
     private void syncLastBatch() throws SQLException {
         CDCMetrics cdcMetrics = cdcMetricsService.query();
         if (null != cdcMetrics) {
             syncCanalAndCallback(cdcMetrics);
-            logger.debug("CDC Sync->Recover->Callback AckMetrics success, {}", JSON.toJSON(cdcMetrics));
+            logger.info("CDC Sync->Recover->Callback AckMetrics success, {}", JSON.toJSON(cdcMetrics));
         }
     }
 
@@ -231,50 +229,26 @@ public class ConsumerRunner extends Thread {
     }
 
     private void syncUnCommit(CDCUnCommitMetrics unCommitMetrics) {
-        if (null == unCommitMetrics) {
-            unCommitMetrics = new CDCUnCommitMetrics();
-        }
-        cdcMetricsService.getCdcMetrics().setCdcUnCommitMetrics(unCommitMetrics);
-    }
-
-    private void callConnectError(int waitInSeconds) {
-        threadSleep(waitInSeconds);
-
-        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setCdcConsumerStatus(CDCStatus.DIS_CONNECTED);
-
-        cdcMetricsService.callback();
+        cdcMetricsService.getCdcMetrics().setCdcUnCommitMetrics(
+                null == unCommitMetrics ? new CDCUnCommitMetrics() : unCommitMetrics);
     }
 
     private void threadSleep(int waitInSeconds) {
         try {
             //  当前没有Binlog消费
-            Thread.sleep(waitInSeconds * 1000);
-
+            Thread.sleep(waitInSeconds * SECOND);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private void callBackError(int waitInSeconds) {
+    private void callBackError(int waitInSeconds, CDCStatus cdcStatus) {
         threadSleep(waitInSeconds);
-        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setCdcConsumerStatus(CDCStatus.CONSUME_FAILED);
 
-        cdcMetricsService.callback();
+        cdcMetricsService.callBackError(cdcStatus);
     }
 
     private void callBackSuccess(CDCAckMetrics currentMetrics) {
-        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setLastConsumerTime(System.currentTimeMillis());
-        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setExecuteRows(currentMetrics.getExecuteRows());
-        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setTotalUseTime(currentMetrics.getTotalUseTime());
-        if (!currentMetrics.getCommitList().isEmpty()) {
-            cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setCommitList(currentMetrics.getCommitList());
-        }
-
-        if (currentMetrics.getMaxSyncUseTime() > ZERO) {
-            cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setMaxSyncUseTime(currentMetrics.getMaxSyncUseTime());
-        }
-
-
-        cdcMetricsService.callback();
+        cdcMetricsService.callBackSuccess(currentMetrics);
     }
 }
