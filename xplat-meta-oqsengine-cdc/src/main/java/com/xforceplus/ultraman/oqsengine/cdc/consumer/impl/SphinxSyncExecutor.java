@@ -190,7 +190,7 @@ public class SphinxSyncExecutor {
         return entityValueBuilder.build(id, metaToFieldTypeMap(meta), attribute);
     }
 
-    //  meat -> Map<String, IEntityField>
+    //  meta -> Map<String, IEntityField>
     private Map<String, IEntityField> metaToFieldTypeMap(String meta) throws SQLException {
 
         Map<String, IEntityField> results = new HashMap<>();
@@ -222,7 +222,8 @@ public class SphinxSyncExecutor {
     private IEntityValue entityValueGet(long pref, Map<Long, IEntityValue> prefEntityValueMaps) throws SQLException {
         IEntityValue entityValue = prefEntityValueMaps.get(pref);
         if (null == entityValue) {
-            throw new SQLException("pref's entityValue could not be null in relation pool when have cref.");
+            throw new SQLException(
+                    String.format("pref's entityValue could not be null in relation pool when have cref, need pref id : %d", pref));
         }
         return entityValue;
     }
