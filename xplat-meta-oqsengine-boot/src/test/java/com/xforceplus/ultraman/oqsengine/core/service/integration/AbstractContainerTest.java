@@ -15,13 +15,14 @@ public abstract class AbstractContainerTest {
 
     static {
         environment =
-            new DockerComposeContainer(new File("src/test/resources/compose-all.yaml"))
-                .withExposedService("mysql_1", 3306, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
-                .withExposedService("manticore0_1", 9306, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
-                .withExposedService("manticore1_1", 9306, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
-                .withExposedService("search-manticore_1", 9306, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
-                .withExposedService("redis_1", 6379, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
-                .withExposedService("canal-server_1", 11111, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)));
+                new DockerComposeContainer(new File("src/test/resources/compose-all.yaml"))
+                        .withLocalCompose(true)
+                        .withExposedService("mysql_1", 3306, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
+                        .withExposedService("manticore0_1", 9306, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
+                        .withExposedService("manticore1_1", 9306, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
+                        .withExposedService("search-manticore_1", 9306, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
+                        .withExposedService("redis_1", 6379, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)))
+                        .withExposedService("canal-server_1", 11111, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)));
 
         environment.start();
 
@@ -44,21 +45,21 @@ public abstract class AbstractContainerTest {
         System.setProperty("CANAL_PORT", environment.getServicePort("canal-server_1", 11111).toString());
 
         System.setProperty(
-            "MYSQL_JDBC",
-            String.format("jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
-                System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));
+                "MYSQL_JDBC",
+                String.format("jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
+                        System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));
 
         System.setProperty("MANTICORE0_JDBC",
-            String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
-                System.getProperty("MANTICORE0_HOST"), System.getProperty("MANTICORE0_PORT")));
+                String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
+                        System.getProperty("MANTICORE0_HOST"), System.getProperty("MANTICORE0_PORT")));
 
         System.setProperty("MANTICORE1_JDBC",
-            String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
-                System.getProperty("MANTICORE1_HOST"), System.getProperty("MANTICORE1_PORT")));
+                String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
+                        System.getProperty("MANTICORE1_HOST"), System.getProperty("MANTICORE1_PORT")));
 
         System.setProperty("SEARCH_MANTICORE_JDBC",
-            String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
-                System.getProperty("SEARCH_MANTICORE_HOST"), System.getProperty("SEARCH_MANTICORE_PORT")));
+                String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
+                        System.getProperty("SEARCH_MANTICORE_HOST"), System.getProperty("SEARCH_MANTICORE_PORT")));
 
         System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
 

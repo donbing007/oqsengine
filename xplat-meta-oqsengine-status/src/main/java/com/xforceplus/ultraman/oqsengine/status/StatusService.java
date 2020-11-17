@@ -12,6 +12,7 @@ public interface StatusService {
      *
      * @return
      */
+    @Deprecated
     Long getCommitId();
 
     /**
