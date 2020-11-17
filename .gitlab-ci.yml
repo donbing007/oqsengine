@@ -1,4 +1,4 @@
-image: registry.cn-hangzhou.aliyuncs.com/xforceplus/cibase:0.12.0
+image: registry.cn-hangzhou.aliyuncs.com/xforceplus/cibase:0.8.1
 
 stages:
   - mvn-package
