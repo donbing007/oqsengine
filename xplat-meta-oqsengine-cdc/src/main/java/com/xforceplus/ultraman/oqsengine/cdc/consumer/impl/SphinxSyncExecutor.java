@@ -120,7 +120,7 @@ public class SphinxSyncExecutor {
             doReplace(rawEntry.getColumns(), prefEntityValueMaps);
         }
 
-        syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
+        syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis()) - Math.abs(rawEntry.getExecuteTime()));
     }
 
     //  判断是否删除

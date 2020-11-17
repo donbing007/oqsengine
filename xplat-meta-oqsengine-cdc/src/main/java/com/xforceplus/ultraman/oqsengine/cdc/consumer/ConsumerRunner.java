@@ -82,7 +82,7 @@ public class ConsumerRunner extends Thread {
             }
 
             try {
-                //  连接CanalServer，如果是服务启动(isFirstCycle = true),则同步缓存中cdcMetrics信息
+                //  连接CanalServer，如果是服务启动(runningStatus = INIT),则同步缓存中cdcMetrics信息
                 connectAndReset(runningStatus.equals(RunningStatus.INIT));
             } catch (Exception e) {
                 closeToNextReconnect(!runningStatus.equals(RunningStatus.INIT)
