@@ -46,11 +46,11 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
     private Long maxQueryTimeMs;
 
     public QueryConditionExecutor(
-            String indexTableName
-            , TransactionResource<Connection> resource
-            , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
-            , StorageStrategyFactory storageStrategyFactory
-            , Long maxQueryTimeMs
+        String indexTableName
+        , TransactionResource<Connection> resource
+        , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
+        , StorageStrategyFactory storageStrategyFactory
+        , Long maxQueryTimeMs
     ) {
         this.indexTableName = indexTableName;
         this.resource = resource;
@@ -60,11 +60,11 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
     }
 
     public static Executor<Tuple6<Long, Conditions, Page, Sort, List<Long>, Long>, List<EntityRef>> build(
-            String indexTableName
-            , TransactionResource<Connection> resource
-            , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
-            , StorageStrategyFactory storageStrategyFactory
-            , Long maxQueryTimeMs
+        String indexTableName
+        , TransactionResource<Connection> resource
+        , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
+        , StorageStrategyFactory storageStrategyFactory
+        , Long maxQueryTimeMs
     ) {
         return new QueryConditionExecutor(indexTableName, resource, conditionsBuilderFactory, storageStrategyFactory, maxQueryTimeMs);
     }
@@ -109,9 +109,9 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
             }
             first = false;
             buff.append(' ')
-                    .append(field.getAlias())
-                    .append(' ')
-                    .append(desc ? SqlKeywordDefine.ORDER_TYPE_DESC : SqlKeywordDefine.ORDER_TYPE_ASC);
+                .append(field.getAlias())
+                .append(' ')
+                .append(desc ? SqlKeywordDefine.ORDER_TYPE_DESC : SqlKeywordDefine.ORDER_TYPE_ASC);
 
         }
         return buff.toString();
@@ -134,8 +134,8 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
             }
 
             buff.append(fieldName)
-                    .append(' ').append(SqlKeywordDefine.ALIAS_LINK).append(' ')
-                    .append(field.getAlias());
+                .append(' ').append(SqlKeywordDefine.ALIAS_LINK).append(' ')
+                .append(field.getAlias());
         }
 
         if (buff.length() > 0) {
@@ -269,15 +269,15 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
         List<SortField> sortFields = null;
         if (useSort == null) {
             useSort = Sort.buildOutOfSort();
-        } else {
+        }
+
+        if (!useSort.isOutOfOrder()) {
             storageStrategy = storageStrategyFactory.getStrategy(useSort.getField().type());
             sortFields = buildSortValues(useSort);
             orderBySqlSegment = buildOrderBySqlSegment(sortFields, useSort.isDes());
             sortSelectValuesSegment = buildSortSelectValuesSegment(sortFields);
         }
 
-
-//        String orderBy = buildOrderBy(useSort);
         String sql = String.format(SQLConstant.SELECT_SQL, sortSelectValuesSegment, indexTableName, whereCondition, orderBySqlSegment);
 
         PreparedStatement st = null;
@@ -288,8 +288,8 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
             st.setLong(2, 0);
             st.setLong(3, page.getPageSize() * page.getIndex());
             st.setLong(4, page.hasVisibleTotalCountLimit() ?
-                    page.getVisibleTotalCount()
-                    : page.getPageSize() * page.getIndex());
+                page.getVisibleTotalCount()
+                : page.getPageSize() * page.getIndex());
             // add max query timeout.
             st.setLong(5, maxQueryTimeMs);
             if (logger.isDebugEnabled()) {
@@ -305,8 +305,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
                 entityRef.setCref(rs.getLong(FieldDefine.CREF));
                 entityRef.setPref(rs.getLong(FieldDefine.PREF));
 
-                if (sort != null && !sort.isOutOfOrder()) {
-                    //TODO generator multi
+                if (!useSort.isOutOfOrder()) {
                     ResultSet finalRs = rs;
                     AtomicInteger index = new AtomicInteger(0);
 
@@ -316,9 +315,15 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
                         try {
                             switch (finalStorageStrategy.storageType()) {
                                 case LONG:
-                                    return StorageValueFactory.buildStorageValue(finalStorageStrategy.storageType(), x.fieldName, finalRs.getLong("sort" + index.getAndIncrement()));
+                                    return StorageValueFactory.buildStorageValue(
+                                        finalStorageStrategy.storageType(),
+                                        x.fieldName,
+                                        finalRs.getLong("sort" + index.getAndIncrement()));
                                 case STRING:
-                                    return StorageValueFactory.buildStorageValue(finalStorageStrategy.storageType(), x.fieldName, finalRs.getString("sort" + index.getAndIncrement()));
+                                    return StorageValueFactory.buildStorageValue(
+                                        finalStorageStrategy.storageType(),
+                                        x.fieldName,
+                                        finalRs.getString("sort" + index.getAndIncrement()));
                                 default:
                                     return null;
                             }

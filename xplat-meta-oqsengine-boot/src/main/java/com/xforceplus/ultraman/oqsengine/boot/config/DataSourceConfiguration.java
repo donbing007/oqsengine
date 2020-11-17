@@ -13,6 +13,7 @@ import org.apache.shardingsphere.shardingjdbc.api.ShardingDataSourceFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -30,7 +31,6 @@ import java.util.stream.Collectors;
  */
 @Configuration
 public class DataSourceConfiguration {
-    ;
 
     @Bean
     public DataSourcePackage dataSourcePackage() {
@@ -38,16 +38,19 @@ public class DataSourceConfiguration {
     }
 
     @Bean
+    @DependsOn("dataSourcePackage")
     public Selector<DataSource> indexWriteDataSourceSelector(DataSourcePackage dataSourcePackage) {
         return new HashSelector(dataSourcePackage.getIndexWriter());
     }
 
     @Bean
+    @DependsOn("dataSourcePackage")
     public DataSource indexSearchDataSource(DataSourcePackage dataSourcePackage) {
         return dataSourcePackage.getIndexSearch().get(0);
     }
 
     @Bean
+    @DependsOn("dataSourcePackage")
     public DataSource masterDataSource(DataSourcePackage dataSourcePackage,
                                        @Value("${storage.master.name:oqsbigentity}") String baseName,
                                        @Value("${storage.master.shard.table.enabled:false}") boolean shard,

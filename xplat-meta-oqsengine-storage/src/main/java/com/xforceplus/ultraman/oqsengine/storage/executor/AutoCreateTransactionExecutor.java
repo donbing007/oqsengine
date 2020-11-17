@@ -27,7 +27,7 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
     }
 
     @Override
-    public Object execute(StorageTask storageTask) throws SQLException {
+    public Object execute(ResourceTask resourceTask) throws SQLException {
         boolean localTx;
         Optional<Transaction> txOptional = transactionManager.getCurrent();
         Transaction tx;
@@ -44,7 +44,7 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
         ExecutorHint hint = new DefaultExecutorHint();
         try {
 
-            Object res = storageTask.run(null, hint);
+            Object res = resourceTask.run(null, hint);
 
             if (localTx) {
 

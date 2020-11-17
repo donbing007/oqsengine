@@ -11,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardStorageTask;
+import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
@@ -88,9 +88,10 @@ public class SQLMasterStorage implements MasterStorage {
     @Override
     public Collection<EntityRef> select(long commitid, Conditions conditions, IEntityClass entityClass, Sort sort)
         throws SQLException {
-        return (Collection<EntityRef>) transactionExecutor.execute(new DataSourceNoShardStorageTask(masterDataSource) {
+        return (Collection<EntityRef>) transactionExecutor.execute(new DataSourceNoShardResourceTask(masterDataSource) {
             @Override
             public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                hint.setReadOnly(true);
                 return QueryLimitCommitidByConditionsExecutor.build(
                     tableName,
                     resource,
@@ -107,11 +108,12 @@ public class SQLMasterStorage implements MasterStorage {
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
         return (Optional<IEntity>) transactionExecutor.execute(
-            new DataSourceNoShardStorageTask(masterDataSource) {
+            new DataSourceNoShardResourceTask(masterDataSource) {
 
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                     Optional<StorageEntity> seOP = QueryExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
+                    hint.setReadOnly(true);
                     if (seOP.isPresent()) {
                         return buildEntityFromStorageEntity(seOP.get(), entityClass);
                     } else {
@@ -126,7 +128,7 @@ public class SQLMasterStorage implements MasterStorage {
     public Collection<IEntity> selectMultiple(Map<Long, IEntityClass> ids) throws SQLException {
 
         Collection<StorageEntity> storageEntities = (Collection<StorageEntity>) transactionExecutor.execute(
-            new DataSourceNoShardStorageTask(masterDataSource) {
+            new DataSourceNoShardResourceTask(masterDataSource) {
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
 
@@ -154,7 +156,7 @@ public class SQLMasterStorage implements MasterStorage {
     @Override
     public int synchronize(long sourceId, long targetId) throws SQLException {
         Optional<StorageEntity> oldOp = (Optional<StorageEntity>) transactionExecutor.execute(
-            new DataSourceNoShardStorageTask(masterDataSource) {
+            new DataSourceNoShardResourceTask(masterDataSource) {
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                     return QueryExecutor.buildNoDetail(tableName, resource, queryTimeout).execute(sourceId);
@@ -164,12 +166,13 @@ public class SQLMasterStorage implements MasterStorage {
         if (oldOp.isPresent()) {
 
             return (int) transactionExecutor.execute(
-                new DataSourceNoShardStorageTask(masterDataSource) {
+                new DataSourceNoShardResourceTask(masterDataSource) {
                     @Override
                     public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                         StorageEntity targetEntity = oldOp.get();
                         targetEntity.setId(targetId);
 
+                        hint.setReadOnly(false);
                         return UpdateVersionAndTxExecutor.build(tableName, resource, queryTimeout).execute(targetEntity);
                     }
                 }
@@ -187,7 +190,7 @@ public class SQLMasterStorage implements MasterStorage {
         checkId(entity);
 
         return (int) transactionExecutor.execute(
-            new DataSourceNoShardStorageTask(masterDataSource) {
+            new DataSourceNoShardResourceTask(masterDataSource) {
 
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -211,6 +214,7 @@ public class SQLMasterStorage implements MasterStorage {
                     }
                     storageEntity.setCommitid(CommitHelper.getUncommitId());
 
+                    hint.setReadOnly(false);
                     return BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
                 }
             });
@@ -221,7 +225,7 @@ public class SQLMasterStorage implements MasterStorage {
         checkId(entity);
 
         return (int) transactionExecutor.execute(
-            new DataSourceNoShardStorageTask(masterDataSource) {
+            new DataSourceNoShardResourceTask(masterDataSource) {
 
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -245,6 +249,7 @@ public class SQLMasterStorage implements MasterStorage {
                     }
                     storageEntity.setCommitid(CommitHelper.getUncommitId());
 
+                    hint.setReadOnly(false);
                     return ReplaceExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
 
                 }
@@ -256,7 +261,7 @@ public class SQLMasterStorage implements MasterStorage {
         checkId(entity);
 
         return (int) transactionExecutor.execute(
-            new DataSourceNoShardStorageTask(masterDataSource) {
+            new DataSourceNoShardResourceTask(masterDataSource) {
 
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -278,6 +283,7 @@ public class SQLMasterStorage implements MasterStorage {
                     }
                     storageEntity.setCommitid(CommitHelper.getUncommitId());
 
+                    hint.setReadOnly(false);
                     return DeleteExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
                 }
             });

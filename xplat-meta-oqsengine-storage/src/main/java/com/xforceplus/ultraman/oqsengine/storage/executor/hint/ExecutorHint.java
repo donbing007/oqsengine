@@ -8,8 +8,12 @@ package com.xforceplus.ultraman.oqsengine.storage.executor.hint;
  */
 public interface ExecutorHint {
 
-    public boolean isRollback();
+    boolean isRollback();
 
-    public void setRollback(boolean rollback);
+    void setRollback(boolean rollback);
+
+    boolean isReadOnly();
+
+    void setReadOnly(boolean readOnly);
 
 }

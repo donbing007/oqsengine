@@ -45,6 +45,21 @@ public abstract class AbstractConnectionTransactionResource extends AbstractTran
     }
 
     @Override
+    public void commit() throws SQLException {
+        if (!isAutoCommit()) {
+            value().commit();
+
+            Optional<Transaction> transactionOp = getTransaction();
+            if (transactionOp.isPresent()) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The transaction resource ({}) commits in the transaction.",
+                        key(), transactionOp.get().id());
+                }
+            }
+        }
+    }
+
+    @Override
     public void rollback() throws SQLException {
         if (!isAutoCommit()) {
             value().rollback();

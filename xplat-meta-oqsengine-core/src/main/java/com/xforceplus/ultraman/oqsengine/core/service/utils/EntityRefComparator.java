@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.core.service.impl;
+package com.xforceplus.ultraman.oqsengine.core.service.utils;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;

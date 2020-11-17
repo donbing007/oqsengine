@@ -11,12 +11,12 @@ import javax.sql.DataSource;
  * @version 0.1 2020/2/17 20:07
  * @since 1.8
  */
-public abstract class DataSourceShardingStorageTask implements StorageTask {
+public abstract class DataSourceShardingResourceTask implements ResourceTask {
 
     private Selector<DataSource> dataSourceSelector;
     private String shardKey;
 
-    public DataSourceShardingStorageTask(
+    public DataSourceShardingResourceTask(
         Selector<DataSource> dataSourceSelector, String shardKey) {
         this.dataSourceSelector = dataSourceSelector;
         this.shardKey = shardKey;

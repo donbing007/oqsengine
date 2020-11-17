@@ -55,6 +55,13 @@ public interface TransactionResource<V> {
     void commit(long commitId) throws SQLException;
 
     /**
+     * 没有提交号的提交,一般是只读事务状态.
+     *
+     * @throws SQLException
+     */
+    void commit() throws SQLException;
+
+    /**
      * 回滚资源.
      *
      * @throws SQLException

@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import org.junit.After;
@@ -9,7 +11,6 @@ import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.SQLException;
-import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 
@@ -80,51 +81,56 @@ public class TransactionManagementServiceImplTest {
 
     @Test
     public void testCommit() throws Exception {
-        Transaction t = mock(Transaction.class);
-        when(t.isCompleted()).thenReturn(false);
-
-        TransactionManager tm = mock(TransactionManager.class);
-        when(tm.getCurrent()).thenReturn(Optional.of(t));
+        TransactionManager tm = new DefaultTransactionManager(
+            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
 
         TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "transactionManager", tm);
 
+        long txId = impl.begin();
+        impl.restore(txId);
+        Transaction tx = tm.getCurrent().get();
+
+        impl.restore(txId);
         impl.commit();
 
-        verify(t, times(1)).commit();
-        verify(tm, times(1)).finish(t);
+        Assert.assertTrue(tx.isCompleted());
+        Assert.assertTrue(tx.isCommitted());
+        Assert.assertFalse(tx.isRollback());
+        Assert.assertEquals(0, tm.size());
     }
 
     @Test
     public void testRollback() throws Exception {
-        Transaction t = mock(Transaction.class);
-        when(t.isCompleted()).thenReturn(false);
-
-        TransactionManager tm = mock(TransactionManager.class);
-        when(tm.getCurrent()).thenReturn(Optional.of(t));
+        TransactionManager tm = new DefaultTransactionManager(
+            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
 
         TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "transactionManager", tm);
 
+        long txId = impl.begin();
+        impl.restore(txId);
+        Transaction tx = tm.getCurrent().get();
+
+        impl.restore(txId);
         impl.rollback();
 
-        verify(t, times(1)).rollback();
-        verify(tm, times(1)).finish(t);
+        Assert.assertTrue(tx.isCompleted());
+        Assert.assertFalse(tx.isCommitted());
+        Assert.assertTrue(tx.isRollback());
+
+        Assert.assertEquals(0, tm.size());
     }
 
     @Test(expected = SQLException.class)
     public void testCompleted() throws Exception {
-        Transaction t = mock(Transaction.class);
-        when(t.isCompleted()).thenReturn(true);
-
-        TransactionManager tm = mock(TransactionManager.class);
-        when(tm.getCurrent()).thenReturn(Optional.of(t));
+        TransactionManager tm = new DefaultTransactionManager(
+            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
 
         TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "transactionManager", tm);
 
         impl.commit();
-
     }
 
 } 

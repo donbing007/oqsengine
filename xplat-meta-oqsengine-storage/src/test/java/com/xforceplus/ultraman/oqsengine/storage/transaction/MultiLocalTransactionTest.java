@@ -178,6 +178,11 @@ public class MultiLocalTransactionTest {
         }
 
         @Override
+        public void commit() throws SQLException {
+            commit(-1);
+        }
+
+        @Override
         public void rollback() throws SQLException {
             if (exception) {
                 throw new SQLException("Expected SQLException.");

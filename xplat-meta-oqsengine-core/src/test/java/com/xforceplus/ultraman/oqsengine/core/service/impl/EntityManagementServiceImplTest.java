@@ -50,7 +50,6 @@ public class EntityManagementServiceImplTest {
     private EntityManagementServiceImpl service;
     private LongIdGenerator idGenerator;
     private MockMasterStorage masterStorage;
-    private MockIndexStorage indexStorage;
 
     @Before
     public void before() throws Exception {
@@ -79,13 +78,11 @@ public class EntityManagementServiceImplTest {
         TransactionExecutor te = new AutoCreateTransactionExecutor(tm);
 
         masterStorage = new MockMasterStorage();
-        indexStorage = new MockIndexStorage();
 
         service = new EntityManagementServiceImpl();
         ReflectionTestUtils.setField(service, "idGenerator", idGenerator);
         ReflectionTestUtils.setField(service, "transactionExecutor", te);
         ReflectionTestUtils.setField(service, "masterStorage", masterStorage);
-        ReflectionTestUtils.setField(service, "indexStorage", indexStorage);
 
     }
 
@@ -124,23 +121,12 @@ public class EntityManagementServiceImplTest {
         Assert.assertNotEquals(0, expectedEntity.id());
         Assert.assertEquals(new EntityFamily(0, 0), expectedEntity.family());
 
-        // 检查是否成功写入主库和索引库.
+        // 检查是否成功写入主库.
         IEntity masterEntity = masterStorage.selectOne(expectedEntity.id(), fatherEntityClass).get();
         Assert.assertEquals(expectedEntity.id(), masterEntity.id());
         Assert.assertEquals(expectedEntity.entityValue(), masterEntity.entityValue());
         Assert.assertEquals(expectedEntity.family(), masterEntity.family());
         Assert.assertEquals(0, masterEntity.version());
-
-        IEntity indexEntity = indexStorage.select(expectedEntity.id()).get();
-        Assert.assertEquals(expectedEntity.id(), indexEntity.id());
-
-        // 只保留可搜索字段.
-        Map<Long, IEntityField> fieldTable =
-            fatherEntityClass.fields().stream()
-                .filter(f -> f.config().isSearchable()).collect(Collectors.toMap(IEntityField::id, f -> f));
-        Assert.assertEquals(fieldTable.size(), indexEntity.entityValue().values().size());
-        Assert.assertEquals(fieldTable.size(), indexEntity.entityValue().values().stream()
-            .filter(v -> fieldTable.containsKey(v.getField().id())).collect(Collectors.toList()).size());
     }
 
     @Test
@@ -166,18 +152,6 @@ public class EntityManagementServiceImplTest {
         fatherValues.stream().forEach(v -> {
             Assert.assertEquals(v, expectedFatherValues.get(v.getField()));
         });
-        //验证父对像索引
-        IEntity fatherIndexEntity = indexStorage.select(expectedEntity.family().parent()).get();
-        Map<IEntityField, IValue> expectedFatherIndexValues =
-            expectedEntity.entityValue().values().stream().filter(
-                v -> fatherFieldTable.containsKey(v.getField().id()) && v.getField().config().isSearchable())
-                .collect(Collectors.toMap(IValue::getField, v -> v));
-        Collection<IValue> fatherIndexValues = fatherIndexEntity.entityValue().values().stream()
-            .filter(v -> expectedFatherIndexValues.containsKey(v.getField())).collect(Collectors.toList());
-        Assert.assertEquals(expectedFatherIndexValues.size(), fatherIndexValues.size());
-        fatherIndexValues.stream().forEach(v -> {
-            Assert.assertEquals(v, expectedFatherIndexValues.get(v.getField()));
-        });
 
         // 验证子对象
         Map<Long, IEntityField> childFieldTable =
@@ -196,18 +170,6 @@ public class EntityManagementServiceImplTest {
             Assert.assertEquals(v, expectedChildValues.get(v.getField()));
         });
 
-        //验证子对象索引
-        IEntity childIndexEntity = indexStorage.select(expectedEntity.id()).get();
-        Map<IEntityField, IValue> expectedChildIndexValues =
-            expectedEntity.entityValue().values().stream()
-                .filter(v -> v.getField().config().isSearchable())
-                .collect(Collectors.toMap(IValue::getField, v -> v));
-        Collection<IValue> childIndexValues = childIndexEntity.entityValue().values().stream()
-            .filter(v -> expectedChildIndexValues.containsKey(v.getField())).collect(Collectors.toList());
-        Assert.assertEquals(expectedChildIndexValues.size(), childIndexValues.size());
-        childIndexValues.stream().forEach(v -> {
-            Assert.assertEquals(v, expectedChildIndexValues.get(v.getField()));
-        });
     }
 
     @Test
@@ -226,12 +188,6 @@ public class EntityManagementServiceImplTest {
             masterEntity.entityValue().values().stream().filter(v -> v.getField().id() != removeField.id()).count()
         );
 
-        IEntity indexEntity = indexStorage.select(expectedEntity.id()).get();
-        Assert.assertEquals(
-            fatherEntityClass.fields().stream().filter(f ->
-                f.config().isSearchable() && f.id() != removeField.id()).count(),
-            indexEntity.entityValue().values().stream().filter(v -> v.getField().id() != removeField.id()).count()
-        );
     }
 
     @Test
@@ -249,13 +205,6 @@ public class EntityManagementServiceImplTest {
         // 验证父类
         IEntity masterEntity = masterStorage.selectOne(expectedEntity.family().parent(), fatherEntityClass).get();
         Assert.assertEquals("8888.8888", masterEntity.entityValue().getValue("f3").get().valueToString());
-        // 验证父类索引
-        masterEntity = indexStorage.select(expectedEntity.family().parent()).get();
-        Assert.assertEquals("8888.8888", masterEntity.entityValue().getValue("f3").get().valueToString());
-
-        //验证子类索引
-        IEntity indexEntity = indexStorage.select(expectedEntity.id()).get();
-        Assert.assertEquals("8888.8888", indexEntity.entityValue().getValue("f3").get().valueToString());
     }
 
     @Test

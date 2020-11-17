@@ -15,6 +15,7 @@ public class DefaultExecutorHint implements ExecutorHint {
     }
 
     private boolean rollback = false;
+    private boolean readOnley = true;
 
     @Override
     public boolean isRollback() {
@@ -24,5 +25,15 @@ public class DefaultExecutorHint implements ExecutorHint {
     @Override
     public void setRollback(boolean rollback) {
         this.rollback = rollback;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return readOnley;
+    }
+
+    @Override
+    public void setReadOnly(boolean readOnly) {
+        readOnley = readOnly;
     }
 }

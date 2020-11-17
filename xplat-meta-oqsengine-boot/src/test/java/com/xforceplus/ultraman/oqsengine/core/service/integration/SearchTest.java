@@ -4,6 +4,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 import com.google.common.collect.Comparators;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
+import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
@@ -19,13 +20,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.junit.*;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -33,7 +33,6 @@ import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
@@ -44,9 +43,8 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = OqsengineBootApplication.class
-    , webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class SearchTest extends AbstractCDCTest {
+@SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+public class SearchTest extends AbstractContainerTest {
 
     private boolean initialization;
 
@@ -62,11 +60,14 @@ public class SearchTest extends AbstractCDCTest {
     @Resource
     private EntityManagementService managementService;
 
-    @Autowired
-    private LongIdGenerator snowflakeIdGenerator;
+    @Resource(name = "snowflakeIdGenerator")
+    private LongIdGenerator idGenerator;
 
     @Resource
-    private IndexStorage indexStorage;
+    private DataSourcePackage dataSourcePackage;
+
+    @Resource
+    private RedisClient redisClient;
 
     @Resource
     private CommitIdStatusService commitIdStatusService;
@@ -94,7 +95,7 @@ public class SearchTest extends AbstractCDCTest {
 
         entities = Arrays.asList(
             new Entity(
-                snowflakeIdGenerator.next(),
+                idGenerator.next(),
                 mainEntityClass,
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "1"),
@@ -103,7 +104,7 @@ public class SearchTest extends AbstractCDCTest {
                     new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
                 ))),
             new Entity(
-                snowflakeIdGenerator.next(),
+                idGenerator.next(),
                 mainEntityClass,
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "1"),
@@ -112,7 +113,7 @@ public class SearchTest extends AbstractCDCTest {
                     new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
                 ))),
             new Entity(
-                snowflakeIdGenerator.next(),
+                idGenerator.next(),
                 mainEntityClass,
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "1"),
@@ -121,7 +122,7 @@ public class SearchTest extends AbstractCDCTest {
                     new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
                 ))),
             new Entity(
-                snowflakeIdGenerator.next(),
+                idGenerator.next(),
                 mainEntityClass,
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "1"),
@@ -130,7 +131,7 @@ public class SearchTest extends AbstractCDCTest {
                     new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
                 ))),
             new Entity(
-                snowflakeIdGenerator.next(),
+                idGenerator.next(),
                 mainEntityClass,
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "1"),
@@ -139,7 +140,7 @@ public class SearchTest extends AbstractCDCTest {
                     new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
                 ))),
             new Entity(
-                snowflakeIdGenerator.next(),
+                idGenerator.next(),
                 mainEntityClass,
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "1"),
@@ -149,7 +150,7 @@ public class SearchTest extends AbstractCDCTest {
                 )))
         );
 
-        buildEntities(entities, true);
+        buildEntities(entities);
     }
 
 
@@ -259,7 +260,7 @@ public class SearchTest extends AbstractCDCTest {
 
         entities = IntStream.range(0, masterSize).mapToObj(
             i -> {
-                Long id = snowflakeIdGenerator.next();
+                Long id = idGenerator.next();
                 return new Entity(
                     id,
                     mainEntityClass,
@@ -273,13 +274,13 @@ public class SearchTest extends AbstractCDCTest {
         ).collect(Collectors.toList());
 
 
-        buildEntities(entities, false);
+        buildEntities(entities);
 
         return entities.stream().map(x -> x.id()).collect(Collectors.toList());
     }
 
 
-    private void buildEntities(List<IEntity> entities, boolean insertIndex) throws SQLException {
+    private void buildEntities(List<IEntity> entities) throws SQLException {
         long txId = transactionManagementService.begin();
 
         for (IEntity e : entities) {
@@ -290,26 +291,6 @@ public class SearchTest extends AbstractCDCTest {
 
         transactionManagementService.restore(txId);
         transactionManagementService.commit();
-
-
-        if (insertIndex) {
-
-            long txId2 = transactionManagementService.begin();
-            long commitId = commitIdStatusService.getMin().get();
-
-            for (IEntity e : entities) {
-                transactionManagementService.restore(txId2);
-                StorageEntity storageEntity = new StorageEntity();
-                storageEntity.setId(e.id());
-                storageEntity.setEntity(e.entityClass().id());
-                storageEntity.setTx(txId);
-                storageEntity.setCommitId(commitId);
-                indexStorage.buildOrReplace(storageEntity, e.entityValue(), false);
-            }
-
-            transactionManagementService.restore(txId2);
-            transactionManagementService.commit();
-        }
     }
 
     @Before
@@ -317,17 +298,13 @@ public class SearchTest extends AbstractCDCTest {
 
         initialization = false;
         mainFields = Arrays.asList(
-            new EntityField(snowflakeIdGenerator.next(), "c1", FieldType.STRING, FieldConfig.build().searchable(true)),
-            new EntityField(snowflakeIdGenerator.next(), "c2", FieldType.LONG, FieldConfig.build().searchable(true)),
-            new EntityField(snowflakeIdGenerator.next(), "c3", FieldType.DECIMAL, FieldConfig.build().searchable(true)),
-            new EntityField(snowflakeIdGenerator.next(), "c4", FieldType.DATETIME, FieldConfig.build().searchable(true))
+            new EntityField(idGenerator.next(), "c1", FieldType.STRING, FieldConfig.build().searchable(true)),
+            new EntityField(idGenerator.next(), "c2", FieldType.LONG, FieldConfig.build().searchable(true)),
+            new EntityField(idGenerator.next(), "c3", FieldType.DECIMAL, FieldConfig.build().searchable(true)),
+            new EntityField(idGenerator.next(), "c4", FieldType.DATETIME, FieldConfig.build().searchable(true))
         );
 
-        mainEntityClass = new EntityClass(snowflakeIdGenerator.next(), "main", null, null, null, mainFields);
-
-        //initData(100, 100);
-
-        //initData();
+        mainEntityClass = new EntityClass(idGenerator.next(), "main", null, null, null, mainFields);
 
         initialization = true;
     }
@@ -335,39 +312,34 @@ public class SearchTest extends AbstractCDCTest {
     @After
     public void after() throws Exception {
         if (initialization) {
-            //clear();
+            clear();
         }
 
         initialization = false;
     }
 
     private void clear() throws SQLException {
-        Collection<IEntity> iEntities = new ArrayList<>();
-        iEntities.addAll(entities != null ? entities : Collections.emptyList());
-
-        long txId = transactionManagementService.begin();
-
-        for (IEntity e : iEntities) {
-            transactionManagementService.restore(txId);
-            managementService.delete(e);
-            indexStorage.delete(e);
-        }
-        transactionManagementService.restore(txId);
-        transactionManagementService.commit();
-
-        DataSource ds = indexWriteDataSourceSelector.select("any");
-        Connection conn = ds.getConnection();
-        Statement statement = conn.createStatement();
-        ResultSet rs = statement.executeQuery("select count(*) as count from oqsindex");
-        rs.next();
-        long size = rs.getLong(1);
-        try {
-            Assert.assertEquals(0, size);
-        } finally {
-            rs.close();
-            statement.close();
+        for (DataSource ds : dataSourcePackage.getMaster()) {
+            Connection conn = ds.getConnection();
+            Statement st = conn.createStatement();
+            st.executeUpdate("truncate table oqsbigentity");
+            st.close();
             conn.close();
         }
+
+        for (DataSource ds : dataSourcePackage.getIndexWriter()) {
+            Connection conn = ds.getConnection();
+            Statement st = conn.createStatement();
+            st.executeUpdate("truncate table oqsindex0");
+            st.executeUpdate("truncate table oqsindex1");
+            st.executeUpdate("truncate table oqsindex2");
+            st.close();
+            conn.close();
+        }
+
+        StatefulRedisConnection<String, String> conn = redisClient.connect();
+        conn.sync().flushall();
+        conn.close();
     }
 
     @Test

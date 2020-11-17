@@ -5,6 +5,8 @@ import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResourceType;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,6 +22,8 @@ import java.util.Optional;
  * @since 1.8
  */
 public class SqlConnectionTransactionResource extends AbstractConnectionTransactionResource {
+
+    final Logger logger = LoggerFactory.getLogger(SqlConnectionTransactionResource.class);
 
     private static final String UPDATE_COMMITID_SQL =
         "update %s set " + FieldDefine.COMMITID + " = ? where " + FieldDefine.TX + " = ?";
@@ -49,7 +53,8 @@ public class SqlConnectionTransactionResource extends AbstractConnectionTransact
     public void commit(long commitId) throws SQLException {
         Optional<Transaction> transactionOp = getTransaction();
         if (transactionOp.isPresent()) {
-            updateCommitId(transactionOp.get().id(), commitId);
+            Transaction tx = transactionOp.get();
+            updateCommitId(tx.id(), commitId);
             super.commit(commitId);
 
             /**
@@ -71,6 +76,11 @@ public class SqlConnectionTransactionResource extends AbstractConnectionTransact
             stat.setLong(2, txId);
 
             stat.executeUpdate();
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("Update the commit number in the new change data in the transaction ({}) to {}.",
+                    txId, commitId);
+            }
         } finally {
             if (stat != null) {
                 stat.close();

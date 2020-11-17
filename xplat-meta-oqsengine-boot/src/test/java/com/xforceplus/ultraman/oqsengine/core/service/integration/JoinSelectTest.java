@@ -1,9 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
+import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
@@ -18,23 +17,27 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import org.junit.*;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.StatefulRedisConnection;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * 关联查询集成测试.
@@ -45,14 +48,11 @@ import java.util.*;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class JoinSelectTest {
-
-    private static GenericContainer manticore;
-
+public class JoinSelectTest extends AbstractContainerTest {
 
     final Logger logger = LoggerFactory.getLogger(JoinSelectTest.class);
 
-    @Resource
+    @Resource(name = "snowflakeIdGenerator")
     private LongIdGenerator idGenerator;
 
     @Resource
@@ -64,8 +64,11 @@ public class JoinSelectTest {
     @Resource
     private TransactionManagementService transactionManagementService;
 
-    @Resource(name = "indexWriteDataSourceSelector")
-    private Selector<DataSource> indexWriteDataSourceSelector;
+    @Resource
+    private DataSourcePackage dataSourcePackage;
+
+    @Resource
+    private RedisClient redisClient;
 
     private boolean initialization;
 
@@ -221,32 +224,27 @@ public class JoinSelectTest {
     }
 
     private void clear() throws SQLException {
-        Collection<IEntity> iEntities = new ArrayList<>();
-        iEntities.addAll(entities != null ? entities : Collections.emptyList());
-        iEntities.addAll(driverEntities != null ? driverEntities : Collections.emptyList());
-
-        long txId = transactionManagementService.begin();
-
-        for (IEntity e : iEntities) {
-            transactionManagementService.restore(txId);
-            managementService.delete(e);
-        }
-        transactionManagementService.restore(txId);
-        transactionManagementService.commit();
-
-        DataSource ds = indexWriteDataSourceSelector.select("any");
-        Connection conn = ds.getConnection();
-        Statement statement = conn.createStatement();
-        ResultSet rs = statement.executeQuery("select count(*) as count from oqsindex");
-        rs.next();
-        long size = rs.getLong(1);
-        try {
-            Assert.assertEquals(0, size);
-        } finally {
-            rs.close();
-            statement.close();
+        for (DataSource ds : dataSourcePackage.getMaster()) {
+            Connection conn = ds.getConnection();
+            Statement st = conn.createStatement();
+            st.executeUpdate("truncate table oqsbigentity");
+            st.close();
             conn.close();
         }
+
+        for (DataSource ds : dataSourcePackage.getIndexWriter()) {
+            Connection conn = ds.getConnection();
+            Statement st = conn.createStatement();
+            st.executeUpdate("truncate table oqsindex0");
+            st.executeUpdate("truncate table oqsindex1");
+            st.executeUpdate("truncate table oqsindex2");
+            st.close();
+            conn.close();
+        }
+
+        StatefulRedisConnection<String, String> conn = redisClient.connect();
+        conn.sync().flushall();
+        conn.close();
     }
 
     private void buildEntities(List<IEntity> entities) throws SQLException {
@@ -257,32 +255,5 @@ public class JoinSelectTest {
         }
         transactionManagementService.restore(txId);
         transactionManagementService.commit();
-    }
-
-    @AfterClass
-    public static void cleanEnvironment() throws Exception {
-        if (manticore != null) {
-            manticore.close();
-        }
-    }
-
-    @BeforeClass
-    public static void prepareEnvironment() throws Exception {
-        manticore = new GenericContainer<>("manticoresearch/manticore:3.4.2")
-            .withExposedPorts(9306)
-            .withNetworkAliases("manticore")
-            .withClasspathResourceMapping("manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
-            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-            .waitingFor(Wait.forListeningPort());
-        manticore.start();
-
-        String jdbcUrl = String.format(
-            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
-            manticore.getContainerIpAddress(),
-            manticore.getFirstMappedPort());
-
-        System.setProperty("MANTICORE_JDBC_URL", jdbcUrl);
-
-        System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
     }
 }

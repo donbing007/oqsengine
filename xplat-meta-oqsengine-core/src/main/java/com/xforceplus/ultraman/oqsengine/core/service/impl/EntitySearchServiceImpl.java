@@ -15,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -70,6 +71,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Resource(name = "callThreadPool")
     private ExecutorService threadPool;
+
+    @Resource(name = "serviceTransactionExecutor")
+    private TransactionExecutor transactionExecutor;
 
     @Resource
     private CommitIdStatusService commitIdStatusService;
@@ -315,7 +319,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 }
             }
 
-            Collection<EntityRef> refs = combinedStorage.select(minUnSyncCommitId, conditions, entityClass, sort, page);
+            Collection<EntityRef> refs = combinedStorage.select(minUnSyncCommitId, useConditions, entityClass, sort, page);
 
             return buildEntities(refs, entityClass);
         } catch (Exception ex) {

@@ -9,11 +9,12 @@ import java.sql.SQLException;
 /**
  * 表示一个任务.
  *
+ * @param <RES> 返回结果.
  * @author dongbin
  * @version 0.1 2020/2/17 15:22
  * @since 1.8
  */
-public interface StorageTask {
+public interface ResourceTask<RES> {
 
     /**
      * 执行任务.
@@ -22,13 +23,15 @@ public interface StorageTask {
      * @return
      * @throws SQLException
      */
-    Object run(TransactionResource resource, ExecutorHint hint) throws SQLException;
+    RES run(TransactionResource resource, ExecutorHint hint) throws SQLException;
 
     /**
      * 获取数据源.
      *
      * @return
      */
-    DataSource getDataSource();
+    default DataSource getDataSource() {
+        return null;
+    }
 
 }

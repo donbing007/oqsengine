@@ -99,22 +99,20 @@
             </plugin>
         </plugins>
     </build>
+
     <modules>
-        <module>xplat-meta-oqsengine-cdc</module>
+        <module>xplat-meta-oqsengine-common</module>
+        <module>xplat-meta-oqsengine-pojo</module>
         <module>xplat-meta-oqsengine-status</module>
+        <module>xplat-meta-oqsengine-storage</module>
+        <module>xplat-meta-oqsengine-masterdb</module>
+        <module>xplat-meta-oqsengine-index</module>
+        <module>xplat-meta-oqsengine-cdc</module>
+        <module>xplat-meta-oqsengine-core</module>
+        <module>xplat-meta-oqsengine-transfer</module>
+        <module>xplat-meta-oqsengine-boot</module>
+        <module>xplat-meta-oqsengine-testreport</module>
     </modules>
-    <!--    <modules>-->
-<!--        <module>xplat-meta-oqsengine-common</module>-->
-<!--        <module>xplat-meta-oqsengine-pojo</module>-->
-<!--        <module>xplat-meta-oqsengine-storage</module>-->
-<!--        <module>xplat-meta-oqsengine-masterdb</module>-->
-<!--        <module>xplat-meta-oqsengine-index</module>-->
-<!--        <module>xplat-meta-oqsengine-core</module>-->
-<!--        <module>xplat-meta-oqsengine-transfer</module>-->
-<!--        <module>xplat-meta-oqsengine-sdk</module>-->
-<!--        <module>xplat-meta-oqsengine-boot</module>-->
-<!--        <module>xplat-meta-oqsengine-testreport</module>-->
-<!--    </modules>-->
 
     <distributionManagement>
         <repository>
@@ -299,31 +297,4 @@
         <test.skip>false</test.skip>
     </properties>
 
-
-    <profiles>
-        <profile>
-            <id>oqsengine</id>
-            <modules>
-                <module>xplat-meta-oqsengine-common</module>
-                <module>xplat-meta-oqsengine-pojo</module>
-                <module>xplat-meta-oqsengine-status</module>
-                <module>xplat-meta-oqsengine-storage</module>
-                <module>xplat-meta-oqsengine-masterdb</module>
-                <module>xplat-meta-oqsengine-index</module>
-                <module>xplat-meta-oqsengine-cdc</module>
-                <module>xplat-meta-oqsengine-core</module>
-                <module>xplat-meta-oqsengine-transfer</module>
-                <module>xplat-meta-oqsengine-boot</module>
-                <module>xplat-meta-oqsengine-testreport</module>
-            </modules>
-        </profile>
-        <profile>
-            <id>sdk</id>
-            <modules>
-                <module>xplat-meta-oqsengine-pojo</module>
-                <module>xplat-meta-oqsengine-sdk</module>
-                <module>xplat-meta-oqsengine-transfer</module>
-            </modules>
-        </profile>
-    </profiles>
 </project>

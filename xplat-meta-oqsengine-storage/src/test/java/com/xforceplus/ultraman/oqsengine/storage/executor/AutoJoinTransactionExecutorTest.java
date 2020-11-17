@@ -68,7 +68,7 @@ public class AutoJoinTransactionExecutorTest {
             (TransactionResourceFactory<Connection>) (key, resource, autocommit) ->
                 new MockConnectionTransactionResource(key, resource, autocommit));
         // 分片键不关心
-        te.execute(new DataSourceShardingStorageTask(dataSourceSelector, "") {
+        te.execute(new DataSourceShardingResourceTask(dataSourceSelector, "") {
             @Override
             public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                 Connection conn = (Connection) resource.value();
@@ -97,7 +97,7 @@ public class AutoJoinTransactionExecutorTest {
             (TransactionResourceFactory<Connection>) (key, resource, autocommit) ->
                 new MockConnectionTransactionResource(key, resource, autocommit));
         // 分片键不关心
-        te.execute(new DataSourceShardingStorageTask(dataSourceSelector, "") {
+        te.execute(new DataSourceShardingResourceTask(dataSourceSelector, "") {
             @Override
             public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                 Connection conn = (Connection) resource.value();
@@ -132,7 +132,7 @@ public class AutoJoinTransactionExecutorTest {
             (TransactionResourceFactory<Connection>) (key, resource, autocommit) ->
                 new MockConnectionTransactionResource(key, resource, autocommit));
         // 分片键不关心
-        te.execute(new DataSourceShardingStorageTask(dataSourceSelector, "") {
+        te.execute(new DataSourceShardingResourceTask(dataSourceSelector, "") {
             @Override
             public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                 Assert.assertEquals(currentT.query(mockDataSource.toString()).get(), resource);

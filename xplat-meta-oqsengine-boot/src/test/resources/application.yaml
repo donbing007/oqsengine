@@ -17,13 +17,11 @@ transaction:
 
 threadPool:
   # 0 or not exist use cpu core + 1
-  io:
-    worker: 0
-    queue: 500
-  # 0 or not exist use cpu core + 1
   call:
     worker: 0
     queue: 1000
+  cdc:
+    worker: 0
 
 maxVisibleNumber: 10000
 
@@ -37,26 +35,26 @@ storage:
         enabled: false
         size: 1
   index:
-    # Do not use concatenation symbols such as "_","-". This will cause the execution to fail.
-    name: "oqsindex"
+    search:
+      name: "oqsindex"
+      maxQueryTimeMs: 0
     write:
-        shard:
-        enabled: false
-  undo:
-    # simple | redis
-    store: "simple"
+      name: "oqsindex"
+      shard:
+        enabled: true
+        size: 3
 
 redis:
-  uri: ${REDIS_URI}
+  uri: "redis://${REDIS_HOST}:${REDIS_PORT}"
 
 cdc:
   connect:
     type: single
-    string: ${CDC_CONNECT}
-    port: ${CDC_PORT}
+    string: "${CANAL_HOST}"
+    port: ${CANAL_PORT}
     destination: nly-v1
     username: root
-    password: xplat
+    password: root
     subscribeFilter: .*\.oqsbigentity.*
   endpoint:
     health:

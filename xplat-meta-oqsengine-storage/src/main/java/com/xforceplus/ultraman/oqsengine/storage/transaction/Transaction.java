@@ -81,6 +81,18 @@ public interface Transaction {
     void attach(long id);
 
     /**
+     * Is it a read-only transaction?
+     *
+     * @return true readOnly,false not readOnly.
+     */
+    boolean isReadOnley();
+
+    /**
+     * Declare a write transaction.
+     */
+    void declareWriteTransaction();
+
+    /**
      * Exclusive actions ensure that only one thread executes per transaction.
      *
      * @param action Actions that need to be performed.

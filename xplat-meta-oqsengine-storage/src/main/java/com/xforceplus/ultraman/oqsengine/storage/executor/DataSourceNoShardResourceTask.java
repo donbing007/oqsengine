@@ -9,11 +9,11 @@ import javax.sql.DataSource;
  * @version 0.1 2020/11/6 13:55
  * @since 1.8
  */
-public abstract class DataSourceNoShardStorageTask implements StorageTask {
+public abstract class DataSourceNoShardResourceTask implements ResourceTask {
 
     private DataSource dataSource;
 
-    public DataSourceNoShardStorageTask(DataSource dataSource) {
+    public DataSourceNoShardResourceTask(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 

@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
 
 import javax.sql.DataSource;
-import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
@@ -38,8 +37,8 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
     }
 
     @Override
-    public Object execute(StorageTask storageTask) throws SQLException {
-        DataSource targetDataSource = storageTask.getDataSource();
+    public Object execute(ResourceTask resourceTask) throws SQLException {
+        DataSource targetDataSource = resourceTask.getDataSource();
 
         String dbKey = buildResourceKey(targetDataSource);
 
@@ -79,8 +78,15 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
 
         ExecutorHint hint = new DefaultExecutorHint();
         try {
-            return storageTask.run(resource, hint);
+            return resourceTask.run(resource, hint);
         } finally {
+            if (tx.isPresent()) {
+                Transaction t = tx.get();
+                if (!hint.isReadOnly()) {
+                    t.declareWriteTransaction();
+                }
+            }
+
             if (!tx.isPresent()) {
                 resource.destroy();
             }

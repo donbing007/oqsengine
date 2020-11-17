@@ -14,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
@@ -30,6 +31,9 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * EntitySearchServiceImpl Tester.
@@ -99,10 +103,16 @@ public class EntitySearchServiceImplTest {
 
         threadPool = Executors.newFixedThreadPool(3);
 
+        CombinedStorage combinedStorage = new CombinedStorage(masterStorage, indexStorage);
+
+        CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
+        when(commitIdStatusService.getMin()).thenReturn(Optional.of(0L));
+
         instance = new EntitySearchServiceImpl();
-        ReflectionTestUtils.setField(instance, "masterStorage", masterStorage);
-        ReflectionTestUtils.setField(instance, "indexStorage", indexStorage);
+        ReflectionTestUtils.setField(instance, "combinedStorage", combinedStorage);
         ReflectionTestUtils.setField(instance, "threadPool", threadPool);
+        ReflectionTestUtils.setField(instance, "commitIdStatusService", commitIdStatusService);
+
         instance.init();
     }
 
@@ -165,13 +175,6 @@ public class EntitySearchServiceImplTest {
     public void after() throws Exception {
         threadPool.shutdown();
     }
-
-
-    @Test
-    public void testSelect() {
-
-    }
-
 
     /**
      * Method: selectOne(long id, IEntityClass entityClass)

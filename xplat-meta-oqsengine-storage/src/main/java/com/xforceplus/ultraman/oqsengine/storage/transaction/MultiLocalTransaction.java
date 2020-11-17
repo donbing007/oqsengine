@@ -36,6 +36,7 @@ public class MultiLocalTransaction implements Transaction {
     private boolean rollback;
     private Lock lock = new ReentrantLock();
     private LongIdGenerator longIdGenerator;
+    private boolean writeTx = false;
 
     private Timer.Sample durationMetrics;
 
@@ -126,6 +127,16 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
+    public boolean isReadOnley() {
+        return !writeTx;
+    }
+
+    @Override
+    public void declareWriteTransaction() {
+        writeTx = true;
+    }
+
+    @Override
     public void exclusiveAction(TransactionExclusiveAction action) throws SQLException {
         lock.lock();
         try {
@@ -133,7 +144,7 @@ public class MultiLocalTransaction implements Transaction {
             action.act();
         } finally {
             lock.unlock();
-            logger.debug("The exclusive operation of the transaction({}) ends.");
+            logger.debug("The exclusive operation of the transaction({}) ends.", this.id());
         }
 
     }
@@ -174,18 +185,26 @@ public class MultiLocalTransaction implements Transaction {
         }
         try {
             List<SQLException> exHolder = new LinkedList<>();
-            long commitId = longIdGenerator.next();
-            if (!CommitHelper.isLegal(commitId)) {
-                throw new SQLException(String.format("The submission number obtained is invalid.[%d]", commitId));
+            long commitId = 0;
+            if (!isReadOnley()) {
+                commitId = longIdGenerator.next();
+                if (!CommitHelper.isLegal(commitId)) {
+                    throw new SQLException(String.format("The submission number obtained is invalid.[%d]", commitId));
+                }
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
+                }
             }
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
-            }
             for (TransactionResource transactionResource : transactionResourceHolder) {
                 try {
                     if (commit) {
-                        transactionResource.commit(commitId);
+                        if (isReadOnley()) {
+                            transactionResource.commit();
+                        } else {
+                            transactionResource.commit(commitId);
+                        }
                     } else {
                         transactionResource.rollback();
                     }

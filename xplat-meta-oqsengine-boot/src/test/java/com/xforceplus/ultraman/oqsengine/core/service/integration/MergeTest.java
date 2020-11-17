@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
-import com.xforceplus.ultraman.oqsengine.core.service.impl.EntityRefComparator;
+import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityRefComparator;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;

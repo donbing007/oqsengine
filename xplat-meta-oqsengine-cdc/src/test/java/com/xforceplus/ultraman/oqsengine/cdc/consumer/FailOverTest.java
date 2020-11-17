@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardStorageTask;
+import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
@@ -171,7 +171,7 @@ public class FailOverTest extends AbstractContainer {
             m2.setAccessible(true);
 
             return (int) masterTransactionExecutor.execute(
-                    new DataSourceNoShardStorageTask(dataSource) {
+                new DataSourceNoShardResourceTask(dataSource) {
 
                         @Override
                         public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
@@ -223,7 +223,7 @@ public class FailOverTest extends AbstractContainer {
             m2.setAccessible(true);
 
             return (int) masterTransactionExecutor.execute(
-                    new DataSourceNoShardStorageTask(dataSource) {
+                new DataSourceNoShardResourceTask(dataSource) {
 
                         @Override
                         public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {

@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityRefComparator;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -9,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
@@ -137,14 +139,14 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
             retRefs.addAll(refs);
         }
 
-        long start = page.getIndex();
+        PageScope scope = page.getAppointPage(1);
         long pageSize = page.getPageSize();
 
         //update totalCount
         long totalCount = page.getTotalCount();
         page.setTotalCount(totalCount + masterRefsWithoutDeleted.size());
 
-        long skips = (start - 1) * pageSize;
+        long skips = scope == null ? 0 : scope.getStartLine();
         List<EntityRef> limitedSelect = retRefs.stream().skip(skips < 0 ? 0 : skips).limit(pageSize).collect(toList());
         return limitedSelect;
     }
