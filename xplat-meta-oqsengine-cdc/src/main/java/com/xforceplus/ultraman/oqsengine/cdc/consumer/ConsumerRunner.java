@@ -199,7 +199,7 @@ public class ConsumerRunner extends Thread {
         CDCMetrics cdcMetrics = cdcMetricsService.query();
         if (null != cdcMetrics) {
             syncCanalAndCallback(cdcMetrics);
-            logger.debug("CDC Sync->Recover->Callback AckMetrics success, {}", JSON.toJSON(cdcMetrics));
+            logger.info("CDC Sync->Recover->Callback AckMetrics success, {}", JSON.toJSON(cdcMetrics));
         }
     }
 
