@@ -33,6 +33,9 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     @Override
     public void cdcAck(CDCAckMetrics ackMetrics) {
+        if (null == cdcMetrics) {
+            cdcMetrics = new CDCMetrics();
+        }
         cdcMetrics.setCdcAckMetrics(ackMetrics);
 
         if (cdcMetrics.getCdcAckMetrics().getLastConsumerTime() > lastConsumerTime) {

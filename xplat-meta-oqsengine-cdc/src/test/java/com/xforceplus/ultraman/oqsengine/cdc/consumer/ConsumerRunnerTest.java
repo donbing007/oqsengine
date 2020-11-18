@@ -103,8 +103,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
         Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
 
         stopConsumerRunner();
-
-        Thread.sleep(10 * 1000);
     }
 
     @Test
@@ -141,9 +139,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
 
         stopConsumerRunner();
-
-        Thread.sleep(10 * 1000);
-
     }
 
     @Test
@@ -190,14 +185,12 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
 
         stopConsumerRunner();
-
-        Thread.sleep(10 * 1000);
     }
 
     @Test
     public void loopTransactionOverBatches() throws SQLException, InterruptedException {
         int gap = 10;
-        int size = 250;
+        int size = 100;
 
         startConsumerRunner(15000);
 
@@ -223,7 +216,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         tx.commit();
         transactionManager.finish();
 
-        Thread.sleep(30 * 1000);
+        Thread.sleep(40 * 1000);
 
         CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
@@ -233,8 +226,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
         Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
 
         stopConsumerRunner();
-
-        Thread.sleep(10 * 1000);
     }
 
 
@@ -242,8 +233,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
     public void loopSmallTransactionBatches() throws SQLException, InterruptedException {
         int gap = 10;
         int loops = 100;
-
-
 
         startConsumerRunner(50000);
 
@@ -278,8 +267,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
         Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
 
         stopConsumerRunner();
-
-        Thread.sleep(10 * 1000);
     }
 
 
@@ -307,6 +294,4 @@ public class ConsumerRunnerTest extends AbstractContainer {
     private int delete(IEntity entity) throws SQLException {
         return masterStorage.delete(entity);
     }
-
-
 }
