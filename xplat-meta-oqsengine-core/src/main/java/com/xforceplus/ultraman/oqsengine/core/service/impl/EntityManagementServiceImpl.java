@@ -2,13 +2,18 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
@@ -20,10 +25,16 @@ import io.micrometer.core.instrument.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -46,16 +57,60 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private MasterStorage masterStorage;
 
+    @Resource
+    private CDCStatusService cdcStatusService;
+
+    /**
+     * 可以接受的最大同步时间毫秒.
+     */
+    private long allowMaxSyncTimeMs = 10000;
+
     private Counter inserCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "build");
     private Counter replaceCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "replace");
     private Counter deleteCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "delete");
     private Counter failCountTotal = Metrics.counter(MetricsDefine.FAIL_COUNT_TOTAL);
 
+    private ScheduledExecutorService checkCDCStatusWorker;
+    private volatile boolean ready = true;
+
+    @PostConstruct
+    public void init() {
+        checkCDCStatusWorker = Executors.newScheduledThreadPool(1, ExecutorHelper.buildNameThreadFactory("CDC-monitor"));
+        checkCDCStatusWorker.scheduleWithFixedDelay(() -> {
+            Optional<CDCMetrics> mOp = cdcStatusService.get();
+            if (mOp.isPresent()) {
+                CDCMetrics metrics = mOp.get();
+                CDCAckMetrics ackMetrics = metrics.getCdcAckMetrics();
+                CDCStatus cdcStatus = ackMetrics.getCdcConsumerStatus();
+                if (CDCStatus.CONNECTED != cdcStatus) {
+                    logger.warn(
+                        "Detected that the CDC synchronization service has stopped and is currently in a state of {}.",
+                        cdcStatus.name());
+                    ready = false;
+                    return;
+                }
+
+                long useTimeMs = ackMetrics.getTotalUseTime();
+                if (useTimeMs > allowMaxSyncTimeMs) {
+                    ready = false;
+                    return;
+                }
+
+                ready = true;
+            }
+        }, 5, 5, TimeUnit.SECONDS);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        ExecutorHelper.shutdownAndAwaitTermination(checkCDCStatusWorker, 3600);
+    }
+
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "build"})
     @Override
     public IEntity build(IEntity entity) throws SQLException {
-
+        checkReady();
         // 克隆一份,后续的修改不影响入参.
         IEntity entityClone;
         try {
@@ -122,6 +177,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "replace"})
     @Override
     public ResultStatus replace(IEntity entity) throws SQLException {
+        checkReady();
 
         if (!masterStorage.selectOne(entity.id(), entity.entityClass()).isPresent()) {
             failCountTotal.increment();
@@ -198,6 +254,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "delete"})
     @Override
     public ResultStatus delete(IEntity entity) throws SQLException {
+        checkReady();
 
         try {
             return (ResultStatus) transactionExecutor.execute(new ResourceTask() {
@@ -263,16 +320,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         return delete(entity);
     }
 
-    // 构造一个适合索引的 IEntity 实例.
-    private IEntity buildIndexEntity(IEntity target) {
-        target.entityValue().filter(v -> v.getField().config().isSearchable());
-
-        // 没有任何可搜索的警告.
-        warnNoSearchable(target);
-
-        return target;
-    }
-
     private boolean isSub(IEntity entity) {
         return entity.entityClass().extendEntityClass() != null;
     }
@@ -320,6 +367,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     // 判断是否操作冲突.
     private boolean isConflict(int size) {
         return size <= 0;
+    }
+
+    // 检查当前是状态是否可写入.
+    private void checkReady() throws SQLException {
+        if (!ready) {
+            throw new SQLException("Data is blocked synchronously and cannot be written now.");
+        }
     }
 
 }

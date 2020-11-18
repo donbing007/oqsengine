@@ -15,6 +15,8 @@
 * xplat-meta-oqsengine-index 索引实现.
 * xplat-meta-oqsengine-masterdb 主数据库实现.
 * xplat-meta-oqsengine-pojo 相关封装对象定义.(EntityClass等)
+* xplat-meta-oqsengine-cdc 数据同步相关.
+* xplat-meta-oqsengine-status 状态管理.
 * xplat-meta-oqsengine-sdk SDK 实现.
 * xplat-meta-oqsengine-transfer 通信实现.
 * xplat-meta-oqsengine-testreport 测试覆盖的聚合项目.不影响实际功能.
@@ -76,54 +78,24 @@ storage:
       enabled: false # 是否表分区.
       size: 1 # 逻辑表分片数量,默认为1.
   index:
-    name: "oqsindex" # 索引库名称,和主库作用相同.
+    search:
+      name: "oqsindex" # 搜索使用的索引名称.
+      maxQueryTimeMs: 0 # 搜索使用的最大毫秒.
+    write:
+      name: "oqsindex" # 写入索引使用的基础名称.
+      shard:
+        enabled: false # 是否分表.
+        size: 1 # 分表数量
 ```
 
 ## master 结构
-```sql
-create table oqsbigentity
-(
-	id bigint not null comment '数据主键',
-	entity bigint default 0 not null comment 'entity 的类型 id.',
-	version int default 0 not null comment '当前数据版本.',
-	time bigint default 0 not null comment '数据操作最后时间.',
-	pref bigint default 0 not null comment '指向当前类型继承的父类型数据实例id.',
-	cref bigint default 0 not null comment '当前父类数据实例指向子类数据实例的 id.',
-	deleted boolean default false not null comment '是否被删除.',
-	attribute json not null comment '当前 entity 的属性集合.',
-	constraint oqsengine_pk primary key (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-```
+查看script/mastdb.sql
 不过由于主库进行了分表设计,使用的是表名加上数字,从0开始.如里分表为3,那么如下需要3个物理表.
 oqsbigentity0, oqsbigentity1, oqsbigentity2
 storage.master.shard.enabled = true 才会启效.
 
 ## mainticore (Sphinx) 结构
-索引的结构需要预先在配置文件中指定.如下.
-```text
-index oqsindex
-{
-        type = rt
-        path = /var/lib/manticore/data/oqsindex
-        rt_attr_bigint = entity
-        rt_attr_bigint = pref
-        rt_attr_bigint = cref
-        rt_attr_json = jsonfields
-        rt_field = fullfields
-
-        # 实时索引的块大小,建议在1G 到 2G 范围.
-        rt_mem_limit = 1024m
-        # 中辍索引的最小字符范围,不能小于2.
-        min_infix_len = 3
-        ngram_chars = U+3000..U+2FA1F
-        ngram_len = 1 
-        
-        # 以下两个配置项为必须,因为 OQSEngine 会用到区域匹配.
-        # see https://docs.manticoresearch.com/latest/html/conf_options_reference/index_configuration_options.html#index-zones
-        index_zones = F*
-        html_strip = 1
-}
-```
+查看script/manticore.sql
 以上索引结构中,id 是默认的其和主库保持同步.即同一个 id 表示同一个实例数据.
 * entity      实例数据的类型 id.
 * pref        指向实例父类实例id.
@@ -159,8 +131,11 @@ oqsengine 会在 /actuator/prometheus 公开一系列指标来输出当前系统
 | executor_completed_tasks_total | name(线程池名称) | 已经完成的任务数量 |
 | oqs_write_count_total | action(build,delete,replace) | 写入数据总量 |
 | oqs_transaction_count | | 活动事务量 |
+| oqs_transaction_duration_seconds | | 事务的持续时间 |
 | oqs_fail_count_total | | 错误总量 |
 | oqs_read_count_total | action(one,nultiple,serch) | 读取数据总量 |
 | oqs_process_delay_latency_seconds_max | action(one,condition) | 操作延时最大值(秒) |
 | oqs_process_delay_latency_seconds_count | action(one,condition) | 操作延时统计数量 |
 | oqs_process_delay_latency_seconds_sum | action(one,condition) | 操作延时总和 |
+| oqs_unsync_commitid_count_total | | 提交但未同步的提交号数量 |
+| oqs_cdc_sync_delay_latency | | CDC 同步的延时 |

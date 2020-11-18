@@ -1,9 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.micrometer.core.instrument.Metrics;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -11,6 +13,7 @@ import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 提交号状态管理者.
@@ -30,6 +33,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     private String key;
 
+    private AtomicLong unSyncCommitIdSize;
+
     public CommitIdStatusServiceImpl() {
         this(DEFAULT_KEY);
     }
@@ -39,6 +44,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         if (this.key == null || this.key.isEmpty()) {
             throw new IllegalArgumentException("The KEY is invalid.");
         }
+
     }
 
     @PostConstruct
@@ -46,6 +52,12 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         connect = redisClient.connect();
         RedisCommands<String, String> commands = connect.sync();
         commands.clientSetname("oqs.commitid");
+
+        unSyncCommitIdSize = Metrics.gauge(
+            MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(0));
+
+        unSyncCommitIdSize.addAndGet(1);
+
     }
 
     @PreDestroy
@@ -57,7 +69,9 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     public long save(long commitId) {
         RedisCommands<String, String> commands = connect.sync();
         commands.zadd(key, (double) commitId, Long.toString(commitId));
+        unSyncCommitIdSize.incrementAndGet();
         return commitId;
+
     }
 
     @Override

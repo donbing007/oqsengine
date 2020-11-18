@@ -50,4 +50,10 @@ public class MetricsDefine {
      * 未同步的提交号数量.
      */
     public static final String UN_SYNC_COMMIT_ID_COUNT_TOTAL = PREFIX + ".unsync.commitid.count.total";
+
+    /**
+     * CDC同步的延时.
+     */
+    public static final String CDC_SYNC_DELAY_LATENCY_SECONDS = PREFIX + ".cdc.sync.delay.latency";
+
 }

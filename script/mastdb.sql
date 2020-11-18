@@ -37,3 +37,8 @@ create table oqsbigentity
     constraint oqsengine_pk primary key (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 PARTITION BY HASH(id) PARTITIONS 40;
  */
+
+/**
+  增加事务和提交号的联合索引.
+ */
+create index tx_commitid_index on oqsbigentity (tx, commitid);
