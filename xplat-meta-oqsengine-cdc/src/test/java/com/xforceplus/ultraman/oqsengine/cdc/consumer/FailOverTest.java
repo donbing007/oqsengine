@@ -66,8 +66,7 @@ public class FailOverTest extends AbstractContainer {
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init("localhost",
-                environment.getServicePort("cannal", 11111),
+        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
                 "nly-v1", "root", "xplat");
 
         cdcDaemonService = new CDCDaemonService();

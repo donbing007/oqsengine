@@ -47,8 +47,7 @@ public class CDCDaemonServiceTest extends AbstractContainer {
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", testCallbackService);
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init("localhost",
-                environment.getServicePort("canal-server_1", 11111),
+        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
                 "nly-v1", "root", "xplat");
 
         cdcDaemonService = new CDCDaemonService();
@@ -62,7 +61,7 @@ public class CDCDaemonServiceTest extends AbstractContainer {
     public void binlogSyncTest() throws InterruptedException {
         cdcDaemonService.startDaemon();
 
-        Thread.sleep(10_000);
+        Thread.sleep(1000_000);
 
         cdcDaemonService.stopDaemon();
     }
