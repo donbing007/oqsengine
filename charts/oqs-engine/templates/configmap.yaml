@@ -24,6 +24,8 @@ data:
           health:
             redis:
               enabled: false
+            db:
+              enabled: false
           endpoints:
             enabled-by-default: false
             web:
