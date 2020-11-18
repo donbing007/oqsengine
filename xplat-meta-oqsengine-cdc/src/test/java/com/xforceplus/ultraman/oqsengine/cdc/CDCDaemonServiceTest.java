@@ -61,7 +61,7 @@ public class CDCDaemonServiceTest extends AbstractContainer {
     public void binlogSyncTest() throws InterruptedException {
         cdcDaemonService.startDaemon();
 
-        Thread.sleep(1000_000);
+        Thread.sleep(10_000);
 
         cdcDaemonService.stopDaemon();
     }
