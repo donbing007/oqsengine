@@ -49,8 +49,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init("localhost",
-                environment.getServicePort("canal-server_1", 11111),
+        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
                 "nly-v1", "root", "xplat");
 
         consumerRunner = new ConsumerRunner(initConsumerService(), cdcMetricsService, singleCDCConnector);
@@ -224,7 +223,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         tx.commit();
         transactionManager.finish();
 
-        Thread.sleep(50 * 1000);
+        Thread.sleep(30 * 1000);
 
         CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);

@@ -67,7 +67,7 @@ public class FailOverTest extends AbstractContainer {
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
         singleCDCConnector.init("localhost",
-                environment.getServicePort("canal-server_1", 11111),
+                environment.getServicePort("cannal", 11111),
                 "nly-v1", "root", "xplat");
 
         cdcDaemonService = new CDCDaemonService();
