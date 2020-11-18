@@ -1,4 +1,4 @@
-FROM registry.cn-hangzhou.aliyuncs.com/xforceplus/image-javabase:0.2.1
+FROM openjdk:oraclelinux8
 LABEL maintainer="wangzheng@xforceplus.com"
 LABEL maintainer="dongbin@xxforceplus.com"
 

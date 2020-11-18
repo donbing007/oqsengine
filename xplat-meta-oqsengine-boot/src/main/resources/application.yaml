@@ -57,7 +57,7 @@ redis:
   # us 微秒
   # ns 纳秒
   uri: "redis://localhost:6379"
-  maxReqQueue: MAX
+  maxReqQueue: 10000
 
 management:
   health:
