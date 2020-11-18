@@ -56,8 +56,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         unSyncCommitIdSize = Metrics.gauge(
             MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(0));
 
-        unSyncCommitIdSize.addAndGet(1);
-
     }
 
     @PreDestroy
@@ -113,7 +111,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     public long obsolete(long commitId) {
         RedisCommands<String, String> commands = connect.sync();
         long size = commands.zrem(key, Long.toString(commitId));
+
         if (size == 1) {
+
+            unSyncCommitIdSize.decrementAndGet();
+
             return commitId;
         } else {
             return -1;
@@ -127,5 +129,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         commands.multi();
         Arrays.stream(commitIds).mapToObj(id -> Long.toString(id)).forEach(id -> commands.zrem(key, id));
         commands.exec();
+
+        unSyncCommitIdSize.addAndGet(-1 * commitIds.length);
     }
 }
