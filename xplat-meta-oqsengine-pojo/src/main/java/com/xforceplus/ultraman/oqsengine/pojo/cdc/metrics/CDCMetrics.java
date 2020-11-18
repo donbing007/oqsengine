@@ -61,7 +61,9 @@ public class CDCMetrics {
     }
 
     public void consumeSuccess(CDCAckMetrics temp) {
+        this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
         this.cdcAckMetrics.setLastConsumerTime(System.currentTimeMillis());
+        this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
         this.cdcAckMetrics.setExecuteRows(temp.getExecuteRows());
         this.cdcAckMetrics.setTotalUseTime(temp.getTotalUseTime());
         if (!temp.getCommitList().isEmpty()) {

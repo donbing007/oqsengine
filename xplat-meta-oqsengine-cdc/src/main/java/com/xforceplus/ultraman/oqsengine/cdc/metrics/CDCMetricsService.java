@@ -59,12 +59,17 @@ public class CDCMetricsService {
     }
 
     public void callBackSuccess(CDCAckMetrics temp) {
-        this.getCdcMetrics().consumeSuccess(temp);
+        cdcMetrics.consumeSuccess(temp);
         callback();
     }
 
     public void callBackError(CDCStatus cdcStatus) {
-        this.getCdcMetrics().getCdcAckMetrics().setCdcConsumerStatus(cdcStatus);
+        cdcMetrics.getCdcAckMetrics().setCdcConsumerStatus(cdcStatus);
+        callback();
+    }
+
+    public void heartBeat(long batchId) {
+        cdcMetrics.heartBeat(batchId);
         callback();
     }
 

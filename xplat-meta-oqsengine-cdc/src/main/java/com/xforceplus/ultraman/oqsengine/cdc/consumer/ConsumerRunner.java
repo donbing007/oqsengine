@@ -190,7 +190,7 @@ public class ConsumerRunner extends Thread {
         //  同步状态
         cdcConnector.ack(batchId);
 
-        cdcMetricsService.getCdcMetrics().heartBeat(batchId);
+        cdcMetricsService.heartBeat(batchId);
     }
 
     private void syncLastBatch() throws SQLException {
