@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.google.common.collect.Comparators;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
@@ -24,7 +23,9 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -77,16 +78,6 @@ public class SearchTest extends AbstractContainerTest {
 
     @Resource
     private TransactionManagementService transactionManagementService;
-
-    @AfterClass
-    public static void cleanEnvironment() throws Exception {
-
-    }
-
-    @BeforeClass
-    public static void prepareEnvironment() throws Exception {
-        System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
-    }
 
 
     private void initData() throws SQLException {
