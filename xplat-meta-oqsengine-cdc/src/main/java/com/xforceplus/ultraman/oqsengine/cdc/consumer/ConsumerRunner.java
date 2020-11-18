@@ -86,7 +86,7 @@ public class ConsumerRunner extends Thread {
                 connectAndReset(runningStatus.equals(RunningStatus.INIT));
             } catch (Exception e) {
                 closeToNextReconnect(!runningStatus.equals(RunningStatus.INIT)
-                    , String.format("%s, %s", "canal-server connection error, {}", e.getMessage()));
+                    , String.format("%s, %s", "canal-server connection error", e.getMessage()));
                 continue;
             }
             //  连接成功，重置标志位
@@ -96,7 +96,7 @@ public class ConsumerRunner extends Thread {
                 //  开始消费
                 consume();
             } catch (Exception e) {
-                closeToNextReconnect(true, String.format("%s, %s", "canal-client consume error, ", e.getMessage()));
+                closeToNextReconnect(true, String.format("%s, %s", "canal-client consume error", e.getMessage()));
             }
         }
     }
