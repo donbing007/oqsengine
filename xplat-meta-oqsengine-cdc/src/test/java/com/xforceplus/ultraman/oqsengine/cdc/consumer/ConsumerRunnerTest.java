@@ -63,7 +63,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
     private void stopConsumerRunner() throws InterruptedException {
         int loop = 0;
-        int maxLoop = 500;
+        int maxLoop = 200;
         while (loop < maxLoop) {
             if (expectedCount == mockRedisCallbackService.getExecuted().get()) {
                 break;
