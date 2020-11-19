@@ -58,7 +58,7 @@ public class CDCMetricsService {
         return cdcMetrics;
     }
 
-    public void callBackSuccess(CDCAckMetrics temp) {
+    public void callBackSuccess(CDCMetrics temp) {
         cdcMetrics.consumeSuccess(temp);
         callback();
     }

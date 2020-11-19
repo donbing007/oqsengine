@@ -225,7 +225,7 @@ public class ConsumerRunner extends Thread {
         syncUnCommit(cdcMetrics.getCdcUnCommitMetrics());
 
         //  回调告知当前成功信息
-        callBackSuccess(cdcMetrics.getCdcAckMetrics());
+        callBackSuccess(cdcMetrics);
     }
 
     private void syncUnCommit(CDCUnCommitMetrics unCommitMetrics) {
@@ -248,7 +248,7 @@ public class ConsumerRunner extends Thread {
         cdcMetricsService.callBackError(cdcStatus);
     }
 
-    private void callBackSuccess(CDCAckMetrics currentMetrics) {
-        cdcMetricsService.callBackSuccess(currentMetrics);
+    private void callBackSuccess(CDCMetrics cdcMetrics) {
+        cdcMetricsService.callBackSuccess(cdcMetrics);
     }
 }
