@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -62,7 +61,18 @@ public class ConsumerRunnerTest extends AbstractContainer {
         consumerRunner.start();
     }
 
-    private void stopConsumerRunner() {
+    private void stopConsumerRunner() throws InterruptedException {
+        int loop = 0;
+        int maxLoop = 1000;
+        while (loop < maxLoop) {
+            if (expectedCount == mockRedisCallbackService.getExecuted().get()) {
+                break;
+            }
+
+            Thread.sleep(1_000);
+            loop ++;
+        }
+        Assert.assertNotEquals(maxLoop, loop);
         consumerRunner.shutdown();
     }
 
@@ -93,15 +103,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
         tx.commit();
         transactionManager.finish();
 
-        Thread.sleep(30 * 1000);
-
-        CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
-        Assert.assertNotNull(cdcMetrics);
-        Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
-
-        Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
-        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
-
         stopConsumerRunner();
     }
 
@@ -127,16 +128,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
         //将事务正常提交,并从事务管理器中销毁事务.
         tx.commit();
         transactionManager.finish();
-
-        Thread.sleep(30 * 1000);
-
-        CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
-        Assert.assertNotNull(cdcMetrics);
-        Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
-
-        Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
-        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
-
 
         stopConsumerRunner();
     }
@@ -174,16 +165,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
             t += gap;
         }
 
-        Thread.sleep(30 * 1000);
-
-        CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
-        Assert.assertNotNull(cdcMetrics);
-        Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
-
-        Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
-        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
-
-
         stopConsumerRunner();
     }
 
@@ -216,15 +197,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
         tx.commit();
         transactionManager.finish();
 
-        Thread.sleep(50 * 1000);
-
-        CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
-        Assert.assertNotNull(cdcMetrics);
-        Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
-
-        Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
-        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
-
         stopConsumerRunner();
     }
 
@@ -256,15 +228,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
             transactionManager.finish();
             i += gap;
         }
-
-        Thread.sleep(30 * 1000);
-
-        CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
-        Assert.assertNotNull(cdcMetrics);
-        Assert.assertNotNull(cdcMetrics.getCdcAckMetrics());
-
-        Assert.assertNotNull(cdcMetrics.getCdcUnCommitMetrics());
-        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
 
         stopConsumerRunner();
     }

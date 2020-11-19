@@ -45,7 +45,7 @@ public class FailOverTest extends AbstractContainer {
 
     private CDCDaemonService cdcDaemonService;
 
-    private static final int partition = 1000000;
+    private static final int partition = 10000000;
 
     private static final int max = 100;
 
