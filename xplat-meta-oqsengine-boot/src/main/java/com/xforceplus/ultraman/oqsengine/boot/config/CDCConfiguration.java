@@ -48,7 +48,7 @@ public class CDCConfiguration {
     @Bean("clusterCDCConnector")
     public CDCConnector clusterCDCConnector(
         @Value("${cdc.connect.string}") String connectString,
-        @Value("${cdc.connect.destination}") String destination,
+        @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
         @Value("${cdc.connect.password}") String password,
         @Value("${cdc.connect.subscribeFilter}") String subscribeFilter,
@@ -67,7 +67,7 @@ public class CDCConfiguration {
     public CDCConnector singleCDCConnector(
         @Value("${cdc.connect.string}") String connectString,       //  general with ip
         @Value("${cdc.connect.port}") int port,
-        @Value("${cdc.connect.destination}") String destination,
+        @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
         @Value("${cdc.connect.password}") String password,
         @Value("${cdc.connect.subscribeFilter}") String subscribeFilter,

@@ -56,20 +56,24 @@ public class CDCMetrics {
 
     public void heartBeat(long batchId) {
         this.batchId = batchId;
+        this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
         this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
         this.cdcAckMetrics.setLastUpdateTime(System.currentTimeMillis());
     }
 
-    public void consumeSuccess(CDCAckMetrics temp) {
+    public void consumeSuccess(CDCMetrics temp) {
+        this.batchId = temp.getBatchId();
+        this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
         this.cdcAckMetrics.setLastConsumerTime(System.currentTimeMillis());
-        this.cdcAckMetrics.setExecuteRows(temp.getExecuteRows());
-        this.cdcAckMetrics.setTotalUseTime(temp.getTotalUseTime());
-        if (!temp.getCommitList().isEmpty()) {
-            this.cdcAckMetrics.setCommitList(temp.getCommitList());
+        this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
+        this.cdcAckMetrics.setExecuteRows(temp.getCdcAckMetrics().getExecuteRows());
+        this.cdcAckMetrics.setTotalUseTime(temp.getCdcAckMetrics().getTotalUseTime());
+        if (!temp.getCdcAckMetrics().getCommitList().isEmpty()) {
+            this.cdcAckMetrics.setCommitList(temp.getCdcAckMetrics().getCommitList());
         }
 
-        if (temp.getMaxSyncUseTime() > ZERO) {
-            this.cdcAckMetrics.setMaxSyncUseTime(temp.getMaxSyncUseTime());
+        if (temp.getCdcAckMetrics().getMaxSyncUseTime() > ZERO) {
+            this.cdcAckMetrics.setMaxSyncUseTime(temp.getCdcAckMetrics().getMaxSyncUseTime());
         }
     }
 

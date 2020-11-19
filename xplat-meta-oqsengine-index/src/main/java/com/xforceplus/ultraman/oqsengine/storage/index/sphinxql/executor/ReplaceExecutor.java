@@ -70,9 +70,9 @@ public class ReplaceExecutor implements Executor<StorageEntity, Integer> {
         // fullfileds
         st.setString(9, toFullString(storageEntity.getFullFields()));
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
+//        if (logger.isDebugEnabled()) {
+//            logger.debug(st.toString());
+//        }
 
         st.executeUpdate();
 

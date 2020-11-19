@@ -66,7 +66,6 @@ cdc:
     type: single
     string: 127.0.0.1
     port: 11111
-    destination: oqsengine
     username: root
     password: root
     subscribeFilter: .*\.oqsbigentity.*

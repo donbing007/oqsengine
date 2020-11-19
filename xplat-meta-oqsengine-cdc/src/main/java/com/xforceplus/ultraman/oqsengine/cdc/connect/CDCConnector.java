@@ -29,6 +29,8 @@ public abstract class CDCConnector {
 
     protected CanalConnector canalConnector;
 
+    private boolean isClosed = true;
+
     public void shutdown() {
         try {
             if (canalConnector.checkValid()) {
@@ -49,6 +51,8 @@ public abstract class CDCConnector {
             canalConnector.connect();
             //  订阅destination
             canalConnector.subscribe(subscribeFilter);
+
+            isClosed = false;
         }
     }
 
@@ -56,7 +60,7 @@ public abstract class CDCConnector {
      * 关闭canal连接
      */
     public void close(boolean withRollbackLast) {
-        if (null != canalConnector) {
+        if (null != canalConnector && !isClosed) {
             try {
                 //  先rollback再关闭
                 if (withRollbackLast) {
@@ -70,6 +74,7 @@ public abstract class CDCConnector {
             } finally {
                 //  关闭连接CanalServer
                 canalConnector.disconnect();
+                isClosed = true;
             }
         }
     }
