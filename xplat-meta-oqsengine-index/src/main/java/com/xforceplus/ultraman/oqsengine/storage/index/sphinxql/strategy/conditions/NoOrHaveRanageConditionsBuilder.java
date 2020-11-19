@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.SphinxQLConditionBuilder;
 
@@ -16,7 +18,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuilder {
 
     @Override
-    public String build(Conditions conditions) {
+    public String build(IEntityClass entityClass, Conditions conditions) {
 
         StringBuilder buff = new StringBuilder();
 
@@ -48,7 +50,10 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
             if (buff.length() > 0) {
                 buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
             }
-            buff.append(super.build(eqConditions));
+            buff.append(super.build(entityClass, eqConditions));
+        } else {
+            buff.append(" ").append(SqlKeywordDefine.AND).append(" ")
+                .append(FieldDefine.ENTITY).append(" = ").append(entityClass.id());
         }
         return buff.toString();
     }

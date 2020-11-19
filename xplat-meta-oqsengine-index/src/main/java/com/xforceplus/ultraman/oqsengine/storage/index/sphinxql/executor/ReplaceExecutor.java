@@ -34,7 +34,7 @@ public class ReplaceExecutor implements Executor<StorageEntity, Integer> {
         replaceSql =
                 String.format(SQLConstant.WRITER_SQL,
                         "replace", indexTableName,
-                        FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.PREF, FieldDefine.CREF,
+                    FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.ENTITY_F, FieldDefine.PREF, FieldDefine.CREF,
                         FieldDefine.TX, FieldDefine.COMMIT_ID,
                         FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
     }
@@ -55,18 +55,20 @@ public class ReplaceExecutor implements Executor<StorageEntity, Integer> {
         st.setLong(1, storageEntity.getId());
         // entity
         st.setLong(2, storageEntity.getEntity());
+        // entityf
+        st.setString(3, Long.toString(storageEntity.getEntity()));
         // pref
-        st.setLong(3, storageEntity.getPref());
+        st.setLong(4, storageEntity.getPref());
         // cref
-        st.setLong(4, storageEntity.getCref());
+        st.setLong(5, storageEntity.getCref());
         //tx
-        st.setLong(5, storageEntity.getTx());
+        st.setLong(6, storageEntity.getTx());
         //commitid
-        st.setLong(6, storageEntity.getCommitId());
+        st.setLong(7, storageEntity.getCommitId());
         // jsonfileds
-        st.setString(7, SphinxQLHelper.serializableJson(storageEntity.getJsonFields()));
+        st.setString(8, SphinxQLHelper.serializableJson(storageEntity.getJsonFields()));
         // fullfileds
-        st.setString(8, toFullString(storageEntity.getFullFields()));
+        st.setString(9, toFullString(storageEntity.getFullFields()));
 
         if (logger.isDebugEnabled()) {
             logger.debug(st.toString());

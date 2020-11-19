@@ -37,7 +37,9 @@ import org.testcontainers.containers.wait.strategy.Wait;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
@@ -185,35 +187,20 @@ public class SphinxQLIndexStorageTest {
         truncate();
 
         initData(storage);
-//        Transaction tx = transactionManager.create();
-//        transactionManager.bind(tx.id());
-//
-//        try {
-//
-//            tx.commit();
-//        } catch (Exception ex) {
-//
-//            if (!tx.isCompleted()) {
-//                tx.rollback();
-//            }
-//
-//            throw ex;
-//
-//        } finally {
-//            transactionManager.finish();
-//        }
-//
-//        // 确认没有事务.
-//        Assert.assertFalse(transactionManager.getCurrent().isPresent());
 
     }
 
     private void truncate() throws SQLException {
+        List<DataSource> dataSources = dataSourcePackage.getIndexWriter();
+        for (DataSource ds : dataSources) {
+            Connection conn = ds.getConnection();
+            Statement st = conn.createStatement();
+            st.executeUpdate("truncate table oqsindex0");
+            st.executeUpdate("truncate table oqsindex1");
+            st.executeUpdate("truncate table oqsindex2");
 
-        if (entityes != null) {
-            for (IEntity entity : entityes) {
-                storage.delete(entity);
-            }
+            st.close();
+            conn.close();
         }
     }
 
@@ -671,7 +658,6 @@ public class SphinxQLIndexStorageTest {
                 }
             });
         } catch (Exception ex) {
-            transactionManager.getCurrent().get().rollback();
             throw ex;
         }
     }

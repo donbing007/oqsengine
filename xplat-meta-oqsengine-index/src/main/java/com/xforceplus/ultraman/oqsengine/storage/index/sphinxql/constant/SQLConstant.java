@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant;
 
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-
 /**
  * 版权：    上海云砺信息科技有限公司
  * 创建者:   youyifan
@@ -11,12 +9,13 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefi
  */
 public class SQLConstant {
 
-    public static final String WRITER_SQL = "%s into %s (%s, %s, %s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?,?,?)";
+    public static final String WRITER_SQL = "%s into %s (%s, %s, %s, %s, %s, %s, %s, %s,%s) values(?,?,?,?,?,?,?,?,?)";
     public static final String DELETE_SQL = "delete from %s where id = ?";
     /**
      * %s 顺序为 where 条件, 排序.
+     * NO_ENTITY表示不会增加entity的过滤.
      */
-    public static final String SELECT_SQL = "select id, pref, cref %s from %s where entity = ? %s %s limit ?,? option max_matches=?,max_query_time=?,ranker=none";
+    public static final String SELECT_SQL = "select id, pref, cref %s from %s where %s %s limit ?,? option max_matches=?,max_query_time=?,ranker=none";
     public static final String FILTER_IDS = "id not in (%s)";
 
     public static final String FILTER_COMMIT = "commitid < %s";

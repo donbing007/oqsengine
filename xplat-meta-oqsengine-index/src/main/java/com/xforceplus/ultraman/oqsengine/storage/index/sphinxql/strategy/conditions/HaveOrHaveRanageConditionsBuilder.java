@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 
 /**
@@ -10,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
  */
 public class HaveOrHaveRanageConditionsBuilder implements ConditionsBuilder<String> {
     @Override
-    public String build(Conditions conditions) {
+    public String build(IEntityClass entityClass, Conditions conditions) {
         //还未实现 by dongbin.
         throw new UnsupportedOperationException();
     }

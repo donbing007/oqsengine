@@ -85,7 +85,7 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
 
     @Override
     public Collection<EntityRef> execute(Conditions conditions) throws SQLException {
-        String where = conditionsBuilderFactory.getBuilder().build(conditions);
+        String where = conditionsBuilderFactory.getBuilder().build(entityClass, conditions);
         String sql = buildSQL(where);
 
         PreparedStatement st = getResource().value().prepareStatement(

@@ -2,9 +2,9 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.SphinxQLConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.SphinxQLConditionQueryBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
@@ -31,15 +31,16 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
      * 没有 or 只有 and 不需要关注连接符.
      */
     @Override
-    public String build(Conditions conditions) {
+    public String build(IEntityClass entityClass, Conditions conditions) {
 
         StringBuilder idBuff = new StringBuilder();
         StringBuilder buff = new StringBuilder();
-        buff.append("MATCH('@").append(FieldDefine.FULL_FIELDS).append(" ");
+        buff.append("MATCH('(@").append(FieldDefine.FULL_FIELDS).append(" ");
         // 用以判断是否还没有条件,方便条件之间的空格.
         int idEmptyLen = idBuff.length();
         int emtpyLen = buff.length();
         boolean allNegative = true;
+        boolean allIdentifie = true;
         SphinxQLConditionBuilder conditionQueryBuilder;
 
         /**
@@ -60,6 +61,7 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
                     idBuff.append(conditionQueryBuilder.build(condition));
 
                 } else {
+                    allIdentifie = false;
                     conditionQueryBuilder = conditionQueryBuilderFactory.getQueryBuilder(condition, true);
                     if (buff.length() > emtpyLen) {
                         buff.append(" ");
@@ -85,30 +87,51 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
             }
         }
 
-        //判断是否都是不等于条件,是的话需要补充所有字段才能成立排除.
-        // -F123 =Sg 表示从所有字段中排除掉 F123.
-        if (allNegative) {
-            buff.append(" =").append(SphinxQLHelper.ALL_DATA_FULL_TEXT);
-        }
-        buff.append("')");
+        // 如果全是主键id查询,那不需要以下处理.
+        if (!allIdentifie) {
 
-        StringBuilder temp = new StringBuilder();
-        if (idBuff.length() > 0) {
-            temp.append(idBuff.toString()).append(" ").append(SqlKeywordDefine.AND).append(" ");
-            buff.insert(0, temp.toString());
-        }
+            //判断是否都是不等于条件,是的话需要补充所有字段才能成立排除.
+            // -F123 =Sg 表示从所有字段中排除掉 F123.
+            if (allNegative) {
+                buff.append(") (@entityf =\"").append(entityClass.id()).append("\")");
+                buff.append("')");
+            } else {
+                buff.append(")')");
+            }
 
-        // issue #14
-        if (!secondaryFilterConditions.isEmpty()) {
-            String condtitonStr = buildSecondFilterConditions(secondaryFilterConditions);
-            if (!condtitonStr.isEmpty()) {
-                temp.delete(0, temp.length());
-                temp.append(condtitonStr)
-                    .append(" ")
-                    .append(SqlKeywordDefine.AND)
-                    .append(" ");
+            StringBuilder temp = new StringBuilder();
+            if (idBuff.length() > 0) {
+                temp.append(idBuff.toString()).append(" ").append(SqlKeywordDefine.AND).append(" ");
                 buff.insert(0, temp.toString());
             }
+
+            // issue #14
+            if (!secondaryFilterConditions.isEmpty()) {
+                String condtitonStr = buildSecondFilterConditions(secondaryFilterConditions);
+                if (!condtitonStr.isEmpty()) {
+                    temp.delete(0, temp.length());
+                    temp.append(condtitonStr)
+                        .append(" ")
+                        .append(SqlKeywordDefine.AND)
+                        .append(" ");
+                    buff.insert(0, temp.toString());
+                }
+            }
+
+            if (!allNegative) {
+                // add entity filter
+                temp.delete(0, temp.length());
+                temp.append(FieldDefine.ENTITY).append(" = ").append(entityClass.id())
+                    .append(" ").append(SqlKeywordDefine.AND).append(" ");
+                buff.insert(0, temp.toString());
+            }
+        } else {
+
+            buff.delete(0, buff.length());
+            if (idBuff.length() > 0) {
+                buff.append(idBuff.toString());
+            }
+
         }
 
         return buff.toString();

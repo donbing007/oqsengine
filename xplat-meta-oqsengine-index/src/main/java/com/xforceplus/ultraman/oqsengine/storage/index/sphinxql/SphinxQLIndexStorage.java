@@ -110,7 +110,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                     sphinxQLConditionsBuilderFactory,
                     storageStrategyFactory,
                     maxSearchTimeoutMs).execute(
-                    Tuple.of(entityClass.id(), conditions, page, sort, filterIds, commitId));
+                    Tuple.of(entityClass, conditions, page, sort, filterIds, commitId));
             }
 
             @Override

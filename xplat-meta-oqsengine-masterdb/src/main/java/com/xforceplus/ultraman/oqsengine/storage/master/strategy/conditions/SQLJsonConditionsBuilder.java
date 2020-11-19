@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.SQLConditionQueryBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
@@ -21,7 +22,7 @@ public class SQLJsonConditionsBuilder implements ConditionsBuilder<String>, Stor
     private SQLConditionQueryBuilderFactory sqlConditionQueryBuilderFactory;
 
     @Override
-    public String build(Conditions conditions) {
+    public String build(IEntityClass entityClass, Conditions conditions) {
         StringBuilder sql = new StringBuilder();
         ConditionBuilder<String> cb;
         for (Condition condition : conditions.collectCondition()) {

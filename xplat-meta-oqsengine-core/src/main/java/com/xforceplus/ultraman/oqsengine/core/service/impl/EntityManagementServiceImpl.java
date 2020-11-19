@@ -64,6 +64,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      * 可以接受的最大同步时间毫秒.
      */
     private long allowMaxSyncTimeMs = 10000;
+    /**
+     * 可以接爱的最大心跳间隔.
+     */
+    private long allowMaxLiveTimeMs = 3000;
 
     private Counter inserCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "build");
     private Counter replaceCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "replace");
@@ -77,6 +81,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public void init() {
         checkCDCStatusWorker = Executors.newScheduledThreadPool(1, ExecutorHelper.buildNameThreadFactory("CDC-monitor"));
         checkCDCStatusWorker.scheduleWithFixedDelay(() -> {
+            /**
+             * 几种情况会认为是CDC同步停止.
+             * 1. CDC状态非正常.
+             * 2. CDC状态最后更新时间超过阀值.
+             * 3. CDC同步最大时间超过阀值.
+             */
             Optional<CDCMetrics> mOp = cdcStatusService.get();
             if (mOp.isPresent()) {
                 CDCMetrics metrics = mOp.get();
@@ -86,6 +96,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     logger.warn(
                         "Detected that the CDC synchronization service has stopped and is currently in a state of {}.",
                         cdcStatus.name());
+                    ready = false;
+                    return;
+                }
+
+                long liveTimeMs = ackMetrics.getLastUpdateTime();
+                if (System.currentTimeMillis() - liveTimeMs > allowMaxLiveTimeMs) {
                     ready = false;
                     return;
                 }

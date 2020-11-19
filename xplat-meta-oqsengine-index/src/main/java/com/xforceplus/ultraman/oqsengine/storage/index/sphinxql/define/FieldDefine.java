@@ -20,6 +20,11 @@ public class FieldDefine {
     public static final String ENTITY = "entity";
 
     /**
+     * entity标识,全文字段.
+     */
+    public static final String ENTITY_F = "entityf";
+
+    /**
      * 父类实体标识.
      */
     public static final String PREF = "pref";

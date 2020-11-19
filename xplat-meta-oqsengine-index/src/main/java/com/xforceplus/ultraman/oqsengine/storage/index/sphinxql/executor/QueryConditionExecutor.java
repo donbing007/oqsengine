@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -31,7 +32,7 @@ import static java.util.stream.Collectors.joining;
 /**
  * Query condition Executor
  */
-public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions, Page, Sort, List<Long>, Long>, List<EntityRef>> {
+public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Conditions, Page, Sort, List<Long>, Long>, List<EntityRef>> {
 
     Logger logger = LoggerFactory.getLogger(QueryConditionExecutor.class);
 
@@ -59,7 +60,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
         this.maxQueryTimeMs = maxQueryTimeMs;
     }
 
-    public static Executor<Tuple6<Long, Conditions, Page, Sort, List<Long>, Long>, List<EntityRef>> build(
+    public static Executor<Tuple6<IEntityClass, Conditions, Page, Sort, List<Long>, Long>, List<EntityRef>> build(
         String indexTableName
         , TransactionResource<Connection> resource
         , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
@@ -215,16 +216,16 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
 
     //TODO
     @Override
-    public List<EntityRef> execute(Tuple6<Long, Conditions, Page, Sort, List<Long>, Long> queryCondition) throws SQLException {
+    public List<EntityRef> execute(Tuple6<IEntityClass, Conditions, Page, Sort, List<Long>, Long> queryCondition) throws SQLException {
 
         Conditions conditions = queryCondition._2();
-        Long entityId = queryCondition._1();
+        IEntityClass entityClass = queryCondition._1();
         Page page = queryCondition._3();
         Sort sort = queryCondition._4();
         List<Long> filterIds = queryCondition._5();
         Long commitId = queryCondition._6();
 
-        String whereCondition = conditionsBuilderFactory.getBuilder(conditions).build(conditions);
+        String whereCondition = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);
 
         if (filterIds != null && !filterIds.isEmpty()) {
             String ids = filterIds.stream().map(Object::toString).collect(joining(","));
@@ -246,10 +247,10 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
             }
 
         }
-
-        if (!whereCondition.isEmpty()) {
-            whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
-        }
+//
+//        if (!whereCondition.isEmpty()) {
+//            whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
+//        }
 
         if (page.isEmptyPage()) {
             return Collections.emptyList();
@@ -283,15 +284,14 @@ public class QueryConditionExecutor implements Executor<Tuple6<Long, Conditions,
         PreparedStatement st = null;
         ResultSet rs = null;
         try {
-            st = ((Connection) resource.value()).prepareStatement(sql);
-            st.setLong(1, entityId);
-            st.setLong(2, 0);
-            st.setLong(3, page.getPageSize() * page.getIndex());
-            st.setLong(4, page.hasVisibleTotalCountLimit() ?
+            st = resource.value().prepareStatement(sql);
+            st.setLong(1, 0);
+            st.setLong(2, page.getPageSize() * page.getIndex());
+            st.setLong(3, page.hasVisibleTotalCountLimit() ?
                 page.getVisibleTotalCount()
                 : page.getPageSize() * page.getIndex());
             // add max query timeout.
-            st.setLong(5, maxQueryTimeMs);
+            st.setLong(4, maxQueryTimeMs);
             if (logger.isDebugEnabled()) {
                 logger.debug(st.toString());
             }

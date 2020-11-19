@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 
 /**
@@ -14,10 +14,14 @@ import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
  */
 public class EmptyConditionsBuilder implements ConditionsBuilder<String> {
 
-    private String SELECT_ALL = "";
-
     @Override
-    public String build(Conditions conditions) {
-        return SELECT_ALL;
+    public String build(IEntityClass entityClass, Conditions conditions) {
+        StringBuilder buff = new StringBuilder();
+        buff.append("MATCH('@")
+            .append(FieldDefine.ENTITY_F)
+            .append(" =\"")
+            .append(entityClass.id())
+            .append("\"')");
+        return buff.toString();
     }
 }

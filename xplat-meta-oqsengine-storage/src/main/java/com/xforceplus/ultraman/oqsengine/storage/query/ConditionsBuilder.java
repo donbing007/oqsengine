@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.query;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 
 /**
  * 条件组构造器.
@@ -14,9 +15,11 @@ public interface ConditionsBuilder<V> {
 
     /**
      * 构造出条件的字符串表示.
+     *
+     * @param entityClass 查询主类型.
      * @param conditions 条件.
      * @return 构造结果.
      */
-    V build(Conditions conditions);
+    V build(IEntityClass entityClass, Conditions conditions);
 
 }
