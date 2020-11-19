@@ -1,9 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.cdc.metrics;
 
+import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,16 +59,19 @@ public class CDCMetricsService {
     }
 
     public void callBackSuccess(CDCMetrics temp) {
+        logger.debug("success consumer, cdcStatus : {}", JSON.toJSON(temp));
         cdcMetrics.consumeSuccess(temp);
         callback();
     }
 
     public void callBackError(CDCStatus cdcStatus) {
+        logger.debug("error, cdcStatus : {}", cdcStatus);
         cdcMetrics.getCdcAckMetrics().setCdcConsumerStatus(cdcStatus);
         callback();
     }
 
     public void heartBeat(long batchId) {
+        logger.debug("heart beat, batchId : {}", batchId);
         cdcMetrics.heartBeat(batchId);
         callback();
     }
@@ -78,7 +81,7 @@ public class CDCMetricsService {
             try {
                 cdcMetricsCallback.cdcSaveLastUnCommit(cdcMetrics);
             } catch (Exception e) {
-                logger.error("back up unCommitMetrics to redis error, unCommitMetrics : {}", cdcMetrics.toString());
+                logger.error("back up unCommitMetrics to redis error, unCommitMetrics : {}", JSON.toJSON(cdcMetrics));
                 e.printStackTrace();
             }
         });
@@ -101,7 +104,7 @@ public class CDCMetricsService {
             try {
                 cdcMetricsCallback.cdcAck(cdcMetrics.getCdcAckMetrics());
             } catch (Exception e) {
-                logger.error("callback error, metrics : {}", cdcMetrics.getCdcAckMetrics().toString());
+                logger.error("callback error, metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
                 e.printStackTrace();
             }
         });

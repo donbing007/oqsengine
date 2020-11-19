@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.cdc.consumer;
+package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
