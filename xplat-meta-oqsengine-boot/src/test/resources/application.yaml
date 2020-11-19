@@ -24,6 +24,7 @@ threadPool:
     worker: 0
 
 maxVisibleNumber: 10000
+ignoreCDCStatusCheck: true
 
 storage:
   timeoutMs:

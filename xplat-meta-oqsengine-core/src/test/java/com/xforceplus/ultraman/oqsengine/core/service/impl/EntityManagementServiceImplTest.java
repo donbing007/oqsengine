@@ -79,7 +79,7 @@ public class EntityManagementServiceImplTest {
 
         masterStorage = new MockMasterStorage();
 
-        service = new EntityManagementServiceImpl();
+        service = new EntityManagementServiceImpl(true);
         ReflectionTestUtils.setField(service, "idGenerator", idGenerator);
         ReflectionTestUtils.setField(service, "transactionExecutor", te);
         ReflectionTestUtils.setField(service, "masterStorage", masterStorage);

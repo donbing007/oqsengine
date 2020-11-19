@@ -69,6 +69,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      */
     private long allowMaxLiveTimeMs = 3000;
 
+    /**
+     * 忽略CDC状态检查.
+     */
+    private boolean ignoreCDCStatus;
+
     private Counter inserCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "build");
     private Counter replaceCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "replace");
     private Counter deleteCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "delete");
@@ -77,49 +82,67 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private ScheduledExecutorService checkCDCStatusWorker;
     private volatile boolean ready = true;
 
+    public EntityManagementServiceImpl() {
+        this(false);
+    }
+
+    public EntityManagementServiceImpl(boolean ignoreCDCStatus) {
+        this.ignoreCDCStatus = ignoreCDCStatus;
+    }
+
     @PostConstruct
     public void init() {
-        checkCDCStatusWorker = Executors.newScheduledThreadPool(1, ExecutorHelper.buildNameThreadFactory("CDC-monitor"));
-        checkCDCStatusWorker.scheduleWithFixedDelay(() -> {
-            /**
-             * 几种情况会认为是CDC同步停止.
-             * 1. CDC状态非正常.
-             * 2. CDC状态最后更新时间超过阀值.
-             * 3. CDC同步最大时间超过阀值.
-             */
-            Optional<CDCMetrics> mOp = cdcStatusService.get();
-            if (mOp.isPresent()) {
-                CDCMetrics metrics = mOp.get();
-                CDCAckMetrics ackMetrics = metrics.getCdcAckMetrics();
-                CDCStatus cdcStatus = ackMetrics.getCdcConsumerStatus();
-                if (CDCStatus.CONNECTED != cdcStatus) {
-                    logger.warn(
-                        "Detected that the CDC synchronization service has stopped and is currently in a state of {}.",
-                        cdcStatus.name());
-                    ready = false;
-                    return;
-                }
+        if (!ignoreCDCStatus) {
+            logger.info("Ignore CDC status checks.");
+            checkCDCStatusWorker = Executors.newScheduledThreadPool(1, ExecutorHelper.buildNameThreadFactory("CDC-monitor"));
+            checkCDCStatusWorker.scheduleWithFixedDelay(() -> {
+                /**
+                 * 几种情况会认为是CDC同步停止.
+                 * 1. CDC状态非正常.
+                 * 2. CDC状态最后更新时间超过阀值.
+                 * 3. CDC同步最大时间超过阀值.
+                 */
+                Optional<CDCMetrics> mOp = cdcStatusService.get();
+                if (mOp.isPresent()) {
+                    CDCMetrics metrics = mOp.get();
+                    CDCAckMetrics ackMetrics = metrics.getCdcAckMetrics();
+                    CDCStatus cdcStatus = ackMetrics.getCdcConsumerStatus();
+                    if (CDCStatus.CONNECTED != cdcStatus) {
+                        logger.warn(
+                            "Detected that the CDC synchronization service has stopped and is currently in a state of {}.",
+                            cdcStatus.name());
+                        ready = false;
+                        return;
+                    }
 
-                long liveTimeMs = ackMetrics.getLastUpdateTime();
-                if (System.currentTimeMillis() - liveTimeMs > allowMaxLiveTimeMs) {
-                    ready = false;
-                    return;
-                }
+                    long liveTimeMs = ackMetrics.getLastUpdateTime();
+                    if (System.currentTimeMillis() - liveTimeMs > allowMaxLiveTimeMs) {
+                        logger.warn(
+                            "The CDC service has not been updated for more than {} milliseconds, so it blocks writes.",
+                            allowMaxLiveTimeMs);
+                        ready = false;
+                        return;
+                    }
 
-                long useTimeMs = ackMetrics.getTotalUseTime();
-                if (useTimeMs > allowMaxSyncTimeMs) {
-                    ready = false;
-                    return;
-                }
+                    long useTimeMs = ackMetrics.getTotalUseTime();
+                    if (useTimeMs > allowMaxSyncTimeMs) {
+                        logger.warn("CDC services synchronize data over {} milliseconds, blocking the write service.",
+                            allowMaxSyncTimeMs);
+                        ready = false;
+                        return;
+                    }
 
-                ready = true;
-            }
-        }, 5, 5, TimeUnit.SECONDS);
+                    ready = true;
+                }
+            }, 6, 6, TimeUnit.SECONDS);
+        }
     }
 
     @PreDestroy
     public void destroy() {
-        ExecutorHelper.shutdownAndAwaitTermination(checkCDCStatusWorker, 3600);
+        if (!ignoreCDCStatus) {
+            ExecutorHelper.shutdownAndAwaitTermination(checkCDCStatusWorker, 3600);
+        }
     }
 
 

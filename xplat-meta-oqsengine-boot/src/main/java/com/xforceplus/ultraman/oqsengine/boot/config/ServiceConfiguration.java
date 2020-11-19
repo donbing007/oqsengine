@@ -30,8 +30,9 @@ public class ServiceConfiguration {
     }
 
     @Bean
-    public EntityManagementService entityManagementService() {
-        return new EntityManagementServiceImpl();
+    public EntityManagementService entityManagementService(
+        @Value("${ignoreCDCStatusCheck:false}") boolean ignoreCDCStatusCheck) {
+        return new EntityManagementServiceImpl(ignoreCDCStatusCheck);
     }
 
     @Bean
