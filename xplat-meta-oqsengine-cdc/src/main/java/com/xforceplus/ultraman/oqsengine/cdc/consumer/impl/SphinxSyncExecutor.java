@@ -206,7 +206,7 @@ public class SphinxSyncExecutor {
         return entityValueBuilder.build(id, metaToFieldTypeMap(meta), attribute);
     }
 
-    //  通过pref获得IEntityValue
+    //  通过pref获得IEntityValue，searchMaster为当拉取不到数据时是否从主库拉取
     private IEntityValue entityValueGet(long pref, Map<Long, IEntityValue> prefEntityValueMaps, boolean searchMaster) throws SQLException {
         IEntityValue entityValue = prefEntityValueMaps.get(pref);
         if (null == entityValue && searchMaster) {

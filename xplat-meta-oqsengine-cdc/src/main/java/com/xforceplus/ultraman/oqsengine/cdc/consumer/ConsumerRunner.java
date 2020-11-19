@@ -2,12 +2,10 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.Message;
-import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.RunningStatus;
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import org.slf4j.Logger;
