@@ -41,7 +41,7 @@ public class EntityGenerateToolBar {
                 new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1)),
                 new DecimalValue(decimalField, new BigDecimal("0.0")), new EnumValue(enumField, "1"),
                 new StringsValue(stringsField, "value1", "value2")));
-        entityes[0] = new Entity(id, entityClass, values, new EntityFamily(0, startId + 1), version);
+        entityes[0] = new Entity(id, entityClass, values, new EntityFamily(0, id + 1), version);
 
         id = startId + 1;
         values = new EntityValue(id);
@@ -50,7 +50,7 @@ public class EntityGenerateToolBar {
                 new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 9, 0, 1)),
                 new DecimalValue(decimalField, new BigDecimal("1.0")), new EnumValue(enumField, "CODE"),
                 new StringsValue(stringsField, "value1", "value2", "value3")));
-        entityes[1] = new Entity(id, entityClass, values, new EntityFamily(startId, 0), version);
+        entityes[1] = new Entity(id, entityClass, values, new EntityFamily(id - 1, 0), version);
 
         id = startId + 2;
         values = new EntityValue(id);
@@ -68,7 +68,7 @@ public class EntityGenerateToolBar {
                 new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1)),
                 new DecimalValue(decimalField, new BigDecimal("1.0")), new EnumValue(enumField, "CODE"),
                 new StringsValue(stringsField, "value1", "value2", "value3")));
-        entityes[3] = new Entity(id, entityClass, values, new EntityFamily(startId + 4, 0), version);
+        entityes[3] = new Entity(id, entityClass, values, new EntityFamily(id + 1, 0), version);
 
         id = startId + 4;
         values = new EntityValue(id);
@@ -77,7 +77,7 @@ public class EntityGenerateToolBar {
                 new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
                 new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
                 new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN")));
-        entityes[4] = new Entity(id, entityClass, values, new EntityFamily(0, startId + 3), version);
+        entityes[4] = new Entity(id, entityClass, values, new EntityFamily(0, id - 1), version);
 
         id = startId + 5;
         values = new EntityValue(id);
