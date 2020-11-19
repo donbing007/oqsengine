@@ -58,9 +58,10 @@ public class CDCMetricsService {
         return cdcMetrics;
     }
 
-    public void callBackSuccess(CDCMetrics temp) {
+    public void callBackSuccess(CDCMetrics temp, boolean isStartSync) {
 //        logger.debug("success consumer, cdcStatus : {}", JSON.toJSON(temp));
-        cdcMetrics.consumeSuccess(temp);
+        cdcMetrics.setCdcUnCommitMetrics(temp.getCdcUnCommitMetrics());
+        cdcMetrics.consumeSuccess(temp, isStartSync);
         callback();
     }
 

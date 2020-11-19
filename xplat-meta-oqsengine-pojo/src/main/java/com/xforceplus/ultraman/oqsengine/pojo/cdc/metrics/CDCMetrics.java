@@ -61,10 +61,13 @@ public class CDCMetrics {
         this.cdcAckMetrics.setLastUpdateTime(System.currentTimeMillis());
     }
 
-    public void consumeSuccess(CDCMetrics temp) {
+    public void consumeSuccess(CDCMetrics temp, boolean sync) {
         this.batchId = temp.getBatchId();
         this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
-        this.cdcAckMetrics.setLastConsumerTime(System.currentTimeMillis());
+        if (!sync) {
+            //  不是启动的recover，则是成功消费，需要更新
+            this.cdcAckMetrics.setLastConsumerTime(System.currentTimeMillis());
+        }
         this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
         this.cdcAckMetrics.setExecuteRows(temp.getCdcAckMetrics().getExecuteRows());
         this.cdcAckMetrics.setTotalUseTime(temp.getCdcAckMetrics().getTotalUseTime());

@@ -27,7 +27,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
  */
 public class ConsumerRunner extends Thread {
 
-    final Logger logger = LoggerFactory.getLogger(CDCDaemonService.class);
+    final Logger logger = LoggerFactory.getLogger(ConsumerRunner.class);
 
     private ConsumerService consumerService;
 
@@ -164,7 +164,7 @@ public class ConsumerRunner extends Thread {
                         consumerService.consume(message.getEntries(), batchId, cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
 
                     //  notice: canal状态确认、指标同步
-                    sync(cdcMetrics);
+                    syncSuccess(cdcMetrics);
                 } else {
                     //  没有新的同步信息，睡眠1秒进入下次轮训
                     threadSleep(FREE_MESSAGE_WAIT_IN_SECONDS);
@@ -204,13 +204,13 @@ public class ConsumerRunner extends Thread {
     /*
         关键步骤
      */
-    private void sync(CDCMetrics cdcMetrics) throws SQLException {
+    private void syncSuccess(CDCMetrics cdcMetrics) throws SQLException {
         if (null != cdcMetrics) {
             //  首先保存本次消费完时未提交的数据
             cdcMetricsService.backup(cdcMetrics);
 
             //  canal ack确认，同步CDC确认信息，
-            syncCanalAndCallback(cdcMetrics);
+            callBackSuccess(cdcMetrics, false);
         }
     }
 
@@ -225,7 +225,7 @@ public class ConsumerRunner extends Thread {
         syncUnCommit(cdcMetrics.getCdcUnCommitMetrics());
 
         //  回调告知当前成功信息
-        callBackSuccess(cdcMetrics);
+        callBackSuccess(cdcMetrics, true);
     }
 
     private void syncUnCommit(CDCUnCommitMetrics unCommitMetrics) {
@@ -248,7 +248,8 @@ public class ConsumerRunner extends Thread {
         cdcMetricsService.callBackError(cdcStatus);
     }
 
-    private void callBackSuccess(CDCMetrics cdcMetrics) {
-        cdcMetricsService.callBackSuccess(cdcMetrics);
+    private void callBackSuccess(CDCMetrics cdcMetrics, boolean isStartSync) {
+
+        cdcMetricsService.callBackSuccess(cdcMetrics, isStartSync);
     }
 }
