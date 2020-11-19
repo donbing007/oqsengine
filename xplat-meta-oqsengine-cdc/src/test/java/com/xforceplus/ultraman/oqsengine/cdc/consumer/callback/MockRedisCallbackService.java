@@ -26,7 +26,7 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     public void reset() {
         cdcMetrics = null;
-        executed.set(0);
+        executed = new AtomicInteger(0);
     }
 
     private long lastConsumerTime = 0;

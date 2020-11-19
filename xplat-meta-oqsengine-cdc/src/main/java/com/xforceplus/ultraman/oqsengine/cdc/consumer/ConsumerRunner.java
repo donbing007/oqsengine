@@ -209,6 +209,9 @@ public class ConsumerRunner extends Thread {
             //  首先保存本次消费完时未提交的数据
             cdcMetricsService.backup(cdcMetrics);
 
+            //  同步状态
+            cdcConnector.ack(cdcMetrics.getBatchId());
+
             //  canal ack确认，同步CDC确认信息，
             callBackSuccess(cdcMetrics, false);
         }
