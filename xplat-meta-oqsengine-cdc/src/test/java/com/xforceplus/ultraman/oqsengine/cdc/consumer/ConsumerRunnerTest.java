@@ -63,7 +63,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
     private void stopConsumerRunner() throws InterruptedException {
         int loop = 0;
-        int maxLoop = 1000;
+        int maxLoop = 100;
         while (loop < maxLoop) {
             if (expectedCount == mockRedisCallbackService.getExecuted().get()) {
                 break;
@@ -147,8 +147,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
                 IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
                 initData(entities, false, false);
 
-                Thread.sleep(1000);
-
                 entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
                 initData(entities, true, false);
                 expectedCount += entities.length;
@@ -186,9 +184,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
                 expectedCount += entities.length;
             }
 
-            for (long i = t; i < t + gap * size; i += gap) {
-                initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true, false);
-            }
         } catch (Exception ex) {
             tx.rollback();
             throw ex;
