@@ -182,10 +182,10 @@ public class ConsumerRunner extends Thread {
     }
 
     private void syncFree(long batchId) throws SQLException {
-        CDCMetrics cdcMetrics = new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
-            cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
+//        CDCMetrics cdcMetrics = new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
+//            cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
 
-        cdcMetricsService.backup(cdcMetrics);
+        //  cdcMetricsService.backup(cdcMetrics);
 
         //  同步状态
         cdcConnector.ack(batchId);
