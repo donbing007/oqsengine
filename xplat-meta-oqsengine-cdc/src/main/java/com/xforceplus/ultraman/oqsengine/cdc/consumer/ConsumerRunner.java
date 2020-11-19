@@ -195,7 +195,7 @@ public class ConsumerRunner extends Thread {
     private void syncLastBatch() throws SQLException {
         CDCMetrics cdcMetrics = cdcMetricsService.query();
         if (null != cdcMetrics) {
-            syncCanalAndCallback(cdcMetrics, true);
+            syncCanalAndCallback(cdcMetrics, System.currentTimeMillis(), true);
             logger.info("CDC Sync->Recover->Callback AckMetrics success, {}", JSON.toJSON(cdcMetrics));
         }
     }
@@ -205,21 +205,20 @@ public class ConsumerRunner extends Thread {
      */
     private void syncSuccess(CDCMetrics cdcMetrics, long lastConnectTime) throws SQLException {
         if (null != cdcMetrics) {
-            cdcMetrics.getCdcAckMetrics().setLastConnectedTime(lastConnectTime);
-
             //  首先保存本次消费完时未提交的数据
             cdcMetricsService.backup(cdcMetrics);
 
-            syncCanalAndCallback(cdcMetrics, false);
+            syncCanalAndCallback(cdcMetrics, lastConnectTime, false);
         }
     }
 
-    private void syncCanalAndCallback(CDCMetrics cdcMetrics, boolean isConnectSync) throws SQLException {
-
+    private void syncCanalAndCallback(CDCMetrics cdcMetrics, long lastConnectTime, boolean isConnectSync) throws SQLException {
         //  ack canal-server 当前位点
         if (cdcMetrics.getBatchId() != EMPTY_BATCH_ID) {
             cdcConnector.ack(cdcMetrics.getBatchId());
         }
+
+        cdcMetrics.getCdcAckMetrics().setLastConnectedTime(lastConnectTime);
 
         if (null == cdcMetrics.getCdcUnCommitMetrics()) {
             cdcMetrics.setCdcUnCommitMetrics(new CDCUnCommitMetrics());
