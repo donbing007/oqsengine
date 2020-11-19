@@ -93,7 +93,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         tx.commit();
         transactionManager.finish();
 
-        Thread.sleep(10 * 1000);
+        Thread.sleep(30 * 1000);
 
         CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
@@ -128,7 +128,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         tx.commit();
         transactionManager.finish();
 
-        Thread.sleep(10 * 1000);
+        Thread.sleep(30 * 1000);
 
         CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
@@ -174,7 +174,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             t += gap;
         }
 
-        Thread.sleep(20 * 1000);
+        Thread.sleep(30 * 1000);
 
         CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
@@ -216,7 +216,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         tx.commit();
         transactionManager.finish();
 
-        Thread.sleep(40 * 1000);
+        Thread.sleep(50 * 1000);
 
         CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
@@ -257,7 +257,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             i += gap;
         }
 
-        Thread.sleep(10 * 1000);
+        Thread.sleep(30 * 1000);
 
         CDCMetrics cdcMetrics = mockRedisCallbackService.queryLastUnCommit();
         Assert.assertNotNull(cdcMetrics);
