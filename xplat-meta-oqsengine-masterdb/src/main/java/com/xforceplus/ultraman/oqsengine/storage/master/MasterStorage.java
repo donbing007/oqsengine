@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
 
@@ -29,6 +30,14 @@ public interface MasterStorage extends Storage {
      * @return 目标实例.
      */
     Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException;
+
+    /**
+     * 根据唯一标识查找相应的实例.
+     *
+     * @param id 目标实例标识.
+     * @return 目标实例.
+     */
+    Optional<IEntityValue> selectEntityValue(long id) throws SQLException;
 
     /**
      * 同时查找多个不同类型的不同实例.

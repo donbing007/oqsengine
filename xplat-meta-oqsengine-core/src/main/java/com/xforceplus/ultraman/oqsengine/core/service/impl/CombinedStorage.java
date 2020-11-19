@@ -96,6 +96,11 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
     }
 
     @Override
+    public Optional<IEntityValue> selectEntityValue(long id) throws SQLException {
+        return masterStorage.selectEntityValue(id);
+    }
+
+    @Override
     public Collection<IEntity> selectMultiple(Map<Long, IEntityClass> ids) throws SQLException {
         return masterStorage.selectMultiple(ids);
     }

@@ -38,6 +38,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityFieldBuildUtils.metaToFieldTypeMap;
+
 /**
  * 主要储存实现.
  *
@@ -122,6 +124,24 @@ public class SQLMasterStorage implements MasterStorage {
                 }
 
             });
+    }
+
+    @Override
+    public Optional<IEntityValue> selectEntityValue(long id) throws SQLException {
+        return (Optional<IEntityValue>) transactionExecutor.execute(
+                new DataSourceNoShardResourceTask(masterDataSource) {
+
+                    @Override
+                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                        Optional<StorageEntity> seOP = QueryExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
+                        hint.setReadOnly(true);
+                        if (seOP.isPresent()) {
+                            return entityValueBuilder.build(id, metaToFieldTypeMap(seOP.get().getMeta()), seOP.get().getAttribute());
+                        } else {
+                            return Optional.empty();
+                        }
+                    }
+                });
     }
 
     @Override

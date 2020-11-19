@@ -42,7 +42,7 @@ public class CDCDaemonServiceTest extends AbstractContainer {
         initDaemonService();
     }
 
-    private void initDaemonService() throws SQLException, InterruptedException {
+    private void initDaemonService() throws Exception {
 
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         testCallbackService = new MockRedisCallbackService();

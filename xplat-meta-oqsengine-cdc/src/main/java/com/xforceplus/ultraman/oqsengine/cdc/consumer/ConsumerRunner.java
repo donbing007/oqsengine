@@ -137,8 +137,8 @@ public class ConsumerRunner extends Thread {
     }
 
     public void consume() throws SQLException {
+        long lastConnectTime = System.currentTimeMillis();
         while (true) {
-
             //  服务被终止
             if (runningStatus.ordinal() >= RunningStatus.TRY_STOP.ordinal()) {
                 runningStatus = RunningStatus.STOP_SUCCESS;
@@ -156,20 +156,21 @@ public class ConsumerRunner extends Thread {
             }
 
             try {
+                CDCMetrics cdcMetrics = null;
                 long batchId = message.getId();
                 if (batchId != EMPTY_BATCH_ID || message.getEntries().size() != EMPTY_BATCH_SIZE) {
 
                     //  binlog处理，同步指标到cdcMetrics中
-                    CDCMetrics cdcMetrics =
+                    cdcMetrics =
                         consumerService.consume(message.getEntries(), batchId, cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
 
                     //  notice: canal状态确认、指标同步
-                    syncSuccess(cdcMetrics);
+                    syncSuccess(cdcMetrics, lastConnectTime);
                 } else {
                     //  没有新的同步信息，睡眠1秒进入下次轮训
                     threadSleep(FREE_MESSAGE_WAIT_IN_SECONDS);
 
-                    syncFree(batchId);
+                    syncFree(batchId, lastConnectTime);
                 }
             } catch (Exception e) {
                 cdcConnector.rollback();
@@ -181,7 +182,7 @@ public class ConsumerRunner extends Thread {
         }
     }
 
-    private void syncFree(long batchId) throws SQLException {
+    private void syncFree(long batchId, long lastConnectTime) throws SQLException {
         CDCMetrics cdcMetrics = new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
             cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
 
@@ -190,13 +191,13 @@ public class ConsumerRunner extends Thread {
         //  同步状态
         cdcConnector.ack(batchId);
 
-        cdcMetricsService.heartBeat(batchId);
+        cdcMetricsService.heartBeat(batchId, lastConnectTime);
     }
 
     private void syncLastBatch() throws SQLException {
         CDCMetrics cdcMetrics = cdcMetricsService.query();
         if (null != cdcMetrics) {
-            syncCanalAndCallback(cdcMetrics);
+            syncCanalAndCallback(cdcMetrics, true);
             logger.info("CDC Sync->Recover->Callback AckMetrics success, {}", JSON.toJSON(cdcMetrics));
         }
     }
@@ -204,20 +205,18 @@ public class ConsumerRunner extends Thread {
     /*
         关键步骤
      */
-    private void syncSuccess(CDCMetrics cdcMetrics) throws SQLException {
+    private void syncSuccess(CDCMetrics cdcMetrics, long lastConnectTime) throws SQLException {
         if (null != cdcMetrics) {
+            cdcMetrics.getCdcAckMetrics().setLastConnectedTime(lastConnectTime);
+
             //  首先保存本次消费完时未提交的数据
             cdcMetricsService.backup(cdcMetrics);
 
-            //  同步状态
-            cdcConnector.ack(cdcMetrics.getBatchId());
-
-            //  canal ack确认，同步CDC确认信息，
-            callBackSuccess(cdcMetrics, false);
+            syncCanalAndCallback(cdcMetrics, false);
         }
     }
 
-    private void syncCanalAndCallback(CDCMetrics cdcMetrics) throws SQLException {
+    private void syncCanalAndCallback(CDCMetrics cdcMetrics, boolean isConnectSync) throws SQLException {
 
         //  ack canal-server 当前位点
         if (cdcMetrics.getBatchId() != EMPTY_BATCH_ID) {
@@ -228,7 +227,7 @@ public class ConsumerRunner extends Thread {
             cdcMetrics.setCdcUnCommitMetrics(new CDCUnCommitMetrics());
         }
         //  回调告知当前成功信息
-        callBackSuccess(cdcMetrics, true);
+        callBackSuccess(cdcMetrics, isConnectSync);
     }
 
     private void syncUnCommit(CDCUnCommitMetrics unCommitMetrics) {
@@ -251,8 +250,8 @@ public class ConsumerRunner extends Thread {
         cdcMetricsService.callBackError(cdcStatus);
     }
 
-    private void callBackSuccess(CDCMetrics cdcMetrics, boolean isStartSync) {
+    private void callBackSuccess(CDCMetrics cdcMetrics, boolean isConnectSync) {
 
-        cdcMetricsService.callBackSuccess(cdcMetrics, isStartSync);
+        cdcMetricsService.callBackSuccess(cdcMetrics, isConnectSync);
     }
 }

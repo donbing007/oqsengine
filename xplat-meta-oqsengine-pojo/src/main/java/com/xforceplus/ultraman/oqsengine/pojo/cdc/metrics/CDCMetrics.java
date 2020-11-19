@@ -54,29 +54,31 @@ public class CDCMetrics {
         this.cdcUnCommitMetrics = cdcUnCommitMetrics;
     }
 
-    public void heartBeat(long batchId) {
+    public void heartBeat(long batchId, long lastConnectTime) {
         this.batchId = batchId;
         this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
-        this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
+        this.cdcAckMetrics.setLastConnectedTime(lastConnectTime);
         this.cdcAckMetrics.setLastUpdateTime(System.currentTimeMillis());
     }
 
-    public void consumeSuccess(CDCMetrics temp, boolean sync) {
+    public void consumeSuccess(CDCMetrics temp, boolean isConnectSync) {
         this.batchId = temp.getBatchId();
         this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
-        if (!sync) {
-            //  不是启动的recover，则是成功消费，需要更新
+        this.cdcAckMetrics.setLastConnectedTime(temp.getCdcAckMetrics().getLastConnectedTime());
+
+        //  启动则更新LastConnectedTime, 否则为成功消费
+        if (!isConnectSync) {
             this.cdcAckMetrics.setLastConsumerTime(System.currentTimeMillis());
         }
-        this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
-        this.cdcAckMetrics.setExecuteRows(temp.getCdcAckMetrics().getExecuteRows());
-        this.cdcAckMetrics.setTotalUseTime(temp.getCdcAckMetrics().getTotalUseTime());
+
         if (!temp.getCdcAckMetrics().getCommitList().isEmpty()) {
             this.cdcAckMetrics.setCommitList(temp.getCdcAckMetrics().getCommitList());
         }
 
         if (temp.getCdcAckMetrics().getMaxSyncUseTime() > ZERO) {
+            this.cdcAckMetrics.setExecuteRows(temp.getCdcAckMetrics().getExecuteRows());
             this.cdcAckMetrics.setMaxSyncUseTime(temp.getCdcAckMetrics().getMaxSyncUseTime());
+            this.cdcAckMetrics.setTotalUseTime(temp.getCdcAckMetrics().getTotalUseTime());
         }
     }
 

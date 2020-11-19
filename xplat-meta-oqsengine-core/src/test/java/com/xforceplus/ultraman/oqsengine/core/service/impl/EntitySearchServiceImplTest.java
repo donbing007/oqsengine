@@ -552,6 +552,14 @@ public class EntitySearchServiceImplTest {
         }
 
         @Override
+        public Optional<IEntityValue> selectEntityValue(long id) throws SQLException {
+            Optional<IEntity> entity =
+                    entities.stream().filter(e -> e.id() == id).findFirst();
+
+            return entity.map(IEntity::entityValue);
+        }
+
+        @Override
         public Collection<IEntity> selectMultiple(Map<Long, IEntityClass> ids) throws SQLException {
             Collection<IEntity> results = new ArrayList(ids.size());
             for (IEntity e : entities) {

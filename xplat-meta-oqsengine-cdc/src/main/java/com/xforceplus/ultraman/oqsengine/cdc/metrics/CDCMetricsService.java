@@ -58,10 +58,10 @@ public class CDCMetricsService {
         return cdcMetrics;
     }
 
-    public void callBackSuccess(CDCMetrics temp, boolean isStartSync) {
+    public void callBackSuccess(CDCMetrics temp, boolean isConnectSync) {
         //  logger.debug("success consumer, cdcStatus : {}", JSON.toJSON(temp));
         cdcMetrics.setCdcUnCommitMetrics(temp.getCdcUnCommitMetrics());
-        cdcMetrics.consumeSuccess(temp, isStartSync);
+        cdcMetrics.consumeSuccess(temp, isConnectSync);
         callback();
     }
 
@@ -71,9 +71,9 @@ public class CDCMetricsService {
         callback();
     }
 
-    public void heartBeat(long batchId) {
+    public void heartBeat(long batchId, long lastConnectTime) {
 //        logger.debug("heart beat, batchId : {}", batchId);
-        cdcMetrics.heartBeat(batchId);
+        cdcMetrics.heartBeat(batchId, lastConnectTime);
         callback();
     }
 

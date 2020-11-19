@@ -42,7 +42,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         initConsumerRunner();
     }
 
-    private void initConsumerRunner() throws SQLException, InterruptedException {
+    private void initConsumerRunner() throws Exception {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService();
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);

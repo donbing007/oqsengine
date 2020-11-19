@@ -42,7 +42,7 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
     }
 
     @Test
-    public void sphinxConsumerBenchmarkTest() throws SQLException, InterruptedException {
+    public void sphinxConsumerBenchmarkTest() throws Exception {
         ConsumerService sphinxConsumerService = initConsumerService();
         //  预热
         sphinxConsumerService.consume(preWarms, 1, new CDCUnCommitMetrics());
