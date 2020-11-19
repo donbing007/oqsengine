@@ -59,19 +59,19 @@ public class CDCMetricsService {
     }
 
     public void callBackSuccess(CDCMetrics temp) {
-        logger.debug("success consumer, cdcStatus : {}", JSON.toJSON(temp));
+//        logger.debug("success consumer, cdcStatus : {}", JSON.toJSON(temp));
         cdcMetrics.consumeSuccess(temp);
         callback();
     }
 
     public void callBackError(CDCStatus cdcStatus) {
-        logger.debug("error, cdcStatus : {}", cdcStatus);
+//        logger.debug("error, cdcStatus : {}", cdcStatus);
         cdcMetrics.getCdcAckMetrics().setCdcConsumerStatus(cdcStatus);
         callback();
     }
 
     public void heartBeat(long batchId) {
-        logger.debug("heart beat, batchId : {}", batchId);
+//        logger.debug("heart beat, batchId : {}", batchId);
         cdcMetrics.heartBeat(batchId);
         callback();
     }
