@@ -35,7 +35,6 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
     private static long startId = 1;
     @BeforeClass
     public static void beforeClass() {
-
         entries = new ArrayList<>(size);
         preWarms = new ArrayList<>(1);
         build(preWarms, 1, Long.MAX_VALUE);
