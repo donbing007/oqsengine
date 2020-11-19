@@ -249,6 +249,7 @@ public class ConsumerRunner extends Thread {
     }
 
     private void callBackSuccess(CDCMetrics cdcMetrics, boolean isStartSync) {
+
         cdcMetricsService.callBackSuccess(cdcMetrics, isStartSync);
     }
 }

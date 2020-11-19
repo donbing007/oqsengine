@@ -65,6 +65,7 @@ public class CDCMetrics {
         this.batchId = temp.getBatchId();
         this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
         if (!sync) {
+            //  不是启动的recover，则是成功消费，需要更新
             this.cdcAckMetrics.setLastConsumerTime(System.currentTimeMillis());
         }
         this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
