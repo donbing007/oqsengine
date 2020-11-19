@@ -99,13 +99,13 @@ public class ConsumerRunner extends Thread {
         }
     }
 
-    private void connectAndReset(boolean isFirstLoop) throws SQLException {
+    private void connectAndReset(boolean isFirstConnect) throws SQLException {
 
         cdcConnector.open();
 
-        if (isFirstLoop) {
+        if (isFirstConnect) {
             //  首先将上次记录完整的信息(batchID)确认到Canal中
-            syncLastBatch();
+            syncAndRecover();
         }
 
         //  由于LastBatch确认后可能存在getPos/ackPos不一致的情况，需要对getPos进行Rollback操作
@@ -192,11 +192,11 @@ public class ConsumerRunner extends Thread {
         cdcMetricsService.heartBeat(batchId, lastConnectTime);
     }
 
-    private void syncLastBatch() throws SQLException {
+    private void syncAndRecover() throws SQLException {
         CDCMetrics cdcMetrics = cdcMetricsService.query();
         if (null != cdcMetrics) {
-            syncCanalAndCallback(cdcMetrics, System.currentTimeMillis(), true);
-            logger.info("CDC Sync->Recover->Callback AckMetrics success, {}", JSON.toJSON(cdcMetrics));
+            syncAndCallback(cdcMetrics, System.currentTimeMillis(), true);
+            logger.info("cdc recover from last ackMetrics position success...");
         }
     }
 
@@ -208,11 +208,11 @@ public class ConsumerRunner extends Thread {
             //  首先保存本次消费完时未提交的数据
             cdcMetricsService.backup(cdcMetrics);
 
-            syncCanalAndCallback(cdcMetrics, lastConnectTime, false);
+            syncAndCallback(cdcMetrics, lastConnectTime, false);
         }
     }
 
-    private void syncCanalAndCallback(CDCMetrics cdcMetrics, long lastConnectTime, boolean isConnectSync) throws SQLException {
+    private void syncAndCallback(CDCMetrics cdcMetrics, long lastConnectTime, boolean isConnectSync) throws SQLException {
         //  ack canal-server 当前位点
         if (cdcMetrics.getBatchId() != EMPTY_BATCH_ID) {
             cdcConnector.ack(cdcMetrics.getBatchId());
@@ -220,16 +220,8 @@ public class ConsumerRunner extends Thread {
 
         cdcMetrics.getCdcAckMetrics().setLastConnectedTime(lastConnectTime);
 
-        if (null == cdcMetrics.getCdcUnCommitMetrics()) {
-            cdcMetrics.setCdcUnCommitMetrics(new CDCUnCommitMetrics());
-        }
         //  回调告知当前成功信息
         callBackSuccess(cdcMetrics, isConnectSync);
-    }
-
-    private void syncUnCommit(CDCUnCommitMetrics unCommitMetrics) {
-        cdcMetricsService.getCdcMetrics().setCdcUnCommitMetrics(
-                null == unCommitMetrics ? new CDCUnCommitMetrics() : unCommitMetrics);
     }
 
     private void threadSleep(int waitInSeconds) {
