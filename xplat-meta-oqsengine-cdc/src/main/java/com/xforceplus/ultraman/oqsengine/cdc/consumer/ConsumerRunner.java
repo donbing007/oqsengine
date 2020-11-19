@@ -221,9 +221,9 @@ public class ConsumerRunner extends Thread {
             cdcConnector.ack(cdcMetrics.getBatchId());
         }
 
-        //  重置cdcUnCommit信息
-        syncUnCommit(cdcMetrics.getCdcUnCommitMetrics());
-
+        if (null == cdcMetrics.getCdcUnCommitMetrics()) {
+            cdcMetrics.setCdcUnCommitMetrics(new CDCUnCommitMetrics());
+        }
         //  回调告知当前成功信息
         callBackSuccess(cdcMetrics, true);
     }
