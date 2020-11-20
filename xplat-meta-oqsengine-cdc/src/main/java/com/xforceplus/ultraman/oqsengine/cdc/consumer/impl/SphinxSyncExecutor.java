@@ -210,7 +210,8 @@ public class SphinxSyncExecutor {
     private IEntityValue entityValueGet(long pref, Map<Long, IEntityValue> prefEntityValueMaps, boolean searchMaster) throws SQLException {
         IEntityValue entityValue = prefEntityValueMaps.get(pref);
         if (null == entityValue && searchMaster) {
-            return masterStorage.selectEntityValue(pref).get();
+            Optional<IEntityValue> e1 = masterStorage.selectEntityValue(pref);
+            return e1.orElse(null);
         }
 //        if (null == entityValue) {
 //            throw new SQLException(
