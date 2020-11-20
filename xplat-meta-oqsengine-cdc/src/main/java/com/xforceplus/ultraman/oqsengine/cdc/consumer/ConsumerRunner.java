@@ -1,13 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.Message;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.CDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.RunningStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +53,7 @@ public class ConsumerRunner extends Thread {
                 //  ignore
                 e.printStackTrace();
             }
+
             if (isShutdown()) {
                 logger.info("cdc consumer success stop.");
                 break;
@@ -81,10 +80,10 @@ public class ConsumerRunner extends Thread {
 
             try {
                 //  连接CanalServer，如果是服务启动(runningStatus = INIT),则同步缓存中cdcMetrics信息
-                connectAndReset();
+                connectAndReset(runningStatus.equals(RunningStatus.INIT));
             } catch (Exception e) {
                 closeToNextReconnect(CDCStatus.DIS_CONNECTED, !runningStatus.equals(RunningStatus.INIT)
-                    , String.format("%s, %s", "canal-server connection error", e.getMessage()));
+                        , String.format("%s, %s", "canal-server connection error", e.getMessage()));
                 continue;
             }
             //  连接成功，重置标志位
@@ -100,15 +99,18 @@ public class ConsumerRunner extends Thread {
         }
     }
 
-    private void connectAndReset() throws SQLException {
+    private void connectAndReset(boolean isFirstConnect) throws SQLException {
 
         cdcConnector.open();
 
         //  首先将上次记录完整的信息(batchID)确认到Canal中
-        syncAndRecover();
+        syncAndRecover(isFirstConnect);
 
         //  由于LastBatch确认后可能存在getPos/ackPos不一致的情况，需要对getPos进行Rollback操作
-        cdcConnector.rollback();
+//        if (cdcMetricsService.getCdcMetrics().getBatchId() > EMPTY_BATCH_ID) {
+//            cdcConnector.rollback();
+//        }
+
     }
 
     private void closeToNextReconnect(CDCStatus cdcStatus, boolean needRollback, String errorMessage) {
@@ -146,59 +148,86 @@ public class ConsumerRunner extends Thread {
                 //获取指定数量的数据
                 message = cdcConnector.getMessageWithoutAck();
             } catch (Exception e) {
+                cdcConnector.rollback();
                 String error = String.format("get message error, %s", e);
                 logger.error(error);
                 throw new SQLException(error);
             }
 
+            boolean synced = false;
             try {
                 CDCMetrics cdcMetrics = null;
                 long batchId = message.getId();
                 if (batchId != EMPTY_BATCH_ID || message.getEntries().size() != EMPTY_BATCH_SIZE) {
-
+                    //  消费
+                    cdcMetrics = consumerService.consume(message.getEntries(), batchId,
+                                                            cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
                     //  binlog处理，同步指标到cdcMetrics中
-                    cdcMetrics =
-                        consumerService.consume(message.getEntries(), batchId, cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
+                    synced = backMetrics(cdcMetrics);
 
                     //  notice: canal状态确认、指标同步
                     syncSuccess(cdcMetrics);
                 } else {
-                    //  没有新的同步信息，睡眠1秒进入下次轮训
-                    threadSleep(FREE_MESSAGE_WAIT_IN_SECONDS);
-
+                    synced = backMetrics(new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
+                            cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics()));
                     syncFree(batchId);
                 }
             } catch (Exception e) {
-                cdcConnector.rollback();
-                String error = String.format("consume message error");
+                String error = "";
+                if (!synced) {
+                    cdcConnector.rollback();
+                    error = String.format("consume message error");
+                } else {
+                    error = String.format("sync finish status error");
+                }
                 e.printStackTrace();
                 throw new SQLException(error);
             }
         }
     }
 
-    private void syncFree(long batchId) throws SQLException {
-        CDCMetrics cdcMetrics = new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
-            cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
-
+    //  首先保存本次消费完时未提交的数据
+    private boolean backMetrics(CDCMetrics cdcMetrics) {
         cdcMetricsService.backup(cdcMetrics);
+        return true;
+    }
+
+    private void syncFree(long batchId) throws SQLException {
 
         //  同步状态
         cdcConnector.ack(batchId);
 
         cdcMetricsService.heartBeat(batchId);
+
+        //  没有新的同步信息，睡眠1秒进入下次轮训
+        threadSleep(FREE_MESSAGE_WAIT_IN_SECONDS);
     }
 
-    private void syncAndRecover() throws SQLException {
+    private void syncAndRecover(boolean isFirstConnect) throws SQLException {
 
         //  设置cdc连接成功
         cdcMetricsService.connected();
 
-        CDCMetrics cdcMetrics = cdcMetricsService.query();
+        if (isFirstConnect) {
+            CDCMetrics cdcMetrics = cdcMetricsService.query();
 
-        if (null != cdcMetrics) {
-            syncAndCallback(cdcMetrics, true);
-            logger.info("cdc recover from last ackMetrics position success...");
+            if (null != cdcMetrics) {
+                //  ack canal-server 当前位点
+                if (cdcMetrics.getBatchId() != EMPTY_BATCH_ID) {
+                    cdcConnector.ack(cdcMetrics.getBatchId());
+
+                    cdcMetrics.setBatchId(EMPTY_BATCH_ID);
+                    cdcMetricsService.backup(cdcMetrics);
+
+                    cdcMetricsService.getCdcMetrics().setBatchId(EMPTY_BATCH_ID);
+                }
+
+                //  回调告知当前成功信息
+                callBackSuccess(cdcMetrics, true);
+
+                logger.info("cdc recover from last ackMetrics position success...");
+            }
+            cdcConnector.rollback();
         }
     }
 
@@ -210,18 +239,17 @@ public class ConsumerRunner extends Thread {
             //  首先保存本次消费完时未提交的数据
             cdcMetricsService.backup(cdcMetrics);
 
-            syncAndCallback(cdcMetrics, false);
-        }
-    }
+            //  ack canal-server 当前位点
+            if (cdcMetrics.getBatchId() != EMPTY_BATCH_ID) {
+                cdcConnector.ack(cdcMetrics.getBatchId());
 
-    private void syncAndCallback(CDCMetrics cdcMetrics, boolean isConnectSync) throws SQLException {
-        //  ack canal-server 当前位点
-        if (cdcMetrics.getBatchId() != EMPTY_BATCH_ID) {
-            cdcConnector.ack(cdcMetrics.getBatchId());
-        }
+                cdcMetrics.setBatchId(EMPTY_BATCH_ID);
+                cdcMetricsService.backup(cdcMetrics);
+            }
 
-        //  回调告知当前成功信息
-        callBackSuccess(cdcMetrics, isConnectSync);
+            //  回调告知当前成功信息
+            callBackSuccess(cdcMetrics, false);
+        }
     }
 
     private void threadSleep(int waitInSeconds) {

@@ -54,6 +54,7 @@ public class CDCMetrics {
         this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
         this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
     }
+
     public void setCdcUnCommitMetrics(CDCUnCommitMetrics cdcUnCommitMetrics) {
         this.cdcUnCommitMetrics = cdcUnCommitMetrics;
     }

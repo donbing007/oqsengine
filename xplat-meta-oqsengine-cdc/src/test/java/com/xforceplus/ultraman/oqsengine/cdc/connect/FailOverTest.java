@@ -38,6 +38,13 @@ public class FailOverTest extends AbstractContainer {
 
     private volatile boolean isTetOver = false;
 
+    private static SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
+
+    static {
+        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
+                "nly-v1", "root", "xplat");
+    }
+
     @Before
     public void before() throws Exception {
 
@@ -56,10 +63,6 @@ public class FailOverTest extends AbstractContainer {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService();
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
-
-        SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
-                "nly-v1", "root", "xplat");
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));

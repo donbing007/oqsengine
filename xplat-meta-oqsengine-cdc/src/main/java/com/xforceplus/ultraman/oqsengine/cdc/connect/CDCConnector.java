@@ -62,19 +62,12 @@ public abstract class CDCConnector {
     public void close(boolean withRollbackLast) {
         if (null != canalConnector && !isClosed) {
             try {
-                //  先rollback再关闭
-                if (withRollbackLast) {
-                    canalConnector.rollback();
-                }
-
-                // 注销订阅destination
-//                canalConnector.unsubscribe();
-            } catch (Exception e) {
-                logger.error("close error, ex : {}", e.getMessage());
-            } finally {
                 logger.error("close canal connector...");
                 //  关闭连接CanalServer
                 canalConnector.disconnect();
+            } catch (Exception e) {
+                logger.error("close error, ex : {}", e.getMessage());
+            } finally {
                 isClosed = true;
             }
         }
