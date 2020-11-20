@@ -93,8 +93,25 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         this.ignoreCDCStatus = ignoreCDCStatus;
     }
 
+    public long getAllowMaxSyncTimeMs() {
+        return allowMaxSyncTimeMs;
+    }
+
+    public void setAllowMaxSyncTimeMs(long allowMaxSyncTimeMs) {
+        this.allowMaxSyncTimeMs = allowMaxSyncTimeMs;
+    }
+
+    public long getAllowMaxLiveTimeMs() {
+        return allowMaxLiveTimeMs;
+    }
+
+    public void setAllowMaxLiveTimeMs(long allowMaxLiveTimeMs) {
+        this.allowMaxLiveTimeMs = allowMaxLiveTimeMs;
+    }
+
     @PostConstruct
     public void init() {
+        readOnly.set(OqsMode.NORMAL.getValue());
         if (!ignoreCDCStatus) {
             logger.info("Ignore CDC status checks.");
             checkCDCStatusWorker = Executors.newScheduledThreadPool(1, ExecutorHelper.buildNameThreadFactory("CDC-monitor"));

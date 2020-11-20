@@ -31,8 +31,14 @@ public class ServiceConfiguration {
 
     @Bean
     public EntityManagementService entityManagementService(
-        @Value("${ignoreCDCStatusCheck:false}") boolean ignoreCDCStatusCheck) {
-        return new EntityManagementServiceImpl(ignoreCDCStatusCheck);
+        @Value("${ignoreCDCStatusCheck:false}") boolean ignoreCDCStatusCheck,
+        @Value("${sync.allowMaxSyncTimeMs:10000}") long allowMaxSyncTimeMs,
+        @Value("${sync.allowMaxLiveTimeMs:3000}") long allowMaxLiveTimeMs
+    ) {
+        EntityManagementServiceImpl impl = new EntityManagementServiceImpl(ignoreCDCStatusCheck);
+        impl.setAllowMaxSyncTimeMs(allowMaxSyncTimeMs);
+        impl.setAllowMaxLiveTimeMs(allowMaxLiveTimeMs);
+        return impl;
     }
 
     @Bean
