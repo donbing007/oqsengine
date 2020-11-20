@@ -34,7 +34,7 @@ public abstract class CDCConnector {
     public void shutdown() {
         try {
             if (canalConnector.checkValid()) {
-                close(true);
+                close();
             }
         } catch (Exception e) {
             logger.warn("shutdown error.");
@@ -59,7 +59,7 @@ public abstract class CDCConnector {
     /**
      * 关闭canal连接
      */
-    public void close(boolean withRollbackLast) {
+    public void close() {
         if (null != canalConnector && !isClosed) {
             try {
                 logger.error("close canal connector...");

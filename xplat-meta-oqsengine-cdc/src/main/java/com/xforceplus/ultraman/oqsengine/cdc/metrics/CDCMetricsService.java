@@ -97,7 +97,7 @@ public class CDCMetricsService {
         }
     }
 
-    public void connected() {
+    public void connectedOk() {
         cdcMetrics.resetStatus();
     }
     private void callback() {

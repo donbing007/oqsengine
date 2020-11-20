@@ -169,15 +169,21 @@ public class SphinxSyncExecutor {
 
         IEntityValue entityValue = null;
 
-        //  是父类
+        //  是父类,从prefEntityValueMaps中获取.
         if (cref > 0) {
             //  通过自己的ID拿到对应的EntityValue
             entityValue = entityValueGet(id, prefEntityValueMaps, false);
         }
-        //  通过binlog获取
+
+        //  通过解析binlog获取
         if (null == entityValue) {
-            entityValue = buildEntityValue(
-                    storageEntity.getId(), getStringFromColumn(columns, META), getStringFromColumn(columns, ATTRIBUTE));
+            try {
+                entityValue = buildEntityValue(
+                        storageEntity.getId(), getStringFromColumn(columns, META), getStringFromColumn(columns, ATTRIBUTE));
+            } catch (Exception e) {
+                //  ignore
+                return false;
+            }
         }
 
         /*
@@ -188,15 +194,17 @@ public class SphinxSyncExecutor {
             IEntityValue entityValueF = entityValueGet(pref, prefEntityValueMaps, true);
             if (null == entityValueF) {
                 logger.warn("get pref entityValue failed. no match data, record will be ignored, id : {}, pref : {}", id, pref);
-                return false;
+            } else {
+                entityValue.addValues(entityValueF.values());
             }
-            entityValue.addValues(entityValueF.values());
         }
 
         /*
             replacement is always true, 所有的OQS同步对于CDC来说都是replace
          */
-        sphinxQLIndexStorage.buildOrReplace(storageEntity, entityValue, true);
+        if (null != entityValue) {
+            sphinxQLIndexStorage.buildOrReplace(storageEntity, entityValue, true);
+        }
 
         return true;
     }
