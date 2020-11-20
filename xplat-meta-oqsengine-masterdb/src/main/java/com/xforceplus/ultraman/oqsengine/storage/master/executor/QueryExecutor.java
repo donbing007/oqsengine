@@ -67,6 +67,10 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
 
         checkTimeout(st);
 
+        if (logger.isDebugEnabled()) {
+            logger.debug(st.toString());
+        }
+
         StorageEntity entity = null;
         ResultSet rs = null;
         try {
