@@ -26,7 +26,9 @@ public class EntityFieldBuildUtils {
 
     //  meta -> Map<String, IEntityField>
     public static Map<String, IEntityField> metaToFieldTypeMap(String meta) throws SQLException {
-
+        if (null == meta || meta.isEmpty()) {
+            return new HashMap<>();
+        }
         Map<String, IEntityField> results = new HashMap<>();
         List<String> metaList = null;
         try {

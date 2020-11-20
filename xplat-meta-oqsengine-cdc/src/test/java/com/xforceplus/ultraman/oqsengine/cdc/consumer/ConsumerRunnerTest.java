@@ -90,56 +90,61 @@ public class ConsumerRunnerTest extends AbstractContainer {
     public void syncTest() throws Exception {
 
         startConsumerRunner(1);
-        Transaction tx = transactionManager.create();
-        transactionManager.bind(tx.id());
-
         try {
-            IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
-            initData(entities, false, false);
+            Transaction tx = transactionManager.create();
+            transactionManager.bind(tx.id());
 
-            Thread.sleep(1000);
+            try {
+                IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
+                initData(entities, false, false);
 
-            entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
-            initData(entities, true, false);
+                Thread.sleep(1000);
 
-            expectedCount += entities.length;
+                entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
+                initData(entities, true, false);
 
-        } catch (Exception ex) {
-            tx.rollback();
-            throw ex;
+                expectedCount += entities.length;
+
+            } catch (Exception ex) {
+                tx.rollback();
+                throw ex;
+            }
+
+            //将事务正常提交,并从事务管理器中销毁事务.
+            tx.commit();
+            transactionManager.finish();
+        } finally {
+            stopConsumerRunner();
         }
-
-        //将事务正常提交,并从事务管理器中销毁事务.
-        tx.commit();
-        transactionManager.finish();
-
-        stopConsumerRunner();
     }
 
     @Test
     public void SyncDeleteTest() throws Exception {
         startConsumerRunner(1000000);
-        Transaction tx = transactionManager.create();
-        transactionManager.bind(tx.id());
 
         try {
-            IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
-            initData(entities, false, false);
+            Transaction tx = transactionManager.create();
+            transactionManager.bind(tx.id());
 
-            Thread.sleep(1000);
+            try {
+                IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
+                initData(entities, false, false);
 
-            initData(entities, true, true);
-            expectedCount += entities.length;
-        } catch (Exception ex) {
-            tx.rollback();
-            throw ex;
+                Thread.sleep(1000);
+
+                initData(entities, true, true);
+                expectedCount += entities.length;
+            } catch (Exception ex) {
+                tx.rollback();
+                throw ex;
+            }
+
+            //将事务正常提交,并从事务管理器中销毁事务.
+            tx.commit();
+            transactionManager.finish();
+        } finally {
+            stopConsumerRunner();
         }
-
-        //将事务正常提交,并从事务管理器中销毁事务.
-        tx.commit();
-        transactionManager.finish();
-
-        stopConsumerRunner();
     }
 
     @Test
@@ -150,30 +155,32 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
         startConsumerRunner(50);
 
-        while (i < loops) {
-            Transaction tx = transactionManager.create();
-            transactionManager.bind(tx.id());
-            try {
-                IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
-                initData(entities, false, false);
+        try {
+            while (i < loops) {
+                Transaction tx = transactionManager.create();
+                transactionManager.bind(tx.id());
+                try {
+                    IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
+                    initData(entities, false, false);
 
-                entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
-                initData(entities, true, false);
-                expectedCount += entities.length;
-            } catch (Exception ex) {
-                tx.rollback();
-                throw ex;
+                    entities = EntityGenerateToolBar.generateFixedEntities(t, 1);
+                    initData(entities, true, false);
+                    expectedCount += entities.length;
+                } catch (Exception ex) {
+                    tx.rollback();
+                    throw ex;
+                }
+
+                //将事务正常提交,并从事务管理器中销毁事务.
+                tx.commit();
+                transactionManager.finish();
+
+                i++;
+                t += gap;
             }
-
-            //将事务正常提交,并从事务管理器中销毁事务.
-            tx.commit();
-            transactionManager.finish();
-
-            i++;
-            t += gap;
+        } finally {
+            stopConsumerRunner();
         }
-
-        stopConsumerRunner();
     }
 
     @Test
@@ -182,27 +189,28 @@ public class ConsumerRunnerTest extends AbstractContainer {
         int size = 100;
 
         startConsumerRunner(15000);
-
-        Transaction tx = transactionManager.create();
-        transactionManager.bind(tx.id());
-
         try {
-            IEntity[] entities;
-            for (long i = t; i < t + gap * size; i += gap) {
-                entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
-                initData(entities, false, false);
-                expectedCount += entities.length;
+            Transaction tx = transactionManager.create();
+            transactionManager.bind(tx.id());
+
+            try {
+                IEntity[] entities;
+                for (long i = t; i < t + gap * size; i += gap) {
+                    entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
+                    initData(entities, false, false);
+                    expectedCount += entities.length;
+                }
+
+            } catch (Exception ex) {
+                tx.rollback();
+                throw ex;
             }
 
-        } catch (Exception ex) {
-            tx.rollback();
-            throw ex;
+            tx.commit();
+            transactionManager.finish();
+        } finally {
+            stopConsumerRunner();
         }
-
-        tx.commit();
-        transactionManager.finish();
-
-        stopConsumerRunner();
     }
 
 
@@ -212,29 +220,30 @@ public class ConsumerRunnerTest extends AbstractContainer {
         int loops = 100;
 
         startConsumerRunner(50000);
+        try {
+            long i = t;
+            long limits = t + gap * loops;
 
-        long i = t;
-        long limits = t + gap * loops;
+            while (i < limits) {
+                Transaction tx = transactionManager.create();
+                transactionManager.bind(tx.id());
+                try {
+                    IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
+                    initData(entities, false, false);
+                    initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true, false);
 
-        while (i < limits) {
-            Transaction tx = transactionManager.create();
-            transactionManager.bind(tx.id());
-            try {
-                IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
-                initData(entities,  false, false);
-                initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true, false);
-
-                expectedCount += entities.length;
-            } catch (Exception ex) {
-                tx.rollback();
-                throw ex;
+                    expectedCount += entities.length;
+                } catch (Exception ex) {
+                    tx.rollback();
+                    throw ex;
+                }
+                tx.commit();
+                transactionManager.finish();
+                i += gap;
             }
-            tx.commit();
-            transactionManager.finish();
-            i += gap;
+        } finally {
+            stopConsumerRunner();
         }
-
-        stopConsumerRunner();
     }
 
 

@@ -11,6 +11,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.cdc.constant;
 public class CDCConstant {
     public static final int DAEMON_NODE_ID = 0;
     public static final int EMPTY_BATCH_ID = -1;
+    public static final long IS_BACK_UP_ID = EMPTY_BATCH_ID * Long.MAX_VALUE;
     public static final int EMPTY_BATCH_SIZE = 0;
     public static final int EMPTY_COLUMN_SIZE = 0;
     public static final int INIT_ID = -1;

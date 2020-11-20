@@ -81,7 +81,7 @@ public class FailOverTest extends AbstractContainer {
 
 
         //  睡眠120秒，结束
-        Thread.sleep(150_000);
+        Thread.sleep(250_000);
         isTetOver = true;
         //  继续等待10秒，结束
         Thread.sleep(10_000);
