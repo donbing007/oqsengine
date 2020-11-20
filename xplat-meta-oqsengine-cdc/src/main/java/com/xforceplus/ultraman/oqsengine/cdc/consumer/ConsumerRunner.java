@@ -229,7 +229,7 @@ public class ConsumerRunner extends Thread {
             //  当前没有Binlog消费
             Thread.sleep(waitInSeconds * SECOND);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            // ignore
         }
     }
 
