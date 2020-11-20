@@ -23,6 +23,7 @@ public class CDCStatusServiceImplTest extends AbstractRedisContainerTest {
     private RedisClient redisClient;
     private CDCStatusServiceImpl impl;
     private String key = "cdc";
+    private String heartBeat = "cdc-heartBeat";
 
     @Before
     public void before() throws Exception {
@@ -32,7 +33,7 @@ public class CDCStatusServiceImplTest extends AbstractRedisContainerTest {
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
 
         ObjectMapper objectMapper = new ObjectMapper();
-        impl = new CDCStatusServiceImpl(key);
+        impl = new CDCStatusServiceImpl(key, heartBeat);
         ReflectionTestUtils.setField(impl, "redisClient", redisClient);
         ReflectionTestUtils.setField(impl, "objectMapper", objectMapper);
         impl.init();

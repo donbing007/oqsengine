@@ -49,6 +49,11 @@ public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
     }
 
     @Override
+    public void heartBeat() {
+        publisher.publishEvent(System.currentTimeMillis());
+    }
+
+    @Override
     public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
         publisher.publishEvent(cdcMetrics);
     }

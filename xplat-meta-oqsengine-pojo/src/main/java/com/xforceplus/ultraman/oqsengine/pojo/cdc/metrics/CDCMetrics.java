@@ -59,9 +59,8 @@ public class CDCMetrics {
         this.cdcUnCommitMetrics = cdcUnCommitMetrics;
     }
 
-    public void heartBeat(long batchId) {
+    public void syncFreeMessage(long batchId) {
         this.batchId = batchId;
-        this.cdcAckMetrics.setLastUpdateTime(System.currentTimeMillis());
     }
 
     public void consumeSuccess(CDCMetrics temp, boolean isConnectSync) {

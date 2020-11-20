@@ -33,4 +33,9 @@ public class CDCListener {
     public void saveCDCMetrics(CDCMetrics cdcMetrics) {
         cdcStatusService.save(cdcMetrics);
     }
+
+    @EventListener
+    public void heartBeat(long heartBeat) {
+        cdcStatusService.heartBeat(heartBeat);
+    }
 }

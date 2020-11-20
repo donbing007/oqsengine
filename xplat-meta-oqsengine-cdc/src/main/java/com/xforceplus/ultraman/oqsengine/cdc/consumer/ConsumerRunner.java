@@ -44,6 +44,7 @@ public class ConsumerRunner extends Thread {
 
     public void shutdown() {
         runningStatus = RunningStatus.TRY_STOP;
+        cdcMetricsService.shutdown();
 
         int useTime = 0;
         while (useTime < MAX_STOP_WAIT_LOOPS) {
@@ -61,6 +62,7 @@ public class ConsumerRunner extends Thread {
 
             useTime++;
         }
+
         if (useTime >= MAX_STOP_WAIT_LOOPS) {
             logger.warn("cdc consumer force stop after {} seconds.", useTime * MAX_STOP_WAIT_TIME);
         }
@@ -72,6 +74,7 @@ public class ConsumerRunner extends Thread {
 
     public void run() {
         runningStatus = RunningStatus.INIT;
+        cdcMetricsService.startMetrics();
         while (true) {
             //  判断当前服务状态是否可运行
             if (checkForStop()) {
@@ -196,7 +199,7 @@ public class ConsumerRunner extends Thread {
         //  同步状态
         cdcConnector.ack(batchId);
 
-        cdcMetricsService.heartBeat(IS_BACK_UP_ID);
+        cdcMetricsService.syncFreeMessage(IS_BACK_UP_ID);
 
         //  没有新的同步信息，睡眠1秒进入下次轮训
         threadSleep(FREE_MESSAGE_WAIT_IN_SECONDS);

@@ -15,6 +15,12 @@ import java.util.Optional;
 public interface CDCStatusService {
 
     /**
+     * 保存HEART_BEAT.
+     *
+     */
+    boolean heartBeat(long heartBeat);
+
+    /**
      * 保存CDC指标.
      *
      * @param cdcMetrics CDC指标.

@@ -57,7 +57,7 @@ public class ConnectorTest extends AbstractContainer  {
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
         singleCDCConnector.init("172.18.31.7", 11111,
-                "oqscdc", "canal", "canal");
+                "oqsengine-cdc-0", "canal", "canal");
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));

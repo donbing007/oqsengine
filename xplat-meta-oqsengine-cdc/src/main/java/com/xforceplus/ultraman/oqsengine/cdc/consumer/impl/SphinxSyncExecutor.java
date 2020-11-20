@@ -80,7 +80,8 @@ public class SphinxSyncExecutor {
     }
 
     //  执行sphinx同步
-    private int syncSphinx(List<RawEntry> rawEntries, Map<Long, IEntityValue> prefEntityValueMaps, CDCMetrics cdcMetrics) throws SQLException {
+    private int syncSphinx(List<RawEntry> rawEntries, Map<Long, IEntityValue> prefEntityValueMaps,
+                           CDCMetrics cdcMetrics) throws SQLException {
         AtomicInteger synced = new AtomicInteger(0);
         if (!rawEntries.isEmpty()) {
             if (isSingleSyncConsumer || rawEntries.size() <= SINGLE_CONSUMER_MAX_ROW) {
@@ -95,7 +96,8 @@ public class SphinxSyncExecutor {
     }
 
     //  多线程作业
-    private void multiConsume(List<RawEntry> rawEntries, Map<Long, IEntityValue> prefEntityValueMaps, CDCMetrics cdcMetrics, AtomicInteger synced) throws SQLException {
+    private void multiConsume(List<RawEntry> rawEntries, Map<Long, IEntityValue> prefEntityValueMaps,
+                              CDCMetrics cdcMetrics, AtomicInteger synced) throws SQLException {
         CountDownLatch latch = new CountDownLatch(rawEntries.size());
         List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>(rawEntries.size());
 

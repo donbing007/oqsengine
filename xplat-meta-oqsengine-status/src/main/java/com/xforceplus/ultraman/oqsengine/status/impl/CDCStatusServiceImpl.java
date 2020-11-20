@@ -21,6 +21,7 @@ import java.util.Optional;
 public class CDCStatusServiceImpl implements CDCStatusService {
 
     private static final String DEFAULT_KEY = "com.xforceplus.ultraman.oqsengine.status.CDCStatusServiceImpl";
+    private static final String HEART_BEAT_KEY = "com.xforceplus.ultraman.oqsengine.status.CDCStatusServiceImpl.heartBeat";
 
     @Resource
     private RedisClient redisClient;
@@ -31,14 +32,21 @@ public class CDCStatusServiceImpl implements CDCStatusService {
 
     private String key;
 
+    private String heartBeatKey;
+
     public CDCStatusServiceImpl() {
-        this(DEFAULT_KEY);
+        this(DEFAULT_KEY, HEART_BEAT_KEY);
     }
 
-    public CDCStatusServiceImpl(String key) {
+    public CDCStatusServiceImpl(String key, String heartBeat) {
         this.key = key;
         if (this.key == null || this.key.isEmpty()) {
             throw new IllegalArgumentException("The KEY is invalid.");
+        }
+
+        this.heartBeatKey = heartBeat;
+        if (this.heartBeatKey == null || this.heartBeatKey.isEmpty()) {
+            throw new IllegalArgumentException("The heartBeatKey is invalid.");
         }
     }
 
@@ -52,6 +60,13 @@ public class CDCStatusServiceImpl implements CDCStatusService {
     @PreDestroy
     public void destroy() {
         connect.close();
+    }
+
+    @Override
+    public boolean heartBeat(long heartBeat) {
+        RedisCommands<String, String> commands = connect.sync();
+        String res = commands.set(heartBeatKey, Long.toString(heartBeat));
+        return "OK".equals(res);
     }
 
     @Override

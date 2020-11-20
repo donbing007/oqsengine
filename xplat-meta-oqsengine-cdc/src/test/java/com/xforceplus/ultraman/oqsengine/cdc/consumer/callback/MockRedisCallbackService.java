@@ -22,10 +22,12 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     private AtomicInteger executed = new AtomicInteger(0);
 
-    private CDCMetrics cdcMetrics;
+    private CDCMetrics cdcMetrics = new CDCMetrics();
+
+    private long heartBeat;
 
     public void reset() {
-        cdcMetrics = null;
+        cdcMetrics = new CDCMetrics();
         executed = new AtomicInteger(0);
     }
 
@@ -33,9 +35,6 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     @Override
     public void cdcAck(CDCAckMetrics ackMetrics) {
-        if (null == cdcMetrics) {
-            cdcMetrics = new CDCMetrics();
-        }
         cdcMetrics.setCdcAckMetrics(ackMetrics);
 
         if (cdcMetrics.getCdcAckMetrics().getLastConsumerTime() > lastConsumerTime) {
@@ -44,6 +43,11 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
         }
 //
 //        logger.info("mock cdcAck info : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
+    }
+
+    @Override
+    public void heartBeat() {
+        this.heartBeat = System.currentTimeMillis();
     }
 
     @Override

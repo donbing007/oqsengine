@@ -21,6 +21,12 @@ public interface CDCMetricsCallback {
     void cdcAck(CDCAckMetrics ackMetrics);
 
     /**
+     * 心跳
+     *
+     */
+    void heartBeat();
+
+    /**
      * 需要在一个原子操作时保证一致性的信息，保证在宕机后从redis恢复的完整性
      *
      * @param cdcMetrics 指标.

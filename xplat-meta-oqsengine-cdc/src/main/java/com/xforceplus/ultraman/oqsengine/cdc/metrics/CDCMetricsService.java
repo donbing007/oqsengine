@@ -38,10 +38,12 @@ public class CDCMetricsService {
 
     private CDCMetrics cdcMetrics;
 
-    public CDCMetricsService() {
-        initCdcSyncPool();
+    private volatile boolean shutdown;
 
+    public CDCMetricsService() {
         cdcMetrics = new CDCMetrics();
+        initCdcSyncPool();
+        shutdown = false;
     }
 
     private void initCdcSyncPool() {
@@ -52,6 +54,29 @@ public class CDCMetricsService {
             ExecutorHelper.buildNameThreadFactory(POOL_NAME, true),
             new ThreadPoolExecutor.AbortPolicy()
         );
+    }
+
+    public void startMetrics() {
+        shutdown = false;
+        //  设置心跳
+        cdcSyncPool.submit(() -> {
+            while (true) {
+                if (shutdown) {
+                    break;
+                }
+                try {
+                    Thread.sleep(HEART_BREAK_INTERVAL);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                cdcMetricsCallback.heartBeat();
+            }
+        });
+    }
+
+    public void shutdown() {
+        shutdown = true;
     }
 
     public CDCMetrics getCdcMetrics() {
@@ -71,9 +96,8 @@ public class CDCMetricsService {
         callback();
     }
 
-    public void heartBeat(long batchId) {
-//        logger.debug("heart beat, batchId : {}", batchId);
-        cdcMetrics.heartBeat(batchId);
+    public void syncFreeMessage(long batchId) {
+        cdcMetrics.syncFreeMessage(batchId);
         callback();
     }
 
@@ -100,6 +124,7 @@ public class CDCMetricsService {
     public void connectedOk() {
         cdcMetrics.resetStatus();
     }
+
     private void callback() {
         try {
             logger.debug("callback ack metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
