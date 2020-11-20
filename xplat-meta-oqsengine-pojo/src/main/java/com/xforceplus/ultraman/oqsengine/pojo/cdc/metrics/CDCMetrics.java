@@ -81,8 +81,4 @@ public class CDCMetrics {
             this.cdcAckMetrics.setTotalUseTime(temp.getCdcAckMetrics().getTotalUseTime());
         }
     }
-
-    public void resetStatus(CDCStatus cdcStatus) {
-        this.cdcAckMetrics.setCdcConsumerStatus(cdcStatus);
-    }
 }
