@@ -215,7 +215,7 @@ public class SphinxSyncExecutor {
             try {
                 e1 = masterStorage.selectEntityValue(pref);
             } catch (Exception e) {
-                logger.warn("query entityValue from master db error..., id : {}", pref);
+                logger.error("query entityValue from master db error..., id : {}", pref);
                 e.printStackTrace();
             }
             return e1.orElse(null);
