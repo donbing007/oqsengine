@@ -30,6 +30,8 @@ public class CDCDaemonServiceTest extends AbstractContainer {
 
     private CDCDaemonService cdcDaemonService;
 
+    private boolean isTest = false;
+
     private MockRedisCallbackService testCallbackService;
 
     @Before
@@ -40,7 +42,7 @@ public class CDCDaemonServiceTest extends AbstractContainer {
         initDaemonService();
     }
 
-    private void initDaemonService() throws SQLException, InterruptedException {
+    private void initDaemonService() throws Exception {
 
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         testCallbackService = new MockRedisCallbackService();
@@ -59,10 +61,12 @@ public class CDCDaemonServiceTest extends AbstractContainer {
 
     @Test
     public void binlogSyncTest() throws InterruptedException {
-        cdcDaemonService.startDaemon();
+        if (isTest) {
+            cdcDaemonService.startDaemon();
 
-        Thread.sleep(10_000);
+            Thread.sleep(10_000);
 
-        cdcDaemonService.stopDaemon();
+            cdcDaemonService.stopDaemon();
+        }
     }
 }

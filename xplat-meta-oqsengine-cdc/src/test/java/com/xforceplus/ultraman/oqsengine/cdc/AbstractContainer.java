@@ -270,8 +270,9 @@ public abstract class AbstractContainer {
 
     protected SphinxSyncExecutor sphinxSyncExecutor;
 
-    protected ConsumerService initConsumerService() throws SQLException, InterruptedException {
+    protected ConsumerService initConsumerService() throws Exception {
 
+        initMaster();
         initIndex();
 
         ExecutorService consumerPool = new ThreadPoolExecutor(10, 10,
@@ -288,6 +289,7 @@ public abstract class AbstractContainer {
         sphinxSyncExecutor = new SphinxSyncExecutor();
         ReflectionTestUtils.setField(sphinxSyncExecutor, "sphinxQLIndexStorage", indexStorage);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "consumerPool", consumerPool);
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "masterStorage", masterStorage);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "entityValueBuilder", entityValueBuilder);
 
         ConsumerService consumerService = new SphinxConsumerService();

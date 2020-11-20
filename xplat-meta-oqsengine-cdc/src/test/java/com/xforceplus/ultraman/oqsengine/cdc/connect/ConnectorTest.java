@@ -42,7 +42,7 @@ public class ConnectorTest extends AbstractContainer  {
         }
     }
 
-    private void initDaemonService() throws SQLException, InterruptedException {
+    private void initDaemonService() throws Exception {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService();
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);

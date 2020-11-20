@@ -46,7 +46,7 @@ public class FailOverTest extends AbstractContainer {
     }
 
 
-    private void initDaemonService() throws SQLException, InterruptedException {
+    private void initDaemonService() throws Exception {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService();
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
@@ -72,8 +72,8 @@ public class FailOverTest extends AbstractContainer {
 
 
         //  睡眠120秒，结束
-        Thread.sleep(200_000);
-        isTetOver = false;
+        Thread.sleep(150_000);
+        isTetOver = true;
         //  继续等待10秒，结束
         Thread.sleep(10_000);
     }
@@ -86,9 +86,11 @@ public class FailOverTest extends AbstractContainer {
             while (!isTetOver) {
                 cdcDaemonService.startDaemon();
 
-                Thread.sleep(20_1000);
+                Thread.sleep(20_000);
 
                 cdcDaemonService.stopDaemon();
+
+                Thread.sleep(5_000);
             }
             System.out.println("stop CDCDamonServiceCall thread.");
             return null;

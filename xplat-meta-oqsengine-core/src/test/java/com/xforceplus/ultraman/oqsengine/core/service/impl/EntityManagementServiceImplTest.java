@@ -348,6 +348,11 @@ public class EntityManagementServiceImplTest {
         }
 
         @Override
+        public Optional<IEntityValue> selectEntityValue(long id) throws SQLException {
+            return Optional.ofNullable(data.get(id).entityValue());
+        }
+
+        @Override
         public Collection<IEntity> selectMultiple(Map<Long, IEntityClass> ids) throws SQLException {
             return ids.keySet().stream().map(id -> data.get(id)).collect(Collectors.toList());
         }

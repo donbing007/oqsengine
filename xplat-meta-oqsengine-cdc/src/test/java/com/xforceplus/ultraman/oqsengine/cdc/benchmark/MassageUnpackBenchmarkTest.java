@@ -35,7 +35,6 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
     private static long startId = 1;
     @BeforeClass
     public static void beforeClass() {
-
         entries = new ArrayList<>(size);
         preWarms = new ArrayList<>(1);
         build(preWarms, 1, Long.MAX_VALUE);
@@ -43,7 +42,7 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
     }
 
     @Test
-    public void sphinxConsumerBenchmarkTest() throws SQLException, InterruptedException {
+    public void sphinxConsumerBenchmarkTest() throws Exception {
         ConsumerService sphinxConsumerService = initConsumerService();
         //  预热
         sphinxConsumerService.consume(preWarms, 1, new CDCUnCommitMetrics());

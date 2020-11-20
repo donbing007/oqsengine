@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
+import com.xforceplus.ultraman.oqsengine.cdc.benchmark.MassageUnpackBenchmarkTest;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
@@ -12,6 +13,8 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.SQLException;
@@ -27,7 +30,7 @@ import java.sql.SQLException;
  * @since : 1.8
  */
 public class ConsumerRunnerTest extends AbstractContainer {
-
+    final Logger logger = LoggerFactory.getLogger(ConsumerRunnerTest.class);
     private ConsumerRunner consumerRunner;
 
     private MockRedisCallbackService mockRedisCallbackService;
@@ -42,7 +45,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         initConsumerRunner();
     }
 
-    private void initConsumerRunner() throws SQLException, InterruptedException {
+    private void initConsumerRunner() throws Exception {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService();
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
@@ -63,7 +66,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
     private void stopConsumerRunner() throws InterruptedException {
         int loop = 0;
-        int maxLoop = 500;
+        int maxLoop = 100;
         while (loop < maxLoop) {
             if (expectedCount == mockRedisCallbackService.getExecuted().get()) {
                 break;
@@ -72,8 +75,10 @@ public class ConsumerRunnerTest extends AbstractContainer {
             Thread.sleep(1_000);
             loop ++;
         }
+        logger.debug("result loop : {}, expectedCount : {}, actual : {}", loop, expectedCount, mockRedisCallbackService.getExecuted().get());
         Assert.assertNotEquals(maxLoop, loop);
         consumerRunner.shutdown();
+        Thread.sleep(5_000);
     }
 
     @Test
