@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 
@@ -51,6 +50,10 @@ public class BuildExecutor extends AbstractMasterExecutor<StorageEntity, Integer
         st.setString(12, storageEntity.getMeta());
 
         checkTimeout(st);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug(st.toString());
+        }
 
         try {
             return st.executeUpdate();
