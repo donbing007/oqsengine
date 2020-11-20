@@ -109,6 +109,12 @@ redis:
   uri: "redis://localhost:6379"
   maxReqQueue: 2147483647
 
+sync:
+  # Data synchronization allowed latency in milliseconds.
+  allowMaxSyncTimeMs: 10000
+  # The heartbeat delay of data synchronization. Milliseconds.
+  allowMaxLiveTimeMs: 3000
+
 # datasource json config
 # Multiple data sources are separated by Numbers.
 # The HikariCP connection pool implementation is used, see configuration parameters.

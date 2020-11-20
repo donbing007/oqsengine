@@ -26,6 +26,10 @@ threadPool:
 
 maxVisibleNumber: 10000
 
+sync:
+  allowMaxSyncTimeMs: 10000
+  allowMaxLiveTimeMs: 3000
+
 storage:
   timeoutMs:
     query: 3000

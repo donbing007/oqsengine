@@ -77,6 +77,9 @@ data:
         redis:
           uri: {{ .Values.redis.uri | default "redis://localhost:6379" | quote}}
           maxReqQueue: {{ .Values.redis.maxReqQueue | default "2147483647" }}
+        sync:
+          allowMaxSyncTimeMs: {{ .Values.sync.allowMaxSyncTimeMs | default "10000"}}
+          allowMaxLiveTimeMs: {{ .Values.sync.allowMaxLiveTimeMs | default "3000" }}
         cdc:
           connect:
             type: {{ .Values.cdc.connect.type }}
