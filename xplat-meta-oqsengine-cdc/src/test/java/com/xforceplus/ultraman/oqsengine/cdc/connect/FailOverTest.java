@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -41,10 +42,15 @@ public class FailOverTest extends AbstractContainer {
     public void before() throws Exception {
 
         initMaster();
-
+        clear();
         initDaemonService();
     }
 
+    @After
+    public void after() throws SQLException {
+        cdcDaemonService.stopDaemon();
+        clear();
+    }
 
     private void initDaemonService() throws Exception {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
