@@ -36,15 +36,6 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
     private static int size = 10000;
     private static long startId = 1;
 
-    @Before
-    public void before() throws SQLException {
-        clear();
-    }
-
-    @After
-    public void after() throws SQLException {
-        clear();
-    }
     @BeforeClass
     public static void beforeClass() {
         entries = new ArrayList<>(size);
