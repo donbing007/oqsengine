@@ -75,7 +75,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             Thread.sleep(1_000);
             loop ++;
         }
-        logger.debug("result loop : {}", loop);
+        logger.debug("result loop : {}, expectedCount : {}, actual : {}", loop, expectedCount, mockRedisCallbackService.getExecuted().get());
         Assert.assertNotEquals(maxLoop, loop);
         consumerRunner.shutdown();
         Thread.sleep(5_000);

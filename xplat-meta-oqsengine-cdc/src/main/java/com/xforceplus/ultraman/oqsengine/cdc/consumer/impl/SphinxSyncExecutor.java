@@ -211,10 +211,11 @@ public class SphinxSyncExecutor {
         IEntityValue entityValue = prefEntityValueMaps.get(pref);
         if (null == entityValue && searchMaster) {
             return masterStorage.selectEntityValue(pref).get();
-//            if (ev == null)
+        }
+//        if (null == entityValue) {
 //            throw new SQLException(
 //                    String.format("pref's entityValue could not be null in relation pool when have cref, need pref id : %d", pref));
-        }
+//        }
         return entityValue;
     }
 
