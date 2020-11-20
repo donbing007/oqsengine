@@ -139,3 +139,4 @@ oqsengine 会在 /actuator/prometheus 公开一系列指标来输出当前系统
 | oqs_process_delay_latency_seconds_sum | action(one,condition) | 操作延时总和 |
 | oqs_unsync_commitid_count_total | | 提交但未同步的提交号数量 |
 | oqs_cdc_sync_delay_latency | | CDC 同步的延时 |
+| oqs_mode | | 当前工作模式(1 正常, 2 只读) |

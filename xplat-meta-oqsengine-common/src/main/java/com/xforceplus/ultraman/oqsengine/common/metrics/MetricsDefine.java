@@ -57,8 +57,8 @@ public class MetricsDefine {
     public static final String CDC_SYNC_DELAY_LATENCY_SECONDS = PREFIX + ".cdc.sync.delay.latency";
 
     /**
-     * 当前是否只读模式.
+     * 当前OQS的工作模式.
      */
-    public static final String READ_ONLY_MODE = PREFIX + ".read_only.mode";
+    public static final String MODE = PREFIX + ".mode";
 
 }

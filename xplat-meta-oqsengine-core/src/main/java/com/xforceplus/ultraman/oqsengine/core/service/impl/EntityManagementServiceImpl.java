@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
@@ -79,7 +80,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private Counter replaceCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "replace");
     private Counter deleteCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "delete");
     private Counter failCountTotal = Metrics.counter(MetricsDefine.FAIL_COUNT_TOTAL);
-    private AtomicInteger readOnly = Metrics.gauge(MetricsDefine.READ_ONLY_MODE, new AtomicInteger(0));
+    private AtomicInteger readOnly = Metrics.gauge(MetricsDefine.MODE, new AtomicInteger(0));
 
     private ScheduledExecutorService checkCDCStatusWorker;
     private volatile boolean ready = true;
@@ -113,7 +114,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         logger.warn(
                             "Detected that the CDC synchronization service has stopped and is currently in a state of {}.",
                             cdcStatus.name());
-                        readOnly.set(1);
+                        readOnly.set(OqsMode.READ_ONLY.getValue());
                         ready = false;
                         return;
                     }
@@ -123,7 +124,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         logger.warn(
                             "The CDC service has not been updated for more than {} milliseconds, so it blocks writes.",
                             allowMaxLiveTimeMs);
-                        readOnly.set(1);
+                        readOnly.set(OqsMode.READ_ONLY.getValue());
                         ready = false;
                         return;
                     }
@@ -133,11 +134,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         logger.warn("CDC services synchronize data over {} milliseconds, blocking the write service.",
                             allowMaxSyncTimeMs);
                         ready = false;
-                        readOnly.set(1);
+                        readOnly.set(OqsMode.READ_ONLY.getValue());
                         return;
                     }
 
-                    readOnly.set(0);
+                    readOnly.set(OqsMode.NORMAL.getValue());
                     ready = true;
                 }
             }, 6, 6, TimeUnit.SECONDS);
