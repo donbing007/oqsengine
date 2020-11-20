@@ -51,7 +51,7 @@ public abstract class CDCConnector {
             canalConnector.connect();
             //  订阅destination
             canalConnector.subscribe(subscribeFilter);
-
+            logger.info("connect to canal server...");
             isClosed = false;
         }
     }
@@ -62,18 +62,12 @@ public abstract class CDCConnector {
     public void close(boolean withRollbackLast) {
         if (null != canalConnector && !isClosed) {
             try {
-                //  先rollback再关闭
-                if (withRollbackLast) {
-                    canalConnector.rollback();
-                }
-
-                //  注销订阅destination
-//                canalConnector.unsubscribe();
+                logger.error("close canal connector...");
+                //  关闭连接CanalServer
+                canalConnector.disconnect();
             } catch (Exception e) {
                 logger.error("close error, ex : {}", e.getMessage());
             } finally {
-                //  关闭连接CanalServer
-                canalConnector.disconnect();
                 isClosed = true;
             }
         }

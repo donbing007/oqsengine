@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerToolsTest;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -33,6 +35,7 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
 
     private static int size = 10000;
     private static long startId = 1;
+
     @BeforeClass
     public static void beforeClass() {
         entries = new ArrayList<>(size);

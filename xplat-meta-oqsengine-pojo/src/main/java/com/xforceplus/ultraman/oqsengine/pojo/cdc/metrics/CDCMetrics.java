@@ -50,21 +50,22 @@ public class CDCMetrics {
         return cdcUnCommitMetrics;
     }
 
+    public void resetStatus() {
+        this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
+        this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
+    }
+
     public void setCdcUnCommitMetrics(CDCUnCommitMetrics cdcUnCommitMetrics) {
         this.cdcUnCommitMetrics = cdcUnCommitMetrics;
     }
 
-    public void heartBeat(long batchId, long lastConnectTime) {
+    public void heartBeat(long batchId) {
         this.batchId = batchId;
-        this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
-        this.cdcAckMetrics.setLastConnectedTime(lastConnectTime);
         this.cdcAckMetrics.setLastUpdateTime(System.currentTimeMillis());
     }
 
     public void consumeSuccess(CDCMetrics temp, boolean isConnectSync) {
         this.batchId = temp.getBatchId();
-        this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
-        this.cdcAckMetrics.setLastConnectedTime(temp.getCdcAckMetrics().getLastConnectedTime());
 
         //  启动则更新LastConnectedTime, 否则为成功消费
         if (!isConnectSync) {

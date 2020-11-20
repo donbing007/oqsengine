@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -37,23 +38,31 @@ public class FailOverTest extends AbstractContainer {
 
     private volatile boolean isTetOver = false;
 
+    private static SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
+
+    static {
+        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
+                "nly-v1", "root", "xplat");
+    }
+
     @Before
     public void before() throws Exception {
 
         initMaster();
-
+        clear();
         initDaemonService();
     }
 
+    @After
+    public void after() throws SQLException {
+        cdcDaemonService.stopDaemon();
+        clear();
+    }
 
     private void initDaemonService() throws Exception {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService();
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
-
-        SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
-                "nly-v1", "root", "xplat");
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));

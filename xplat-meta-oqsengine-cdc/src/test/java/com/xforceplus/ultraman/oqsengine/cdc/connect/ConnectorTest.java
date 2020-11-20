@@ -37,8 +37,16 @@ public class ConnectorTest extends AbstractContainer  {
     public void before() throws Exception {
         if (isDoTest) {
             initMaster();
-
+            clear();
             initDaemonService();
+        }
+    }
+
+    @After
+    public void after() throws SQLException {
+        if (isDoTest) {
+            cdcDaemonService.stopDaemon();
+            clear();
         }
     }
 

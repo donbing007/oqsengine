@@ -42,7 +42,7 @@ public class CDCConstant {
     public static final int SPLIT_META_LENGTH = 2;
 
     //  shutdown时最大的等待循环次数
-    public static final int MAX_STOP_WAIT_LOOPS = 5;
+    public static final int MAX_STOP_WAIT_LOOPS = 1024;
 
     //  shutdown时单次循环等待时间
     public static final int MAX_STOP_WAIT_TIME = 4;

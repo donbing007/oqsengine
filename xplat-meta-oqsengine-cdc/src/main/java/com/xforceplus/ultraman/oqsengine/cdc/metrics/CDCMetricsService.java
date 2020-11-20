@@ -71,9 +71,9 @@ public class CDCMetricsService {
         callback();
     }
 
-    public void heartBeat(long batchId, long lastConnectTime) {
+    public void heartBeat(long batchId) {
 //        logger.debug("heart beat, batchId : {}", batchId);
-        cdcMetrics.heartBeat(batchId, lastConnectTime);
+        cdcMetrics.heartBeat(batchId);
         callback();
     }
 
@@ -97,6 +97,9 @@ public class CDCMetricsService {
         }
     }
 
+    public void connected() {
+        cdcMetrics.resetStatus();
+    }
     private void callback() {
         //  设置本次callback的时间
         cdcMetrics.getCdcAckMetrics().setLastUpdateTime(System.currentTimeMillis());
@@ -110,4 +113,6 @@ public class CDCMetricsService {
             }
         });
     }
+
+
 }

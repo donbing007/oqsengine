@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,6 +44,11 @@ public class ConsumerRunnerTest extends AbstractContainer {
         initMaster();
     }
 
+    @After
+    public void after() throws SQLException {
+        clear();
+    }
+
     private ConsumerRunner initConsumerRunner() throws Exception {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService();
@@ -56,6 +62,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
     }
 
     private void startConsumerRunner(long partitionId) throws Exception {
+        clear();
         t = partitionId;
         expectedCount = 0;
         consumerRunner = initConsumerRunner();

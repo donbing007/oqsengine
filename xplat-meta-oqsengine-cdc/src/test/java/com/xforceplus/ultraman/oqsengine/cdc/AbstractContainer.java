@@ -38,8 +38,9 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import javax.sql.DataSource;
-import java.io.File;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -316,5 +317,25 @@ public abstract class AbstractContainer {
         }
 
         return dataSourcePackage.getIndexSearch().get(0);
+    }
+
+    public void clear() throws SQLException {
+        for (DataSource ds : dataSourcePackage.getMaster()) {
+            Connection conn = ds.getConnection();
+            Statement st = conn.createStatement();
+            st.executeUpdate("truncate table oqsbigentity");
+            st.close();
+            conn.close();
+        }
+
+        for (DataSource ds : dataSourcePackage.getIndexWriter()) {
+            Connection conn = ds.getConnection();
+            Statement st = conn.createStatement();
+            st.executeUpdate("truncate table oqsindex0");
+            st.executeUpdate("truncate table oqsindex1");
+            st.executeUpdate("truncate table oqsindex2");
+            st.close();
+            conn.close();
+        }
     }
 }
