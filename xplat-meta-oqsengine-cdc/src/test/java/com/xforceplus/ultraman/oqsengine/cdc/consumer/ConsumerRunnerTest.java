@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
-import com.xforceplus.ultraman.oqsengine.cdc.benchmark.MassageUnpackBenchmarkTest;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
@@ -42,10 +41,9 @@ public class ConsumerRunnerTest extends AbstractContainer {
     @Before
     public void before() throws Exception {
         initMaster();
-        initConsumerRunner();
     }
 
-    private void initConsumerRunner() throws Exception {
+    private ConsumerRunner initConsumerRunner() throws Exception {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService();
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
@@ -54,13 +52,13 @@ public class ConsumerRunnerTest extends AbstractContainer {
         singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
                 "nly-v1", "root", "xplat");
 
-        consumerRunner = new ConsumerRunner(initConsumerService(), cdcMetricsService, singleCDCConnector);
+        return new ConsumerRunner(initConsumerService(), cdcMetricsService, singleCDCConnector);
     }
 
-    private void startConsumerRunner(long partitionId) {
+    private void startConsumerRunner(long partitionId) throws Exception {
         t = partitionId;
         expectedCount = 0;
-        mockRedisCallbackService.reset();
+        consumerRunner = initConsumerRunner();
         consumerRunner.start();
     }
 
@@ -82,7 +80,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
     }
 
     @Test
-    public void syncTest() throws InterruptedException, SQLException {
+    public void syncTest() throws Exception {
 
         startConsumerRunner(1);
         Transaction tx = transactionManager.create();
@@ -112,7 +110,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
     }
 
     @Test
-    public void SyncDeleteTest() throws SQLException, InterruptedException {
+    public void SyncDeleteTest() throws Exception {
         startConsumerRunner(1000000);
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
@@ -138,7 +136,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
     }
 
     @Test
-    public void loopTest() throws InterruptedException, SQLException {
+    public void loopTest() throws Exception {
         int gap = 10;
         long loops = 2;
         int i = 0;
@@ -172,7 +170,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
     }
 
     @Test
-    public void loopTransactionOverBatches() throws SQLException, InterruptedException {
+    public void loopTransactionOverBatches() throws Exception {
         int gap = 10;
         int size = 100;
 
@@ -202,7 +200,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
 
     @Test
-    public void loopSmallTransactionBatches() throws SQLException, InterruptedException {
+    public void loopSmallTransactionBatches() throws Exception {
         int gap = 10;
         int loops = 100;
 
