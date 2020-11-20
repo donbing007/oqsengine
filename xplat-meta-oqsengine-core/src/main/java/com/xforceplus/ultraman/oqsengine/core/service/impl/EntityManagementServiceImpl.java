@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -78,6 +79,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private Counter replaceCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "replace");
     private Counter deleteCountTotal = Metrics.counter(MetricsDefine.WRITE_COUNT_TOTAL, "action", "delete");
     private Counter failCountTotal = Metrics.counter(MetricsDefine.FAIL_COUNT_TOTAL);
+    private AtomicInteger readOnly = Metrics.gauge(MetricsDefine.READ_ONLY_MODE, new AtomicInteger(0));
 
     private ScheduledExecutorService checkCDCStatusWorker;
     private volatile boolean ready = true;
@@ -111,6 +113,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         logger.warn(
                             "Detected that the CDC synchronization service has stopped and is currently in a state of {}.",
                             cdcStatus.name());
+                        readOnly.set(1);
                         ready = false;
                         return;
                     }
@@ -120,6 +123,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         logger.warn(
                             "The CDC service has not been updated for more than {} milliseconds, so it blocks writes.",
                             allowMaxLiveTimeMs);
+                        readOnly.set(1);
                         ready = false;
                         return;
                     }
@@ -129,9 +133,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         logger.warn("CDC services synchronize data over {} milliseconds, blocking the write service.",
                             allowMaxSyncTimeMs);
                         ready = false;
+                        readOnly.set(1);
                         return;
                     }
 
+                    readOnly.set(0);
                     ready = true;
                 }
             }, 6, 6, TimeUnit.SECONDS);
@@ -150,6 +156,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Override
     public IEntity build(IEntity entity) throws SQLException {
         checkReady();
+
+        markTime(entity);
+
         // 克隆一份,后续的修改不影响入参.
         IEntity entityClone;
         try {
@@ -218,15 +227,17 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public ResultStatus replace(IEntity entity) throws SQLException {
         checkReady();
 
+        markTime(entity);
+
         if (!masterStorage.selectOne(entity.id(), entity.entityClass()).isPresent()) {
             failCountTotal.increment();
             throw new SQLException(String.format("An Entity that does not exist cannot be updated (%d).", entity.id()));
         }
 
         // 克隆一份,后续的修改不影响入参.
-        IEntity target;
+        IEntity entityClone;
         try {
-            target = (IEntity) entity.clone();
+            entityClone = (IEntity) entity.clone();
         } catch (CloneNotSupportedException e) {
             replaceCountTotal.increment();
             throw new SQLException(e.getMessage(), e);
@@ -242,10 +253,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         /**
                          * 拆分为父与子.
                          */
-                        IEntity fatherEntity = buildFatherEntity(target, target.id());
+                        IEntity fatherEntity = buildFatherEntity(entityClone, entityClone.id());
                         fatherEntity.resetId(entity.family().parent());
 
-                        IEntity childEntity = buildChildEntity(target, target.family().parent());
+                        IEntity childEntity = buildChildEntity(entityClone, entityClone.family().parent());
 
                         if (isConflict(masterStorage.replace(fatherEntity))) {
                             hint.setRollback(true);
@@ -259,15 +270,15 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                     } else {
 
-                        if (isConflict(masterStorage.replace(target))) {
+                        if (isConflict(masterStorage.replace(entityClone))) {
                             hint.setRollback(true);
                             return ResultStatus.CONFLICT;
                         }
 
                         // 有子类
-                        if (target.family().child() > 0) {
+                        if (entityClone.family().child() > 0) {
                             // 父子同步
-                            if (isConflict(masterStorage.synchronize(target.id(), target.family().child()))) {
+                            if (isConflict(masterStorage.synchronize(entityClone.id(), entityClone.family().child()))) {
                                 hint.setRollback(true);
                                 return ResultStatus.CONFLICT;
                             }
@@ -294,6 +305,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Override
     public ResultStatus delete(IEntity entity) throws SQLException {
         checkReady();
+
+        markTime(entity);
 
         try {
             return (ResultStatus) transactionExecutor.execute(new ResourceTask() {
@@ -383,24 +396,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 newValues.addValue(v);
             });
 
-        return new Entity(entity.id(), entityClass, newValues, family, entity.version());
-    }
-
-    // true 发起了警告,false 没有发起警告.
-    private boolean warnNoSearchable(IEntity entity) {
-        IEntityClass entityClass = entity.entityClass();
-        long indexNumber = entityClass.fields().stream().filter(f -> f.config().isSearchable()).count();
-        if (indexNumber == 0 && isSub(entity)) {
-            indexNumber +=
-                entityClass.extendEntityClass().fields().stream().filter(f -> f.config().isSearchable()).count();
-        }
-        if (indexNumber == 0) {
-            logger.warn("An attempt was made to create an Entity({})-EntityClass({}) without any index.",
-                entity.id(), entity.entityClass().id());
-            return true;
-        }
-
-        return false;
+        IEntity newEntity = new Entity(entity.id(), entityClass, newValues, family, entity.version());
+        newEntity.markTime(entity.time());
+        return newEntity;
     }
 
     // 判断是否操作冲突.
@@ -413,6 +411,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         if (!ready) {
             throw new SQLException("Data is blocked synchronously and cannot be written now.");
         }
+    }
+
+    private void markTime(IEntity entity) {
+        entity.markTime(System.currentTimeMillis());
     }
 
 }

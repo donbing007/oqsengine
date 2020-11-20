@@ -134,7 +134,9 @@ public class Entity implements IEntity, Serializable {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        return new Entity(id(), entityClass(), (IEntityValue) entityValue().clone(), family(), version());
+        IEntity newEntity = new Entity(id(), entityClass(), (IEntityValue) entityValue().clone(), family(), version());
+        newEntity.markTime(time());
+        return newEntity;
     }
 
     @Override

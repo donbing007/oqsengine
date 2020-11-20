@@ -127,6 +127,7 @@ public class EntityManagementServiceImplTest {
         Assert.assertEquals(expectedEntity.entityValue(), masterEntity.entityValue());
         Assert.assertEquals(expectedEntity.family(), masterEntity.family());
         Assert.assertEquals(0, masterEntity.version());
+        Assert.assertNotEquals(0, masterEntity.time());
     }
 
     @Test
@@ -146,6 +147,7 @@ public class EntityManagementServiceImplTest {
         Assert.assertEquals(new EntityFamily(0, expectedEntity.id()), fatherMasterEntity.family());
         Assert.assertEquals(0, fatherMasterEntity.version());
         Assert.assertEquals(fatherEntityClass, fatherMasterEntity.entityClass());
+        Assert.assertNotEquals(0, fatherMasterEntity.time());
         Collection<IValue> fatherValues = fatherMasterEntity.entityValue().values().stream()
             .filter(v -> expectedFatherValues.containsKey(v.getField())).collect(Collectors.toList());
         Assert.assertEquals(expectedFatherValues.size(), fatherValues.size());
@@ -163,6 +165,7 @@ public class EntityManagementServiceImplTest {
         Assert.assertEquals(new EntityFamily(expectedEntity.family().parent(), 0), childMasterEntity.family());
         Assert.assertEquals(0, childMasterEntity.version());
         Assert.assertEquals(childEntityClass, childMasterEntity.entityClass());
+        Assert.assertNotEquals(0, childMasterEntity.time());
         Collection<IValue> childValues = childMasterEntity.entityValue().values().stream()
             .filter(v -> expectedChildValues.containsKey(v.getField())).collect(Collectors.toList());
         Assert.assertEquals(expectedChildValues.size(), childValues.size());
@@ -187,6 +190,7 @@ public class EntityManagementServiceImplTest {
             fatherEntityClass.fields().stream().filter(f -> f.id() != removeField.id()).count(),
             masterEntity.entityValue().values().stream().filter(v -> v.getField().id() != removeField.id()).count()
         );
+        Assert.assertNotEquals(0, masterEntity.time());
 
     }
 
@@ -205,6 +209,7 @@ public class EntityManagementServiceImplTest {
         // 验证父类
         IEntity masterEntity = masterStorage.selectOne(expectedEntity.family().parent(), fatherEntityClass).get();
         Assert.assertEquals("8888.8888", masterEntity.entityValue().getValue("f3").get().valueToString());
+        Assert.assertNotEquals(0, masterEntity.time());
     }
 
     @Test
@@ -282,13 +287,15 @@ public class EntityManagementServiceImplTest {
         IEntityValue newValue = new EntityValue(source.id());
         newValue.addValues(source.entityValue().values());
 
-        return new Entity(
+        IEntity newEntity = new Entity(
             source.id(),
             source.entityClass(),
             newValue,
             new EntityFamily(source.family().parent(), source.family().child()),
             incrVersion ? source.version() + 1 : source.version()
         );
+        newEntity.markTime(source.time());
+        return newEntity;
     }
 
     private IEntity buildEntity(IEntityClass entityClass, boolean buildId) {
