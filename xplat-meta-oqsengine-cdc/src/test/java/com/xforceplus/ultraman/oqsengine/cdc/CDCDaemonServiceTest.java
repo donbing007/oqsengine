@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -36,10 +37,12 @@ public class CDCDaemonServiceTest extends AbstractContainer {
 
     @Before
     public void before() throws Exception {
-
-        initMaster();
-
         initDaemonService();
+    }
+
+    @After
+    public void after() {
+        closeAll();
     }
 
     private void initDaemonService() throws Exception {
@@ -54,7 +57,7 @@ public class CDCDaemonServiceTest extends AbstractContainer {
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));
-        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initConsumerService());
+        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initAll());
         ReflectionTestUtils.setField(cdcDaemonService, "cdcMetricsService", cdcMetricsService);
         ReflectionTestUtils.setField(cdcDaemonService, "cdcConnector", singleCDCConnector);
     }

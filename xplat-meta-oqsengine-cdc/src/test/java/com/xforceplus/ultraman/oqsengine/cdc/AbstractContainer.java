@@ -6,10 +6,13 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
+import com.xforceplus.ultraman.oqsengine.devops.SQLDevOpsStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
@@ -72,7 +75,17 @@ public abstract class AbstractContainer {
     protected StorageStrategyFactory masterStorageStrategyFactory;
 
     protected CommitIdStatusService commitIdStatusService;
+    protected SphinxSyncExecutor sphinxSyncExecutor;
 
+    protected TransactionManager transactionManager;
+    protected SphinxQLIndexStorage indexStorage;
+    protected DataSourcePackage dataSourcePackage;
+    protected SQLDevOpsStorage devOpsStorage;
+    protected SQLMasterStorage masterStorage;
+    protected DataSource dataSource;
+    protected TransactionExecutor masterTransactionExecutor;
+    protected String tableName = "oqsbigentity";
+    protected String cdcErrors = "cdcerrors";
     static {
             Network network = Network.newNetwork();
             mysql = new GenericContainer("mysql:5.7")
@@ -168,31 +181,28 @@ public abstract class AbstractContainer {
             System.out.println(System.getProperty("MANTICORE_WRITE1_JDBC_URL"));
     }
 
+    protected ConsumerService initAll() throws Exception {
+        System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
+        dataSourcePackage = DataSourceFactory.build();
 
-    protected TransactionManager transactionManager;
-    protected SphinxQLIndexStorage indexStorage;
-    protected DataSourcePackage dataSourcePackage;
+        initMaster();
+        initDevOps();
+        initIndex();
 
-    protected SQLMasterStorage masterStorage;
-    protected DataSource dataSource;
-    protected TransactionExecutor masterTransactionExecutor;
-    protected String tableName = "oqsbigentity";
+        return initConsumerService();
+    }
 
-    protected DataSource buildDataSourceSelectorMaster(String file) {
-        if (dataSourcePackage == null) {
-            System.setProperty(DataSourceFactory.CONFIG_FILE, file);
+    protected void closeAll() {
+        dataSourcePackage.close();
+    }
 
-            dataSourcePackage = DataSourceFactory.build();
-        }
-
+    protected DataSource buildDataSourceSelectorMaster() {
         return dataSourcePackage.getMaster().get(0);
     }
 
     protected void initIndex() throws SQLException, InterruptedException {
-        Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector(
-            "./src/test/resources/sql_index_storage.conf");
-        DataSource searchDataSource = buildSearchDataSource(
-                "./src/test/resources/sql_index_storage.conf");
+        Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector();
+        DataSource searchDataSource = buildSearchDataSource();
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
@@ -231,9 +241,55 @@ public abstract class AbstractContainer {
         indexStorage.init();
     }
 
+    protected void initDevOps() throws Exception {
+
+        DataSource devOpsDataSource = buildDevOpsDataSource();
+
+        IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
+        ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", masterStorageStrategyFactory);
+
+        SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
+        sqlJsonConditionsBuilderFactory.setStorageStrategy(masterStorageStrategyFactory);
+        sqlJsonConditionsBuilderFactory.init();
+
+        devOpsStorage = new SQLDevOpsStorage();
+        ReflectionTestUtils.setField(devOpsStorage, "devOpsDataSource", devOpsDataSource);
+        devOpsStorage.setCdcErrorRecordTable(cdcErrors);
+        devOpsStorage.init();
+    }
+
+    protected ConsumerService initConsumerService() throws Exception {
+
+        ExecutorService consumerPool = new ThreadPoolExecutor(10, 10,
+                0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(2048),
+                ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
+                new ThreadPoolExecutor.AbortPolicy());
+
+        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
+        storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
+        IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
+        ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
+
+        sphinxSyncExecutor = new SphinxSyncExecutor();
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "sphinxQLIndexStorage", indexStorage);
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "consumerPool", consumerPool);
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "masterStorage", masterStorage);
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "entityValueBuilder", entityValueBuilder);
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "devOpsStorage", devOpsStorage);
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "seqNoGenerator",
+                new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0)));
+
+        ConsumerService consumerService = new SphinxConsumerService();
+
+        ReflectionTestUtils.setField(consumerService, "sphinxSyncExecutor", sphinxSyncExecutor);
+
+        return consumerService;
+    }
+
     protected void initMaster() throws Exception {
 
-        dataSource = buildDataSourceSelectorMaster("./src/test/resources/oqsengine-ds.conf");
+        dataSource = buildDataSourceSelectorMaster();
 
         if (transactionManager == null) {
             long commitId = 0;
@@ -269,53 +325,16 @@ public abstract class AbstractContainer {
         masterStorage.init();
     }
 
-    protected SphinxSyncExecutor sphinxSyncExecutor;
-
-    protected ConsumerService initConsumerService() throws Exception {
-
-        initMaster();
-        initIndex();
-
-        ExecutorService consumerPool = new ThreadPoolExecutor(10, 10,
-            0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(2048),
-            ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
-            new ThreadPoolExecutor.AbortPolicy());
-
-        StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
-        storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
-        IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
-        ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
-
-        sphinxSyncExecutor = new SphinxSyncExecutor();
-        ReflectionTestUtils.setField(sphinxSyncExecutor, "sphinxQLIndexStorage", indexStorage);
-        ReflectionTestUtils.setField(sphinxSyncExecutor, "consumerPool", consumerPool);
-        ReflectionTestUtils.setField(sphinxSyncExecutor, "masterStorage", masterStorage);
-        ReflectionTestUtils.setField(sphinxSyncExecutor, "entityValueBuilder", entityValueBuilder);
-
-        ConsumerService consumerService = new SphinxConsumerService();
-
-        ReflectionTestUtils.setField(consumerService, "sphinxSyncExecutor", sphinxSyncExecutor);
-
-        return consumerService;
+    private DataSource buildDevOpsDataSource() {
+        return dataSourcePackage.getDevOps();
     }
 
-    private Selector<DataSource> buildWriteDataSourceSelector(String file) {
-        System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-
-        dataSourcePackage = DataSourceFactory.build();
-
+    private Selector<DataSource> buildWriteDataSourceSelector() {
         return new HashSelector<>(dataSourcePackage.getIndexWriter());
 
     }
 
-    private DataSource buildSearchDataSource(String file) {
-        if (dataSourcePackage == null) {
-            System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-
-            dataSourcePackage = DataSourceFactory.build();
-        }
-
+    private DataSource buildSearchDataSource() {
         return dataSourcePackage.getIndexSearch().get(0);
     }
 

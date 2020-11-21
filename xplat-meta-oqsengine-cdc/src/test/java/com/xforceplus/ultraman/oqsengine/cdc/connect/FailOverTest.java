@@ -47,16 +47,13 @@ public class FailOverTest extends AbstractContainer {
 
     @Before
     public void before() throws Exception {
-
-        initMaster();
-        clear();
         initDaemonService();
     }
 
     @After
     public void after() throws SQLException {
-        cdcDaemonService.stopDaemon();
         clear();
+        closeAll();
     }
 
     private void initDaemonService() throws Exception {
@@ -66,7 +63,7 @@ public class FailOverTest extends AbstractContainer {
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));
-        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initConsumerService());
+        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initAll());
         ReflectionTestUtils.setField(cdcDaemonService, "cdcMetricsService", cdcMetricsService);
         ReflectionTestUtils.setField(cdcDaemonService, "cdcConnector", singleCDCConnector);
     }
@@ -79,9 +76,9 @@ public class FailOverTest extends AbstractContainer {
         executorService.submit(new MysqlInitCall());
         executorService.submit(new CDCDamonServiceCall());
 
-
         //  睡眠120秒，结束
-        Thread.sleep(250_000);
+        Thread.sleep(100_000);
+        System.out.println("stop");
         isTetOver = true;
         //  继续等待10秒，结束
         Thread.sleep(10_000);

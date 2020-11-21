@@ -36,17 +36,16 @@ public class ConnectorTest extends AbstractContainer  {
     @Before
     public void before() throws Exception {
         if (isDoTest) {
-            initMaster();
-            clear();
             initDaemonService();
+            clear();
         }
     }
 
     @After
     public void after() throws SQLException {
         if (isDoTest) {
-            cdcDaemonService.stopDaemon();
             clear();
+            closeAll();
         }
     }
 
@@ -61,7 +60,7 @@ public class ConnectorTest extends AbstractContainer  {
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));
-        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initConsumerService());
+        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initAll());
         ReflectionTestUtils.setField(cdcDaemonService, "cdcMetricsService", cdcMetricsService);
         ReflectionTestUtils.setField(cdcDaemonService, "cdcConnector", singleCDCConnector);
     }

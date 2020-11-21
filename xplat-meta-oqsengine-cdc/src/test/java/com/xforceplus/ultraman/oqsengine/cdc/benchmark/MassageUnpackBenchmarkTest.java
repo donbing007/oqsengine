@@ -46,18 +46,22 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
 
     @Test
     public void sphinxConsumerBenchmarkTest() throws Exception {
-        ConsumerService sphinxConsumerService = initConsumerService();
-        //  预热
-        sphinxConsumerService.consume(preWarms, 1, new CDCUnCommitMetrics());
+        try {
+            ConsumerService sphinxConsumerService = initAll();
+            //  预热
+            sphinxConsumerService.consume(preWarms, 1, new CDCUnCommitMetrics());
 
-        StopWatch stopWatch = new StopWatch();
+            StopWatch stopWatch = new StopWatch();
 
-        stopWatch.start();
-        sphinxConsumerService.consume(entries, 2, new CDCUnCommitMetrics());
+            stopWatch.start();
+            sphinxConsumerService.consume(entries, 2, new CDCUnCommitMetrics());
 
-        stopWatch.stop();
+            stopWatch.stop();
 
-        logger.info("end sphinxConsumerBenchmarkTest loops : {}, use timeMs : {} ms", size, stopWatch.getTime());
+            logger.info("end sphinxConsumerBenchmarkTest loops : {}, use timeMs : {} ms", size, stopWatch.getTime());
+        } finally {
+            closeAll();
+        }
     }
 
     @Test

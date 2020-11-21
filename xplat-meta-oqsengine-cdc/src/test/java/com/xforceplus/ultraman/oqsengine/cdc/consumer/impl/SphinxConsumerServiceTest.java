@@ -4,6 +4,7 @@ import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,7 +44,12 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
     @Before
     public void before() throws Exception {
-        sphinxConsumerService = initConsumerService();
+        sphinxConsumerService = initAll();
+    }
+
+    @After
+    public void after() throws Exception {
+        closeAll();
     }
 
     /*

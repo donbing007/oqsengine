@@ -16,11 +16,13 @@ public class DataSourcePackage {
     private List<DataSource> master;
     private List<DataSource> indexWriter;
     private List<DataSource> indexSearch;
+    private DataSource devOps;
 
-    public DataSourcePackage(List<DataSource> master, List<DataSource> indexWriter, List<DataSource> indexSearch) {
+    public DataSourcePackage(List<DataSource> master, List<DataSource> indexWriter, List<DataSource> indexSearch, DataSource devOps) {
         this.master = master;
         this.indexWriter = indexWriter;
         this.indexSearch = indexSearch;
+        this.devOps = devOps;
     }
 
     public List<DataSource> getMaster() {
@@ -35,6 +37,10 @@ public class DataSourcePackage {
         return indexSearch;
     }
 
+    public DataSource getDevOps() {
+        return devOps;
+    }
+
     public void close() {
         if (master != null) {
             doClose(master);
@@ -46,6 +52,10 @@ public class DataSourcePackage {
 
         if (indexSearch != null) {
             doClose(indexSearch);
+        }
+
+        if (null != devOps) {
+            ((HikariDataSource) devOps).close();
         }
     }
 

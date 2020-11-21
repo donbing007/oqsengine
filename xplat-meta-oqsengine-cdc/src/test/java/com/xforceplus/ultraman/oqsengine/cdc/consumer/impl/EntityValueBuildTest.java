@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,14 +45,17 @@ public class EntityValueBuildTest extends AbstractContainer {
     @Before
     public void before() throws Exception {
 
-        initMaster();
-
-        sphinxConsumerService = initConsumerService();
+        sphinxConsumerService = initAll();
 
 
         expectedEntities = EntityGenerateToolBar.generateFixedEntities(partitionId, 0);
 
         initStorageEntities();
+    }
+
+    @After
+    public void after() {
+        closeAll();
     }
 
     @Test

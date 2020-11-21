@@ -59,6 +59,7 @@ public class DataSourceFactory {
     private static final String INDEX_WRITER_PATH = "dataSources.index.write";
     private static final String INDEX_SEARCH_PATH = "dataSources.index.search";
     private static final String MASTER_PATH = "dataSources.master";
+    private static final String DEV_OPS_PATH = MASTER_PATH;
 
     /**
      * 数据源构造,会试图读取构造三个数据源列表.
@@ -100,7 +101,20 @@ public class DataSourceFactory {
             master = Collections.emptyList();
         }
 
-        return new DataSourcePackage(master, indexWrite, indexSearch);
+        DataSource devOpsDataSource;
+        if (config.hasPath(DEV_OPS_PATH)) {
+            List<DataSource> devOps =
+                    buildDataSources("master", (List<Config>) config.getConfigList(DEV_OPS_PATH));
+            if (devOps.size() > 0) {
+                devOpsDataSource = devOps.get(0);
+            } else {
+                throw new RuntimeException("devOps dataSource was been configure, but not init success");
+            }
+        } else {
+            devOpsDataSource = null;
+        }
+
+        return new DataSourcePackage(master, indexWrite, indexSearch, devOpsDataSource);
     }
 
     private static List<DataSource> buildDataSources(String baseName, List<Config> configs) {

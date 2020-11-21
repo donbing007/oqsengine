@@ -41,12 +41,15 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
     @Before
     public void before() throws Exception {
-        initMaster();
+        consumerRunner = initConsumerRunner();
+        consumerRunner.start();
     }
 
     @After
     public void after() throws SQLException {
+        consumerRunner.shutdown();
         clear();
+        closeAll();
     }
 
     private ConsumerRunner initConsumerRunner() throws Exception {
@@ -58,15 +61,12 @@ public class ConsumerRunnerTest extends AbstractContainer {
         singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
                 "nly-v1", "root", "xplat");
 
-        return new ConsumerRunner(initConsumerService(), cdcMetricsService, singleCDCConnector);
+        return new ConsumerRunner(initAll(), cdcMetricsService, singleCDCConnector);
     }
 
     private void startConsumerRunner(long partitionId) throws Exception {
-        clear();
         t = partitionId;
         expectedCount = 0;
-        consumerRunner = initConsumerRunner();
-        consumerRunner.start();
     }
 
     private void stopConsumerRunner() throws InterruptedException {
@@ -82,8 +82,8 @@ public class ConsumerRunnerTest extends AbstractContainer {
         }
         logger.debug("result loop : {}, expectedCount : {}, actual : {}", loop, expectedCount, mockRedisCallbackService.getExecuted().get());
         Assert.assertNotEquals(maxLoop, loop);
-        consumerRunner.shutdown();
-        Thread.sleep(5_000);
+//        consumerRunner.shutdown();
+//        Thread.sleep(5_000);
     }
 
     @Test
