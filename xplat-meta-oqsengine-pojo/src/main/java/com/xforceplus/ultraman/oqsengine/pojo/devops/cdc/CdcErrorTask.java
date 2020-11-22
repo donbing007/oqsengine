@@ -22,7 +22,7 @@ public class CdcErrorTask {
     public static CdcErrorTask buildErrorTask(long seqNo, long id, long commitId, String message) {
         CdcErrorTask cdcErrorTask = new CdcErrorTask();
         cdcErrorTask.setSeqNo(seqNo);
-        cdcErrorTask.setCommitId(id);
+        cdcErrorTask.setId(id);
         cdcErrorTask.setCommitId(commitId);
         cdcErrorTask.setMessage(message.length() > MAX_ERROR_MESSAGE_LENGTH ?
                             message.substring(DEFAULT_START_POS, MAX_ERROR_MESSAGE_LENGTH) : message);

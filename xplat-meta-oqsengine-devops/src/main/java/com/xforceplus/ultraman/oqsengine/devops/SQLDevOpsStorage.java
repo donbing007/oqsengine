@@ -1,12 +1,17 @@
 package com.xforceplus.ultraman.oqsengine.devops;
 
+import com.xforceplus.ultraman.oqsengine.devops.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.devops.executor.impl.CdcErrorBuildExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.executor.impl.CdcErrorQueryExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.executor.impl.CdcErrorUpdateExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.CdcErrorTask;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.FixedStatus;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.util.Collection;
 
 /**
  * desc :
@@ -36,14 +41,28 @@ public class SQLDevOpsStorage implements DevOpsStorage {
     @PostConstruct
     public void init() {
         if (queryTimeout <= 0) {
-            setQueryTimeout(3000L);
+            setQueryTimeout(10_000L);
         }
     }
 
     @Override
-    public int recordCdcError(CdcErrorTask cdcErrorTask) throws SQLException {
+    public int buildCdcError(CdcErrorTask cdcErrorTask) throws SQLException {
         return CdcErrorBuildExecutor
                 .build(cdcErrorRecordTable, devOpsDataSource, queryTimeout)
                 .execute(cdcErrorTask);
+    }
+
+    @Override
+    public int updateCdcError(long seqNo, FixedStatus fixedStatus) throws SQLException {
+        return CdcErrorUpdateExecutor
+                .build(cdcErrorRecordTable, devOpsDataSource, queryTimeout, fixedStatus)
+                .execute(seqNo);
+    }
+
+    @Override
+    public Collection<CdcErrorTask> queryCdcErrors(CdcErrorQueryCondition res) throws SQLException {
+        return CdcErrorQueryExecutor
+                .build(cdcErrorRecordTable, devOpsDataSource, queryTimeout)
+                .execute(res);
     }
 }

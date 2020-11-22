@@ -257,7 +257,7 @@ public class SphinxSyncExecutor {
     }
 
     private void errorHandle(CdcErrorTask cdcErrorTask) throws SQLException {
-        devOpsStorage.recordCdcError(cdcErrorTask);
+        devOpsStorage.buildCdcError(cdcErrorTask);
     }
 
     //  多线程作业封装类

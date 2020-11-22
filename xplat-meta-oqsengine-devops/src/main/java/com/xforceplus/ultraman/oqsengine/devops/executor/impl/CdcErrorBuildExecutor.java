@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.devops.executor.impl;
 import com.xforceplus.ultraman.oqsengine.devops.executor.DevOpsExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.ErrorFieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -43,6 +42,10 @@ public class CdcErrorBuildExecutor extends AbstractDevOpsExecutor<CdcErrorTask, 
             st.setLong(7, res.getFixedTime());
 
             checkTimeout(st);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug(st.toString());
+            }
 
             return st.executeUpdate();
         }

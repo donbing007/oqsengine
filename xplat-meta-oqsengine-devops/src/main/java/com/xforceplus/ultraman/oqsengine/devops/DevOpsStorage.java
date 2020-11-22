@@ -1,8 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.devops;
 
+import com.xforceplus.ultraman.oqsengine.devops.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.CdcErrorTask;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.FixedStatus;
 
 import java.sql.SQLException;
+import java.util.Collection;
 
 /**
  * desc :
@@ -15,7 +18,17 @@ import java.sql.SQLException;
 public interface DevOpsStorage {
 
     /*
-        record cdc error
+        build cdc error
      */
-    int recordCdcError(CdcErrorTask cdcErrorTask) throws SQLException;
+    int buildCdcError(CdcErrorTask cdcErrorTask) throws SQLException;
+
+    /*
+        update cdc error status
+    */
+    int updateCdcError(long seqNo, FixedStatus fixedStatus) throws SQLException;
+
+    /*
+        query by condition
+     */
+    Collection<CdcErrorTask> queryCdcErrors(CdcErrorQueryCondition res) throws SQLException;
 }
