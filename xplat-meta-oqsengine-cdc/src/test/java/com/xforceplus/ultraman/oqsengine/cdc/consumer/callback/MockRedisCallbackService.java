@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.callback;
 
-import com.alibaba.fastjson.JSON;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import org.slf4j.Logger;
@@ -22,12 +22,13 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     private AtomicInteger executed = new AtomicInteger(0);
 
-    private CDCMetrics cdcMetrics = new CDCMetrics();
-
+    private CDCMetrics cdcMetrics;
+    private CDCAckMetrics ackMetrics;
     private long heartBeat;
 
     public void reset() {
-        cdcMetrics = new CDCMetrics();
+        cdcMetrics = null;
+        ackMetrics = null;
         executed = new AtomicInteger(0);
     }
 
@@ -35,9 +36,10 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     @Override
     public void cdcAck(CDCAckMetrics ackMetrics) {
-        cdcMetrics.setCdcAckMetrics(ackMetrics);
+        this.ackMetrics = ackMetrics;
 
-        if (cdcMetrics.getCdcAckMetrics().getLastConsumerTime() > lastConsumerTime) {
+        if (ackMetrics.getCdcConsumerStatus() == CDCStatus.CONNECTED &&
+                this.ackMetrics.getLastConsumerTime() > lastConsumerTime) {
             executed.addAndGet(cdcMetrics.getCdcAckMetrics().getExecuteRows());
             lastConsumerTime = cdcMetrics.getCdcAckMetrics().getLastConsumerTime();
         }

@@ -213,7 +213,7 @@ public class SphinxSyncExecutor {
                     entityValue.addValues(entityValueF.values());
                 } catch (Exception ex) {
                     return generateErrorTask(id, commitId, String.format(
-                            "get pref entityValue failed. no match data, record will be ignored, id : {}, pref : {}, message : {}",
+                            "get pref entityValue failed. no match data, record will be ignored, id : %d, pref : %d, message : %s",
                                                                         id, pref, ex.getMessage())
                             );
                 }
@@ -245,15 +245,13 @@ public class SphinxSyncExecutor {
     private IEntityValue entityValueGet(long pref, Map<Long, IEntityValue> prefEntityValueMaps) throws SQLException {
         IEntityValue entityValue = prefEntityValueMaps.get(pref);
         if (null == entityValue) {
-            Optional<IEntityValue> e1;
             try {
-                e1 = masterStorage.selectEntityValue(pref);
+                return masterStorage.selectEntityValue(pref).orElse(null);
             } catch (Exception e) {
-                String error = String.format("query entityValue from master db error..., id : %d, message : %s", pref, e.getMessage());
-                e.printStackTrace();
+                String error = String.format("query entityValue from master db error..., id : %d, " +
+                        "message : %s", pref, e.getMessage());
                 throw new SQLException(error);
             }
-            return e1.orElse(null);
         }
 //        if (null == entityValue) {
 //            throw new SQLException(

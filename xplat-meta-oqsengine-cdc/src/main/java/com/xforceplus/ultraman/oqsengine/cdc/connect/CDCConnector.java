@@ -37,8 +37,7 @@ public abstract class CDCConnector {
                 close();
             }
         } catch (Exception e) {
-            logger.warn("shutdown error.");
-            e.printStackTrace();
+            logger.warn("shutdown error, message : {}", e.getMessage());
         }
     }
 

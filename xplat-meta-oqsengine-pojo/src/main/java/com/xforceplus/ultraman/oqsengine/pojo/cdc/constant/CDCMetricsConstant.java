@@ -15,5 +15,5 @@ public class CDCMetricsConstant {
 
     public static final int MAX_QUEUE_SIZE = 1024;
 
-    public static final int HEART_BREAK_INTERVAL = 1000;
+    public static final int HEART_BEAT_INTERVAL = 1000;
 }

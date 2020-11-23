@@ -136,7 +136,7 @@ public class SQLMasterStorage implements MasterStorage {
                         Optional<StorageEntity> seOP = QueryExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
                         hint.setReadOnly(true);
                         if (seOP.isPresent()) {
-                            return entityValueBuilder.build(id, metaToFieldTypeMap(seOP.get().getMeta()), seOP.get().getAttribute());
+                            return Optional.ofNullable(entityValueBuilder.build(id, metaToFieldTypeMap(seOP.get().getMeta()), seOP.get().getAttribute()));
                         } else {
                             return Optional.empty();
                         }
