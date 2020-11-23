@@ -132,11 +132,23 @@ public class SphinxSyncExecutor {
     //  作业
     private void sphinxConsume(RawEntry rawEntry, Map<Long, IEntityValue> prefEntityValueMaps,
                                                 CDCMetrics cdcMetrics, AtomicInteger synced) throws SQLException {
-        AbstractMap.SimpleEntry<Boolean, CdcErrorTask> result;
-        if (isDelete(rawEntry.getColumns())) {
-            result = doDelete(rawEntry.getColumns());
-        } else {
-            result = doReplace(rawEntry.getColumns(), prefEntityValueMaps);
+        AbstractMap.SimpleEntry<Boolean, CdcErrorTask> result = null;
+
+        boolean isDelete = false;
+        try {
+            isDelete = getBooleanFromColumn(rawEntry.getColumns(), DELETED);
+        } catch (Exception e) {
+            result = generateErrorTask(rawEntry.getId(), rawEntry.getCommitId(),
+                    String.format("get delete column error, id : %d, commitId : %d, message : %s",
+                                                rawEntry.getId(), rawEntry.getCommitId(), e.getMessage()));
+        }
+
+        if (null == result) {
+            if (isDelete) {
+                result = doDelete(rawEntry.getId(), rawEntry.getCommitId());
+            } else {
+                result = doReplace(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId(), prefEntityValueMaps);
+            }
         }
 
         if (!result.getKey()) {
@@ -147,15 +159,8 @@ public class SphinxSyncExecutor {
         }
     }
 
-    //  判断是否删除
-    private boolean isDelete(List<CanalEntry.Column> columns) throws SQLException {
-        return getBooleanFromColumn(columns, DELETED);
-    }
-
     //  删除
-    private AbstractMap.SimpleEntry<Boolean, CdcErrorTask> doDelete(List<CanalEntry.Column> columns) throws SQLException {
-        long id = getLongFromColumn(columns, ID);
-        long commitid = getLongFromColumn(columns, COMMITID);             //  commitid
+    private AbstractMap.SimpleEntry<Boolean, CdcErrorTask> doDelete(long id, long commitId) throws SQLException {
         try {
             sphinxQLIndexStorage.delete(id);
 
@@ -164,7 +169,7 @@ public class SphinxSyncExecutor {
             String message = String.format("delete error, id : %d, message : %s", id, e.getMessage());
             logger.error(message);
             return new AbstractMap.SimpleEntry<Boolean, CdcErrorTask>(false,
-                    CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitid, message));
+                    CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, message));
         }
     }
 
@@ -177,9 +182,7 @@ public class SphinxSyncExecutor {
 
     //  replace操作
     private AbstractMap.SimpleEntry<Boolean, CdcErrorTask>
-                doReplace(List<CanalEntry.Column> columns, Map<Long, IEntityValue> prefEntityValueMaps) throws SQLException {
-        long id = getLongFromColumn(columns, ID);                         //  id
-        long commitid = getLongFromColumn(columns, COMMITID);             //  commitid
+                doReplace(List<CanalEntry.Column> columns, long id, long commitId, Map<Long, IEntityValue> prefEntityValueMaps) throws SQLException {
         //  通过解析binlog获取
         try {
             long cref = getLongFromColumn(columns, CREF);
@@ -191,7 +194,7 @@ public class SphinxSyncExecutor {
                     pref,                                             //  pref
                     cref,                                             //  cref
                     getLongFromColumn(columns, TX),                   //  tx
-                    commitid,                                         //  commitid
+                    commitId,                                         //  commitid
                     null,                                   //  由sphinxQLIndexStorage内部转换  entityValue
                     null                                     //  由sphinxQLIndexStorage内部转换  entityValue
             );
@@ -209,11 +212,10 @@ public class SphinxSyncExecutor {
                     IEntityValue entityValueF = entityValueGet(pref, prefEntityValueMaps);
                     entityValue.addValues(entityValueF.values());
                 } catch (Exception ex) {
-                    String message = String.format("get pref entityValue failed. no match data, record will be ignored, id : {}, pref : {}, message : {}",
-                            id, pref, ex.getMessage());
-                    logger.error(message);
-                    return new AbstractMap.SimpleEntry<Boolean, CdcErrorTask>(false,
-                                                CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitid, message));
+                    return generateErrorTask(id, commitId, String.format(
+                            "get pref entityValue failed. no match data, record will be ignored, id : {}, pref : {}, message : {}",
+                                                                        id, pref, ex.getMessage())
+                            );
                 }
             }
             /*
@@ -223,11 +225,15 @@ public class SphinxSyncExecutor {
 
             return new AbstractMap.SimpleEntry<>(true, null);
         } catch (Exception e) {
-            String message = String.format("buildEntityValue, id : %d, message : %s", id, e.getMessage());
-            logger.error(message);
-            return new AbstractMap.SimpleEntry<Boolean, CdcErrorTask>(false,
-                    CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitid, message));
+            return generateErrorTask(id, commitId, String.format("buildEntityValue, id : %d, message : %s", id, e.getMessage()));
         }
+    }
+
+    //  生成错误任务
+    private AbstractMap.SimpleEntry<Boolean, CdcErrorTask> generateErrorTask(long id, long commitId, String message) throws SQLException {
+        logger.warn(message);
+        return new AbstractMap.SimpleEntry<Boolean, CdcErrorTask>(false,
+                CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, message));
     }
 
     //  IEntityValue build

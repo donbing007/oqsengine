@@ -167,9 +167,13 @@ public class ConsumerRunner extends Thread {
                     //  canal状态确认、指标同步
                     syncSuccess(cdcMetrics);
                 } else {
+
                     //  当前没有任务需要消费
-                    synced = backMetrics(new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
-                            cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics()));
+                    cdcMetrics = new CDCMetrics(batchId, cdcMetricsService.getCdcMetrics().getCdcAckMetrics(),
+                            cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
+                    cdcMetrics.getCdcAckMetrics().setExecuteRows(ZERO);
+
+                    synced = backMetrics(cdcMetrics);
 
                     syncFree(batchId);
                 }
@@ -199,7 +203,7 @@ public class ConsumerRunner extends Thread {
         //  同步状态
         cdcConnector.ack(batchId);
 
-        cdcMetricsService.syncFreeMessage(IS_BACK_UP_ID);
+//        cdcMetricsService.syncFreeMessage(EMPTY_BATCH_ID);
 
         //  没有新的同步信息，睡眠1秒进入下次轮训
         threadSleep(FREE_MESSAGE_WAIT_IN_SECONDS);
@@ -216,19 +220,13 @@ public class ConsumerRunner extends Thread {
 
         if (null != cdcMetrics) {
             //  当前的BatchId != -1时，表示需要进行Canal batchId ACK操作
-            if (cdcMetrics.getBatchId() != IS_BACK_UP_ID) {
-                //  1.确认ack batchId
-                cdcConnector.ack(cdcMetrics.getBatchId());
-                //  2.设置当前batchId为-1
-                cdcMetrics.setBatchId(IS_BACK_UP_ID);
-                //  3.重置redis unCommit数据
-                cdcMetricsService.backup(cdcMetrics);
-                //  4.设置当前cdcMetricsService的batchId为-1
-                cdcMetricsService.getCdcMetrics().setBatchId(IS_BACK_UP_ID);
+            long originBatchId = cdcMetrics.getBatchId();
+            if (originBatchId != IS_BACK_UP_ID && originBatchId != EMPTY_BATCH_ID) {
+                // ack确认， 回写uncommit信息
+                backAfterAck(originBatchId, cdcMetrics);
             }
-
             //  回调告知当前成功信息
-            callBackSuccess(cdcMetrics, true);
+            callBackSuccess(originBatchId, cdcMetrics, true);
 
             logger.info("cdc recover from last ackMetrics position success...");
         }
@@ -242,17 +240,26 @@ public class ConsumerRunner extends Thread {
      */
     private void syncSuccess(CDCMetrics cdcMetrics) throws SQLException {
         if (null != cdcMetrics) {
-            //  首先保存本次消费完时未提交的数据，必须保证此步骤为最高优先级
-            cdcMetricsService.backup(cdcMetrics);
-
-            //  ACK batchId
-            cdcConnector.ack(cdcMetrics.getBatchId());
-            cdcMetrics.setBatchId(IS_BACK_UP_ID);
-            cdcMetricsService.backup(cdcMetrics);
+            long originBatchId = cdcMetrics.getBatchId();
+            // ack确认， 回写uncommit信息
+            backAfterAck(originBatchId, cdcMetrics);
 
             //  回调告知当前成功信息
-            callBackSuccess(cdcMetrics, false);
+            callBackSuccess(originBatchId, cdcMetrics, false);
         }
+    }
+    /*
+        由于采用2阶段prepare -> confirm模式，当进入backAfterAck的逻辑时,必须保证一致性（成功）
+        所以需要在ack成功后标记batchId为-Long.MAX_VALUE，并覆盖uncommitMetrics。
+        启动时重复该步骤
+     */
+    private void backAfterAck(long originBatchId, CDCMetrics cdcMetrics) throws SQLException {
+        //  1.确认ack batchId
+        cdcConnector.ack(originBatchId);
+        //  2.设置当前batchId为-1
+        cdcMetrics.setBatchId(IS_BACK_UP_ID);
+        //  3.重置redis unCommit数据
+        cdcMetricsService.backup(cdcMetrics);
     }
 
     private void threadSleep(int waitInSeconds) {
@@ -270,8 +277,7 @@ public class ConsumerRunner extends Thread {
         cdcMetricsService.callBackError(cdcStatus);
     }
 
-    private void callBackSuccess(CDCMetrics cdcMetrics, boolean isConnectSync) {
-
-        cdcMetricsService.callBackSuccess(cdcMetrics, isConnectSync);
+    private void callBackSuccess(long originBatchId, CDCMetrics cdcMetrics, boolean isConnectSync) {
+        cdcMetricsService.callBackSuccess(originBatchId, cdcMetrics, isConnectSync);
     }
 }

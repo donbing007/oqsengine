@@ -61,10 +61,11 @@ public class CDCMetrics {
 
     public void syncFreeMessage(long batchId) {
         this.batchId = batchId;
+        this.cdcAckMetrics.setExecuteRows(ZERO);
     }
 
-    public void consumeSuccess(CDCMetrics temp, boolean isConnectSync) {
-        this.batchId = temp.getBatchId();
+    public void consumeSuccess(long originBatchId, CDCMetrics temp, boolean isConnectSync) {
+        this.batchId = originBatchId;
 
         //  启动则更新LastConnectedTime, 否则为成功消费
         if (!isConnectSync) {

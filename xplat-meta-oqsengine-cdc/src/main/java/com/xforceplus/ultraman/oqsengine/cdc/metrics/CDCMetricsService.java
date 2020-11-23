@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCMetricsConstant.*;
 
 
@@ -83,11 +84,13 @@ public class CDCMetricsService {
         return cdcMetrics;
     }
 
-    public void callBackSuccess(CDCMetrics temp, boolean isConnectSync) {
+    public void callBackSuccess(long originBatchId, CDCMetrics temp, boolean isConnectSync) {
         //  logger.debug("success consumer, cdcStatus : {}", JSON.toJSON(temp));
         cdcMetrics.setCdcUnCommitMetrics(temp.getCdcUnCommitMetrics());
-        cdcMetrics.consumeSuccess(temp, isConnectSync);
-        callback();
+        cdcMetrics.consumeSuccess(originBatchId, temp, isConnectSync);
+        if (originBatchId != EMPTY_BATCH_ID) {
+            callback();
+        }
     }
 
     public void callBackError(CDCStatus cdcStatus) {
@@ -98,7 +101,7 @@ public class CDCMetricsService {
 
     public void syncFreeMessage(long batchId) {
         cdcMetrics.syncFreeMessage(batchId);
-        callback();
+        //callback();
     }
 
     public void backup(CDCMetrics cdcMetrics) {

@@ -38,9 +38,8 @@ public class BinLogParseUtils {
             return str.equalsIgnoreCase("true") ||
                     (StringUtils.isNumeric(str) && Integer.parseInt(str) > ZERO);
         } catch (Exception e) {
-            //  ignore
+            throw e;
         }
-        return false;
     }
 
     public static CanalEntry.Column getColumnWithoutNull(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {

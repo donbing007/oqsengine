@@ -134,7 +134,7 @@ public class SphinxConsumerService implements ConsumerService {
                 if (commitId != CommitHelper.getUncommitId()) {
                     //  更新
                     cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(commitId);
-                    rawEntries.add(new RawEntry(
+                    rawEntries.add(new RawEntry(id, commitId,
                             entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
                 } else {
                     //  优化父子类
