@@ -45,6 +45,11 @@ public class FieldDefine {
     public static final String COMMIT_ID = "commitid";
 
     /**
+     * transaction commit id
+     */
+    public static final String TIME = "time";
+
+    /**
      * 属性 json 储存.
      */
     public static final String JSON_FIELDS = "jsonfields";

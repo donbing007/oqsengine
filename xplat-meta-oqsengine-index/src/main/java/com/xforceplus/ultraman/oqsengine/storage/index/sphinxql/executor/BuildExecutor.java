@@ -36,7 +36,7 @@ public class BuildExecutor implements Executor<StorageEntity, Integer> {
                 "insert", indexTableName,
                 FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.ENTITY_F, FieldDefine.PREF, FieldDefine.CREF,
                 FieldDefine.TX, FieldDefine.COMMIT_ID,
-                FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS);
+                FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS, FieldDefine.TIME);
     }
 
     public static BuildExecutor build(TransactionResource resource, String indexTableName) {
@@ -69,6 +69,8 @@ public class BuildExecutor implements Executor<StorageEntity, Integer> {
         st.setString(8, SphinxQLHelper.serializableJson(storageEntity.getJsonFields()));
         // fullfileds
         st.setString(9, toFullString(storageEntity.getFullFields()));
+        // time
+        st.setLong(10, storageEntity.getTime());
 
         if (logger.isDebugEnabled()) {
             logger.debug(st.toString());

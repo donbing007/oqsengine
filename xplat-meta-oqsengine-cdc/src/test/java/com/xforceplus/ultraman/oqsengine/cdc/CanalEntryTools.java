@@ -85,6 +85,8 @@ public class CanalEntryTools {
                 return buildAttribute(v, attrId, attrIndex);
             case META:
                 return buildMeta(v, attrId, attrIndex);
+            case TIME:
+                return buildTime(v, System.currentTimeMillis());
         }
 
         return null;
@@ -141,6 +143,13 @@ public class CanalEntryTools {
         return builder.build();
     }
 
+    private static CanalEntry.Column buildTime(OqsBigEntityColumns v, long time) {
+        CanalEntry.Column.Builder builder = getBuilder(v);
+        builder.setValue(Long.toString(time));
+        return builder.build();
+    }
+
+
     private static CanalEntry.Column buildAttribute(OqsBigEntityColumns v, int attrId, int attrIndex) {
         CanalEntry.Column.Builder builder = getBuilder(v);
         builder.setValue(Prepared.attrs[attrIndex]);
@@ -152,6 +161,7 @@ public class CanalEntryTools {
         builder.setValue(Prepared.metas[attrIndex]);
         return builder.build();
     }
+
 
     private static class Prepared {
         static String[] attrs = {
