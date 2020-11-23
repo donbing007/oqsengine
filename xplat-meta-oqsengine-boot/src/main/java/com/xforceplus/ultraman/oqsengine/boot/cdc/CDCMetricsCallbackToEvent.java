@@ -27,14 +27,29 @@ public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
     private CDCStatusService cdcStatusService;
 
     private AtomicLong cdcSyncTime = new AtomicLong(0);
+    private AtomicLong cdcExecutedCount = new AtomicLong(0);
+    private AtomicLong cdcMaxUseTime = new AtomicLong(0);
     private TimeGauge.Builder<AtomicLong> cdcSyncTimeGauge;
+    private TimeGauge.Builder<AtomicLong> cdcExecutedCountGauge;
+    private TimeGauge.Builder<AtomicLong> cdcMaxUseTimeGauge;
 
     @PostConstruct
     public void init() {
         cdcSyncTimeGauge =
             TimeGauge.builder(
                 MetricsDefine.CDC_SYNC_DELAY_LATENCY_SECONDS, cdcSyncTime, TimeUnit.SECONDS, AtomicLong::get);
+
+        cdcExecutedCountGauge =
+                TimeGauge.builder(
+                        MetricsDefine.CDC_SYNC_EXECUTED_COUNT, cdcExecutedCount, TimeUnit.SECONDS, AtomicLong::get);
+
+        cdcMaxUseTimeGauge =
+                TimeGauge.builder(
+                        MetricsDefine.CDC_SYNC_MAX_HANDLE_LATENCY_SECONDS, cdcMaxUseTime, TimeUnit.SECONDS, AtomicLong::get);
+
         cdcSyncTimeGauge.register(Metrics.globalRegistry);
+        cdcExecutedCountGauge.register(Metrics.globalRegistry);
+        cdcMaxUseTimeGauge.register(Metrics.globalRegistry);
     }
 
     public CDCMetricsCallbackToEvent(ApplicationEventPublisher publisher) {
@@ -46,6 +61,10 @@ public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
         publisher.publishEvent(ackMetrics);
 
         cdcSyncTime.set(ackMetrics.getTotalUseTime() / 1000);
+
+        cdcExecutedCount.set(ackMetrics.getExecuteRows());
+
+        cdcMaxUseTime.set(ackMetrics.getMaxSyncUseTime());
     }
 
     @Override
