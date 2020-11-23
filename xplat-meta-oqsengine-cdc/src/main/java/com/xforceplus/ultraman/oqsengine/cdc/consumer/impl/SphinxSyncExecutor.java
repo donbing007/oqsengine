@@ -245,15 +245,13 @@ public class SphinxSyncExecutor {
     private IEntityValue entityValueGet(long pref, Map<Long, IEntityValue> prefEntityValueMaps) throws SQLException {
         IEntityValue entityValue = prefEntityValueMaps.get(pref);
         if (null == entityValue) {
-            Optional<IEntityValue> e1;
             try {
-                e1 = masterStorage.selectEntityValue(pref);
+                return masterStorage.selectEntityValue(pref).orElse(null);
             } catch (Exception e) {
                 String error = String.format("query entityValue from master db error..., id : %d, " +
                         "message : %s", pref, e.getMessage());
                 throw new SQLException(error);
             }
-            return e1.orElse(null);
         }
 //        if (null == entityValue) {
 //            throw new SQLException(

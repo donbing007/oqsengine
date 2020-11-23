@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.callback;
 
-import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;

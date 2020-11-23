@@ -7,6 +7,11 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
@@ -22,10 +27,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.shaded.org.apache.commons.lang.time.StopWatch;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
 /**
@@ -90,9 +99,42 @@ public class BigBatchSyncTest extends AbstractContainer {
             }
         }
 
-
         Assert.assertEquals(expectedSize, mockRedisCallbackService.getExecuted().get());
-        logger.info("total use time, {}", stopWatch.getTime());
+        logger.info("total build use time, {}", stopWatch.getTime());
+
+        mockRedisCallbackService.reset();
+        Thread.sleep(5_000);
+        Assert.assertEquals(ZERO, mockRedisCallbackService.getExecuted().get());
+
+        //  额外测试单条数据不存在父类的情况,需要从主库查询
+        IEntity entity = testNoPref(333L);
+        Transaction tx = transactionManager.create();
+        transactionManager.bind(tx.id());
+        try {
+            build(entity);
+        } catch (Exception e) {
+            tx.rollback();
+            throw e;
+        }
+        tx.commit();
+        transactionManager.finish();
+
+        while (true) {
+            if (mockRedisCallbackService.getExecuted().get() == 1) {
+                break;
+            }
+        }
+        Assert.assertTrue(mockRedisCallbackService.getExecuted().get() > 0);
+    }
+
+    private IEntity testNoPref(long id) {
+        IEntityValue values = new EntityValue(id);
+        values.addValues(Arrays.asList(new LongValue(longField, 1L), new StringValue(stringField, "v1"),
+                new BooleanValue(boolField, true),
+                new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1)),
+                new DecimalValue(decimalField, new BigDecimal("0.0")), new EnumValue(enumField, "1"),
+                new StringsValue(stringsField, "value1", "value2")));
+        return new Entity(id, entityClass, values, new EntityFamily(2, 0), 0);
     }
 
     private void initData() throws SQLException {
