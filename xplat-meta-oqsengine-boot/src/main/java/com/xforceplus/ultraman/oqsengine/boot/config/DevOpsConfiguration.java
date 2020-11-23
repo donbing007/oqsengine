@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.devops.DevOpsStorage;
 import com.xforceplus.ultraman.oqsengine.devops.SQLDevOpsStorage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * desc :
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Bean;
  * date : 2020/11/21
  * @since : 1.8
  */
+@Configuration
 public class DevOpsConfiguration {
     @Bean
     public DevOpsStorage devOpsStorage(
