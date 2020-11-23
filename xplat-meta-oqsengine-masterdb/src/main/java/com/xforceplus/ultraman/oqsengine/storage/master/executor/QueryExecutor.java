@@ -21,6 +21,20 @@ import java.util.Optional;
 public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<StorageEntity>> {
 
     private boolean noDetail;
+    private boolean noMeta;
+
+    /**
+     * 查询所有信息.
+     *
+     * @param tableName
+     * @param resource
+     * @param timeoutMs
+     * @return
+     */
+    public static Executor<Long, Optional<StorageEntity>> buildHaveAllDetail(
+        String tableName, TransactionResource resource, long timeoutMs) {
+        return new QueryExecutor(tableName, resource, false, false, timeoutMs);
+    }
 
     /**
      * 查询包含详细信息
@@ -31,7 +45,7 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
      */
     public static Executor<Long, Optional<StorageEntity>> buildHaveDetail(
         String tableName, TransactionResource resource, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, false, timeoutMs);
+        return new QueryExecutor(tableName, resource, false, true, timeoutMs);
     }
 
     /**
@@ -43,7 +57,7 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
      */
     public static Executor<Long, Optional<StorageEntity>> buildNoDetail(
         String tableName, TransactionResource resource, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, true, timeoutMs);
+        return new QueryExecutor(tableName, resource, true, true, timeoutMs);
     }
 
     public QueryExecutor(String tableName, TransactionResource<Connection> resource, boolean noDetail) {
@@ -51,9 +65,15 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
         this.noDetail = noDetail;
     }
 
-    public QueryExecutor(String tableName, TransactionResource<Connection> resource, boolean noDetail, long timeoutMs) {
+    public QueryExecutor(
+        String tableName,
+        TransactionResource<Connection> resource,
+        boolean noDetail,
+        boolean noMeta,
+        long timeoutMs) {
         super(tableName, resource, timeoutMs);
         this.noDetail = noDetail;
+        this.noMeta = noMeta;
     }
 
     @Override
@@ -88,6 +108,9 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
                     entity.setCref(rs.getLong(FieldDefine.CREF));
                     entity.setAttribute(rs.getString(FieldDefine.ATTRIBUTE));
                 }
+                if (!noMeta) {
+                    entity.setMeta(rs.getString(FieldDefine.META));
+                }
             }
 
 
@@ -105,26 +128,27 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
     private String buildSQL(long id) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
+        sql.append(String.join(",",
+            FieldDefine.VERSION,
+            FieldDefine.TIME,
+            FieldDefine.TX,
+            FieldDefine.COMMITID
+            )
+        );
         if (!noDetail) {
-            sql.append(String.join(",",
-                FieldDefine.ENTITY,
-                FieldDefine.VERSION,
-                FieldDefine.PREF,
-                FieldDefine.CREF,
-                FieldDefine.TIME,
-                FieldDefine.TX,
-                FieldDefine.COMMITID,
-                FieldDefine.ATTRIBUTE
-                )
-            );
-        } else {
-            sql.append(String.join(",",
-                FieldDefine.VERSION,
-                FieldDefine.TIME,
-                FieldDefine.TX,
-                FieldDefine.COMMITID
-                )
-            );
+            sql.append(",")
+                .append(String.join(",",
+                    FieldDefine.ENTITY,
+                    FieldDefine.PREF,
+                    FieldDefine.CREF,
+                    FieldDefine.ATTRIBUTE
+                    )
+                );
+        }
+
+        if (!noMeta) {
+            sql.append(",")
+                .append(FieldDefine.META);
         }
 
         sql.append(" FROM ")

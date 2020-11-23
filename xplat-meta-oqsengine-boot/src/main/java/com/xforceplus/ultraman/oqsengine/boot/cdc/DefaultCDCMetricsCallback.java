@@ -24,9 +24,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * cdc metrics callback
  */
-public class CDCMetricsCallbackToEvent implements CDCMetricsCallback {
+public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
 
-    final Logger logger = LoggerFactory.getLogger(CDCMetricsCallbackToEvent.class);
+    final Logger logger = LoggerFactory.getLogger(DefaultCDCMetricsCallback.class);
 
     @Resource
     private CDCStatusService cdcStatusService;
