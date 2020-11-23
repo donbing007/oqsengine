@@ -133,7 +133,7 @@ public class SQLMasterStorage implements MasterStorage {
 
                     @Override
                     public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                        Optional<StorageEntity> seOP = QueryExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
+                        Optional<StorageEntity> seOP = QueryExecutor.buildHaveAllDetail(tableName, resource, queryTimeout).execute(id);
                         hint.setReadOnly(true);
                         if (seOP.isPresent()) {
                             return Optional.ofNullable(entityValueBuilder.build(id, metaToFieldTypeMap(seOP.get().getMeta()), seOP.get().getAttribute()));
