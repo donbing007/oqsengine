@@ -8,6 +8,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
 
@@ -28,6 +31,8 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColum
  * @since : 1.8
  */
 public class SphinxConsumerService implements ConsumerService {
+
+    final Logger logger = LoggerFactory.getLogger(SphinxConsumerService.class);
 
     @Resource(name = "sphinxSyncExecutor")
     private SphinxSyncExecutor sphinxSyncExecutor;
@@ -114,16 +119,26 @@ public class SphinxConsumerService implements ConsumerService {
             for (CanalEntry.RowData rowData : rowChange.getRowDatasList()) {
                 //  获取一条完整的Row，只关心变化后的数据
                 List<CanalEntry.Column> columns = rowData.getAfterColumnsList();
+
                 //  check need sync
                 //  由于主库同步后会在最后commit时再更新一次commit_id，所以对于binlog同步来说，
                 //  只需同步commit_id小于Long.MAX_VALUE的row
-                if (needSyncRow(columns)) {
+                if (null == columns || columns.size() == EMPTY_COLUMN_SIZE) {
+                    throw new SQLException("columns must not be null");
+                }
+                //  获取ID
+                Long id = getLongFromColumn(columns, ID);
+                //  获取CommitID
+                Long commitId = getLongFromColumn(columns, COMMITID);
+                //  是否MAX_VALUE
+                if (commitId != CommitHelper.getUncommitId()) {
                     //  更新
-                    cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(getLongFromColumn(columns, COMMITID));
+                    cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(commitId);
                     rawEntries.add(new RawEntry(
-                        entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
+                            entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
                 } else {
-                    addPrefEntityValue(columns, cdcMetrics);
+                    //  优化父子类
+                    addPrefEntityValue(columns, id, cdcMetrics);
                 }
             }
         }
@@ -136,26 +151,17 @@ public class SphinxConsumerService implements ConsumerService {
         蓄水池在每一次事务结束时进行判断，必须为空(代表一个事务中的父子类已全部同步完毕)
         父类会扔自己的EntityValue进去,子类会取出自己父类的EntityValue进行合并
     */
-    private void addPrefEntityValue(List<CanalEntry.Column> columns, CDCMetrics cdcMetrics) throws SQLException {
-        //  有子类, 将父类的EntityValue存入的relationMap中
-        if (getLongFromColumn(columns, CREF) > ZERO) {
-            cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues()
-                .put(getLongFromColumn(columns, ID),
-                    new RawEntityValue(getStringFromColumn(columns, ATTRIBUTE), getStringFromColumn(columns, META)));
+    private void addPrefEntityValue(List<CanalEntry.Column> columns, Long id, CDCMetrics cdcMetrics) throws SQLException {
+        try {
+            //  有子类, 将父类的EntityValue存入的relationMap中
+            if (getLongFromColumn(columns, CREF) > ZERO) {
+                cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues()
+                        .put(id,
+                                new RawEntityValue(getStringFromColumn(columns, ATTRIBUTE), getStringFromColumn(columns, META)));
+            }
+        } catch (Exception e) {
+            logger.warn("convert pref entityValue failed, pref: {}, ignore.", id);
         }
-    }
-
-    //  只同步小于MAX_VALUE数据
-    private boolean needSyncRow(List<CanalEntry.Column> columns) throws SQLException {
-        if (null == columns || columns.size() == EMPTY_COLUMN_SIZE) {
-            throw new SQLException("columns must not be null");
-        }
-
-        CanalEntry.Column column = existsColumn(columns, COMMITID);
-        if (null == column) {
-            throw new SQLException("sync row failed, unknown column commitid.");
-        }
-        return Long.parseLong(column.getValue()) != CommitHelper.getUncommitId();
     }
 
     /*

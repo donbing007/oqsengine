@@ -44,7 +44,7 @@ public class SphinxSyncExecutor {
     @Resource(name = "masterStorage")
     private MasterStorage masterStorage;
 
-    @Resource(name = "DevOpsStorage")
+    @Resource(name = "devOpsStorage")
     private DevOpsStorage devOpsStorage;
 
     @Resource(name = "entityValueBuilder")
