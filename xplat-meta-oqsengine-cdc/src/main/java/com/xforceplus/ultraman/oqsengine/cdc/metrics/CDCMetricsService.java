@@ -66,9 +66,10 @@ public class CDCMetricsService {
                     break;
                 }
                 try {
-                    Thread.sleep(HEART_BREAK_INTERVAL);
+                    Thread.sleep(HEART_BEAT_INTERVAL);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    //
+                    logger.warn("heart_beat_interval sleep error, message :{}", e.getMessage());
                 }
 
                 cdcMetricsCallback.heartBeat();
@@ -110,7 +111,6 @@ public class CDCMetricsService {
                 cdcMetricsCallback.cdcSaveLastUnCommit(cdcMetrics);
             } catch (Exception e) {
                 logger.error("back up unCommitMetrics to redis error, unCommitMetrics : {}", JSON.toJSON(cdcMetrics));
-                e.printStackTrace();
             }
         });
     }
@@ -119,7 +119,6 @@ public class CDCMetricsService {
         try {
             return cdcMetricsCallback.queryLastUnCommit();
         } catch (Exception e) {
-            e.printStackTrace();
             throw new SQLException("query unCommitMetrics from redis error.");
         }
     }
@@ -132,8 +131,7 @@ public class CDCMetricsService {
         try {
             logger.debug("callback ack metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
         } catch (Exception ex) {
-            logger.debug("print ack metrics error.");
-            ex.printStackTrace();
+            logger.debug("print ack metrics error, message : {}", ex.getMessage());
         }
 
         //  设置本次callback的时间
@@ -145,8 +143,6 @@ public class CDCMetricsService {
             } catch (Exception e) {
                 try {
                     logger.error("callback error, metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
-
-                    e.printStackTrace();
                 } catch (Exception ee) {
                     //  ignore
                 }

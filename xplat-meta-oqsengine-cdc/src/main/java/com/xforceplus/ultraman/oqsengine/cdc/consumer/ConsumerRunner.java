@@ -52,7 +52,7 @@ public class ConsumerRunner extends Thread {
                 Thread.sleep(MAX_STOP_WAIT_TIME * SECOND);
             } catch (Exception e) {
                 //  ignore
-                e.printStackTrace();
+                logger.warn("shutdown error, message : {}", e.getMessage());
             }
 
             if (isShutdown()) {
@@ -120,12 +120,7 @@ public class ConsumerRunner extends Thread {
 
     private boolean checkForStop() {
         if (runningStatus.ordinal() >= RunningStatus.TRY_STOP.ordinal()) {
-            try {
-                cdcConnector.shutdown();
-            } catch (Exception e) {
-                //  ignore
-                e.printStackTrace();
-            }
+            cdcConnector.shutdown();
             runningStatus = RunningStatus.STOP_SUCCESS;
             return true;
         }
@@ -186,7 +181,7 @@ public class ConsumerRunner extends Thread {
                 } else {
                     error = String.format("sync finish status error");
                 }
-                e.printStackTrace();
+                logger.error("sync error, message : {}, will reconnect...", error);
                 throw new SQLException(error);
             }
         }
