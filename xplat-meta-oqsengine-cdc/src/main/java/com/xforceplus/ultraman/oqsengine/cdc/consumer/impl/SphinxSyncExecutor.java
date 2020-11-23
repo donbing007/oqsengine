@@ -23,6 +23,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.SINGLE_CONSUMER_MAX_ROW;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
 import static com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityFieldBuildUtils.metaToFieldTypeMap;
 
@@ -91,17 +92,14 @@ public class SphinxSyncExecutor {
                            CDCMetrics cdcMetrics) throws SQLException {
         AtomicInteger synced = new AtomicInteger(0);
         if (!rawEntries.isEmpty()) {
-            for (RawEntry rawEntry : rawEntries) {
-                sphinxConsume(rawEntry, prefEntityValueMaps, cdcMetrics, synced);
+            //  开启多线程写入
+            if (isSingleSyncConsumer || rawEntries.size() <= SINGLE_CONSUMER_MAX_ROW) {
+                for (RawEntry rawEntry : rawEntries) {
+                    sphinxConsume(rawEntry, prefEntityValueMaps, cdcMetrics, synced);
+                }
+            } else {
+                multiConsume(rawEntries, prefEntityValueMaps, cdcMetrics, synced);
             }
-//            开启多线程写入
-//            if (isSingleSyncConsumer || rawEntries.size() <= SINGLE_CONSUMER_MAX_ROW) {
-//                for (RawEntry rawEntry : rawEntries) {
-//                    sphinxConsume(rawEntry, prefEntityValueMaps, cdcMetrics, synced);
-//                }
-//            } else {
-//                multiConsume(rawEntries, prefEntityValueMaps, cdcMetrics, synced);
-//            }
         }
         return synced.get();
     }
