@@ -74,6 +74,12 @@ data:
               shard:
                 enabled: {{ .Values.storage.index.write.shard.enabled | default "false" }}
                 size: {{ .Values.storage.index.write.shard.size | default "1" }}
+          devOps:
+            cdc:
+              errors:
+                name: {{ .Values.storage.devOps.cdc.errors.name | default "cdcerrors" | quote }}
+            maxQueryTimeMs: {{ .Values.storage.devOps.maxQueryTimeMs | default "3000" }}
+
         redis:
           uri: {{ .Values.redis.uri | default "redis://localhost:6379" | quote}}
           maxReqQueue: {{ .Values.redis.maxReqQueue | default "2147483647" }}

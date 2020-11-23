@@ -48,6 +48,12 @@ storage:
       shard:
         enabled: false
         size: 1
+  devOps:
+    cdc:
+      errors:
+        name: "cdcerrors"
+    maxQueryTimeMs: 3000
+
 redis:
   # 单机 redis://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
   # 单机SSL rediss://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]

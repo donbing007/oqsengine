@@ -105,6 +105,12 @@ storage:
       shard:
         enabled: false
         size: 1
+  devOps:
+    cdc:
+      errors:
+        name: "cdcerrors"
+    maxQueryTimeMs: 3000
+
 redis:
   uri: "redis://localhost:6379"
   maxReqQueue: 2147483647
