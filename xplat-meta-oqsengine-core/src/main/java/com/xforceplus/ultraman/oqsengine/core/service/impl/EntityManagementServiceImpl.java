@@ -119,9 +119,16 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 /**
                  * 几种情况会认为是CDC同步停止.
                  * 1. CDC状态非正常.
-                 * 2. CDC状态最后更新时间超过阀值.
+                 * 2. CDC心跳.
                  * 3. CDC同步最大时间超过阀值.
                  */
+                if (!cdcStatusService.isAlive()) {
+                    logger.warn("CDC heartbeat test failed,CDC may be offline. Write transactions will be blocked.");
+                    readOnly.set(OqsMode.READ_ONLY.getValue());
+                    ready = false;
+                    return;
+                }
+
                 Optional<CDCMetrics> mOp = cdcStatusService.get();
                 if (mOp.isPresent()) {
                     CDCMetrics metrics = mOp.get();
@@ -136,22 +143,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return;
                     }
 
-                    long liveTimeMs = ackMetrics.getLastUpdateTime();
-                    if (System.currentTimeMillis() - liveTimeMs > allowMaxLiveTimeMs) {
-                        logger.warn(
-                            "The CDC service has not been updated for more than {} milliseconds, so it blocks writes.",
-                            allowMaxLiveTimeMs);
-                        readOnly.set(OqsMode.READ_ONLY.getValue());
-                        ready = false;
-                        return;
-                    }
-
                     long useTimeMs = ackMetrics.getTotalUseTime();
                     if (useTimeMs > allowMaxSyncTimeMs) {
                         logger.warn("CDC services synchronize data over {} milliseconds, blocking the write service.",
                             allowMaxSyncTimeMs);
-                        ready = false;
                         readOnly.set(OqsMode.READ_ONLY.getValue());
+                        ready = false;
                         return;
                     }
 

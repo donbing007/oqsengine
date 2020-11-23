@@ -18,7 +18,6 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
 
     private static final String DEFAULT_KEY = "com.xforceplus.ultraman.oqsengine.common.id";
 
-    private RedisClient redisClient;
 
     private StatefulRedisConnection<String, String> connection;
 
@@ -30,7 +29,6 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
 
     public RedisOrderContinuousLongIdGenerator(RedisClient redisClient, String key) {
 
-        this.redisClient = redisClient;
         this.key = key;
         this.connection = redisClient.connect();
     }

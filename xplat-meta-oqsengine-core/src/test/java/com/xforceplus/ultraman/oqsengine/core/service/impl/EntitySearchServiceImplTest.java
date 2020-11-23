@@ -49,26 +49,26 @@ public class EntitySearchServiceImplTest {
     private ExecutorService threadPool;
 
     private final Collection<IEntityField> childFields = Arrays.asList(
-            new EntityField(idGenerator.next(), "c4", FieldType.STRING),
-            new EntityField(idGenerator.next(), "c5", FieldType.LONG),
-            new EntityField(idGenerator.next(), "c6", FieldType.BOOLEAN)
+        new EntityField(idGenerator.next(), "c4", FieldType.STRING, FieldConfig.build().searchable(true)),
+        new EntityField(idGenerator.next(), "c5", FieldType.LONG, FieldConfig.build().searchable(true)),
+        new EntityField(idGenerator.next(), "c6", FieldType.BOOLEAN)
     );
 
     private final Collection<IEntityField> parentFields = Arrays.asList(
-            new EntityField(idGenerator.next(), "c1", FieldType.STRING),
-            new EntityField(idGenerator.next(), "c2", FieldType.LONG),
-            new EntityField(idGenerator.next(), "c3", FieldType.BOOLEAN),
-            new EntityField(idGenerator.next(), "rel0.id", FieldType.LONG)
+        new EntityField(idGenerator.next(), "c1", FieldType.STRING, FieldConfig.build().searchable(true)),
+        new EntityField(idGenerator.next(), "c2", FieldType.LONG, FieldConfig.build().searchable(true)),
+        new EntityField(idGenerator.next(), "c3", FieldType.BOOLEAN, FieldConfig.build().searchable(true)),
+        new EntityField(idGenerator.next(), "rel0.id", FieldType.LONG)
     );
 
     private final Collection<IEntityField> driverFields0 = Arrays.asList(
-            new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING),
-            new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG)
+        new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING, FieldConfig.build().searchable(true)),
+        new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG, FieldConfig.build().searchable(true))
     );
 
     private final Collection<IEntityField> driverFields1 = Arrays.asList(
-            new EntityField(idGenerator.next(), "rel1.name", FieldType.STRING),
-            new EntityField(idGenerator.next(), "rel1.age", FieldType.LONG)
+        new EntityField(idGenerator.next(), "rel1.name", FieldType.STRING, FieldConfig.build().searchable(true)),
+        new EntityField(idGenerator.next(), "rel1.age", FieldType.LONG, FieldConfig.build().searchable(true))
     );
 
     private IEntityClass parentEntityClass;
@@ -119,19 +119,19 @@ public class EntitySearchServiceImplTest {
     private Map<IEntityClass, Collection<EntityRef>> buildIndexEntities() {
         Map<IEntityClass, Collection<EntityRef>> refs = new HashMap<>();
         refs.put(
-                driverEntityClass0,
-                masterEntities.values().stream()
-                        .filter(e -> e.entityClass().equals(driverEntityClass0))
-                        .map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child()))
-                        .collect(Collectors.toList())
+            driverEntityClass0,
+            masterEntities.values().stream()
+                .filter(e -> e.entityClass().equals(driverEntityClass0))
+                .map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child()))
+                .collect(Collectors.toList())
         );
 
         refs.put(
-                driverEntityClass1,
-                masterEntities.values().stream()
-                        .filter(e -> e.entityClass().equals(driverEntityClass1))
-                        .map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child()))
-                        .collect(Collectors.toList())
+            driverEntityClass1,
+            masterEntities.values().stream()
+                .filter(e -> e.entityClass().equals(driverEntityClass1))
+                .map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child()))
+                .collect(Collectors.toList())
         );
 
         return refs;
@@ -196,8 +196,8 @@ public class EntitySearchServiceImplTest {
 
                     Collection<IValue> childValues = child.entityValue().values();
                     child.entityValue().clear()
-                            .addValues(parent.entityValue().values())
-                            .addValues(childValues);
+                        .addValues(parent.entityValue().values())
+                        .addValues(childValues);
 
 
                     Assert.assertEquals(child, selectEntityOp.get());
@@ -209,9 +209,31 @@ public class EntitySearchServiceImplTest {
     }
 
     @Test
+    public void testSelectNoSearchableField() throws Exception {
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    childEntityClass.field("c6").get(),// c6 no searchable.
+                    ConditionOperator.EQUALS,
+                    new BooleanValue(childEntityClass.field("c6").get(), false)
+                )
+            ).addAnd(
+                new Condition(
+                    driverEntityClass0,
+                    driverEntityClass0.field("rel0.age").get(),
+                    ConditionOperator.EQUALS,
+                    new LongValue(driverEntityClass0.field("rel0.age").get(), 100)
+                )
+            );
+
+        Collection<IEntity> results = instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100));
+        Assert.assertEquals(0, results.size());
+    }
+
+    @Test
     public void testSelectWrongParent() throws Exception {
         IEntity useEntity = masterEntities.values().stream().filter(
-                e -> e.entityClass().extendEntityClass() != null).findFirst().get();
+            e -> e.entityClass().extendEntityClass() != null).findFirst().get();
         // 不存在的家族信息.
         useEntity.resetFamily(new EntityFamily(0, 0));
 
@@ -225,7 +247,7 @@ public class EntitySearchServiceImplTest {
     @Test
     public void testSelectWrongParentQuery() throws Exception {
         IEntity useEntity = masterEntities.values().stream().filter(
-                e -> e.entityClass().extendEntityClass() != null).findFirst().get();
+            e -> e.entityClass().extendEntityClass() != null).findFirst().get();
         // 不存在的家族信息.
         useEntity.resetFamily(new EntityFamily(Long.MAX_VALUE, 0));
 
@@ -240,7 +262,7 @@ public class EntitySearchServiceImplTest {
     public void testselectMultiple() throws Exception {
 
         long[] requestIds = masterEntities.values().stream().filter(
-                e -> e.entityClass() == childEntityClass
+            e -> e.entityClass() == childEntityClass
         ).mapToLong(e -> e.id()).toArray();
         Collection<IEntity> entities = instance.selectMultiple(requestIds, childEntityClass);
 
@@ -251,8 +273,8 @@ public class EntitySearchServiceImplTest {
 
             Collection<IValue> childValues = child.entityValue().values();
             child.entityValue().clear()
-                    .addValues(parent.entityValue().values())
-                    .addValues(childValues);
+                .addValues(parent.entityValue().values())
+                .addValues(childValues);
 
             Assert.assertEquals(child, entity);
         }
@@ -261,27 +283,27 @@ public class EntitySearchServiceImplTest {
     @Test
     public void testJoinOverTheMaximumDriver() throws Exception {
         Conditions conditions = Conditions.buildEmtpyConditions()
-                .addAnd(
-                        new Condition(
-                                new EntityField(idGenerator.next(), "c4", FieldType.STRING),
-                                ConditionOperator.EQUALS,
-                                new StringValue(new EntityField(idGenerator.next(), "c4", FieldType.STRING), "v1")
-                        )
-                ).addAnd(
-                        new Condition(
-                                driverEntityClass0,
-                                new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG),
-                                ConditionOperator.EQUALS,
-                                new LongValue(new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG), 100)
-                        )
-                ).addOr(
-                        new Condition(
-                                driverEntityClass1,
-                                new EntityField(idGenerator.next(), "rel1.name", FieldType.STRING),
-                                ConditionOperator.EQUALS,
-                                new StringValue(new EntityField(idGenerator.next(), "rel1.name", FieldType.STRING), "v2")
-                        )
-                );
+            .addAnd(
+                new Condition(
+                    childEntityClass.field("c4").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(childEntityClass.field("c4").get(), "v1")
+                )
+            ).addAnd(
+                new Condition(
+                    driverEntityClass0,
+                    driverEntityClass0.field("rel0.age").get(),
+                    ConditionOperator.EQUALS,
+                    new LongValue(driverEntityClass0.field("rel0.age").get(), 100)
+                )
+            ).addOr(
+                new Condition(
+                    driverEntityClass1,
+                    driverEntityClass1.field("rel1.name").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(driverEntityClass1.field("rel1.name").get(), "v2")
+                )
+            );
 
         try {
             instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100));
@@ -295,20 +317,20 @@ public class EntitySearchServiceImplTest {
     public void testJoinOverTheMaximumDriverLen() throws Exception {
         instance.setMaxJoinDriverLineNumber(2);
         Conditions conditions = Conditions.buildEmtpyConditions()
-                .addAnd(
-                        new Condition(
-                                new EntityField(idGenerator.next(), "c4", FieldType.STRING),
-                                ConditionOperator.EQUALS,
-                                new StringValue(new EntityField(idGenerator.next(), "c4", FieldType.STRING), "v1")
-                        )
-                ).addAnd(
-                        new Condition(
-                                driverEntityClass0,
-                                new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG),
-                                ConditionOperator.EQUALS,
-                                new LongValue(new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG), 100)
-                        )
-                );
+            .addAnd(
+                new Condition(
+                    childEntityClass.field("c4").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(childEntityClass.field("c4").get(), "v1")
+                )
+            ).addAnd(
+                new Condition(
+                    driverEntityClass0,
+                    driverEntityClass0.field("rel0.age").get(),
+                    ConditionOperator.EQUALS,
+                    new LongValue(driverEntityClass0.field("rel0.age").get(), 100)
+                )
+            );
 
         try {
             instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100));
@@ -347,104 +369,104 @@ public class EntitySearchServiceImplTest {
      */
     private Collection<JoinCase> buildJoinCase() {
         return Arrays.asList(
-                new JoinCase(
-                        parentEntityClass,
-                        Conditions.buildEmtpyConditions()
-                                .addAnd(new Condition(
-                                                driverEntityClass0,
-                                                new EntityField(driverFields0.stream().findFirst().get().id(), "rel0.name", FieldType.STRING),
-                                                ConditionOperator.EQUALS,
-                                                new StringValue(new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING), "driver-v1")
-                                        )
-                                )
-                        ,
-                        Page.newSinglePage(100),
-                        Sort.buildOutOfSort(),
-                        Arrays.asList(
-                                driverEntityClass0.code()
-                                        + ".rel0.name = \"driver-v1\"."
-                                        + driverEntityClass0.id()
-                                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true",
-
-                                driverEntityClass0.code()
-                                        + ".rel0.name = \"driver-v1\"."
-                                        + driverEntityClass0.id()
-                                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true",
-
-                                "rel0.id IN ("
-                                        + masterEntities.values().stream()
-                                        .filter(e -> e.entityClass().equals(driverEntityClass0))
-                                        .map(e -> Long.toString(e.id()))
-                                        .collect(Collectors.joining(", "))
-                                        + ")."
-                                        + parentEntityClass.id()
-                                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true"
+            new JoinCase(
+                parentEntityClass,
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                            driverEntityClass0,
+                            driverEntityClass0.field("rel0.name").get(),
+                            ConditionOperator.EQUALS,
+                            new StringValue(driverEntityClass0.field("rel0.name").get(), "driver-v1")
                         )
-                )
+                    )
                 ,
-                new JoinCase(
-                        parentEntityClass,
-                        Conditions.buildEmtpyConditions()
-                                .addAnd(new Condition(
-                                                driverEntityClass0,
-                                                new EntityField(driverFields0.stream().findFirst().get().id(), "rel0.name", FieldType.STRING),
-                                                ConditionOperator.EQUALS,
-                                                new StringValue(new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING), "driver-v1")
-                                        )
-                                )
-                                .addAnd(
-                                        new Condition(
-                                                driverEntityClass0,
-                                                new EntityField(driverFields0.stream().skip(1).findFirst().get().id(), "rel0.age", FieldType.LONG),
-                                                ConditionOperator.EQUALS,
-                                                new LongValue(new EntityField(idGenerator.next(), "rel0.age", FieldType.LONG), 100)
-                                        )
-                                ),
-                        Page.newSinglePage(100),
-                        Sort.buildOutOfSort(),
-                        Arrays.asList(
-                                driverEntityClass0.code()
-                                        + ".rel0.name = \"driver-v1\" AND " + driverEntityClass0.code() + ".rel0.age = 100."
-                                        + driverEntityClass0.id()
-                                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true",
+                Page.newSinglePage(100),
+                Sort.buildOutOfSort(),
+                Arrays.asList(
+                    driverEntityClass0.code()
+                        + ".rel0.name = \"driver-v1\"."
+                        + driverEntityClass0.id()
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true",
 
-                                driverEntityClass0.code()
-                                        + ".rel0.name = \"driver-v1\" AND " + driverEntityClass0.code() + ".rel0.age = 100."
-                                        + driverEntityClass0.id()
-                                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true",
+                    driverEntityClass0.code()
+                        + ".rel0.name = \"driver-v1\"."
+                        + driverEntityClass0.id()
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true",
 
-                                "rel0.id IN ("
-                                        + masterEntities.values().stream()
-                                        .filter(e -> e.entityClass().equals(driverEntityClass0))
-                                        .map(e -> Long.toString(e.id()))
-                                        .collect(Collectors.joining(", "))
-                                        + ")."
-                                        + parentEntityClass.id()
-                                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true"
-                        )
+                    "rel0.id IN ("
+                        + masterEntities.values().stream()
+                        .filter(e -> e.entityClass().equals(driverEntityClass0))
+                        .map(e -> Long.toString(e.id()))
+                        .collect(Collectors.joining(", "))
+                        + ")."
+                        + parentEntityClass.id()
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true"
                 )
-                ,
-                // 驱动 entity 没有数据.
-                new JoinCase(
-                        parentEntityClass,
-                        Conditions.buildEmtpyConditions()
-                                .addAnd(
-                                        new Condition(
-                                                notExistDriverEntityClass,
-                                                new EntityField(driverFields0.stream().findFirst().get().id(), "rel0.name", FieldType.STRING),
-                                                ConditionOperator.EQUALS,
-                                                new StringValue(new EntityField(idGenerator.next(), "rel0.name", FieldType.STRING), "driver-v1")
-                                        )
-                                ),
-                        Page.newSinglePage(100),
-                        Sort.buildOutOfSort(),
-                        Arrays.asList(
-                                notExistDriverEntityClass.code()
-                                        + ".rel0.name = \"driver-v1\"."
-                                        + notExistDriverEntityClass.id()
-                                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true"
+            )
+            ,
+            new JoinCase(
+                parentEntityClass,
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                            driverEntityClass0,
+                            driverEntityClass0.field("rel0.name").get(),
+                            ConditionOperator.EQUALS,
+                            new StringValue(driverEntityClass0.field("rel0.name").get(), "driver-v1")
                         )
+                    )
+                    .addAnd(
+                        new Condition(
+                            driverEntityClass0,
+                            driverEntityClass0.field("rel0.age").get(),
+                            ConditionOperator.EQUALS,
+                            new LongValue(driverEntityClass0.field("rel0.age").get(), 100)
+                        )
+                    ),
+                Page.newSinglePage(100),
+                Sort.buildOutOfSort(),
+                Arrays.asList(
+                    driverEntityClass0.code()
+                        + ".rel0.name = \"driver-v1\" AND " + driverEntityClass0.code() + ".rel0.age = 100."
+                        + driverEntityClass0.id()
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true",
+
+                    driverEntityClass0.code()
+                        + ".rel0.name = \"driver-v1\" AND " + driverEntityClass0.code() + ".rel0.age = 100."
+                        + driverEntityClass0.id()
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true",
+
+                    "rel0.id IN ("
+                        + masterEntities.values().stream()
+                        .filter(e -> e.entityClass().equals(driverEntityClass0))
+                        .map(e -> Long.toString(e.id()))
+                        .collect(Collectors.joining(", "))
+                        + ")."
+                        + parentEntityClass.id()
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true"
                 )
+            )
+            ,
+            // 驱动 entity 没有数据.
+            new JoinCase(
+                parentEntityClass,
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            notExistDriverEntityClass,
+                            notExistDriverEntityClass.field("rel0.name").get(),
+                            ConditionOperator.EQUALS,
+                            new StringValue(notExistDriverEntityClass.field("rel0.name").get(), "driver-v1")
+                        )
+                    ),
+                Page.newSinglePage(100),
+                Sort.buildOutOfSort(),
+                Arrays.asList(
+                    notExistDriverEntityClass.code()
+                        + ".rel0.name = \"driver-v1\"."
+                        + notExistDriverEntityClass.id()
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true"
+                )
+            )
         );
     }
 
@@ -456,9 +478,9 @@ public class EntitySearchServiceImplTest {
         private Collection<String> expectedStrings;
 
         public JoinCase(
-                IEntityClass reusltEntityClass,
-                Conditions conditions,
-                Page page, Sort sort, Collection<String> expectedStrings) {
+            IEntityClass reusltEntityClass,
+            Conditions conditions,
+            Page page, Sort sort, Collection<String> expectedStrings) {
             this.reusltEntityClass = reusltEntityClass;
             this.conditions = conditions;
             this.page = page;
@@ -472,7 +494,7 @@ public class EntitySearchServiceImplTest {
         long classId = idGenerator.next();
         if (parentEntityClass != null) {
             return new EntityClass(
-                    classId, "class-" + classId, null, null, parentEntityClass, fields);
+                classId, "class-" + classId, null, null, parentEntityClass, fields);
         } else {
             return new EntityClass(classId, "class-" + classId, fields);
         }
@@ -484,26 +506,26 @@ public class EntitySearchServiceImplTest {
             long childId = idGenerator.next();
 
             return new Entity[]{
-                    new Entity(
-                            childId,
-                            entityClass,
-                            buildValues(entityClass),
-                            new EntityFamily(parentId, 0),
-                            0)
-                    ,
-                    new Entity(
-                            parentId,
-                            entityClass.extendEntityClass(),
-                            buildValues(entityClass.extendEntityClass()),
-                            new EntityFamily(0, childId), 0)
+                new Entity(
+                    childId,
+                    entityClass,
+                    buildValues(entityClass),
+                    new EntityFamily(parentId, 0),
+                    0)
+                ,
+                new Entity(
+                    parentId,
+                    entityClass.extendEntityClass(),
+                    buildValues(entityClass.extendEntityClass()),
+                    new EntityFamily(0, childId), 0)
             };
 
         } else {
 
             return new Entity[]{new Entity(
-                    idGenerator.next(),
-                    entityClass,
-                    buildValues(entityClass))};
+                idGenerator.next(),
+                entityClass,
+                buildValues(entityClass))};
         }
     }
 
@@ -554,7 +576,7 @@ public class EntitySearchServiceImplTest {
         @Override
         public Optional<IEntityValue> selectEntityValue(long id) throws SQLException {
             Optional<IEntity> entity =
-                    entities.stream().filter(e -> e.id() == id).findFirst();
+                entities.stream().filter(e -> e.id() == id).findFirst();
 
             return entity.map(IEntity::entityValue);
         }
@@ -697,11 +719,11 @@ public class EntitySearchServiceImplTest {
         public String toString() {
             StringBuilder buff = new StringBuilder();
             buff.append(conditions.toString())
-                    .append(".")
-                    .append(entityClass.id())
-                    .append(".asc:")
-                    .append(sort.isAsc()).append("|des:").append(sort.isDes()).append("|outoforder:").append(sort.isOutOfOrder())
-                    .append(".empty:");
+                .append(".")
+                .append(entityClass.id())
+                .append(".asc:")
+                .append(sort.isAsc()).append("|des:").append(sort.isDes()).append("|outoforder:").append(sort.isOutOfOrder())
+                .append(".empty:");
             buff.append(page.isEmptyPage()).append("|single:").append(page.isSinglePage()).append("|ready:").append(page.isReady());
             return buff.toString();
         }

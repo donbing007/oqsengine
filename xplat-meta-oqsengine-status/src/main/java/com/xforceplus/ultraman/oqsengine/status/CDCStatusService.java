@@ -18,7 +18,14 @@ public interface CDCStatusService {
      * 保存HEART_BEAT.
      *
      */
-    boolean heartBeat(long heartBeat);
+    boolean heartBeat();
+
+    /**
+     * 判断CDC是否健康.
+     *
+     * @return true健康, false不健康.
+     */
+    boolean isAlive();
 
     /**
      * 保存CDC指标.

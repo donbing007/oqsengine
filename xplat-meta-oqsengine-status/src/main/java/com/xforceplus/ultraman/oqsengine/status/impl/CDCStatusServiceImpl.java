@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 
@@ -33,6 +34,8 @@ public class CDCStatusServiceImpl implements CDCStatusService {
     private String key;
 
     private String heartBeatKey;
+
+    private long lastHeartBeatValue = -1;
 
     public CDCStatusServiceImpl() {
         this(DEFAULT_KEY, HEART_BEAT_KEY);
@@ -63,10 +66,41 @@ public class CDCStatusServiceImpl implements CDCStatusService {
     }
 
     @Override
-    public boolean heartBeat(long heartBeat) {
+    public boolean heartBeat() {
         RedisCommands<String, String> commands = connect.sync();
-        String res = commands.set(heartBeatKey, Long.toString(heartBeat));
-        return "OK".equals(res);
+        try {
+            commands.incr(heartBeatKey);
+        } catch (RedisCommandExecutionException ex) {
+            if ("ERR increment or decrement would overflow".equals(ex.getMessage())) {
+                //表示已经溢出了,最多64个bit.进行回卷.
+                commands.set(heartBeatKey, Long.toString(0));
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean isAlive() {
+        RedisCommands<String, String> commands = connect.sync();
+        String value = commands.get(heartBeatKey);
+        if (value == null) {
+            return false;
+        }
+        long now = Long.parseLong(value);
+        /**
+         * 如果当前值和最后值不同,那么表示CDC仍然存活.
+         * lastHeartBeatValue 默认等于-1,心跳从0开始.
+         */
+        try {
+            if (now != lastHeartBeatValue) {
+                return true;
+            } else {
+                return false;
+            }
+        } finally {
+            lastHeartBeatValue = now;
+        }
     }
 
     @Override

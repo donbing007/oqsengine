@@ -245,6 +245,21 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             throw new SQLException("Invalid entityClass.");
         }
 
+        // 检查是否有非可搜索的字段,如果有将空返回.
+        Optional<IEntityClass> entityClassOp;
+        boolean checkResult;
+        for (Condition c : conditions.collectCondition()) {
+            entityClassOp = c.getEntityClass();
+            if (entityClassOp.isPresent()) {
+                checkResult = checkCanSearch(c, entityClassOp.get());
+            } else {
+                checkResult = checkCanSearch(c, entityClass);
+            }
+            if (!checkResult) {
+                return Collections.emptyList();
+            }
+        }
+
         Conditions useConditions = conditions;
         Sort useSort = sort;
         if (useSort == null) {
@@ -319,7 +334,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 }
             }
 
-            Collection<EntityRef> refs = combinedStorage.select(minUnSyncCommitId, useConditions, entityClass, sort, page);
+            Collection<EntityRef> refs = combinedStorage.select(
+                minUnSyncCommitId, useConditions, entityClass, useSort, page);
 
             return buildEntities(refs, entityClass);
         } catch (Exception ex) {
@@ -328,6 +344,33 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         } finally {
             searchReadCountTotal.increment();
         }
+    }
+
+    /**
+     * 以下情况会空返回.
+     * 1. 字段不存在.
+     * 2. 字段非可搜索.
+     */
+    private boolean checkCanSearch(Condition c, IEntityClass entityClass) {
+
+        IEntityClass useEntityClass = entityClass;
+        IEntityField field;
+        while (useEntityClass != null) {
+
+            Optional<IEntityField> fOp = useEntityClass.field(c.getField().id());
+            if (fOp.isPresent()) {
+                field = fOp.get();
+                if (!field.config().isSearchable()) {
+                    return false;
+                } else {
+                    return true;
+                }
+            } else {
+                useEntityClass = useEntityClass.extendEntityClass();
+            }
+        }
+
+        return false;
     }
 
     /**

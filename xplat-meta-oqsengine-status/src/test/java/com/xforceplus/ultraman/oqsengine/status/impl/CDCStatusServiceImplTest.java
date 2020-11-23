@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.status.AbstractRedisContainerTest;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,7 +24,8 @@ public class CDCStatusServiceImplTest extends AbstractRedisContainerTest {
     private RedisClient redisClient;
     private CDCStatusServiceImpl impl;
     private String key = "cdc";
-    private String heartBeat = "cdc-heartBeat";
+    private String heartBeatKey = "cdc-heartBeat";
+    private StatefulRedisConnection<String, String> conn;
 
     @Before
     public void before() throws Exception {
@@ -33,10 +35,12 @@ public class CDCStatusServiceImplTest extends AbstractRedisContainerTest {
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
 
         ObjectMapper objectMapper = new ObjectMapper();
-        impl = new CDCStatusServiceImpl(key, heartBeat);
+        impl = new CDCStatusServiceImpl(key, heartBeatKey);
         ReflectionTestUtils.setField(impl, "redisClient", redisClient);
         ReflectionTestUtils.setField(impl, "objectMapper", objectMapper);
         impl.init();
+
+        conn = redisClient.connect();
     }
 
     @After
@@ -44,7 +48,8 @@ public class CDCStatusServiceImplTest extends AbstractRedisContainerTest {
         impl.destroy();
         impl = null;
 
-        redisClient.connect().sync().del(key);
+        conn.close();
+        redisClient.connect().sync().flushall();
         redisClient.shutdown();
         redisClient = null;
     }
@@ -58,4 +63,40 @@ public class CDCStatusServiceImplTest extends AbstractRedisContainerTest {
         Assert.assertEquals(100, metrics.getBatchId());
     }
 
+    @Test
+    public void testHeartBeat() throws Exception {
+        Assert.assertTrue(impl.heartBeat());
+        Assert.assertTrue(impl.heartBeat());
+        Assert.assertTrue(impl.heartBeat());
+
+        long heartBeatValue = Long.parseLong(conn.sync().get(heartBeatKey));
+        Assert.assertEquals(3, heartBeatValue);
+    }
+
+    /**
+     * 如果逻辑时间达到了Long.MAX_VALUE进行回卷.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testHeartBeatRewind() throws Exception {
+        conn.sync().set(heartBeatKey, Long.toString(Long.MAX_VALUE));
+
+        impl.heartBeat();
+
+        Assert.assertTrue(impl.isAlive());
+
+        Assert.assertEquals("0", conn.sync().get(heartBeatKey));
+    }
+
+    @Test
+    public void testHeartBeatNotExist() throws Exception {
+        conn.sync().del(heartBeatKey);
+
+        Assert.assertFalse(impl.isAlive());
+
+        impl.heartBeat();
+
+        Assert.assertTrue(impl.isAlive());
+    }
 } 

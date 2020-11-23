@@ -39,6 +39,11 @@ create table oqsbigentity
  */
 
 /**
-  增加事务和提交号的联合索引.
+  增加提交号和entity的索引.
+  会单独使用commitid进行查询,基于最左匹配的原则这里将commitid放在前部以使单
  */
-create index tx_commitid_index on oqsbigentity (tx, commitid);
+create index commitid_entity_index on oqsbigentity (commitid, entity);
+/**
+  用以更新提交号的索引.
+ */
+create index tx_index on oqsbigentity (tx);
