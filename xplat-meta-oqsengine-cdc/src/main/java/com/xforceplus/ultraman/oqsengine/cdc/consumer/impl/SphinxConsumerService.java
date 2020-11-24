@@ -95,6 +95,9 @@ public class SphinxConsumerService implements ConsumerService {
             syncCount += sphinxSyncExecutor.sync(rawEntries, cdcMetrics);
         }
 
+        logger.debug("un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+
+
         return syncCount;
     }
 
