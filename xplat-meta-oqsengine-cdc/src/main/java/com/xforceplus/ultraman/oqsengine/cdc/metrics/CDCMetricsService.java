@@ -106,13 +106,11 @@ public class CDCMetricsService {
     }
 
     public void backup(CDCMetrics cdcMetrics) {
-        cdcSyncPool.submit(() -> {
-            try {
-                cdcMetricsCallback.cdcSaveLastUnCommit(cdcMetrics);
-            } catch (Exception e) {
-                logger.error("back up unCommitMetrics to redis error, unCommitMetrics : {}", JSON.toJSON(cdcMetrics));
-            }
-        });
+        try {
+            cdcMetricsCallback.cdcSaveLastUnCommit(cdcMetrics);
+        } catch (Exception e) {
+            logger.error("back up unCommitMetrics to redis error, unCommitMetrics : {}", JSON.toJSON(cdcMetrics));
+        }
     }
 
     public CDCMetrics query() throws SQLException {
@@ -137,18 +135,15 @@ public class CDCMetricsService {
         //  设置本次callback的时间
         cdcMetrics.getCdcAckMetrics().setLastUpdateTime(System.currentTimeMillis());
         //  异步执行回调
-        cdcSyncPool.submit(() -> {
+        try {
+            cdcMetricsCallback.cdcAck(cdcMetrics.getCdcAckMetrics());
+        } catch (Exception e) {
             try {
-                cdcMetricsCallback.cdcAck(cdcMetrics.getCdcAckMetrics());
-            } catch (Exception e) {
-                try {
-                    logger.error("callback error, metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
-                } catch (Exception ee) {
-                    //  ignore
-                }
+                logger.error("callback error, metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
+            } catch (Exception ee) {
+                //  ignore
             }
-        });
-
+        }
     }
 
 
