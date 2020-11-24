@@ -25,7 +25,7 @@ public class CDCMetricsRecorder {
         cdcMetrics = new CDCMetrics();
 
         if (null != cdcUnCommitMetrics) {
-            cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(cdcUnCommitMetrics.getUnCommitId());
+            cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(cdcUnCommitMetrics.getUnCommitIds());
             cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues().putAll(cdcUnCommitMetrics.getUnCommitEntityValues());
         }
         cdcMetrics.setBatchId(batchId);

@@ -18,6 +18,7 @@ import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -98,12 +99,10 @@ public class SphinxConsumerService implements ConsumerService {
 
     private void cleanUnCommit(CDCMetrics cdcMetrics) {
         //  每次Transaction结束,将unCommitId同步到commitList中
-        if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitId() > INIT_ID) {
-            cdcMetrics.getCdcAckMetrics().getCommitList().add(cdcMetrics.getCdcUnCommitMetrics().getUnCommitId());
-            cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(INIT_ID);
-        }
+        cdcMetrics.getCdcAckMetrics().getCommitList().addAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds());
 
         //  每个Transaction的结束需要将unCommitEntityValues清空
+        cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(new LinkedHashSet<>());
         cdcMetrics.getCdcUnCommitMetrics().setUnCommitEntityValues(new ConcurrentHashMap<>());
     }
 
@@ -147,7 +146,7 @@ public class SphinxConsumerService implements ConsumerService {
                 //  是否MAX_VALUE
                 if (commitId != CommitHelper.getUncommitId()) {
                     //  更新
-                    cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(commitId);
+                    cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
                     rawEntries.add(new RawEntry(id, commitId,
                             entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
                 } else {

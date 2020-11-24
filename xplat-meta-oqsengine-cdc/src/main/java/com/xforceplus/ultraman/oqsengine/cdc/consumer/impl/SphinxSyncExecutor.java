@@ -73,7 +73,6 @@ public class SphinxSyncExecutor {
     }
 
 
-
     //  执行同步到Sphinx操作
     public int sync(List<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
         Map<Long, IEntityValue> prefEntityValueMaps =
@@ -83,7 +82,7 @@ public class SphinxSyncExecutor {
     }
 
     //  将unCommitEntityValues中Attr + meta 键值对转为Map<Long, IEntityValue>
-    private Map<Long, IEntityValue> convertToEntityValueMap(Map<Long, RawEntityValue> rawEntityValueMap) throws SQLException {
+    private Map<Long, IEntityValue> convertToEntityValueMap(Map<Long, RawEntityValue> rawEntityValueMap) {
 
         Map<Long, IEntityValue> valueMap = Maps.newHashMap();
         for (Map.Entry<Long, RawEntityValue> vEntry : rawEntityValueMap.entrySet()) {
