@@ -95,8 +95,13 @@ public class SphinxConsumerService implements ConsumerService {
             syncCount += sphinxSyncExecutor.sync(rawEntries, cdcMetrics);
         }
 
-        logger.debug("un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
-
+        if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
+            logger.debug("un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > UNEXPECTED_COMMIT_ID_COUNT) {
+                logger.warn("one transaction has more than one commitId, ids : {}",
+                        JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            }
+        }
 
         return syncCount;
     }
@@ -106,6 +111,10 @@ public class SphinxConsumerService implements ConsumerService {
         if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
             cdcMetrics.getCdcAckMetrics().getCommitList().addAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds());
             logger.debug("commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > UNEXPECTED_COMMIT_ID_COUNT) {
+                logger.warn("one transaction has more than one commitId, ids : {}",
+                        JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            }
         }
 
         //  每个Transaction的结束需要将unCommitEntityValues清空
