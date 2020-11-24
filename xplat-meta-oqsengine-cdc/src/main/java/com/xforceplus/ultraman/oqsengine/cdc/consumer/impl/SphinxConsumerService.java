@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
@@ -99,7 +100,10 @@ public class SphinxConsumerService implements ConsumerService {
 
     private void cleanUnCommit(CDCMetrics cdcMetrics) {
         //  每次Transaction结束,将unCommitId同步到commitList中
-        cdcMetrics.getCdcAckMetrics().getCommitList().addAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds());
+        if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
+            cdcMetrics.getCdcAckMetrics().getCommitList().addAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds());
+            logger.debug("commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+        }
 
         //  每个Transaction的结束需要将unCommitEntityValues清空
         cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(new LinkedHashSet<>());
