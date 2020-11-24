@@ -2,17 +2,23 @@ package com.xforceplus.ultraman.oqsengine.status.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.TimeGauge;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author dongbin
@@ -21,8 +27,9 @@ import java.util.Optional;
  */
 public class CDCStatusServiceImpl implements CDCStatusService {
 
-    private static final String DEFAULT_KEY = "com.xforceplus.ultraman.oqsengine.status.CDCStatusServiceImpl";
-    private static final String HEART_BEAT_KEY = "com.xforceplus.ultraman.oqsengine.status.CDCStatusServiceImpl.heartBeat";
+    private static final String DEFAULT_CDC_METRICS_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.metrics";
+    private static final String DEFAULT_HEART_BEAT_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.heartBeat";
+    private static final String DEFAULT_CDC_ACK_METRICS_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.ack";
 
     @Resource
     private RedisClient redisClient;
@@ -31,20 +38,33 @@ public class CDCStatusServiceImpl implements CDCStatusService {
 
     private StatefulRedisConnection<String, String> connect;
 
-    private String key;
+    private String metricsKey;
+
+    private String ackKey;
 
     private String heartBeatKey;
 
     private long lastHeartBeatValue = -1;
+    private AtomicLong cdcSyncTime = new AtomicLong(0);
+    private AtomicLong cdcExecutedCount = new AtomicLong(0);
+    private AtomicLong cdcMaxUseTime = new AtomicLong(0);
+    private TimeGauge.Builder<AtomicLong> cdcSyncTimeGauge;
+    private TimeGauge.Builder<AtomicLong> cdcExecutedCountGauge;
+    private TimeGauge.Builder<AtomicLong> cdcMaxUseTimeGauge;
 
     public CDCStatusServiceImpl() {
-        this(DEFAULT_KEY, HEART_BEAT_KEY);
+        this(DEFAULT_CDC_METRICS_KEY, DEFAULT_CDC_ACK_METRICS_KEY, DEFAULT_HEART_BEAT_KEY);
     }
 
-    public CDCStatusServiceImpl(String key, String heartBeat) {
-        this.key = key;
-        if (this.key == null || this.key.isEmpty()) {
-            throw new IllegalArgumentException("The KEY is invalid.");
+    public CDCStatusServiceImpl(String metricsKey, String ack, String heartBeat) {
+        this.metricsKey = metricsKey;
+        if (this.metricsKey == null || this.metricsKey.isEmpty()) {
+            throw new IllegalArgumentException("The cdc status metrics is invalid.");
+        }
+
+        this.ackKey = ack;
+        if (this.ackKey == null || this.ackKey.isEmpty()) {
+            throw new IllegalArgumentException("The ack key is invalid.");
         }
 
         this.heartBeatKey = heartBeat;
@@ -58,6 +78,22 @@ public class CDCStatusServiceImpl implements CDCStatusService {
         connect = redisClient.connect();
         RedisCommands<String, String> commands = connect.sync();
         commands.clientSetname("oqs.cdc");
+
+        cdcSyncTimeGauge =
+            TimeGauge.builder(
+                MetricsDefine.CDC_SYNC_DELAY_LATENCY_SECONDS, cdcSyncTime, TimeUnit.SECONDS, AtomicLong::get);
+
+        cdcExecutedCountGauge =
+            TimeGauge.builder(
+                MetricsDefine.CDC_SYNC_EXECUTED_COUNT, cdcExecutedCount, TimeUnit.SECONDS, AtomicLong::get);
+
+        cdcMaxUseTimeGauge =
+            TimeGauge.builder(
+                MetricsDefine.CDC_SYNC_MAX_HANDLE_LATENCY_SECONDS, cdcMaxUseTime, TimeUnit.SECONDS, AtomicLong::get);
+
+        cdcSyncTimeGauge.register(Metrics.globalRegistry);
+        cdcExecutedCountGauge.register(Metrics.globalRegistry);
+        cdcMaxUseTimeGauge.register(Metrics.globalRegistry);
     }
 
     @PreDestroy
@@ -104,28 +140,56 @@ public class CDCStatusServiceImpl implements CDCStatusService {
     }
 
     @Override
-    public boolean save(CDCMetrics cdcMetrics) {
+    public boolean saveUnCommit(CDCMetrics cdcMetrics) {
+        return save(cdcMetrics, metricsKey);
+    }
+
+    @Override
+    public Optional<CDCMetrics> getUnCommit() {
+        return get(metricsKey, CDCMetrics.class);
+    }
+
+    @Override
+    public boolean saveAck(CDCAckMetrics ackMetrics) {
+        try {
+            return save(ackMetrics, ackKey);
+        } finally {
+            cdcSyncTime.set(ackMetrics.getTotalUseTime() / 1000);
+
+            cdcExecutedCount.set(ackMetrics.getExecuteRows());
+
+            cdcMaxUseTime.set(ackMetrics.getMaxSyncUseTime());
+        }
+    }
+
+    @Override
+    public Optional<CDCAckMetrics> getAck() {
+        return get(ackKey, CDCAckMetrics.class);
+    }
+
+    private boolean save(Object obj, String key) {
         String json = null;
         try {
-            json = objectMapper.writeValueAsString(cdcMetrics);
+            json = objectMapper.writeValueAsString(obj);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e.getMessage(), e);
         }
 
         RedisCommands<String, String> commands = connect.sync();
         String res = commands.set(key, json);
+
         return "OK".equals(res);
+
     }
 
-    @Override
-    public Optional<CDCMetrics> get() {
+    private <T> Optional<T> get(String key, Class<T> clazz) {
         RedisCommands<String, String> commands = connect.sync();
         String json = commands.get(key);
         if (json == null) {
             return Optional.empty();
         } else {
             try {
-                return Optional.of(objectMapper.readValue(json, CDCMetrics.class));
+                return Optional.of(objectMapper.readValue(json, clazz));
             } catch (JsonProcessingException e) {
                 throw new IllegalArgumentException(e.getMessage(), e);
             }

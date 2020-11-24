@@ -13,6 +13,7 @@ import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -114,7 +115,9 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
         if (size == 1) {
 
-            unSyncCommitIdSize.decrementAndGet();
+            CompletableFuture.runAsync(() -> {
+                unSyncCommitIdSize.decrementAndGet();
+            });
 
             return commitId;
         } else {
@@ -131,5 +134,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         commands.exec();
 
         unSyncCommitIdSize.addAndGet(-1 * commitIds.length);
+
     }
 }

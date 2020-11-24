@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
@@ -129,10 +128,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return;
                 }
 
-                Optional<CDCMetrics> mOp = cdcStatusService.get();
-                if (mOp.isPresent()) {
-                    CDCMetrics metrics = mOp.get();
-                    CDCAckMetrics ackMetrics = metrics.getCdcAckMetrics();
+                Optional<CDCAckMetrics> ackOp = cdcStatusService.getAck();
+                if (ackOp.isPresent()) {
+                    CDCAckMetrics ackMetrics = ackOp.get();
                     CDCStatus cdcStatus = ackMetrics.getCdcConsumerStatus();
                     if (CDCStatus.CONNECTED != cdcStatus) {
                         logger.warn(
