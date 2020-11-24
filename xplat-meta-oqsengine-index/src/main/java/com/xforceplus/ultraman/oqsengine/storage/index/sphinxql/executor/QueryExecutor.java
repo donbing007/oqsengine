@@ -55,7 +55,8 @@ public class QueryExecutor implements Executor<Long, Optional<StorageEntity>> {
                         rs.getLong(FieldDefine.TX),
                         rs.getLong(FieldDefine.COMMIT_ID),
                         SphinxQLHelper.deserializeJson(rs.getString(FieldDefine.JSON_FIELDS)),
-                        null
+                        null,
+                        rs.getLong(FieldDefine.TIME)
                 );
             }
 

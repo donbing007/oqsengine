@@ -22,6 +22,7 @@ public class StorageEntity implements Serializable {
     private long cref;
     private long tx;
     private long commitId;
+    private long time;
     private Map<String, Object> jsonFields;
     private Set<String> fullFields;
 
@@ -29,7 +30,7 @@ public class StorageEntity implements Serializable {
 
     }
 
-    public StorageEntity(long id, long entity, long pref, long cref, long tx, long commitId, Map<String, Object> jsonFields, Set<String> fullFields) {
+    public StorageEntity(long id, long entity, long pref, long cref, long tx, long commitId, Map<String, Object> jsonFields, Set<String> fullFields, long time) {
         this.id = id;
         this.entity = entity;
         this.pref = pref;
@@ -38,6 +39,7 @@ public class StorageEntity implements Serializable {
         this.commitId = commitId;
         this.jsonFields = jsonFields;
         this.fullFields = setGlobalFlag(fullFields);
+        this.time = time;
     }
 
     public long getId() {
@@ -116,6 +118,14 @@ public class StorageEntity implements Serializable {
         }};
     }
 
+    public long getTime() {
+        return time;
+    }
+
+    public void setTime(long time) {
+        this.time = time;
+    }
+
     @Override
     public String toString() {
         return "StorageEntity{" +
@@ -127,6 +137,7 @@ public class StorageEntity implements Serializable {
                 ", commitId=" + commitId +
                 ", jsonFields=" + JSON.toJSONString(jsonFields) +
                 ", fullFields=" + JSON.toJSONString(fullFields) +
+                ", time=" + time +
                 '}';
     }
 }

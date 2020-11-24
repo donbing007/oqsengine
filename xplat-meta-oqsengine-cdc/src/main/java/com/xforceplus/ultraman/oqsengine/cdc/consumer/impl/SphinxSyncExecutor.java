@@ -194,8 +194,11 @@ public class SphinxSyncExecutor {
                     getLongFromColumn(columns, TX),                   //  tx
                     commitId,                                         //  commitid
                     null,                                   //  由sphinxQLIndexStorage内部转换  entityValue
-                    null                                     //  由sphinxQLIndexStorage内部转换  entityValue
+                    null,                                    //  由sphinxQLIndexStorage内部转换  entityValue
+                    getLongFromColumn(columns, TIME)                  //  time
             );
+
+
 
             //  取自己的entityValue
             IEntityValue entityValue = buildEntityValue(
