@@ -33,6 +33,9 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.*;
 
+import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.INVALID_ENTITY_ID;
+import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.PARSE_COLUMNS_ERROR;
+
 /**
  * 基于 SphinxQL 的索引储存实现. 注意: 这里交所有的 单引号 双引号和斜杠都进行了替换. 此实现并不会进行属性的返回,只会进行查询.
  * <p>
@@ -175,11 +178,15 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     @Override
     public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
         checkId(storageEntity.getId());
-
-        //  jsonFields
-        storageEntity.setJsonFields(serializeToMap(entityValue, true));
-        // fullTexts
-        storageEntity.setFullFields(serializeSetFull(entityValue));
+        try {
+            //  jsonFields
+            storageEntity.setJsonFields(serializeToMap(entityValue, true));
+            // fullTexts
+            storageEntity.setFullFields(serializeSetFull(entityValue));
+        } catch (Exception e) {
+            throw new SQLException(
+                    String.format("serialize entityValue to jsonFields/fullTexts failed, message : %s", e.getMessage()), PARSE_COLUMNS_ERROR.name());
+        }
 
         return doBuildReplaceStorageEntity(storageEntity, replacement);
     }
@@ -285,7 +292,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
     private void checkId(long id) throws SQLException {
         if (id == 0) {
-            throw new SQLException("Invalid entity`s id.");
+            throw new SQLException("Invalid entity`s id.", INVALID_ENTITY_ID.name());
         }
     }
 

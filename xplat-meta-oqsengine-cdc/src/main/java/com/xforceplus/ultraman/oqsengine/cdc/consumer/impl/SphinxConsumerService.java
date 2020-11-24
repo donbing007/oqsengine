@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.annotation.Timed;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -115,6 +117,7 @@ public class SphinxConsumerService implements ConsumerService {
         } catch (Exception e) {
             throw new SQLException(String.format("parse entry value failed, [%s], [%s]", entry.getStoreValue(), e));
         }
+
         CanalEntry.EventType eventType = rowChange.getEventType();
         if (supportEventType(eventType)) {
             //  遍历RowData
@@ -128,10 +131,19 @@ public class SphinxConsumerService implements ConsumerService {
                 if (null == columns || columns.size() == EMPTY_COLUMN_SIZE) {
                     throw new SQLException("columns must not be null");
                 }
-                //  获取ID
-                Long id = getLongFromColumn(columns, ID);
-                //  获取CommitID
-                Long commitId = getLongFromColumn(columns, COMMITID);
+
+                Long id = UN_KNOW_ID;
+                Long commitId = UN_KNOW_ID;
+                try {
+                    //  获取ID
+                    id = getLongFromColumn(columns, ID);
+                    //  获取CommitID
+                    commitId = getLongFromColumn(columns, COMMITID);
+                } catch (Exception e) {
+                    sphinxSyncExecutor.errorHandle(id, commitId, String.format("parse id, commit from columns failed, message : %s", e.getMessage()));
+                    continue;
+                }
+
                 //  是否MAX_VALUE
                 if (commitId != CommitHelper.getUncommitId()) {
                     //  更新
@@ -147,6 +159,7 @@ public class SphinxConsumerService implements ConsumerService {
 
         return rawEntries;
     }
+
 
     /*
         当存在子类时,将父类信息缓存在蓄水池中，等待子类进行合并
