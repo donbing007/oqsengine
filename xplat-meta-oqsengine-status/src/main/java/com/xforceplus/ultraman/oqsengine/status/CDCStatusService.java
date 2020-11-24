@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.status;
 
 
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 
 import java.util.Optional;
@@ -16,7 +17,6 @@ public interface CDCStatusService {
 
     /**
      * 保存HEART_BEAT.
-     *
      */
     boolean heartBeat();
 
@@ -32,12 +32,27 @@ public interface CDCStatusService {
      *
      * @param cdcMetrics CDC指标.
      */
-    boolean save(CDCMetrics cdcMetrics);
+    boolean saveUnCommit(CDCMetrics cdcMetrics);
 
     /**
      * 获取最后的CDC指标快照.
      *
      * @return CDC指标快照.
      */
-    Optional<CDCMetrics> get();
+    Optional<CDCMetrics> getUnCommit();
+
+    /**
+     * 保存CDC处理响应状态.
+     *
+     * @param ackMetrics 响应信息.
+     * @return true保存成功, false保存失败.
+     */
+    boolean saveAck(CDCAckMetrics ackMetrics);
+
+    /**
+     * 查询最后保存的CDC响应状态.
+     *
+     * @return 响应快照.
+     */
+    Optional<CDCAckMetrics> getAck();
 }

@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.status.AbstractRedisContainerTest;
 import io.lettuce.core.RedisClient;
@@ -23,7 +25,8 @@ public class CDCStatusServiceImplTest extends AbstractRedisContainerTest {
 
     private RedisClient redisClient;
     private CDCStatusServiceImpl impl;
-    private String key = "cdc";
+    private String statusKey = "status-cdc";
+    private String ackKey = "ack-cdc";
     private String heartBeatKey = "cdc-heartBeat";
     private StatefulRedisConnection<String, String> conn;
 
@@ -35,7 +38,7 @@ public class CDCStatusServiceImplTest extends AbstractRedisContainerTest {
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
 
         ObjectMapper objectMapper = new ObjectMapper();
-        impl = new CDCStatusServiceImpl(key, heartBeatKey);
+        impl = new CDCStatusServiceImpl(statusKey, ackKey, heartBeatKey);
         ReflectionTestUtils.setField(impl, "redisClient", redisClient);
         ReflectionTestUtils.setField(impl, "objectMapper", objectMapper);
         impl.init();
@@ -58,8 +61,8 @@ public class CDCStatusServiceImplTest extends AbstractRedisContainerTest {
     public void testSaveGet() throws Exception {
         CDCMetrics metrics = new CDCMetrics();
         metrics.setBatchId(100);
-        Assert.assertTrue(impl.save(metrics));
-        metrics = impl.get().get();
+        Assert.assertTrue(impl.saveUnCommit(metrics));
+        metrics = impl.getUnCommit().get();
         Assert.assertEquals(100, metrics.getBatchId());
     }
 
@@ -98,5 +101,14 @@ public class CDCStatusServiceImplTest extends AbstractRedisContainerTest {
         impl.heartBeat();
 
         Assert.assertTrue(impl.isAlive());
+    }
+
+    @Test
+    public void testSaveAck() throws Exception {
+        CDCAckMetrics ack = new CDCAckMetrics(CDCStatus.CONNECTED);
+        Assert.assertTrue(impl.saveAck(ack));
+
+        ack = impl.getAck().get();
+        Assert.assertEquals(CDCStatus.CONNECTED, ack.getCdcConsumerStatus());
     }
 } 
