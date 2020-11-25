@@ -43,14 +43,13 @@ public class ReplaceExecutor implements Executor<StorageEntity, Integer> {
         return new ReplaceExecutor(resource, indexTableName);
     }
 
+
     @Override
     public Integer execute(StorageEntity storageEntity) throws SQLException {
-
         final String sql = String.format(replaceSql, indexTableName);
 
         PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
 
-        // id, entity, pref, cref, tx, commit, jsonfileds, fullfileds
         // id
         st.setLong(1, storageEntity.getId());
         // entity
@@ -78,11 +77,8 @@ public class ReplaceExecutor implements Executor<StorageEntity, Integer> {
             logger.debug(st.toString());
         }
 
-        st.executeUpdate();
-
         try {
-            // 不做版本控制.没有异常即为成功.
-            return 1;
+            return st.executeUpdate();
         } finally {
             st.close();
         }

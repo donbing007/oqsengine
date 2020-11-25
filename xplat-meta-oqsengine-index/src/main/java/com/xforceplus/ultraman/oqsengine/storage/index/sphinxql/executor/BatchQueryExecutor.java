@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -48,7 +49,8 @@ public class BatchQueryExecutor implements Executor<Long, Collection<EntityRef>>
 
         ResultSet rs = null;
         String sql = buildCleanSelect(indexTableName);
-        try (PreparedStatement st = resource.getConnection().prepareStatement(sql)){
+        try (Connection connection = resource.getConnection();
+                    PreparedStatement st = connection.prepareStatement(sql)){
             st.setLong(1, entityId);    // entityId
             st.setLong(2, maintainId);  // maintainId
             st.setLong(3, start);       // start

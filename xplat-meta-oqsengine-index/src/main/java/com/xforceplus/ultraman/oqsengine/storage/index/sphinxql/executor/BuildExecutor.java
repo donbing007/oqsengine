@@ -73,8 +73,11 @@ public class BuildExecutor implements Executor<StorageEntity, Integer> {
         // time
         st.setLong(11, storageEntity.getTime());
 
-        try {
+        if (logger.isDebugEnabled()) {
+            logger.debug(st.toString());
+        }
 
+        try {
             return st.executeUpdate();
         } finally {
             st.close();

@@ -9,7 +9,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant;
  */
 public class SQLConstant {
 
-    public static final String WRITER_SQL = "%s into %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?,?,?,?,?,?)";
+    public static final String WRITER_SQL = "%s into %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) values(?,?,?,?,?,?,?,?,?,?,?)";
     public static final String DELETE_SQL = "delete from %s where id = ?";
     /**
      * %s 顺序为 where 条件, 排序.

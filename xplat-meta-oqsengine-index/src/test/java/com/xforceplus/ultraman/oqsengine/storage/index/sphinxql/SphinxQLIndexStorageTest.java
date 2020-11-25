@@ -182,7 +182,9 @@ public class SphinxQLIndexStorageTest {
         batchDeletes = new EntityValue(id);
         batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1026")));
 
-        batchDeleteEntities[1] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        IEntity entity1 = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        entity1.restMaintainId(taskId);
+        batchDeleteEntities[1] = entity1;
         batchDeleteEntities[1].markTime(time);
 
 
@@ -204,7 +206,6 @@ public class SphinxQLIndexStorageTest {
 
         batchDeleteEntities[3] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
         batchDeleteEntities[3].markTime(time);
-
         expectedBatchDeleteIds.add(id);
 
         //	5.满足taskId不相等, 时间卡在边界线下限 被删除
@@ -225,7 +226,6 @@ public class SphinxQLIndexStorageTest {
 
         batchDeleteEntities[5] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
         batchDeleteEntities[5].markTime(time);
-
         expectedBatchDeleteIds.add(id);
     }
 
@@ -369,7 +369,7 @@ public class SphinxQLIndexStorageTest {
         Assert.assertFalse(transactionManager.getCurrent().isPresent());
 
         Collection<EntityRef> entityRefs =
-                storage.select(Conditions.buildEmtpyConditions(), batchDeleteClass, null, Page.newSinglePage(100), null, 1000L);
+                storage.select(Conditions.buildEmtpyConditions(), batchDeleteClass, null, new Page(1, 1000), null, 1000L);
 
         Assert.assertNotNull(entityRefs);
         Assert.assertEquals(batchDeleteEntities.length - expectedBatchDeleteIds.size(), entityRefs.size());
@@ -762,6 +762,19 @@ public class SphinxQLIndexStorageTest {
             Arrays.stream(entityes).forEach(e -> {
                 try {
                     storage.buildOrReplace(create(e.id(), e.entityClass().id(), commitId, tx), e.entityValue(), false);
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex.getMessage(), ex);
+                }
+            });
+            Arrays.stream(batchDeleteEntities).forEach(e -> {
+                try {
+                    StorageEntity storageEntity =
+                            create(e.id(), e.entityClass().id(), commitId, tx);
+                    storageEntity.setTime(e.time());
+                    if (e.maintainId() == taskId) {
+                        storageEntity.setMaintainId(taskId);
+                    }
+                    storage.buildOrReplace(storageEntity, e.entityValue(), false);
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex.getMessage(), ex);
                 }
