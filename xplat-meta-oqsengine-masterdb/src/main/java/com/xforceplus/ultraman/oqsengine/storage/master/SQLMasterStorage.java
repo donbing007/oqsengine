@@ -103,7 +103,7 @@ public class SQLMasterStorage implements MasterStorage {
 
         List<DataSourceSummary> dataSourceSummaries = new LinkedList<>();
         BatchCondition batchCondition = new BatchCondition(start, end, entityClass);
-        for (int i = 0; i < dataSources.size(); i ++) {
+        for (int i = 0; i < dataSources.size(); i++) {
             List<String> tables = new ArrayList<>();
 
             tables.add(tableName);

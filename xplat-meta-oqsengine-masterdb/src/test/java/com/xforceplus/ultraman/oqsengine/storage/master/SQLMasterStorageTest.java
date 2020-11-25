@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
+import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.CommonRangeShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
@@ -150,7 +151,8 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
 
         Assert.assertNotNull(dataQueryIterator);
 
-//        Assert.assertEquals(99, dataQueryIterator.size());
+        int expected = Integer.parseInt(endId - startId + 1 + "");
+        Assert.assertEquals(expected, dataQueryIterator.size());
 
         Assert.assertTrue(dataQueryIterator.hasNext());
 
@@ -166,7 +168,7 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
                 count ++;
             }
         }
-        Assert.assertEquals(99, count);
+        Assert.assertEquals(expected, count);
     }
 
     /**
@@ -402,15 +404,16 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         TableRuleConfiguration tableRuleConfiguration = new TableRuleConfiguration(
             "oqsbigentity", "ds${0..1}.oqsbigentity${0..2}");
         tableRuleConfiguration.setDatabaseShardingStrategyConfig(
-            new StandardShardingStrategyConfiguration("id", new HashPreciseShardingAlgorithm()));
+            new StandardShardingStrategyConfiguration("id", new HashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
         tableRuleConfiguration.setTableShardingStrategyConfig(
-            new StandardShardingStrategyConfiguration("id", new SuffixNumberHashPreciseShardingAlgorithm()));
+            new StandardShardingStrategyConfiguration("id", new SuffixNumberHashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
 
 
         ShardingRuleConfiguration shardingRuleConfig = new ShardingRuleConfiguration();
         shardingRuleConfig.getTableRuleConfigs().add(tableRuleConfiguration);
 
         Properties prop = new Properties();
+//        prop.setProperty("allow.range.query.with.inline.sharding", "true");
 //        prop.put("sql.show", "true");
         dataSource = ShardingDataSourceFactory.createDataSource(dsMap, shardingRuleConfig, prop);
         return dataSource;
