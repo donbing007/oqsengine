@@ -104,7 +104,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     @Override
     public long[] getAll() {
         RedisCommands<String, String> commands = connect.sync();
-        List<String> ids = commands.zrange(key, 0, Long.MAX_VALUE);
+        List<String> ids = commands.zrange(key, 0, -1);
         return ids.stream().mapToLong(id -> Long.parseLong(id)).toArray();
     }
 
@@ -133,18 +133,20 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     @Override
     public void obsolete(long... commitIds) {
         RedisCommands<String, String> commands = connect.sync();
+        final long onlyOne = 1;
+        Arrays.stream(commitIds).parallel().mapToObj(id -> Long.toString(id)).forEach(id -> {
+            long size = commands.zrem(key, id);
 
-        commands.multi();
-        Arrays.stream(commitIds).mapToObj(id -> Long.toString(id)).forEach(id -> {
-                commands.zrem(key, id);
+            if (size == onlyOne) {
 
                 if (logger.isDebugEnabled()) {
-                    logger.debug("The {} commit number has been synchronized successfully.", id);
+                    logger.debug("The {} commit number eliminated successfully.", id);
                 }
-            }
-        );
 
-        commands.exec();
+            } else {
+                logger.warn("The {} commit number elimination failed.", id);
+            }
+        });
 
         CompletableFuture.runAsync(() -> unSyncCommitIdSize.set(size()));
     }
