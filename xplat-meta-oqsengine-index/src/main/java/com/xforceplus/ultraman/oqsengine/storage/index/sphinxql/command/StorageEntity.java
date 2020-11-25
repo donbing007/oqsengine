@@ -25,6 +25,7 @@ public class StorageEntity implements Serializable {
     private long time;
     private Map<String, Object> jsonFields;
     private Set<String> fullFields;
+    private long maintainId;
 
     public StorageEntity() {
 
@@ -40,6 +41,7 @@ public class StorageEntity implements Serializable {
         this.jsonFields = jsonFields;
         this.fullFields = setGlobalFlag(fullFields);
         this.time = time;
+        this.maintainId = 0;
     }
 
     public long getId() {
@@ -106,6 +108,22 @@ public class StorageEntity implements Serializable {
         this.commitId = commitId;
     }
 
+    public long getMaintainId() {
+        return maintainId;
+    }
+
+    public void setMaintainId(long maintainId) {
+        this.maintainId = maintainId;
+    }
+
+    public long getTime() {
+        return time;
+    }
+
+    public void setTime(long time) {
+        this.time = time;
+    }
+
     private Set<String> setGlobalFlag(Set<String> fullfields) {
         if (fullfields == null) {
             return fullfields;
@@ -116,14 +134,6 @@ public class StorageEntity implements Serializable {
         return new HashSet<String>(fullfields) {{
             add(SphinxQLHelper.ALL_DATA_FULL_TEXT);
         }};
-    }
-
-    public long getTime() {
-        return time;
-    }
-
-    public void setTime(long time) {
-        this.time = time;
     }
 
     @Override

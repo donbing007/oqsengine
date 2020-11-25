@@ -58,6 +58,8 @@ public class QueryExecutor implements Executor<Long, Optional<StorageEntity>> {
                         null,
                         rs.getLong(FieldDefine.TIME)
                 );
+
+                storageEntity.setMaintainId(rs.getLong(FieldDefine.MAINTAIN_ID));
             }
 
             return Optional.ofNullable(storageEntity);

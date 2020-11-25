@@ -7,11 +7,13 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
+import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
 
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 /**
  * 主要储存定义.
@@ -21,6 +23,19 @@ import java.util.Optional;
  * @since 1.8
  */
 public interface MasterStorage extends Storage {
+
+    /**
+     * 产生一个批量搜索迭代器
+     *
+     * @param entityClass 目标实例类型.
+     * @param start 开始时间
+     * @param end 结束时间
+     * @param threadPool 外部传入执行线程池，如为null表示采用默认的线程池
+     * @return 目标实例.
+     */
+    DataQueryIterator newIterator(IEntityClass entityClass, long start, long end,
+                                  ExecutorService threadPool, int queryTimeout, int pageSize) throws SQLException;
+
 
     /**
      * 根据唯一标识查找相应的实例.

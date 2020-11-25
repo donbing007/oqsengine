@@ -6,6 +6,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
@@ -314,5 +317,40 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                     }
                 }
             });
+    }
+
+    @Override
+    public boolean clean(long entityId, long maintainId, long start, long end) throws SQLException {
+        checkId(entityId);
+        List<EntityRef> entityRefs = new ArrayList<>();
+        for (DataSource dataSource : writerDataSourceSelector.selects()) {
+            for (String indexName : indexWriteIndexNameSelector.selects()) {
+                Collection<EntityRef> refs =
+                        BatchQueryExecutor.build(dataSource, indexName, entityId, maintainId, start, end).execute(1L);
+
+                if (!refs.isEmpty()) {
+                    entityRefs.addAll(refs);
+                }
+            }
+        }
+        /*
+            考虑到重建索引后出现不一致的记录数量不会太多，目前采用逐个删除的策略
+         */
+        if (0 < entityRefs.size()) {
+            for (EntityRef entityRef : entityRefs) {
+                delete(new Entity(entityRef.getId(),
+                        new AnyEntityClass(), new EntityValue(entityRef.getId())));
+
+                if (0 < entityRef.getCref()) {
+                    delete(new Entity(entityRef.getCref(),
+                            new AnyEntityClass(), new EntityValue(entityRef.getCref())));
+                } else if (0 < entityRef.getPref()) {
+                    delete(new Entity(entityRef.getPref(),
+                            new AnyEntityClass(), new EntityValue(entityRef.getPref())));
+                }
+            }
+        }
+
+        return true;
     }
 }

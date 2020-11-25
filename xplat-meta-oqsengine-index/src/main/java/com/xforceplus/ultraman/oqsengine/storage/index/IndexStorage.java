@@ -60,4 +60,13 @@ public interface IndexStorage extends Storage {
      * @throws SQLException Storage error.
      */
     int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException;
+
+    /**
+     * 批量删除，遍历dataSource.
+     * @param entityId 搜索目标的 entityID.
+     * @param maintainId 搜索目标的 taskId.
+     * @param start 开始时间.
+     * @param end 结束时间.
+     */
+    boolean clean(long entityId, long maintainId, long start, long end) throws SQLException;
 }

@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.common.selector;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 轮流依次选择.
@@ -24,5 +26,11 @@ public class TakeTurnsSelector<V> implements Selector<V> {
     @Override
     public V select(String key) {
         return targets.get(point++ % targets.size());
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<V> selects() {
+        return targets.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

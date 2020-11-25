@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
@@ -18,6 +19,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
@@ -33,13 +35,20 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -57,13 +66,20 @@ import static org.mockito.Mockito.when;
  */
 public class SQLMasterStorageTest extends AbstractMysqlTest {
 
+    final Logger logger = LoggerFactory.getLogger(SQLMasterStorageTest.class);
+
     private TransactionManager transactionManager;
 
     private DataSource dataSource;
     private SQLMasterStorage storage;
     private List<IEntity> expectedEntitys;
+    private List<IEntity> expectedEntitiesWithTime;
     private IEntityField fixStringsField = new EntityField(100000, "strings", FieldType.STRINGS);
     private StringsValue fixStringsValue = new StringsValue(fixStringsField, "1,2,3,500002,测试".split(","));
+
+    private long timeId = LocalDateTime.now().toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
+
+    private IEntityClass expectEntityClass;
 
     @Before
     public void before() throws Exception {
@@ -100,6 +116,10 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
         expectedEntitys = initData(storage, 10);
+
+        tx = transactionManager.create();
+        transactionManager.bind(tx.id());
+        initMultiDataSourceData(storage, 100);
     }
 
     @After
@@ -112,6 +132,41 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         stat.execute("truncate table oqsbigentity");
         stat.close();
         conn.close();
+    }
+
+    @Test
+    public void testNewDataQueryIterator() throws SQLException {
+
+        ExecutorService consumerPool = new ThreadPoolExecutor(10, 10,
+                0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(2048),
+                ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
+                new ThreadPoolExecutor.AbortPolicy());
+
+        long startId = timeId + 23;
+        long endId = timeId + 74;
+        DataQueryIterator dataQueryIterator =
+                storage.newIterator(expectEntityClass, startId, endId, consumerPool, 3000, 10);
+
+        Assert.assertNotNull(dataQueryIterator);
+
+//        Assert.assertEquals(99, dataQueryIterator.size());
+
+        Assert.assertTrue(dataQueryIterator.hasNext());
+
+        int count = 0;
+        List<IEntity> allEntities = new ArrayList<>();
+        int loops = 0;
+        while (dataQueryIterator.hasNext()) {
+            loops ++;
+            List<IEntity> entities = dataQueryIterator.next();
+            for (IEntity entity : entities) {
+                logger.debug("query loops : {}, id : {}, time : {}", loops, entity.id(), entity.time());
+                allEntities.add(entity);
+                count ++;
+            }
+        }
+        Assert.assertEquals(99, count);
     }
 
     /**
@@ -361,4 +416,48 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         return dataSource;
     }
 
+    private void initMultiDataSourceData(SQLMasterStorage storage, int size) throws Exception {
+        if (null == expectEntityClass) {
+            expectEntityClass =
+                    new EntityClass(timeId, "test", Collections.emptyList());
+        }
+
+        expectedEntitiesWithTime = new ArrayList<>(size);
+        for(int i = 1; i < size; i++) {
+            expectedEntitiesWithTime.add(buildEntityWithEntityClassInit(timeId, timeId + i));
+        }
+
+        try {
+            expectedEntitiesWithTime.stream().forEach(e -> {
+                try {
+                    storage.build(e);
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex.getMessage(), ex);
+                }
+            });
+        } catch (Exception e) {
+            transactionManager.getCurrent().get().rollback();
+            throw e;
+        }
+
+        //将事务正常提交,并从事务管理器中销毁事务.
+        Transaction tx = transactionManager.getCurrent().get();
+        tx.commit();
+        transactionManager.finish();
+    }
+
+    private IEntity buildEntityWithEntityClassInit(long entityClassId, long id) {
+        Collection<IEntityField> fields = buildRandomFields(id, 3);
+        fields.add(fixStringsField);
+
+        IEntity entity = new Entity(
+                id,
+                new EntityClass(entityClassId, "test", fields),
+                buildRandomValue(id, fields),
+                null,
+                0
+        );
+        entity.markTime(id);
+        return entity;
+    }
 }

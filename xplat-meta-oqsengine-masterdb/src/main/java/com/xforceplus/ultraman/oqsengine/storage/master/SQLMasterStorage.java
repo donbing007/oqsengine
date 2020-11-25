@@ -10,6 +10,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.BatchCondition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.DataSourceSummary;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.TableSummary;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -18,6 +21,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.*;
+import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -26,6 +30,7 @@ import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,9 +38,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityFieldBuildUtils.metaToFieldTypeMap;
@@ -70,6 +74,8 @@ public class SQLMasterStorage implements MasterStorage {
 
     private long queryTimeout;
 
+    private static final String dataSourceName = "master";
+
     public void setQueryTimeout(long queryTimeout) {
         this.queryTimeout = queryTimeout;
     }
@@ -86,6 +92,66 @@ public class SQLMasterStorage implements MasterStorage {
             setQueryTimeout(3000L);
         }
     }
+
+
+    @Override
+    public DataQueryIterator newIterator(IEntityClass entityClass, long start, long end,
+                                         ExecutorService threadPool, int queryTimeout, int pageSize) throws SQLException {
+
+        List<DataSource> dataSources = new ArrayList<>();
+        dataSources.add(masterDataSource);
+
+        List<DataSourceSummary> dataSourceSummaries = new LinkedList<>();
+        BatchCondition batchCondition = new BatchCondition(start, end, entityClass);
+        for (int i = 0; i < dataSources.size(); i ++) {
+            List<String> tables = new ArrayList<>();
+
+            tables.add(tableName);
+
+            CountDownLatch latch = new CountDownLatch(tables.size());
+            List<Future<TableSummary>> futures = new ArrayList<Future<TableSummary>>(tables.size());
+            for (String tableName : tables) {
+                futures.add(threadPool.submit(
+                        new CountByTableSummaryCallable(latch, batchCondition, tableName, queryTimeout)));
+            }
+
+            try {
+                if (!latch.await(this.queryTimeout, TimeUnit.MILLISECONDS)) {
+                    for (Future<TableSummary> f : futures) {
+                        f.cancel(true);
+                    }
+
+                    throw new SQLException("Query failed, timeout.");
+                }
+            } catch (InterruptedException e) {
+                throw new SQLException(e.getMessage(), e);
+            }
+            if (futures.size() > 0) {
+                List<TableSummary> tableSummaries = new ArrayList<>();
+                for (Future<TableSummary> f : futures) {
+                    try {
+                        TableSummary tableSummary = f.get();
+                        if (null != tableSummary && tableSummary.getCount() > 0) {
+                            tableSummaries.add(tableSummary);
+                        }
+                    } catch (Exception e) {
+                        throw new SQLException(e.getMessage(), e);
+                    }
+                }
+                if (tableSummaries.size() > 0) {
+                    DataSourceSummary dataSourceSummary = new DataSourceSummary(dataSources.get(i),
+                            String.format("%s-%d", dataSourceName, i), tableSummaries);
+                    dataSourceSummaries.add(dataSourceSummary);
+                }
+            }
+        }
+
+        return 0 < dataSourceSummaries.size() ?
+                new DataQueryIterator(batchCondition, dataSourceSummaries, this, threadPool,
+                        queryTimeout, pageSize) : null;
+    }
+
+
 
     @Override
     public Collection<EntityRef> select(long commitid, Conditions conditions, IEntityClass entityClass, Sort sort)
@@ -379,5 +445,120 @@ public class SQLMasterStorage implements MasterStorage {
             .filter(f -> f.config().isSearchable())
             .map(f -> "\"" + String.join("-", Long.toString(f.id()), f.type().getType()) + "\"")
             .collect(Collectors.joining(",")) + "]";
+    }
+
+
+    /**
+     * 统一EntityClass在每一个库->表中的数量
+     */
+    private class CountByTableSummaryCallable implements Callable<TableSummary> {
+
+        private CountDownLatch latch;
+
+        private BatchCondition batchCondition;
+
+        private String tableName;
+
+        private int timeout;
+
+        public CountByTableSummaryCallable(CountDownLatch latch, BatchCondition batchCondition, String tableName, int timeout) {
+            this.latch = latch;
+            this.batchCondition = batchCondition;
+            this.timeout = timeout;
+            this.tableName = tableName;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public TableSummary call() throws Exception {
+            try {
+                return (TableSummary) transactionExecutor.execute(
+                        new DataSourceNoShardResourceTask(masterDataSource) {
+
+                            @Override
+                            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+
+                                TableSummary tableSummary = new TableSummary(tableName);
+
+                                Optional<Integer> integer = BatchQueryCountExecutor.build(tableName, resource, timeout,
+                                        batchCondition.getEntityClass().id(), batchCondition.getStartTime(), batchCondition.getEndTime()).execute(1L);
+
+                                if (integer.isPresent()) {
+                                    tableSummary.setCount(integer.get());
+                                    return tableSummary;
+                                }
+                                throw new SQLException("query count failed, empty result.");
+                            }
+                        });
+            } finally {
+                latch.countDown();
+            }
+        }
+    }
+
+
+    /**
+     *
+     */
+    public class BathQueryByTableSummaryCallable implements Callable<List<IEntity>> {
+
+        private CountDownLatch latch;
+
+        private BatchCondition batchCondition;
+
+        private String tableName;
+
+        private long startId;
+
+        private int pageSize;
+
+        private DataSource dataSource;
+
+        private int timeout;
+
+        public BathQueryByTableSummaryCallable(BatchCondition batchCondition, long startId, int pageSize, DataSource dataSource, String tableName, int timeout) {
+            this.batchCondition = batchCondition;
+            this.startId = startId;
+            this.pageSize = pageSize;
+            this.dataSource = dataSource;
+            this.tableName = tableName;
+            this.timeout = timeout;
+        }
+
+        public void setLatch(CountDownLatch latch) {
+            this.latch = latch;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public List<IEntity> call() throws Exception {
+            try {
+                return (List<IEntity>) transactionExecutor.execute(
+                        new DataSourceNoShardResourceTask(dataSource) {
+
+                            @Override
+                            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+
+                                Collection<StorageEntity> seCollection = BatchQueryExecutor.build(tableName, resource, timeout,
+                                        batchCondition.getEntityClass().id(), batchCondition.getStartTime(), batchCondition.getEndTime(),
+                                        startId, pageSize).execute(1L);
+                                hint.setReadOnly(true);
+
+                                List<IEntity> entities = new ArrayList<>(seCollection.size());
+                                for (StorageEntity se : seCollection) {
+                                    Optional<IEntity> entityOp = buildEntityFromStorageEntity(se, batchCondition.getEntityClass());
+                                    if (entityOp.isPresent()) {
+                                        entities.add(entityOp.get());
+                                    } else {
+                                        throw new SQLException("batch query failed, empty result.");
+                                    }
+                                }
+                                return entities;
+                            }
+                        });
+            } finally {
+                latch.countDown();
+            }
+        }
     }
 }

@@ -53,6 +53,20 @@ storage:
       errors:
         name: "cdcerrors"
     maxQueryTimeMs: 3000
+    task:
+      split: 10
+      max:
+        queue:
+          size: 2000
+      execution:
+        timeout: 300000
+      update:
+        frequency: 100
+      cache:
+        expire: 30
+        maxsize: 500
+      page:
+        size: 1000
 
 redis:
   # 单机 redis://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
