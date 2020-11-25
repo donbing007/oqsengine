@@ -751,14 +751,14 @@ public class SphinxQLIndexStorageTest {
         searchManticore.start();
 
         String write0Jdbc = String.format(
-            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+            "jdbc:p6spy:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
             manticore0.getContainerIpAddress(), manticore0.getFirstMappedPort());
         String write1Jdbc = String.format(
-            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+            "jdbc:p6spy:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
             manticore1.getContainerIpAddress(), manticore1.getFirstMappedPort());
 
         String searchJdbc = String.format(
-            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
+            "jdbc:p6spy:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
             searchManticore.getContainerIpAddress(), searchManticore.getFirstMappedPort());
 
         System.setProperty("MANTICORE_WRITE0_JDBC_URL", write0Jdbc);

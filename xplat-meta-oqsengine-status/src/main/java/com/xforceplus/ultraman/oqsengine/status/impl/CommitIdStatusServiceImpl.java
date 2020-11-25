@@ -6,6 +6,8 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micrometer.core.instrument.Metrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -25,7 +27,9 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
-    private static final String DEFAULT_KEY = "com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService";
+    final Logger logger = LoggerFactory.getLogger(CommitIdStatusServiceImpl.class);
+
+    private static final String DEFAULT_KEY = "com.xforceplus.ultraman.oqsengine.status.commitid";
 
     @Resource
     private RedisClient redisClient;
@@ -55,7 +59,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         commands.clientSetname("oqs.commitid");
 
         unSyncCommitIdSize = Metrics.gauge(
-            MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(0));
+            MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(size()));
 
     }
 
@@ -68,7 +72,9 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     public long save(long commitId) {
         RedisCommands<String, String> commands = connect.sync();
         commands.zadd(key, (double) commitId, Long.toString(commitId));
-        unSyncCommitIdSize.incrementAndGet();
+
+        CompletableFuture.runAsync(() -> unSyncCommitIdSize.set(size()));
+
         return commitId;
 
     }
@@ -115,11 +121,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
         if (size == 1) {
 
-            CompletableFuture.runAsync(() -> {
-                unSyncCommitIdSize.decrementAndGet();
-            });
+            CompletableFuture.runAsync(() -> unSyncCommitIdSize.set(size()));
 
             return commitId;
+
         } else {
             return -1;
         }
@@ -130,10 +135,17 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         RedisCommands<String, String> commands = connect.sync();
 
         commands.multi();
-        Arrays.stream(commitIds).mapToObj(id -> Long.toString(id)).forEach(id -> commands.zrem(key, id));
+        Arrays.stream(commitIds).mapToObj(id -> Long.toString(id)).forEach(id -> {
+                commands.zrem(key, id);
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The {} commit number has been synchronized successfully.", id);
+                }
+            }
+        );
+
         commands.exec();
 
-        unSyncCommitIdSize.addAndGet(-1 * commitIds.length);
-
+        CompletableFuture.runAsync(() -> unSyncCommitIdSize.set(size()));
     }
 }

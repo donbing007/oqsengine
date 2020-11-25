@@ -356,7 +356,7 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         shardingRuleConfig.getTableRuleConfigs().add(tableRuleConfiguration);
 
         Properties prop = new Properties();
-        prop.put("sql.show", "true");
+//        prop.put("sql.show", "true");
         dataSource = ShardingDataSourceFactory.createDataSource(dsMap, shardingRuleConfig, prop);
         return dataSource;
     }

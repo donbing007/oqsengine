@@ -51,10 +51,6 @@ public class BuildExecutor extends AbstractMasterExecutor<StorageEntity, Integer
 
         checkTimeout(st);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
-
         try {
             return st.executeUpdate();
         } finally {

@@ -36,10 +36,6 @@ public class DeleteExecutor implements Executor<Long, Integer> {
         PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
         st.setLong(1, id);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
-
         // 在事务状态,返回值恒等于0.
         st.executeUpdate();
 

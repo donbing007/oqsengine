@@ -45,10 +45,6 @@ public class UpdateVersionAndTxExecutor extends AbstractMasterExecutor<StorageEn
 
         checkTimeout(st);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
-
         try {
             return st.executeUpdate();
         } finally {

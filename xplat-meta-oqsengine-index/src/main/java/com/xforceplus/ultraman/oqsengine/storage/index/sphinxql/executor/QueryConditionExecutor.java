@@ -292,9 +292,6 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
                 : page.getPageSize() * page.getIndex());
             // add max query timeout.
             st.setLong(4, maxQueryTimeMs);
-            if (logger.isDebugEnabled()) {
-                logger.debug(st.toString());
-            }
 
             rs = st.executeQuery();
             List<EntityRef> refs = new ArrayList((int) page.getPageSize());

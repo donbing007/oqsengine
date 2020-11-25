@@ -129,19 +129,19 @@ public class SQLMasterStorage implements MasterStorage {
     @Override
     public Optional<IEntityValue> selectEntityValue(long id) throws SQLException {
         return (Optional<IEntityValue>) transactionExecutor.execute(
-                new DataSourceNoShardResourceTask(masterDataSource) {
+            new DataSourceNoShardResourceTask(masterDataSource) {
 
-                    @Override
-                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                        Optional<StorageEntity> seOP = QueryExecutor.buildHaveAllDetail(tableName, resource, queryTimeout).execute(id);
-                        hint.setReadOnly(true);
-                        if (seOP.isPresent()) {
-                            return Optional.ofNullable(entityValueBuilder.build(id, metaToFieldTypeMap(seOP.get().getMeta()), seOP.get().getAttribute()));
-                        } else {
-                            return Optional.empty();
-                        }
+                @Override
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                    Optional<StorageEntity> seOP = QueryExecutor.buildHaveAllDetail(tableName, resource, queryTimeout).execute(id);
+                    hint.setReadOnly(true);
+                    if (seOP.isPresent()) {
+                        return Optional.ofNullable(entityValueBuilder.build(id, metaToFieldTypeMap(seOP.get().getMeta()), seOP.get().getAttribute()));
+                    } else {
+                        return Optional.empty();
                     }
-                });
+                }
+            });
     }
 
     @Override

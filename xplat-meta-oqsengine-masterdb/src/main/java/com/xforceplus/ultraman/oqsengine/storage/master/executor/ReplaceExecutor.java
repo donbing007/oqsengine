@@ -46,10 +46,6 @@ public class ReplaceExecutor extends AbstractMasterExecutor<StorageEntity, Integ
 
         checkTimeout(st);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
-
         try {
             return st.executeUpdate();
         } finally {
