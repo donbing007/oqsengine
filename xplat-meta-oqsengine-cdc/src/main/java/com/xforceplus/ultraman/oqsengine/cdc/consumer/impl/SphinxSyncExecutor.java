@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 import com.alibaba.google.common.collect.Maps;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.devops.DevOpsStorage;
+import com.xforceplus.ultraman.oqsengine.devops.cdcerror.DevOpsStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;

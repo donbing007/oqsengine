@@ -1,10 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
-import com.xforceplus.ultraman.oqsengine.devops.DevOpsStorage;
-import com.xforceplus.ultraman.oqsengine.devops.SQLDevOpsStorage;
-import com.xforceplus.ultraman.oqsengine.devops.executor.rebuild.DevOpsRebuildIndexExecutor;
-import com.xforceplus.ultraman.oqsengine.devops.executor.rebuild.RebuildIndexExecutor;
-import com.xforceplus.ultraman.oqsengine.devops.utils.LockExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.cdcerror.DevOpsStorage;
+import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLDevOpsStorage;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.LockExecutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
