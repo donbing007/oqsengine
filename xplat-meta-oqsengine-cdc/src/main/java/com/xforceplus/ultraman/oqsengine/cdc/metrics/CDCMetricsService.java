@@ -130,23 +130,22 @@ public class CDCMetricsService {
         //  设置本次callback的时间
         cdcMetrics.getCdcAckMetrics().setLastUpdateTime(System.currentTimeMillis());
 
-        //  异步执行回调
+        try {
+            logger.debug("callback ack metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
+        } catch (Exception ex) {
+            logger.debug("print ack metrics error, message : {}", ex.getMessage());
+        }
+
+        //  执行回调
         try {
             cdcMetricsCallback.cdcAck(cdcMetrics.getCdcAckMetrics());
-
-            try {
-                logger.debug("callback ack metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
-            } catch (Exception ex) {
-                logger.debug("print ack metrics error, message : {}", ex.getMessage());
-            }
         } catch (Exception e) {
             try {
-                logger.error("callback error, metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
+                logger.error("callback error, metrics : {}, message : {}",
+                                JSON.toJSON(cdcMetrics.getCdcAckMetrics()), e.getMessage());
             } catch (Exception ee) {
                 //  ignore
             }
         }
     }
-
-
 }
