@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
@@ -8,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.annotation.Timed;
 import org.slf4j.Logger;
@@ -15,7 +17,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -91,17 +95,26 @@ public class SphinxConsumerService implements ConsumerService {
             syncCount += sphinxSyncExecutor.sync(rawEntries, cdcMetrics);
         }
 
+        logCommitId(cdcMetrics);
         return syncCount;
+    }
+
+    private void logCommitId(CDCMetrics cdcMetrics) {
+        if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
+            logger.debug("un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > UNEXPECTED_COMMIT_ID_COUNT) {
+                logger.warn("one transaction has more than one commitId, ids : {}",
+                        JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            }
+        }
     }
 
     private void cleanUnCommit(CDCMetrics cdcMetrics) {
         //  每次Transaction结束,将unCommitId同步到commitList中
-        if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitId() > INIT_ID) {
-            cdcMetrics.getCdcAckMetrics().getCommitList().add(cdcMetrics.getCdcUnCommitMetrics().getUnCommitId());
-            cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(INIT_ID);
-        }
+        logCommitId(cdcMetrics);
 
         //  每个Transaction的结束需要将unCommitEntityValues清空
+        cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(new LinkedHashSet<>());
         cdcMetrics.getCdcUnCommitMetrics().setUnCommitEntityValues(new ConcurrentHashMap<>());
     }
 
@@ -115,6 +128,7 @@ public class SphinxConsumerService implements ConsumerService {
         } catch (Exception e) {
             throw new SQLException(String.format("parse entry value failed, [%s], [%s]", entry.getStoreValue(), e));
         }
+
         CanalEntry.EventType eventType = rowChange.getEventType();
         if (supportEventType(eventType)) {
             //  遍历RowData
@@ -128,14 +142,23 @@ public class SphinxConsumerService implements ConsumerService {
                 if (null == columns || columns.size() == EMPTY_COLUMN_SIZE) {
                     throw new SQLException("columns must not be null");
                 }
-                //  获取ID
-                Long id = getLongFromColumn(columns, ID);
-                //  获取CommitID
-                Long commitId = getLongFromColumn(columns, COMMITID);
+
+                Long id = UN_KNOW_ID;
+                Long commitId = UN_KNOW_ID;
+                try {
+                    //  获取ID
+                    id = getLongFromColumn(columns, ID);
+                    //  获取CommitID
+                    commitId = getLongFromColumn(columns, COMMITID);
+                } catch (Exception e) {
+                    sphinxSyncExecutor.errorHandle(id, commitId, String.format("parse id, commit from columns failed, message : %s", e.getMessage()));
+                    continue;
+                }
+
                 //  是否MAX_VALUE
                 if (commitId != CommitHelper.getUncommitId()) {
                     //  更新
-                    cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(commitId);
+                    cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
                     rawEntries.add(new RawEntry(id, commitId,
                             entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
                 } else {
@@ -147,6 +170,7 @@ public class SphinxConsumerService implements ConsumerService {
 
         return rawEntries;
     }
+
 
     /*
         当存在子类时,将父类信息缓存在蓄水池中，等待子类进行合并

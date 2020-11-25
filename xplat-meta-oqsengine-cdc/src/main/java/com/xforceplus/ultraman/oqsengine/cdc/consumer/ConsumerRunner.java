@@ -177,9 +177,9 @@ public class ConsumerRunner extends Thread {
                 if (!synced) {
                     //  当未执行到最终必须成功时,需进行rollback
                     cdcConnector.rollback();
-                    error = String.format("consume message error");
+                    error = "consume message error";
                 } else {
-                    error = String.format("sync finish status error");
+                    error = "sync finish status error";
                 }
                 logger.error("sync error, message : {}, will reconnect...", error);
                 throw new SQLException(error);

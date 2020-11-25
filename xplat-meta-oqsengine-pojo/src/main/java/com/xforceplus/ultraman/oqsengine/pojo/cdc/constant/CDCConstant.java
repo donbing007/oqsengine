@@ -15,7 +15,10 @@ public class CDCConstant {
     public static final int EMPTY_BATCH_SIZE = 0;
     public static final int EMPTY_COLUMN_SIZE = 0;
     public static final int INIT_ID = -1;
+    public static final int UNEXPECTED_COMMIT_ID_COUNT = 1;
     public static final int ZERO = 0;
+
+    public static final long UN_KNOW_ID = -1;
 
     public static final int SINGLE_CONSUMER_MAX_ROW = 10;
 

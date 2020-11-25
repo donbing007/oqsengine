@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics;
 
+import com.alibaba.fastjson.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
@@ -25,7 +26,8 @@ public class CDCMetricsRecorder {
         cdcMetrics = new CDCMetrics();
 
         if (null != cdcUnCommitMetrics) {
-            cdcMetrics.getCdcUnCommitMetrics().setUnCommitId(cdcUnCommitMetrics.getUnCommitId());
+            cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(cdcUnCommitMetrics.getUnCommitIds());
+            logger.debug("start new batch, sync un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
             cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues().putAll(cdcUnCommitMetrics.getUnCommitEntityValues());
         }
         cdcMetrics.setBatchId(batchId);
