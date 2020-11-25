@@ -249,7 +249,7 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
 
             Collection<EntityRef> refs = null;
             try {
-                refs = storage.select(0, c.conditions, entityClass, c.sort);
+                refs = storage.select(0, c.conditions, c.entityClass, c.sort);
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
@@ -583,7 +583,6 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
                 },
                 Sort.buildDescSort(dateTimeField)
             )
-
         );
     }
 
@@ -646,8 +645,8 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
         shardingRuleConfig.getTableRuleConfigs().add(tableRuleConfiguration);
 
         Properties prop = new Properties();
-        prop.put("sql.show", "true");
-        prop.put("sql.simple", "false");
+//        prop.put("sql.show", "true");
+//        prop.put("sql.simple", "false");
         dataSource = ShardingDataSourceFactory.createDataSource(dsMap, shardingRuleConfig, prop);
         return dataSource;
     }

@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 /**
  * 抽像的单条件查询构造器.
+ *
  * @param <T> 构造结果.
  * @author dongbin
  * @version 0.1 2020/11/9 15:40

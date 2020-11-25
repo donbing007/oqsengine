@@ -48,10 +48,6 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<Collection<Lon
 
         checkTimeout(st);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
-
         ResultSet rs = null;
         List<StorageEntity> entities = new ArrayList<>(ids.size());
         StorageEntity entity;

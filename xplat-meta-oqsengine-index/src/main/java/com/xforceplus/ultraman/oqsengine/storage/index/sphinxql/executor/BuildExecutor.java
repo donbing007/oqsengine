@@ -72,10 +72,6 @@ public class BuildExecutor implements Executor<StorageEntity, Integer> {
         // time
         st.setLong(10, storageEntity.getTime());
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
-
         try {
 
             return st.executeUpdate();

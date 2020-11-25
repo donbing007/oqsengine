@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
@@ -23,6 +24,9 @@ import java.util.Collection;
  * @since <pre>Nov 5, 2020</pre>
  */
 public class SQLJsonConditionBuilderTest {
+
+    private static IEntityField longField = new EntityField(1, "long", FieldType.LONG);
+    private static IEntityField stringField = new EntityField(2, "string", FieldType.STRING);
 
     @Before
     public void before() throws Exception {
@@ -57,59 +61,59 @@ public class SQLJsonConditionBuilderTest {
         return Arrays.asList(
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.LONG),
+                    longField,
                     ConditionOperator.EQUALS,
-                    new LongValue(new EntityField(1, "test", FieldType.LONG), 200L)
+                    new LongValue(longField, 200L)
                 ),
                 "attribute->>'$.F1L' = 200"
             )
             ,
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.LONG),
+                    longField,
                     ConditionOperator.MULTIPLE_EQUALS,
-                    new LongValue(new EntityField(1, "test", FieldType.LONG), 200L),
-                    new LongValue(new EntityField(1, "test", FieldType.LONG), 300L)
+                    new LongValue(longField, 200L),
+                    new LongValue(longField, 300L)
                 ),
                 "attribute->>'$.F1L' IN (200,300)"
             )
             ,
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.STRING),
+                    stringField,
                     ConditionOperator.MULTIPLE_EQUALS,
-                    new StringValue(new EntityField(1, "test", FieldType.LONG), "200L"),
-                    new StringValue(new EntityField(1, "test", FieldType.LONG), "300L")
+                    new StringValue(stringField, "200L"),
+                    new StringValue(stringField, "300L")
                 ),
-                "attribute->>'$.F1S' IN (\"200L\",\"300L\")"
+                "attribute->>'$.F2S' IN (\"200L\",\"300L\")"
             )
             ,
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.LONG),
+                    longField,
                     ConditionOperator.LESS_THAN_EQUALS,
-                    new LongValue(new EntityField(1, "test", FieldType.LONG), 200L)
+                    new LongValue(longField, 200L)
                 ),
                 "attribute->>'$.F1L' <= 200"
             )
             ,
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.LONG),
+                    longField,
                     ConditionOperator.GREATER_THAN_EQUALS,
-                    new LongValue(new EntityField(1, "test", FieldType.LONG), 200L)
+                    new LongValue(longField, 200L)
                 ),
                 "attribute->>'$.F1L' >= 200"
             )
             ,
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.STRING),
+                    stringField,
                     ConditionOperator.LIKE,
-                    new StringValue(new EntityField(1, "test", FieldType.LONG), "200L")
+                    new StringValue(stringField, "200L")
                 ),
-                "attribute->>'$.F1S' LIKE \"%200L%\""
+                "attribute->>'$.F2S' LIKE \"%200L%\""
             )
         );
     }
-} 
+}

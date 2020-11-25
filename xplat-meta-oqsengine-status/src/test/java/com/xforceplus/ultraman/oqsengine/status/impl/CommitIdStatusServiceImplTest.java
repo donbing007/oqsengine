@@ -11,7 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 
 /**
@@ -139,7 +142,13 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
 
         Assert.assertEquals(10L, impl.getMin().get().longValue());
         Assert.assertEquals(999L, impl.getMax().get().longValue());
+
+        // 因为同步指标是异步的,所以等待成功.
+        TimeUnit.MILLISECONDS.sleep(10);
+
+        Field unSyncCommitIdSizeField = impl.getClass().getDeclaredField("unSyncCommitIdSize");
+        unSyncCommitIdSizeField.setAccessible(true);
+        AtomicLong unSyncCommitIdSize = (AtomicLong) unSyncCommitIdSizeField.get(impl);
+        Assert.assertEquals(989L, unSyncCommitIdSize.longValue());
     }
-
-
 } 

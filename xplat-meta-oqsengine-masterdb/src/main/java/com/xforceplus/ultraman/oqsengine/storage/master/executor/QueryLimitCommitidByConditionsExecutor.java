@@ -95,10 +95,6 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
 
         checkTimeout(st);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
-
         ResultSet rs = st.executeQuery();
         Collection<EntityRef> refs = new ArrayList<>();
         while (rs.next()) {

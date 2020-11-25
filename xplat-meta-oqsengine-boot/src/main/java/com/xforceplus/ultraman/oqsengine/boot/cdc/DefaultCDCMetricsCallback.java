@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,17 +32,15 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
 
     @Override
     public void cdcAck(CDCAckMetrics ackMetrics) {
-        List<Long> idList = ackMetrics.getCommitList();
-        long[] ids = idList.stream().mapToLong(id -> id).toArray();
-        commitIdStatusService.obsolete(ids);
+        try {
+            List<Long> idList = ackMetrics.getCommitList();
+            long[] ids = idList.stream().mapToLong(id -> id).toArray();
+            commitIdStatusService.obsolete(ids);
 
-        if (logger.isDebugEnabled()) {
-            Arrays.stream(ids).parallel().forEach(id -> {
-                logger.debug("The {} commit number has been synchronized successfully.", id);
-            });
+            cdcStatusService.saveAck(ackMetrics);
+        } catch (Throwable ex) {
+            logger.error(ex.getMessage(), ex);
         }
-
-        cdcStatusService.saveAck(ackMetrics);
     }
 
     @Override

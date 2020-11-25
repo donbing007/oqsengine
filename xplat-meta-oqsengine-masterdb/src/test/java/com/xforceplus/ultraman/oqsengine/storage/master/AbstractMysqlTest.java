@@ -32,10 +32,10 @@ public abstract class AbstractMysqlTest {
 
 
         String mysql0Jdbc = String.format(
-            "jdbc:mysql://%s:%d/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
+            "jdbc:p6spy:mysql://%s:%d/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
             mysql0.getContainerIpAddress(), mysql0.getFirstMappedPort());
         String mysql1Jdbc = String.format(
-            "jdbc:mysql://%s:%d/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
+            "jdbc:p6spy:mysql://%s:%d/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
             mysql1.getContainerIpAddress(), mysql1.getFirstMappedPort());
 
         System.setProperty("MYSQL0_JDBC_URL", mysql0Jdbc);

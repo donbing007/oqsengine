@@ -61,10 +61,6 @@ public class DeleteExecutor extends AbstractMasterExecutor<StorageEntity, Intege
 
         checkTimeout(st);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
-
         try {
             return st.executeUpdate();
         } finally {
