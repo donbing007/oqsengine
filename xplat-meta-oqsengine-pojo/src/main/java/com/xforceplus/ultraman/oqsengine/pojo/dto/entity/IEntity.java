@@ -64,6 +64,13 @@ public interface IEntity extends Cloneable {
     public void resetVersion(int version);
 
     /**
+     * 数据维护标识.
+     *
+     * @return 维护标识.
+     */
+    public long maintainId();
+
+    /**
      * 最后处理时间戳.
      *
      * @return 时间戳.
@@ -78,11 +85,20 @@ public interface IEntity extends Cloneable {
     public void markTime(long time);
 
     /**
+     * 记录当前时间.
+     */
+    public void markTime();
+
+    /**
      * 克隆.
      * @return
      * @throws CloneNotSupportedException
      */
     public Object clone() throws CloneNotSupportedException;
 
-
+    /**
+     * 维护ID.
+     * @param maintainId 维护ID
+     */
+    public void restMaintainId(long maintainId);
 }

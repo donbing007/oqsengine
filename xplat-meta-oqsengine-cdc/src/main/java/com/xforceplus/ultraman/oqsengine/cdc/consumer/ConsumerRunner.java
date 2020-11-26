@@ -251,7 +251,7 @@ public class ConsumerRunner extends Thread {
     private void backAfterAck(long originBatchId, CDCMetrics cdcMetrics) throws SQLException {
         //  1.确认ack batchId
         cdcConnector.ack(originBatchId);
-        //  2.设置当前batchId为-1
+        //  2.设置当前batchId为-LONG.MAX_VALUE
         cdcMetrics.setBatchId(IS_BACK_UP_ID);
         //  3.重置redis unCommit数据
         cdcMetricsService.backup(cdcMetrics);

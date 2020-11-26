@@ -41,12 +41,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.time.OffsetDateTime;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * SphinxQLIndexStorage Tester.
@@ -82,7 +81,16 @@ public class SphinxQLIndexStorageTest {
     private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "test",
         Arrays.asList(longField, stringField, boolField, dateTimeField, decimalField, enumField, stringsField));
 
+    private static IEntityClass batchDeleteClass = new EntityClass(1024 + 1, "batchDeleteClass",
+            Arrays.asList(longField, stringField));
+
     private static IEntity[] entityes;
+
+    private static IEntity[] batchDeleteEntities;
+    private static long testStandTime;
+    private static long rangeTime;
+    private static long taskId;
+    private static List<Long> expectedBatchDeleteIds;
 
     static {
         entityes = new IEntity[7];
@@ -144,6 +152,81 @@ public class SphinxQLIndexStorageTest {
         values.addValues(Arrays.asList(new StringValue(stringField141, "B"), new StringValue(stringField142, "1")));
         entityes[6] = new Entity(id, entityClass, values);
 
+        initReIndexData();
+    }
+
+    private static void initReIndexData() {
+        //	reIndex test delete
+        expectedBatchDeleteIds = new ArrayList<>();
+        batchDeleteEntities = new IEntity[6];
+
+        taskId = Long.MAX_VALUE;
+
+        testStandTime = LocalDateTime.now().toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
+
+        rangeTime = 10;
+
+        //	1. 标准时间-1ms ，不被删
+        long time = testStandTime - 5;
+        long id = 1;
+        IEntityValue batchDeletes = new EntityValue(id);
+        batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1025")));
+
+        batchDeleteEntities[0] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        batchDeleteEntities[0].markTime(time);
+
+
+        //	2. 满足 标准时～rangeTime, taskId相等, 不被删
+        time = testStandTime + rangeTime - 1;
+        id = 2;
+        batchDeletes = new EntityValue(id);
+        batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1026")));
+
+        IEntity entity1 = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        entity1.restMaintainId(taskId);
+        batchDeleteEntities[1] = entity1;
+        batchDeleteEntities[1].markTime(time);
+
+
+        //	3. 满足 标准时～rangeTime, 被删
+        time = testStandTime + rangeTime - 1;
+        id = 3;
+        batchDeletes = new EntityValue(id);
+        batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1027")));
+
+        batchDeleteEntities[2] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        batchDeleteEntities[2].markTime(time);
+        expectedBatchDeleteIds.add(id);
+
+        // 4.满足taskId不相等, 时间在删除区间内  被删除
+        id = 4;
+        time = testStandTime + rangeTime - 1;
+        batchDeletes = new EntityValue(id);
+        batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1028")));
+
+        batchDeleteEntities[3] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        batchDeleteEntities[3].markTime(time);
+        expectedBatchDeleteIds.add(id);
+
+        //	5.满足taskId不相等, 时间卡在边界线下限 被删除
+        id = 5;
+        time = testStandTime;
+        batchDeletes = new EntityValue(id);
+        batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1029")));
+
+        batchDeleteEntities[4] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        batchDeleteEntities[4].markTime(time);
+        expectedBatchDeleteIds.add(id);
+
+        //	6.满足taskId不相等, 时间卡在边界线上限 被删除
+        id = 6;
+        time = testStandTime + rangeTime;
+        batchDeletes = new EntityValue(id);
+        batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1030")));
+
+        batchDeleteEntities[5] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        batchDeleteEntities[5].markTime(time);
+        expectedBatchDeleteIds.add(id);
     }
 
     @Before
@@ -271,6 +354,32 @@ public class SphinxQLIndexStorageTest {
             entityClass, null, Page.newSinglePage(100), null, 0L);
 
         Assert.assertEquals(0, refs.size());
+    }
+
+    @Test
+    public void testBatchDelete() throws Exception {
+
+        //	test delete last one due to taskId = 0 and time in range
+        boolean deleteResult =
+                storage.clean(batchDeleteClass.id(), taskId, testStandTime, testStandTime + 101);
+
+        Assert.assertTrue(deleteResult);
+
+        // 确认没有事务.
+        Assert.assertFalse(transactionManager.getCurrent().isPresent());
+
+        Collection<EntityRef> entityRefs =
+                storage.select(Conditions.buildEmtpyConditions(), batchDeleteClass, null, new Page(1, 1000), null, 1000L);
+
+        Assert.assertNotNull(entityRefs);
+        Assert.assertEquals(batchDeleteEntities.length - expectedBatchDeleteIds.size(), entityRefs.size());
+        List<Long> ids = entityRefs.stream().map(EntityRef::getId).collect(Collectors.toList());
+        expectedBatchDeleteIds.forEach(
+                expectedDelete -> {
+                    //	删除的ID不在列表中
+                    Assert.assertFalse(ids.contains(expectedDelete));
+                }
+        );
     }
 
     @Test
@@ -653,6 +762,19 @@ public class SphinxQLIndexStorageTest {
             Arrays.stream(entityes).forEach(e -> {
                 try {
                     storage.buildOrReplace(create(e.id(), e.entityClass().id(), commitId, tx), e.entityValue(), false);
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex.getMessage(), ex);
+                }
+            });
+            Arrays.stream(batchDeleteEntities).forEach(e -> {
+                try {
+                    StorageEntity storageEntity =
+                            create(e.id(), e.entityClass().id(), commitId, tx);
+                    storageEntity.setTime(e.time());
+                    if (e.maintainId() == taskId) {
+                        storageEntity.setMaintainId(taskId);
+                    }
+                    storage.buildOrReplace(storageEntity, e.entityValue(), false);
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex.getMessage(), ex);
                 }

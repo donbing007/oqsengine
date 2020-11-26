@@ -45,7 +45,7 @@ public class FieldDefine {
     public static final String COMMIT_ID = "commitid";
 
     /**
-     * transaction commit id
+     * 属性TIME.
      */
     public static final String TIME = "time";
 
@@ -58,6 +58,11 @@ public class FieldDefine {
      * 属性全文储存.
      */
     public static final String FULL_FIELDS = "fullfields";
+
+    /**
+     * 属性维护ID.
+     */
+    public static final String MAINTAIN_ID = "maintainid";
 
     /**
      * 统计行数字段.

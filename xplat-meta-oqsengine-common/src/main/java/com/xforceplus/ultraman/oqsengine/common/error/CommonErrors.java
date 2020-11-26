@@ -10,5 +10,9 @@ package com.xforceplus.ultraman.oqsengine.common.error;
  */
 public enum  CommonErrors {
     INVALID_ENTITY_ID,
-    PARSE_COLUMNS_ERROR
+    PARSE_COLUMNS_ERROR,
+    NO_EXECUTING_RESULT,
+    BUILD_LOCK_FAILED,
+    GET_LOCK_FAILED,
+    RESULT_NOT_EQUALS_EXPECTED
 }

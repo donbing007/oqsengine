@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.common.selector;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * 选择器.
  *
@@ -17,5 +20,9 @@ public interface Selector<V> {
      * @return 选择的值.
      */
     public V select(String key);
+
+    default List<V> selects() {
+        return Collections.emptyList();
+    }
 
 }

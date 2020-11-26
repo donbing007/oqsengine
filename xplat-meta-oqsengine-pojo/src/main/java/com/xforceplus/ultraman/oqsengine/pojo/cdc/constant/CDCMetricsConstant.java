@@ -9,9 +9,9 @@ package com.xforceplus.ultraman.oqsengine.pojo.cdc.constant;
  * @since : 1.8
  */
 public class CDCMetricsConstant {
-    public static final String POOL_NAME = "cdcCallBackPool";
+    public static final String POOL_NAME = "cdcMetricsPool";
 
-    public static final int THREAD_POOL_SIZE = 2;
+    public static final int THREAD_POOL_SIZE = 1;
 
     public static final int MAX_QUEUE_SIZE = 1024;
 

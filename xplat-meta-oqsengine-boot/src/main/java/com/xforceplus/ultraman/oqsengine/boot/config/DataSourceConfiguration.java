@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
+import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.CommonRangeShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
@@ -74,9 +75,9 @@ public class DataSourceConfiguration {
             TableRuleConfiguration tableRuleConfiguration = new TableRuleConfiguration(
                 baseName, String.format("ds${0..%d}.%s${0..%d}", dsSize - 1, baseName, shardSize - 1));
             tableRuleConfiguration.setDatabaseShardingStrategyConfig(
-                new StandardShardingStrategyConfiguration("id", new HashPreciseShardingAlgorithm()));
+                new StandardShardingStrategyConfiguration("id", new HashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
             tableRuleConfiguration.setTableShardingStrategyConfig(
-                new StandardShardingStrategyConfiguration("id", new SuffixNumberHashPreciseShardingAlgorithm()));
+                new StandardShardingStrategyConfiguration("id", new SuffixNumberHashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
 
 
             ShardingRuleConfiguration shardingRuleConfig = new ShardingRuleConfiguration();
