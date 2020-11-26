@@ -25,11 +25,6 @@ import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.*;
 public class RebuildIndexTest extends AbstractContainer {
     final Logger logger = LoggerFactory.getLogger(RebuildIndexTest.class);
 
-    private int pageNo = 1;
-    private int pageSize = 10;
-
-    private int doneTask = 0;
-
     private int totalSize = 1000;
     private int testResumeCount = 3000;
     private int defaultSleepInterval = 3_000;
@@ -37,23 +32,22 @@ public class RebuildIndexTest extends AbstractContainer {
     long txId = 0;
     long commitId = 0;
 
-    @Before
-    public void before() throws Exception {
-
+    @BeforeClass
+    public static void beforeClass() throws Exception {
         start();
+    }
 
-        // 确认没有事务.
-        Assert.assertFalse(transactionManager.getCurrent().isPresent());
+    @AfterClass
+    public static void afterClass() throws Exception {
+        close();
     }
 
     @After
     public void after() throws SQLException {
-
+        startPos = 1;
+        clear();
         // 确认没有事务.
         Assert.assertFalse(transactionManager.getCurrent().isPresent());
-
-        clear();
-        close();
     }
 
     private int sleepForWaitStatusOk(int wakeUp, String errorFunction) throws InterruptedException {

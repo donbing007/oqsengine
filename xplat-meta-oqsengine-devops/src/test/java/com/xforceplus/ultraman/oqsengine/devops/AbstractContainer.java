@@ -45,7 +45,6 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -67,16 +66,16 @@ public abstract class AbstractContainer {
 
     protected static DataSourcePackage dataSourcePackage;
 
-    protected LongIdGenerator idGenerator;
-    protected DataSource dataSource;
-    protected SQLCdcErrorStorage cdcErrorStorage;
-    protected SQLMasterStorage masterStorage;
-    protected SphinxQLIndexStorage indexStorage;
-    protected StorageStrategyFactory masterStorageStrategyFactory;
-    protected CommitIdStatusService commitIdStatusService;
-    protected TransactionManager transactionManager;
-    protected TransactionExecutor masterTransactionExecutor;
-    protected DevOpsRebuildIndexExecutor taskExecutor;
+    protected static LongIdGenerator idGenerator;
+    protected static DataSource dataSource;
+    protected static SQLCdcErrorStorage cdcErrorStorage;
+    protected static SQLMasterStorage masterStorage;
+    protected static SphinxQLIndexStorage indexStorage;
+    protected static StorageStrategyFactory masterStorageStrategyFactory;
+    protected static CommitIdStatusService commitIdStatusService;
+    protected static TransactionManager transactionManager;
+    protected static TransactionExecutor masterTransactionExecutor;
+    protected static DevOpsRebuildIndexExecutor taskExecutor;
     protected static String tableName = "oqsbigentity";
     protected static String cdcErrorsTableName = "cdcerrors";
     protected static String rebuildTableName = "devopstasks";
@@ -157,7 +156,7 @@ public abstract class AbstractContainer {
         System.out.println(System.getProperty("MANTICORE_WRITE1_JDBC_URL"));
     }
 
-    protected void start() throws Exception {
+    protected static void start() throws Exception {
         dataSourcePackage = DataSourceFactory.build();
 
         if (transactionManager == null) {
@@ -175,16 +174,15 @@ public abstract class AbstractContainer {
         initDevOps();
     }
 
-    protected void close() throws SQLException {
-        clear();
+    protected static void close() {
         dataSourcePackage.close();
     }
 
-    protected DataSource buildDataSourceSelectorMaster() {
+    protected static DataSource buildDataSourceSelectorMaster() {
         return dataSourcePackage.getMaster().get(0);
     }
 
-    private void initMaster() throws Exception {
+    private static void initMaster() throws Exception {
 
         dataSource = buildDataSourceSelectorMaster();
 
@@ -213,7 +211,7 @@ public abstract class AbstractContainer {
         masterStorage.init();
     }
 
-    private void initIndex() throws SQLException, InterruptedException {
+    private static void initIndex() throws SQLException, InterruptedException {
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector();
         DataSource searchDataSource = buildSearchDataSource();
 
@@ -242,7 +240,7 @@ public abstract class AbstractContainer {
         indexStorage.init();
     }
 
-    private void initDevOps() throws Exception {
+    private static void initDevOps() throws Exception {
 
         DataSource devOpsDataSource = buildDevOpsDataSource();
 
@@ -254,7 +252,7 @@ public abstract class AbstractContainer {
         initTaskStorage(devOpsDataSource);
     }
 
-    private void initTaskStorage(DataSource devOpsDataSource) throws IllegalAccessException, InstantiationException {
+    private static void initTaskStorage(DataSource devOpsDataSource) throws IllegalAccessException, InstantiationException {
 
         SQLTaskStorage sqlTaskStorage = new SQLTaskStorage();
         ReflectionTestUtils.setField(sqlTaskStorage, "devOpsDataSource", devOpsDataSource);
@@ -275,16 +273,16 @@ public abstract class AbstractContainer {
         taskExecutor.init();
     }
 
-    private DataSource buildDevOpsDataSource() {
+    private static DataSource buildDevOpsDataSource() {
         return dataSourcePackage.getDevOps();
     }
 
-    private Selector<DataSource> buildWriteDataSourceSelector() {
+    private static Selector<DataSource> buildWriteDataSourceSelector() {
         return new HashSelector<>(dataSourcePackage.getIndexWriter());
     }
 
 
-    private DataSource buildSearchDataSource() {
+    private static DataSource buildSearchDataSource() {
         return dataSourcePackage.getIndexSearch().get(0);
     }
 
