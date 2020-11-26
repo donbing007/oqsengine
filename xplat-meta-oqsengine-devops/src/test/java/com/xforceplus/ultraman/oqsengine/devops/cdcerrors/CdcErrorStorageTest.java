@@ -17,9 +17,7 @@ import java.util.Collection;
  * date : 2020/11/22
  * @since : 1.8
  */
-public class SQLDevOpsStorageTest extends AbstractContainer {
-
-    private SQLCdcErrorStorage sqlDevOpsStorage;
+public class CdcErrorStorageTest extends AbstractContainer {
 
     private static long unExpectedSeqNo = Long.MAX_VALUE;
     private static long unExpectedId = Long.MAX_VALUE;
@@ -31,25 +29,30 @@ public class SQLDevOpsStorageTest extends AbstractContainer {
     private static CdcErrorTask expectedCdcErrorTask =
                 CdcErrorTask.buildErrorTask(expectedSeqNo, expectedId, expectedCommitId, expectedMessage);
 
-    @Before
-    public void before() throws Exception {
+    @BeforeClass
+    public static void beforeClass() throws Exception {
         start();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        close();
     }
 
     @After
     public void after() throws SQLException {
-        close();
+        clear();
     }
 
     @Test
     public void cdcCRU() throws Exception {
-        int count = sqlDevOpsStorage.buildCdcError(expectedCdcErrorTask);
+        int count = cdcErrorStorage.buildCdcError(expectedCdcErrorTask);
         Assert.assertEquals(1, count);
 
-        count = sqlDevOpsStorage.updateCdcError(expectedCdcErrorTask.getSeqNo(), FixedStatus.FIXED);
+        count = cdcErrorStorage.updateCdcError(expectedCdcErrorTask.getSeqNo(), FixedStatus.FIXED);
         Assert.assertEquals(1, count);
 
-        count = sqlDevOpsStorage.updateCdcError(unExpectedSeqNo, FixedStatus.FIXED);
+        count = cdcErrorStorage.updateCdcError(unExpectedSeqNo, FixedStatus.FIXED);
         Assert.assertEquals(0, count);
 
         //  使用expectedSeqNo查询
@@ -77,18 +80,16 @@ public class SQLDevOpsStorageTest extends AbstractContainer {
         cdcErrorQueryCondition = new CdcErrorQueryCondition();
         cdcErrorQueryCondition.setCommitId(expectedCommitId);
         queryWithOneExpected(cdcErrorQueryCondition);
-
-
     }
 
     private void queryWithOneExpected(CdcErrorQueryCondition cdcErrorQueryCondition) throws SQLException {
-        Collection<CdcErrorTask> cdcErrorTaskList = sqlDevOpsStorage.queryCdcErrors(cdcErrorQueryCondition);
+        Collection<CdcErrorTask> cdcErrorTaskList = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
         Assert.assertEquals(1, cdcErrorTaskList.size());
         isExpectedCdcErrorTask(cdcErrorTaskList.stream().findFirst().get());
     }
 
     private void queryWithUnexpected(CdcErrorQueryCondition cdcErrorQueryCondition) throws SQLException {
-        Collection<CdcErrorTask> cdcErrorTaskList = sqlDevOpsStorage.queryCdcErrors(cdcErrorQueryCondition);
+        Collection<CdcErrorTask> cdcErrorTaskList = cdcErrorStorage.queryCdcErrors(cdcErrorQueryCondition);
         Assert.assertEquals(0, cdcErrorTaskList.size());
     }
 

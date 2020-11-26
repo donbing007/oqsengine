@@ -32,6 +32,7 @@ import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.strategy.StandardShardingStrategyConfiguration;
 import org.apache.shardingsphere.shardingjdbc.api.ShardingDataSourceFactory;
+import org.apache.shardingsphere.shardingjdbc.jdbc.core.datasource.ShardingDataSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -133,6 +134,8 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         stat.execute("truncate table oqsbigentity");
         stat.close();
         conn.close();
+
+        ((ShardingDataSource) dataSource).close();
     }
 
     @Test
