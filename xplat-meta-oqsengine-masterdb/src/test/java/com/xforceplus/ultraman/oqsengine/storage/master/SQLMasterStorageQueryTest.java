@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -32,6 +33,7 @@ import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.strategy.StandardShardingStrategyConfiguration;
 import org.apache.shardingsphere.shardingjdbc.api.ShardingDataSourceFactory;
+import org.apache.shardingsphere.shardingjdbc.jdbc.core.datasource.ShardingDataSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -91,7 +93,7 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
             new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1)),
             new DecimalValue(decimalField, BigDecimal.ZERO), new EnumValue(enumField, "1"),
             new StringsValue(stringsField, "value1", "value2")));
-        entityes[0] = new Entity(id, entityClass, values);
+        entityes[0] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 1;
         values = new EntityValue(id);
@@ -100,7 +102,7 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
             new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 9, 0, 1)),
             new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
             new StringsValue(stringsField, "value1", "value2", "value3")));
-        entityes[1] = new Entity(id, entityClass, values);
+        entityes[1] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 2;
         values = new EntityValue(id);
@@ -109,7 +111,7 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
             new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 11, 18, 1)),
             new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
             new StringsValue(stringsField, "value1", "value2", "value3")));
-        entityes[2] = new Entity(id, entityClass, values);
+        entityes[2] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 3;
         values = new EntityValue(id);
@@ -118,7 +120,7 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
             new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1)),
             new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
             new StringsValue(stringsField, "value1", "value2", "value3")));
-        entityes[3] = new Entity(id, entityClass, values);
+        entityes[3] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 4;
         values = new EntityValue(id);
@@ -127,7 +129,7 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
             new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
             new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
             new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN")));
-        entityes[4] = new Entity(id, entityClass, values);
+        entityes[4] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
     }
 
     @Before
@@ -201,6 +203,9 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
         stat.execute("truncate table oqsbigentity");
         stat.close();
         conn.close();
+
+        ((ShardingDataSource) dataSource).close();
+
     }
 
     /**
@@ -216,7 +221,7 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
             new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
             new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
             new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN")));
-        IEntity uncommitEntity = new Entity(100L, entityClass, uncommitEntityValue);
+        IEntity uncommitEntity = new Entity(100L, entityClass, uncommitEntityValue, OqsVersion.MAJOR);
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
         storage.build(uncommitEntity);

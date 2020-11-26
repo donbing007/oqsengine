@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
@@ -29,6 +30,7 @@ import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.strategy.StandardShardingStrategyConfiguration;
 import org.apache.shardingsphere.shardingjdbc.api.ShardingDataSourceFactory;
+import org.apache.shardingsphere.shardingjdbc.jdbc.core.datasource.ShardingDataSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -112,6 +114,8 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         stat.execute("truncate table oqsbigentity");
         stat.close();
         conn.close();
+
+        ((ShardingDataSource) dataSource).close();
     }
 
     /**
@@ -282,7 +286,8 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         IEntity entity = new Entity(
             baseId,
             new EntityClass(baseId, "test", fields),
-            buildRandomValue(baseId, fields)
+            buildRandomValue(baseId, fields),
+            OqsVersion.MAJOR
         );
         return entity;
     }
