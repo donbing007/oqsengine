@@ -20,6 +20,16 @@ public interface CommitIdStatusService {
     long save(long commitId);
 
     /**
+     * 保存一个新的提交号,在执行前会执行一个预定动作.
+     * 保证在提交号提交之前会执行这个动作,并且不会在此之前进行淘汰.
+     *
+     * @param commitId 提交号.
+     * @param act      动作.
+     * @return 保存的提交号.
+     */
+    long save(long commitId, Runnable act);
+
+    /**
      * 获取当前最小的提交号.
      *
      * @return 提交号.
@@ -46,15 +56,6 @@ public interface CommitIdStatusService {
      * @return 当前提交号数量快照.
      */
     long size();
-
-    /**
-     * 淘汰一个提交号.
-     * 如果目标提交号不存在,将返回-1.
-     *
-     * @param commitId 目标提交号.
-     * @return 被淘汰的提交号.
-     */
-    long obsolete(long commitId);
 
     /**
      * 淘汰多个提交号.

@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
+import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.status.AbstractRedisContainerTest;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -13,7 +14,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 
@@ -40,6 +41,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
 
         impl = new CommitIdStatusServiceImpl(key);
         ReflectionTestUtils.setField(impl, "redisClient", redisClient);
+        ReflectionTestUtils.setField(impl, "locker", new LocalResourceLocker());
         impl.init();
     }
 
@@ -99,7 +101,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
 
         long[] actualAll = impl.getAll();
 
-        Assert.assertArrayEquals(expectedAll, actualAll);
+        Assert.assertEquals(expectedAll.length, actualAll.length);
 
     }
 
@@ -150,5 +152,81 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
         unSyncCommitIdSizeField.setAccessible(true);
         AtomicLong unSyncCommitIdSize = (AtomicLong) unSyncCommitIdSizeField.get(impl);
         Assert.assertEquals(989L, unSyncCommitIdSize.longValue());
+    }
+
+    /**
+     * 测试并发保存和淘汰,保存被延时.
+     */
+    @Test
+    public void testObsoleteAndSaveConcurrent() throws Exception {
+        CompletableFuture.runAsync(() -> {
+            impl.save(100, () -> {
+                try {
+                    TimeUnit.SECONDS.sleep(1L);
+                } catch (InterruptedException e) {
+                }
+            });
+        });
+
+        impl.obsolete(100);
+
+        long[] ids = impl.getAll();
+        Assert.assertEquals(0, ids.length);
+
+        Field unSyncCommitIdSizeField = impl.getClass().getDeclaredField("unSyncCommitIdSize");
+        unSyncCommitIdSizeField.setAccessible(true);
+        AtomicLong unSyncCommitIdSize = (AtomicLong) unSyncCommitIdSizeField.get(impl);
+        Assert.assertEquals(0, unSyncCommitIdSize.longValue());
+    }
+
+    /**
+     * 测试并发的进行保存和淘汰,并持续一段时间.
+     */
+    @Test
+    public void testConcurrentProcess() throws Exception {
+        BlockingDeque<Long> queue = new LinkedBlockingDeque<>();
+
+        ExecutorService worker = Executors.newFixedThreadPool(50);
+
+        CountDownLatch obsoleteLatch = new CountDownLatch(1);
+        worker.submit(() -> {
+            while (true) {
+                long id = 0;
+                try {
+                    id = queue.take();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    break;
+                }
+                if (id == -1L) {
+                    break;
+                } else {
+                    impl.obsolete(id);
+                }
+            }
+            obsoleteLatch.countDown();
+        });
+
+        int size = 10000;
+        CountDownLatch latch = new CountDownLatch(size);
+        for (int i = 0; i < size; i++) {
+            long finalI = i;
+            worker.submit(() -> {
+                impl.save(finalI, () -> {
+                    queue.offer(finalI);
+                    latch.countDown();
+                });
+            });
+        }
+
+        latch.await();
+
+        queue.offer(-1L);
+        obsoleteLatch.await();
+        worker.shutdown();
+
+        TimeUnit.SECONDS.sleep(1);
+
+        Assert.assertEquals(0, impl.size());
     }
 } 

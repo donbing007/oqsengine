@@ -1,9 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
+import com.xforceplus.ultraman.oqsengine.common.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micrometer.core.instrument.Metrics;
 import org.slf4j.Logger;
@@ -12,10 +16,12 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -34,7 +40,16 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     @Resource
     private RedisClient redisClient;
 
-    private StatefulRedisConnection<String, String> connect;
+    @Resource
+    private ResourceLocker locker;
+
+    private StatefulRedisConnection<String, String> syncConnect;
+
+    private StatefulRedisConnection<String, String> asyncConnect;
+
+    private RedisCommands<String, String> syncCommands;
+
+    private RedisAsyncCommands<String, String> asyncCommands;
 
     private String key;
 
@@ -54,26 +69,61 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     @PostConstruct
     public void init() {
-        connect = redisClient.connect();
-        RedisCommands<String, String> commands = connect.sync();
-        commands.clientSetname("oqs.commitid");
+        if (locker == null) {
+            throw new IllegalStateException("Invalid ResourceLocker.");
+        }
+        if (redisClient == null) {
+            throw new IllegalStateException("Invalid redisClient.");
+        }
+
+        syncConnect = redisClient.connect();
+        syncCommands = syncConnect.sync();
+        syncCommands.clientSetname("oqs.sync.commitid");
+
+        asyncConnect = redisClient.connect();
+        asyncCommands = asyncConnect.async();
+        asyncCommands.setAutoFlushCommands(false);
+        asyncCommands.clientSetname("oqs.async.commitid");
 
         unSyncCommitIdSize = Metrics.gauge(
             MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(size()));
+
+
+        logger.info("Use {} as the key for the list of submission Numbers.", key);
 
     }
 
     @PreDestroy
     public void destroy() {
-        connect.close();
+        syncConnect.close();
+        asyncConnect.close();
     }
 
     @Override
     public long save(long commitId) {
-        RedisCommands<String, String> commands = connect.sync();
-        commands.zadd(key, (double) commitId, Long.toString(commitId));
+        return save(commitId, null);
+    }
 
-        CompletableFuture.runAsync(() -> unSyncCommitIdSize.set(size()));
+    @Override
+    public long save(long commitId, Runnable act) {
+
+        String target = Long.toString(commitId);
+
+        locker.lock(target);
+        try {
+            if (act != null) {
+                act.run();
+            }
+            syncCommands.zadd(key, (double) commitId, target);
+        } finally {
+            locker.unlock(target);
+        }
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Save the new commit number {}.", commitId);
+        }
+
+        updateMetrics();
 
         return commitId;
 
@@ -81,73 +131,91 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     @Override
     public Optional<Long> getMin() {
-        RedisCommands<String, String> commands = connect.sync();
-        List<String> ids = commands.zrange(key, 0, 0);
+        List<String> ids = syncCommands.zrange(key, 0, 0);
         if (ids.isEmpty()) {
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("The current minimum commit number not obtained.");
+            }
+
             return Optional.empty();
         } else {
-            return Optional.of(Long.parseLong(ids.get(0)));
+            // 首个元素
+            final int first = 0;
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("The minimum commit number to get to is {}.", ids.get(first));
+            }
+
+            return Optional.of(Long.parseLong(ids.get(first)));
         }
     }
 
     @Override
     public Optional<Long> getMax() {
-        RedisCommands<String, String> commands = connect.sync();
-        List<String> ids = commands.zrevrange(key, 0, 0);
+        List<String> ids = syncCommands.zrevrange(key, 0, 0);
         if (ids.isEmpty()) {
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("The current maximum commit number not obtained.");
+            }
+
             return Optional.empty();
         } else {
-            return Optional.of(Long.parseLong(ids.get(0)));
+
+            // 首个元素
+            final int first = 0;
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("The maximum commit number to get to is {}.", ids.get(first));
+            }
+
+            return Optional.of(Long.parseLong(ids.get(first)));
         }
     }
 
     @Override
     public long[] getAll() {
-        RedisCommands<String, String> commands = connect.sync();
-        List<String> ids = commands.zrange(key, 0, -1);
-        return ids.stream().mapToLong(id -> Long.parseLong(id)).toArray();
+        List<String> ids = syncCommands.zrange(key, 0, -1);
+        return ids.parallelStream().mapToLong(id -> Long.parseLong(id)).toArray();
     }
 
     @Override
     public long size() {
-        RedisCommands<String, String> commands = connect.sync();
-        return commands.zcard(key);
-    }
-
-    @Override
-    public long obsolete(long commitId) {
-        RedisCommands<String, String> commands = connect.sync();
-        long size = commands.zrem(key, Long.toString(commitId));
-
-        if (size == 1) {
-
-            CompletableFuture.runAsync(() -> unSyncCommitIdSize.set(size()));
-
-            return commitId;
-
-        } else {
-            return -1;
-        }
+        return syncCommands.zcard(key);
     }
 
     @Override
     public void obsolete(long... commitIds) {
-        RedisCommands<String, String> commands = connect.sync();
-        final long onlyOne = 1;
-        Arrays.stream(commitIds).parallel().mapToObj(id -> Long.toString(id)).forEach(id -> {
-            long size = commands.zrem(key, id);
 
-            if (size == onlyOne) {
+        List<RedisFuture<Long>> futures = new ArrayList<>(commitIds.length);
+        String target;
+        for (long id : commitIds) {
+            target = Long.toString(id);
+            locker.lock(target);
+            try {
 
-                if (logger.isDebugEnabled()) {
-                    logger.debug("The {} commit number eliminated successfully.", id);
+                futures.add(asyncCommands.zrem(key, target));
+
+            } finally {
+                if (!locker.unlock(target)) {
+                    logger.error("Unable to unlock, target submission number is {}.", target);
                 }
-
-            } else {
-                logger.warn("The {} commit number elimination failed.", id);
             }
-        });
+        }
 
+        asyncCommands.flushCommands();
+        LettuceFutures.awaitAll(1, TimeUnit.MINUTES, futures.toArray(new RedisFuture[futures.size()]));
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("The commit`s number {} has been eliminated.", Arrays.toString(commitIds));
+        }
+        updateMetrics();
+
+
+    }
+
+    private void updateMetrics() {
         CompletableFuture.runAsync(() -> unSyncCommitIdSize.set(size()));
     }
 }
