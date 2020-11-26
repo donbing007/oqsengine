@@ -15,11 +15,13 @@ import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 import static java.util.stream.Collectors.toList;
 
@@ -88,6 +90,16 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
     @Override
     public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
         return indexStorage.buildOrReplace(storageEntity, entityValue, replacement);
+    }
+
+    @Override
+    public boolean clean(long entityId, long maintainId, long start, long end) throws SQLException {
+        return indexStorage.clean(entityId, maintainId, start, end);
+    }
+
+    @Override
+    public DataQueryIterator newIterator(IEntityClass entityClass, long start, long end, ExecutorService threadPool, int queryTimeout, int pageSize) throws SQLException {
+        return masterStorage.newIterator(entityClass, start, end, threadPool, queryTimeout, pageSize);
     }
 
     @Override
