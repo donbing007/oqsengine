@@ -1,14 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.devops.cdcerrors;
 
 import com.xforceplus.ultraman.oqsengine.devops.AbstractContainer;
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLDevOpsStorage;
+import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.FixedStatus;
 import org.junit.*;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Collection;
 
@@ -22,7 +19,7 @@ import java.util.Collection;
  */
 public class SQLDevOpsStorageTest extends AbstractContainer {
 
-    private SQLDevOpsStorage sqlDevOpsStorage;
+    private SQLCdcErrorStorage sqlDevOpsStorage;
 
     private static long unExpectedSeqNo = Long.MAX_VALUE;
     private static long unExpectedId = Long.MAX_VALUE;
@@ -37,17 +34,10 @@ public class SQLDevOpsStorageTest extends AbstractContainer {
     @Before
     public void before() throws Exception {
         start();
-        DataSource devOpsDataSource = buildDevOpsDataSource();
-
-        sqlDevOpsStorage = new SQLDevOpsStorage();
-        ReflectionTestUtils.setField(sqlDevOpsStorage, "devOpsDataSource", devOpsDataSource);
-        sqlDevOpsStorage.setCdcErrorRecordTable(cdcErrorsTableName);
-        sqlDevOpsStorage.init();
     }
 
     @After
     public void after() throws SQLException {
-        clear();
         close();
     }
 
@@ -110,10 +100,5 @@ public class SQLDevOpsStorageTest extends AbstractContainer {
         Assert.assertEquals(FixedStatus.FIXED.ordinal(), cdcErrorTask.getStatus());
         Assert.assertTrue(System.currentTimeMillis() > cdcErrorTask.getExecuteTime() && cdcErrorTask.getExecuteTime() > 0);
         Assert.assertTrue(System.currentTimeMillis() > cdcErrorTask.getFixedTime() && cdcErrorTask.getFixedTime() > 0);
-    }
-
-
-    private DataSource buildDevOpsDataSource() {
-        return dataSourcePackage.getDevOps();
     }
 }

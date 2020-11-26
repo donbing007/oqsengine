@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.impl;
 
+import com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.CdcErrorExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +16,7 @@ import java.sql.SQLException;
  * date : 2020/11/21
  * @since : 1.8
  */
-public abstract class AbstractDevOpsExecutor<T, R> implements DevOpsExecutor<T, R> {
+public abstract class AbstractDevOpsExecutor<T, R> implements CdcErrorExecutor<T, R> {
 
     final Logger logger = LoggerFactory.getLogger(AbstractDevOpsExecutor.class);
     private String tableName;

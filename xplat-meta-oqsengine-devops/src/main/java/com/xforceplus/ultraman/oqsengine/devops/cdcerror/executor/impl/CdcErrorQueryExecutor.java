@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.impl;
 
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.condition.CdcErrorQueryCondition;
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.DevOpsExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.CdcErrorExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.ErrorFieldDefine;
 
@@ -28,7 +28,7 @@ public class CdcErrorQueryExecutor extends AbstractDevOpsExecutor<CdcErrorQueryC
         super(tableName, dataSource, timeoutMs);
     }
 
-    public static DevOpsExecutor<CdcErrorQueryCondition, Collection<CdcErrorTask>>
+    public static CdcErrorExecutor<CdcErrorQueryCondition, Collection<CdcErrorTask>>
                                         build(String tableName, DataSource dataSource, long timeout) {
         return new CdcErrorQueryExecutor(tableName, dataSource, timeout);
     }

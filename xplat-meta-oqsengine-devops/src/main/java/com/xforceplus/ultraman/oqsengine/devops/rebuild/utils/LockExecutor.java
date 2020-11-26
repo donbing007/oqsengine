@@ -11,6 +11,8 @@ import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.ERROR.DUPLICATE_KEY_ERROR;
+
 
 /**
  * desc :

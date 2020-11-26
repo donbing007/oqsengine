@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -22,6 +24,8 @@ import java.util.List;
  * @since : 1.8
  */
 public class BatchQueryExecutor implements Executor<Long, Collection<EntityRef>> {
+
+    final Logger logger = LoggerFactory.getLogger(BatchQueryExecutor.class);
 
     private long entityId;
     private long maintainId;
@@ -56,10 +60,13 @@ public class BatchQueryExecutor implements Executor<Long, Collection<EntityRef>>
             st.setLong(3, start);       // start
             st.setLong(4, end);         // end
 
+            if (logger.isDebugEnabled()) {
+                logger.debug(st.toString());
+            }
 
-            rs = st.executeQuery();
             List<EntityRef> entityRefList = new ArrayList<>();
-            if (rs.next()) {
+            rs = st.executeQuery();
+            while (rs.next()) {
                 entityRefList.add(new EntityRef(rs.getLong(FieldDefine.ID), rs.getLong(FieldDefine.PREF), rs.getLong(FieldDefine.CREF)));
             }
 

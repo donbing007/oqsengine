@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 import com.alibaba.google.common.collect.Maps;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.DevOpsStorage;
+import com.xforceplus.ultraman.oqsengine.devops.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
@@ -48,8 +48,8 @@ public class SphinxSyncExecutor {
     @Resource(name = "masterStorage")
     private MasterStorage masterStorage;
 
-    @Resource(name = "devOpsStorage")
-    private DevOpsStorage devOpsStorage;
+    @Resource(name = "cdcErrorStorage")
+    private CdcErrorStorage cdcErrorStorage;
 
     @Resource(name = "entityValueBuilder")
     private IEntityValueBuilder<String> entityValueBuilder;
@@ -266,7 +266,7 @@ public class SphinxSyncExecutor {
     }
 
     public void errorHandle(long id, long commitId, String message) throws SQLException {
-        devOpsStorage.buildCdcError(CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, message));
+        cdcErrorStorage.buildCdcError(CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, message));
     }
 
     private void sleepNoInterrupted(long interval) {

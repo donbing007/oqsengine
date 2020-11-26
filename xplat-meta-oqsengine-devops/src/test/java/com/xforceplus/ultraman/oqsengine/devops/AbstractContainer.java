@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.devops;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.lock.LockHelper;
@@ -10,9 +11,10 @@ import com.xforceplus.ultraman.oqsengine.common.lock.process.ProcessLockFactory;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLDevOpsStorage;
+import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.LockExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
@@ -65,8 +67,9 @@ public abstract class AbstractContainer {
 
     protected static DataSourcePackage dataSourcePackage;
 
+    protected LongIdGenerator idGenerator;
     protected DataSource dataSource;
-    protected SQLDevOpsStorage devOpsStorage;
+    protected SQLCdcErrorStorage cdcErrorStorage;
     protected SQLMasterStorage masterStorage;
     protected SphinxQLIndexStorage indexStorage;
     protected StorageStrategyFactory masterStorageStrategyFactory;
@@ -133,19 +136,19 @@ public abstract class AbstractContainer {
 
         System.setProperty(
                 "MYSQL_JDBC_URL",
-                String.format("jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
+                String.format("jdbc:p6spy:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
                         System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));
 
         System.setProperty("MANTICORE_WRITE0_JDBC_URL",
-                String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
+                String.format("jdbc:p6spy:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
                         System.getProperty("MANTICORE0_HOST"), System.getProperty("MANTICORE0_PORT")));
 
         System.setProperty("MANTICORE_WRITE1_JDBC_URL",
-                String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
+                String.format("jdbc:p6spy:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
                         System.getProperty("MANTICORE1_HOST"), System.getProperty("MANTICORE1_PORT")));
 
         System.setProperty("MANTICORE_SEARCH_JDBC_URL",
-                String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
+                String.format("jdbc:p6spy:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
                         System.getProperty("SEARCH_MANTICORE_HOST"), System.getProperty("SEARCH_MANTICORE_PORT")));
 
         System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
@@ -157,23 +160,6 @@ public abstract class AbstractContainer {
     protected void start() throws Exception {
         dataSourcePackage = DataSourceFactory.build();
 
-        initMaster();
-        initIndex();
-        initDevOps();
-    }
-
-    protected void close() {
-        dataSourcePackage.close();
-    }
-
-    protected DataSource buildDataSourceSelectorMaster() {
-        return dataSourcePackage.getMaster().get(0);
-    }
-
-    protected void initMaster() throws Exception {
-
-        dataSource = buildDataSourceSelectorMaster();
-
         if (transactionManager == null) {
             long commitId = 0;
             commitIdStatusService = mock(CommitIdStatusServiceImpl.class);
@@ -182,6 +168,25 @@ public abstract class AbstractContainer {
             transactionManager = new DefaultTransactionManager(
                     new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
         }
+
+        idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0));
+        initMaster();
+        initIndex();
+        initDevOps();
+    }
+
+    protected void close() throws SQLException {
+        clear();
+        dataSourcePackage.close();
+    }
+
+    protected DataSource buildDataSourceSelectorMaster() {
+        return dataSourcePackage.getMaster().get(0);
+    }
+
+    private void initMaster() throws Exception {
+
+        dataSource = buildDataSourceSelectorMaster();
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
                 transactionManager, new SqlConnectionTransactionResourceFactory(tableName, commitIdStatusService));
@@ -208,21 +213,9 @@ public abstract class AbstractContainer {
         masterStorage.init();
     }
 
-    protected void initIndex() throws SQLException, InterruptedException {
+    private void initIndex() throws SQLException, InterruptedException {
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector();
         DataSource searchDataSource = buildSearchDataSource();
-
-        // 等待加载完毕
-        TimeUnit.SECONDS.sleep(1L);
-
-        if (transactionManager == null) {
-            long commitId = 0;
-            commitIdStatusService = mock(CommitIdStatusServiceImpl.class);
-            when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
-
-            transactionManager = new DefaultTransactionManager(
-                    new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
-        }
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(transactionManager,
                 new SphinxQLTransactionResourceFactory());
@@ -249,14 +242,14 @@ public abstract class AbstractContainer {
         indexStorage.init();
     }
 
-    protected void initDevOps() throws Exception {
+    private void initDevOps() throws Exception {
 
         DataSource devOpsDataSource = buildDevOpsDataSource();
 
-        devOpsStorage = new SQLDevOpsStorage();
-        ReflectionTestUtils.setField(devOpsStorage, "devOpsDataSource", devOpsDataSource);
-        devOpsStorage.setCdcErrorRecordTable(cdcErrorsTableName);
-        devOpsStorage.init();
+        cdcErrorStorage = new SQLCdcErrorStorage();
+        ReflectionTestUtils.setField(cdcErrorStorage, "devOpsDataSource", devOpsDataSource);
+        cdcErrorStorage.setCdcErrorRecordTable(cdcErrorsTableName);
+        cdcErrorStorage.init();
 
         initTaskStorage(devOpsDataSource);
     }
@@ -265,7 +258,7 @@ public abstract class AbstractContainer {
 
         SQLTaskStorage sqlTaskStorage = new SQLTaskStorage();
         ReflectionTestUtils.setField(sqlTaskStorage, "devOpsDataSource", devOpsDataSource);
-        sqlTaskStorage.setTable();
+        sqlTaskStorage.setTable(rebuildTableName);
 
         LockExecutor lockExecutor = new LockExecutor();
         ReflectionTestUtils.setField(lockExecutor, "lockFactory",
@@ -277,9 +270,9 @@ public abstract class AbstractContainer {
         ReflectionTestUtils.setField(taskExecutor, "indexStorage", indexStorage);
         ReflectionTestUtils.setField(taskExecutor, "sqlTaskStorage", sqlTaskStorage);
         ReflectionTestUtils.setField(taskExecutor, "masterStorage", masterStorage);
-        ReflectionTestUtils.setField(taskExecutor, "idGenerator", new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0)));
+        ReflectionTestUtils.setField(taskExecutor, "idGenerator", idGenerator);
         ReflectionTestUtils.setField(taskExecutor, "lockExecutor", lockExecutor);
-
+        taskExecutor.init();
     }
 
     private DataSource buildDevOpsDataSource() {

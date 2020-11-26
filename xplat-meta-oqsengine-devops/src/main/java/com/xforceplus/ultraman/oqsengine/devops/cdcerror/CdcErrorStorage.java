@@ -9,13 +9,13 @@ import java.util.Collection;
 
 /**
  * desc :
- * name : DevOpsStorage
+ * name : CdcErrorStorage
  *
  * @author : xujia
  * date : 2020/11/21
  * @since : 1.8
  */
-public interface DevOpsStorage {
+public interface CdcErrorStorage {
 
     /*
         build cdc error

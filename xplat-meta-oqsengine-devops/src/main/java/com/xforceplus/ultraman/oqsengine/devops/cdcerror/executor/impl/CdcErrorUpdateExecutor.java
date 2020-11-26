@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.impl;
 
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.DevOpsExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.CdcErrorExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.ErrorFieldDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.FixedStatus;
 
@@ -25,7 +25,7 @@ public class CdcErrorUpdateExecutor extends AbstractDevOpsExecutor<Long, Integer
         this.fixedStatus = fixedStatus;
     }
 
-    public static DevOpsExecutor<Long, Integer>
+    public static CdcErrorExecutor<Long, Integer>
                                 build(String tableName, DataSource dataSource, long timeout, FixedStatus fixedStatus) {
         return new CdcErrorUpdateExecutor(tableName, dataSource, timeout, fixedStatus);
     }

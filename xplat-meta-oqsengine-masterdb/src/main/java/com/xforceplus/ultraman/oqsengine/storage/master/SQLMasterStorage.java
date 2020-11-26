@@ -429,6 +429,7 @@ public class SQLMasterStorage implements MasterStorage {
             new EntityFamily(se.getPref(), se.getCref()),
             se.getVersion()
         );
+        entity.markTime(se.getTime());
         return Optional.of(entity);
     }
 

@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
+import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -333,10 +334,12 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                 }
             }
         }
+
         /*
             考虑到重建索引后出现不一致的记录数量不会太多，目前采用逐个删除的策略
          */
         if (0 < entityRefs.size()) {
+            logger.info("do function clean, some surplus indexes have been deleted, ids : {}", JSON.toJSON(entityRefs));
             for (EntityRef entityRef : entityRefs) {
                 delete(new Entity(entityRef.getId(),
                         new AnyEntityClass(), new EntityValue(entityRef.getId())));
@@ -349,6 +352,8 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                             new AnyEntityClass(), new EntityValue(entityRef.getPref())));
                 }
             }
+        } else {
+            logger.info("do function clean, no more surplus indexes have been deleted");
         }
 
         return true;

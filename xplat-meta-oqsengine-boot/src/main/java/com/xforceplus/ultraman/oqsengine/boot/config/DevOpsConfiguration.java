@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.DevOpsStorage;
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLDevOpsStorage;
+import com.xforceplus.ultraman.oqsengine.devops.cdcerror.CdcErrorStorage;
+import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.LockExecutor;
@@ -39,11 +39,11 @@ public class DevOpsConfiguration {
     }
 
     @Bean
-    public DevOpsStorage devOpsStorage(
+    public CdcErrorStorage cdcErrorStorage(
             @Value("${storage.devOps.cdc.errors.name:cdcerrors}") String cdcErrorName,
             @Value("${storage.devOps.maxQueryTimeMs:3000}") long maxQueryTimeMs) {
 
-        SQLDevOpsStorage storage = new SQLDevOpsStorage();
+        SQLCdcErrorStorage storage = new SQLCdcErrorStorage();
         storage.setQueryTimeout(maxQueryTimeMs);
         storage.setCdcErrorRecordTable(cdcErrorName);
         return storage;

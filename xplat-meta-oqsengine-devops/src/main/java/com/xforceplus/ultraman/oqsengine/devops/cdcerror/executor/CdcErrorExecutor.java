@@ -10,7 +10,7 @@ import java.sql.SQLException;
  * date : 2020/11/21
  * @since : 1.8
  */
-public interface DevOpsExecutor<T, R> {
+public interface CdcErrorExecutor<T, R> {
 
     /**
      * 执行.

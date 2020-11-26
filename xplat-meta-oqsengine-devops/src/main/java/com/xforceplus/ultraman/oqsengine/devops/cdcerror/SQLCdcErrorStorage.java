@@ -15,13 +15,13 @@ import java.util.Collection;
 
 /**
  * desc :
- * name : SQLDevOpsStorage
+ * name : SQLCdcErrorStorage
  *
  * @author : xujia
  * date : 2020/11/21
  * @since : 1.8
  */
-public class SQLDevOpsStorage implements DevOpsStorage {
+public class SQLCdcErrorStorage implements CdcErrorStorage {
 
     @Resource(name = "devOpsDataSource")
     private DataSource devOpsDataSource;
