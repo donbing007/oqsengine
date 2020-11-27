@@ -231,12 +231,13 @@ public class ConsumerRunnerTest extends AbstractContainer {
                     initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true, false);
 
                     expectedCount += entities.length;
+                    tx.commit();
                 } catch (Exception ex) {
                     tx.rollback();
                     throw ex;
+                } finally {
+                    transactionManager.finish();
                 }
-                tx.commit();
-                transactionManager.finish();
                 i += gap;
             }
         } finally {
