@@ -93,16 +93,6 @@ data:
                 maxsize: {{ .Values.storage.devOps.task.cache.maxsize | default "500" }}
               page:
                 size: {{ .Values.storage.devOps.task.page.size | default "1000" }}
-          distribute:
-            lock:
-              type: {{ .Values.distribute.lock.type | default "process" }}
-              handler: {{ .Values.distribute.lock.handler | default "local" }}
-              on: {{ .Values.distribute.lock.on | default "true" }}
-              wait:
-                timeout:
-                  seconds: {{ .Values.distribute.lock.wait.timeout.seconds | default "30" }}
-                maxUnLockRetry: {{ .Values.distribute.lock.maxUnLockRetry | default "0" }}
-
 
         redis:
           uri: {{ .Values.redis.uri | default "redis://localhost:6379" | quote}}
