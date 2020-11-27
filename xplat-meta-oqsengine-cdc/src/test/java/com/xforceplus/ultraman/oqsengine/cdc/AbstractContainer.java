@@ -189,15 +189,11 @@ public abstract class AbstractContainer {
                 String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
                         System.getProperty("SEARCH_MANTICORE_HOST"), System.getProperty("SEARCH_MANTICORE_PORT")));
 
-        System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
-
         System.out.println(System.getProperty("MANTICORE_WRITE0_JDBC_URL"));
         System.out.println(System.getProperty("MANTICORE_WRITE1_JDBC_URL"));
-
-
     }
 
-    protected ConsumerService initAll() throws Exception {
+    protected ConsumerService initAll(boolean singleSync) throws Exception {
         System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
         dataSourcePackage = DataSourceFactory.build();
 
@@ -217,7 +213,7 @@ public abstract class AbstractContainer {
         initIndex();
         initDevOps();
 
-        return initConsumerService();
+        return initConsumerService(singleSync);
     }
 
     protected void closeAll() {
@@ -280,13 +276,9 @@ public abstract class AbstractContainer {
         cdcErrorStorage.init();
     }
 
-    private ConsumerService initConsumerService() throws Exception {
+    private ConsumerService initConsumerService(boolean singleSync) throws Exception {
 
-        ExecutorService consumerPool = new ThreadPoolExecutor(10, 10,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(2048),
-                ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
-                new ThreadPoolExecutor.AbortPolicy());
+        ExecutorService consumerPool = null;
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
@@ -294,6 +286,17 @@ public abstract class AbstractContainer {
         ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
 
         sphinxSyncExecutor = new SphinxSyncExecutor();
+        //  为false开启多线程
+        if (!singleSync) {
+            sphinxSyncExecutor.setSingleSyncConsumer(false);
+            sphinxSyncExecutor.setExecutionTimeout(100_000);
+            consumerPool = new ThreadPoolExecutor(50, 50,
+                    0L, TimeUnit.MILLISECONDS,
+                    new ArrayBlockingQueue<>(10000),
+                    ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
+                    new ThreadPoolExecutor.AbortPolicy());
+
+        }
         ReflectionTestUtils.setField(sphinxSyncExecutor, "sphinxQLIndexStorage", indexStorage);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "consumerPool", consumerPool);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "masterStorage", masterStorage);
@@ -301,6 +304,8 @@ public abstract class AbstractContainer {
         ReflectionTestUtils.setField(sphinxSyncExecutor, "cdcErrorStorage", cdcErrorStorage);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "seqNoGenerator",
                 new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0)));
+
+
 
         ConsumerService consumerService = new SphinxConsumerService();
 

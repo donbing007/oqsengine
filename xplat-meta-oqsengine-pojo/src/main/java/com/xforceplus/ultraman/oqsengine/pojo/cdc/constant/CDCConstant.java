@@ -21,7 +21,7 @@ public class CDCConstant {
 
     public static final long UN_KNOW_ID = -1;
 
-    public static final int SINGLE_CONSUMER_MAX_ROW = 10;
+    public static final int MULTI_CONSUMER_OPEN_MIN_BATCHES = 5;
 
     //  当前CDC connection连接失败后的重连间隔 (默认3S)
     public static final int RECONNECT_WAIT_IN_SECONDS = 3;

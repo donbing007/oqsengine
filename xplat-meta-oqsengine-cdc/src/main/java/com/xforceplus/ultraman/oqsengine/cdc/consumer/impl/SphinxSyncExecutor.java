@@ -26,8 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
 import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.INVALID_ENTITY_ID;
 import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.PARSE_COLUMNS_ERROR;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.SECOND;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.SINGLE_CONSUMER_MAX_ROW;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
 import static com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityFieldBuildUtils.metaToFieldTypeMap;
 
@@ -86,7 +85,7 @@ public class SphinxSyncExecutor {
         AtomicInteger synced = new AtomicInteger(0);
         if (!rawEntries.isEmpty()) {
             //  开启多线程写入
-            if (isSingleSyncConsumer || rawEntries.size() <= SINGLE_CONSUMER_MAX_ROW) {
+            if (isSingleSyncConsumer || rawEntries.size() < MULTI_CONSUMER_OPEN_MIN_BATCHES) {
                 for (RawEntry rawEntry : rawEntries) {
                     sphinxConsume(rawEntry, cdcMetrics, synced);
                 }
@@ -101,9 +100,10 @@ public class SphinxSyncExecutor {
     private void multiConsume(List<RawEntry> rawEntries, CDCMetrics cdcMetrics, AtomicInteger synced) throws SQLException {
         CountDownLatch latch = new CountDownLatch(rawEntries.size());
         List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>(rawEntries.size());
-
-        rawEntries.forEach((value) -> futures.add(consumerPool.submit(
-                new SyncSphinxCallable(value, cdcMetrics, synced, latch))));
+        for (RawEntry rawEntry : rawEntries) {
+            futures.add(consumerPool.submit(
+                    new SyncSphinxCallable(rawEntry, cdcMetrics, synced, latch)));
+        }
 
         try {
             if (!latch.await(executionTimeout, TimeUnit.MILLISECONDS)) {

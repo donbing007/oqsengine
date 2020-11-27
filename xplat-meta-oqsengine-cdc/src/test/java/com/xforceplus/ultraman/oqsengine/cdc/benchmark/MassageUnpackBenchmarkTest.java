@@ -47,7 +47,7 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
     @Test
     public void sphinxConsumerBenchmarkTest() throws Exception {
         try {
-            ConsumerService sphinxConsumerService = initAll();
+            ConsumerService sphinxConsumerService = initAll(false);
             //  预热
             sphinxConsumerService.consume(preWarms, 1, new CDCUnCommitMetrics());
 
