@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.common.hash.Time33Hash;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 基于 Hash 方法的 datasoruce 选择器.
@@ -31,5 +33,11 @@ public class HashSelector<V> implements Selector<V> {
         int address = Math.abs(Time33Hash.build().hash(key) % targets.size());
 
         return targets.get(address);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<V> selects() {
+        return targets.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

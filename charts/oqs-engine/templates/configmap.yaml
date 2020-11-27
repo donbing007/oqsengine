@@ -79,6 +79,30 @@ data:
               errors:
                 name: {{ .Values.storage.devOps.cdc.errors.name | default "cdcerrors" | quote }}
             maxQueryTimeMs: {{ .Values.storage.devOps.maxQueryTimeMs | default "3000" }}
+            task:
+              split: {{ .Values.devops.task.split | default "10" }}
+              max:
+                queue:
+                  size: {{ .Values.devops.task.max.queue.size | default "2000" }}
+              execution:
+                timeout: {{ .Values.devops.task.execution.timeout | default "30000" }}
+              update:
+                frequency: {{ .Values.devops.task.update.frequency | default "100" }}
+              cache:
+                expire: {{ .Values.devops.task.cache.expire | default "30" }}
+                maxsize: {{ .Values.devops.task.cache.maxsize | default "500" }}
+              page:
+                size: {{ .Values.devops.task.page.size | default "1000" }}
+          distribute:
+            lock:
+              type: {{ .Values.distribute.lock.type | default "process" }}
+              handler: {{ .Values.distribute.lock.handler | default "local" }}
+              on: {{ .Values.distribute.lock.on | default "true" }}
+              wait:
+                timeout:
+                  seconds: {{ .Values.distribute.lock.wait.timeout.seconds | default "30" }}
+                maxUnLockRetry: {{ .Values.distribute.lock.maxUnLockRetry | default "0" }}
+
 
         redis:
           uri: {{ .Values.redis.uri | default "redis://localhost:6379" | quote}}

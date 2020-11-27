@@ -96,7 +96,9 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     @Override
     public void filter(Predicate<? super IValue> predicate) {
-        values.entrySet().removeIf(entry -> !predicate.test(entry.getValue()));
+        if (values != null) {
+            values.entrySet().removeIf(entry -> !predicate.test(entry.getValue()));
+        }
     }
 
     @Override

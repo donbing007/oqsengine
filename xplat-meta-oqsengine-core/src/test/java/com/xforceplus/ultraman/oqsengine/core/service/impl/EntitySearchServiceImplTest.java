@@ -18,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -569,6 +570,11 @@ public class EntitySearchServiceImplTest {
         }
 
         @Override
+        public DataQueryIterator newIterator(IEntityClass entityClass, long start, long end, ExecutorService threadPool, int queryTimeout, int pageSize) throws SQLException {
+            return null;
+        }
+
+        @Override
         public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
             return entities.stream().filter(e -> e.id() == id && e.entityClass().equals(entityClass)).findFirst();
         }
@@ -684,6 +690,11 @@ public class EntitySearchServiceImplTest {
         @Override
         public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
             return 0;
+        }
+
+        @Override
+        public boolean clean(long entityId, long maintainId, long start, long end) throws SQLException {
+            return false;
         }
 
         @Override

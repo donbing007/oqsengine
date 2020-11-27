@@ -44,6 +44,11 @@ public class Entity implements IEntity, Serializable {
      */
     private int version;
 
+    /**
+     * 维护标识.
+     */
+    private long maintainid;
+
     @Override
     public long id() {
         return id;
@@ -88,6 +93,18 @@ public class Entity implements IEntity, Serializable {
     public void markTime(long time) {
         this.time = time;
     }
+
+    @Override
+    public long maintainId() {
+        return maintainid;
+    }
+
+
+    @Override
+    public void markTime() {
+        this.time = System.currentTimeMillis();
+    }
+
 
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue) {
         this(id, entityClass, entityValue, null, 0);
@@ -137,6 +154,11 @@ public class Entity implements IEntity, Serializable {
         IEntity newEntity = new Entity(id(), entityClass(), (IEntityValue) entityValue().clone(), family(), version());
         newEntity.markTime(time());
         return newEntity;
+    }
+
+    @Override
+    public void restMaintainId(long maintainId) {
+        this.maintainid = maintainId;
     }
 
     @Override

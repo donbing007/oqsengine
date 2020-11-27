@@ -48,3 +48,7 @@ create index commitid_entity_index on oqsbigentity (commitid, entity);
   用以更新提交号的索引.
  */
 create index tx_index on oqsbigentity (tx);
+/**
+  用以更新提交号的索引.
+ */
+create index time_index on oqsbigentity (time);

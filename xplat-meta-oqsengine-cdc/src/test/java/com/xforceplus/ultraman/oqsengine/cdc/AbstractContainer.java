@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
-import com.xforceplus.ultraman.oqsengine.devops.SQLDevOpsStorage;
+import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
@@ -80,7 +80,7 @@ public abstract class AbstractContainer {
     protected TransactionManager transactionManager;
     protected SphinxQLIndexStorage indexStorage;
     protected DataSourcePackage dataSourcePackage;
-    protected SQLDevOpsStorage devOpsStorage;
+    protected SQLCdcErrorStorage cdcErrorStorage;
     protected SQLMasterStorage masterStorage;
     protected DataSource dataSource;
     protected TransactionExecutor masterTransactionExecutor;
@@ -185,9 +185,18 @@ public abstract class AbstractContainer {
         System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
         dataSourcePackage = DataSourceFactory.build();
 
+        if (transactionManager == null) {
+            long commitId = 0;
+            commitIdStatusService = mock(CommitIdStatusServiceImpl.class);
+            when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
+
+            transactionManager = new DefaultTransactionManager(
+                    new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
+        }
+
         initMaster();
-        initDevOps();
         initIndex();
+        initDevOps();
 
         return initConsumerService();
     }
@@ -200,21 +209,12 @@ public abstract class AbstractContainer {
         return dataSourcePackage.getMaster().get(0);
     }
 
-    protected void initIndex() throws SQLException, InterruptedException {
+    private void initIndex() throws SQLException, InterruptedException {
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector();
         DataSource searchDataSource = buildSearchDataSource();
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
-
-        if (transactionManager == null) {
-            long commitId = 0;
-            commitIdStatusService = mock(CommitIdStatusServiceImpl.class);
-            when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
-
-            transactionManager = new DefaultTransactionManager(
-                new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
-        }
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(transactionManager,
             new SphinxQLTransactionResourceFactory());
@@ -241,7 +241,7 @@ public abstract class AbstractContainer {
         indexStorage.init();
     }
 
-    protected void initDevOps() throws Exception {
+    private void initDevOps() throws Exception {
 
         DataSource devOpsDataSource = buildDevOpsDataSource();
 
@@ -252,13 +252,13 @@ public abstract class AbstractContainer {
         sqlJsonConditionsBuilderFactory.setStorageStrategy(masterStorageStrategyFactory);
         sqlJsonConditionsBuilderFactory.init();
 
-        devOpsStorage = new SQLDevOpsStorage();
-        ReflectionTestUtils.setField(devOpsStorage, "devOpsDataSource", devOpsDataSource);
-        devOpsStorage.setCdcErrorRecordTable(cdcErrors);
-        devOpsStorage.init();
+        cdcErrorStorage = new SQLCdcErrorStorage();
+        ReflectionTestUtils.setField(cdcErrorStorage, "devOpsDataSource", devOpsDataSource);
+        cdcErrorStorage.setCdcErrorRecordTable(cdcErrors);
+        cdcErrorStorage.init();
     }
 
-    protected ConsumerService initConsumerService() throws Exception {
+    private ConsumerService initConsumerService() throws Exception {
 
         ExecutorService consumerPool = new ThreadPoolExecutor(10, 10,
                 0L, TimeUnit.MILLISECONDS,
@@ -276,7 +276,7 @@ public abstract class AbstractContainer {
         ReflectionTestUtils.setField(sphinxSyncExecutor, "consumerPool", consumerPool);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "masterStorage", masterStorage);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "entityValueBuilder", entityValueBuilder);
-        ReflectionTestUtils.setField(sphinxSyncExecutor, "devOpsStorage", devOpsStorage);
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "cdcErrorStorage", cdcErrorStorage);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "seqNoGenerator",
                 new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0)));
 
@@ -287,18 +287,9 @@ public abstract class AbstractContainer {
         return consumerService;
     }
 
-    protected void initMaster() throws Exception {
+    private void initMaster() throws Exception {
 
         dataSource = buildDataSourceSelectorMaster();
-
-        if (transactionManager == null) {
-            long commitId = 0;
-            commitIdStatusService = mock(CommitIdStatusServiceImpl.class);
-            when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
-
-            transactionManager = new DefaultTransactionManager(
-                    new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
-        }
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
                 transactionManager, new SqlConnectionTransactionResourceFactory(tableName, commitIdStatusService));
