@@ -96,7 +96,7 @@ public class CDCStatusServiceImplTest extends AbstractRedisContainerTest {
     public void testHeartBeatNotExist() throws Exception {
         conn.sync().del(heartBeatKey);
 
-        Assert.assertFalse(impl.isAlive());
+        Assert.assertTrue(impl.isAlive());
 
         impl.heartBeat();
 

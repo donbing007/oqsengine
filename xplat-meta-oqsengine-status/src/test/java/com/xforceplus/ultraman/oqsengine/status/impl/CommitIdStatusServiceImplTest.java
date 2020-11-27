@@ -61,7 +61,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
      */
     @Test
     public void testSave() throws Exception {
-        long expectedTotal = LongStream.rangeClosed(1, 1000).parallel().map(i -> impl.save(i)).sum();
+        long expectedTotal = LongStream.rangeClosed(1, 1000).map(i -> impl.save(i)).sum();
 
         long[] allIds = impl.getAll();
         long actualTotal = Arrays.stream(allIds).sum();
@@ -74,7 +74,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
     @Test
     public void testGetMin() throws Exception {
         long expectedMin = LongStream
-            .rangeClosed(9, 1000).parallel().map(i -> impl.save(i)).min().getAsLong();
+            .rangeClosed(9, 1000).map(i -> impl.save(i)).min().getAsLong();
 
         long actualMin = impl.getMin().get();
         Assert.assertEquals(expectedMin, actualMin);
@@ -86,7 +86,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
     @Test
     public void testGetMax() throws Exception {
         long expectedMax = LongStream
-            .rangeClosed(9, 1000).parallel().map(i -> impl.save(i)).max().getAsLong();
+            .rangeClosed(9, 1000).map(i -> impl.save(i)).max().getAsLong();
 
         long actualMax = impl.getMax().get();
         Assert.assertEquals(expectedMax, actualMax);
@@ -98,7 +98,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
     @Test
     public void testGetAll() throws Exception {
         long[] expectedAll = LongStream
-            .rangeClosed(9, 1000).parallel().map(i -> impl.save(i)).sorted().toArray();
+            .rangeClosed(9, 1000).map(i -> impl.save(i)).sorted().toArray();
 
         long[] actualAll = impl.getAll();
 
@@ -112,7 +112,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
     @Test
     public void testSize() throws Exception {
         long expectedCount = LongStream
-            .rangeClosed(9, 1000).parallel().map(i -> impl.save(i)).count();
+            .rangeClosed(9, 1000).map(i -> impl.save(i)).count();
         Assert.assertEquals(expectedCount, impl.size());
     }
 
@@ -122,7 +122,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
     @Test
     public void testObsoleteCommitId() throws Exception {
         long[] expected = LongStream
-            .rangeClosed(9, 1000).parallel().map(i -> impl.save(i)).filter(i -> i != 20).filter(i -> i != 9)
+            .rangeClosed(9, 1000).map(i -> impl.save(i)).filter(i -> i != 20).filter(i -> i != 9)
             .sorted().toArray();
         impl.obsolete(20);
         impl.obsolete(9);
