@@ -5,12 +5,11 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.exception.DevopsTaskExistException;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.DefaultDevOpsTaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
-
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.LockExecutor;
@@ -65,7 +64,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     @Resource
     private SQLTaskStorage sqlTaskStorage;
 
-    @Resource(name = "longIdGenerator")
+    @Resource(name = "snowflakeIdGenerator")
     private LongIdGenerator idGenerator;
 
     @Resource(name = "lockExecutor")

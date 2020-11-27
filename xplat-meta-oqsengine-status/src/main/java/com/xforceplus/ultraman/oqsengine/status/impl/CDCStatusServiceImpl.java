@@ -121,7 +121,7 @@ public class CDCStatusServiceImpl implements CDCStatusService {
         RedisCommands<String, String> commands = connect.sync();
         String value = commands.get(heartBeatKey);
         if (value == null) {
-            return false;
+            return true;
         }
         long now = Long.parseLong(value);
         /**

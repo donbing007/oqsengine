@@ -132,7 +132,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
         try {
 
-            return combinedStorage.selectOne(id, entityClass);
+            Optional<IEntity> entityOptional = combinedStorage.selectOne(id, entityClass);
+            if (entityOptional.isPresent()) {
+                final int onlyOne = 0;
+                return Optional.of(
+                    buildEntitiesFromEntities(Arrays.asList(entityOptional.get()), entityClass).get(onlyOne));
+            } else {
+                return entityOptional;
+            }
 
         } catch (Exception ex) {
             failCountTotal.increment();
@@ -147,13 +154,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Override
     public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
 
-        Map<Long, IEntityClass> request = new HashMap<>(ids.length);
-        for (long id : ids) {
-            request.put(id, entityClass);
-        }
+        Map<Long, IEntityClass> request =
+            Arrays.stream(ids).collect(HashMap::new, (hashMap, i) -> hashMap.put(i, entityClass), HashMap::putAll);
 
         try {
-            Collection<IEntity> entities = combinedStorage.selectMultiple(request);
+            Collection<IEntity> entities = buildEntitiesFromEntities(
+                combinedStorage.selectMultiple(request), entityClass);
 
             return entities;
         } catch (Exception ex) {
@@ -275,7 +281,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Collection<EntityRef> refs = combinedStorage.select(
                 minUnSyncCommitId, useConditions, entityClass, useSort, page);
 
-            return buildEntities(refs, entityClass);
+            return buildEntitiesFromRefs(refs, entityClass);
         } catch (Exception ex) {
             failCountTotal.increment();
             throw ex;
@@ -330,9 +336,21 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     /**
+     * 构造最终返回的Entity.
+     * 会根据oqsmajor来处理兼容.
+     */
+    private List<IEntity> buildEntitiesFromEntities(Collection<IEntity> entities, IEntityClass entityClass) throws SQLException {
+        Collection<EntityRef> refs =
+            entities.stream().map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child(), e.major()))
+                .collect(Collectors.toList());
+
+        return buildEntitiesFromRefs(refs, entityClass);
+    }
+
+    /**
      * 将根据数据查询的产生oqsmajor版本号来决定如何处理.
      */
-    private Collection<IEntity> buildEntities(Collection<EntityRef> refs, IEntityClass entityClass) throws SQLException {
+    private List<IEntity> buildEntitiesFromRefs(Collection<EntityRef> refs, IEntityClass entityClass) throws SQLException {
 
         if (refs.isEmpty()) {
             return Collections.emptyList();
@@ -370,7 +388,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         Map<Long, IEntity> iEntityMap = combinedStorage.selectMultiple(select)
             .parallelStream().collect(toMap(IEntity::id, e -> e, (e0, e1) -> e0));
 
-        return refs.parallelStream().map(ref -> {
+        return refs.stream().map(ref -> {
             IEntity entity = iEntityMap.get(ref.getId());
             if (entity == null) {
                 logger.warn("The expected Entity{} was not found.", ref.getId());

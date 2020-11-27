@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.common.timerwheel;
 import org.junit.*;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -50,6 +51,8 @@ public class TimerWheelTest {
         wheel.add("test", 300L);
 
         latch.await();
+
+        TimeUnit.SECONDS.sleep(1L);
 
         Assert.assertEquals(0, wheel.size());
         Assert.assertFalse(wheel.exist("test"));

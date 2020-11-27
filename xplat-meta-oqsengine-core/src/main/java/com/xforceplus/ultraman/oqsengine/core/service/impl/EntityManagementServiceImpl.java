@@ -138,6 +138,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                  * 1. CDC状态非正常.
                  * 2. CDC心跳.
                  * 3. CDC同步最大时间超过阀值.
+                 * 4. 未同步提交号达到阀值.
                  */
                 if (!cdcStatusService.isAlive()) {
                     logger.warn("CDC heartbeat test failed,CDC may be offline. Write transactions will be blocked.");
@@ -146,6 +147,18 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return;
                 }
 
+                long unsynccommitSize = commitIdStatusService.size();
+                if (unsynccommitSize > allowMaxUnSyncCommitIdSize) {
+                    logger.warn("The number of unsynchronized commit Numbers exceeds {} and the service write is blocked.",
+                        allowMaxUnSyncCommitIdSize);
+                    readOnly.set(OqsMode.READ_ONLY.getValue());
+                    ready = false;
+                    return;
+                }
+
+                /**
+                 * 检查CDC指标.
+                 */
                 Optional<CDCAckMetrics> ackOp = cdcStatusService.getAck();
                 if (ackOp.isPresent()) {
                     CDCAckMetrics ackMetrics = ackOp.get();
@@ -168,15 +181,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return;
                     }
 
-                    long unsynccommitSize = commitIdStatusService.size();
-                    if (unsynccommitSize > allowMaxUnSyncCommitIdSize) {
-                        logger.warn("The number of unsynchronized commit Numbers exceeds {} and the service write is blocked.",
-                            allowMaxUnSyncCommitIdSize);
-                        readOnly.set(OqsMode.READ_ONLY.getValue());
-                        ready = false;
-                        return;
-                    }
-
+                    readOnly.set(OqsMode.NORMAL.getValue());
+                    ready = true;
+                } else {
+                    /**
+                     * 查询不到结果时,假定存活.
+                     */
                     readOnly.set(OqsMode.NORMAL.getValue());
                     ready = true;
                 }
