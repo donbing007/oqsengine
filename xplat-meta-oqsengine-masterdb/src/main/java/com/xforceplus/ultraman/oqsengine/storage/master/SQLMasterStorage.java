@@ -460,6 +460,7 @@ public class SQLMasterStorage implements MasterStorage {
             .collect(Collectors.joining(",")));
 
         if (entityClass.extendEntityClass() != null) {
+            buff.append(",");
             buff.append(entityClass.extendEntityClass().fields().stream()
                 .filter(f -> f.config().isSearchable())
                 .map(f -> "\"" + String.join("-", Long.toString(f.id()), f.type().getType()) + "\"")

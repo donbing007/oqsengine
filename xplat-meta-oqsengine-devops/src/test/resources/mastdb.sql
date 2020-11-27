@@ -13,6 +13,7 @@ create table oqsbigentity
     deleted   boolean default false not null comment '是否被删除.',
     attribute json                  not null comment '当前 entity 的属性集合.',
     meta      json                  not null comment '数据产生时的元信息摘要',
+    oqsmajor  int     default 0     not null comment '产生数据的oqs主版本号',
     constraint oqsengine_pk0 primary key (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
