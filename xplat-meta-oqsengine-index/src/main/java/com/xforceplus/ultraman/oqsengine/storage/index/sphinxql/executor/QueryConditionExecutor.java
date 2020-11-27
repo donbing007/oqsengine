@@ -286,7 +286,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
         try {
             st = resource.value().prepareStatement(sql);
             st.setLong(1, 0);
-            st.setLong(2, page.getPageSize() * page.getIndex());
+            st.setLong(2, page.getPageSize() * (page.getIndex() - 1));
             st.setLong(3, page.hasVisibleTotalCountLimit() ?
                 page.getVisibleTotalCount()
                 : page.getPageSize() * page.getIndex());
@@ -301,6 +301,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
                 entityRef.setId(rs.getLong(FieldDefine.ID));
                 entityRef.setCref(rs.getLong(FieldDefine.CREF));
                 entityRef.setPref(rs.getLong(FieldDefine.PREF));
+                entityRef.setMajor(rs.getInt(FieldDefine.OQS_MAJOR));
 
                 if (!useSort.isOutOfOrder()) {
                     ResultSet finalRs = rs;

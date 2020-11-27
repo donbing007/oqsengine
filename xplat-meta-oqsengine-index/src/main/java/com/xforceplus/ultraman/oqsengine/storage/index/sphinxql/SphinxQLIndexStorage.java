@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
 import com.alibaba.fastjson.JSON;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -327,7 +328,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         for (DataSource dataSource : writerDataSourceSelector.selects()) {
             for (String indexName : indexWriteIndexNameSelector.selects()) {
                 Collection<EntityRef> refs =
-                        BatchQueryExecutor.build(dataSource, indexName, entityId, maintainId, start, end).execute(1L);
+                    MaintainTimeBetweenQueryExecutor.build(dataSource, indexName, entityId, maintainId, start, end).execute(1L);
 
                 if (!refs.isEmpty()) {
                     entityRefs.addAll(refs);
@@ -342,14 +343,14 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             logger.info("do function clean, some surplus indexes have been deleted, ids : {}", JSON.toJSON(entityRefs));
             for (EntityRef entityRef : entityRefs) {
                 delete(new Entity(entityRef.getId(),
-                        new AnyEntityClass(), new EntityValue(entityRef.getId())));
+                    new AnyEntityClass(), new EntityValue(entityRef.getId()), OqsVersion.MAJOR));
 
                 if (0 < entityRef.getCref()) {
                     delete(new Entity(entityRef.getCref(),
-                            new AnyEntityClass(), new EntityValue(entityRef.getCref())));
+                        new AnyEntityClass(), new EntityValue(entityRef.getCref()), OqsVersion.MAJOR));
                 } else if (0 < entityRef.getPref()) {
                     delete(new Entity(entityRef.getPref(),
-                            new AnyEntityClass(), new EntityValue(entityRef.getPref())));
+                        new AnyEntityClass(), new EntityValue(entityRef.getPref()), OqsVersion.MAJOR));
                 }
             }
         } else {

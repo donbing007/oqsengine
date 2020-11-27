@@ -134,6 +134,8 @@ sync:
   allowMaxSyncTimeMs: 10000
   # The heartbeat delay of data synchronization. Milliseconds.
   allowMaxLiveTimeMs: 3000
+  # Acceptable number of unsynchronized commit Numbers.
+  allowMaxUnSyncCommitIdSize: 30
 
 # datasource json config
 # Multiple data sources are separated by Numbers.

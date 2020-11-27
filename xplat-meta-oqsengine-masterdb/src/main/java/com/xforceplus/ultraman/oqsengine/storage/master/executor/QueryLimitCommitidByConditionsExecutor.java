@@ -110,6 +110,7 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
         ref.setPref(rs.getLong(FieldDefine.PREF));
         ref.setCref(rs.getLong(FieldDefine.CREF));
         ref.setOp(rs.getInt(FieldDefine.OP));
+        ref.setMajor(rs.getInt(FieldDefine.OQS_MAJOR));
         if (sort != null && !sort.isOutOfOrder()) {
             ref.setOrderValue(rs.getString(SELECT_SORT_COLUMN));
         }
@@ -119,9 +120,12 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
     private String buildSQL(String where) {
         StringBuilder sql = new StringBuilder();
 
-        // select id,pref,cref,op,JSON_UNQUOTE(JSON_EXTRACT(attribute, '$.sort')) as sort from oqsbigentity where (entity = ? and commitid = ?) and (where)
+        // select id,pref,cref,op,oqsmajor, JSON_UNQUOTE(JSON_EXTRACT(attribute, '$.sort')) as sort from oqsbigentity where (entity = ? and commitid = ?) and (where)
         sql.append("SELECT ")
-            .append(String.join(",", FieldDefine.ID, FieldDefine.PREF, FieldDefine.CREF, FieldDefine.OP));
+            .append(
+                String.join(
+                    ",",
+                    FieldDefine.ID, FieldDefine.PREF, FieldDefine.CREF, FieldDefine.OP, FieldDefine.OQS_MAJOR));
         if (sort != null && !sort.isOutOfOrder()) {
             /**
              * 这里没有使用mysql的->>符号原因是,shard-jdbc解析会出现错误.

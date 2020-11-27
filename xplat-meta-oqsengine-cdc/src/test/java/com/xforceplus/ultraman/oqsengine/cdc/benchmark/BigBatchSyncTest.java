@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
@@ -134,7 +135,7 @@ public class BigBatchSyncTest extends AbstractContainer {
                 new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1)),
                 new DecimalValue(decimalField, new BigDecimal("0.0")), new EnumValue(enumField, "1"),
                 new StringsValue(stringsField, "value1", "value2")));
-        return new Entity(id, entityClass, values, new EntityFamily(2, 0), 0);
+        return new Entity(id, entityClass, values, new EntityFamily(2, 0), 0, OqsVersion.MAJOR);
     }
 
     private void initData() throws SQLException {

@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityFamily;
@@ -48,6 +49,11 @@ public class Entity implements IEntity, Serializable {
      * 维护标识.
      */
     private long maintainid;
+
+    /**
+     * 产生数据的oqs版本.
+     */
+    private int major;
 
     @Override
     public long id() {
@@ -105,16 +111,24 @@ public class Entity implements IEntity, Serializable {
         this.time = System.currentTimeMillis();
     }
 
+    @Override
+    public int major() {
+        return this.major;
+    }
 
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue) {
-        this(id, entityClass, entityValue, null, 0);
+        this(id, entityClass, entityValue, null, 0, OqsVersion.MAJOR);
     }
 
-    public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, int version) {
-        this(id, entityClass, entityValue, null, version);
+    public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, int major) {
+        this(id, entityClass, entityValue, null, 0, major);
     }
 
-    public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, IEntityFamily family, int version) {
+    public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, int version, int major) {
+        this(id, entityClass, entityValue, null, version, major);
+    }
+
+    public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, IEntityFamily family, int version, int major) {
         if (entityClass == null) {
             throw new IllegalArgumentException("Invalid class meta information.");
         }
@@ -131,6 +145,7 @@ public class Entity implements IEntity, Serializable {
         }
 
         this.version = version;
+        this.major = major;
     }
 
     /**
@@ -151,7 +166,8 @@ public class Entity implements IEntity, Serializable {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        IEntity newEntity = new Entity(id(), entityClass(), (IEntityValue) entityValue().clone(), family(), version());
+        IEntity newEntity = new Entity(
+            id(), entityClass(), (IEntityValue) entityValue().clone(), family(), version(), OqsVersion.MAJOR);
         newEntity.markTime(time());
         return newEntity;
     }
@@ -173,6 +189,7 @@ public class Entity implements IEntity, Serializable {
         return id == entity.id &&
             time == entity.time &&
             version == entity.version &&
+            major == entity.major &&
             Objects.equals(entityClass, entity.entityClass) &&
             Objects.equals(entityValue, entity.entityValue) &&
             Objects.equals(family, entity.family);
@@ -180,7 +197,7 @@ public class Entity implements IEntity, Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, time, entityClass, entityValue, family, version);
+        return Objects.hash(id, time, entityClass, entityValue, family, version, major);
     }
 
     @Override
@@ -192,6 +209,7 @@ public class Entity implements IEntity, Serializable {
         sb.append(", entityValue=").append(entityValue);
         sb.append(", family=").append(family);
         sb.append(", version=").append(version);
+        sb.append(", major=").append(major);
         sb.append('}');
         return sb.toString();
     }

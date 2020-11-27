@@ -12,6 +12,7 @@ create table oqsbigentity0
     deleted   boolean default false not null comment '是否被删除.',
     attribute json                  not null comment '当前 entity 的属性集合.',
     meta      json                  not null comment '数据产生时的元信息摘要',
+    oqsmajor  int     default 0     not null comment '产生数据的oqs主版本号',
     constraint oqsengine_pk0 primary key (id),
     key time_index0 (time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -30,6 +31,7 @@ create table oqsbigentity1
     deleted   boolean default false not null comment '是否被删除.',
     attribute json                  not null comment '当前 entity 的属性集合.',
     meta      json                  not null comment '数据产生时的元信息摘要',
+    oqsmajor  int     default 0     not null comment '产生数据的oqs主版本号',
     constraint oqsengine_pk1 primary key (id),
     key time_index1 (time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -48,6 +50,7 @@ create table oqsbigentity2
     deleted   boolean default false not null comment '是否被删除.',
     attribute json                  not null comment '当前 entity 的属性集合.',
     meta      json                  not null comment '数据产生时的元信息摘要',
+    oqsmajor  int     default 0     not null comment '产生数据的oqs主版本号',
     constraint oqsengine_pk2 primary key (id),
     key time_index2 (time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

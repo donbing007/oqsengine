@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -16,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -35,6 +37,9 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * EntityManagementServiceImpl Tester.
@@ -80,10 +85,14 @@ public class EntityManagementServiceImplTest {
 
         masterStorage = new MockMasterStorage();
 
+        CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
+        when(commitIdStatusService.size()).thenReturn(0L);
+
         service = new EntityManagementServiceImpl(true);
         ReflectionTestUtils.setField(service, "idGenerator", idGenerator);
         ReflectionTestUtils.setField(service, "transactionExecutor", te);
         ReflectionTestUtils.setField(service, "masterStorage", masterStorage);
+        ReflectionTestUtils.setField(service, "commitIdStatusService", commitIdStatusService);
 
     }
 
@@ -159,6 +168,9 @@ public class EntityManagementServiceImplTest {
         // 验证子对象
         Map<Long, IEntityField> childFieldTable =
             childEntityClass.fields().stream().collect(Collectors.toMap(IEntityField::id, f -> f));
+        childFieldTable.putAll(
+            childEntityClass.extendEntityClass().fields().stream().collect(Collectors.toMap(IEntityField::id, f -> f)));
+
         Map<IEntityField, IValue> expectedChildValues =
             expectedEntity.entityValue().values().stream().filter(v -> childFieldTable.containsKey(v.getField().id()))
                 .collect(Collectors.toMap(IValue::getField, v -> v));
@@ -293,7 +305,8 @@ public class EntityManagementServiceImplTest {
             source.entityClass(),
             newValue,
             new EntityFamily(source.family().parent(), source.family().child()),
-            incrVersion ? source.version() + 1 : source.version()
+            incrVersion ? source.version() + 1 : source.version(),
+            OqsVersion.MAJOR
         );
         newEntity.markTime(source.time());
         return newEntity;

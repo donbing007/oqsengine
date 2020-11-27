@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -123,7 +124,7 @@ public class EntitySearchServiceImplTest {
             driverEntityClass0,
             masterEntities.values().stream()
                 .filter(e -> e.entityClass().equals(driverEntityClass0))
-                .map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child()))
+                .map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child(), OqsVersion.MAJOR))
                 .collect(Collectors.toList())
         );
 
@@ -131,7 +132,7 @@ public class EntitySearchServiceImplTest {
             driverEntityClass1,
             masterEntities.values().stream()
                 .filter(e -> e.entityClass().equals(driverEntityClass1))
-                .map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child()))
+                .map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child(), OqsVersion.MAJOR))
                 .collect(Collectors.toList())
         );
 
@@ -229,34 +230,6 @@ public class EntitySearchServiceImplTest {
 
         Collection<IEntity> results = instance.selectByConditions(conditions, childEntityClass, Page.newSinglePage(100));
         Assert.assertEquals(0, results.size());
-    }
-
-    @Test
-    public void testSelectWrongParent() throws Exception {
-        IEntity useEntity = masterEntities.values().stream().filter(
-            e -> e.entityClass().extendEntityClass() != null).findFirst().get();
-        // 不存在的家族信息.
-        useEntity.resetFamily(new EntityFamily(0, 0));
-
-        try {
-            instance.selectOne(useEntity.id(), useEntity.entityClass()).get();
-            Assert.fail("The SQLException was expected to be thrown, but it didn't.");
-        } catch (SQLException ex) {
-        }
-    }
-
-    @Test
-    public void testSelectWrongParentQuery() throws Exception {
-        IEntity useEntity = masterEntities.values().stream().filter(
-            e -> e.entityClass().extendEntityClass() != null).findFirst().get();
-        // 不存在的家族信息.
-        useEntity.resetFamily(new EntityFamily(Long.MAX_VALUE, 0));
-
-        try {
-            instance.selectOne(useEntity.id(), useEntity.entityClass()).get();
-            Assert.fail("The SQLException was expected to be thrown, but it didn't.");
-        } catch (SQLException ex) {
-        }
     }
 
     @Test
@@ -512,13 +485,16 @@ public class EntitySearchServiceImplTest {
                     entityClass,
                     buildValues(entityClass),
                     new EntityFamily(parentId, 0),
-                    0)
+                    0,
+                    OqsVersion.MAJOR
+                )
                 ,
                 new Entity(
                     parentId,
                     entityClass.extendEntityClass(),
                     buildValues(entityClass.extendEntityClass()),
-                    new EntityFamily(0, childId), 0)
+                    new EntityFamily(0, childId), 0, OqsVersion.MAJOR
+                )
             };
 
         } else {
@@ -526,7 +502,7 @@ public class EntitySearchServiceImplTest {
             return new Entity[]{new Entity(
                 idGenerator.next(),
                 entityClass,
-                buildValues(entityClass))};
+                buildValues(entityClass), OqsVersion.MAJOR)};
         }
     }
 

@@ -16,16 +16,14 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * desc :
- * name : BatchQueryExecutor
  *
  * @author : xujia
  * date : 2020/11/18
  * @since : 1.8
  */
-public class BatchQueryExecutor implements Executor<Long, Collection<EntityRef>> {
+public class MaintainTimeBetweenQueryExecutor implements Executor<Long, Collection<EntityRef>> {
 
-    final Logger logger = LoggerFactory.getLogger(BatchQueryExecutor.class);
+    final Logger logger = LoggerFactory.getLogger(MaintainTimeBetweenQueryExecutor.class);
 
     private long entityId;
     private long maintainId;
@@ -35,7 +33,7 @@ public class BatchQueryExecutor implements Executor<Long, Collection<EntityRef>>
 
     private DataSource resource;
 
-    public BatchQueryExecutor(DataSource resource, String indexTableName, long entityId, long maintainId, long start, long end) {
+    public MaintainTimeBetweenQueryExecutor(DataSource resource, String indexTableName, long entityId, long maintainId, long start, long end) {
         this.indexTableName = indexTableName;
         this.resource = resource;
         this.entityId = entityId;
@@ -44,8 +42,8 @@ public class BatchQueryExecutor implements Executor<Long, Collection<EntityRef>>
         this.end = end;
     }
 
-    public static BatchQueryExecutor build(DataSource resource, String indexTableName, long entityId, long maintainId, long start, long end) {
-        return new BatchQueryExecutor(resource, indexTableName, entityId, maintainId, start, end);
+    public static MaintainTimeBetweenQueryExecutor build(DataSource resource, String indexTableName, long entityId, long maintainId, long start, long end) {
+        return new MaintainTimeBetweenQueryExecutor(resource, indexTableName, entityId, maintainId, start, end);
     }
 
     @Override
@@ -54,11 +52,15 @@ public class BatchQueryExecutor implements Executor<Long, Collection<EntityRef>>
         ResultSet rs = null;
         String sql = buildCleanSelect(indexTableName);
         try (Connection connection = resource.getConnection();
-                    PreparedStatement st = connection.prepareStatement(sql)){
-            st.setLong(1, entityId);    // entityId
-            st.setLong(2, maintainId);  // maintainId
-            st.setLong(3, start);       // start
-            st.setLong(4, end);         // end
+             PreparedStatement st = connection.prepareStatement(sql)) {
+            // entityId
+            st.setLong(1, entityId);
+            // maintainId
+            st.setLong(2, maintainId);
+            // start
+            st.setLong(3, start);
+            // end
+            st.setLong(4, end);
 
             if (logger.isDebugEnabled()) {
                 logger.debug(st.toString());
@@ -67,7 +69,14 @@ public class BatchQueryExecutor implements Executor<Long, Collection<EntityRef>>
             List<EntityRef> entityRefList = new ArrayList<>();
             rs = st.executeQuery();
             while (rs.next()) {
-                entityRefList.add(new EntityRef(rs.getLong(FieldDefine.ID), rs.getLong(FieldDefine.PREF), rs.getLong(FieldDefine.CREF)));
+                entityRefList.add(
+                    new EntityRef(
+                        rs.getLong(FieldDefine.ID),
+                        rs.getLong(FieldDefine.PREF),
+                        rs.getLong(FieldDefine.CREF),
+                        rs.getInt(FieldDefine.OQS_MAJOR)
+                    )
+                );
             }
 
             return entityRefList;
@@ -83,20 +92,21 @@ public class BatchQueryExecutor implements Executor<Long, Collection<EntityRef>>
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
         sql.append(String.join(",",
-                FieldDefine.ID,
-                FieldDefine.PREF,
-                FieldDefine.CREF
+            FieldDefine.ID,
+            FieldDefine.PREF,
+            FieldDefine.CREF,
+            FieldDefine.OQS_MAJOR
         ));
         sql.append(" FROM ")
-                .append(indexName)
-                .append(" WHERE ")
-                .append(FieldDefine.ENTITY).append("=").append("?")
-                .append(" AND ")
-                .append(FieldDefine.MAINTAIN_ID).append("!=").append("?")
-                .append(" AND ")
-                .append(FieldDefine.TIME).append(">=").append("?")
-                .append(" AND ")
-                .append(FieldDefine.TIME).append("<=").append("?");
+            .append(indexName)
+            .append(" WHERE ")
+            .append(FieldDefine.ENTITY).append("=").append("?")
+            .append(" AND ")
+            .append(FieldDefine.MAINTAIN_ID).append("!=").append("?")
+            .append(" AND ")
+            .append(FieldDefine.TIME).append(">=").append("?")
+            .append(" AND ")
+            .append(FieldDefine.TIME).append("<=").append("?");
 
         return sql.toString();
     }

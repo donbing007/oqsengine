@@ -65,6 +65,7 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<Collection<Lon
                 entity.setTime(rs.getLong(FieldDefine.TIME));
                 entity.setPref(rs.getLong(FieldDefine.PREF));
                 entity.setCref(rs.getLong(FieldDefine.CREF));
+                entity.setOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR));
                 entity.setAttribute(rs.getString(FieldDefine.ATTRIBUTE));
                 entities.add(entity);
             }
@@ -95,6 +96,7 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<Collection<Lon
             FieldDefine.TIME,
             FieldDefine.TX,
             FieldDefine.COMMITID,
+            FieldDefine.OQS_MAJOR,
             FieldDefine.ATTRIBUTE
             )
         )

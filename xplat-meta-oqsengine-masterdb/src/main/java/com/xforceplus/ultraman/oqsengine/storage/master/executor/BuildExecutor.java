@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -48,6 +49,7 @@ public class BuildExecutor extends AbstractMasterExecutor<StorageEntity, Integer
         st.setBoolean(10, storageEntity.getDeleted());
         st.setString(11, storageEntity.getAttribute());
         st.setString(12, storageEntity.getMeta());
+        st.setInt(13, OqsVersion.MAJOR);
 
         checkTimeout(st);
 
@@ -62,7 +64,7 @@ public class BuildExecutor extends AbstractMasterExecutor<StorageEntity, Integer
 
     private String buildSQL(StorageEntity storageEntity) {
         StringBuilder buff = new StringBuilder();
-        // insert into ${table} (id, entity, tx, commitid, version, op, time, pref, cref, deleted, attribute,meta) values(?,?,?,?,?,?,?,?,?,?)
+        // insert into ${table} (id, entity, tx, commitid, version, op, time, pref, cref, deleted, attribute,meta,oqsver) values(?,?,?,?,?,?,?,?,?,?)
         buff.append("INSERT INTO ").append(getTableName())
             .append(' ')
             .append("(").append(String.join(",",
@@ -77,10 +79,11 @@ public class BuildExecutor extends AbstractMasterExecutor<StorageEntity, Integer
             FieldDefine.CREF,
             FieldDefine.DELETED,
             FieldDefine.ATTRIBUTE,
-            FieldDefine.META)
+            FieldDefine.META,
+            FieldDefine.OQS_MAJOR)
         )
             .append(") VALUES (")
-            .append(String.join(",", Collections.nCopies(12, "?")))
+            .append(String.join(",", Collections.nCopies(13, "?")))
             .append(")");
         return buff.toString();
     }

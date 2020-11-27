@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
@@ -24,6 +25,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,7 +52,8 @@ public class SearchTest extends AbstractContainerTest {
     private boolean initialization;
 
     private Collection<IEntityField> mainFields;
-    private IEntityClass mainEntityClass;
+    private IEntityClass fatherEntityClass;
+    private IEntityClass childEntityClass;
     private List<IEntity> entities;
 
     private Random random = new Random();
@@ -86,59 +89,73 @@ public class SearchTest extends AbstractContainerTest {
 
         entities = Arrays.asList(
             new Entity(
-                idGenerator.next(),
-                mainEntityClass,
+                1,
+                fatherEntityClass,
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "1"),
                     new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
                     new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("11.03")),
                     new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
-                ))),
+                )),
+                OqsVersion.MAJOR
+            ),
             new Entity(
-                idGenerator.next(),
-                mainEntityClass,
+                2,
+                fatherEntityClass,
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "1"),
                     new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
                     new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("11.3")),
                     new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
-                ))),
+                )),
+                OqsVersion.MAJOR
+            ),
             new Entity(
-                idGenerator.next(),
-                mainEntityClass,
+                3,
+                fatherEntityClass,
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "1"),
                     new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
                     new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-11.3")),
                     new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
-                ))),
+                )),
+                OqsVersion.MAJOR
+            ),
             new Entity(
-                idGenerator.next(),
-                mainEntityClass,
+                4,
+                fatherEntityClass,
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "1"),
                     new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
                     new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-11.03")),
                     new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
-                ))),
+                )),
+                OqsVersion.MAJOR
+            ),
             new Entity(
-                idGenerator.next(),
-                mainEntityClass,
+                5,
+                childEntityClass,
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "1"),
                     new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
                     new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("-11.30")),
-                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
-                ))),
+                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now),
+                    new EnumValue(childEntityClass.field("c5").get(), "false")
+                )),
+                OqsVersion.MAJOR
+            ),
             new Entity(
-                idGenerator.next(),
-                mainEntityClass,
+                6,
+                childEntityClass,
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "1"),
                     new LongValue(mainFields.stream().skip(1).findFirst().get(), 1L),
                     new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal("11.30")),
-                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now)
-                )))
+                    new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), now),
+                    new EnumValue(childEntityClass.field("c5").get(), "true")
+                )),
+                OqsVersion.MAJOR
+            )
         );
 
         buildEntities(entities);
@@ -195,7 +212,7 @@ public class SearchTest extends AbstractContainerTest {
             try {
                 transactionManagementService.restore(txId);
             } catch (SQLException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e.getMessage(), e);
             }
 
             int i = random.nextInt(3);
@@ -205,33 +222,37 @@ public class SearchTest extends AbstractContainerTest {
 
                     Entity entity = new Entity(
                         x,
-                        mainEntityClass,
+                        fatherEntityClass,
                         new EntityValue(0).addValues(Arrays.asList(
                             new StringValue(mainFields.stream().findFirst().get(), nextStr()),
                             new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
                             new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextDouble().toString())),
                             new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), nextLocalDateTime())
-                        )));
+                        )),
+                        OqsVersion.MAJOR
+                    );
                     managementService.replace(entity);
                     updateIds.add(x);
 
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e.getMessage(), e);
                 }
             } else if (i == 2) {
                 //delete
                 try {
                     transactionManagementService.restore(txId);
-                    Entity entity = new Entity(x, mainEntityClass, new EntityValue(0).addValues(Arrays.asList(
+                    Entity entity = new Entity(x, fatherEntityClass, new EntityValue(0).addValues(Arrays.asList(
                         new StringValue(mainFields.stream().findFirst().get(), nextStr()),
                         new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
                         new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextDouble().toString())),
                         new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), nextLocalDateTime())
-                    )));
+                    )),
+                        OqsVersion.MAJOR
+                    );
                     managementService.delete(entity);
                     deleteIds.add(x);
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e.getMessage(), e);
                 }
 
 
@@ -254,13 +275,15 @@ public class SearchTest extends AbstractContainerTest {
                 Long id = idGenerator.next();
                 return new Entity(
                     id,
-                    mainEntityClass,
+                    fatherEntityClass,
                     new EntityValue(0).addValues(Arrays.asList(
                         new StringValue(mainFields.stream().findFirst().get(), nextStr()),
                         new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
                         new DecimalValue(mainFields.stream().skip(2).findFirst().get(), new BigDecimal(nextDouble().toString())),
                         new DateTimeValue(mainFields.stream().skip(3).findFirst().get(), nextLocalDateTime())
-                    )));
+                    )),
+                    OqsVersion.MAJOR
+                );
             }
         ).collect(Collectors.toList());
 
@@ -295,7 +318,16 @@ public class SearchTest extends AbstractContainerTest {
             new EntityField(idGenerator.next(), "c4", FieldType.DATETIME, FieldConfig.build().searchable(true))
         );
 
-        mainEntityClass = new EntityClass(idGenerator.next(), "main", null, null, null, mainFields);
+        fatherEntityClass = new EntityClass(idGenerator.next(), "main", null, null, null, mainFields);
+
+        childEntityClass = new EntityClass(
+            idGenerator.next(),
+            "child",
+            null,
+            null,
+            fatherEntityClass,
+            Arrays.asList(
+                new EntityField(idGenerator.next(), "c5", FieldType.ENUM, FieldConfig.build().searchable(true))));
 
         initialization = true;
     }
@@ -334,17 +366,73 @@ public class SearchTest extends AbstractContainerTest {
     }
 
     @Test
-    public void basicSearch() throws SQLException, InterruptedException {
+    public void testChildSearch() throws Exception {
+        initData();
+
+        Collection<IEntity> iEntities =
+            entitySearchService.selectByConditions(
+                Conditions.buildEmtpyConditions(),
+                childEntityClass,
+                Sort.buildDescSort(mainFields.stream().skip(2).findFirst().get()),
+                new Page(1, 10));
+
+        Assert.assertEquals(2, iEntities.size());
+
+        List<BigDecimal> bigDecimals = iEntities.stream().map(x -> {
+            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DecimalValue).findFirst().get();
+            return ((DecimalValue) iValue).getValue();
+        }).collect(Collectors.toList());
+
+        Comparator<BigDecimal> bigDecimalComparator = (o1, o2) -> o1.compareTo(o2);
+
+        assertTrue(Comparators.isInOrder(bigDecimals, bigDecimalComparator));
+    }
+
+    @Test
+    public void testChildSecondPageSearch() throws Exception {
+        initData();
+
+        Collection<IEntity> iEntities =
+            entitySearchService.selectByConditions(
+                Conditions.buildEmtpyConditions(),
+                childEntityClass,
+                Sort.buildAscSort(mainFields.stream().skip(2).findFirst().get()),
+                new Page(1, 1));
+
+        Assert.assertEquals(1, iEntities.size());
+        List<BigDecimal> bigDecimals = iEntities.stream().map(x -> {
+            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DecimalValue).findFirst().get();
+            return ((DecimalValue) iValue).getValue();
+        }).collect(Collectors.toList());
+        Assert.assertEquals(new BigDecimal("-11.30"), bigDecimals.get(0));
+
+        iEntities =
+            entitySearchService.selectByConditions(
+                Conditions.buildEmtpyConditions(),
+                childEntityClass,
+                Sort.buildAscSort(mainFields.stream().skip(2).findFirst().get()),
+                new Page(2, 1));
+
+        Assert.assertEquals(1, iEntities.size());
+        bigDecimals = iEntities.stream().map(x -> {
+            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DecimalValue).findFirst().get();
+            return ((DecimalValue) iValue).getValue();
+        }).collect(Collectors.toList());
+        Assert.assertEquals(new BigDecimal("11.30"), bigDecimals.get(0));
+    }
+
+    @Test
+    public void basicSearch() throws Exception {
 
         initData();
 
         Thread.sleep(10000);
 
         Page page = new Page(0, 100);
-        Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(2));
+        Sort sort = Sort.buildAscSort(fatherEntityClass.fields().get(2));
 
         Collection<IEntity> iEntities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions(), mainEntityClass, sort, page);
+            Conditions.buildEmtpyConditions(), fatherEntityClass, sort, page);
 
         List<BigDecimal> bigDecimals = iEntities.stream().map(x -> {
             IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DecimalValue).findFirst().get();
@@ -363,10 +451,10 @@ public class SearchTest extends AbstractContainerTest {
         Thread.sleep(10000);
 
         Page page = new Page(0, 100);
-        Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(0));
+        Sort sort = Sort.buildAscSort(fatherEntityClass.fields().get(0));
 
         Collection<IEntity> iEntities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions(), mainEntityClass, sort, page);
+            Conditions.buildEmtpyConditions(), fatherEntityClass, sort, page);
 
         List<String> stringList = iEntities.stream().map(x -> {
             IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof StringValue).findFirst().get();
@@ -387,10 +475,10 @@ public class SearchTest extends AbstractContainerTest {
         Thread.sleep(10000);
 
         Page page = new Page(0, 100);
-        Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(3));
+        Sort sort = Sort.buildAscSort(fatherEntityClass.fields().get(3));
 
         Collection<IEntity> iEntities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions(), mainEntityClass, sort, page);
+            Conditions.buildEmtpyConditions(), fatherEntityClass, sort, page);
 
         List<LocalDateTime> dateList = iEntities.stream().map(x -> {
             IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DateTimeValue).findFirst().get();
@@ -408,10 +496,10 @@ public class SearchTest extends AbstractContainerTest {
         initData(100);
 
         Page page = new Page(0, 100);
-        Sort sort = Sort.buildAscSort(mainEntityClass.fields().get(1));
+        Sort sort = Sort.buildAscSort(fatherEntityClass.fields().get(1));
 
         Collection<IEntity> iEntities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions(), mainEntityClass, sort, page);
+            Conditions.buildEmtpyConditions(), fatherEntityClass, sort, page);
 
         List<Long> dateList = iEntities.stream().map(x -> {
             IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof LongValue).findFirst().get();
@@ -431,7 +519,7 @@ public class SearchTest extends AbstractContainerTest {
         Page page = new Page(0, 100);
 
         Collection<IEntity> iEntities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions(), mainEntityClass, null, page);
+            Conditions.buildEmtpyConditions(), fatherEntityClass, null, page);
 
         assertTrue(page.getTotalCount() == 100);
     }
@@ -448,7 +536,7 @@ public class SearchTest extends AbstractContainerTest {
         Page page = new Page(0, 100);
 
         Collection<IEntity> iEntities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions(), mainEntityClass, null, page);
+            Conditions.buildEmtpyConditions(), fatherEntityClass, null, page);
 
         assertTrue(page.getTotalCount() == 200);
     }
@@ -467,7 +555,7 @@ public class SearchTest extends AbstractContainerTest {
 
         Page page = new Page(0, 100);
         Collection<IEntity> iEntities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions(), mainEntityClass, null, page);
+            Conditions.buildEmtpyConditions(), fatherEntityClass, null, page);
 
 
         assertTrue(page.getTotalCount() == (50 - listListTuple2._1().size()));

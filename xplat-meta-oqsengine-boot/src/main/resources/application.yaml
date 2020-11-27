@@ -29,6 +29,7 @@ maxVisibleNumber: 10000
 sync:
   allowMaxSyncTimeMs: 10000
   allowMaxLiveTimeMs: 3000
+  allowMaxUnSyncCommitIdSize: 30
 
 storage:
   timeoutMs:

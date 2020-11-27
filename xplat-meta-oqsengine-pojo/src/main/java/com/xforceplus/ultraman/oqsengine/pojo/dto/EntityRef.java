@@ -5,6 +5,7 @@ import java.util.Objects;
 
 /**
  * 表示一个 entity 的指针.
+ *
  * @author dongbin
  * @version 0.1 2020/2/17 16:55
  * @since 1.8
@@ -14,20 +15,22 @@ public final class EntityRef implements Serializable {
     private long id;
     private long pref;
     private long cref;
-    private String orderValue;
     private int op;
+    private int major;
+    private String orderValue;
 
     public EntityRef() {
     }
 
-    public EntityRef(long id, long pref, long cref) {
-        this(id, pref, cref, null);
+    public EntityRef(long id, long pref, long cref, int major) {
+        this(id, pref, cref, major, null);
     }
 
-    public EntityRef(long id, long pref, long cref, String orderValue) {
+    public EntityRef(long id, long pref, long cref, int major, String orderValue) {
         this.id = id;
         this.pref = pref;
         this.cref = cref;
+        this.major = major;
         this.orderValue = orderValue;
     }
 
@@ -71,24 +74,30 @@ public final class EntityRef implements Serializable {
         this.op = op;
     }
 
+    public int getMajor() {
+        return major;
+    }
+
+    public void setMajor(int major) {
+        this.major = major;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof EntityRef)) {
-            return false;
-        }
+        if (this == o) return true;
+        if (!(o instanceof EntityRef)) return false;
         EntityRef entityRef = (EntityRef) o;
         return getId() == entityRef.getId() &&
             getPref() == entityRef.getPref() &&
             getCref() == entityRef.getCref() &&
+            getOp() == entityRef.getOp() &&
+            getMajor() == entityRef.getMajor() &&
             Objects.equals(getOrderValue(), entityRef.getOrderValue());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getPref(), getCref(), getOrderValue());
+        return Objects.hash(getId(), getPref(), getCref(), getOp(), getMajor(), getOrderValue());
     }
 
     @Override
@@ -97,8 +106,9 @@ public final class EntityRef implements Serializable {
         sb.append("id=").append(id);
         sb.append(", pref=").append(pref);
         sb.append(", cref=").append(cref);
-        sb.append(", orderValue='").append(orderValue).append('\'');
         sb.append(", op=").append(op);
+        sb.append(", major=").append(major);
+        sb.append(", orderValue='").append(orderValue).append('\'');
         sb.append('}');
         return sb.toString();
     }

@@ -19,6 +19,7 @@ public class StorageEntity implements Serializable {
     private String attribute;
     private String meta;
     private long time;
+    private int oqsMajor;
 
     public long getId() {
         return id;
@@ -76,11 +77,11 @@ public class StorageEntity implements Serializable {
         this.cref = cref;
     }
 
-    public Boolean getDeleted() {
+    public boolean getDeleted() {
         return deleted;
     }
 
-    public void setDeleted(Boolean deleted) {
+    public void setDeleted(boolean deleted) {
         this.deleted = deleted;
     }
 
@@ -116,30 +117,50 @@ public class StorageEntity implements Serializable {
         this.meta = meta;
     }
 
+    public int getOqsMajor() {
+        return oqsMajor;
+    }
+
+    public void setOqsMajor(int oqsMajor) {
+        this.oqsMajor = oqsMajor;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof StorageEntity)) return false;
-        StorageEntity entity1 = (StorageEntity) o;
-        return getId() == entity1.getId() &&
-            getEntity() == entity1.getEntity() &&
-            getTx() == entity1.getTx() &&
-            getCommitid() == entity1.getCommitid() &&
-            getVersion() == entity1.getVersion() &&
-            getOp() == entity1.getOp() &&
-            getPref() == entity1.getPref() &&
-            getCref() == entity1.getCref() &&
-            getTime() == entity1.getTime() &&
-            Objects.equals(getDeleted(), entity1.getDeleted()) &&
-            Objects.equals(getAttribute(), entity1.getAttribute()) &&
-            Objects.equals(getMeta(), entity1.getMeta());
+        StorageEntity that = (StorageEntity) o;
+        return getId() == that.getId() &&
+            getEntity() == that.getEntity() &&
+            getTx() == that.getTx() &&
+            getCommitid() == that.getCommitid() &&
+            getVersion() == that.getVersion() &&
+            getOp() == that.getOp() &&
+            getPref() == that.getPref() &&
+            getCref() == that.getCref() &&
+            getDeleted() == that.getDeleted() &&
+            getTime() == that.getTime() &&
+            getOqsMajor() == that.getOqsMajor() &&
+            Objects.equals(getAttribute(), that.getAttribute()) &&
+            Objects.equals(getMeta(), that.getMeta());
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-            getId(), getEntity(), getTx(), getCommitid(), getVersion(), getOp(),
-            getPref(), getCref(), getDeleted(), getAttribute(), getMeta(), getTime());
+            getId(),
+            getEntity(),
+            getTx(),
+            getCommitid(),
+            getVersion(),
+            getOp(),
+            getPref(),
+            getCref(),
+            getDeleted(),
+            getAttribute(),
+            getMeta(),
+            getTime(),
+            getOqsMajor());
     }
 
     @Override
@@ -157,6 +178,7 @@ public class StorageEntity implements Serializable {
         sb.append(", attribute='").append(attribute).append('\'');
         sb.append(", meta='").append(meta).append('\'');
         sb.append(", time=").append(time);
+        sb.append(", oqsMajor=").append(oqsMajor);
         sb.append('}');
         return sb.toString();
     }

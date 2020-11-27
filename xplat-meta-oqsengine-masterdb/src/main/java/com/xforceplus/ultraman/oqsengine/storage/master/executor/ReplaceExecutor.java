@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -39,10 +40,11 @@ public class ReplaceExecutor extends AbstractMasterExecutor<StorageEntity, Integ
         st.setLong(2, storageEntity.getTx());
         st.setLong(3, storageEntity.getCommitid());
         st.setInt(4, storageEntity.getOp());
-        st.setString(5, storageEntity.getAttribute());
-        st.setString(6, storageEntity.getMeta());
-        st.setLong(7, storageEntity.getId());
-        st.setInt(8, storageEntity.getVersion());
+        st.setInt(5, OqsVersion.MAJOR);
+        st.setString(6, storageEntity.getAttribute());
+        st.setString(7, storageEntity.getMeta());
+        st.setLong(8, storageEntity.getId());
+        st.setInt(9, storageEntity.getVersion());
 
         checkTimeout(st);
 
@@ -65,6 +67,7 @@ public class ReplaceExecutor extends AbstractMasterExecutor<StorageEntity, Integ
             .append(FieldDefine.TX).append("=").append("?, ")
             .append(FieldDefine.COMMITID).append("=").append("?, ")
             .append(FieldDefine.OP).append("=").append("?, ")
+            .append(FieldDefine.OQS_MAJOR).append("=").append("?, ")
             .append(FieldDefine.ATTRIBUTE).append("=").append("?, ")
             .append(FieldDefine.META).append("=").append("? ")
             .append(" WHERE ")

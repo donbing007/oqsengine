@@ -65,6 +65,11 @@ public class FieldDefine {
     public static final String MAINTAIN_ID = "maintainid";
 
     /**
+     * 数据产生的oqs大版本.
+     */
+    public static final String OQS_MAJOR = "oqsmajor";
+
+    /**
      * 统计行数字段.
      */
     public static final String COUNT = "count";

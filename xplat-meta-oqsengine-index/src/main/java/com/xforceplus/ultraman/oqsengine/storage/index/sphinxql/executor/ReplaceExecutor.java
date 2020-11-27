@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
@@ -32,24 +33,34 @@ public class ReplaceExecutor implements Executor<StorageEntity, Integer> {
         this.indexTableName = indexTableName;
         this.resource = resource;
         replaceSql =
-                String.format(SQLConstant.WRITER_SQL,
-                        "replace", indexTableName,
-                    FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.ENTITY_F, FieldDefine.PREF, FieldDefine.CREF,
-                        FieldDefine.TX, FieldDefine.COMMIT_ID,
-                        FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS, FieldDefine.MAINTAIN_ID, FieldDefine.TIME);
+            String.format(SQLConstant.WRITER_SQL,
+                "replace", indexTableName,
+                FieldDefine.ID,
+                FieldDefine.ENTITY,
+                FieldDefine.ENTITY_F,
+                FieldDefine.PREF,
+                FieldDefine.CREF,
+                FieldDefine.TX,
+                FieldDefine.COMMIT_ID,
+                FieldDefine.JSON_FIELDS,
+                FieldDefine.FULL_FIELDS,
+                FieldDefine.MAINTAIN_ID,
+                FieldDefine.TIME,
+                FieldDefine.OQS_MAJOR);
     }
 
-    public static ReplaceExecutor build(TransactionResource resource, String indexTableName){
+    public static ReplaceExecutor build(TransactionResource resource, String indexTableName) {
         return new ReplaceExecutor(resource, indexTableName);
     }
 
-
     @Override
     public Integer execute(StorageEntity storageEntity) throws SQLException {
+
         final String sql = String.format(replaceSql, indexTableName);
 
         PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
 
+        // id, entity, pref, cref, tx, commit, jsonfileds, fullfileds
         // id
         st.setLong(1, storageEntity.getId());
         // entity
@@ -72,10 +83,10 @@ public class ReplaceExecutor implements Executor<StorageEntity, Integer> {
         st.setLong(10, storageEntity.getMaintainId());
         // time
         st.setLong(11, storageEntity.getTime());
+        // oqsmajor
+        st.setInt(12, OqsVersion.MAJOR);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
+        st.executeUpdate();
 
         try {
             return st.executeUpdate();
