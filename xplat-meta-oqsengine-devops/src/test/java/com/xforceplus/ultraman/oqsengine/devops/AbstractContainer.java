@@ -6,8 +6,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.lock.LockHelper;
-import com.xforceplus.ultraman.oqsengine.common.lock.process.ProcessLockFactory;
+import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
@@ -259,8 +258,8 @@ public abstract class AbstractContainer {
         sqlTaskStorage.setTable(rebuildTableName);
 
         LockExecutor lockExecutor = new LockExecutor();
-        ReflectionTestUtils.setField(lockExecutor, "lockFactory",
-                new ProcessLockFactory(LockHelper.ProcessHandlerLevel.LOCAL.name()));
+        ReflectionTestUtils.setField(lockExecutor, "resourceLocker",
+                new LocalResourceLocker());
 
         taskExecutor = new DevOpsRebuildIndexExecutor(10, 3000, 30000,
                 100, 30, 300, 3000, 100);

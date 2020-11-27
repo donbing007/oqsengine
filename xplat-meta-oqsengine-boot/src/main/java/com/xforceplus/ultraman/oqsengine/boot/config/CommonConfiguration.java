@@ -84,9 +84,4 @@ public class CommonConfiguration {
         return new SQLJsonIEntityValueBuilder();
     }
 
-    @Bean
-    public ResourceLocker locker() {
-        return new LocalResourceLocker();
-    }
-
 }
