@@ -47,7 +47,7 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
     @Test
     public void sphinxConsumerBenchmarkTest() throws Exception {
         try {
-            ConsumerService sphinxConsumerService = initAll();
+            ConsumerService sphinxConsumerService = initAll(false);
             //  预热
             sphinxConsumerService.consume(preWarms, 1, new CDCUnCommitMetrics());
 
@@ -86,7 +86,7 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
     private static void build(List<CanalEntry.Entry> entries, int size, long startId) {
         for (int i = 0; i < size; i++) {
             long start = startId + i;
-            CanalEntry.Entry fRanDom_1 = buildRow(start, true, 1, start, "0", start,
+            CanalEntry.Entry fRanDom_1 = buildRow(start, true, 1, startId, "0", start,
                     i % SphinxConsumerToolsTest.Prepared.metas.length, 0, 0, 1);
             entries.add(fRanDom_1);
         }

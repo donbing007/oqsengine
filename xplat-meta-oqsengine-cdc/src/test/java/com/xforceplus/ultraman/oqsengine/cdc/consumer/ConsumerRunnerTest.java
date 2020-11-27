@@ -61,7 +61,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
                 "nly-v1", "root", "xplat");
 
-        return new ConsumerRunner(initAll(), cdcMetricsService, singleCDCConnector);
+        return new ConsumerRunner(initAll(true), cdcMetricsService, singleCDCConnector);
     }
 
     private void startConsumerRunner(long partitionId) throws Exception {
@@ -231,12 +231,13 @@ public class ConsumerRunnerTest extends AbstractContainer {
                     initData(EntityGenerateToolBar.generateFixedEntities(i, 1), true, false);
 
                     expectedCount += entities.length;
+                    tx.commit();
                 } catch (Exception ex) {
                     tx.rollback();
                     throw ex;
+                } finally {
+                    transactionManager.finish();
                 }
-                tx.commit();
-                transactionManager.finish();
                 i += gap;
             }
         } finally {

@@ -45,7 +45,7 @@ public class EntityValueBuildTest extends AbstractContainer {
     @Before
     public void before() throws Exception {
 
-        sphinxConsumerService = initAll();
+        sphinxConsumerService = initAll(true);
 
 
         expectedEntities = EntityGenerateToolBar.generateFixedEntities(partitionId, 0);

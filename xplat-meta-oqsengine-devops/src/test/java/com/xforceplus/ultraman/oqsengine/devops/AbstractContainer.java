@@ -33,6 +33,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import io.lettuce.core.RedisClient;
 import org.junit.Ignore;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.BindMode;
@@ -44,9 +45,6 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * desc :
@@ -62,19 +60,21 @@ public abstract class AbstractContainer {
     protected static GenericContainer manticore0;
     protected static GenericContainer manticore1;
     protected static GenericContainer searchManticore;
+    protected static GenericContainer redis;
 
-    protected static DataSourcePackage dataSourcePackage;
+    protected DataSourcePackage dataSourcePackage;
 
-    protected static LongIdGenerator idGenerator;
-    protected static DataSource dataSource;
-    protected static SQLCdcErrorStorage cdcErrorStorage;
-    protected static SQLMasterStorage masterStorage;
-    protected static SphinxQLIndexStorage indexStorage;
-    protected static StorageStrategyFactory masterStorageStrategyFactory;
-    protected static CommitIdStatusService commitIdStatusService;
-    protected static TransactionManager transactionManager;
-    protected static TransactionExecutor masterTransactionExecutor;
-    protected static DevOpsRebuildIndexExecutor taskExecutor;
+    protected RedisClient redisClient;
+    protected LongIdGenerator idGenerator;
+    protected DataSource dataSource;
+    protected SQLCdcErrorStorage cdcErrorStorage;
+    protected SQLMasterStorage masterStorage;
+    protected SphinxQLIndexStorage indexStorage;
+    protected StorageStrategyFactory masterStorageStrategyFactory;
+    protected CommitIdStatusServiceImpl commitIdStatusService;
+    protected TransactionManager transactionManager;
+    protected TransactionExecutor masterTransactionExecutor;
+    protected DevOpsRebuildIndexExecutor taskExecutor;
     protected static String tableName = "oqsbigentity";
     protected static String cdcErrorsTableName = "cdcerrors";
     protected static String rebuildTableName = "devopstasks";
@@ -120,6 +120,12 @@ public abstract class AbstractContainer {
                 .waitingFor(Wait.forListeningPort());
         searchManticore.start();
 
+        redis = new GenericContainer("redis:6.0.9-alpine3.12")
+                .withNetworkAliases("redis")
+                .withExposedPorts(6379)
+                .waitingFor(Wait.forListeningPort());
+        redis.start();
+
         System.setProperty("MYSQL_HOST", mysql.getContainerIpAddress());
         System.setProperty("MYSQL_PORT", mysql.getFirstMappedPort().toString());
 
@@ -153,15 +159,22 @@ public abstract class AbstractContainer {
 
         System.out.println(System.getProperty("MANTICORE_WRITE0_JDBC_URL"));
         System.out.println(System.getProperty("MANTICORE_WRITE1_JDBC_URL"));
+
+        System.setProperty("REDIS_HOST", redis.getContainerIpAddress());
+        System.setProperty("REDIS_PORT", redis.getFirstMappedPort().toString());
     }
 
-    protected static void start() throws Exception {
+    protected void start() throws Exception {
         dataSourcePackage = DataSourceFactory.build();
 
         if (transactionManager == null) {
-            long commitId = 0;
-            commitIdStatusService = mock(CommitIdStatusServiceImpl.class);
-            when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
+            redisClient = RedisClient.create(
+                    String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
+            commitIdStatusService = new CommitIdStatusServiceImpl();
+            ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
+            ReflectionTestUtils.setField(commitIdStatusService, "locker", new LocalResourceLocker());
+            commitIdStatusService.init();
+
 
             transactionManager = new DefaultTransactionManager(
                     new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
@@ -173,15 +186,19 @@ public abstract class AbstractContainer {
         initDevOps();
     }
 
-    protected static void close() {
+    protected void close() {
+        commitIdStatusService.destroy();
+        redisClient.connect().sync().flushall();
+        redisClient.shutdown();
+
         dataSourcePackage.close();
     }
 
-    protected static DataSource buildDataSourceSelectorMaster() {
+    protected DataSource buildDataSourceSelectorMaster() {
         return dataSourcePackage.getMaster().get(0);
     }
 
-    private static void initMaster() throws Exception {
+    private void initMaster() throws Exception {
 
         dataSource = buildDataSourceSelectorMaster();
 
@@ -210,7 +227,7 @@ public abstract class AbstractContainer {
         masterStorage.init();
     }
 
-    private static void initIndex() throws SQLException, InterruptedException {
+    private void initIndex() throws SQLException, InterruptedException {
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector();
         DataSource searchDataSource = buildSearchDataSource();
 
@@ -239,7 +256,7 @@ public abstract class AbstractContainer {
         indexStorage.init();
     }
 
-    private static void initDevOps() throws Exception {
+    private void initDevOps() throws Exception {
 
         DataSource devOpsDataSource = buildDevOpsDataSource();
 
@@ -251,7 +268,7 @@ public abstract class AbstractContainer {
         initTaskStorage(devOpsDataSource);
     }
 
-    private static void initTaskStorage(DataSource devOpsDataSource) throws IllegalAccessException, InstantiationException {
+    private void initTaskStorage(DataSource devOpsDataSource) throws IllegalAccessException, InstantiationException {
 
         SQLTaskStorage sqlTaskStorage = new SQLTaskStorage();
         ReflectionTestUtils.setField(sqlTaskStorage, "devOpsDataSource", devOpsDataSource);
@@ -272,16 +289,16 @@ public abstract class AbstractContainer {
         taskExecutor.init();
     }
 
-    private static DataSource buildDevOpsDataSource() {
+    private DataSource buildDevOpsDataSource() {
         return dataSourcePackage.getDevOps();
     }
 
-    private static Selector<DataSource> buildWriteDataSourceSelector() {
+    private Selector<DataSource> buildWriteDataSourceSelector() {
         return new HashSelector<>(dataSourcePackage.getIndexWriter());
     }
 
 
-    private static DataSource buildSearchDataSource() {
+    private DataSource buildSearchDataSource() {
         return dataSourcePackage.getIndexSearch().get(0);
     }
 

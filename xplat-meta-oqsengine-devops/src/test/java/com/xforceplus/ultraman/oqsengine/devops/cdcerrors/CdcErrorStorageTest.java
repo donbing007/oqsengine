@@ -29,19 +29,15 @@ public class CdcErrorStorageTest extends AbstractContainer {
     private static CdcErrorTask expectedCdcErrorTask =
                 CdcErrorTask.buildErrorTask(expectedSeqNo, expectedId, expectedCommitId, expectedMessage);
 
-    @BeforeClass
-    public static void beforeClass() throws Exception {
+    @Before
+    public void before() throws Exception {
         start();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        close();
     }
 
     @After
     public void after() throws SQLException {
         clear();
+        close();
     }
 
     @Test

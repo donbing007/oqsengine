@@ -63,7 +63,7 @@ public class FailOverTest extends AbstractContainer {
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));
-        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initAll());
+        ReflectionTestUtils.setField(cdcDaemonService, "consumerService", initAll(true));
         ReflectionTestUtils.setField(cdcDaemonService, "cdcMetricsService", cdcMetricsService);
         ReflectionTestUtils.setField(cdcDaemonService, "cdcConnector", singleCDCConnector);
     }

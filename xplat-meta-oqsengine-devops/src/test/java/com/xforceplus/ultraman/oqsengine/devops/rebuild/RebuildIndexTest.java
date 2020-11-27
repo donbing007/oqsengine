@@ -33,14 +33,9 @@ public class RebuildIndexTest extends AbstractContainer {
     long txId = 0;
     long commitId = 0;
 
-    @BeforeClass
-    public static void beforeClass() throws Exception {
+    @Before
+    public void before() throws Exception {
         start();
-    }
-
-    @AfterClass
-    public static void afterClass() throws Exception {
-        close();
     }
 
     @After
@@ -49,6 +44,8 @@ public class RebuildIndexTest extends AbstractContainer {
         clear();
         // 确认没有事务.
         Assert.assertFalse(transactionManager.getCurrent().isPresent());
+
+        close();
     }
 
     private int sleepForWaitStatusOk(int wakeUp, String errorFunction) throws InterruptedException {
