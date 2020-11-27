@@ -290,7 +290,7 @@ public abstract class AbstractContainer {
         if (!singleSync) {
             sphinxSyncExecutor.setSingleSyncConsumer(false);
             sphinxSyncExecutor.setExecutionTimeout(100_000);
-            consumerPool = new ThreadPoolExecutor(50, 50,
+            consumerPool = new ThreadPoolExecutor(10, 10,
                     0L, TimeUnit.MILLISECONDS,
                     new ArrayBlockingQueue<>(10000),
                     ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
