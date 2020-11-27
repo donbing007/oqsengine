@@ -165,6 +165,7 @@ public class RebuildIndexTest extends AbstractContainer {
             if (taskHandler.getProgressPercentage() == ONE_HUNDRED_PERCENT) {
                 break;
             }
+            Thread.sleep(10 * 1000);
             cancelResumeByCondition(taskHandler.id());
             wakeUp += sleepForWaitStatusOk(wakeUp, "resumeTest");
         }
@@ -177,9 +178,8 @@ public class RebuildIndexTest extends AbstractContainer {
         Optional<TaskHandler> task = taskExecutor.syncTask(taskId);
         if (task.isPresent()) {
             TaskHandler taskHandler = task.get();
-            Thread.sleep(5 * 1000);
             taskHandler.cancel();
-            Thread.sleep(5 * 1000);
+            Thread.sleep(20 * 1000);
 
             taskHandler = taskExecutor.resumeIndex(pauseResumeEntityClass, taskHandler.devOpsTaskInfo().id(), 0);
 
