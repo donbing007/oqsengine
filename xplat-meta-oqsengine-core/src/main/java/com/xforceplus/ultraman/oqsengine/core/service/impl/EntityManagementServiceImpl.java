@@ -196,6 +196,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @PreDestroy
     public void destroy() {
+        ready = false;
         if (!ignoreCDCStatus) {
             ExecutorHelper.shutdownAndAwaitTermination(checkCDCStatusWorker, 3600);
         }
