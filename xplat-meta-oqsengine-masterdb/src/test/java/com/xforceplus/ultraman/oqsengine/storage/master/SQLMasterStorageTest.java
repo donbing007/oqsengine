@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.CommonRange
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
@@ -18,7 +19,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
-import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
@@ -29,6 +30,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import io.lettuce.core.RedisClient;
 import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.strategy.StandardShardingStrategyConfiguration;
@@ -57,8 +59,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toMap;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * SQLMasterStorage Tester.
@@ -67,11 +67,12 @@ import static org.mockito.Mockito.when;
  * @version 1.0 02/25/2020
  * @since <pre>Feb 25, 2020</pre>
  */
-public class SQLMasterStorageTest extends AbstractMysqlTest {
+public class SQLMasterStorageTest extends AbstractContainerTest {
 
     final Logger logger = LoggerFactory.getLogger(SQLMasterStorageTest.class);
 
     private TransactionManager transactionManager;
+    private RedisClient redisClient;
 
     private DataSource dataSource;
     private SQLMasterStorage storage;
@@ -95,9 +96,13 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         transactionManager = new DefaultTransactionManager(
             new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
 
-        long commitId = 0;
-        CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
-        when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
+        redisClient = RedisClient.create(
+            String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
+        CommitIdStatusServiceImpl commitIdStatusService = new CommitIdStatusServiceImpl();
+        ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
+        ReflectionTestUtils.setField(commitIdStatusService, "locker", new LocalResourceLocker());
+        commitIdStatusService.init();
+
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
             transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity", commitIdStatusService));
 
@@ -137,6 +142,9 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         conn.close();
 
         ((ShardingDataSource) dataSource).close();
+
+        redisClient.connect().sync().flushall();
+        redisClient.shutdown();
     }
 
     @Test

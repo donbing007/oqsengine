@@ -293,10 +293,11 @@ public class SQLMasterStorage implements MasterStorage {
                     Optional<Transaction> tOp = resource.getTransaction();
                     if (tOp.isPresent()) {
                         storageEntity.setTx(tOp.get().id());
+                        storageEntity.setCommitid(CommitHelper.getUncommitId());
                     } else {
                         logger.warn("Build run with no transaction, unable to get the transaction ID.");
                         storageEntity.setTx(0);
-                        storageEntity.setCommitid(CommitHelper.getUncommitId());
+                        storageEntity.setCommitid(0);
                     }
 
                     hint.setReadOnly(false);

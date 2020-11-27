@@ -1,6 +1,6 @@
 instance:
   type: static
-  id: 0
+  id: 1
 
 grpc:
   server:

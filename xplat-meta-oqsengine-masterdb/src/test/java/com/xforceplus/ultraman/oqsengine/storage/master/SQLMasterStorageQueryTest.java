@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -17,7 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
-import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
@@ -29,6 +30,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import io.lettuce.core.RedisClient;
 import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.strategy.StandardShardingStrategyConfiguration;
@@ -55,20 +57,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * @author dongbin
  * @version 0.1 2020/11/6 16:16
  * @since 1.8
  */
-public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
+public class SQLMasterStorageQueryTest extends AbstractContainerTest {
 
     private TransactionManager transactionManager;
 
     private DataSource dataSource;
     private SQLMasterStorage storage;
+    private RedisClient redisClient;
 
     private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
     private static IEntityField stringField = new EntityField(Long.MAX_VALUE - 1, "string", FieldType.STRING);
@@ -143,9 +143,13 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        long commitId = 0;
-        CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
-        when(commitIdStatusService.save(commitId)).thenReturn(commitId++);
+        redisClient = RedisClient.create(
+            String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
+        CommitIdStatusServiceImpl commitIdStatusService = new CommitIdStatusServiceImpl();
+        ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
+        ReflectionTestUtils.setField(commitIdStatusService, "locker", new LocalResourceLocker());
+        commitIdStatusService.init();
+
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
             transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity", commitIdStatusService));
 
@@ -206,6 +210,8 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
 
         ((ShardingDataSource) dataSource).close();
 
+        redisClient.connect().sync().flushall();
+        redisClient.shutdown();
     }
 
     /**
@@ -216,7 +222,9 @@ public class SQLMasterStorageQueryTest extends AbstractMysqlTest {
     @Test
     public void testUncommittedTransactionSelect() throws Exception {
         IEntityValue uncommitEntityValue = new EntityValue(100L);
-        uncommitEntityValue.addValues(Arrays.asList(new LongValue(longField, 2L), new StringValue(stringField, "\"@带有符号的中文@\"\'"),
+        uncommitEntityValue.addValues(Arrays.asList(
+            new LongValue(longField, 2L),
+            new StringValue(stringField, "\"@带有符号的中文@\"\'"),
             new BooleanValue(boolField, false),
             new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
             new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
