@@ -100,6 +100,7 @@ data:
         sync:
           allowMaxSyncTimeMs: {{ .Values.sync.allowMaxSyncTimeMs | default "10000"}}
           allowMaxLiveTimeMs: {{ .Values.sync.allowMaxLiveTimeMs | default "3000" }}
+          allowMaxUnSyncCommitIdSize: {{ .Values.sync.allowMaxUnSyncCommitIdSize | default "30" }}
         cdc:
           connect:
             type: {{ .Values.cdc.connect.type }}

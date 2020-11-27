@@ -141,11 +141,12 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
                 .map(EntityRef::getId)
                 .collect(toList());
 
-        Collection<EntityRef> refs = indexStorage.select(conditions, entityClass, sort, page, filterIdsFromMaster, commitId);
+        Page indexPage = new Page(page.getIndex(), page.getPageSize());
+        Collection<EntityRef> refs = indexStorage.select(
+            conditions, entityClass, sort, indexPage, filterIdsFromMaster, commitId);
 
-        //TODO sort transform
-
-        List<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());
+        List<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().
+            filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());
 
         List<EntityRef> retRefs = new LinkedList<>();
         //combine two refs
@@ -156,12 +157,9 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
             retRefs.addAll(refs);
         }
 
-        PageScope scope = page.getAppointPage(1);
+        page.setTotalCount(indexPage.getTotalCount() + masterRefsWithoutDeleted.size());
+        PageScope scope = page.getNextPage();
         long pageSize = page.getPageSize();
-
-        //update totalCount
-        long totalCount = page.getTotalCount();
-        page.setTotalCount(totalCount + masterRefsWithoutDeleted.size());
 
         long skips = scope == null ? 0 : scope.getStartLine();
         List<EntityRef> limitedSelect = retRefs.stream().skip(skips < 0 ? 0 : skips).limit(pageSize).collect(toList());

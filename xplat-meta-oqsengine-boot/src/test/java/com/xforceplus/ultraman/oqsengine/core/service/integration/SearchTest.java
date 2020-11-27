@@ -383,38 +383,39 @@ public class SearchTest extends AbstractContainerTest {
             return ((DecimalValue) iValue).getValue();
         }).collect(Collectors.toList());
 
-        Comparator<BigDecimal> bigDecimalComparator = (o1, o2) -> o1.compareTo(o2);
+        Comparator<BigDecimal> bigDecimalComparator = BigDecimal::compareTo;
 
-        assertTrue(Comparators.isInOrder(bigDecimals, bigDecimalComparator));
+        assertTrue(Comparators.isInOrder(bigDecimals, bigDecimalComparator.reversed()));
     }
 
     @Test
     public void testChildSecondPageSearch() throws Exception {
         initData();
 
-        Collection<IEntity> iEntities =
+        List<BigDecimal> bigDecimals;
+        Collection<IEntity> iEntitiesFirst =
             entitySearchService.selectByConditions(
                 Conditions.buildEmtpyConditions(),
                 childEntityClass,
                 Sort.buildAscSort(mainFields.stream().skip(2).findFirst().get()),
                 new Page(1, 1));
 
-        Assert.assertEquals(1, iEntities.size());
-        List<BigDecimal> bigDecimals = iEntities.stream().map(x -> {
+        Assert.assertEquals(1, iEntitiesFirst.size());
+        bigDecimals = iEntitiesFirst.stream().map(x -> {
             IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DecimalValue).findFirst().get();
             return ((DecimalValue) iValue).getValue();
         }).collect(Collectors.toList());
         Assert.assertEquals(new BigDecimal("-11.30"), bigDecimals.get(0));
 
-        iEntities =
+        Collection<IEntity> iEntitiesSecond =
             entitySearchService.selectByConditions(
                 Conditions.buildEmtpyConditions(),
                 childEntityClass,
                 Sort.buildAscSort(mainFields.stream().skip(2).findFirst().get()),
                 new Page(2, 1));
 
-        Assert.assertEquals(1, iEntities.size());
-        bigDecimals = iEntities.stream().map(x -> {
+        Assert.assertEquals(1, iEntitiesSecond.size());
+        bigDecimals = iEntitiesSecond.stream().map(x -> {
             IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DecimalValue).findFirst().get();
             return ((DecimalValue) iValue).getValue();
         }).collect(Collectors.toList());
