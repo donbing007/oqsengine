@@ -80,7 +80,7 @@ data:
                 name: {{ .Values.storage.devOps.cdc.errors.name | default "cdcerrors" | quote }}
             maxQueryTimeMs: {{ .Values.storage.devOps.maxQueryTimeMs | default "3000" }}
             task:
-              split: {{ .Values.storage.devops.task.split | default "10" }}
+              split: {{ .Values.storage.devOps.task.split | default "10" }}
               max:
                 queue:
                   size: {{ .Values.storage.devOps.task.max.queue.size | default "2000" }}
