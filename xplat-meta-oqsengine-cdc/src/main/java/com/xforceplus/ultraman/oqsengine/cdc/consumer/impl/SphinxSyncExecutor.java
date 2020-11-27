@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 import com.alibaba.google.common.collect.Maps;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
@@ -195,7 +196,7 @@ public class SphinxSyncExecutor {
         long cref = getLongFromColumn(columns, CREF);
         long pref = getLongFromColumn(columns, PREF);
 
-        int oqsMajor = getIntegerFromColumn(columns, PREF);
+        int oqsMajor = getIntegerFromColumn(columns, OQSMAJOR);
 
         StorageEntity storageEntity = new StorageEntity(
                 id,                                               //  id
@@ -214,10 +215,10 @@ public class SphinxSyncExecutor {
         IEntityValue entityValue = buildEntityValue(
                 storageEntity.getId(), getStringFromColumn(columns, META), getStringFromColumn(columns, ATTRIBUTE));
 
-            /*
-                老数据
-            */
-        if (oqsMajor == 0) {
+         /*
+            老数据，有父类
+         */
+        if (oqsMajor != OqsVersion.MAJOR && pref > 0) {
             //  通过pref拿到父类的EntityValue
             IEntityValue entityValueF = entityValueGet(pref);
             entityValue.addValues(entityValueF.values());
@@ -245,6 +246,7 @@ public class SphinxSyncExecutor {
     }
 
     public void errorHandle(long id, long commitId, String message) throws SQLException {
+        logger.warn("sphinx consume error will be record in cdcerrors,  id : {}, commitId : {}, message : {}", id, commitId, message);
         cdcErrorStorage.buildCdcError(CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, message));
     }
 

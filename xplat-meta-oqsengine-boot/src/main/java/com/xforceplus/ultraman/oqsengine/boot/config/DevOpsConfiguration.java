@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.devops.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.LockExecutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -47,5 +48,10 @@ public class DevOpsConfiguration {
         storage.setQueryTimeout(maxQueryTimeMs);
         storage.setCdcErrorRecordTable(cdcErrorName);
         return storage;
+    }
+
+    @Bean
+    public SQLTaskStorage sqlTaskStorage() {
+        return new SQLTaskStorage();
     }
 }

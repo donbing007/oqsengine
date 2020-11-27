@@ -15,9 +15,10 @@ import java.util.Random;
  */
 public class CanalEntryTools {
 
-    public static CanalEntry.Entry buildRow(long id, boolean replacement, long tx, long commit, String isDeleted, long entityId, int attrIndex, long pref, long cref) {
+    public static CanalEntry.Entry buildRow(long id, boolean replacement, long tx, long commit, String isDeleted,
+                                                        long entityId, int attrIndex, long pref, long cref, int oqsmajor) {
         CanalEntry.Entry.Builder builder = getEntryBuildByEntryType(CanalEntry.EntryType.ROWDATA);
-        builder.setStoreValue(buildRowChange(id, replacement, tx, commit, isDeleted, entityId, attrIndex, pref, cref).toByteString());
+        builder.setStoreValue(buildRowChange(id, replacement, tx, commit, isDeleted, entityId, attrIndex, pref, cref, oqsmajor).toByteString());
         return builder.build();
     }
 
@@ -39,23 +40,23 @@ public class CanalEntryTools {
 
 
     private static CanalEntry.RowChange buildRowChange(long id, boolean replacement, long tx, long commit,
-                                                String isDeleted, long entityId, int attrIndex, long pref, long cref) {
+                                                String isDeleted, long entityId, int attrIndex, long pref, long cref, int oqsmajor) {
         CanalEntry.RowChange.Builder builder = CanalEntry.RowChange.newBuilder();
 
         CanalEntry.EventType eventType = replacement ? CanalEntry.EventType.UPDATE : CanalEntry.EventType.INSERT;
         builder.setEventType(eventType);
 
-        builder.addRowDatas(buildRowData(id, tx, commit, isDeleted, entityId, attrIndex, pref, cref));
+        builder.addRowDatas(buildRowData(id, tx, commit, isDeleted, entityId, attrIndex, pref, cref, oqsmajor));
 
         return builder.build();
     }
 
     private static CanalEntry.RowData buildRowData(long id, long tx, long commit,
-                                            String isDeleted, long entityId, int attrIndex, long pref, long cref) {
+                                            String isDeleted, long entityId, int attrIndex, long pref, long cref, int oqsmajor) {
         int attrId = Math.abs(new Random(id).nextInt());
         CanalEntry.RowData.Builder builder = CanalEntry.RowData.newBuilder();
         for (OqsBigEntityColumns v : OqsBigEntityColumns.values()) {
-            CanalEntry.Column column = buildColumn(id, v, attrId, tx, commit, isDeleted, entityId, attrIndex, pref, cref);
+            CanalEntry.Column column = buildColumn(id, v, attrId, tx, commit, isDeleted, entityId, attrIndex, pref, cref, oqsmajor);
             if (null != column) {
                 builder.addAfterColumns(column);
             }
@@ -65,7 +66,7 @@ public class CanalEntryTools {
     }
 
     private static CanalEntry.Column buildColumn(long id, OqsBigEntityColumns v, int attrId, long tx,
-                                          long commit, String isDeleted, long entityId, int attrIndex, long pref, long cref) {
+                                          long commit, String isDeleted, long entityId, int attrIndex, long pref, long cref, int oqsmajor) {
         switch (v) {
             case ID:
                 return buildId(id, v);
@@ -87,6 +88,8 @@ public class CanalEntryTools {
                 return buildMeta(v, attrId, attrIndex);
             case TIME:
                 return buildTime(v, System.currentTimeMillis());
+            case OQSMAJOR:
+                return buildOqsmajor(v, oqsmajor);
         }
 
         return null;
@@ -146,6 +149,12 @@ public class CanalEntryTools {
     private static CanalEntry.Column buildTime(OqsBigEntityColumns v, long time) {
         CanalEntry.Column.Builder builder = getBuilder(v);
         builder.setValue(Long.toString(time));
+        return builder.build();
+    }
+
+    private static CanalEntry.Column buildOqsmajor(OqsBigEntityColumns v, int oqsmajor) {
+        CanalEntry.Column.Builder builder = getBuilder(v);
+        builder.setValue(Integer.toString(oqsmajor));
         return builder.build();
     }
 

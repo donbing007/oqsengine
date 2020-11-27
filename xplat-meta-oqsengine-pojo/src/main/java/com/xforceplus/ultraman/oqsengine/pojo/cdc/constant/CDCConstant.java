@@ -17,6 +17,7 @@ public class CDCConstant {
     public static final int INIT_ID = -1;
     public static final int UNEXPECTED_COMMIT_ID_COUNT = 1;
     public static final int ZERO = 0;
+    public static final int OLD_MAJOR = 0;
 
     public static final long UN_KNOW_ID = -1;
 

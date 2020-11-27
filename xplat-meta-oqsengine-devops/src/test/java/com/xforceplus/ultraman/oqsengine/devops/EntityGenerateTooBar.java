@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.devops;
 
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
@@ -50,7 +51,7 @@ public class EntityGenerateTooBar {
             IEntityValue values = new EntityValue(startPos);
             values.addValues(Arrays.asList(new LongValue(longField, startPos),
                     new StringValue(stringField, "longString" + startPos)));
-            entities[i] = new Entity(startPos, longStringEntityClass, values, new EntityFamily(0, 0), testVersion);
+            entities[i] = new Entity(startPos, longStringEntityClass, values, new EntityFamily(0, 0), testVersion, OqsVersion.MAJOR);
             entities[i].markTime(defaultTime + startPos * SECOND);
             startPos++;
             //  结束时间
@@ -76,7 +77,7 @@ public class EntityGenerateTooBar {
             IEntityValue values = new EntityValue(startPos);
             values.addValues(Arrays.asList(new LongValue(longField, startPos),
                     new StringValue(stringField, "surPlus" + startPos), new BooleanValue(boolField, startPos % 2 == 0)));
-            entities[i] = new Entity(startPos, surPlusNeedDeleteEntityClass, values, new EntityFamily(0, 0), testVersion);
+            entities[i] = new Entity(startPos, surPlusNeedDeleteEntityClass, values, new EntityFamily(0, 0), testVersion, OqsVersion.MAJOR);
             entities[i].markTime(defaultTime + startPos * SECOND);
             startPos++;
             surPlusEndTime = entities[i].time();
@@ -106,13 +107,13 @@ public class EntityGenerateTooBar {
         for (int i = 0; i < size; i++) {
             IEntityValue pValues = new EntityValue(startPos);
             pValues.addValues(Collections.singletonList(new LongValue(longField, startPos)));
-            IEntity entityF = new Entity(startPos, prefEntityClass, pValues, new EntityFamily(0, startPos + 1), testVersion);
+            IEntity entityF = new Entity(startPos, prefEntityClass, pValues, new EntityFamily(0, startPos + 1), testVersion, OqsVersion.MAJOR);
 
             startPos++;
 
             IEntityValue cValues = new EntityValue(startPos);
             pValues.addValues(Arrays.asList(new StringValue(stringField, "prefCref" + startPos), new BooleanValue(boolField, startPos % 2 == 0)));
-            IEntity entityC = new Entity(startPos, crefEntityClass, cValues, new EntityFamily(startPos - 1, 0), testVersion);
+            IEntity entityC = new Entity(startPos, crefEntityClass, cValues, new EntityFamily(startPos - 1, 0), testVersion, OqsVersion.MAJOR);
 
             prefCrefEndTime = defaultTime + startPos * SECOND;
             entityF.markTime(prefCrefEndTime);
@@ -145,7 +146,7 @@ public class EntityGenerateTooBar {
                     new StringValue(stringField, "surPlus" + startPos),
                     new BooleanValue(boolField, startPos % 2 == 0),
                     new StringsValue(stringsField, "value" + startPos, startPos + "value", "value" + startPos + "value")));
-            entities[i] = new Entity(startPos, pauseResumeEntityClass, values, new EntityFamily(0, 0), 0);
+            entities[i] = new Entity(startPos, pauseResumeEntityClass, values, new EntityFamily(0, 0), 0, OqsVersion.MAJOR);
             entities[i].markTime(defaultTime + startPos * SECOND);
             startPos++;
             pauseResumeEndTime = entities[i].time();

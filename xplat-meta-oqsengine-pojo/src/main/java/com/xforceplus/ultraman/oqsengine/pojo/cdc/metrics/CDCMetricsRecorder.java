@@ -20,6 +20,7 @@ public class CDCMetricsRecorder {
     private CDCMetrics cdcMetrics;
     private StopWatch timeRecorder = new StopWatch();
 
+
     public CDCMetricsRecorder startRecord(CDCUnCommitMetrics cdcUnCommitMetrics, long batchId) {
         timeRecorder.start();
         //  将上一次的剩余信息设置回来
@@ -28,7 +29,6 @@ public class CDCMetricsRecorder {
         if (null != cdcUnCommitMetrics) {
             cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(cdcUnCommitMetrics.getUnCommitIds());
             logger.debug("start new batch, sync un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
-            cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues().putAll(cdcUnCommitMetrics.getUnCommitEntityValues());
         }
         cdcMetrics.setBatchId(batchId);
         return this;

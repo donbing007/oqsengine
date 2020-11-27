@@ -181,7 +181,7 @@ public class ConsumerRunner extends Thread {
                 } else {
                     error = "sync finish status error";
                 }
-                logger.error("sync error, message : {}, will reconnect...", error);
+                logger.error("sync error, will reconnect..., message : {}, {}", error, e.getMessage());
                 throw new SQLException(error);
             }
         }

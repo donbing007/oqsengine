@@ -134,13 +134,13 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         //  random 1
         long commitId = Long.MAX_VALUE - 1;
-        CanalEntry.Entry fRanDom_1 = buildRow(RANDOM_INSERT_1, true, 1, commitId, "false", RANDOM_INSERT_1, EXPECTED_ATTR_INDEX_2, 0, 0);
+        CanalEntry.Entry fRanDom_1 = buildRow(RANDOM_INSERT_1, true, 1, commitId, "false", RANDOM_INSERT_1, EXPECTED_ATTR_INDEX_2, 0, 0, 1);
         entries.add(fRanDom_1);
 
         addExpectCount(commitId);
 
         //  build child
-        CanalEntry.Entry cEntryUnCommit = buildRow(EXPECTED_CREF, true, 1, commitId, "false", EXPECTED_CREF, EXPECTED_ATTR_INDEX_1, EXPECTED_PREF, 0);
+        CanalEntry.Entry cEntryUnCommit = buildRow(EXPECTED_CREF, true, 1, commitId, "false", EXPECTED_CREF, EXPECTED_ATTR_INDEX_1, EXPECTED_PREF, 0, 1);
         entries.add(cEntryUnCommit);
 
         addExpectCount(commitId);
@@ -157,19 +157,19 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
             这里将子类设定为比父类先到，在批次1中，父类在批次二中，模拟了真实情况的不确定性
          */
         //  build father
-        CanalEntry.Entry fEntryUnCommit = buildRow(EXPECTED_PREF, true, 1, commitId, "false", EXPECTED_PREF, EXPECTED_ATTR_INDEX_2, 0, EXPECTED_CREF);
+        CanalEntry.Entry fEntryUnCommit = buildRow(EXPECTED_PREF, true, 1, commitId, "false", EXPECTED_PREF, EXPECTED_ATTR_INDEX_2, 0, EXPECTED_CREF, 1);
         entries.add(fEntryUnCommit);
 
         addExpectCount(commitId);
 
         //  build delete
-        CanalEntry.Entry cDeleted = buildRow(EXPECTED_DELETED, true, 1, commitId, "true", EXPECTED_DELETED, EXPECTED_ATTR_INDEX_0, 0, 0);
+        CanalEntry.Entry cDeleted = buildRow(EXPECTED_DELETED, true, 1, commitId, "true", EXPECTED_DELETED, EXPECTED_ATTR_INDEX_0, 0, 0, 1);
         entries.add(cDeleted);
 
         addExpectCount(commitId);
 
         //  random 2
-        CanalEntry.Entry fRanDom_2 = buildRow(RANDOM_INSERT_2, true, 1, commitId, "false", RANDOM_INSERT_2, EXPECTED_ATTR_INDEX_1, 0, 0);
+        CanalEntry.Entry fRanDom_2 = buildRow(RANDOM_INSERT_2, true, 1, commitId, "false", RANDOM_INSERT_2, EXPECTED_ATTR_INDEX_1, 0, 0,1);
         entries.add(fRanDom_2);
 
         addExpectCount(commitId);
@@ -185,31 +185,31 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
     private void build(List<CanalEntry.Entry> entries, long commitId) {
         //  random 1
-        CanalEntry.Entry fRanDom_1 = buildRow(RANDOM_INSERT_1, true, 1, commitId, "false", RANDOM_INSERT_1, EXPECTED_ATTR_INDEX_2, 0, 0);
+        CanalEntry.Entry fRanDom_1 = buildRow(RANDOM_INSERT_1, true, 1, commitId, "false", RANDOM_INSERT_1, EXPECTED_ATTR_INDEX_2, 0, 0, 1);
         entries.add(fRanDom_1);
 
         addExpectCount(commitId);
 
         //  build father
-        CanalEntry.Entry fEntryUnCommit = buildRow(EXPECTED_PREF, true, 1, commitId, "false", EXPECTED_PREF, EXPECTED_ATTR_INDEX_2, 0, EXPECTED_CREF);
+        CanalEntry.Entry fEntryUnCommit = buildRow(EXPECTED_PREF, true, 1, commitId, "false", EXPECTED_PREF, EXPECTED_ATTR_INDEX_2, 0, EXPECTED_CREF, 1);
         entries.add(fEntryUnCommit);
 
         addExpectCount(commitId);
 
         //  build child
-        CanalEntry.Entry cEntryUnCommit = buildRow(EXPECTED_CREF, true, 1, commitId, "false", EXPECTED_CREF, EXPECTED_ATTR_INDEX_1, EXPECTED_PREF, 0);
+        CanalEntry.Entry cEntryUnCommit = buildRow(EXPECTED_CREF, true, 1, commitId, "false", EXPECTED_CREF, EXPECTED_ATTR_INDEX_1, EXPECTED_PREF, 0, 1);
         entries.add(cEntryUnCommit);
 
         addExpectCount(commitId);
 
         //  build delete
-        CanalEntry.Entry cDeleted = buildRow(EXPECTED_DELETED, true, 1, commitId, "true", EXPECTED_DELETED, EXPECTED_ATTR_INDEX_0, 0, 0);
+        CanalEntry.Entry cDeleted = buildRow(EXPECTED_DELETED, true, 1, commitId, "true", EXPECTED_DELETED, EXPECTED_ATTR_INDEX_0, 0, 0, 1);
         entries.add(cDeleted);
 
         addExpectCount(commitId);
 
         //  random 2
-        CanalEntry.Entry fRanDom_2 = buildRow(RANDOM_INSERT_2, true, 1, commitId, "false", RANDOM_INSERT_2, EXPECTED_ATTR_INDEX_1, 0, 0);
+        CanalEntry.Entry fRanDom_2 = buildRow(RANDOM_INSERT_2, true, 1, commitId, "false", RANDOM_INSERT_2, EXPECTED_ATTR_INDEX_1, 0, 0, 1);
         entries.add(fRanDom_2);
 
         addExpectCount(commitId);
