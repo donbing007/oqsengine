@@ -71,4 +71,8 @@ public class FieldDefine {
      * 元信息.用以数据同步.
      */
     public static final String META = "meta";
+    /**
+     * 产生数据的大版本号.
+     */
+    public static final String OQS_MAJOR = "oqsmajor";
 }

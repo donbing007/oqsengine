@@ -14,6 +14,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
@@ -184,28 +185,28 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
      */
     @Test
     public void testConcurrentProcess() throws Exception {
-        BlockingDeque<Long> queue = new LinkedBlockingDeque<>();
+        Queue<Long> queue = new ConcurrentLinkedQueue();
 
         ExecutorService worker = Executors.newFixedThreadPool(50);
 
         CountDownLatch obsoleteLatch = new CountDownLatch(1);
-        worker.submit(() -> {
-            while (true) {
-                long id = 0;
-                try {
-                    id = queue.take();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    break;
+        for (int i = 0; i < 10; i++) {
+            worker.submit(() -> {
+                while (true) {
+                    Long id = queue.poll();
+                    if (id == null) {
+                        continue;
+                    }
+
+                    if (id == -1L) {
+                        break;
+                    } else {
+                        impl.obsolete(id);
+                    }
                 }
-                if (id == -1L) {
-                    break;
-                } else {
-                    impl.obsolete(id);
-                }
-            }
-            obsoleteLatch.countDown();
-        });
+                obsoleteLatch.countDown();
+            });
+        }
 
         int size = 10000;
         CountDownLatch latch = new CountDownLatch(size);
@@ -228,5 +229,6 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
         TimeUnit.SECONDS.sleep(1);
 
         Assert.assertEquals(0, impl.size());
+        Assert.assertEquals(0, queue.size());
     }
 } 

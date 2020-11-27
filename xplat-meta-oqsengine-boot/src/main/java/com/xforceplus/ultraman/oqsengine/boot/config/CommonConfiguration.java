@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceConfiguration;
+import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
+import com.xforceplus.ultraman.oqsengine.common.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
@@ -80,6 +82,11 @@ public class CommonConfiguration {
     @Bean("entityValueBuilder")
     public IEntityValueBuilder entityValueBuilder() {
         return new SQLJsonIEntityValueBuilder();
+    }
+
+    @Bean
+    public ResourceLocker locker() {
+        return new LocalResourceLocker();
     }
 
 }

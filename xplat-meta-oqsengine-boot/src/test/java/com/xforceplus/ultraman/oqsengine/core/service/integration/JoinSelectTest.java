@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
@@ -162,7 +163,9 @@ public class JoinSelectTest extends AbstractContainerTest {
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(driverFields.stream().findFirst().get(), "name0"),
                     new LongValue(driverFields.stream().skip(1).findFirst().get(), 0)
-                )))
+                )),
+                OqsVersion.MAJOR
+            )
             ,
             new Entity(
                 idGenerator.next(),
@@ -170,7 +173,9 @@ public class JoinSelectTest extends AbstractContainerTest {
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(driverFields.stream().findFirst().get(), "name1"),
                     new LongValue(driverFields.stream().skip(1).findFirst().get(), 1)
-                )))
+                )),
+                OqsVersion.MAJOR
+            )
         ));
 
         for (int i = 0; i < 1000; i++) {
@@ -181,7 +186,8 @@ public class JoinSelectTest extends AbstractContainerTest {
                     new EntityValue(0).addValues(Arrays.asList(
                         new StringValue(driverFields.stream().findFirst().get(), "name2"),
                         new LongValue(driverFields.stream().skip(1).findFirst().get(), Long.MAX_VALUE)
-                    ))
+                    )),
+                    OqsVersion.MAJOR
                 )
             );
         }
@@ -197,7 +203,9 @@ public class JoinSelectTest extends AbstractContainerTest {
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "main.c1.value0"),
                     new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId)
-                )))
+                )),
+                OqsVersion.MAJOR
+            )
             ,
             new Entity(
                 idGenerator.next(),
@@ -205,7 +213,9 @@ public class JoinSelectTest extends AbstractContainerTest {
                 new EntityValue(0).addValues(Arrays.asList(
                     new StringValue(mainFields.stream().findFirst().get(), "main.c1.value1"),
                     new LongValue(mainFields.stream().skip(1).findFirst().get(), driverId)
-                )))
+                )),
+                OqsVersion.MAJOR
+            )
         ));
 
         // big driver main entity.
@@ -215,7 +225,8 @@ public class JoinSelectTest extends AbstractContainerTest {
             new EntityValue(0).addValues(Arrays.asList(
                 new StringValue(mainFields.stream().findFirst().get(), "main.c1.bigvalue"),
                 new LongValue(mainFields.stream().skip(1).findFirst().get(), driverEntities.get(driverEntities.size() - 1).id())
-            ))
+            )),
+            OqsVersion.MAJOR
         ));
 
         buildEntities(entities);

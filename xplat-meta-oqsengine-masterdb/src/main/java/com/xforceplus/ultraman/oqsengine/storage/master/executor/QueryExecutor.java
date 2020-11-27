@@ -98,6 +98,7 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
                 entity.setTime(rs.getLong(FieldDefine.TIME));
                 entity.setTx(rs.getLong(FieldDefine.TX));
                 entity.setCommitid(rs.getLong(FieldDefine.COMMITID));
+                entity.setOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR));
                 if (!noDetail) {
                     entity.setEntity(rs.getLong(FieldDefine.ENTITY));
                     entity.setPref(rs.getLong(FieldDefine.PREF));
@@ -128,7 +129,8 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
             FieldDefine.VERSION,
             FieldDefine.TIME,
             FieldDefine.TX,
-            FieldDefine.COMMITID
+            FieldDefine.COMMITID,
+            FieldDefine.OQS_MAJOR
             )
         );
         if (!noDetail) {

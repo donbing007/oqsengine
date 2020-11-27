@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.mode.OqsMode;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
@@ -14,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
@@ -32,8 +34,8 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -61,6 +63,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private CDCStatusService cdcStatusService;
 
+    @Resource
+    private CommitIdStatusService commitIdStatusService;
+
     /**
      * 可以接受的最大同步时间毫秒.
      */
@@ -69,6 +74,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      * 可以接爱的最大心跳间隔.
      */
     private long allowMaxLiveTimeMs = 3000;
+
+    /**
+     * 可以接受的最大未同步提交号数量.
+     */
+    private long allowMaxUnSyncCommitIdSize = 30;
 
     /**
      * 忽略CDC状态检查.
@@ -108,12 +118,20 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         this.allowMaxLiveTimeMs = allowMaxLiveTimeMs;
     }
 
+    public long getAllowMaxUnSyncCommitIdSize() {
+        return allowMaxUnSyncCommitIdSize;
+    }
+
+    public void setAllowMaxUnSyncCommitIdSize(long allowMaxUnSyncCommitIdSize) {
+        this.allowMaxUnSyncCommitIdSize = allowMaxUnSyncCommitIdSize;
+    }
+
     @PostConstruct
     public void init() {
         readOnly.set(OqsMode.NORMAL.getValue());
         if (!ignoreCDCStatus) {
             logger.info("Ignore CDC status checks.");
-            checkCDCStatusWorker = Executors.newScheduledThreadPool(1, ExecutorHelper.buildNameThreadFactory("CDC-monitor"));
+            checkCDCStatusWorker = new ScheduledThreadPoolExecutor(1, ExecutorHelper.buildNameThreadFactory("CDC-monitor"));
             checkCDCStatusWorker.scheduleWithFixedDelay(() -> {
                 /**
                  * 几种情况会认为是CDC同步停止.
@@ -145,6 +163,15 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     if (useTimeMs > allowMaxSyncTimeMs) {
                         logger.warn("CDC services synchronize data over {} milliseconds, blocking the write service.",
                             allowMaxSyncTimeMs);
+                        readOnly.set(OqsMode.READ_ONLY.getValue());
+                        ready = false;
+                        return;
+                    }
+
+                    long unsynccommitSize = commitIdStatusService.size();
+                    if (unsynccommitSize > allowMaxUnSyncCommitIdSize) {
+                        logger.warn("The number of unsynchronized commit Numbers exceeds {} and the service write is blocked.",
+                            allowMaxUnSyncCommitIdSize);
                         readOnly.set(OqsMode.READ_ONLY.getValue());
                         ready = false;
                         return;
@@ -390,17 +417,25 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private IEntity buildChildEntity(IEntity entity, long pref) {
-        return build(entity, entity.entityClass(), new EntityFamily(pref, 0));
+        return build(entity, entity.entityClass(), new EntityFamily(pref, 0), true);
     }
 
     private IEntity buildFatherEntity(IEntity entity, long cref) {
-        return build(entity, entity.entityClass().extendEntityClass(), new EntityFamily(0, cref));
+        return build(entity, entity.entityClass().extendEntityClass(), new EntityFamily(0, cref), false);
     }
 
-    private IEntity build(IEntity entity, IEntityClass entityClass, IEntityFamily family) {
+    /**
+     * 构造一个新的IEntity实例,all参数决定了是对父子属性分离构造还是子类包含父类属性.
+     */
+    private IEntity build(IEntity entity, IEntityClass entityClass, IEntityFamily family, boolean includeFather) {
         // 当前属于子类的属性速查表.
         Map<IEntityField, Object> fieldTable =
             entityClass.fields().stream().collect(Collectors.toMap(v -> v, v -> ""));
+
+        if (includeFather && entityClass.extendEntityClass() != null) {
+            fieldTable.putAll(
+                entityClass.extendEntityClass().fields().stream().collect(Collectors.toMap(v -> v, v -> "")));
+        }
 
         IEntityValue newValues = new EntityValue(entityClass.id());
         entity.entityValue().values().stream()
@@ -409,7 +444,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 newValues.addValue(v);
             });
 
-        IEntity newEntity = new Entity(entity.id(), entityClass, newValues, family, entity.version());
+        IEntity newEntity = new Entity(entity.id(), entityClass, newValues, family, entity.version(), OqsVersion.MAJOR);
         newEntity.markTime(entity.time());
         return newEntity;
     }

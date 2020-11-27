@@ -90,6 +90,13 @@ public interface IEntity extends Cloneable {
     public void markTime();
 
     /**
+     * 产生的oqs大版本号.
+     *
+     * @return 大版本号.
+     */
+    public int major();
+
+    /**
      * 克隆.
      * @return
      * @throws CloneNotSupportedException

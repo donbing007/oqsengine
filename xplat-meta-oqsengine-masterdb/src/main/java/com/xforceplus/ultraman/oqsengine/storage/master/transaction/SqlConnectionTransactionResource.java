@@ -55,12 +55,25 @@ public class SqlConnectionTransactionResource extends AbstractConnectionTransact
         if (transactionOp.isPresent()) {
             Transaction tx = transactionOp.get();
             updateCommitId(tx.id(), commitId);
-            super.commit(commitId);
 
             /**
-             * 记录下最后产生的commitid,这个值决定了从主库搜索的数据范围.
+             * 数据库提交会在写入commitId之前,在保证之前有可能同步已经完成造成提交号实际执行顺序如下.
+             *  1. 淘汰提交号.
+             *  2. 保存提交号.
+             *  最终结果为提交号没有被正确淘汰.
+             *  这里由commitIdStatusService的实现来保证保存和事务提交是在一个锁保护内,以防这期间被淘汰.
              */
-            commitIdStatusService.save(commitId);
+            try {
+                commitIdStatusService.save(commitId, () -> {
+                    try {
+                        super.commit(commitId);
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e.getMessage(), e);
+                    }
+                });
+            } catch (Exception e) {
+                throw new SQLException(e.getMessage(), e);
+            }
 
         } else {
             throw new SQLException("Is not bound to any transaction.");

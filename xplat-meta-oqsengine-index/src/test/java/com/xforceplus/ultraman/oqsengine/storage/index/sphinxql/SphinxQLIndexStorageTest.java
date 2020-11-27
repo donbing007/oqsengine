@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -82,7 +83,7 @@ public class SphinxQLIndexStorageTest {
         Arrays.asList(longField, stringField, boolField, dateTimeField, decimalField, enumField, stringsField));
 
     private static IEntityClass batchDeleteClass = new EntityClass(1024 + 1, "batchDeleteClass",
-            Arrays.asList(longField, stringField));
+        Arrays.asList(longField, stringField));
 
     private static IEntity[] entityes;
 
@@ -102,7 +103,7 @@ public class SphinxQLIndexStorageTest {
             new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1)),
             new DecimalValue(decimalField, BigDecimal.ZERO), new EnumValue(enumField, "1"),
             new StringsValue(stringsField, "value1", "value2")));
-        entityes[0] = new Entity(id, entityClass, values);
+        entityes[0] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 1;
         values = new EntityValue(id);
@@ -111,7 +112,7 @@ public class SphinxQLIndexStorageTest {
             new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 9, 0, 1)),
             new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
             new StringsValue(stringsField, "value1", "value2", "value3")));
-        entityes[1] = new Entity(id, entityClass, values);
+        entityes[1] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 2;
         values = new EntityValue(id);
@@ -120,7 +121,7 @@ public class SphinxQLIndexStorageTest {
             new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 11, 18, 1)),
             new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
             new StringsValue(stringsField, "value1", "value2", "value3")));
-        entityes[2] = new Entity(id, entityClass, values);
+        entityes[2] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 3;
         values = new EntityValue(id);
@@ -129,7 +130,7 @@ public class SphinxQLIndexStorageTest {
             new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1)),
             new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
             new StringsValue(stringsField, "value1", "value2", "value3")));
-        entityes[3] = new Entity(id, entityClass, values);
+        entityes[3] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 4;
         values = new EntityValue(id);
@@ -138,19 +139,19 @@ public class SphinxQLIndexStorageTest {
             new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
             new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
             new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN")));
-        entityes[4] = new Entity(id, entityClass, values);
+        entityes[4] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         // issue #14
         id = Long.MAX_VALUE - 5;
         values = new EntityValue(id);
         values.addValues(Arrays.asList(new StringValue(stringField141, "A"), new StringValue(stringField142, "0")));
-        entityes[5] = new Entity(id, entityClass, values);
+        entityes[5] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         // issue #14
         id = Long.MAX_VALUE - 6;
         values = new EntityValue(id);
         values.addValues(Arrays.asList(new StringValue(stringField141, "B"), new StringValue(stringField142, "1")));
-        entityes[6] = new Entity(id, entityClass, values);
+        entityes[6] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         initReIndexData();
     }
@@ -172,7 +173,7 @@ public class SphinxQLIndexStorageTest {
         IEntityValue batchDeletes = new EntityValue(id);
         batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1025")));
 
-        batchDeleteEntities[0] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        batchDeleteEntities[0] = new Entity(id, batchDeleteClass, batchDeletes, null, 0, OqsVersion.MAJOR);
         batchDeleteEntities[0].markTime(time);
 
 
@@ -182,7 +183,7 @@ public class SphinxQLIndexStorageTest {
         batchDeletes = new EntityValue(id);
         batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1026")));
 
-        IEntity entity1 = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        IEntity entity1 = new Entity(id, batchDeleteClass, batchDeletes, null, 0, OqsVersion.MAJOR);
         entity1.restMaintainId(taskId);
         batchDeleteEntities[1] = entity1;
         batchDeleteEntities[1].markTime(time);
@@ -194,7 +195,7 @@ public class SphinxQLIndexStorageTest {
         batchDeletes = new EntityValue(id);
         batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1027")));
 
-        batchDeleteEntities[2] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        batchDeleteEntities[2] = new Entity(id, batchDeleteClass, batchDeletes, null, 0, OqsVersion.MAJOR);
         batchDeleteEntities[2].markTime(time);
         expectedBatchDeleteIds.add(id);
 
@@ -204,7 +205,7 @@ public class SphinxQLIndexStorageTest {
         batchDeletes = new EntityValue(id);
         batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1028")));
 
-        batchDeleteEntities[3] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        batchDeleteEntities[3] = new Entity(id, batchDeleteClass, batchDeletes, null, 0, OqsVersion.MAJOR);
         batchDeleteEntities[3].markTime(time);
         expectedBatchDeleteIds.add(id);
 
@@ -214,7 +215,7 @@ public class SphinxQLIndexStorageTest {
         batchDeletes = new EntityValue(id);
         batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1029")));
 
-        batchDeleteEntities[4] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        batchDeleteEntities[4] = new Entity(id, batchDeleteClass, batchDeletes, null, 0, OqsVersion.MAJOR);
         batchDeleteEntities[4].markTime(time);
         expectedBatchDeleteIds.add(id);
 
@@ -224,7 +225,7 @@ public class SphinxQLIndexStorageTest {
         batchDeletes = new EntityValue(id);
         batchDeletes.addValues(Arrays.asList(new LongValue(longField, id), new StringValue(stringField, "V1030")));
 
-        batchDeleteEntities[5] = new Entity(id, batchDeleteClass, batchDeletes, null, 0);
+        batchDeleteEntities[5] = new Entity(id, batchDeleteClass, batchDeletes, null, 0, OqsVersion.MAJOR);
         batchDeleteEntities[5].markTime(time);
         expectedBatchDeleteIds.add(id);
     }
@@ -361,7 +362,7 @@ public class SphinxQLIndexStorageTest {
 
         //	test delete last one due to taskId = 0 and time in range
         boolean deleteResult =
-                storage.clean(batchDeleteClass.id(), taskId, testStandTime, testStandTime + 101);
+            storage.clean(batchDeleteClass.id(), taskId, testStandTime, testStandTime + 101);
 
         Assert.assertTrue(deleteResult);
 
@@ -369,16 +370,16 @@ public class SphinxQLIndexStorageTest {
         Assert.assertFalse(transactionManager.getCurrent().isPresent());
 
         Collection<EntityRef> entityRefs =
-                storage.select(Conditions.buildEmtpyConditions(), batchDeleteClass, null, new Page(1, 1000), null, 1000L);
+            storage.select(Conditions.buildEmtpyConditions(), batchDeleteClass, null, new Page(1, 1000), null, 1000L);
 
         Assert.assertNotNull(entityRefs);
         Assert.assertEquals(batchDeleteEntities.length - expectedBatchDeleteIds.size(), entityRefs.size());
         List<Long> ids = entityRefs.stream().map(EntityRef::getId).collect(Collectors.toList());
         expectedBatchDeleteIds.forEach(
-                expectedDelete -> {
-                    //	删除的ID不在列表中
-                    Assert.assertFalse(ids.contains(expectedDelete));
-                }
+            expectedDelete -> {
+                //	删除的ID不在列表中
+                Assert.assertFalse(ids.contains(expectedDelete));
+            }
         );
     }
 
@@ -769,7 +770,7 @@ public class SphinxQLIndexStorageTest {
             Arrays.stream(batchDeleteEntities).forEach(e -> {
                 try {
                     StorageEntity storageEntity =
-                            create(e.id(), e.entityClass().id(), commitId, tx);
+                        create(e.id(), e.entityClass().id(), commitId, tx);
                     storageEntity.setTime(e.time());
                     if (e.maintainId() == taskId) {
                         storageEntity.setMaintainId(taskId);

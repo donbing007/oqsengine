@@ -131,47 +131,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
         try {
-            Optional<IEntity> entityOptional = combinedStorage.selectOne(id, entityClass);
 
-            if (entityOptional.isPresent()) {
+            return combinedStorage.selectOne(id, entityClass);
 
-                if (entityClass.extendEntityClass() != null) {
-
-                    /**
-                     * 查询出子类,需要加载父类信息.
-                     */
-                    IEntity child = entityOptional.get();
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(
-                            "The query object is a subclass, loading the parent class data information.[id={},parent=[]]",
-                            id, child.family().parent());
-                    }
-
-                    if (child.family().parent() == 0) {
-                        throw new SQLException(
-                            String.format("A fatal error, unable to find parent data (%d) for data (%d).",
-                                child.family().parent(), id));
-                    }
-
-                    Optional<IEntity> parentOptional =
-                        combinedStorage.selectOne(child.family().parent(), entityClass.extendEntityClass());
-
-                    if (parentOptional.isPresent()) {
-
-                        merageChildAndParent(child, parentOptional.get());
-
-                    } else {
-
-                        throw new SQLException(
-                            String.format("A fatal error, unable to find parent data (%d) for data (%d)",
-                                child.family().parent(), id));
-                    }
-
-                }
-
-            }
-            return entityOptional;
         } catch (Exception ex) {
             failCountTotal.increment();
             throw ex;
@@ -192,30 +154,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         try {
             Collection<IEntity> entities = combinedStorage.selectMultiple(request);
-
-            // 如果有继承关系.
-            if (entityClass.extendEntityClass() != null) {
-                request = entities.stream().collect(
-                    toMap(c -> c.family().parent(), c -> c.entityClass().extendEntityClass(), (c0, c1) -> c0)
-                );
-
-                Collection<IEntity> parentEntities = combinedStorage.selectMultiple(request);
-                Map<Long, IEntity> parentEntityMap =
-                    parentEntities.stream().collect(toMap(p -> p.id(), p -> p, (p0, p1) -> p0));
-
-
-                IEntity parent;
-                for (IEntity child : entities) {
-                    parent = parentEntityMap.get(child.family().parent());
-                    if (parent == null) {
-                        throw new SQLException(
-                            String.format("A fatal error, unable to find parent data (%d) for data (%d).",
-                                child.family().parent(), child.id()));
-                    }
-
-                    this.merageChildAndParent(child, parent);
-                }
-            }
 
             return entities;
         } catch (Exception ex) {
@@ -391,95 +329,65 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         return entityClasses;
     }
 
-    //TODO check
+    /**
+     * 将根据数据查询的产生oqsmajor版本号来决定如何处理.
+     */
     private Collection<IEntity> buildEntities(Collection<EntityRef> refs, IEntityClass entityClass) throws SQLException {
 
         if (refs.isEmpty()) {
             return Collections.emptyList();
         }
 
-        IEntityField sortField;
-
-        Map<Long, IEntityClass> select =
-            refs.parallelStream().filter(e -> e.getId() > 0)
-                .collect(toMap(EntityRef::getId, e -> entityClass, (e0, e1) -> {
-                    return e0;
-                }));
-
-        // 有继承
+        /**
+         * 整理出需要加载的id.
+         */
+        Map<Long, IEntityClass> select;
         if (entityClass.extendEntityClass() != null) {
-            select.putAll(
-                refs.parallelStream().filter(e -> e.getPref() > 0)
-                    .collect(toMap(EntityRef::getPref, e -> entityClass.extendEntityClass(), (e0, e1) -> e0)));
-        }
 
+            select = new HashMap();
+            for (EntityRef ref : refs) {
 
-        Collection<IEntity> entities = combinedStorage.selectMultiple(select);
+                if (ref.getMajor() == 0) {
+                    /**
+                     * 大版本为0,数据格式为子类只含有子类部份的字段信息.
+                     */
+                    select.put(ref.getId(), entityClass);
+                    select.put(ref.getPref(), entityClass.extendEntityClass());
 
-        //生成 entity 速查表
-        Map<Long, IEntity> entityTable =
-            entities.stream().collect(toMap(IEntity::id, e -> e, (e0, e1) -> e0));
+                } else {
 
-        Collection<IEntity> resultEntities = new ArrayList<>(refs.size());
-        IEntity resultEntity = null;
-        for (EntityRef ref : refs) {
-            resultEntity = buildEntity(ref, entityClass, entityTable);
-            if (resultEntity != null) {
-                resultEntities.add(resultEntity);
+                    select.put(ref.getId(), entityClass);
+
+                }
             }
+
+        } else {
+            select = refs.parallelStream().collect(
+                toMap(EntityRef::getId, e -> entityClass, (e0, e1) -> e0));
         }
 
-        // 需要保证顺序
-        return resultEntities;
+        // 加载所有需要的数据,包含父子类.
+        Map<Long, IEntity> iEntityMap = combinedStorage.selectMultiple(select)
+            .parallelStream().collect(toMap(IEntity::id, e -> e, (e0, e1) -> e0));
 
-    }
-
-    // 根据 id 转换实际 entity.
-    private IEntity buildEntity(EntityRef ref, IEntityClass entityClass, Map<Long, IEntity> entityTable)
-        throws SQLException {
-        if (entityClass.extendEntityClass() == null) {
-
-            IEntity entity = entityTable.get(ref.getId());
-
+        return refs.parallelStream().map(ref -> {
+            IEntity entity = iEntityMap.get(ref.getId());
             if (entity == null) {
-                throw new SQLException(String.format("A fatal error, unable to find data (%d).", ref.getId()));
+                logger.warn("The expected Entity{} was not found.", ref.getId());
+                return null;
+            }
+
+            if (ref.getMajor() == 0 && entityClass.extendEntityClass() != null) {
+                IEntity father = iEntityMap.get(ref.getPref());
+                if (father != null) {
+                    entity.entityValue().addValues(father.entityValue().values());
+                } else {
+                    logger.warn("The parent class {} for {} was not found.", ref.getId(), ref.getPref());
+                }
             }
 
             return entity;
-
-        } else {
-
-            IEntity child = entityTable.get(ref.getId());
-
-            if (ref.getPref() == 0) {
-                throw new SQLException(
-                    String.format("A fatal error, unable to find parent data (%d) for data (%d).",
-                        ref.getId(), ref.getPref()));
-            }
-
-            IEntity parent = entityTable.get(ref.getPref());
-
-            // 子类数据和父类数据有一个不存在即判定无法构造.
-            if (child == null) {
-                throw new SQLException(String.format("A fatal error, unable to find data (%d).", ref.getId()));
-            }
-
-            if (parent == null) {
-                throw new SQLException(
-                    String.format("A fatal error, unable to find parent data (%d) for data (%d).",
-                        ref.getId(), ref.getPref()));
-            }
-
-            merageChildAndParent(child, parent);
-
-            return child;
-
-        }
-    }
-
-    // 合并子类和父类属性,同样字段子类会覆盖父类.
-    private void merageChildAndParent(IEntity child, IEntity parent) {
-        child.entityValue().addValues(parent.entityValue().values());
+        }).collect(Collectors.toList());
     }
 
     /**

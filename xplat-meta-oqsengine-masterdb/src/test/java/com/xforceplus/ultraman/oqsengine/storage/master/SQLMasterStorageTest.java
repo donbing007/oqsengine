@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPrecise
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
@@ -142,15 +143,15 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
     public void testNewDataQueryIterator() throws SQLException {
 
         ExecutorService consumerPool = new ThreadPoolExecutor(10, 10,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(2048),
-                ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
-                new ThreadPoolExecutor.AbortPolicy());
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(2048),
+            ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
+            new ThreadPoolExecutor.AbortPolicy());
 
         long startId = timeId + 23;
         long endId = timeId + 74;
         DataQueryIterator dataQueryIterator =
-                storage.newIterator(expectEntityClass, startId, endId, consumerPool, 3000, 10);
+            storage.newIterator(expectEntityClass, startId, endId, consumerPool, 3000, 10);
 
         Assert.assertNotNull(dataQueryIterator);
 
@@ -163,12 +164,12 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         List<IEntity> allEntities = new ArrayList<>();
         int loops = 0;
         while (dataQueryIterator.hasNext()) {
-            loops ++;
+            loops++;
             List<IEntity> entities = dataQueryIterator.next();
             for (IEntity entity : entities) {
                 logger.debug("query loops : {}, id : {}, time : {}", loops, entity.id(), entity.time());
                 allEntities.add(entity);
-                count ++;
+                count++;
             }
         }
         Assert.assertEquals(expected, count);
@@ -342,7 +343,8 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         IEntity entity = new Entity(
             baseId,
             new EntityClass(baseId, "test", fields),
-            buildRandomValue(baseId, fields)
+            buildRandomValue(baseId, fields),
+            OqsVersion.MAJOR
         );
         return entity;
     }
@@ -425,11 +427,11 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
     private void initMultiDataSourceData(SQLMasterStorage storage, int size) throws Exception {
         if (null == expectEntityClass) {
             expectEntityClass =
-                    new EntityClass(timeId, "test", Collections.emptyList());
+                new EntityClass(timeId, "test", Collections.emptyList());
         }
 
         expectedEntitiesWithTime = new ArrayList<>(size);
-        for(int i = 1; i < size; i++) {
+        for (int i = 1; i < size; i++) {
             expectedEntitiesWithTime.add(buildEntityWithEntityClassInit(timeId, timeId + i));
         }
 
@@ -457,11 +459,12 @@ public class SQLMasterStorageTest extends AbstractMysqlTest {
         fields.add(fixStringsField);
 
         IEntity entity = new Entity(
-                id,
-                new EntityClass(entityClassId, "test", fields),
-                buildRandomValue(id, fields),
-                null,
-                0
+            id,
+            new EntityClass(entityClassId, "test", fields),
+            buildRandomValue(id, fields),
+            null,
+            0,
+            OqsVersion.MAJOR
         );
         entity.markTime(id);
         return entity;

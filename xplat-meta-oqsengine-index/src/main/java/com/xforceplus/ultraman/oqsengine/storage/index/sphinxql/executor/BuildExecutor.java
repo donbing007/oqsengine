@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
@@ -34,9 +35,18 @@ public class BuildExecutor implements Executor<StorageEntity, Integer> {
         buildSql =
             String.format(SQLConstant.WRITER_SQL,
                 "insert", indexTableName,
-                FieldDefine.ID, FieldDefine.ENTITY, FieldDefine.ENTITY_F, FieldDefine.PREF, FieldDefine.CREF,
-                FieldDefine.TX, FieldDefine.COMMIT_ID,
-                FieldDefine.JSON_FIELDS, FieldDefine.FULL_FIELDS, FieldDefine.MAINTAIN_ID, FieldDefine.TIME);
+                FieldDefine.ID,
+                FieldDefine.ENTITY,
+                FieldDefine.ENTITY_F,
+                FieldDefine.PREF,
+                FieldDefine.CREF,
+                FieldDefine.TX,
+                FieldDefine.COMMIT_ID,
+                FieldDefine.JSON_FIELDS,
+                FieldDefine.FULL_FIELDS,
+                FieldDefine.MAINTAIN_ID,
+                FieldDefine.TIME,
+                FieldDefine.OQS_MAJOR);
     }
 
     public static BuildExecutor build(TransactionResource resource, String indexTableName) {
@@ -50,6 +60,7 @@ public class BuildExecutor implements Executor<StorageEntity, Integer> {
 
         PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
 
+        // id, entity, pref, cref, tx, commit, jsonfileds, fullfileds
         // id
         st.setLong(1, storageEntity.getId());
         // entity
@@ -72,12 +83,15 @@ public class BuildExecutor implements Executor<StorageEntity, Integer> {
         st.setLong(10, storageEntity.getMaintainId());
         // time
         st.setLong(11, storageEntity.getTime());
+        // major
+        st.setInt(12, OqsVersion.MAJOR);
 
         if (logger.isDebugEnabled()) {
             logger.debug(st.toString());
         }
 
         try {
+
             return st.executeUpdate();
         } finally {
             st.close();

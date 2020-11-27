@@ -30,7 +30,6 @@ import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -223,7 +222,7 @@ public class SQLMasterStorage implements MasterStorage {
             }
         );
 
-        return storageEntities.parallelStream().filter(se -> ids.containsKey(se.getId())).map(se -> {
+        return storageEntities.parallelStream().map(se -> {
             IEntityClass entityClass = ids.get(se.getId());
             Optional<IEntity> op;
             try {
@@ -297,8 +296,8 @@ public class SQLMasterStorage implements MasterStorage {
                     } else {
                         logger.warn("Build run with no transaction, unable to get the transaction ID.");
                         storageEntity.setTx(0);
+                        storageEntity.setCommitid(CommitHelper.getUncommitId());
                     }
-                    storageEntity.setCommitid(CommitHelper.getUncommitId());
 
                     hint.setReadOnly(false);
                     return BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
@@ -387,6 +386,15 @@ public class SQLMasterStorage implements MasterStorage {
         Map<String, IEntityField> fieldTable = entityClass.fields()
             .stream().collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0));
 
+        if (entityClass.extendEntityClass() != null) {
+            fieldTable.putAll(
+                entityClass.extendEntityClass()
+                    .fields()
+                    .stream()
+                    .collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0))
+            );
+        }
+
         return entityValueBuilder.build(id, fieldTable, json);
 
     }
@@ -427,7 +435,8 @@ public class SQLMasterStorage implements MasterStorage {
             entityClass,
             toEntityValue(se.getId(), entityClass, se.getAttribute()),
             new EntityFamily(se.getPref(), se.getCref()),
-            se.getVersion()
+            se.getVersion(),
+            se.getOqsMajor()
         );
         entity.markTime(se.getTime());
         return Optional.of(entity);
@@ -442,10 +451,22 @@ public class SQLMasterStorage implements MasterStorage {
      * @return 字符串表示.
      */
     private String buildSearchAbleSyncMeta(IEntityClass entityClass) {
-        return "[" + entityClass.fields().stream()
+        StringBuffer buff = new StringBuffer();
+        buff.append('[');
+        buff.append(entityClass.fields().stream()
             .filter(f -> f.config().isSearchable())
             .map(f -> "\"" + String.join("-", Long.toString(f.id()), f.type().getType()) + "\"")
-            .collect(Collectors.joining(",")) + "]";
+            .collect(Collectors.joining(",")));
+
+        if (entityClass.extendEntityClass() != null) {
+            buff.append(entityClass.extendEntityClass().fields().stream()
+                .filter(f -> f.config().isSearchable())
+                .map(f -> "\"" + String.join("-", Long.toString(f.id()), f.type().getType()) + "\"")
+                .collect(Collectors.joining(",")));
+        }
+        buff.append(']');
+
+        return buff.toString();
     }
 
 
