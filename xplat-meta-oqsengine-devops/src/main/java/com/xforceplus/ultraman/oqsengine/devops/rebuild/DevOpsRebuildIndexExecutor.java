@@ -68,9 +68,6 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     @Resource(name = "longIdGenerator")
     private LongIdGenerator idGenerator;
 
-    @Resource(name = "lockExecutor")
-    private LockExecutor lockExecutor;
-
     private int taskExecTimeout;
     private int splitPart;
     private int maxQueueSize;
@@ -145,8 +142,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                 !offsetCountCheck(taskInfo.getBatchSize(), dataQueryIterator.size(), null != offsetSnapShot)) {
             if (isBuild) {
                 //  entityClass有其他的任务正在执行
-                if (NULL_UPDATE == eitherRight(lockExecutor.executorWithLock(TASK_BUILD_LOCK + taskInfo.getEntity(),
-                        taskExecTimeout, TimeUnit.MILLISECONDS, buildTask(), taskInfo))) {
+                if (NULL_UPDATE == eitherRight(buildTask().apply(taskInfo))) {
                     throw new DevopsTaskExistException("entityClass has another running task, current task will be error end!");
                 }
             }
@@ -168,8 +164,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
 
         //  entityClass有其他的任务正在执行
-        if (NULL_UPDATE == eitherRight(lockExecutor.executorWithLock(TASK_BUILD_LOCK + taskInfo.getEntity(),
-                taskExecTimeout, TimeUnit.MILLISECONDS, func, taskInfo))) {
+        if (NULL_UPDATE == eitherRight(func.apply(taskInfo))) {
             throw new DevopsTaskExistException("entityClass has another running task, current task will be error end!");
         }
 

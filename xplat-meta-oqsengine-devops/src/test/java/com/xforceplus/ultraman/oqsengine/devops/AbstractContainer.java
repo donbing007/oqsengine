@@ -274,9 +274,9 @@ public abstract class AbstractContainer {
         ReflectionTestUtils.setField(sqlTaskStorage, "devOpsDataSource", devOpsDataSource);
         sqlTaskStorage.setTable(rebuildTableName);
 
-        LockExecutor lockExecutor = new LockExecutor();
-        ReflectionTestUtils.setField(lockExecutor, "resourceLocker",
-                new LocalResourceLocker());
+//        LockExecutor lockExecutor = new LockExecutor();
+//        ReflectionTestUtils.setField(lockExecutor, "resourceLocker",
+//                new LocalResourceLocker());
 
         taskExecutor = new DevOpsRebuildIndexExecutor(10, 3000, 30000,
                 100, 30, 300, 3000, 100);
@@ -285,7 +285,7 @@ public abstract class AbstractContainer {
         ReflectionTestUtils.setField(taskExecutor, "sqlTaskStorage", sqlTaskStorage);
         ReflectionTestUtils.setField(taskExecutor, "masterStorage", masterStorage);
         ReflectionTestUtils.setField(taskExecutor, "idGenerator", idGenerator);
-        ReflectionTestUtils.setField(taskExecutor, "lockExecutor", lockExecutor);
+//        ReflectionTestUtils.setField(taskExecutor, "lockExecutor", lockExecutor);
         taskExecutor.init();
     }
 
