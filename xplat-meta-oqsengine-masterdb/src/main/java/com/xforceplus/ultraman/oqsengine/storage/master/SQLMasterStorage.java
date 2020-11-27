@@ -454,13 +454,17 @@ public class SQLMasterStorage implements MasterStorage {
     private String buildSearchAbleSyncMeta(IEntityClass entityClass) {
         StringBuffer buff = new StringBuffer();
         buff.append('[');
+        int emptyLen = buff.length();
+
         buff.append(entityClass.fields().stream()
             .filter(f -> f.config().isSearchable())
             .map(f -> "\"" + String.join("-", Long.toString(f.id()), f.type().getType()) + "\"")
             .collect(Collectors.joining(",")));
 
         if (entityClass.extendEntityClass() != null) {
-            buff.append(",");
+            if (buff.length() > emptyLen) {
+                buff.append(",");
+            }
             buff.append(entityClass.extendEntityClass().fields().stream()
                 .filter(f -> f.config().isSearchable())
                 .map(f -> "\"" + String.join("-", Long.toString(f.id()), f.type().getType()) + "\"")
