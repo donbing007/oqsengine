@@ -3,27 +3,19 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
-import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
-import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
-import io.micrometer.core.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
@@ -116,7 +108,6 @@ public class SphinxConsumerService implements ConsumerService {
 
         //  每个Transaction的结束需要将unCommitEntityValues清空
         cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(new LinkedHashSet<>());
-        cdcMetrics.getCdcUnCommitMetrics().setUnCommitEntityValues(new ConcurrentHashMap<>());
     }
 
 
@@ -162,33 +153,11 @@ public class SphinxConsumerService implements ConsumerService {
                     cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
                     rawEntries.add(new RawEntry(id, commitId,
                             entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
-                } else {
-                    //  优化父子类
-                    addPrefEntityValue(columns, id, cdcMetrics);
                 }
             }
         }
 
         return rawEntries;
-    }
-
-
-    /*
-        当存在子类时,将父类信息缓存在蓄水池中，等待子类进行合并
-        蓄水池在每一次事务结束时进行判断，必须为空(代表一个事务中的父子类已全部同步完毕)
-        父类会扔自己的EntityValue进去,子类会取出自己父类的EntityValue进行合并
-    */
-    private void addPrefEntityValue(List<CanalEntry.Column> columns, Long id, CDCMetrics cdcMetrics) throws SQLException {
-        try {
-            //  有子类, 将父类的EntityValue存入的relationMap中
-            if (getLongFromColumn(columns, CREF) > ZERO) {
-                cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues()
-                        .put(id,
-                                new RawEntityValue(getStringFromColumn(columns, ATTRIBUTE), getStringFromColumn(columns, META)));
-            }
-        } catch (Exception e) {
-            logger.warn("convert pref entityValue failed, pref: {}, ignore.", id);
-        }
     }
 
     /*

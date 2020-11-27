@@ -23,5 +23,6 @@ public enum OqsBigEntityColumns {
     CREF,
     DELETED,
     ATTRIBUTE,
-    META;
+    META,
+    OQSMAJOR;
 }

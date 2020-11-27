@@ -75,52 +75,34 @@ public class SphinxSyncExecutor {
 
     //  执行同步到Sphinx操作
     public int sync(List<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
-        Map<Long, IEntityValue> prefEntityValueMaps =
-                convertToEntityValueMap(cdcMetrics.getCdcUnCommitMetrics().getUnCommitEntityValues());
 
-        return syncSphinx(rawEntries, prefEntityValueMaps, cdcMetrics);
-    }
-
-    //  将unCommitEntityValues中Attr + meta 键值对转为Map<Long, IEntityValue>
-    private Map<Long, IEntityValue> convertToEntityValueMap(Map<Long, RawEntityValue> rawEntityValueMap) {
-
-        Map<Long, IEntityValue> valueMap = Maps.newHashMap();
-        for (Map.Entry<Long, RawEntityValue> vEntry : rawEntityValueMap.entrySet()) {
-            try {
-                valueMap.put(vEntry.getKey(),
-                        buildEntityValue(vEntry.getKey(), vEntry.getValue().getMeta(), vEntry.getValue().getAttr()));
-            } catch (Exception e) {
-                logger.warn("convertToEntityValueMap failed...will be ignore id : {}, message :{}", vEntry.getKey(), e.getMessage());
-            }
-        }
-        return valueMap;
+        return syncSphinx(rawEntries, cdcMetrics);
     }
 
     //  执行sphinx同步
-    private int syncSphinx(List<RawEntry> rawEntries, Map<Long, IEntityValue> prefEntityValueMaps,
+    private int syncSphinx(List<RawEntry> rawEntries,
                            CDCMetrics cdcMetrics) throws SQLException {
         AtomicInteger synced = new AtomicInteger(0);
         if (!rawEntries.isEmpty()) {
             //  开启多线程写入
             if (isSingleSyncConsumer || rawEntries.size() <= SINGLE_CONSUMER_MAX_ROW) {
                 for (RawEntry rawEntry : rawEntries) {
-                    sphinxConsume(rawEntry, prefEntityValueMaps, cdcMetrics, synced);
+                    sphinxConsume(rawEntry, cdcMetrics, synced);
                 }
             } else {
-                multiConsume(rawEntries, prefEntityValueMaps, cdcMetrics, synced);
+                multiConsume(rawEntries, cdcMetrics, synced);
             }
         }
         return synced.get();
     }
 
     //  多线程作业
-    private void multiConsume(List<RawEntry> rawEntries, Map<Long, IEntityValue> prefEntityValueMaps,
-                              CDCMetrics cdcMetrics, AtomicInteger synced) throws SQLException {
+    private void multiConsume(List<RawEntry> rawEntries, CDCMetrics cdcMetrics, AtomicInteger synced) throws SQLException {
         CountDownLatch latch = new CountDownLatch(rawEntries.size());
         List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>(rawEntries.size());
 
         rawEntries.forEach((value) -> futures.add(consumerPool.submit(
-                new SyncSphinxCallable(value, cdcMetrics, prefEntityValueMaps, synced, latch))));
+                new SyncSphinxCallable(value, cdcMetrics, synced, latch))));
 
         try {
             if (!latch.await(executionTimeout, TimeUnit.MILLISECONDS)) {
@@ -137,15 +119,14 @@ public class SphinxSyncExecutor {
     }
 
     //  作业
-    private void sphinxConsume(RawEntry rawEntry, Map<Long, IEntityValue> prefEntityValueMaps,
-                               CDCMetrics cdcMetrics, AtomicInteger synced) throws SQLException {
+    private void sphinxConsume(RawEntry rawEntry, CDCMetrics cdcMetrics, AtomicInteger synced) throws SQLException {
         try {
             boolean isDelete = getBooleanFromColumn(rawEntry.getColumns(), DELETED);
 
             if (isDelete) {
                 doDelete(rawEntry.getId(), rawEntry.getCommitId());
             } else {
-                doReplace(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId(), prefEntityValueMaps);
+                doReplace(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId());
             }
 
             syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
@@ -208,11 +189,13 @@ public class SphinxSyncExecutor {
     }
 
     //  replace操作
-    private int doReplace(List<CanalEntry.Column> columns, long id, long commitId, Map<Long, IEntityValue> prefEntityValueMaps) throws SQLException {
+    private int doReplace(List<CanalEntry.Column> columns, long id, long commitId) throws SQLException {
         //  通过解析binlog获取
 
         long cref = getLongFromColumn(columns, CREF);
         long pref = getLongFromColumn(columns, PREF);
+
+        int oqsMajor = getIntegerFromColumn(columns, PREF);
 
         StorageEntity storageEntity = new StorageEntity(
                 id,                                               //  id
@@ -225,17 +208,18 @@ public class SphinxSyncExecutor {
                 null,                                    //  由sphinxQLIndexStorage内部转换  entityValue
                 getLongFromColumn(columns, TIME)                  //  time
         );
+        storageEntity.setOqsmajor(oqsMajor);
 
         //  取自己的entityValue
         IEntityValue entityValue = buildEntityValue(
                 storageEntity.getId(), getStringFromColumn(columns, META), getStringFromColumn(columns, ATTRIBUTE));
 
             /*
-                有父类, 合并父类entityValue
+                老数据
             */
-        if (pref > 0) {
+        if (oqsMajor == 0) {
             //  通过pref拿到父类的EntityValue
-            IEntityValue entityValueF = entityValueGet(pref, prefEntityValueMaps);
+            IEntityValue entityValueF = entityValueGet(pref);
             entityValue.addValues(entityValueF.values());
         }
 
@@ -248,21 +232,16 @@ public class SphinxSyncExecutor {
     }
 
     //  通过pref获得IEntityValue，当拉取不到数据时从主库拉取
-    private IEntityValue entityValueGet(long pref, Map<Long, IEntityValue> prefEntityValueMaps) {
-        IEntityValue entityValue = prefEntityValueMaps.get(pref);
-        if (null == entityValue) {
-            while (true) {
-                try {
-                    entityValue = masterStorage.selectEntityValue(pref).orElse(null);
-                    break;
-                } catch (Exception e) {
-                    logger.warn("entityValueGet from master db error, will retry..., id : {}, " +
-                            "message : {}", pref, e.getMessage());
-                    sleepNoInterrupted(SECOND);
-                }
+    private IEntityValue entityValueGet(long pref) {
+        while (true) {
+            try {
+                return masterStorage.selectEntityValue(pref).orElse(null);
+            } catch (Exception e) {
+                logger.warn("entityValueGet from master db error, will retry..., id : {}, " +
+                        "message : {}", pref, e.getMessage());
+                sleepNoInterrupted(SECOND);
             }
         }
-        return entityValue;
     }
 
     public void errorHandle(long id, long commitId, String message) throws SQLException {
@@ -282,21 +261,19 @@ public class SphinxSyncExecutor {
         private CountDownLatch latch;
         private RawEntry rawEntry;
         private CDCMetrics cdcMetrics;
-        private Map<Long, IEntityValue> prefEntityValueMaps;
         private AtomicInteger synced;
 
-        public SyncSphinxCallable(RawEntry rawEntry, CDCMetrics cdcMetrics, Map<Long, IEntityValue> prefEntityValueMaps, AtomicInteger synced, CountDownLatch latch) {
+        public SyncSphinxCallable(RawEntry rawEntry, CDCMetrics cdcMetrics, AtomicInteger synced, CountDownLatch latch) {
             this.rawEntry = rawEntry;
             this.latch = latch;
             this.cdcMetrics = cdcMetrics;
-            this.prefEntityValueMaps = prefEntityValueMaps;
             this.synced = synced;
         }
 
         @Override
         public Boolean call() throws Exception {
             try {
-                sphinxConsume(rawEntry, prefEntityValueMaps, cdcMetrics, synced);
+                sphinxConsume(rawEntry, cdcMetrics, synced);
             } finally {
                 latch.countDown();
             }

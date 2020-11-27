@@ -1,13 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics;
 
 
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntityValue;
 
 import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.INIT_ID;
 
 /**
  * desc :
@@ -19,19 +14,9 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.IN
  */
 public class CDCUnCommitMetrics {
     private LinkedHashSet<Long> unCommitIds;
-    private Map<Long, RawEntityValue> unCommitEntityValues;
 
     public CDCUnCommitMetrics() {
         unCommitIds = new LinkedHashSet<>();
-        unCommitEntityValues = new ConcurrentHashMap<>();
-    }
-
-    public Map<Long, RawEntityValue> getUnCommitEntityValues() {
-        return unCommitEntityValues;
-    }
-
-    public void setUnCommitEntityValues(Map<Long, RawEntityValue> unCommitEntityValues) {
-        this.unCommitEntityValues = unCommitEntityValues;
     }
 
     public LinkedHashSet<Long> getUnCommitIds() {

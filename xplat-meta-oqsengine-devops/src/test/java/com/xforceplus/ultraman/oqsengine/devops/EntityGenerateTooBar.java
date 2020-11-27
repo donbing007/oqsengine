@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
 
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.SECOND;
+
 /**
  * desc :
  * name : EntityGenerateTooBar
@@ -33,7 +35,6 @@ public class EntityGenerateTooBar {
     public static LocalDateTime now = LocalDateTime.now();
     public static long defaultTime = now.toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
 
-    public static final long one_second = 1000;
     /*
         long string entityValue
     */
@@ -50,7 +51,7 @@ public class EntityGenerateTooBar {
             values.addValues(Arrays.asList(new LongValue(longField, startPos),
                     new StringValue(stringField, "longString" + startPos)));
             entities[i] = new Entity(startPos, longStringEntityClass, values, new EntityFamily(0, 0), testVersion);
-            entities[i].markTime(defaultTime + startPos * one_second);
+            entities[i].markTime(defaultTime + startPos * SECOND);
             startPos++;
             //  结束时间
             longStringEndTime = entities[i].time();
@@ -76,7 +77,7 @@ public class EntityGenerateTooBar {
             values.addValues(Arrays.asList(new LongValue(longField, startPos),
                     new StringValue(stringField, "surPlus" + startPos), new BooleanValue(boolField, startPos % 2 == 0)));
             entities[i] = new Entity(startPos, surPlusNeedDeleteEntityClass, values, new EntityFamily(0, 0), testVersion);
-            entities[i].markTime(defaultTime + startPos * one_second);
+            entities[i].markTime(defaultTime + startPos * SECOND);
             startPos++;
             surPlusEndTime = entities[i].time();
         }
@@ -113,7 +114,7 @@ public class EntityGenerateTooBar {
             pValues.addValues(Arrays.asList(new StringValue(stringField, "prefCref" + startPos), new BooleanValue(boolField, startPos % 2 == 0)));
             IEntity entityC = new Entity(startPos, crefEntityClass, cValues, new EntityFamily(startPos - 1, 0), testVersion);
 
-            prefCrefEndTime = defaultTime + startPos * one_second;
+            prefCrefEndTime = defaultTime + startPos * SECOND;
             entityF.markTime(prefCrefEndTime);
             entityC.markTime(prefCrefEndTime);
 
@@ -145,7 +146,7 @@ public class EntityGenerateTooBar {
                     new BooleanValue(boolField, startPos % 2 == 0),
                     new StringsValue(stringsField, "value" + startPos, startPos + "value", "value" + startPos + "value")));
             entities[i] = new Entity(startPos, pauseResumeEntityClass, values, new EntityFamily(0, 0), 0);
-            entities[i].markTime(defaultTime + startPos * one_second);
+            entities[i].markTime(defaultTime + startPos * SECOND);
             startPos++;
             pauseResumeEndTime = entities[i].time();
         }

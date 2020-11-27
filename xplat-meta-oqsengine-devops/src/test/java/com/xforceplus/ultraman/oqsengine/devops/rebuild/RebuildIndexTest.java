@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.*;
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.ONE_HUNDRED_PERCENT;
 
 /**
  * desc :
@@ -75,7 +76,7 @@ public class RebuildIndexTest extends AbstractContainer {
 
         int wakeUp = 0;
         while (true) {
-            if (taskHandler.getProgressPercentage() == 100) {
+            if (taskHandler.getProgressPercentage() == ONE_HUNDRED_PERCENT) {
                 break;
             }
             wakeUp += sleepForWaitStatusOk(wakeUp, "rebuildIndexSimple");
@@ -106,7 +107,7 @@ public class RebuildIndexTest extends AbstractContainer {
 
         int wakeUp = 0;
         while (true) {
-            if (taskHandler.getProgressPercentage() == 100) {
+            if (taskHandler.getProgressPercentage() == ONE_HUNDRED_PERCENT) {
                 break;
             }
             wakeUp += sleepForWaitStatusOk(wakeUp, "rebuildIndexDeleteSurPlus");
@@ -132,7 +133,7 @@ public class RebuildIndexTest extends AbstractContainer {
 
         int wakeUp = 0;
         while (true) {
-            if (taskHandler.getProgressPercentage() == 100) {
+            if (taskHandler.getProgressPercentage() == ONE_HUNDRED_PERCENT) {
                 break;
             }
             wakeUp += sleepForWaitStatusOk(wakeUp, "rebuildIndexIncludePrefCref");
@@ -164,7 +165,7 @@ public class RebuildIndexTest extends AbstractContainer {
          */
         int wakeUp = 0;
         while (true) {
-            if (taskHandler.getProgressPercentage() == 100) {
+            if (taskHandler.getProgressPercentage() == ONE_HUNDRED_PERCENT) {
                 break;
             }
             cancelResumeByCondition(taskHandler.id());

@@ -23,6 +23,10 @@ public class BinLogParseUtils {
         return Long.parseLong(getColumnWithoutNull(columns, oqsBigEntityColumns).getValue());
     }
 
+    public static int getIntegerFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
+        return Integer.parseInt(getColumnWithoutNull(columns, oqsBigEntityColumns).getValue());
+    }
+
     public static String getStringFromColumn(List<CanalEntry.Column> columns, OqsBigEntityColumns oqsBigEntityColumns) throws SQLException {
         return getColumnWithoutNull(columns, oqsBigEntityColumns).getValue();
     }

@@ -26,6 +26,7 @@ public class StorageEntity implements Serializable {
     private Map<String, Object> jsonFields;
     private Set<String> fullFields;
     private long maintainId;
+    private int oqsmajor;
 
     public StorageEntity() {
 
@@ -134,6 +135,14 @@ public class StorageEntity implements Serializable {
         return new HashSet<String>(fullfields) {{
             add(SphinxQLHelper.ALL_DATA_FULL_TEXT);
         }};
+    }
+
+    public int getOqsmajor() {
+        return oqsmajor;
+    }
+
+    public void setOqsmajor(int oqsmajor) {
+        this.oqsmajor = oqsmajor;
     }
 
     @Override
