@@ -221,6 +221,9 @@ public abstract class AbstractContainer {
     }
 
     protected void closeAll() {
+        commitIdStatusService.destroy();
+        redisClient.connect().sync().flushall();
+        redisClient.shutdown();
         dataSourcePackage.close();
     }
 
@@ -366,8 +369,5 @@ public abstract class AbstractContainer {
             st.close();
             conn.close();
         }
-
-        redisClient.connect().sync().flushall();
-        redisClient.shutdown();
     }
 }
