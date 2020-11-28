@@ -67,10 +67,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private CommitIdStatusService commitIdStatusService;
 
     /**
-     * 可以接受的最大同步时间毫秒.
-     */
-    private long allowMaxSyncTimeMs = 10000;
-    /**
      * 可以接爱的最大心跳间隔.
      */
     private long allowMaxLiveTimeMs = 3000;
@@ -102,14 +98,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         this.ignoreCDCStatus = ignoreCDCStatus;
     }
 
-    public long getAllowMaxSyncTimeMs() {
-        return allowMaxSyncTimeMs;
-    }
-
-    public void setAllowMaxSyncTimeMs(long allowMaxSyncTimeMs) {
-        this.allowMaxSyncTimeMs = allowMaxSyncTimeMs;
-    }
-
     public long getAllowMaxLiveTimeMs() {
         return allowMaxLiveTimeMs;
     }
@@ -130,15 +118,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     public void init() {
         readOnly.set(OqsMode.NORMAL.getValue());
         if (!ignoreCDCStatus) {
-            logger.info("Ignore CDC status checks.");
             checkCDCStatusWorker = new ScheduledThreadPoolExecutor(1, ExecutorHelper.buildNameThreadFactory("CDC-monitor"));
             checkCDCStatusWorker.scheduleWithFixedDelay(() -> {
                 /**
                  * 几种情况会认为是CDC同步停止.
                  * 1. CDC状态非正常.
                  * 2. CDC心跳.
-                 * 3. CDC同步最大时间超过阀值.
-                 * 4. 未同步提交号达到阀值.
+                 * 3. 未同步提交号达到阀值.
                  */
                 if (!cdcStatusService.isAlive()) {
                     logger.warn("CDC heartbeat test failed,CDC may be offline. Write transactions will be blocked.");
@@ -147,8 +133,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return;
                 }
 
-                long unsynccommitSize = commitIdStatusService.size();
-                if (unsynccommitSize > allowMaxUnSyncCommitIdSize) {
+                long uncommentSize = commitIdStatusService.size();
+                if (uncommentSize > allowMaxUnSyncCommitIdSize) {
                     logger.warn("The number of unsynchronized commit Numbers exceeds {} and the service write is blocked.",
                         allowMaxUnSyncCommitIdSize);
                     readOnly.set(OqsMode.READ_ONLY.getValue());
@@ -172,25 +158,18 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return;
                     }
 
-                    long useTimeMs = ackMetrics.getTotalUseTime();
-                    if (useTimeMs > allowMaxSyncTimeMs) {
-                        logger.warn("CDC services synchronize data over {} milliseconds, blocking the write service.",
-                            allowMaxSyncTimeMs);
-                        readOnly.set(OqsMode.READ_ONLY.getValue());
-                        ready = false;
-                        return;
-                    }
-
-                    readOnly.set(OqsMode.NORMAL.getValue());
-                    ready = true;
                 } else {
                     /**
                      * 查询不到结果时,假定存活.
                      */
                     readOnly.set(OqsMode.NORMAL.getValue());
                     ready = true;
+
+                    logger.warn("Unable to check CDC reported indicators, default is health.");
                 }
             }, 6, 6, TimeUnit.SECONDS);
+        } else {
+            logger.info("Ignore CDC status checks.");
         }
     }
 

@@ -32,15 +32,10 @@ public class ServiceConfiguration {
     @Bean
     public EntityManagementService entityManagementService(
         @Value("${ignoreCDCStatusCheck:false}") boolean ignoreCDCStatusCheck,
-        @Value("${sync.allowMaxSyncTimeMs:10000}") long allowMaxSyncTimeMs,
         @Value("${sync.allowMaxLiveTimeMs:3000}") long allowMaxLiveTimeMs,
         @Value("${sync.allowMaxUnSyncCommitIdSize:30}") long allowMaxUnSyncCommitIdSize
     ) {
         EntityManagementServiceImpl impl = new EntityManagementServiceImpl(ignoreCDCStatusCheck);
-        if (allowMaxSyncTimeMs > 0) {
-            impl.setAllowMaxSyncTimeMs(allowMaxSyncTimeMs);
-        }
-
         if (allowMaxLiveTimeMs > 0) {
             impl.setAllowMaxLiveTimeMs(allowMaxLiveTimeMs);
         }
