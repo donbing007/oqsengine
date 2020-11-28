@@ -438,7 +438,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     private void checkReady() throws SQLException {
         if (!ready) {
             if (blockMessage != null) {
-                throw new SQLException("Currently in read-only mode for the reason of [{}].", blockMessage);
+                throw new SQLException(String.format("Currently in read-only mode for the reason of [{}].", blockMessage));
             } else {
                 throw new SQLException("Currently in read-only mode for unknown reasons.");
             }
