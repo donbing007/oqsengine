@@ -89,6 +89,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     private ScheduledExecutorService checkCDCStatusWorker;
     private volatile boolean ready = true;
+    private volatile String blockMessage;
 
     public EntityManagementServiceImpl() {
         this(false);
@@ -116,7 +117,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @PostConstruct
     public void init() {
-        readOnly.set(OqsMode.NORMAL.getValue());
+        setNormalMode();
         if (!ignoreCDCStatus) {
             checkCDCStatusWorker = new ScheduledThreadPoolExecutor(1, ExecutorHelper.buildNameThreadFactory("CDC-monitor"));
             checkCDCStatusWorker.scheduleWithFixedDelay(() -> {
@@ -127,18 +128,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                  * 3. 未同步提交号达到阀值.
                  */
                 if (!cdcStatusService.isAlive()) {
-                    logger.warn("CDC heartbeat test failed,CDC may be offline. Write transactions will be blocked.");
-                    readOnly.set(OqsMode.READ_ONLY.getValue());
-                    ready = false;
+                    setReadOnlyMode("CDC heartbeat test failed.");
                     return;
                 }
 
                 long uncommentSize = commitIdStatusService.size();
                 if (uncommentSize > allowMaxUnSyncCommitIdSize) {
-                    logger.warn("The number of unsynchronized commit Numbers exceeds {} and the service write is blocked.",
-                        allowMaxUnSyncCommitIdSize);
-                    readOnly.set(OqsMode.READ_ONLY.getValue());
-                    ready = false;
+                    setReadOnlyMode(
+                        String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
                     return;
                 }
 
@@ -150,23 +147,16 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     CDCAckMetrics ackMetrics = ackOp.get();
                     CDCStatus cdcStatus = ackMetrics.getCdcConsumerStatus();
                     if (CDCStatus.CONNECTED != cdcStatus) {
-                        logger.warn(
-                            "Detected that the CDC synchronization service has stopped and is currently in a state of {}.",
-                            cdcStatus.name());
-                        readOnly.set(OqsMode.READ_ONLY.getValue());
-                        ready = false;
+                        setReadOnlyMode(String.format("CDC status is %s.", cdcStatus.name()));
                         return;
                     }
 
-                } else {
-                    /**
-                     * 查询不到结果时,假定存活.
-                     */
-                    readOnly.set(OqsMode.NORMAL.getValue());
-                    ready = true;
-
-                    logger.warn("Unable to check CDC reported indicators, default is health.");
                 }
+                /**
+                 * 查询不到结果时,假定存活.
+                 */
+                setNormalMode();
+
             }, 6, 6, TimeUnit.SECONDS);
         } else {
             logger.info("Ignore CDC status checks.");
@@ -447,12 +437,36 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     // 检查当前是状态是否可写入.
     private void checkReady() throws SQLException {
         if (!ready) {
-            throw new SQLException("Data is blocked synchronously and cannot be written now.");
+            if (blockMessage != null) {
+                throw new SQLException("Currently in read-only mode for the reason of [{}].", blockMessage);
+            } else {
+                throw new SQLException("Currently in read-only mode for unknown reasons.");
+            }
         }
     }
 
     private void markTime(IEntity entity) {
         entity.markTime(System.currentTimeMillis());
+    }
+
+    private void setNormalMode() {
+        blockMessage = null;
+        readOnly.set(OqsMode.NORMAL.getValue());
+        ready = true;
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("The current check status is normal.");
+        }
+    }
+
+    private void setReadOnlyMode(String msg) {
+        blockMessage = msg;
+        readOnly.set(OqsMode.READ_ONLY.getValue());
+        ready = false;
+
+        if (logger.isWarnEnabled()) {
+            logger.warn("Set to read-only mode because [{}].", msg);
+        }
     }
 
 }
