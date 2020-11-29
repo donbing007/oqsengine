@@ -79,12 +79,37 @@ public class TransactionVisibilityTest extends AbstractContainerTest {
     }
 
     /**
+     * 不断创建马上查询.
+     */
+    @Test
+    public void testBuildAfterRead() throws Exception {
+        IEntity newFatherEntity = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 100000L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+
+        for (int i = 0; i < 100; i++) {
+            newFatherEntity = entityManagementService.build(newFatherEntity);
+            IEntity selectEntity = entitySearchService.selectOne(newFatherEntity.id(), childClass).get();
+
+            Assert.assertNotEquals(0, selectEntity.id());
+
+            Assert.assertEquals(100000L, selectEntity.entityValue().getValue("c1").get().valueToLong());
+            Assert.assertEquals("0", selectEntity.entityValue().getValue("c3").get().valueToString());
+        }
+
+        TimeUnit.SECONDS.sleep(1);
+
+        Assert.assertEquals(0, commitIdStatusService.size());
+    }
+
+    /**
      * 测试不断的更新已有数据,并立即查询后的结果.
      *
      * @throws Exception
      */
     @Test
-    public void testBuildRead() throws Exception {
+    public void testUpdateAfterRead() throws Exception {
         IEntity newFatherEntity = new Entity(0, childClass, new EntityValue(0)
             .addValue(new LongValue(fatherClass.field("c1").get(), 100000L))
             .addValue(new EnumValue(childClass.field("c3").get(), "0"))
