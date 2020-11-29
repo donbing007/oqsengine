@@ -365,7 +365,7 @@ public class EntitySearchServiceImplTest {
                     driverEntityClass0.code()
                         + ".rel0.name = \"driver-v1\"."
                         + driverEntityClass0.id()
-                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true",
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true",
 
                     "rel0.id IN ("
                         + masterEntities.values().stream()
@@ -374,7 +374,7 @@ public class EntitySearchServiceImplTest {
                         .collect(Collectors.joining(", "))
                         + ")."
                         + parentEntityClass.id()
-                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true"
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true"
                 )
             )
             ,
@@ -407,7 +407,7 @@ public class EntitySearchServiceImplTest {
                     driverEntityClass0.code()
                         + ".rel0.name = \"driver-v1\" AND " + driverEntityClass0.code() + ".rel0.age = 100."
                         + driverEntityClass0.id()
-                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true",
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true",
 
                     "rel0.id IN ("
                         + masterEntities.values().stream()
@@ -416,7 +416,7 @@ public class EntitySearchServiceImplTest {
                         .collect(Collectors.joining(", "))
                         + ")."
                         + parentEntityClass.id()
-                        + ".asc:false|des:true|outoforder:true.empty:false|single:true|ready:true"
+                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true"
                 )
             )
             ,
