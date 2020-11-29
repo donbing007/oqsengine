@@ -172,7 +172,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "build"})
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "build"})
     @Override
     public IEntity build(IEntity entity) throws SQLException {
         checkReady();
@@ -242,7 +242,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "replace"})
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "replace"})
     @Override
     public ResultStatus replace(IEntity entity) throws SQLException {
         checkReady();
@@ -321,7 +321,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "delete"})
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "delete"})
     @Override
     public ResultStatus delete(IEntity entity) throws SQLException {
         checkReady();
@@ -381,7 +381,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "deleteforce"})
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "deleteforce"})
     @Override
     public ResultStatus deleteForce(IEntity entity) throws SQLException {
         /**

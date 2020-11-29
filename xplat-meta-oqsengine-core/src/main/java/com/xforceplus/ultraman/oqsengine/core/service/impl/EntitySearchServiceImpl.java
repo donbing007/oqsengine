@@ -127,7 +127,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         this.maxVisibleTotalCount = maxVisibleTotalCount;
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "one"})
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "one"})
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
         try {
@@ -150,7 +150,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "multiple"})
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "multiple"})
     @Override
     public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
 
@@ -170,13 +170,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "condition"})
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
     public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Page page) throws SQLException {
         return selectByConditions(conditions, entityClass, Sort.buildOutOfSort(), page);
     }
 
-    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"action", "condition"})
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
     public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
         throws SQLException {
