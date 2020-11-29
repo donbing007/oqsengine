@@ -18,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,6 +33,7 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author dongbin
@@ -44,6 +46,9 @@ public class TransactionVisibilityTest extends AbstractContainerTest {
 
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;
+
+    @Resource
+    private CommitIdStatusService commitIdStatusService;
 
     @Resource
     private EntitySearchService entitySearchService;
@@ -111,5 +116,9 @@ public class TransactionVisibilityTest extends AbstractContainerTest {
             Assert.assertEquals(Long.toString(i), entities.stream()
                 .findFirst().get().entityValue().getValue("c3").get().valueToString());
         }
+
+        TimeUnit.SECONDS.sleep(1);
+
+        Assert.assertEquals(0, commitIdStatusService.size());
     }
 }
