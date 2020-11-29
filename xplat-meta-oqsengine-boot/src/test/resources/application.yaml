@@ -112,7 +112,7 @@ cdc:
     type: single
     host: "${CANAL_HOST}"
     port: ${CANAL_PORT}
-    destination: oqsengine
+    destination: nly-v1
     username: root
     password: root
     subscribeFilter: .*\.oqsbigentity.*
