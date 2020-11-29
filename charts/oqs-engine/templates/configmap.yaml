@@ -100,7 +100,7 @@ data:
         cdc:
           connect:
             type: {{ .Values.cdc.connect.type }}
-            string: {{ .Values.cdc.connect.string }}
+            host: {{ .Values.cdc.connect.host }}
             port: {{ .Values.cdc.connect.port }}
             destination: {{ template "oqsengine.fullname" . }}-0
             username: {{ .Values.cdc.connect.username }}

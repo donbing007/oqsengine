@@ -254,7 +254,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     /**
      * { "{fieldId}" : fieldValue }
      */
-    public Map<String, Object> serializeToMap(IEntityValue values, boolean encodeString) {
+    private Map<String, Object> serializeToMap(IEntityValue values, boolean encodeString) {
         Map<String, Object> data = new HashMap<>(values.values().size());
         values.values().stream().forEach(v -> {
             StorageValue storageValue = storageStrategyFactory.getStrategy(v.getField().type()).toStorageValue(v);

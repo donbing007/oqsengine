@@ -47,7 +47,7 @@ public class CDCConfiguration {
     @ConditionalOnExpression("'${cdc.connect.type}'.equals('cluster')")
     @Bean("clusterCDCConnector")
     public CDCConnector clusterCDCConnector(
-        @Value("${cdc.connect.string}") String connectString,
+        @Value("${cdc.connect.host}") String host,
         @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
         @Value("${cdc.connect.password}") String password,
@@ -56,7 +56,7 @@ public class CDCConfiguration {
 
 
         ClusterCDCConnector clusterCanalConnector = new ClusterCDCConnector();
-        clusterCanalConnector.init(connectString, destination, userName, password);
+        clusterCanalConnector.init(host, destination, userName, password);
 
         initProperties(clusterCanalConnector, subscribeFilter, batchSize);
         return clusterCanalConnector;
@@ -65,7 +65,7 @@ public class CDCConfiguration {
     @ConditionalOnExpression("'${cdc.connect.type}'.equals('single')")
     @Bean("singleCDCConnector")
     public CDCConnector singleCDCConnector(
-        @Value("${cdc.connect.string}") String connectString,       //  general with ip
+        @Value("${cdc.connect.host}") String host,       //  general with ip
         @Value("${cdc.connect.port}") int port,
         @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
@@ -74,7 +74,7 @@ public class CDCConfiguration {
         @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init(connectString, port, destination, userName, password);
+        singleCDCConnector.init(host, port, destination, userName, password);
 
         initProperties(singleCDCConnector, subscribeFilter, batchSize);
         return singleCDCConnector;

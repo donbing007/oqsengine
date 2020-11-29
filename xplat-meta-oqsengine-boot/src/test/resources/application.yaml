@@ -1,6 +1,7 @@
 instance:
+  # static | statefulset 前者读取配置文件,后者使用 k8s statefulset 生成的 hostname.
   type: static
-  id: 1
+  id: 0
 
 grpc:
   server:
@@ -11,9 +12,11 @@ server:
 logging:
   level:
     root: debug
+    io:
+      lettuce: info
 
 transaction:
-  timeoutMs: 300000
+  timeoutMs: 3000
 
 threadPool:
   # 0 or not exist use cpu core + 1
@@ -24,7 +27,10 @@ threadPool:
     worker: 0
 
 maxVisibleNumber: 10000
-ignoreCDCStatusCheck: true
+
+sync:
+  allowMaxLiveTimeMs: 3000
+  allowMaxUnSyncCommitIdSize: 100
 
 storage:
   timeoutMs:
@@ -42,35 +48,76 @@ storage:
     write:
       name: "oqsindex"
       shard:
-        enabled: true
-        size: 3
+        enabled: false
+        size: 1
+  devOps:
+    cdc:
+      errors:
+        name: "cdcerrors"
+    maxQueryTimeMs: 3000
+    task:
+      split: 10
+      max:
+        queue:
+          size: 2000
+      execution:
+        timeout: 300000
+      update:
+        frequency: 100
+      cache:
+        expire: 30
+        maxsize: 500
+      page:
+        size: 1000
 
 redis:
+  # 单机 redis://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
+  # 单机SSL rediss://[password@]host[:port][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]
+  # 哨兵: redis-sentinel://[password@]host[:port][,host2[:port2]][/databaseNumber][?[timeout=timeout[d|h|m|s|ms|us|ns]]#sentinelMasterId
+  # 时间单位
+  # d 天
+  # h 小时
+  # m 分钟
+  # s 秒钟
+  # ms 毫秒
+  # us 微秒
+  # ns 纳秒
   uri: "redis://${REDIS_HOST}:${REDIS_PORT}"
+  maxReqQueue: 10000
 
-sync:
-  # Data synchronization allowed latency in milliseconds.
-  allowMaxSyncTimeMs: 10000
-  # The heartbeat delay of data synchronization. Milliseconds.
-  allowMaxLiveTimeMs: 3000
-  # Acceptable number of unsynchronized commit Numbers.
-  allowMaxUnSyncCommitIdSize: 30
+management:
+  health:
+    redis:
+      enabled: false
+    db:
+      enabled: false
+  endpoints:
+    enabled-by-default: false
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      enabled: true
+      show-details: always
+    shutdown:
+      enabled: true
+    info:
+      enabled: true
+    prometheus:
+      enabled: true
 
 cdc:
   connect:
     type: single
-    string: "${CANAL_HOST}"
+    host: "${CANAL_HOST}"
     port: ${CANAL_PORT}
-    destination: nly-v1
+    destination: oqsengine
     username: root
     password: root
     subscribeFilter: .*\.oqsbigentity.*
-  endpoint:
-    health:
-      show-details: never
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-      base-path: "/"
-
+    batchSize: 1
+  execution:
+    timeoutMs: 30000
+    single:
+      consumer: true

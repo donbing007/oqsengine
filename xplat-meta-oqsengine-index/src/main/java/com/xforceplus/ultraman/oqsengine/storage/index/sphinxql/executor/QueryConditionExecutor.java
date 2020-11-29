@@ -243,7 +243,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
             if (StringUtils.isEmpty(whereCondition)) {
                 whereCondition = commitFilterId;
             } else {
-                whereCondition = whereCondition.concat(" and ").concat(commitFilterId);
+                whereCondition = commitFilterId.concat(" AND ").concat(whereCondition);
             }
 
         }
