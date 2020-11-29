@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
 import com.alibaba.fastjson.JSON;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -29,6 +30,7 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
+import io.micrometer.core.annotation.Timed;
 import io.vavr.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,6 +106,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
      * @return
      * @throws SQLException
      */
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "condition"})
     @Override
     public Collection<EntityRef> select(
         Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, Long commitId)
@@ -180,6 +183,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         throw new UnsupportedOperationException("Deprecated");
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "save"})
     @Override
     public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
         checkId(storageEntity.getId());
@@ -190,12 +194,13 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             storageEntity.setFullFields(serializeSetFull(entityValue));
         } catch (Exception e) {
             throw new SQLException(
-                    String.format("serialize entityValue to jsonFields/fullTexts failed, message : %s", e.getMessage()), PARSE_COLUMNS_ERROR.name());
+                String.format("serialize entityValue to jsonFields/fullTexts failed, message : %s", e.getMessage()), PARSE_COLUMNS_ERROR.name());
         }
 
         return doBuildReplaceStorageEntity(storageEntity, replacement);
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "delete"})
     @Override
     public int delete(long id) throws SQLException {
         checkId(id);
@@ -212,6 +217,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             });
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "delete"})
     @Override
     public int delete(IEntity entity) throws SQLException {
         return delete(entity.id());

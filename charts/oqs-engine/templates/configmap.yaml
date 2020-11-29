@@ -47,14 +47,11 @@ data:
         transaction:
           timeoutMs: {{ .Values.storage.transaction.timeoutMs | default "2000" }}
         threadPool:
-          io:
-            worker: {{ .Values.storage.threadPool.io.worker | default "0" }}
-            queue: {{ .Values.storage.threadPool.io.queue | default "1000" }}
           call:
             worker: {{ .Values.storage.threadPool.call.worker | default "0" }}
             queue: {{ .Values.storage.threadPool.call.queue | default "500" }}
           cdc:
-            worker: {{ .Values.storage.threadPool.call.worker | default "0" }}
+            worker: {{ .Values.storage.threadPool.cdc.worker | default "1" }}
         maxVisibleNumber: {{ .Values.storage.maxVisibleNumber | default "10000" }}
         storage:
           timeoutMs:

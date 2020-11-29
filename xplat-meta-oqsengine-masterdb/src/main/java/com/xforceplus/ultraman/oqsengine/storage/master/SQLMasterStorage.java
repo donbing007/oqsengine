@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import com.alibaba.fastjson.JSONObject;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -30,6 +31,7 @@ import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import io.micrometer.core.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -151,7 +153,7 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
 
-
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "condition"})
     @Override
     public Collection<EntityRef> select(long commitid, Conditions conditions, IEntityClass entityClass, Sort sort)
         throws SQLException {
@@ -172,6 +174,7 @@ public class SQLMasterStorage implements MasterStorage {
         });
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "one"})
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
         return (Optional<IEntity>) transactionExecutor.execute(
@@ -209,6 +212,7 @@ public class SQLMasterStorage implements MasterStorage {
             });
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "multiple"})
     @Override
     public Collection<IEntity> selectMultiple(Map<Long, IEntityClass> ids) throws SQLException {
 
@@ -270,6 +274,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "build"})
     @Override
     public int build(IEntity entity) throws SQLException {
         checkId(entity);
@@ -306,6 +311,7 @@ public class SQLMasterStorage implements MasterStorage {
             });
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "replace"})
     @Override
     public int replace(IEntity entity) throws SQLException {
         checkId(entity);
@@ -342,6 +348,7 @@ public class SQLMasterStorage implements MasterStorage {
             });
     }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "delete"})
     @Override
     public int delete(IEntity entity) throws SQLException {
         checkId(entity);
