@@ -61,13 +61,17 @@ public class DataSourceFactory {
     private static final String MASTER_PATH = "dataSources.master";
     private static final String DEV_OPS_PATH = MASTER_PATH;
 
+    public static DataSourcePackage build() {
+        return build(false);
+    }
+
     /**
      * 数据源构造,会试图读取构造三个数据源列表.
      * 索引读,索引写和主库.
      *
      * @return 构造的数据源包装.
      */
-    public static DataSourcePackage build() {
+    public static DataSourcePackage build(boolean showSql) {
         String dsConfigFile = System.getProperty(CONFIG_FILE);
 
         Config config;
@@ -80,7 +84,7 @@ public class DataSourceFactory {
         List<DataSource> indexWrite;
         if (config.hasPath(INDEX_WRITER_PATH)) {
             indexWrite = buildDataSources("indexWrite",
-                (List<Config>) config.getConfigList(INDEX_WRITER_PATH));
+                (List<Config>) config.getConfigList(INDEX_WRITER_PATH), showSql);
         } else {
             indexWrite = Collections.emptyList();
         }
@@ -88,7 +92,7 @@ public class DataSourceFactory {
         List<DataSource> indexSearch;
         if (config.hasPath(INDEX_SEARCH_PATH)) {
             indexSearch = buildDataSources("indexSearch",
-                (List<Config>) config.getConfigList(INDEX_SEARCH_PATH));
+                (List<Config>) config.getConfigList(INDEX_SEARCH_PATH), showSql);
         } else {
             indexSearch = Collections.emptyList();
         }
@@ -96,7 +100,7 @@ public class DataSourceFactory {
         List<DataSource> master;
         if (config.hasPath(MASTER_PATH)) {
             master = buildDataSources("master",
-                (List<Config>) config.getConfigList(MASTER_PATH));
+                (List<Config>) config.getConfigList(MASTER_PATH), showSql);
         } else {
             master = Collections.emptyList();
         }
@@ -104,7 +108,7 @@ public class DataSourceFactory {
         DataSource devOpsDataSource;
         if (config.hasPath(DEV_OPS_PATH)) {
             List<DataSource> devOps =
-                    buildDataSources("master", (List<Config>) config.getConfigList(DEV_OPS_PATH));
+                buildDataSources("master", (List<Config>) config.getConfigList(DEV_OPS_PATH), showSql);
             if (devOps.size() > 0) {
                 devOpsDataSource = devOps.get(0);
             } else {
@@ -117,15 +121,15 @@ public class DataSourceFactory {
         return new DataSourcePackage(master, indexWrite, indexSearch, devOpsDataSource);
     }
 
-    private static List<DataSource> buildDataSources(String baseName, List<Config> configs) {
+    private static List<DataSource> buildDataSources(String baseName, List<Config> configs, boolean showSql) {
         List<DataSource> ds = new ArrayList<>(configs.size());
         for (int i = 0; i < configs.size(); i++) {
-            ds.add(buildDataSource(baseName + "-" + i, configs.get(i)));
+            ds.add(buildDataSource(baseName + "-" + i, configs.get(i), showSql));
         }
         return ds;
     }
 
-    private static DataSource buildDataSource(String name, Config config) {
+    private static DataSource buildDataSource(String name, Config config, boolean showSql) {
         HikariConfig hikariConfig = new HikariConfig();
 
         config.entrySet().stream().forEach(e -> {
@@ -136,6 +140,18 @@ public class DataSourceFactory {
                 throw new RuntimeException(String.format("Configuration error, wrong property '%s' '%s'.", e.getKey(), e.getValue()));
             }
         });
+
+        if (showSql) {
+            hikariConfig.setDriverClassName("com.p6spy.engine.spy.P6SpyDriver");
+            final String jdbcPreifx = "jdbc:";
+            final String loggerJdbcPrefix = jdbcPreifx + "p6spy:";
+            if (!hikariConfig.getJdbcUrl().startsWith(loggerJdbcPrefix)) {
+                StringBuffer loggerJdbc = new StringBuffer();
+                loggerJdbc.append(loggerJdbcPrefix);
+                loggerJdbc.append(hikariConfig.getJdbcUrl().substring(jdbcPreifx.length()));
+                hikariConfig.setJdbcUrl(loggerJdbc.toString());
+            }
+        }
 
         hikariConfig.setPoolName(name);
         hikariConfig.setMetricRegistry(Metrics.globalRegistry);

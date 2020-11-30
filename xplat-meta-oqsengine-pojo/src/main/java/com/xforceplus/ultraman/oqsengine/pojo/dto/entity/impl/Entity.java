@@ -7,6 +7,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 
 import java.io.Serializable;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 /**
@@ -202,15 +206,25 @@ public class Entity implements IEntity, Serializable {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("Entity{");
-        sb.append("id=").append(id);
-        sb.append(", time=").append(time);
-        sb.append(", entityClass=").append(entityClass);
-        sb.append(", entityValue=").append(entityValue);
-        sb.append(", family=").append(family);
-        sb.append(", version=").append(version);
-        sb.append(", major=").append(major);
-        sb.append('}');
-        return sb.toString();
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        StringBuilder buff = new StringBuilder();
+        buff.append("id: ").append(id)
+            .append(", ")
+            .append("entity: ").append(entityClass.id())
+            .append(", ")
+            .append("version: ").append(version)
+            .append(", ")
+            .append("time: ").append(
+            df.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneId.systemDefault())))
+            .append(", ")
+            .append("major: ").append(major)
+            .append(", ")
+            .append("pref: ").append(family.parent())
+            .append(", ")
+            .append("cref: ").append(family.child())
+            .append(", ")
+            .append("value: ").append(entityValue.toString());
+
+        return buff.toString();
     }
 }

@@ -16,12 +16,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
@@ -223,6 +220,44 @@ public class EntityManagementServiceImplTest {
         IEntity masterEntity = masterStorage.selectOne(expectedEntity.family().parent(), fatherEntityClass).get();
         Assert.assertEquals("8888.8888", masterEntity.entityValue().getValue("f3").get().valueToString());
         Assert.assertNotEquals(0, masterEntity.time());
+    }
+
+    @Test
+    public void testExtendDeleteFather() throws Exception {
+        IEntity expectedEntity = buildEntity(childEntityClass, false);
+        expectedEntity = service.build(expectedEntity);
+
+        long fatherId = expectedEntity.family().parent();
+
+        IEntity fatherEntity = new Entity(fatherId, fatherEntityClass, new EntityValue(fatherId));
+        fatherEntity.resetFamily(new EntityFamily(0, expectedEntity.id()));
+        ResultStatus status = service.delete(fatherEntity);
+        Assert.assertEquals(ResultStatus.SUCCESS, status);
+
+        Assert.assertFalse(masterStorage.selectOne(fatherId, fatherEntityClass).isPresent());
+        Assert.assertFalse(masterStorage.selectOne(expectedEntity.id(), childEntityClass).isPresent());
+    }
+
+    @Test
+    public void testNoExtendDelete() throws Exception {
+        IEntity fatherEntity = buildEntity(fatherEntityClass, false);
+        fatherEntity = service.build(fatherEntity);
+
+        ResultStatus status = service.delete(fatherEntity);
+        Assert.assertEquals(ResultStatus.SUCCESS, status);
+        Assert.assertFalse(masterStorage.selectOne(fatherEntity.id(), fatherEntityClass).isPresent());
+    }
+
+    @Test
+    public void testExtendDeleteChild() throws Exception {
+        IEntity expectedEntity = buildEntity(childEntityClass, false);
+        expectedEntity = service.build(expectedEntity);
+
+        ResultStatus status = service.delete(expectedEntity);
+        Assert.assertEquals(ResultStatus.SUCCESS, status);
+
+        Assert.assertFalse(masterStorage.selectOne(expectedEntity.family().parent(), fatherEntityClass).isPresent());
+        Assert.assertFalse(masterStorage.selectOne(expectedEntity.id(), childEntityClass).isPresent());
     }
 
     @Test
@@ -439,67 +474,6 @@ public class EntityManagementServiceImplTest {
                 }
             }
 
-        }
-    }
-
-    static class MockIndexStorage implements IndexStorage {
-
-        private Map<Long, IEntity> data = new HashMap<>();
-
-        public Optional<IEntity> select(long id) {
-            return Optional.ofNullable(copyEntity(data.get(id)));
-        }
-
-//        @Override
-//        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
-//            throws SQLException {
-//            throw new UnsupportedOperationException();
-//        }
-
-        @Override
-        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, Long commitId) throws SQLException {
-            return null;
-        }
-
-        @Override
-        public void replaceAttribute(IEntityValue attribute) throws SQLException {
-            IEntity target = data.get(attribute.id());
-            attribute.values().stream().forEach(a -> {
-                target.entityValue().addValue(a);
-            });
-        }
-
-        @Override
-        public int delete(long id) throws SQLException {
-            return 0;
-        }
-
-        @Override
-        public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
-            return 0;
-        }
-
-        @Override
-        public boolean clean(long entityId, long maintainId, long start, long end) throws SQLException {
-            return false;
-        }
-
-        @Override
-        public int build(IEntity entity) throws SQLException {
-            data.put(entity.id(), copyEntity(entity));
-            return 1;
-        }
-
-        @Override
-        public int replace(IEntity entity) throws SQLException {
-            data.put(entity.id(), copyEntity(entity));
-            return 1;
-        }
-
-        @Override
-        public int delete(IEntity entity) throws SQLException {
-            data.remove(entity.id());
-            return 1;
         }
     }
 

@@ -49,6 +49,13 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
         StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(field.type());
         StringBuilder sql = new StringBuilder();
 
+        // id查询.
+        if (field.config().isIdentifie()) {
+            StorageValue idStorageValue = storageStrategy.toStorageValue(condition.getFirstValue());
+            sql.append("id ").append(condition.getOperator().getSymbol()).append(' ').append(idStorageValue.value());
+            return sql.toString();
+        }
+
         sql.append(FieldDefine.ATTRIBUTE)
             .append("->>'$.")
             .append(FieldDefine.ATTRIBUTE_PREFIX).append(

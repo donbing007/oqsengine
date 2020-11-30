@@ -16,7 +16,7 @@ logging:
       lettuce: info
 
 transaction:
-  timeoutMs: 3000
+  timeoutMs: 3000000
 
 threadPool:
   # 0 or not exist use cpu core + 1
@@ -33,6 +33,8 @@ sync:
   allowMaxUnSyncCommitIdSize: 100
 
 storage:
+  debug:
+    showsql: true
   timeoutMs:
     query: 3000
   master:

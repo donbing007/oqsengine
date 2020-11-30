@@ -79,6 +79,49 @@ public class TransactionVisibilityTest extends AbstractContainerTest {
     }
 
     /**
+     * 更新后查询不等值总数匹配.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testUpdateAfterNotEqCount() throws Exception {
+        IEntity targetEntity = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 100000L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+        entityManagementService.build(targetEntity);
+
+        for (int i = 1; i <= 200; i++) {
+            targetEntity = entitySearchService.selectOne(targetEntity.id(), childClass).get();
+            targetEntity.entityValue().addValue(
+                new EnumValue(childClass.field("c3").get(), Long.toString(i))
+            );
+            ResultStatus status = entityManagementService.replace(targetEntity);
+            Assert.assertTrue(ResultStatus.SUCCESS == status);
+
+            Page page = Page.newSinglePage(100);
+            Collection<IEntity> entities = entitySearchService.selectByConditions(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        childClass.field("c3").get(),
+                        ConditionOperator.NOT_EQUALS,
+                        new EnumValue(childClass.field("c3").get(), "0")
+                    )
+                ),
+                childClass,
+                page
+            );
+
+            Assert.assertEquals(1, page.getTotalCount());
+        }
+
+        TimeUnit.SECONDS.sleep(1);
+
+        Assert.assertEquals(0, commitIdStatusService.size());
+
+    }
+
+    /**
      * 不断创建马上查询.
      */
     @Test

@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
@@ -356,6 +357,22 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         if (isConflict(masterStorage.delete(entity))) {
                             hint.setRollback(true);
                             return ResultStatus.CONFLICT;
+                        }
+
+                        // 有子类需要删除.
+                        if (entity.family().child() > 0) {
+
+                            IEntity chlidEntity = new Entity(
+                                entity.family().child(),
+                                AnyEntityClass.getInstance(),
+                                new EntityValue(entity.family().child()),
+                                entity.version()
+                            );
+
+                            if (isConflict(masterStorage.delete(chlidEntity))) {
+                                hint.setRollback(true);
+                                return ResultStatus.CONFLICT;
+                            }
                         }
 
                     }

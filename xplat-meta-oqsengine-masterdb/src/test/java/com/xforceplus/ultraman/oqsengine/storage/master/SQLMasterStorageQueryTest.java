@@ -54,7 +54,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -70,6 +70,7 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
     private SQLMasterStorage storage;
     private RedisClient redisClient;
 
+    private static IEntityField idField = new EntityField(Long.MAX_VALUE - 100, "id", FieldType.LONG, FieldConfig.build().identifie(true));
     private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
     private static IEntityField stringField = new EntityField(Long.MAX_VALUE - 1, "string", FieldType.STRING);
     private static IEntityField boolField = new EntityField(Long.MAX_VALUE - 2, "bool", FieldType.BOOLEAN);
@@ -88,11 +89,16 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
 
         long id = Long.MAX_VALUE;
         IEntityValue values = new EntityValue(id);
-        values.addValues(Arrays.asList(new LongValue(longField, 1L), new StringValue(stringField, "v1"),
+        values.addValues(Arrays.asList(
+            new LongValue(longField, 1L),
+            new StringValue(stringField, "v1"),
             new BooleanValue(boolField, true),
             new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1)),
             new DecimalValue(decimalField, BigDecimal.ZERO), new EnumValue(enumField, "1"),
-            new StringsValue(stringsField, "value1", "value2")));
+            new StringsValue(stringsField, "value1", "value2"),
+            new EnumValue(enumField, "1")
+            )
+        );
         entityes[0] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 1;
@@ -101,7 +107,9 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
             new BooleanValue(boolField, true),
             new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 9, 0, 1)),
             new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3")));
+            new StringsValue(stringsField, "value1", "value2", "value3"),
+            new EnumValue(enumField, "2")
+        ));
         entityes[1] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 2;
@@ -110,7 +118,9 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
             new BooleanValue(boolField, false),
             new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 11, 18, 1)),
             new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3")));
+            new StringsValue(stringsField, "value1", "value2", "value3"),
+            new EnumValue(enumField, "3")
+        ));
         entityes[2] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 3;
@@ -119,7 +129,9 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
             new BooleanValue(boolField, false),
             new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1)),
             new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3")));
+            new StringsValue(stringsField, "value1", "value2", "value3"),
+            new EnumValue(enumField, "4")
+        ));
         entityes[3] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 4;
@@ -128,7 +140,9 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
             new BooleanValue(boolField, false),
             new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
             new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN")));
+            new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN"),
+            new EnumValue(enumField, "5")
+        ));
         entityes[4] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
     }
 
@@ -267,13 +281,38 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                 throw new RuntimeException(e.getMessage(), e);
             }
 
-            c.check.test(refs);
+            c.check.accept(refs);
         });
     }
 
     private Collection<Case> buildSelectCase() {
 
         return Arrays.asList(
+            // enum no eq
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        enumField, ConditionOperator.NOT_EQUALS, new EnumValue(enumField, "1")
+                    )),
+                entityClass,
+                r -> {
+                    Assert.assertEquals(4, r.size());
+                }
+            )
+            ,
+            // id eq
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        idField, ConditionOperator.EQUALS, new LongValue(idField, Long.MAX_VALUE)
+                    )),
+                entityClass,
+                result -> {
+                    Assert.assertEquals(1, result.size());
+                    Assert.assertEquals(Long.MAX_VALUE, result.stream().findFirst().get().getId());
+                }
+            )
+            ,
             // long eq
             new Case(
                 Conditions.buildEmtpyConditions().addAnd(
@@ -283,7 +322,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                     Assert.assertEquals(2, result.size());
                     Assert.assertEquals(0, result.stream().filter(r ->
                         !(r.getId() == Long.MAX_VALUE - 1)).filter(r -> !(r.getId() == Long.MAX_VALUE - 2)).count());
-                    return true;
                 })
             ,
             // long not eq
@@ -298,8 +336,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
                         .count());
-
-                    return true;
                 })
             ,
             // long >
@@ -314,8 +350,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
                         .count());
-
-                    return true;
                 })
             ,
             // long >=
@@ -333,8 +367,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
                         .count());
-
-                    return true;
                 })
             ,
             // long <
@@ -348,8 +380,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                     Assert.assertEquals(0, result.stream()
                         .filter(r -> !(r.getId() == Long.MAX_VALUE))
                         .count());
-
-                    return true;
                 })
             ,
             // long <=
@@ -366,8 +396,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
                         .filter(r -> !(r.getId() == Long.MAX_VALUE))
                         .count());
-
-                    return true;
                 })
             ,
             // long in
@@ -385,7 +413,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
                         .count());
 
-                    return true;
                 })
             ,
             // string eq
@@ -401,7 +428,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
                         .count());
 
-                    return true;
                 })
             ,
             // string no eq
@@ -420,7 +446,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE))
                         .count());
 
-                    return true;
                 })
             ,
             // string like
@@ -436,7 +461,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
                         .count());
 
-                    return true;
                 })
             ,
             // decimal eq
@@ -454,7 +478,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
                         .count());
 
-                    return true;
                 })
             ,
             // decimal no eq
@@ -471,7 +494,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
                         .count());
 
-                    return true;
                 })
             ,
             // decimal >
@@ -487,7 +509,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
                         .count());
 
-                    return true;
                 })
             ,
             // decimal >=
@@ -506,7 +527,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
                         .count());
 
-                    return true;
                 })
             ,
             // dateTimeField between
@@ -524,7 +544,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
                         .count());
-                    return true;
                 })
             ,
             // stringsField =
@@ -538,7 +557,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                     Assert.assertEquals(0, result.stream()
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
                         .count());
-                    return true;
                 })
             ,
             // stringsField in
@@ -558,13 +576,11 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
                         .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
                         .count());
-                    return true;
                 })
             ,
             // emtpy condition
             new Case(Conditions.buildEmtpyConditions(), entityClass, result -> {
                 Assert.assertEquals(5, result.size());
-                return true;
             })
             ,
             // strings in no row.
@@ -574,7 +590,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                 entityClass,
                 result -> {
                     Assert.assertEquals(0, result.size());
-                    return true;
                 })
             ,
             // sort
@@ -591,8 +606,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                         .count());
 
                     Assert.assertEquals(3, result.stream().filter(e -> e.getOrderValue() != null).count());
-
-                    return true;
                 },
                 Sort.buildDescSort(dateTimeField)
             )
@@ -603,13 +616,13 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
         private Conditions conditions;
         private IEntityClass entityClass;
         private Sort sort;
-        private Predicate<? super Collection<EntityRef>> check;
+        private Consumer<? super Collection<EntityRef>> check;
 
-        public Case(Conditions conditions, IEntityClass entityClass, Predicate<? super Collection<EntityRef>> check) {
+        public Case(Conditions conditions, IEntityClass entityClass, Consumer<? super Collection<EntityRef>> check) {
             this(conditions, entityClass, check, null);
         }
 
-        public Case(Conditions conditions, IEntityClass entityClass, Predicate<? super Collection<EntityRef>> check,
+        public Case(Conditions conditions, IEntityClass entityClass, Consumer<? super Collection<EntityRef>> check,
                     Sort sort) {
             this.conditions = conditions;
             this.entityClass = entityClass;

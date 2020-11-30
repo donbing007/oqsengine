@@ -51,9 +51,9 @@ public class SqlLogger extends FormattedLogger {
         String sql,
         String url) {
 
-        if (logger.isDebugEnabled()) {
+        if (logger.isInfoEnabled()) {
             final String msg = strategy.formatMessage(connectionId, now, elapsed, category.toString(), prepared, sql, url);
-            logger.debug(msg);
+            logger.info(msg);
         }
     }
 }

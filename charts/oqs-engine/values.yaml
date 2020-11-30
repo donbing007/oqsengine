@@ -75,6 +75,8 @@ cdc:
     single:
       consumer: true
 storage:
+  debug:
+    showsql: false
   # Maximum amount of visible data.
   maxVisibleNumber: 10000
   threadPool:

@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -25,6 +26,7 @@ import java.util.Collection;
  */
 public class SQLJsonConditionBuilderTest {
 
+    private static IEntityField idField = new EntityField(Long.MAX_VALUE, "id", FieldType.LONG, FieldConfig.build().identifie(true));
     private static IEntityField longField = new EntityField(1, "long", FieldType.LONG);
     private static IEntityField stringField = new EntityField(2, "string", FieldType.STRING);
 
@@ -59,6 +61,15 @@ public class SQLJsonConditionBuilderTest {
 
     private Collection<Case> buildCases() {
         return Arrays.asList(
+            new Case(
+                new Condition(
+                    idField,
+                    ConditionOperator.EQUALS,
+                    new LongValue(idField, 100L)
+                ),
+                "id = 100"
+            )
+            ,
             new Case(
                 new Condition(
                     longField,

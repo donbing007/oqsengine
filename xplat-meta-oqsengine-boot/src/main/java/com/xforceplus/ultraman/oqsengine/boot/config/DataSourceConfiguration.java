@@ -34,8 +34,9 @@ import java.util.stream.Collectors;
 public class DataSourceConfiguration {
 
     @Bean
-    public DataSourcePackage dataSourcePackage() {
-        return DataSourceFactory.build();
+    public DataSourcePackage dataSourcePackage(
+        @Value("${storage.debug.showsql:false}") boolean showSql) {
+        return DataSourceFactory.build(showSql);
     }
 
     @Bean

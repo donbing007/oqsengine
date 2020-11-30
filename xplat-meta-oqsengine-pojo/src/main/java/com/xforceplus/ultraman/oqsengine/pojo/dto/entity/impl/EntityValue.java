@@ -142,10 +142,25 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     @Override
     public String toString() {
-        return "EntityValue{" +
-            "id=" + id +
-            ", values=" + (values != null ? values.toString() : "NULL") +
-            '}';
+        StringBuilder buff = new StringBuilder();
+        buff.append("[");
+        final int emptyLen = buff.length();
+        values.values().stream().forEach(v -> {
+            if (buff.length() > emptyLen) {
+                buff.append(" , ");
+            }
+            buff.append("{")
+                .append("id: ").append(v.getField().id())
+                .append(", ")
+                .append("name: ").append(v.getField().name())
+                .append(", ")
+                .append("type: ").append(v.getField().type().getType())
+                .append(", ")
+                .append("value: ").append(v.getValue().toString())
+                .append("}");
+        });
+        buff.append("]");
+        return buff.toString();
     }
 
     // 比较两个 map.

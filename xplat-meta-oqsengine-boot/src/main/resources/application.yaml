@@ -31,6 +31,8 @@ sync:
   allowMaxUnSyncCommitIdSize: 100
 
 storage:
+  debug:
+    showsql: false
   timeoutMs:
     query: 3000
   master:

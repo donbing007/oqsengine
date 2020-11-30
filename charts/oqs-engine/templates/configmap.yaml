@@ -54,6 +54,8 @@ data:
             worker: {{ .Values.storage.threadPool.cdc.worker | default "1" }}
         maxVisibleNumber: {{ .Values.storage.maxVisibleNumber | default "10000" }}
         storage:
+          debug:
+            showsql: {{ .Values.storage.debug.showsql | default "false" }}
           timeoutMs:
             query: {{ .Values.storage.timeoutMs.query | default "3000" }}
           master:
