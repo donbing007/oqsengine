@@ -86,8 +86,6 @@ public class ReplaceExecutor implements Executor<StorageEntity, Integer> {
         // oqsmajor
         st.setInt(12, OqsVersion.MAJOR);
 
-        st.executeUpdate();
-
         try {
             return st.executeUpdate();
         } finally {
