@@ -33,7 +33,7 @@ maxVisibleNumber: 10000
 
 sync:
   allowMaxLiveTimeMs: 3000
-  allowMaxUnSyncCommitIdSize: 100
+  allowMaxUnSyncCommitIdSize: 1000
 
 storage:
   debug:
