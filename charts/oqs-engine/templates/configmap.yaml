@@ -22,6 +22,8 @@ data:
             root: {{ .Values.logger.level }}
             io:
               lettuce: info
+          pattern:
+            console: "%d{yyyy-MM-dd} %d{hhh:mm:ss},%red(%d{SSS}) %green(%-5level) [%thread] %cyan(%logger{36}) : %msg%n"
         management:
           health:
             redis:

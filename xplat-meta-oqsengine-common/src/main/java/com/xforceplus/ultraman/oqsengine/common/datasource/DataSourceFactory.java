@@ -131,6 +131,10 @@ public class DataSourceFactory {
 
     private static DataSource buildDataSource(String name, Config config, boolean showSql) {
         HikariConfig hikariConfig = new HikariConfig();
+        // 默认事务级别为读可提交.
+        hikariConfig.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
+        hikariConfig.setPoolName(name);
+        hikariConfig.setMetricRegistry(Metrics.globalRegistry);
 
         config.entrySet().stream().forEach(e -> {
 
@@ -152,9 +156,6 @@ public class DataSourceFactory {
                 hikariConfig.setJdbcUrl(loggerJdbc.toString());
             }
         }
-
-        hikariConfig.setPoolName(name);
-        hikariConfig.setMetricRegistry(Metrics.globalRegistry);
 
         return new HikariDataSource(hikariConfig);
     }

@@ -38,7 +38,6 @@ public class SqlConnectionTransactionResource extends AbstractConnectionTransact
         String tableName,
         CommitIdStatusService commitIdStatusService) throws SQLException {
         super(key, conn, autocommit);
-        conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         updateCommitIdSql = String.format(UPDATE_COMMITID_SQL, tableName);
 
         this.commitIdStatusService = commitIdStatusService;
