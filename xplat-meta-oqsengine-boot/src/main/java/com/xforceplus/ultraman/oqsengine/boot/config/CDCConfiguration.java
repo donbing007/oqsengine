@@ -33,15 +33,9 @@ public class CDCConfiguration {
         return consumerService;
     }
 
-    @Bean("sphinxSyncExecutor")
-    public SphinxSyncExecutor sphinxSyncExecutor(
-        @Value("${cdc.execution.timeoutMs:30000}") int executionTimeout,
-        @Value("${cdc.execution.single.consumer:true}") boolean singleConsumer) {
-        SphinxSyncExecutor sphinxSyncService = new SphinxSyncExecutor();
-        sphinxSyncService.setExecutionTimeout(executionTimeout);
-        sphinxSyncService.setSingleSyncConsumer(singleConsumer);
-
-        return sphinxSyncService;
+    @Bean("syncExecutor")
+    public SphinxSyncExecutor syncExecutor() {
+        return new SphinxSyncExecutor();
     }
 
     @ConditionalOnExpression("'${cdc.connect.type}'.equals('cluster')")

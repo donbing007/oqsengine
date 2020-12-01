@@ -1,11 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
-import com.alibaba.google.common.collect.Maps;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.CdcErrorStorage;
-import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.CdcErrorTask;
@@ -20,12 +18,9 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
 import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.INVALID_ENTITY_ID;
-import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.PARSE_COLUMNS_ERROR;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
 import static com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityFieldBuildUtils.metaToFieldTypeMap;
@@ -38,7 +33,7 @@ import static com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityField
  * date : 2020/11/13
  * @since : 1.8
  */
-public class SphinxSyncExecutor {
+public class SphinxSyncExecutor implements SyncExecutor {
 
     final Logger logger = LoggerFactory.getLogger(SphinxSyncExecutor.class);
 
@@ -54,87 +49,41 @@ public class SphinxSyncExecutor {
     @Resource(name = "entityValueBuilder")
     private IEntityValueBuilder<String> entityValueBuilder;
 
-    @Resource(name = "cdcConsumerPool")
-    private ExecutorService consumerPool;
-
     @Resource(name = "snowflakeIdGenerator")
     private LongIdGenerator seqNoGenerator;
 
-    private boolean isSingleSyncConsumer = true;
-
-    private int executionTimeout = 3 * 1000;
-
-    public void setExecutionTimeout(int executionTimeout) {
-        this.executionTimeout = executionTimeout;
-    }
-
-    public void setSingleSyncConsumer(boolean singleSyncConsumer) {
-        isSingleSyncConsumer = singleSyncConsumer;
-    }
-
-
     //  执行同步到Sphinx操作
-    public int sync(List<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
-
-        return syncSphinx(rawEntries, cdcMetrics);
-    }
-
-    //  执行sphinx同步
-    private int syncSphinx(List<RawEntry> rawEntries,
-                           CDCMetrics cdcMetrics) throws SQLException {
-        AtomicInteger synced = new AtomicInteger(0);
-        if (!rawEntries.isEmpty()) {
-            //  开启多线程写入
-            if (isSingleSyncConsumer || rawEntries.size() < MULTI_CONSUMER_OPEN_MIN_BATCHES) {
-                for (RawEntry rawEntry : rawEntries) {
-                    sphinxConsume(rawEntry, cdcMetrics, synced);
-                }
-            } else {
-                multiConsume(rawEntries, cdcMetrics, synced);
-            }
-        }
-        return synced.get();
-    }
-
-    //  多线程作业
-    private void multiConsume(List<RawEntry> rawEntries, CDCMetrics cdcMetrics, AtomicInteger synced) throws SQLException {
-        CountDownLatch latch = new CountDownLatch(rawEntries.size());
-        List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>(rawEntries.size());
+    public int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
+        int synced = 0;
+        List<StorageEntity> storageEntityList = new ArrayList<>();
+        long startTime = 0;
         for (RawEntry rawEntry : rawEntries) {
-            futures.add(consumerPool.submit(
-                    new SyncSphinxCallable(rawEntry, cdcMetrics, synced, latch)));
-        }
-
-        try {
-            if (!latch.await(executionTimeout, TimeUnit.MILLISECONDS)) {
-
-                for (Future<Boolean> f : futures) {
-                    f.cancel(true);
+            try {
+                boolean isDelete = getBooleanFromColumn(rawEntry.getColumns(), DELETED);
+                if (isDelete) {
+                    synced += doDelete(rawEntry.getId(), rawEntry.getCommitId());
+                    syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
+                } else {
+                    //  加入批量更新Map中
+                    startTime = rawEntry.getExecuteTime();
+                    storageEntityList.add(
+                            prepareForReplace(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId()));
                 }
-
-                throw new SQLException("Query failed, timeout.");
+            } catch (Exception e) {
+                errorRecord(rawEntry.getId(), rawEntry.getCommitId(), e.getMessage());
             }
-        } catch (InterruptedException e) {
-            throw new SQLException(e.getMessage(), e);
         }
+
+        if (!storageEntityList.isEmpty()) {
+            synced += sphinxQLIndexStorage.batchSave(storageEntityList, true, true);
+            syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - startTime));
+        }
+        return synced;
     }
 
-    //  作业
-    private void sphinxConsume(RawEntry rawEntry, CDCMetrics cdcMetrics, AtomicInteger synced) throws SQLException {
-        try {
-            boolean isDelete = getBooleanFromColumn(rawEntry.getColumns(), DELETED);
-
-            if (isDelete) {
-                doDelete(rawEntry.getId(), rawEntry.getCommitId());
-            } else {
-                doReplace(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId());
-            }
-
-            syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
-            synced.incrementAndGet();
-        } catch (Exception e) {
-            errorHandle(rawEntry.getId(), rawEntry.getCommitId(), e.getMessage());
-        }
+    public void errorRecord(long id, long commitId, String message) throws SQLException {
+        logger.warn("sphinx consume error will be record in cdcerrors,  id : {}, commitId : {}, message : {}", id, commitId, message);
+        cdcErrorStorage.buildCdcError(CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, message));
     }
 
     //  删除,不停的循环删除, 直到成功为止
@@ -158,39 +107,14 @@ public class SphinxSyncExecutor {
         }
     }
 
-    private int doReplace(StorageEntity storageEntity, IEntityValue entityValue) throws SQLException {
-        while (true) {
-            try {
-                /*
-                    replacement is always true, 所有的OQS同步对于CDC来说都是replace
-                */
-                return sphinxQLIndexStorage.buildOrReplace(storageEntity, entityValue, true);
-            } catch (Exception e) {
-                //  delete error
-                logger.error("replace error, will retry..., id : {}, commitId : {}, message : {}",
-                        storageEntity.getId(), storageEntity.getCommitId(), e.getMessage());
-                //  当数据存在错误时，抛出错误，否则可以认为是连接错误，将无限重试
-                if (e instanceof SQLException) {
-                    SQLException el = (SQLException) e;
-                    if (el.getSQLState().equals(INVALID_ENTITY_ID.name()) || el.getSQLState().equals(PARSE_COLUMNS_ERROR.name())) {
-                        throw new SQLException(String.format("replace-sync error, id : %d, commitId : %d, message : %s",
-                                                        storageEntity.getId(), storageEntity.getCommitId(), e.getMessage()));
-                    }
-                }
-                sleepNoInterrupted(SECOND);
-            }
-        }
-    }
-
-    //  同步使用时间
+    //  同步时间
     private synchronized void syncMetrics(CDCMetrics cdcMetrics, long useTime) {
         if (cdcMetrics.getCdcAckMetrics().getMaxSyncUseTime() < useTime) {
             cdcMetrics.getCdcAckMetrics().setMaxSyncUseTime(useTime);
         }
     }
 
-    //  replace操作
-    private int doReplace(List<CanalEntry.Column> columns, long id, long commitId) throws SQLException {
+    private StorageEntity prepareForReplace(List<CanalEntry.Column> columns, long id, long commitId) throws SQLException {
         //  通过解析binlog获取
 
         long cref = getLongFromColumn(columns, CREF);
@@ -220,11 +144,14 @@ public class SphinxSyncExecutor {
          */
         if (oqsMajor != OqsVersion.MAJOR && pref > 0) {
             //  通过pref拿到父类的EntityValue
-            IEntityValue entityValueF = entityValueGet(pref);
+            IEntityValue entityValueF = queryEntityValue(pref);
             entityValue.addValues(entityValueF.values());
         }
 
-        return doReplace(storageEntity, entityValue);
+        //  将entityValue转换为JsonFields和FullFields并写入storageEntity
+        sphinxQLIndexStorage.entityValueToStorage(storageEntity, entityValue);
+
+        return storageEntity;
     }
 
     //  IEntityValue build
@@ -233,7 +160,7 @@ public class SphinxSyncExecutor {
     }
 
     //  通过pref获得IEntityValue，当拉取不到数据时从主库拉取
-    private IEntityValue entityValueGet(long pref) {
+    private IEntityValue queryEntityValue(long pref) {
         while (true) {
             try {
                 return masterStorage.selectEntityValue(pref).orElse(null);
@@ -245,41 +172,11 @@ public class SphinxSyncExecutor {
         }
     }
 
-    public void errorHandle(long id, long commitId, String message) throws SQLException {
-        logger.warn("sphinx consume error will be record in cdcerrors,  id : {}, commitId : {}, message : {}", id, commitId, message);
-        cdcErrorStorage.buildCdcError(CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, message));
-    }
-
     private void sleepNoInterrupted(long interval) {
         try {
             Thread.sleep(interval);
         } catch (InterruptedException ex) {
             //  ignore
-        }
-    }
-
-    //  多线程作业封装类
-    private class SyncSphinxCallable implements Callable<Boolean> {
-        private CountDownLatch latch;
-        private RawEntry rawEntry;
-        private CDCMetrics cdcMetrics;
-        private AtomicInteger synced;
-
-        public SyncSphinxCallable(RawEntry rawEntry, CDCMetrics cdcMetrics, AtomicInteger synced, CountDownLatch latch) {
-            this.rawEntry = rawEntry;
-            this.latch = latch;
-            this.cdcMetrics = cdcMetrics;
-            this.synced = synced;
-        }
-
-        @Override
-        public Boolean call() throws Exception {
-            try {
-                sphinxConsume(rawEntry, cdcMetrics, synced);
-            } finally {
-                latch.countDown();
-            }
-            return true;
         }
     }
 }

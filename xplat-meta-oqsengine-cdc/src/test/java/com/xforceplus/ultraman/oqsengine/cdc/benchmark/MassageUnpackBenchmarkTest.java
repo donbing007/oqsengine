@@ -5,11 +5,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerToolsTest;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.shaded.org.apache.commons.lang.time.StopWatch;
@@ -47,18 +45,19 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
     @Test
     public void sphinxConsumerBenchmarkTest() throws Exception {
         try {
-            ConsumerService sphinxConsumerService = initAll(false);
+            ConsumerService sphinxConsumerService = initAll();
             //  预热
             sphinxConsumerService.consume(preWarms, 1, new CDCUnCommitMetrics());
 
             StopWatch stopWatch = new StopWatch();
 
             stopWatch.start();
-            sphinxConsumerService.consume(entries, 2, new CDCUnCommitMetrics());
-
+            CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, new CDCUnCommitMetrics());
             stopWatch.stop();
 
-            logger.info("end sphinxConsumerBenchmarkTest loops : {}, use timeMs : {} ms", size, stopWatch.getTime());
+            Assert.assertEquals(size, cdcMetrics.getCdcAckMetrics().getExecuteRows());
+            logger.info("end sphinxConsumerBenchmarkTest loops : {}, use timeMs : {} ms",
+                    cdcMetrics.getCdcAckMetrics().getExecuteRows(), stopWatch.getTime());
         } finally {
             closeAll();
         }

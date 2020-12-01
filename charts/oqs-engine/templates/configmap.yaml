@@ -89,8 +89,6 @@ data:
                   size: {{ .Values.storage.devOps.task.max.queue.size | default "2000" }}
               execution:
                 timeout: {{ .Values.storage.devOps.task.execution.timeout | default "30000" }}
-              update:
-                frequency: {{ .Values.storage.devOps.task.update.frequency | default "100" }}
               cache:
                 expire: {{ .Values.storage.devOps.task.cache.expire | default "30" }}
                 maxsize: {{ .Values.storage.devOps.task.cache.maxsize | default "500" }}
@@ -113,10 +111,7 @@ data:
             password: {{ .Values.cdc.connect.password }}
             subscribeFilter: {{ .Values.cdc.connect.subscribeFilter | quote }}
             batchSize: {{ .Values.cdc.connect.batchSize | default "2048" | quote }}
-          execution:
-            timeoutMs: {{ .Values.cdc.execution.timeoutMs | default "30000" | quote }}
-            single:
-              consumer: {{ .Values.cdc.execution.single.consumer | default "true" | quote }}
+
     oqsengine-ds.conf: |
         {
           "dataSources": {

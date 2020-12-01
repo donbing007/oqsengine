@@ -65,8 +65,6 @@ storage:
           size: 2000
       execution:
         timeout: 300000
-      update:
-        frequency: 100
       cache:
         expire: 30
         maxsize: 500
@@ -120,7 +118,3 @@ cdc:
     password: root
     subscribeFilter: .*\.oqsbigentity.*
     batchSize: 1
-  execution:
-    timeoutMs: 30000
-    single:
-      consumer: true

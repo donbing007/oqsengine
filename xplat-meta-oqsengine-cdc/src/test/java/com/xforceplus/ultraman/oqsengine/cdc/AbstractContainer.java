@@ -9,13 +9,11 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -193,7 +191,7 @@ public abstract class AbstractContainer {
         System.out.println(System.getProperty("MANTICORE_WRITE1_JDBC_URL"));
     }
 
-    protected ConsumerService initAll(boolean singleSync) throws Exception {
+    protected ConsumerService initAll() throws Exception {
         System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
         dataSourcePackage = DataSourceFactory.build();
 
@@ -213,7 +211,7 @@ public abstract class AbstractContainer {
         initIndex();
         initDevOps();
 
-        return initConsumerService(singleSync);
+        return initConsumerService();
     }
 
     protected void closeAll() {
@@ -276,9 +274,7 @@ public abstract class AbstractContainer {
         cdcErrorStorage.init();
     }
 
-    private ConsumerService initConsumerService(boolean singleSync) throws Exception {
-
-        ExecutorService consumerPool = null;
+    private ConsumerService initConsumerService() throws Exception {
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
@@ -286,26 +282,13 @@ public abstract class AbstractContainer {
         ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
 
         sphinxSyncExecutor = new SphinxSyncExecutor();
-        //  为false开启多线程
-        if (!singleSync) {
-            sphinxSyncExecutor.setSingleSyncConsumer(false);
-            sphinxSyncExecutor.setExecutionTimeout(100_000);
-            consumerPool = new ThreadPoolExecutor(10, 10,
-                    0L, TimeUnit.MILLISECONDS,
-                    new ArrayBlockingQueue<>(10000),
-                    ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
-                    new ThreadPoolExecutor.AbortPolicy());
 
-        }
         ReflectionTestUtils.setField(sphinxSyncExecutor, "sphinxQLIndexStorage", indexStorage);
-        ReflectionTestUtils.setField(sphinxSyncExecutor, "consumerPool", consumerPool);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "masterStorage", masterStorage);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "entityValueBuilder", entityValueBuilder);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "cdcErrorStorage", cdcErrorStorage);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "seqNoGenerator",
                 new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0)));
-
-
 
         ConsumerService consumerService = new SphinxConsumerService();
 

@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageE
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 索引储存实现.
@@ -51,6 +52,22 @@ public interface IndexStorage extends Storage {
      * @throws SQLException Storage error.
      */
     int delete(long id) throws SQLException;
+
+    /**
+     * 转换entityValue为JsonFields和FullFields
+     * @param storageEntity
+     * @param entityValue
+     * @throws SQLException Storage error.
+     */
+    void entityValueToStorage(StorageEntity storageEntity, IEntityValue entityValue);
+
+    /**
+     * 批量插入或更新.
+     * @param storageEntities
+     * @param replacement
+     * @throws SQLException Storage error.
+     */
+    int batchSave(Collection<StorageEntity> storageEntities, boolean replacement, boolean retry) throws SQLException;
 
     /**
      * Deletes an existing entity.

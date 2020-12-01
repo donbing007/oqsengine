@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.devops.rebuild;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.Lists;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
@@ -12,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.LockExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.OffsetSnapShot;
@@ -67,11 +65,9 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     @Resource(name = "snowflakeIdGenerator")
     private LongIdGenerator idGenerator;
 
-    private int taskExecTimeout;
     private int splitPart;
     private int maxQueueSize;
     private int executionTimeout;
-    private int updateFrequency;
 
     //  30s
     private long cacheExpireTime;
@@ -88,13 +84,11 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
     public static Cache<String, BatchStatus> BATCH_STATUS_CACHE;
 
-    public DevOpsRebuildIndexExecutor(int splitPart, int maxQueueSize, int executionTimeout, int updateFrequency,
-                                      long cacheExpireTime, long cacheMaxSize, int taskExecTimeout, int pageSize) {
+    public DevOpsRebuildIndexExecutor(int splitPart, int maxQueueSize, int executionTimeout, long cacheExpireTime,
+                                      long cacheMaxSize, int pageSize) {
         this.splitPart = splitPart;
         this.maxQueueSize = maxQueueSize;
         this.executionTimeout = executionTimeout;
-        this.updateFrequency = updateFrequency;
-        this.taskExecTimeout = taskExecTimeout;
 
         //  30s
         this.cacheExpireTime = cacheExpireTime;
@@ -419,93 +413,33 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         return new DefaultDevOpsTaskHandler(sqlTaskStorage, taskInfo);
     }
 
-    /*
-        处理往索引库中ReIndex逻辑(replace index)， 主要是按照线程池大小切分任务总数
-        每一格处理大小=threadPoolSize即FutureList tasks=threadPoolSize
-     */
     private void consumer(DevOpsTaskInfo taskInfo, List<IEntity> entityList) throws SQLException {
         logger.info("start consumer entity, entity size {}", entityList.size());
         if (EMPTY_COLLECTION_SIZE < entityList.size()) {
-            int lastFocus = EMPTY_COLLECTION_SIZE;
-            List<List<IEntity>> splitEntity = Lists.partition(entityList, splitPart);
-
-            for (List<IEntity> spl : splitEntity) {
-                if (EMPTY_COLLECTION_SIZE < spl.size()) {
-                    CountDownLatch countDownLatch = new CountDownLatch(spl.size());
-                    List<Future> futures = new ArrayList<>(spl.size());
-                    for (IEntity entity : spl) {
-                        entity.restMaintainId(taskInfo.getMaintainid());
-                        futures.add(taskThreadPool.submit(new ReIndexCallable(countDownLatch, entity)));
-                    }
-
-                    try {
-                        if (!countDownLatch.await(executionTimeout, TimeUnit.MILLISECONDS)) {
-                            for (Future f : futures) {
-                                f.cancel(true);
-                            }
-
-                            throw new SQLException(REINDEX_TIME_OUT_ERROR.name(), REINDEX_TIME_OUT_ERROR.name());
-                        }
-                    } catch (InterruptedException e) {
-                        throw new SQLException(e.getMessage(), e);
-                    }
-                    if (EMPTY_COLLECTION_SIZE < futures.size()) {
-                        taskInfo.addFinishSize(futures.size());
-                    }
-                }
-                /*
-                    这里每100条更新一次数据库finishSize,用以统计百分比, 使用乐观锁，当更新结果为0 说明任务被终止,
-                    需要将BatchStatus设置为CANCEL，并终止当前任务
-                 */
-                if (taskInfo.getFinishSize() - lastFocus > updateFrequency) {
-                    if (NULL_UPDATE == sqlTaskStorage.update(taskInfo, RUNNING)) {
-                        taskInfo.setStatus(CANCEL.getCode());
-                        throw new SQLException("task might be canceled.");
-                    }
-                    lastFocus = taskInfo.getFinishSize();
-                }
-            }
-
-            /*
-                最后一次检查
-             */
-            if (lastFocus < taskInfo.getFinishSize()) {
-                if (NULL_UPDATE == sqlTaskStorage.update(taskInfo, RUNNING)) {
-                    taskInfo.setStatus(CANCEL.getCode());
-                    throw new SQLException("task might be canceled.");
-                }
-            }
-        }
-    }
-
-    private class ReIndexCallable implements Callable<Integer> {
-        private CountDownLatch countDownLatch;
-        private IEntity entity;
-
-        public ReIndexCallable(CountDownLatch countDownLatch, IEntity entity) {
-            this.countDownLatch = countDownLatch;
-            this.entity = entity;
-        }
-
-        @Override
-        public Integer call() throws Exception {
-            try {
-
+            List<StorageEntity> storageEntityList = new ArrayList<>();
+            for (IEntity entity : entityList) {
                 StorageEntity storageEntity = new StorageEntity(
                         entity.id(), entity.entityClass().id(), entity.family().parent(), entity.family().child(),
                         maintainTxId, maintainCommitId, null, null, entity.time());
 
-                storageEntity.setMaintainId(entity.maintainId());
+                //  加入maintainId
+                storageEntity.setMaintainId(taskInfo.getMaintainid());
+                //  转换JsonFields/FullFields
+                indexStorage.entityValueToStorage(storageEntity, entity.entityValue());
+                storageEntityList.add(storageEntity);
+            }
+            //  批量更新
+            int finished = indexStorage.batchSave(storageEntityList, true, true);
+            taskInfo.addFinishSize(finished);
 
-                int reIndex = indexStorage.buildOrReplace(storageEntity, entity.entityValue(), true);
-                if (NULL_UPDATE == reIndex) {
-                    throw new SQLException("reIndex failed, no one replace.");
-                }
-
-                return reIndex;
-            } finally {
-                countDownLatch.countDown();
+            /*
+                更新状态，如果更新失败，则说明当前任务已被cancel
+             */
+            if (NULL_UPDATE == sqlTaskStorage.update(taskInfo, RUNNING)) {
+                taskInfo.setStatus(CANCEL.getCode());
+                throw new SQLException("task might be canceled.");
             }
         }
+        logger.info("finish consumer entity, entity size {}", entityList.size());
     }
 }

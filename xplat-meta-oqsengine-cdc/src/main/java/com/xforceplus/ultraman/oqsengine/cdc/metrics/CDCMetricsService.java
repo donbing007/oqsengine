@@ -34,47 +34,38 @@ public class CDCMetricsService {
     @Resource
     private CDCMetricsCallback cdcMetricsCallback;
 
-    //  sync pool
-    private ExecutorService cdcSyncPool;
-
     private CDCMetrics cdcMetrics;
 
     private volatile boolean shutdown;
 
     public CDCMetricsService() {
         cdcMetrics = new CDCMetrics();
-        initCdcSyncPool();
         shutdown = false;
     }
-
-    private void initCdcSyncPool() {
-        //  启动一个线程数大小为1线程池进行CDC指标的同步
-        cdcSyncPool = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE,
-            0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(MAX_QUEUE_SIZE),
-            ExecutorHelper.buildNameThreadFactory(POOL_NAME, true),
-            new ThreadPoolExecutor.AbortPolicy()
-        );
+    public void startMetrics() {
+        logger.info("cdc metrics start, it will start hearBeat thread");
+        Thread heartBeat = new Thread(this::heartBeat);
+        heartBeat.setName("cdc-heatBeat");
+        heartBeat.start();
+        logger.info("cdc metrics hearBeat thread start ok...");
     }
 
-    public void startMetrics() {
+    public void heartBeat() {
         shutdown = false;
         //  设置心跳
-        cdcSyncPool.submit(() -> {
-            while (true) {
-                if (shutdown) {
-                    break;
-                }
-                try {
-                    Thread.sleep(HEART_BEAT_INTERVAL);
-                } catch (InterruptedException e) {
-                    //
-                    logger.warn("heart_beat_interval sleep error, message :{}", e.getMessage());
-                }
-
-                cdcMetricsCallback.heartBeat();
+        while (true) {
+            if (shutdown) {
+                break;
             }
-        });
+
+            try {
+                cdcMetricsCallback.heartBeat();
+                logger.debug("execute heartBeat, time : {}", System.currentTimeMillis());
+                Thread.sleep(HEART_BEAT_INTERVAL);
+            } catch (Exception e) {
+                logger.warn("execute heartBeat error, message :{}", e.getMessage());
+            }
+        }
     }
 
     public void shutdown() {

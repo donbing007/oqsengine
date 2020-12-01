@@ -44,7 +44,7 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
     @Before
     public void before() throws Exception {
-        sphinxConsumerService = initAll(true);
+        sphinxConsumerService = initAll();
     }
 
     @After

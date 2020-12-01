@@ -62,10 +62,6 @@ public class MaintainTimeBetweenQueryExecutor implements Executor<Long, Collecti
             // end
             st.setLong(4, end);
 
-            if (logger.isDebugEnabled()) {
-                logger.debug(st.toString());
-            }
-
             List<EntityRef> entityRefList = new ArrayList<>();
             rs = st.executeQuery();
             while (rs.next()) {

@@ -54,4 +54,7 @@ public class CDCConstant {
 
     //  shutdown时单次循环等待时间
     public static final int SECOND = 1000;
+
+    //  split
+    public static final int SPLIT_SIZE = 10;
 }

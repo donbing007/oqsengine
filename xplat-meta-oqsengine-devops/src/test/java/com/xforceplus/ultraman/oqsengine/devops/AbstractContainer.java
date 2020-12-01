@@ -279,7 +279,7 @@ public abstract class AbstractContainer {
 //                new LocalResourceLocker());
 
         taskExecutor = new DevOpsRebuildIndexExecutor(10, 3000, 30000,
-                100, 30, 300, 3000, 100);
+                 30, 300,  100);
 
         ReflectionTestUtils.setField(taskExecutor, "indexStorage", indexStorage);
         ReflectionTestUtils.setField(taskExecutor, "sqlTaskStorage", sqlTaskStorage);

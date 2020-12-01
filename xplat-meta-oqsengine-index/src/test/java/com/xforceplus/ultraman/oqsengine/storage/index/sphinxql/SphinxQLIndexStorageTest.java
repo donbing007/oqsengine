@@ -762,7 +762,9 @@ public class SphinxQLIndexStorageTest {
         try {
             Arrays.stream(entityes).forEach(e -> {
                 try {
-                    storage.buildOrReplace(create(e.id(), e.entityClass().id(), commitId, tx), e.entityValue(), false);
+                    StorageEntity storageEntity = create(e.id(), e.entityClass().id(), commitId, tx);
+                    storage.entityValueToStorage(storageEntity, e.entityValue());
+                    storage.batchSave(Collections.singletonList(storageEntity), false, false);
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex.getMessage(), ex);
                 }
@@ -775,7 +777,8 @@ public class SphinxQLIndexStorageTest {
                     if (e.maintainId() == taskId) {
                         storageEntity.setMaintainId(taskId);
                     }
-                    storage.buildOrReplace(storageEntity, e.entityValue(), false);
+                    storage.entityValueToStorage(storageEntity, e.entityValue());
+                    storage.batchSave(Collections.singletonList(storageEntity), false, false);
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex.getMessage(), ex);
                 }
