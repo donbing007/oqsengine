@@ -653,7 +653,7 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
 
     private DataSource buildDataSource(String file) throws SQLException {
         System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-        DataSourcePackage dataSourcePackage = DataSourceFactory.build();
+        DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
 
         AtomicInteger index = new AtomicInteger(0);
         Map<String, DataSource> dsMap = dataSourcePackage.getMaster().stream().collect(Collectors.toMap(

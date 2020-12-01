@@ -15,6 +15,7 @@ import java.util.Objects;
 
 /**
  * Entity实体定义.
+ *
  * @author wangzheng
  * @version 1.0 2020/3/26 15:10
  */
@@ -210,7 +211,7 @@ public class Entity implements IEntity, Serializable {
         StringBuilder buff = new StringBuilder();
         buff.append("id: ").append(id)
             .append(", ")
-            .append("entity: ").append(entityClass.id())
+            .append("entity: ").append(entityClass.code())
             .append(", ")
             .append("version: ").append(version)
             .append(", ")
@@ -222,8 +223,18 @@ public class Entity implements IEntity, Serializable {
             .append("pref: ").append(family.parent())
             .append(", ")
             .append("cref: ").append(family.child())
-            .append(", ")
-            .append("value: ").append(entityValue.toString());
+            .append("\n");
+        entityValue().values().stream().forEach(v -> {
+            buff.append("{")
+                .append("id: ").append(v.getField().id())
+                .append(", ")
+                .append("name: ").append(v.getField().name())
+                .append(", ")
+                .append("type: ").append(v.getField().type().getType())
+                .append(", ")
+                .append("value: ").append(v.getValue().toString())
+                .append("}\n");
+        });
 
         return buff.toString();
     }

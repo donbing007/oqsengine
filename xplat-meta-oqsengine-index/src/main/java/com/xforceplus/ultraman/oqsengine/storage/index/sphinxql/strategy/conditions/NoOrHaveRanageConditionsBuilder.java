@@ -53,7 +53,11 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
             buff.append(super.build(entityClass, eqConditions));
         } else {
             buff.append(" ").append(SqlKeywordDefine.AND).append(" ")
-                .append(FieldDefine.ENTITY).append(" = ").append(entityClass.id());
+                .append("MATCH('@")
+                .append(FieldDefine.ENTITY_F)
+                .append(" =\"")
+                .append(entityClass.id())
+                .append("\"')");
         }
         return buff.toString();
     }

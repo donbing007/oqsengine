@@ -58,38 +58,35 @@ public class ReplaceExecutor implements Executor<StorageEntity, Integer> {
 
         final String sql = String.format(replaceSql, indexTableName);
 
-        PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
+        try (PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql)) {
 
-        // id, entity, pref, cref, tx, commit, jsonfileds, fullfileds
-        // id
-        st.setLong(1, storageEntity.getId());
-        // entity
-        st.setLong(2, storageEntity.getEntity());
-        // entityf
-        st.setString(3, Long.toString(storageEntity.getEntity()));
-        // pref
-        st.setLong(4, storageEntity.getPref());
-        // cref
-        st.setLong(5, storageEntity.getCref());
-        //tx
-        st.setLong(6, storageEntity.getTx());
-        //commitid
-        st.setLong(7, storageEntity.getCommitId());
-        // jsonfileds
-        st.setString(8, SphinxQLHelper.serializableJson(storageEntity.getJsonFields()));
-        // fullfileds
-        st.setString(9, toFullString(storageEntity.getFullFields()));
-        // maintainId
-        st.setLong(10, storageEntity.getMaintainId());
-        // time
-        st.setLong(11, storageEntity.getTime());
-        // oqsmajor
-        st.setInt(12, OqsVersion.MAJOR);
+            // id, entity, pref, cref, tx, commit, jsonfileds, fullfileds
+            // id
+            st.setLong(1, storageEntity.getId());
+            // entity
+            st.setLong(2, storageEntity.getEntity());
+            // entityf
+            st.setString(3, Long.toString(storageEntity.getEntity()));
+            // pref
+            st.setLong(4, storageEntity.getPref());
+            // cref
+            st.setLong(5, storageEntity.getCref());
+            //tx
+            st.setLong(6, storageEntity.getTx());
+            //commitid
+            st.setLong(7, storageEntity.getCommitId());
+            // jsonfileds
+            st.setString(8, SphinxQLHelper.serializableJson(storageEntity.getJsonFields()));
+            // fullfileds
+            st.setString(9, toFullString(storageEntity.getFullFields()));
+            // maintainId
+            st.setLong(10, storageEntity.getMaintainId());
+            // time
+            st.setLong(11, storageEntity.getTime());
+            // oqsmajor
+            st.setInt(12, OqsVersion.MAJOR);
 
-        try {
             return st.executeUpdate();
-        } finally {
-            st.close();
         }
     }
 }

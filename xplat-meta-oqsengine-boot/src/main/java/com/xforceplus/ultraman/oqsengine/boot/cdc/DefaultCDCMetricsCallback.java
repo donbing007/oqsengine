@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.boot.cdc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.CDCMetricsCallback;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
@@ -46,25 +45,11 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
     @Override
     public void heartBeat() {
         cdcStatusService.heartBeat();
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("CDC heartBeat.");
-        }
     }
 
     @Override
     public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
         cdcStatusService.saveUnCommit(cdcMetrics);
-
-        if (logger.isDebugEnabled()) {
-            String json = null;
-            try {
-                json = objectMapper.writeValueAsString(cdcMetrics);
-            } catch (JsonProcessingException e) {
-                json = "{}";
-            }
-            logger.debug("Save cdc status {}", json);
-        }
     }
 
     @Override

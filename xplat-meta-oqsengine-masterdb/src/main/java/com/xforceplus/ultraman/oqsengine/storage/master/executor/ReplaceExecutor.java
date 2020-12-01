@@ -35,25 +35,20 @@ public class ReplaceExecutor extends AbstractMasterExecutor<StorageEntity, Integ
     @Override
     public Integer execute(StorageEntity storageEntity) throws SQLException {
         String sql = buildSQL(storageEntity);
-        PreparedStatement st = getResource().value().prepareStatement(sql);
-        st.setLong(1, storageEntity.getTime());
-        st.setLong(2, storageEntity.getTx());
-        st.setLong(3, storageEntity.getCommitid());
-        st.setInt(4, storageEntity.getOp());
-        st.setInt(5, OqsVersion.MAJOR);
-        st.setString(6, storageEntity.getAttribute());
-        st.setString(7, storageEntity.getMeta());
-        st.setLong(8, storageEntity.getId());
-        st.setInt(9, storageEntity.getVersion());
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+            st.setLong(1, storageEntity.getTime());
+            st.setLong(2, storageEntity.getTx());
+            st.setLong(3, storageEntity.getCommitid());
+            st.setInt(4, storageEntity.getOp());
+            st.setInt(5, OqsVersion.MAJOR);
+            st.setString(6, storageEntity.getAttribute());
+            st.setString(7, storageEntity.getMeta());
+            st.setLong(8, storageEntity.getId());
+            st.setInt(9, storageEntity.getVersion());
 
-        checkTimeout(st);
+            checkTimeout(st);
 
-        try {
             return st.executeUpdate();
-        } finally {
-            if (st != null) {
-                st.close();
-            }
         }
     }
 

@@ -74,7 +74,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                FieldDefine.JSON_FIELDS + ".1L > 100 AND entity = 9223372036854775807"
+                FieldDefine.JSON_FIELDS + ".1L > 100 AND MATCH('@entityf =\"9223372036854775807\"')"
             )
             ,
             new Case(
@@ -103,7 +103,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new DecimalValue(new EntityField(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
                     )
                 ),
-                "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 567890000000000000)) AND entity = 9223372036854775807"
+                "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 567890000000000000)) AND MATCH('@entityf =\"9223372036854775807\"')"
             )
             ,
             new Case(

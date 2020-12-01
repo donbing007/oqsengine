@@ -36,29 +36,24 @@ public class BuildExecutor extends AbstractMasterExecutor<StorageEntity, Integer
     @Override
     public Integer execute(StorageEntity storageEntity) throws SQLException {
         String sql = buildSQL(storageEntity);
-        PreparedStatement st = getResource().value().prepareStatement(sql);
-        st.setLong(1, storageEntity.getId());
-        st.setLong(2, storageEntity.getEntity());
-        st.setLong(3, storageEntity.getTx());
-        st.setLong(4, storageEntity.getCommitid());
-        st.setInt(5, storageEntity.getVersion());
-        st.setInt(6, storageEntity.getOp());
-        st.setLong(7, storageEntity.getTime());
-        st.setLong(8, storageEntity.getPref());
-        st.setLong(9, storageEntity.getCref());
-        st.setBoolean(10, storageEntity.getDeleted());
-        st.setString(11, storageEntity.getAttribute());
-        st.setString(12, storageEntity.getMeta());
-        st.setInt(13, OqsVersion.MAJOR);
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+            st.setLong(1, storageEntity.getId());
+            st.setLong(2, storageEntity.getEntity());
+            st.setLong(3, storageEntity.getTx());
+            st.setLong(4, storageEntity.getCommitid());
+            st.setInt(5, storageEntity.getVersion());
+            st.setInt(6, storageEntity.getOp());
+            st.setLong(7, storageEntity.getTime());
+            st.setLong(8, storageEntity.getPref());
+            st.setLong(9, storageEntity.getCref());
+            st.setBoolean(10, storageEntity.getDeleted());
+            st.setString(11, storageEntity.getAttribute());
+            st.setString(12, storageEntity.getMeta());
+            st.setInt(13, OqsVersion.MAJOR);
 
-        checkTimeout(st);
-
-        try {
+            checkTimeout(st);
             return st.executeUpdate();
-        } finally {
-            if (st != null) {
-                st.close();
-            }
+
         }
     }
 

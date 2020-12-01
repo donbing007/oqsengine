@@ -35,22 +35,17 @@ public class UpdateVersionAndTxExecutor extends AbstractMasterExecutor<StorageEn
     @Override
     public Integer execute(StorageEntity storageEntity) throws SQLException {
         String sql = buildSQL(storageEntity);
-        PreparedStatement st = getResource().value().prepareStatement(sql);
-        st.setInt(1, storageEntity.getVersion());
-        st.setLong(2, storageEntity.getTime());
-        st.setLong(3, storageEntity.getTx());
-        st.setLong(4, storageEntity.getCommitid());
-        st.setLong(5, OperationType.UPDATE.getValue());
-        st.setLong(6, storageEntity.getId());
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+            st.setInt(1, storageEntity.getVersion());
+            st.setLong(2, storageEntity.getTime());
+            st.setLong(3, storageEntity.getTx());
+            st.setLong(4, storageEntity.getCommitid());
+            st.setLong(5, OperationType.UPDATE.getValue());
+            st.setLong(6, storageEntity.getId());
 
-        checkTimeout(st);
+            checkTimeout(st);
 
-        try {
             return st.executeUpdate();
-        } finally {
-            if (st != null) {
-                st.close();
-            }
         }
     }
 

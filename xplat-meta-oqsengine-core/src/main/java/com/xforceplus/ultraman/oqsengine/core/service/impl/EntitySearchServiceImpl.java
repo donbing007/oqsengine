@@ -135,11 +135,15 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Optional<IEntity> entityOptional = combinedStorage.selectOne(id, entityClass);
             if (entityOptional.isPresent()) {
                 final int onlyOne = 0;
-                return Optional.of(
+                entityOptional = Optional.of(
                     buildEntitiesFromEntities(Arrays.asList(entityOptional.get()), entityClass).get(onlyOne));
-            } else {
-                return entityOptional;
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Select one result: [{}].", entityOptional.get());
+                }
             }
+
+            return entityOptional;
 
         } catch (Exception ex) {
             failCountTotal.increment();
@@ -158,8 +162,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Arrays.stream(ids).collect(HashMap::new, (hashMap, i) -> hashMap.put(i, entityClass), HashMap::putAll);
 
         try {
-            Collection<IEntity> entities = buildEntitiesFromEntities(
-                combinedStorage.selectMultiple(request), entityClass);
+            Collection<IEntity> entities = buildEntitiesFromEntities(combinedStorage.selectMultiple(request), entityClass);
+
+            if (logger.isDebugEnabled()) {
+                entities.stream().forEach(e -> {
+                    logger.debug("Select multiple result: [{}].", e.toString());
+                });
+            }
 
             return entities;
         } catch (Exception ex) {
@@ -281,7 +290,21 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Collection<EntityRef> refs = combinedStorage.select(
                 minUnSyncCommitId, useConditions, entityClass, useSort, page);
 
-            return buildEntitiesFromRefs(refs, entityClass);
+            List<IEntity> entities = buildEntitiesFromRefs(refs, entityClass);
+
+            if (logger.isDebugEnabled()) {
+                if (entities.size() == 0) {
+
+                    logger.debug("Select conditions result: []");
+
+                } else {
+                    entities.stream().forEach(e -> {
+                        logger.debug("Select conditions result: [{}]", e.toString());
+                    });
+                }
+            }
+
+            return entities;
         } catch (Exception ex) {
             failCountTotal.increment();
             throw ex;
@@ -305,15 +328,27 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             if (fOp.isPresent()) {
                 field = fOp.get();
                 if (!field.config().isSearchable()) {
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("The field {} in the conditional query is not searchable and the query is aborted.",
+                            field.name());
+                    }
+
                     return false;
                 } else {
                     return true;
                 }
             } else {
+
                 useEntityClass = useEntityClass.extendEntityClass();
+
             }
         }
 
+        if (logger.isDebugEnabled()) {
+            logger.debug("All fields in the conditional query are either non-searchable or non-{}({}) entity fields.",
+                entityClass.code(), entityClass.id());
+        }
         return false;
     }
 

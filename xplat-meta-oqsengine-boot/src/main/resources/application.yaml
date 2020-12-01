@@ -12,6 +12,8 @@ server:
 logging:
   level:
     root: debug
+    io:
+      lettuce: info
 
 transaction:
   timeoutMs: 3000
@@ -26,13 +28,14 @@ threadPool:
 
 maxVisibleNumber: 10000
 
+ignoreCDCStatusCheck: false
 sync:
   allowMaxLiveTimeMs: 3000
   allowMaxUnSyncCommitIdSize: 100
 
 storage:
   debug:
-    showsql: false
+    showsql: true
   timeoutMs:
     query: 3000
   master:
@@ -48,8 +51,8 @@ storage:
     write:
       name: "oqsindex"
       shard:
-        enabled: false
-        size: 1
+        enabled: true
+        size: 3
   devOps:
     cdc:
       errors:
@@ -82,7 +85,7 @@ redis:
   # ms 毫秒
   # us 微秒
   # ns 纳秒
-  uri: "redis://localhost:6379"
+  uri: "redis://127.0.0.1:6379"
   maxReqQueue: 10000
 
 management:

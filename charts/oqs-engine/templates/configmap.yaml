@@ -20,6 +20,8 @@ data:
         logging:
           level:
             root: {{ .Values.logger.level }}
+            io:
+              lettuce: info
         management:
           health:
             redis:

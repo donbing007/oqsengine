@@ -31,23 +31,21 @@ public class QueryExecutor implements Executor<Long, Optional<StorageEntity>> {
         this.resource = resource;
     }
 
-    public static QueryExecutor build(TransactionResource resource, String indexTableName){
+    public static QueryExecutor build(TransactionResource resource, String indexTableName) {
         return new QueryExecutor(indexTableName, resource);
     }
 
     @Override
     public Optional<StorageEntity> execute(Long id) throws SQLException {
-        PreparedStatement st = null;
-        ResultSet rs = null;
-        try {
-            String sql = String.format(SQLConstant.SELECT_FROM_ID_SQL, indexTableName);
-            st = ((Connection) resource.value()).prepareStatement(sql);
+
+        String sql = String.format(SQLConstant.SELECT_FROM_ID_SQL, indexTableName);
+        try (PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql)) {
             st.setLong(1, id);
 
-            rs = st.executeQuery();
-            StorageEntity storageEntity = null;
-            if (rs.next()) {
-                storageEntity = new StorageEntity(
+            try (ResultSet rs = st.executeQuery()) {
+                StorageEntity storageEntity = null;
+                if (rs.next()) {
+                    storageEntity = new StorageEntity(
                         id,
                         rs.getLong(FieldDefine.ENTITY),
                         rs.getLong(FieldDefine.PREF),
@@ -57,19 +55,12 @@ public class QueryExecutor implements Executor<Long, Optional<StorageEntity>> {
                         SphinxQLHelper.deserializeJson(rs.getString(FieldDefine.JSON_FIELDS)),
                         null,
                         rs.getLong(FieldDefine.TIME)
-                );
+                    );
 
-                storageEntity.setMaintainId(rs.getLong(FieldDefine.MAINTAIN_ID));
-            }
+                    storageEntity.setMaintainId(rs.getLong(FieldDefine.MAINTAIN_ID));
+                }
 
-            return Optional.ofNullable(storageEntity);
-        } finally {
-            if (rs != null) {
-                rs.close();
-            }
-
-            if (st != null) {
-                st.close();
+                return Optional.ofNullable(storageEntity);
             }
         }
     }

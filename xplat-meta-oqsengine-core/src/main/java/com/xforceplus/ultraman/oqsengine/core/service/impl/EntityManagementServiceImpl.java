@@ -470,10 +470,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         blockMessage = null;
         readOnly.set(OqsMode.NORMAL.getValue());
         ready = true;
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("The current check status is normal.");
-        }
     }
 
     private void setReadOnlyMode(String msg) {

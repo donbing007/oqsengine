@@ -39,48 +39,39 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<Collection<Lon
     @Override
     public Collection<StorageEntity> execute(Collection<Long> ids) throws SQLException {
         String sql = buildSQL(ids.size());
-        PreparedStatement st = getResource().value().prepareStatement(sql);
-        int index = 1;
-        for (long id : ids) {
-            st.setLong(index++, id);
-        }
-        st.setBoolean(ids.size() + 1, false);
-
-        checkTimeout(st);
-
-        ResultSet rs = null;
-        List<StorageEntity> entities = new ArrayList<>(ids.size());
-        StorageEntity entity;
-        try {
-            rs = st.executeQuery();
-
-            while (rs.next()) {
-                entity = new StorageEntity();
-                entity.setId(rs.getLong(FieldDefine.ID));
-                entity.setEntity(rs.getLong(FieldDefine.ENTITY));
-                entity.setVersion(rs.getInt(FieldDefine.VERSION));
-                entity.setOp(rs.getInt(FieldDefine.OP));
-                entity.setTx(rs.getLong(FieldDefine.TX));
-                entity.setCommitid(rs.getLong(FieldDefine.COMMITID));
-                entity.setTime(rs.getLong(FieldDefine.TIME));
-                entity.setPref(rs.getLong(FieldDefine.PREF));
-                entity.setCref(rs.getLong(FieldDefine.CREF));
-                entity.setOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR));
-                entity.setAttribute(rs.getString(FieldDefine.ATTRIBUTE));
-                entities.add(entity);
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+            int index = 1;
+            for (long id : ids) {
+                st.setLong(index++, id);
             }
+            st.setBoolean(ids.size() + 1, false);
 
-            return entities;
+            checkTimeout(st);
 
-        } finally {
-            if (rs != null) {
-                rs.close();
-            }
+            List<StorageEntity> entities = new ArrayList<>(ids.size());
+            StorageEntity entity;
+            try (ResultSet rs = st.executeQuery()) {
 
-            if (st != null) {
-                st.close();
+                while (rs.next()) {
+                    entity = new StorageEntity();
+                    entity.setId(rs.getLong(FieldDefine.ID));
+                    entity.setEntity(rs.getLong(FieldDefine.ENTITY));
+                    entity.setVersion(rs.getInt(FieldDefine.VERSION));
+                    entity.setOp(rs.getInt(FieldDefine.OP));
+                    entity.setTx(rs.getLong(FieldDefine.TX));
+                    entity.setCommitid(rs.getLong(FieldDefine.COMMITID));
+                    entity.setTime(rs.getLong(FieldDefine.TIME));
+                    entity.setPref(rs.getLong(FieldDefine.PREF));
+                    entity.setCref(rs.getLong(FieldDefine.CREF));
+                    entity.setOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR));
+                    entity.setAttribute(rs.getString(FieldDefine.ATTRIBUTE));
+                    entities.add(entity);
+                }
+
+                return entities;
             }
         }
+
     }
 
     private String buildSQL(int size) {

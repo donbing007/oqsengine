@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  mysql:
+    image: mysql:5.7
+    environment:
+      - MYSQL_DATABASE=oqsengine
+      - MYSQL_ROOT_USERNAME=root
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - 3306:3306
+    volumes:
+      - "./docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/"
+      - "./mysql.cnf:/etc/my.cnf"
+
+  canal-server:
+    image: canal/canal-server:v1.1.4
+    depends_on:
+      - mysql
+    ports:
+      - 11111:11111
+    environment:
+      - canal.instance.mysql.slaveId=12
+      - canal.auto.scan=false
+      - canal.destinations=oqsengine
+      - canal.instance.master.address=mysql:3306
+      - canal.instance.dbUsername=root
+      - canal.instance.dbPassword=root
+      - canal.mq.topic=oqsengine
+      - canal.instance.filter.regex=.*\.oqsbigentity.*
+
+  redis:
+    image: redis:6.0.9-alpine3.12
+    ports:
+      - 6379:6379
+
+  manticore:
+    image: manticoresearch/manticore:3.5.0
+    ports:
+      - 9306:9306
+    volumes:
+      - "./manticore.conf:/etc/manticoresearch/manticore.conf"

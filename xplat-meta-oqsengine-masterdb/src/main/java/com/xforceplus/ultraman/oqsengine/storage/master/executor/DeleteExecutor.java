@@ -34,41 +34,35 @@ public class DeleteExecutor extends AbstractMasterExecutor<StorageEntity, Intege
 
     @Override
     public Integer execute(StorageEntity storageEntity) throws SQLException {
-        PreparedStatement st;
         if (VersionHelp.isOmnipotence(storageEntity.getVersion())) {
 
             String sql = buildForceSQL(storageEntity);
-            st = getResource().value().prepareStatement(sql);
-            st.setInt(1, storageEntity.getVersion());
-            st.setBoolean(2, true);
-            st.setLong(3, storageEntity.getTime());
-            st.setLong(4, storageEntity.getTx());
-            st.setLong(5, storageEntity.getCommitid());
-            st.setInt(6, storageEntity.getOp());
-            st.setLong(7, storageEntity.getId());
+            try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+                st.setInt(1, storageEntity.getVersion());
+                st.setBoolean(2, true);
+                st.setLong(3, storageEntity.getTime());
+                st.setLong(4, storageEntity.getTx());
+                st.setLong(5, storageEntity.getCommitid());
+                st.setInt(6, storageEntity.getOp());
+                st.setLong(7, storageEntity.getId());
+                checkTimeout(st);
+                return st.executeUpdate();
+            }
         } else {
 
             String sql = buildSQl(storageEntity);
-            st = getResource().value().prepareStatement(sql);
-            st.setBoolean(1, true);
-            st.setLong(2, storageEntity.getTime());
-            st.setLong(3, storageEntity.getTx());
-            st.setLong(4, storageEntity.getCommitid());
-            st.setInt(5, storageEntity.getOp());
-            st.setLong(6, storageEntity.getId());
-            st.setInt(7, storageEntity.getVersion());
-        }
-
-        checkTimeout(st);
-
-        try {
-            return st.executeUpdate();
-        } finally {
-            if (st != null) {
-                st.close();
+            try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+                st.setBoolean(1, true);
+                st.setLong(2, storageEntity.getTime());
+                st.setLong(3, storageEntity.getTx());
+                st.setLong(4, storageEntity.getCommitid());
+                st.setInt(5, storageEntity.getOp());
+                st.setLong(6, storageEntity.getId());
+                st.setInt(7, storageEntity.getVersion());
+                checkTimeout(st);
+                return st.executeUpdate();
             }
         }
-
     }
 
     private String buildForceSQL(StorageEntity storageEntity) {

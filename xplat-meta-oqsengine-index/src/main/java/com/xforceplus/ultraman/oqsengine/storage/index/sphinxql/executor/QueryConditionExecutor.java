@@ -214,7 +214,6 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
         return count;
     }
 
-    //TODO
     @Override
     public List<EntityRef> execute(Tuple6<IEntityClass, Conditions, Page, Sort, List<Long>, Long> queryCondition) throws SQLException {
 
@@ -247,10 +246,6 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
             }
 
         }
-//
-//        if (!whereCondition.isEmpty()) {
-//            whereCondition = SqlKeywordDefine.AND + " " + whereCondition;
-//        }
 
         if (page.isEmptyPage()) {
             return Collections.emptyList();
@@ -281,10 +276,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
 
         String sql = String.format(SQLConstant.SELECT_SQL, sortSelectValuesSegment, indexTableName, whereCondition, orderBySqlSegment);
 
-        PreparedStatement st = null;
-        ResultSet rs = null;
-        try {
-            st = resource.value().prepareStatement(sql);
+        try (PreparedStatement st = resource.value().prepareStatement(sql)) {
             st.setLong(1, 0);
             st.setLong(2, page.getPageSize() * (page.getIndex() - 1));
             st.setLong(3, page.hasVisibleTotalCountLimit() ?
@@ -293,74 +285,66 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
             // add max query timeout.
             st.setLong(4, maxQueryTimeMs);
 
-            rs = st.executeQuery();
-            List<EntityRef> refs = new ArrayList((int) page.getPageSize());
+            try (ResultSet rs = st.executeQuery()) {
+                List<EntityRef> refs = new ArrayList((int) page.getPageSize());
 
-            while (rs.next()) {
-                EntityRef entityRef = new EntityRef();
-                entityRef.setId(rs.getLong(FieldDefine.ID));
-                entityRef.setCref(rs.getLong(FieldDefine.CREF));
-                entityRef.setPref(rs.getLong(FieldDefine.PREF));
-                entityRef.setMajor(rs.getInt(FieldDefine.OQS_MAJOR));
+                while (rs.next()) {
+                    EntityRef entityRef = new EntityRef();
+                    entityRef.setId(rs.getLong(FieldDefine.ID));
+                    entityRef.setCref(rs.getLong(FieldDefine.CREF));
+                    entityRef.setPref(rs.getLong(FieldDefine.PREF));
+                    entityRef.setMajor(rs.getInt(FieldDefine.OQS_MAJOR));
 
-                if (!useSort.isOutOfOrder()) {
-                    ResultSet finalRs = rs;
-                    AtomicInteger index = new AtomicInteger(0);
+                    if (!useSort.isOutOfOrder()) {
+                        ResultSet finalRs = rs;
+                        AtomicInteger index = new AtomicInteger(0);
 
-                    StorageStrategy finalStorageStrategy = storageStrategy;
-                    Optional<StorageValue> reduce = sortFields.stream().map(x -> {
-                        //get sort value
-                        try {
-                            switch (finalStorageStrategy.storageType()) {
-                                case LONG:
-                                    return StorageValueFactory.buildStorageValue(
-                                        finalStorageStrategy.storageType(),
-                                        x.fieldName,
-                                        finalRs.getLong("sort" + index.getAndIncrement()));
-                                case STRING:
-                                    return StorageValueFactory.buildStorageValue(
-                                        finalStorageStrategy.storageType(),
-                                        x.fieldName,
-                                        finalRs.getString("sort" + index.getAndIncrement()));
-                                default:
-                                    return null;
+                        StorageStrategy finalStorageStrategy = storageStrategy;
+                        Optional<StorageValue> reduce = sortFields.stream().map(x -> {
+                            //get sort value
+                            try {
+                                switch (finalStorageStrategy.storageType()) {
+                                    case LONG:
+                                        return StorageValueFactory.buildStorageValue(
+                                            finalStorageStrategy.storageType(),
+                                            x.fieldName,
+                                            finalRs.getLong("sort" + index.getAndIncrement()));
+                                    case STRING:
+                                        return StorageValueFactory.buildStorageValue(
+                                            finalStorageStrategy.storageType(),
+                                            x.fieldName,
+                                            finalRs.getString("sort" + index.getAndIncrement()));
+                                    default:
+                                        return null;
+                                }
+                            } catch (Exception ex) {
+                                logger.error("{}", ex);
+                                return null;
                             }
-                        } catch (Exception ex) {
-                            logger.error("{}", ex);
-                            return null;
+                        }).filter(Objects::nonNull).reduce(StorageValue::stick);
+
+                        if (reduce.isPresent()) {
+
+                            IValue iValue = storageStrategy.toLogicValue(useSort.getField(), reduce.get());
+
+                            if (iValue.compareByString()) {
+                                entityRef.setOrderValue(iValue.valueToString());
+                            } else {
+                                entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
+                            }
+
                         }
-                    }).filter(Objects::nonNull).reduce(StorageValue::stick);
-
-                    if (reduce.isPresent()) {
-
-                        IValue iValue = storageStrategy.toLogicValue(useSort.getField(), reduce.get());
-
-                        if (iValue.compareByString()) {
-                            entityRef.setOrderValue(iValue.valueToString());
-                        } else {
-                            entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
-                        }
-
                     }
+
+                    refs.add(entityRef);
                 }
 
-                refs.add(entityRef);
-            }
+                if (!page.isSinglePage()) {
+                    long count = count(resource);
+                    page.setTotalCount(count);
+                }
 
-            if (!page.isSinglePage()) {
-                long count = count(resource);
-                page.setTotalCount(count);
-            }
-
-            return refs;
-
-        } finally {
-            if (rs != null) {
-                rs.close();
-            }
-
-            if (st != null) {
-                st.close();
+                return refs;
             }
         }
     }

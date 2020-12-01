@@ -107,7 +107,11 @@ public class TransactionVisibilityTest extends AbstractContainerTest {
                         ConditionOperator.NOT_EQUALS,
                         new EnumValue(childClass.field("c3").get(), "0")
                     )
-                ),
+                ).addAnd(new Condition(
+                    fatherClass.field("c1").get(),
+                    ConditionOperator.EQUALS,
+                    new LongValue(fatherClass.field("c1").get(), 100000L)
+                )),
                 childClass,
                 page
             );

@@ -41,27 +41,18 @@ public class BatchQueryCountExecutor extends AbstractMasterExecutor<Long, Option
     @Override
     public Optional<Integer> execute(Long aLong) throws SQLException {
         String sql = buildCountSQL();
-        PreparedStatement st = getResource().value().prepareStatement(sql);
-        st.setLong(1, entity);
-        st.setLong(2, startTime);
-        st.setLong(3, endTime);
+        try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
+            st.setLong(1, entity);
+            st.setLong(2, startTime);
+            st.setLong(3, endTime);
 
-        checkTimeout(st);
-
-        ResultSet rs = null;
-        try {
-            rs = st.executeQuery();
-            if (rs.next()) {
-                return Optional.of(rs.getInt(1));
-            }
-            return Optional.empty();
-        } finally {
-            if (rs != null) {
-                rs.close();
-            }
-
-            if (st != null) {
-                st.close();
+            checkTimeout(st);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(rs.getInt(1));
+                } else {
+                    return Optional.empty();
+                }
             }
         }
     }

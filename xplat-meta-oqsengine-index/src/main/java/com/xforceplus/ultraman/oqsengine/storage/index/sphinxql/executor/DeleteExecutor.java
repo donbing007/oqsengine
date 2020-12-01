@@ -26,30 +26,21 @@ public class DeleteExecutor implements Executor<Long, Integer> {
         this.resource = resource;
     }
 
-    public static DeleteExecutor build(TransactionResource resource, String indexTableName){
+    public static DeleteExecutor build(TransactionResource resource, String indexTableName) {
         return new DeleteExecutor(indexTableName, resource);
     }
 
     @Override
     public Integer execute(Long id) throws SQLException {
         String sql = String.format(SQLConstant.DELETE_SQL, indexTableName);
-        PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql);
-        st.setLong(1, id);
+        try (PreparedStatement st = ((Connection) resource.value()).prepareStatement(sql)) {
+            st.setLong(1, id);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(st.toString());
-        }
-
-        try {
             // 在事务状态,返回值恒等于0.
             st.executeUpdate();
 
             // 不做版本控制.没有异常即为成功.
             return 1;
-        } finally {
-            if (st != null) {
-                st.close();
-            }
         }
     }
 }

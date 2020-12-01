@@ -79,45 +79,38 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
     @Override
     public Optional<StorageEntity> execute(Long id) throws SQLException {
         String sql = buildSQL(id);
-        PreparedStatement st = getResource().value().prepareStatement(
-            sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-        st.setFetchSize(Integer.MIN_VALUE);
-        st.setLong(1, id);
-        st.setBoolean(2, false);
+        try (PreparedStatement st = getResource().value().prepareStatement(
+            sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
 
-        checkTimeout(st);
+            st.setFetchSize(Integer.MIN_VALUE);
+            st.setLong(1, id);
+            st.setBoolean(2, false);
 
-        StorageEntity entity = null;
-        ResultSet rs = null;
-        try {
-            rs = st.executeQuery();
-            if (rs.next()) {
-                entity = new StorageEntity();
-                entity.setId(id);
-                entity.setVersion(rs.getInt(FieldDefine.VERSION));
-                entity.setTime(rs.getLong(FieldDefine.TIME));
-                entity.setTx(rs.getLong(FieldDefine.TX));
-                entity.setCommitid(rs.getLong(FieldDefine.COMMITID));
-                entity.setOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR));
-                if (!noDetail) {
-                    entity.setEntity(rs.getLong(FieldDefine.ENTITY));
-                    entity.setPref(rs.getLong(FieldDefine.PREF));
-                    entity.setCref(rs.getLong(FieldDefine.CREF));
-                    entity.setAttribute(rs.getString(FieldDefine.ATTRIBUTE));
+            checkTimeout(st);
+
+            StorageEntity entity = null;
+
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    entity = new StorageEntity();
+                    entity.setId(id);
+                    entity.setVersion(rs.getInt(FieldDefine.VERSION));
+                    entity.setTime(rs.getLong(FieldDefine.TIME));
+                    entity.setTx(rs.getLong(FieldDefine.TX));
+                    entity.setCommitid(rs.getLong(FieldDefine.COMMITID));
+                    entity.setOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR));
+                    if (!noDetail) {
+                        entity.setEntity(rs.getLong(FieldDefine.ENTITY));
+                        entity.setPref(rs.getLong(FieldDefine.PREF));
+                        entity.setCref(rs.getLong(FieldDefine.CREF));
+                        entity.setAttribute(rs.getString(FieldDefine.ATTRIBUTE));
+                    }
+                    if (!noMeta) {
+                        entity.setMeta(rs.getString(FieldDefine.META));
+                    }
                 }
-                if (!noMeta) {
-                    entity.setMeta(rs.getString(FieldDefine.META));
-                }
-            }
 
-
-            return Optional.ofNullable(entity);
-        } finally {
-            if (rs != null) {
-                rs.close();
-            }
-            if (st != null) {
-                st.close();
+                return Optional.ofNullable(entity);
             }
         }
     }

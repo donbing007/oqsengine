@@ -24,6 +24,7 @@ threadPool:
     worker: 0
     queue: 1000
   cdc:
+    # 0 or not exist use cpu core + 1
     worker: 0
 
 maxVisibleNumber: 10000

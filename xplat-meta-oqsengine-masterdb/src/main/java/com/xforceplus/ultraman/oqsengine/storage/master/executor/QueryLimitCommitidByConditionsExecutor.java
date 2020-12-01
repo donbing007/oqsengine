@@ -88,20 +88,23 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
         String where = conditionsBuilderFactory.getBuilder().build(entityClass, conditions);
         String sql = buildSQL(where);
 
-        PreparedStatement st = getResource().value().prepareStatement(
-            sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-        st.setLong(1, entityClass.id());
-        st.setLong(2, commitid);
+        try (PreparedStatement st = getResource().value().prepareStatement(
+            sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
 
-        checkTimeout(st);
+            st.setLong(1, entityClass.id());
+            st.setLong(2, commitid);
 
-        ResultSet rs = st.executeQuery();
-        Collection<EntityRef> refs = new ArrayList<>();
-        while (rs.next()) {
-            refs.add(buildEntityRef(rs, sort));
+            checkTimeout(st);
+
+            try (ResultSet rs = st.executeQuery()) {
+                Collection<EntityRef> refs = new ArrayList<>();
+                while (rs.next()) {
+                    refs.add(buildEntityRef(rs, sort));
+                }
+
+                return refs;
+            }
         }
-
-        return refs;
     }
 
     private EntityRef buildEntityRef(ResultSet rs, Sort sort) throws SQLException {
