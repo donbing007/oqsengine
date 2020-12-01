@@ -33,7 +33,7 @@ maxVisibleNumber: 10000
 
 sync:
   allowMaxLiveTimeMs: 3000
-  allowMaxUnSyncCommitIdSize: 1000
+  allowMaxUnSyncCommitIdSize: 100
 
 storage:
   debug:
@@ -117,7 +117,7 @@ cdc:
     type: single
     host: "${CANAL_HOST}"
     port: ${CANAL_PORT}
-    destination: nly-v1
+    destination: "${CANAL_DESTINATION}"
     username: root
     password: root
     subscribeFilter: .*\.oqsbigentity.*

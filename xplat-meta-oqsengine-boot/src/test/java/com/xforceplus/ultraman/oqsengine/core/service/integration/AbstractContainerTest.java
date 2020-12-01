@@ -7,6 +7,8 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
+import java.util.Random;
+
 @Ignore
 public abstract class AbstractContainerTest {
 
@@ -66,13 +68,15 @@ public abstract class AbstractContainerTest {
             .waitingFor(Wait.forListeningPort());
         redis.start();
 
+        System.setProperty("CANAL_DESTINATION", getRandomString(6));
+
         cannal = new GenericContainer("canal/canal-server:v1.1.4")
             .withNetwork(network)
             .withNetworkAliases("cannal")
             .withExposedPorts(11111)
             .withEnv("canal.instance.mysql.slaveId", "12")
             .withEnv("canal.auto.scan", "false")
-            .withEnv("canal.destinations", "nly-v1")
+            .withEnv("canal.destinations", System.getProperty("CANAL_DESTINATION"))
             .withEnv("canal.instance.master.address", "mysql:3306")
             .withEnv("canal.instance.dbUsername", "root")
             .withEnv("canal.instance.dbPassword", "root")
@@ -120,5 +124,16 @@ public abstract class AbstractContainerTest {
 
         System.out.println(System.getProperty("MANTICORE0_JDBC"));
         System.out.println(System.getProperty("MANTICORE1_JDBC"));
+    }
+
+    private static String getRandomString(int length) {
+        String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        Random random = new Random();
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < length; i++) {
+            int number = random.nextInt(62);
+            sb.append(str.charAt(number));
+        }
+        return sb.toString();
     }
 }
