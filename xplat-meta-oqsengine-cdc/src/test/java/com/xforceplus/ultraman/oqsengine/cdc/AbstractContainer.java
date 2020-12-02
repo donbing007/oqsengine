@@ -254,6 +254,7 @@ public abstract class AbstractContainer {
         ReflectionTestUtils.setField(indexStorage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
         indexStorage.setSearchIndexName("oqsindex");
         indexStorage.setMaxSearchTimeoutMs(1000);
+        indexStorage.setMaxBatchSize(50);
         indexStorage.init();
     }
 

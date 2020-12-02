@@ -41,12 +41,10 @@ import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.INVALID_ENTITY_ID;
 import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.PARSE_COLUMNS_ERROR;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.SECOND;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.SPLIT_SIZE;
 
 /**
  * 基于 SphinxQL 的索引储存实现. 注意: 这里交所有的 单引号 双引号和斜杠都进行了替换. 此实现并不会进行属性的返回,只会进行查询.
@@ -80,6 +78,8 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     @Resource(name = "indexWriteIndexNameSelector")
     private Selector<String> indexWriteIndexNameSelector;
 
+    private int maxBatchSize = 20;
+
     private String searchIndexName;
 
     // 最大查询超时时间,默认为无限.
@@ -101,9 +101,11 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         this.searchIndexName = searchIndexName;
     }
 
+    public void setMaxBatchSize(int maxBatchSize) {
+        this.maxBatchSize = maxBatchSize;
+    }
 
-
-    /**
+/**
      * query by condition
      *
      * @param conditions  搜索条件.
@@ -232,7 +234,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         int executed = 0;
         for (Map.Entry<String, Map<String, List<StorageEntity>>> dataSourceEntry : shardingStorageEntities.entrySet()) {
             for (Map.Entry<String, List<StorageEntity>> internalEntry : dataSourceEntry.getValue().entrySet()) {
-                Collection<List<StorageEntity>> partitions = Lists.partition(internalEntry.getValue(), SPLIT_SIZE);
+                Collection<List<StorageEntity>> partitions = Lists.partition(internalEntry.getValue(), maxBatchSize);
                 for (List<StorageEntity> storageEntityList : partitions) {
                     try {
                         int batchExecuted = doBatchSave(storageEntityList, replacement);
