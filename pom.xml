@@ -107,9 +107,9 @@
         <module>xplat-meta-oqsengine-storage</module>
         <module>xplat-meta-oqsengine-masterdb</module>
         <module>xplat-meta-oqsengine-index</module>
+        <module>xplat-meta-oqsengine-devops</module>
         <module>xplat-meta-oqsengine-cdc</module>
         <module>xplat-meta-oqsengine-core</module>
-        <module>xplat-meta-oqsengine-devops</module>
         <module>xplat-meta-oqsengine-transfer</module>
         <module>xplat-meta-oqsengine-boot</module>
         <module>xplat-meta-oqsengine-testreport</module>
