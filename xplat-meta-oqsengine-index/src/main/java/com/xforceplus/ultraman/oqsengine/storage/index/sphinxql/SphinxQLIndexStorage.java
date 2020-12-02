@@ -78,7 +78,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     @Resource(name = "indexWriteIndexNameSelector")
     private Selector<String> indexWriteIndexNameSelector;
 
-    private int maxBatchSize = 20;
+    private int maxBatchSize = 50;
 
     private String searchIndexName;
 
@@ -105,7 +105,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         this.maxBatchSize = maxBatchSize;
     }
 
-/**
+    /**
      * query by condition
      *
      * @param conditions  搜索条件.
@@ -216,7 +216,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     public int batchSave(Collection<StorageEntity> storageEntities, boolean replacement, boolean forceRetry) throws SQLException {
 
         //  database key -> table key -> List
-        Map<String, Map<String, List<StorageEntity>>> shardingStorageEntities = new HashMap<>();
+        Map<String, List<StorageEntity>> shardingStorageEntities = new HashMap<>();
         //  分类storageEntity
         for (StorageEntity storageEntity : storageEntities) {
             //  写入到shardingStorageEntities中
@@ -224,60 +224,57 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
             String dataSourceKey = ((HikariDataSource) writerDataSourceSelector.select(shardKey)).getPoolName();
             String tableShardKey = indexWriteIndexNameSelector.select(shardKey);
 
-            //  写入StorageEntity
-            shardingStorageEntities.computeIfAbsent(dataSourceKey, k -> new HashMap<>())
-                    .computeIfAbsent(tableShardKey, k -> new ArrayList<>())
+            //  写入StorageEntity, key使用 dataSourceKey_tableShardKey 这样的结构
+            shardingStorageEntities.computeIfAbsent(dataSourceKey + "_" + tableShardKey, k -> new ArrayList<>())
                     .add(storageEntity);
         }
 
         //  开始按照数据库/表进行分片插入
         int executed = 0;
-        for (Map.Entry<String, Map<String, List<StorageEntity>>> dataSourceEntry : shardingStorageEntities.entrySet()) {
-            for (Map.Entry<String, List<StorageEntity>> internalEntry : dataSourceEntry.getValue().entrySet()) {
-                Collection<List<StorageEntity>> partitions = Lists.partition(internalEntry.getValue(), maxBatchSize);
-                for (List<StorageEntity> storageEntityList : partitions) {
-                    try {
-                        int batchExecuted = doBatchSave(storageEntityList, replacement);
-                        if (batchExecuted != storageEntityList.size()) {
-                            throw new SQLException(
-                                    String.format("batchExecute size [%d] not match storageEntities size [%d], will retry by single executor.",
-                                                                    batchExecuted, storageEntities.size()));
-                        }
-                        executed += batchExecuted;
-                    } catch (Exception ex1) {
+        for (List<StorageEntity> entities : shardingStorageEntities.values()) {
+            Collection<List<StorageEntity>> partitions = Lists.partition(entities, maxBatchSize);
+            for (List<StorageEntity> storageEntityList : partitions) {
+                try {
+                    int batchExecuted = doBatchSave(storageEntityList, replacement);
+                    if (batchExecuted != storageEntityList.size()) {
+                        throw new SQLException(
+                                String.format("batchExecute size [%d] not match storageEntities size [%d], will retry by single executor.",
+                                        batchExecuted, storageEntities.size()));
+                    }
+                    executed += batchExecuted;
+                } catch (Exception ex1) {
                         /*
                             批量执行失败，将进行降级处理，实际为按每一条进行插入或替换处理，如果依然处理失败，则根据forceRetry判断是否需要无限重试与否
                          */
-                        logger.error("batch job failed, will be retry by single operation, message : {}", ex1.getMessage());
-                        for (StorageEntity se : storageEntityList) {
-                            try {
-                                executed += doBuildReplaceStorageEntity(se, replacement);
-                            } catch (Exception ex2) {
+                    logger.error("batch job failed, will be retry by single operation, message : {}", ex1.getMessage());
+                    for (StorageEntity se : storageEntityList) {
+                        try {
+                            executed += doBuildReplaceStorageEntity(se, replacement);
+                        } catch (Exception ex2) {
                                 /*
                                     是否进行重试
                                  */
-                                if (forceRetry) {
-                                    while (true) {
+                            if (forceRetry) {
+                                while (true) {
+                                    try {
+                                        executed += doBuildReplaceStorageEntity(se, replacement);
+                                        break;
+                                    } catch (Exception ex3) {
+                                        //  delete error
+                                        logger.error("replace error, will retry..., id : {}, commitId : {}, message : {}",
+                                                se.getId(), se.getCommitId(), ex3.getMessage());
                                         try {
-                                            executed += doBuildReplaceStorageEntity(se, replacement);
-                                            break;
-                                        } catch (Exception ex3) {
-                                            //  delete error
-                                            logger.error("replace error, will retry..., id : {}, commitId : {}, message : {}",
-                                                    se.getId(), se.getCommitId(), ex3.getMessage());
-                                            try {
-                                                Thread.sleep(SECOND);
-                                            } catch (InterruptedException e) {
-                                                e.printStackTrace();
-                                            }
+                                            Thread.sleep(SECOND);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
                                         }
                                     }
-                                } else {
-                                    //  delete error
-                                    logger.error("replace error, id : {}, commitId : {}, message : {}",
-                                            se.getId(), se.getCommitId(), ex2.getMessage());
-                                    throw ex2;
                                 }
+                            } else {
+                                //  delete error
+                                logger.error("replace error, id : {}, commitId : {}, message : {}",
+                                        se.getId(), se.getCommitId(), ex2.getMessage());
+                                throw ex2;
                             }
                         }
                     }

@@ -72,7 +72,7 @@ data:
             search:
               name: {{ .Values.storage.index.search.name | default "oqsindex" | quote }}
               maxQueryTimeMs: {{ .Values.storage.index.search.maxQueryTimeMs | default "0" }}
-              maxBatchSize: {{ .Values.storage.index.search.maxBatchSize | default "20" }}
+              maxBatchSize: {{ .Values.storage.index.search.maxBatchSize | default "50" }}
             write:
               name: {{ .Values.storage.index.write.name | default "oqsindex" | quote }}
               shard:
