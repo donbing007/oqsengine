@@ -139,29 +139,27 @@ public class BigBatchSyncTest extends AbstractContainer {
 //    }
 
     private void initData() throws SQLException {
-        Transaction tx = transactionManager.create();
-        transactionManager.bind(tx.id());
+//        Transaction tx = transactionManager.create();
+//        transactionManager.bind(tx.id());
         try {
             int i = 1;
             for (; i < maxTestSize; ) {
                 IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
                 for (IEntity entity : entities) {
-                    build(entity);
+                    masterStorage.build(entity);
                 }
                 expectedSize += entities.length;
                 i += entities.length;
             }
-            tx.commit();
-            transactionManager.finish();
+//            tx.commit();
         } catch (Exception e) {
-            tx.rollback();
+//            tx.rollback();
             throw e;
+        } finally {
+//            transactionManager.finish();
         }
     }
 
-    private int build(IEntity entity) throws SQLException {
-        return masterStorage.build(entity);
-    }
 
     private int replace(long commitId) throws SQLException {
         return (Integer) masterTransactionExecutor.execute(

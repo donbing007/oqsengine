@@ -4,6 +4,7 @@ import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerToolsTest;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
@@ -11,8 +12,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.shaded.org.apache.commons.lang.time.StopWatch;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,33 +37,48 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
     private static int size = 10000;
     private static long startId = 1;
 
+    private static CDCMetricsService cdcMetricsService;
+    private ConsumerService sphinxConsumerService;
     @BeforeClass
     public static void beforeClass() {
         entries = new ArrayList<>(size);
         preWarms = new ArrayList<>(1);
         build(preWarms, 1, Long.MAX_VALUE);
         build(entries, 10000, startId);
+        cdcMetricsService = new CDCMetricsService();
+        ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", new MockRedisCallbackService());
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        cdcMetricsService.shutdown();
+    }
+
+    @Before
+    public void before() throws Exception {
+        sphinxConsumerService = initAll();
+    }
+
+    @After
+    public void after() throws SQLException {
+        clear();
+        closeAll();
     }
 
     @Test
     public void sphinxConsumerBenchmarkTest() throws Exception {
-        try {
-            ConsumerService sphinxConsumerService = initAll();
-            //  预热
-            sphinxConsumerService.consume(preWarms, 1, new CDCMetricsService());
+        //  预热
+        sphinxConsumerService.consume(preWarms, 1, cdcMetricsService);
 
-            StopWatch stopWatch = new StopWatch();
+        StopWatch stopWatch = new StopWatch();
 
-            stopWatch.start();
-            CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, new CDCMetricsService());
-            stopWatch.stop();
+        stopWatch.start();
+        CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, cdcMetricsService);
+        stopWatch.stop();
 
-            Assert.assertEquals(size, cdcMetrics.getCdcAckMetrics().getExecuteRows());
-            logger.info("end sphinxConsumerBenchmarkTest loops : {}, use timeMs : {} ms",
-                    cdcMetrics.getCdcAckMetrics().getExecuteRows(), stopWatch.getTime());
-        } finally {
-            closeAll();
-        }
+        Assert.assertEquals(size, cdcMetrics.getCdcAckMetrics().getExecuteRows());
+        logger.info("end sphinxConsumerBenchmarkTest loops : {}, use timeMs : {} ms",
+                cdcMetrics.getCdcAckMetrics().getExecuteRows(), stopWatch.getTime());
     }
 
     @Test

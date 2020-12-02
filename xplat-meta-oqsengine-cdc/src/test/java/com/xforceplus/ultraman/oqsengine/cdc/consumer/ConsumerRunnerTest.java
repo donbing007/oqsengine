@@ -81,7 +81,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             loop ++;
         }
         logger.debug("result loop : {}, expectedCount : {}, actual : {}", loop, expectedCount, mockRedisCallbackService.getExecuted().get());
-        Assert.assertNotEquals(maxLoop, loop);
+        Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());
     }
 
     @Test
@@ -165,6 +165,8 @@ public class ConsumerRunnerTest extends AbstractContainer {
                     initData(entities, true, false);
                     expectedCount += entities.length;
                 } catch (Exception ex) {
+                    ex.printStackTrace();
+                    logger.error("loop test write data error, ex : {}", ex.getMessage());
                     tx.rollback();
                     throw ex;
                 }

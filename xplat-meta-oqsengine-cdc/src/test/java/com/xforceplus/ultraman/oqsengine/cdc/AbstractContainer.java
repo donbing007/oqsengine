@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
+import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
@@ -235,7 +236,7 @@ public abstract class AbstractContainer {
         sphinxQLConditionsBuilderFactory.init();
 
         Selector<String> indexWriteIndexNameSelector =
-                new SuffixNumberHashSelector("oqsindex", 3);
+                new NoSelector<>("oqsindex");
 
         indexStorage = new SphinxQLIndexStorage();
         ReflectionTestUtils.setField(indexStorage, "writerDataSourceSelector", writeDataSourceSelector);
@@ -344,9 +345,7 @@ public abstract class AbstractContainer {
         for (DataSource ds : dataSourcePackage.getIndexWriter()) {
             Connection conn = ds.getConnection();
             Statement st = conn.createStatement();
-            st.executeUpdate("truncate table oqsindex0");
-            st.executeUpdate("truncate table oqsindex1");
-            st.executeUpdate("truncate table oqsindex2");
+            st.executeUpdate("truncate table oqsindex");
             st.close();
             conn.close();
         }
