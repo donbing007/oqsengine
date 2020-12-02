@@ -52,7 +52,11 @@ public class CDCConstant {
     //  shutdown时单次循环等待时间
     public static final int MAX_STOP_WAIT_TIME = 4;
 
-    //  shutdown时单次循环等待时间
     public static final int SECOND = 1000;
 
+    //  检查commitID是否ready的间隔
+    public static final int READ_CHECK_INTERVAL = 10;
+
+    //  检查commitID是否ready方法的执行时间，打印WARM日志的最大时间容忍值
+    public static final int READ_WARM_MAX_INTERVAL = 100;
 }

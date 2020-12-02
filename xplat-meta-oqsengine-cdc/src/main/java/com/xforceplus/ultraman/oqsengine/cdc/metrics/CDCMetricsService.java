@@ -6,11 +6,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StopWatch;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
 
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_ID;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCMetricsConstant.*;
 
 
@@ -38,11 +39,11 @@ public class CDCMetricsService {
         shutdown = false;
     }
     public void startMetrics() {
-        logger.info("cdc metrics start, it will start hearBeat thread");
+        logger.info("cdc-metrics start, it will start hearBeat thread");
         Thread heartBeat = new Thread(this::heartBeat);
         heartBeat.setName("cdc-heartBeat");
         heartBeat.start();
-        logger.info("cdc metrics hearBeat thread start ok...");
+        logger.info("cdc-metrics hearBeat thread start ok...");
     }
 
     public void heartBeat() {
@@ -55,10 +56,10 @@ public class CDCMetricsService {
 
             try {
                 cdcMetricsCallback.heartBeat();
-                logger.debug("cdc current heartBeat timeStamps : {}", System.currentTimeMillis());
+                logger.debug("cdc-metrics current heartBeat timeStamps : {}", System.currentTimeMillis());
                 Thread.sleep(HEART_BEAT_INTERVAL);
             } catch (Exception e) {
-                logger.warn("cdc heartBeat error, message :{}", e.getMessage());
+                logger.warn("cdc-metrics heartBeat error, message :{}", e.getMessage());
             }
         }
     }
@@ -95,7 +96,7 @@ public class CDCMetricsService {
         try {
             cdcMetricsCallback.cdcSaveLastUnCommit(cdcMetrics);
         } catch (Exception e) {
-            logger.error("back up unCommitMetrics to redis error, unCommitMetrics : {}", JSON.toJSON(cdcMetrics));
+            logger.error("cdc-metrics back up unCommitMetrics to redis error, unCommitMetrics : {}", JSON.toJSON(cdcMetrics));
         }
     }
 
@@ -103,8 +104,32 @@ public class CDCMetricsService {
         try {
             return cdcMetricsCallback.queryLastUnCommit();
         } catch (Exception e) {
-            throw new SQLException("query unCommitMetrics from redis error.");
+            throw new SQLException("cdc-metrics query unCommitMetrics from redis error.");
         }
+    }
+
+    public void isReadyCommit(long commitId) {
+        StopWatch timer = new StopWatch();
+        try {
+            timer.start();
+            while (true) {
+                if (!cdcMetricsCallback.isReadyCommit(commitId)) {
+                    try {
+                        Thread.sleep(READ_CHECK_INTERVAL);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    continue;
+                }
+                break;
+            }
+        } finally {
+            timer.stop();
+            if (timer.getLastTaskTimeMillis() > READ_WARM_MAX_INTERVAL) {
+                logger.warn("cdc-metrics, wait for ready commitId use too much times, commitId {}", commitId);
+            }
+        }
+
     }
 
     public void connectedOk() {
