@@ -48,6 +48,7 @@ public class SqlConnectionTransactionResource extends AbstractConnectionTransact
         if (transactionOp.isPresent()) {
             Transaction tx = transactionOp.get();
             updateCommitId(tx.id(), commitId);
+            super.commit(commitId);
         } else {
             throw new SQLException("Is not bound to any transaction.");
         }

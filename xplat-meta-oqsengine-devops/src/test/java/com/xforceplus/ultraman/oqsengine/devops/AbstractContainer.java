@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
@@ -170,7 +169,6 @@ public abstract class AbstractContainer {
                     String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
             commitIdStatusService = new CommitIdStatusServiceImpl();
             ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
-            ReflectionTestUtils.setField(commitIdStatusService, "locker", new LocalResourceLocker());
             commitIdStatusService.init();
 
 

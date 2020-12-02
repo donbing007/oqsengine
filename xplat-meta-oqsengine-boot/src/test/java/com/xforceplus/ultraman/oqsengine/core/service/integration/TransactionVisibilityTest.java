@@ -165,6 +165,7 @@ public class TransactionVisibilityTest extends AbstractContainerTest {
         newFatherEntity = entityManagementService.build(newFatherEntity);
         Assert.assertTrue(newFatherEntity.id() != 0);
         for (int i = 0; i < 100; i++) {
+            newFatherEntity = entitySearchService.selectOne(newFatherEntity.id(), childClass).get();
             newFatherEntity.entityValue().addValue(
                 new EnumValue(childClass.field("c3").get(), Long.toString(i))
             );
@@ -183,7 +184,6 @@ public class TransactionVisibilityTest extends AbstractContainerTest {
                 childClass,
                 page
             );
-            newFatherEntity = entities.stream().findFirst().get();
             Assert.assertEquals(0, page.getTotalCount());
 
             Assert.assertEquals(0, entities.size());

@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
  * Feb 26, 2020
  *        </pre>
  */
-public class SphinxQLIndexStorageTest {
+public class SphinxQLIndexStorageTest extends AbstractContainerTest {
 
     private TransactionManager transactionManager;
     private SphinxQLIndexStorage storage;

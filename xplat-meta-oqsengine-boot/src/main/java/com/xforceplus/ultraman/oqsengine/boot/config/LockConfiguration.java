@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
+import com.xforceplus.ultraman.oqsengine.common.lock.ResourceLocker;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -13,8 +16,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class LockConfiguration {
 
-//    @Bean
-//    public ResourceLocker locker() {
-//        return new LocalResourceLocker();
-//    }
+    @Bean
+    public ResourceLocker locker() {
+        return new LocalResourceLocker();
+    }
 }

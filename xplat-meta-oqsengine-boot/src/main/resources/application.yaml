@@ -118,4 +118,4 @@ cdc:
     username: root
     password: root
     subscribeFilter: .*\.oqsbigentity.*
-    batchSize: 1
+    batchSize: 2048

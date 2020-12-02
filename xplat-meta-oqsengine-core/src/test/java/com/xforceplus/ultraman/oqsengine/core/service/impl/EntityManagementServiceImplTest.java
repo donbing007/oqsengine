@@ -16,9 +16,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DecimalValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
@@ -53,6 +56,7 @@ public class EntityManagementServiceImplTest {
     private EntityManagementServiceImpl service;
     private LongIdGenerator idGenerator;
     private MockMasterStorage masterStorage;
+    private MockIndexStorage indexStorage;
 
     @Before
     public void before() throws Exception {
@@ -81,6 +85,7 @@ public class EntityManagementServiceImplTest {
         TransactionExecutor te = new AutoCreateTransactionExecutor(tm);
 
         masterStorage = new MockMasterStorage();
+        indexStorage = new MockIndexStorage();
 
         CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
         when(commitIdStatusService.size()).thenReturn(0L);
@@ -89,6 +94,7 @@ public class EntityManagementServiceImplTest {
         ReflectionTestUtils.setField(service, "idGenerator", idGenerator);
         ReflectionTestUtils.setField(service, "transactionExecutor", te);
         ReflectionTestUtils.setField(service, "masterStorage", masterStorage);
+        ReflectionTestUtils.setField(service, "indexStorage", indexStorage);
         ReflectionTestUtils.setField(service, "commitIdStatusService", commitIdStatusService);
 
     }
@@ -490,5 +496,73 @@ public class EntityManagementServiceImplTest {
             buff.append(rand.nextInt(26) + 'a');
         }
         return buff.toString();
+    }
+
+    static class MockIndexStorage implements IndexStorage {
+
+        private Map<Long, IEntity> data = new HashMap<>();
+
+        public Optional<IEntity> select(long id) {
+            return Optional.ofNullable(copyEntity(data.get(id)));
+        }
+
+        @Override
+        public Collection<EntityRef> select(
+            Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, Long commitId)
+            throws SQLException {
+            return null;
+        }
+
+        @Override
+        public void replaceAttribute(IEntityValue attribute) throws SQLException {
+            IEntity target = data.get(attribute.id());
+            attribute.values().stream().forEach(a -> {
+                target.entityValue().addValue(a);
+            });
+        }
+
+        @Override
+        public int delete(long id) throws SQLException {
+            data.remove(id);
+            return 1;
+        }
+
+        @Override
+        public void entityValueToStorage(StorageEntity storageEntity, IEntityValue entityValue) {
+
+        }
+
+        @Override
+        public int batchSave(Collection<StorageEntity> storageEntities, boolean replacement, boolean retry) throws SQLException {
+            return 0;
+        }
+
+        @Override
+        public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
+            return 0;
+        }
+
+        @Override
+        public boolean clean(long entityId, long maintainId, long start, long end) throws SQLException {
+            return false;
+        }
+
+        @Override
+        public int build(IEntity entity) throws SQLException {
+            data.put(entity.id(), copyEntity(entity));
+            return 1;
+        }
+
+        @Override
+        public int replace(IEntity entity) throws SQLException {
+            data.put(entity.id(), copyEntity(entity));
+            return 1;
+        }
+
+        @Override
+        public int delete(IEntity entity) throws SQLException {
+            data.remove(entity.id());
+            return 1;
+        }
     }
 } 
