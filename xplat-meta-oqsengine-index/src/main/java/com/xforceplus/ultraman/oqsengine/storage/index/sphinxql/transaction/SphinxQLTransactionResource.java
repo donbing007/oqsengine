@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractCo
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * sphinxQL 相关的资源管理器.
@@ -15,8 +16,48 @@ import java.sql.SQLException;
  */
 public class SphinxQLTransactionResource extends AbstractConnectionTransactionResource {
 
+    private boolean autocommit;
+
     public SphinxQLTransactionResource(String key, Connection conn, boolean autocommit) throws SQLException {
-        super(key, conn, autocommit);
+        super(key, conn, true);
+
+        if (autocommit != true) {
+            execute("begin");
+        }
+
+        this.autocommit = autocommit;
+    }
+
+    @Override
+    public void commit(long commitId) throws SQLException {
+        if (!this.autocommit) {
+            execute("commit");
+        } else {
+            throw new SQLException("Can't call commit when autocommit=true");
+        }
+    }
+
+    @Override
+    public void commit() throws SQLException {
+        if (!this.autocommit) {
+            execute("commit");
+        } else {
+            throw new SQLException("Can't call commit when autocommit=true");
+        }
+    }
+
+    @Override
+    public void rollback() throws SQLException {
+        if (!this.autocommit) {
+            execute("rollback");
+        } else {
+            throw new SQLException("Can't call rollback when autocommit=true");
+        }
+    }
+
+    @Override
+    public boolean isAutoCommit() {
+        return this.autocommit;
     }
 
     @Override
@@ -24,4 +65,9 @@ public class SphinxQLTransactionResource extends AbstractConnectionTransactionRe
         return TransactionResourceType.INDEX;
     }
 
+    private void execute(String command) throws SQLException {
+        try (Statement st = value().createStatement()) {
+            st.execute(command);
+        }
+    }
 }

@@ -4,8 +4,8 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
+import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
-import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -258,8 +258,7 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
         sphinxQLConditionsBuilderFactory.init();
 
-        Selector<String> indexWriteIndexNameSelector =
-            new SuffixNumberHashSelector("oqsindex", 3);
+        Selector<String> indexWriteIndexNameSelector = new NoSelector("oqsindex");
 
         storage = new SphinxQLIndexStorage();
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
@@ -283,13 +282,13 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
         for (DataSource ds : dataSources) {
             Connection conn = ds.getConnection();
             Statement st = conn.createStatement();
-            st.executeUpdate("truncate table oqsindex0");
-            st.executeUpdate("truncate table oqsindex1");
-            st.executeUpdate("truncate table oqsindex2");
+            st.executeUpdate("truncate table oqsindex");
 
             st.close();
             conn.close();
         }
+
+        dataSourcePackage.close();
     }
 
     @After
