@@ -222,7 +222,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         for (StorageEntity storageEntity : storageEntities) {
             //  写入到shardingStorageEntities中
             String shardKey = Long.toString(storageEntity.getId());
-            String dataSourceKey = ((HikariDataSource) writerDataSourceSelector.select(shardKey)).getPoolName();
+            String dataSourceKey = writerDataSourceSelector.select(shardKey).toString();
             String tableShardKey = indexWriteIndexNameSelector.select(shardKey);
 
             //  写入StorageEntity, key使用 dataSourceKey_tableShardKey 这样的结构
@@ -232,8 +232,8 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
         //  开始按照数据库/表进行分片插入
         int executed = 0;
-        for (List<StorageEntity> entities : shardingStorageEntities.values()) {
-            Collection<List<StorageEntity>> partitions = Lists.partition(entities, maxBatchSize);
+        for (Map.Entry<String, List<StorageEntity>> entities : shardingStorageEntities.entrySet()) {
+            Collection<List<StorageEntity>> partitions = Lists.partition(entities.getValue(), maxBatchSize);
             for (List<StorageEntity> storageEntityList : partitions) {
                 try {
                     int batchExecuted = doBatchSave(storageEntityList, replacement);
