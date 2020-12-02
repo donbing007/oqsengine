@@ -69,13 +69,14 @@ public class ConsumerRunnerTest extends AbstractContainer {
         expectedCount = 0;
     }
 
-    private void stopConsumerRunner() throws InterruptedException {
+    private void stopConsumerRunner(String func) throws InterruptedException {
         int loop = 0;
         int maxLoop = 100;
         while (loop < maxLoop) {
             if (expectedCount == mockRedisCallbackService.getExecuted().get()) {
                 break;
             }
+            logger.warn("func -> {}, current -> {}, expectedCount -> {}", func, mockRedisCallbackService.getExecuted().get(), expectedCount);
 
             Thread.sleep(1_000);
             loop ++;
@@ -89,7 +90,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
         startConsumerRunner(1);
         try {
-            Transaction tx = transactionManager.create();
+            Transaction tx = transactionManager.create(30_000);
             transactionManager.bind(tx.id());
 
             try {
@@ -112,7 +113,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             tx.commit();
             transactionManager.finish();
         } finally {
-            stopConsumerRunner();
+            stopConsumerRunner("syncTest");
         }
     }
 
@@ -121,7 +122,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
         startConsumerRunner(1000000);
 
         try {
-            Transaction tx = transactionManager.create();
+            Transaction tx = transactionManager.create(30_000);
             transactionManager.bind(tx.id());
 
             try {
@@ -141,7 +142,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             tx.commit();
             transactionManager.finish();
         } finally {
-            stopConsumerRunner();
+            stopConsumerRunner("SyncDeleteTest");
         }
     }
 
@@ -155,7 +156,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
         try {
             while (i < loops) {
-                Transaction tx = transactionManager.create();
+                Transaction tx = transactionManager.create(30_000);
                 transactionManager.bind(tx.id());
                 try {
                     IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(t, 0);
@@ -179,7 +180,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
                 t += gap;
             }
         } finally {
-            stopConsumerRunner();
+            stopConsumerRunner("loopTest");
         }
     }
 
@@ -190,7 +191,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
 
         startConsumerRunner(15000);
         try {
-            Transaction tx = transactionManager.create();
+            Transaction tx = transactionManager.create(30_000);
             transactionManager.bind(tx.id());
 
             try {
@@ -209,7 +210,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
             tx.commit();
             transactionManager.finish();
         } finally {
-            stopConsumerRunner();
+            stopConsumerRunner("loopTransactionOverBatches");
         }
     }
 
@@ -243,7 +244,7 @@ public class ConsumerRunnerTest extends AbstractContainer {
                 i += gap;
             }
         } finally {
-            stopConsumerRunner();
+            stopConsumerRunner("loopSmallTransactionBatches");
         }
     }
 
@@ -251,25 +252,13 @@ public class ConsumerRunnerTest extends AbstractContainer {
     private void initData(IEntity[] datas, boolean replacement, boolean delete) throws SQLException {
         for (IEntity entity : datas) {
             if (delete) {
-                delete(entity);
+                masterStorage.delete(entity);
             } else if (replacement) {
-                replace(entity, 0);
+                entity.resetVersion(0);
+                masterStorage.replace(entity);
             } else {
-                build(entity);
+                masterStorage.build(entity);
             }
         }
-    }
-
-    private int build(IEntity entity) throws SQLException {
-        return masterStorage.build(entity);
-    }
-
-    private int replace(IEntity entity, int version) throws SQLException {
-        entity.resetVersion(version);
-        return masterStorage.replace(entity);
-    }
-
-    private int delete(IEntity entity) throws SQLException {
-        return masterStorage.delete(entity);
     }
 }
