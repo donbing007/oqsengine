@@ -26,13 +26,11 @@ public class DevOpsConfiguration {
             @Value("${storage.devOps.task.split:10}") int splitPart,
             @Value("${storage.devOps.task.max.queue.size:2000}") int maxQueueSize,
             @Value("${storage.devOps.task.execution.timeout:30000}") int executionTimeout,
-            @Value("${storage.devOps.task.update.frequency:100}") int updateFrequency,
             @Value("${storage.devOps.task.cache.expire:30}") long cacheExpireTime,
             @Value("${storage.devOps.task.cache.maxsize:500}") long cacheMaxSize,
-            @Value("${storage.devOps.maxQueryTimeMs:3000}") int taskTimeout,
             @Value("${storage.devOps.task.page.size:1000}") int pageSize) {
         return new DevOpsRebuildIndexExecutor(splitPart, maxQueueSize, executionTimeout,
-                updateFrequency, cacheExpireTime, cacheMaxSize, taskTimeout, pageSize);
+                cacheExpireTime, cacheMaxSize, pageSize);
     }
     @Bean(name = "lockExecutor")
     public LockExecutor lockExecutor() {

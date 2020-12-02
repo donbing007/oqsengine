@@ -88,9 +88,20 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
     }
 
     @Override
+    public void entityValueToStorage(StorageEntity storageEntity, IEntityValue entityValue) {
+        indexStorage.entityValueToStorage(storageEntity, entityValue);
+    }
+
+    @Override
+    public int batchSave(Collection<StorageEntity> storageEntities, boolean replacement, boolean retry) throws SQLException {
+        return indexStorage.batchSave(storageEntities, replacement, retry);
+    }
+
+    @Override
     public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
         return indexStorage.buildOrReplace(storageEntity, entityValue, replacement);
     }
+
 
     @Override
     public boolean clean(long entityId, long maintainId, long start, long end) throws SQLException {

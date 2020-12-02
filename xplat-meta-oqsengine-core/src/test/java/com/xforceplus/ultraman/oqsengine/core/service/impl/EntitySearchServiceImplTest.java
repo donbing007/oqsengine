@@ -664,6 +664,16 @@ public class EntitySearchServiceImplTest {
         }
 
         @Override
+        public void entityValueToStorage(StorageEntity storageEntity, IEntityValue entityValue) {
+
+        }
+
+        @Override
+        public int batchSave(Collection<StorageEntity> storageEntities, boolean replacement, boolean retry) throws SQLException {
+            return 0;
+        }
+
+        @Override
         public int buildOrReplace(StorageEntity storageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
             return 0;
         }

@@ -13,9 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
+
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
@@ -32,8 +31,8 @@ public class SphinxConsumerService implements ConsumerService {
 
     final Logger logger = LoggerFactory.getLogger(SphinxConsumerService.class);
 
-    @Resource(name = "sphinxSyncExecutor")
-    private SphinxSyncExecutor sphinxSyncExecutor;
+    @Resource(name = "syncExecutor")
+    private SyncExecutor sphinxSyncExecutor;
 
     @Override
     public CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCUnCommitMetrics cdcUnCommitMetrics) throws SQLException {
@@ -59,24 +58,15 @@ public class SphinxConsumerService implements ConsumerService {
     private int syncAfterDataFilter(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
         int syncCount = ZERO;
         //  需要同步的列表
-        List<RawEntry> rawEntries = new ArrayList<>();
+        Map<Long, RawEntry> rawEntries = new HashMap<>();
         for (CanalEntry.Entry entry : entries) {
             //  不是TransactionEnd/RowData类型数据, 将被过滤
             switch (entry.getEntryType()) {
                 case TRANSACTIONEND:
-                    //  同步rawEntries到Sphinx
-                    if (rawEntries.size() > 0) {
-                        //  通过执行器执行Sphinx同步
-                        syncCount += sphinxSyncExecutor.sync(rawEntries, cdcMetrics);
-
-                        //  每个Transaction的结束需要将rawEntries清空
-                        rawEntries.clear();
-                    }
-                    //  到达TransactionEnd时的清理与同步
                     cleanUnCommit(cdcMetrics);
                     break;
                 case ROWDATA:
-                    rawEntries.addAll(internalDataSync(entry, cdcMetrics));
+                    internalDataSync(entry, cdcMetrics, rawEntries);
                     break;
             }
         }
@@ -84,7 +74,7 @@ public class SphinxConsumerService implements ConsumerService {
         //  最后一个unCommitId的数据也需要同步一次
         if (!rawEntries.isEmpty()) {
             //  通过执行器执行Sphinx同步
-            syncCount += sphinxSyncExecutor.sync(rawEntries, cdcMetrics);
+            syncCount += sphinxSyncExecutor.execute(rawEntries.values(), cdcMetrics);
         }
 
         logCommitId(cdcMetrics);
@@ -111,8 +101,7 @@ public class SphinxConsumerService implements ConsumerService {
     }
 
 
-    private List<RawEntry> internalDataSync(CanalEntry.Entry entry, CDCMetrics cdcMetrics) throws SQLException {
-        List<RawEntry> rawEntries = new ArrayList<>();
+    private void internalDataSync(CanalEntry.Entry entry, CDCMetrics cdcMetrics, Map<Long, RawEntry> rawEntries) throws SQLException {
         CanalEntry.RowChange rowChange = null;
         try {
             rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
@@ -143,7 +132,7 @@ public class SphinxConsumerService implements ConsumerService {
                     //  获取CommitID
                     commitId = getLongFromColumn(columns, COMMITID);
                 } catch (Exception e) {
-                    sphinxSyncExecutor.errorHandle(id, commitId, String.format("parse id, commit from columns failed, message : %s", e.getMessage()));
+                    sphinxSyncExecutor.errorRecord(id, commitId, String.format("parse id, commit from columns failed, message : %s", e.getMessage()));
                     continue;
                 }
 
@@ -151,13 +140,11 @@ public class SphinxConsumerService implements ConsumerService {
                 if (commitId != CommitHelper.getUncommitId()) {
                     //  更新
                     cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
-                    rawEntries.add(new RawEntry(id, commitId,
+                    rawEntries.put(id, new RawEntry(id, commitId,
                             entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
                 }
             }
         }
-
-        return rawEntries;
     }
 
     /*

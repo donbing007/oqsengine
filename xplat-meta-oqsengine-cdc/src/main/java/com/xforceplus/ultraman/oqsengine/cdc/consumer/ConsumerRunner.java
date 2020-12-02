@@ -74,7 +74,9 @@ public class ConsumerRunner extends Thread {
 
     public void run() {
         runningStatus = RunningStatus.INIT;
+
         cdcMetricsService.startMetrics();
+
         while (true) {
             //  判断当前服务状态是否可运行
             if (checkForStop()) {
@@ -142,7 +144,7 @@ public class ConsumerRunner extends Thread {
             } catch (Exception e) {
                 //  未获取到数据,回滚
                 cdcConnector.rollback();
-                String error = String.format("get message error, %s", e);
+                String error = String.format("cdc get message error, %s", e);
                 logger.error(error);
                 throw new SQLException(error);
             }
@@ -181,7 +183,7 @@ public class ConsumerRunner extends Thread {
                 } else {
                     error = "sync finish status error";
                 }
-                logger.error("sync error, will reconnect..., message : {}, {}", error, e.getMessage());
+                logger.error("cdc sync error, will reconnect..., message : {}, {}", error, e.getMessage());
                 throw new SQLException(error);
             }
         }

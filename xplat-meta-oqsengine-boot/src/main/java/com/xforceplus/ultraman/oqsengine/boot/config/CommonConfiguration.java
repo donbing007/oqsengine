@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceConfiguration;
-import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
-import com.xforceplus.ultraman.oqsengine.common.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
@@ -39,22 +37,6 @@ public class CommonConfiguration {
         }
 
         return buildThreadPool(useWorker, useQueue, "oqsengine-call", false);
-    }
-
-    @Bean("cdcConsumerPool")
-    public ExecutorService cdcConsumerPool(
-        @Value("${threadPool.cdc.worker:1}") int worker, @Value("${cdc.connect.batchSize:2048}") int queue) {
-        int useWorker = worker;
-        int useQueue = queue;
-        if (useWorker == 0) {
-            useWorker = Runtime.getRuntime().availableProcessors() + 1;
-        }
-
-        if (useQueue < 500) {
-            useQueue = 500;
-        }
-
-        return buildThreadPool(useWorker, useQueue, "oqsengine-cdc", false);
     }
 
     private ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {

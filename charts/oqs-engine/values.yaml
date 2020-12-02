@@ -70,10 +70,7 @@ cdc:
     password: root
     subscribeFilter: .*\.oqsbigentity.*
     batchSize: 2048
-  execution:
-    timeoutMs: 30000
-    single:
-      consumer: true
+
 storage:
   debug:
     showsql: false
@@ -102,6 +99,7 @@ storage:
     search:
       name: "oqsindex"
       maxQueryTimeMs: 0
+      maxBatchSize: 50
     write:
       name: "oqsindex"
       shard:
@@ -119,8 +117,6 @@ storage:
           size: 2000
       execution:
         timeout: 300000
-      update:
-        frequency: 100
       cache:
         expire: 30
         maxsize: 500

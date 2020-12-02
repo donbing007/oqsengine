@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
@@ -48,6 +48,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * desc :
@@ -188,7 +191,7 @@ public abstract class AbstractContainer {
         System.out.println(System.getProperty("MANTICORE_WRITE1_JDBC_URL"));
     }
 
-    protected ConsumerService initAll(boolean singleSync) throws Exception {
+    protected ConsumerService initAll() throws Exception {
         System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
         dataSourcePackage = DataSourceFactory.build();
 
@@ -197,17 +200,18 @@ public abstract class AbstractContainer {
                     String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
             commitIdStatusService = new CommitIdStatusServiceImpl();
             ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
+            ReflectionTestUtils.setField(commitIdStatusService, "locker", new LocalResourceLocker());
             commitIdStatusService.init();
 
             transactionManager = new DefaultTransactionManager(
-                new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
+                    new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
         }
 
         initMaster();
         initIndex();
         initDevOps();
 
-        return initConsumerService(singleSync);
+        return initConsumerService();
     }
 
     protected void closeAll() {
@@ -250,6 +254,7 @@ public abstract class AbstractContainer {
         ReflectionTestUtils.setField(indexStorage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
         indexStorage.setSearchIndexName("oqsindex");
         indexStorage.setMaxSearchTimeoutMs(1000);
+        indexStorage.setMaxBatchSize(50);
         indexStorage.init();
     }
 
@@ -270,9 +275,7 @@ public abstract class AbstractContainer {
         cdcErrorStorage.init();
     }
 
-    private ConsumerService initConsumerService(boolean singleSync) throws Exception {
-
-        ExecutorService consumerPool = null;
+    private ConsumerService initConsumerService() throws Exception {
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
@@ -280,26 +283,13 @@ public abstract class AbstractContainer {
         ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
 
         sphinxSyncExecutor = new SphinxSyncExecutor();
-        //  为false开启多线程
-        if (!singleSync) {
-            sphinxSyncExecutor.setSingleSyncConsumer(false);
-            sphinxSyncExecutor.setExecutionTimeout(100_000);
-            consumerPool = new ThreadPoolExecutor(10, 10,
-                    0L, TimeUnit.MILLISECONDS,
-                    new ArrayBlockingQueue<>(10000),
-                    ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
-                    new ThreadPoolExecutor.AbortPolicy());
 
-        }
         ReflectionTestUtils.setField(sphinxSyncExecutor, "sphinxQLIndexStorage", indexStorage);
-        ReflectionTestUtils.setField(sphinxSyncExecutor, "consumerPool", consumerPool);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "masterStorage", masterStorage);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "entityValueBuilder", entityValueBuilder);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "cdcErrorStorage", cdcErrorStorage);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "seqNoGenerator",
                 new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0)));
-
-
 
         ConsumerService consumerService = new SphinxConsumerService();
 
