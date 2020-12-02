@@ -287,8 +287,6 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
             st.close();
             conn.close();
         }
-
-        dataSourcePackage.close();
     }
 
     @After
