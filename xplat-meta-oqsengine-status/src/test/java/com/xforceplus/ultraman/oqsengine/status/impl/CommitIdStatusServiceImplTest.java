@@ -87,18 +87,6 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
         Assert.assertTrue(impl.isReady(commitId));
     }
 
-    @Test
-    public void testSetReadyTTL() throws Exception {
-        long commitId = 101;
-        impl.setCommitidStatusTTLMs(1000);
-        impl.save(commitId, false);
-        Assert.assertFalse(impl.isReady(commitId));
-
-        TimeUnit.MILLISECONDS.sleep(1000L);
-
-        Assert.assertFalse(impl.isReady(commitId));
-    }
-
     /**
      * Method: getMin()
      */

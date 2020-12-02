@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisFuture;
-import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -52,8 +51,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     private String commitidsKey;
 
     private String commitidStatusKeyPrefix;
-
-    private long commitidStatusTTLMs = 3 * 100000;
 
     private AtomicLong unSyncCommitIdSize;
 
@@ -108,8 +105,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         String statusKey = commitidStatusKeyPrefix + "." + target;
         String status = ready ? CommitStatus.READY.getSymbol() : CommitStatus.NOT_READY.getSymbol();
 
+        syncCommands.set(statusKey, status);
         syncCommands.zadd(commitidsKey, (double) commitId, target);
-        syncCommands.set(statusKey, status, SetArgs.Builder.px(commitidStatusTTLMs));
 
         updateMetrics();
 
@@ -124,7 +121,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
         CommitStatus status = CommitStatus.getInstance(value);
 
-        if (CommitStatus.READY == status) {
+        if (CommitStatus.READY == status || CommitStatus.UNKNOWN == status) {
             return true;
         } else {
             return false;
@@ -135,7 +132,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     public void ready(long commitId) {
         String target = Long.toString(commitId);
         String statusKey = commitidStatusKeyPrefix + "." + target;
-        syncCommands.set(statusKey, CommitStatus.READY.getSymbol(), SetArgs.Builder.px(commitidStatusTTLMs));
+        syncCommands.set(statusKey, CommitStatus.READY.getSymbol());
     }
 
     @Override
@@ -211,10 +208,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
             logger.debug("The commit`s number {} has been eliminated.", Arrays.toString(commitIds));
         }
         updateMetrics();
-    }
-
-    public void setCommitidStatusTTLMs(long commitidStatusTTLMs) {
-        this.commitidStatusTTLMs = commitidStatusTTLMs;
     }
 
     private void updateMetrics() {
