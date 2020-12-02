@@ -96,7 +96,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
 
         TimeUnit.MILLISECONDS.sleep(1000L);
 
-        Assert.assertTrue(impl.isReady(commitId));
+        Assert.assertFalse(impl.isReady(commitId));
     }
 
     /**

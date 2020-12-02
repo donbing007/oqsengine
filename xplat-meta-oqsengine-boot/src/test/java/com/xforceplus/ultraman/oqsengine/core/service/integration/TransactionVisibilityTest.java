@@ -171,22 +171,22 @@ public class TransactionVisibilityTest extends AbstractContainerTest {
             ResultStatus status = entityManagementService.replace(newFatherEntity);
             Assert.assertTrue(ResultStatus.SUCCESS == status);
 
+            Page page = Page.newSinglePage(100);
             Collection<IEntity> entities = entitySearchService.selectByConditions(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(
                         childClass.field("c3").get(),
-                        ConditionOperator.EQUALS,
+                        ConditionOperator.NOT_EQUALS,
                         new EnumValue(childClass.field("c3").get(), Long.toString(i))
                     )
                 ),
                 childClass,
-                Page.newSinglePage(100)
+                page
             );
             newFatherEntity = entities.stream().findFirst().get();
+            Assert.assertEquals(0, page.getTotalCount());
 
-            Assert.assertEquals(1, entities.size());
-            Assert.assertEquals(Long.toString(i), entities.stream()
-                .findFirst().get().entityValue().getValue("c3").get().valueToString());
+            Assert.assertEquals(0, entities.size());
         }
 
         TimeUnit.SECONDS.sleep(1);

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -81,8 +82,11 @@ public class TransactionManagementServiceImplTest {
 
     @Test
     public void testCommit() throws Exception {
+
+        CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
+        when(commitIdStatusService.save(0, true)).thenReturn(0L);
         TransactionManager tm = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
+            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
 
         TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "transactionManager", tm);
@@ -102,8 +106,10 @@ public class TransactionManagementServiceImplTest {
 
     @Test
     public void testRollback() throws Exception {
+        CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
+        when(commitIdStatusService.save(0, true)).thenReturn(0L);
         TransactionManager tm = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
+            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
 
         TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "transactionManager", tm);
@@ -124,8 +130,10 @@ public class TransactionManagementServiceImplTest {
 
     @Test(expected = SQLException.class)
     public void testCompleted() throws Exception {
+        CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
+        when(commitIdStatusService.save(0, true)).thenReturn(0L);
         TransactionManager tm = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
+            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
 
         TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "transactionManager", tm);

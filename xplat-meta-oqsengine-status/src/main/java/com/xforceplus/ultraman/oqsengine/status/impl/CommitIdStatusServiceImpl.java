@@ -53,7 +53,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     private String commitidStatusKeyPrefix;
 
-    private long commitidStatusTTLMs = 3 * 10000;
+    private long commitidStatusTTLMs = 3 * 100000;
 
     private AtomicLong unSyncCommitIdSize;
 
@@ -109,9 +109,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         String status = ready ? CommitStatus.READY.getSymbol() : CommitStatus.NOT_READY.getSymbol();
 
         syncCommands.zadd(commitidsKey, (double) commitId, target);
-        if (!ready) {
-            syncCommands.set(statusKey, status, SetArgs.Builder.px(commitidStatusTTLMs));
-        }
+        syncCommands.set(statusKey, status, SetArgs.Builder.px(commitidStatusTTLMs));
 
         updateMetrics();
 
@@ -126,17 +124,18 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
         CommitStatus status = CommitStatus.getInstance(value);
 
-        /**
-         * 如果没有状态或者标示就绪都认为已经就绪.
-         */
-        return !(CommitStatus.NOT_READY == status);
+        if (CommitStatus.READY == status) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public void ready(long commitId) {
         String target = Long.toString(commitId);
         String statusKey = commitidStatusKeyPrefix + "." + target;
-        syncCommands.del(statusKey);
+        syncCommands.set(statusKey, CommitStatus.READY.getSymbol(), SetArgs.Builder.px(commitidStatusTTLMs));
     }
 
     @Override

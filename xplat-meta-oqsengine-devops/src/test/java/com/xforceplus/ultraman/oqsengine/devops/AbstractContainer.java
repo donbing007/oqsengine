@@ -11,11 +11,9 @@ import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.LockExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -177,7 +175,7 @@ public abstract class AbstractContainer {
 
 
             transactionManager = new DefaultTransactionManager(
-                    new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
+                new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
         }
 
         idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0));
@@ -203,7 +201,7 @@ public abstract class AbstractContainer {
         dataSource = buildDataSourceSelectorMaster();
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-                transactionManager, new SqlConnectionTransactionResourceFactory(tableName, commitIdStatusService));
+            transactionManager, new SqlConnectionTransactionResourceFactory(tableName));
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

@@ -200,19 +200,16 @@ public class MultiLocalTransaction implements Transaction {
                         logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
                     }
 
-                    final long finalCommitId = commitId;
                     for (TransactionResource transactionResource : transactionResourceHolder) {
                         try {
-                            transactionResource.commit(finalCommitId);
+                            transactionResource.commit(commitId);
                             transactionResource.destroy();
                         } catch (SQLException ex) {
                             exHolder.add(0, ex);
                             break;
                         }
                     }
-                    commitIdStatusService.save(finalCommitId, false);
-
-                    commitIdStatusService.ready(commitId);
+                    commitIdStatusService.save(commitId, true);
 
                 } else {
                     // 只读事务提交.

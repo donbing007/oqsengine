@@ -61,4 +61,9 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
             return null;
         }
     }
+
+    @Override
+    public boolean isReadyCommit(long commitId) {
+        return commitIdStatusService.isReady(commitId);
+    }
 }

@@ -77,7 +77,7 @@ public class EntityManagementServiceImplTest {
         );
 
 
-        TransactionManager tm = new DefaultTransactionManager(idGenerator, new IncreasingOrderLongIdGenerator(0));
+        TransactionManager tm = new DefaultTransactionManager(idGenerator, new IncreasingOrderLongIdGenerator(0), null);
         TransactionExecutor te = new AutoCreateTransactionExecutor(tm);
 
         masterStorage = new MockMasterStorage();
