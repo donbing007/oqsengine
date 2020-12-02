@@ -191,6 +191,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         throw new UnsupportedOperationException("Deprecated");
     }
 
+    @Override
     public void entityValueToStorage(StorageEntity storageEntity, IEntityValue entityValue) {
         //  jsonFields
         storageEntity.setJsonFields(serializeToMap(entityValue, true));

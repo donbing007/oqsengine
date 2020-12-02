@@ -208,14 +208,9 @@ public class SearchTest extends AbstractContainerTest {
         long txId = transactionManagementService.begin();
 
 
-        ids.stream().forEach(x -> {
-            try {
-                transactionManagementService.restore(txId);
-            } catch (SQLException e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
+        for (long x : ids) {
 
-            int i = random.nextInt(3);
+            int i = 1;
             if (i == 1) {
                 //update
                 try {
@@ -231,6 +226,7 @@ public class SearchTest extends AbstractContainerTest {
                         )),
                         OqsVersion.MAJOR
                     );
+                    transactionManagementService.restore(txId);
                     managementService.replace(entity);
                     updateIds.add(x);
 
@@ -240,7 +236,6 @@ public class SearchTest extends AbstractContainerTest {
             } else if (i == 2) {
                 //delete
                 try {
-                    transactionManagementService.restore(txId);
                     Entity entity = new Entity(x, fatherEntityClass, new EntityValue(0).addValues(Arrays.asList(
                         new StringValue(mainFields.stream().findFirst().get(), nextStr()),
                         new LongValue(mainFields.stream().skip(1).findFirst().get(), nextId()),
@@ -249,15 +244,15 @@ public class SearchTest extends AbstractContainerTest {
                     )),
                         OqsVersion.MAJOR
                     );
+                    transactionManagementService.restore(txId);
                     managementService.delete(entity);
                     deleteIds.add(x);
                 } catch (SQLException e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
 
-
             }
-        });
+        }
 
         transactionManagementService.restore(txId);
         transactionManagementService.commit();
@@ -353,9 +348,7 @@ public class SearchTest extends AbstractContainerTest {
         for (DataSource ds : dataSourcePackage.getIndexWriter()) {
             Connection conn = ds.getConnection();
             Statement st = conn.createStatement();
-            st.executeUpdate("truncate table oqsindex0");
-            st.executeUpdate("truncate table oqsindex1");
-            st.executeUpdate("truncate table oqsindex2");
+            st.executeUpdate("truncate table oqsindex");
             st.close();
             conn.close();
         }
@@ -546,12 +539,7 @@ public class SearchTest extends AbstractContainerTest {
     public void mixedOperationSearch() throws SQLException, InterruptedException {
         List<Long> longs = initData(50);
 
-        Thread.sleep(10000);
-
         Tuple2<List<Long>, List<Long>> listListTuple2 = randomOperation(longs);
-
-        System.out.println("DELETED :" + listListTuple2._1().size());
-        System.out.println("UPDATED :" + listListTuple2._2().size());
 
 
         Page page = new Page(0, 100);

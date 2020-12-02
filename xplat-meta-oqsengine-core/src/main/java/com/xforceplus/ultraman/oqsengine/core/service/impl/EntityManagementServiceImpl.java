@@ -319,11 +319,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                     return ResultStatus.SUCCESS;
                 }
-
-                @Override
-                public DataSource getDataSource() {
-                    return null;
-                }
             });
         } catch (Exception ex) {
             failCountTotal.increment();
@@ -403,11 +398,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     }
 
                     return ResultStatus.SUCCESS;
-                }
-
-                @Override
-                public DataSource getDataSource() {
-                    return null;
                 }
             });
         } catch (Exception ex) {
