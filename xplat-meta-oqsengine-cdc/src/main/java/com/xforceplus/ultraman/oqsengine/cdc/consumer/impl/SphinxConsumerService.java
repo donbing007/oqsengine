@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.google.common.base.Stopwatch;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetricsRecorder;
@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StopWatch;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
@@ -36,13 +35,15 @@ public class SphinxConsumerService implements ConsumerService {
     @Resource(name = "syncExecutor")
     private SyncExecutor sphinxSyncExecutor;
 
+
+
     @Override
-    public CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCUnCommitMetrics cdcUnCommitMetrics) throws SQLException {
+    public CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCMetricsService cdcMetricsService) throws SQLException {
         //  初始化指标记录器
-        CDCMetricsRecorder cdcMetricsRecorder = init(cdcUnCommitMetrics, batchId);
+        CDCMetricsRecorder cdcMetricsRecorder = init(cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics(), batchId);
 
         //  同步逻辑
-        int syncs = syncAfterDataFilter(entries, cdcMetricsRecorder.getCdcMetrics());
+        int syncs = syncAfterDataFilter(entries, cdcMetricsRecorder.getCdcMetrics(), cdcMetricsService);
 
         //  完成指标记录器
         return cdcMetricsRecorder.finishRecord(syncs).getCdcMetrics();
@@ -57,7 +58,7 @@ public class SphinxConsumerService implements ConsumerService {
     /*
         数据清洗、同步
     * */
-    private int syncAfterDataFilter(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics) throws SQLException {
+    private int syncAfterDataFilter(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics, CDCMetricsService cdcMetricsService) throws SQLException {
         int syncCount = ZERO;
         //  需要同步的列表
         Map<Long, RawEntry> rawEntries = new HashMap<>();
@@ -68,7 +69,7 @@ public class SphinxConsumerService implements ConsumerService {
                     cleanUnCommit(cdcMetrics);
                     break;
                 case ROWDATA:
-                    internalDataSync(entry, cdcMetrics, rawEntries);
+                    internalDataSync(entry, cdcMetrics, cdcMetricsService, rawEntries);
                     break;
             }
         }
@@ -103,7 +104,8 @@ public class SphinxConsumerService implements ConsumerService {
     }
 
 
-    private void internalDataSync(CanalEntry.Entry entry, CDCMetrics cdcMetrics, Map<Long, RawEntry> rawEntries) throws SQLException {
+    private void internalDataSync(CanalEntry.Entry entry, CDCMetrics cdcMetrics, CDCMetricsService cdcMetricsService,
+                                  Map<Long, RawEntry> rawEntries) throws SQLException {
         CanalEntry.RowChange rowChange = null;
         try {
             rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
@@ -141,9 +143,8 @@ public class SphinxConsumerService implements ConsumerService {
                 //  是否MAX_VALUE
                 if (commitId != CommitHelper.getUncommitId()) {
                     if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
-                        //  todo
-                        StopWatch time = new StopWatch();
-
+                        //  阻塞直到成功
+                        cdcMetricsService.isReadyCommit(commitId);
                     }
                     //  更新
                     cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);

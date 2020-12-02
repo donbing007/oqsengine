@@ -156,8 +156,7 @@ public class ConsumerRunner extends Thread {
                 long batchId = message.getId();
                 if (batchId != EMPTY_BATCH_ID || message.getEntries().size() != EMPTY_BATCH_SIZE) {
                     //  消费binlog
-                    cdcMetrics = consumerService.consume(message.getEntries(), batchId,
-                                                            cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics());
+                    cdcMetrics = consumerService.consume(message.getEntries(), batchId, cdcMetricsService);
                     //  binlog处理，同步指标到cdcMetrics中
                     synced = backMetrics(cdcMetrics);
 
