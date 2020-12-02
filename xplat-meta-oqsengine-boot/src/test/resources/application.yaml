@@ -54,7 +54,7 @@ storage:
     write:
       name: "oqsindex"
       shard:
-        enabled: true
+        enabled: false
         size: 3
   devOps:
     cdc:
