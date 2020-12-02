@@ -69,8 +69,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
                     synced += doDelete(rawEntry.getId(), rawEntry.getCommitId());
                     syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
                 }
-
             } catch (Exception e) {
+                e.printStackTrace();
                 errorRecord(rawEntry.getId(), rawEntry.getCommitId(), e.getMessage());
             }
         }
@@ -83,8 +83,8 @@ public class SphinxSyncExecutor implements SyncExecutor {
     }
 
     public void errorRecord(long id, long commitId, String message) throws SQLException {
-        logger.warn("sphinx consume error will be record in cdcerrors,  id : {}, commitId : {}, message : {}", id, commitId, message);
-        cdcErrorStorage.buildCdcError(CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, message));
+        logger.warn("sphinx consume error will be record in cdcerrors,  id : {}, commitId : {}, message : {}", id, commitId, null == message ? "unknow" : message);
+        cdcErrorStorage.buildCdcError(CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, null == message ? "unknow" : message));
     }
 
     //  删除,不停的循环删除, 直到成功为止
@@ -146,7 +146,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
         if (oqsMajor != OqsVersion.MAJOR && pref > 0) {
             //  通过pref拿到父类的EntityValue
             IEntityValue entityValueF = queryEntityValue(pref);
-            entityValue.addValues(entityValueF.values());
+            entityValue.addValues(null == entityValueF ? Collections.emptyList() : entityValueF.values());
         }
 
         //  将entityValue转换为JsonFields和FullFields并写入storageEntity
