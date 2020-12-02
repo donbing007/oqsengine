@@ -5,6 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerToolsTest;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import org.junit.*;
@@ -46,12 +47,12 @@ public class MassageUnpackBenchmarkTest extends AbstractContainer {
         try {
             ConsumerService sphinxConsumerService = initAll();
             //  预热
-            sphinxConsumerService.consume(preWarms, 1, new CDCUnCommitMetrics());
+            sphinxConsumerService.consume(preWarms, 1, new CDCMetricsService());
 
             StopWatch stopWatch = new StopWatch();
 
             stopWatch.start();
-            CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, new CDCUnCommitMetrics());
+            CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, new CDCMetricsService());
             stopWatch.stop();
 
             Assert.assertEquals(size, cdcMetrics.getCdcAckMetrics().getExecuteRows());

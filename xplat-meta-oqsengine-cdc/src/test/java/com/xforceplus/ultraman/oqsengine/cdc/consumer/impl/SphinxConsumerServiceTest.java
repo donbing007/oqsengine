@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
+import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import org.junit.After;
 import org.junit.Assert;
@@ -100,9 +101,8 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         build(entries, Long.MAX_VALUE);
 
-        CDCMetrics cdcMetrics = new CDCMetrics();
-
-        CDCMetrics after_1 = sphinxConsumerService.consume(entries, 1, cdcMetrics.getCdcUnCommitMetrics());
+        CDCMetricsService cdcMetricsService = new CDCMetricsService();
+        CDCMetrics after_1 = sphinxConsumerService.consume(entries, 1, cdcMetricsService);
 
         Assert.assertEquals(expectedSize, after_1.getCdcAckMetrics().getExecuteRows());
 
@@ -111,7 +111,9 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
         CanalEntry.Entry entryTEnd = buildTransactionEnd();
         entries.add(entryTEnd);
 
-        CDCMetrics after_2 = sphinxConsumerService.consume(entries, 2, after_1.getCdcUnCommitMetrics());
+        cdcMetricsService = new CDCMetricsService();
+        cdcMetricsService.getCdcMetrics().setCdcUnCommitMetrics(after_1.getCdcUnCommitMetrics());
+        CDCMetrics after_2 = sphinxConsumerService.consume(entries, 2, cdcMetricsService);
 
         Assert.assertEquals(expectedSize, after_2.getCdcAckMetrics().getExecuteRows());
     }
@@ -145,9 +147,8 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
 
         addExpectCount(commitId);
 
-        CDCMetrics cdcMetrics = new CDCMetrics();
-
-        CDCMetrics after_1 = sphinxConsumerService.consume(entries, 1, cdcMetrics.getCdcUnCommitMetrics());
+        CDCMetricsService cdcMetricsService = new CDCMetricsService();
+        CDCMetrics after_1 = sphinxConsumerService.consume(entries, 1, cdcMetricsService);
 
         Assert.assertEquals(expectedSize, after_1.getCdcAckMetrics().getExecuteRows());
 
@@ -178,7 +179,9 @@ public class SphinxConsumerServiceTest extends AbstractContainer {
         CanalEntry.Entry entryTEnd = buildTransactionEnd();
         entries.add(entryTEnd);
 
-        CDCMetrics after_2 = sphinxConsumerService.consume(entries, 2, after_1.getCdcUnCommitMetrics());
+        cdcMetricsService = new CDCMetricsService();
+        cdcMetricsService.getCdcMetrics().setCdcUnCommitMetrics(after_1.getCdcUnCommitMetrics());
+        CDCMetrics after_2 = sphinxConsumerService.consume(entries, 2, cdcMetricsService);
 
         Assert.assertEquals(expectedSize, after_2.getCdcAckMetrics().getExecuteRows());
     }
