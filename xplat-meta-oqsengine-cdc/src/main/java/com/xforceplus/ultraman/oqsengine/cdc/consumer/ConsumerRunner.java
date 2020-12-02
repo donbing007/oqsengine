@@ -182,6 +182,7 @@ public class ConsumerRunner extends Thread {
                 } else {
                     error = "sync finish status error";
                 }
+                e.printStackTrace();
                 logger.error("cdc sync error, will reconnect..., message : {}, {}", error, e.getMessage());
                 throw new SQLException(error);
             }
