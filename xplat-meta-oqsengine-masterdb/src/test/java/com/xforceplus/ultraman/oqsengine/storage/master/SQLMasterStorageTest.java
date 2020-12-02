@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.CommonRange
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
@@ -93,18 +92,17 @@ public class SQLMasterStorageTest extends AbstractContainerTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        transactionManager = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
-
         redisClient = RedisClient.create(
             String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
         CommitIdStatusServiceImpl commitIdStatusService = new CommitIdStatusServiceImpl();
         ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
-        ReflectionTestUtils.setField(commitIdStatusService, "locker", new LocalResourceLocker());
         commitIdStatusService.init();
 
+        transactionManager = new DefaultTransactionManager(
+            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
+
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity", commitIdStatusService));
+            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

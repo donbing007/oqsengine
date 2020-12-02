@@ -20,6 +20,7 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
+import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import io.micrometer.core.annotation.Timed;
@@ -60,6 +61,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private MasterStorage masterStorage;
+
+    @Resource
+    private IndexStorage indexStorage;
 
     @Resource
     private CDCStatusService cdcStatusService;
@@ -289,12 +293,17 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             return ResultStatus.CONFLICT;
                         }
 
+                        eliminateIndex(fatherEntity.id());
+                        eliminateIndex(childEntity.id());
+
                     } else {
 
                         if (isConflict(masterStorage.replace(entityClone))) {
                             hint.setRollback(true);
                             return ResultStatus.CONFLICT;
                         }
+
+                        eliminateIndex(entityClone.id());
 
                         // 有子类
                         if (entityClone.family().child() > 0) {
@@ -303,6 +312,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                                 hint.setRollback(true);
                                 return ResultStatus.CONFLICT;
                             }
+
+                            eliminateIndex(entityClone.family().child());
                         }
                     }
 
@@ -351,6 +362,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             return ResultStatus.CONFLICT;
                         }
 
+                        eliminateIndex(fatherEntity.id());
+                        eliminateIndex(childEntity.id());
 
                     } else {
 
@@ -358,6 +371,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             hint.setRollback(true);
                             return ResultStatus.CONFLICT;
                         }
+
+                        eliminateIndex(entity.id());
 
                         // 有子类需要删除.
                         if (entity.family().child() > 0) {
@@ -373,6 +388,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                                 hint.setRollback(true);
                                 return ResultStatus.CONFLICT;
                             }
+
+                            /**
+                             * 删除索引中的相应数据.由CDC重建.
+                             */
+                            eliminateIndex(entity.family().child());
                         }
 
                     }
@@ -407,6 +427,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         entity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
 
         return delete(entity);
+    }
+
+    /**
+     * 淘汰索引数据,由CDC重建.
+     */
+    private void eliminateIndex(long id) throws SQLException {
+        indexStorage.delete(id);
     }
 
     private boolean isSub(IEntity entity) {

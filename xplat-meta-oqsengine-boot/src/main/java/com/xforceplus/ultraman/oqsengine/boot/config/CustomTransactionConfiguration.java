@@ -25,8 +25,10 @@ public class CustomTransactionConfiguration {
     public TransactionManager transactionManager(
         LongIdGenerator snowflakeIdGenerator,
         LongIdGenerator redisIdGenerator,
-        @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs) {
-        return new DefaultTransactionManager(transactionTimeoutMs, snowflakeIdGenerator, redisIdGenerator);
+        @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs,
+        CommitIdStatusService commitIdStatusService) {
+        return new DefaultTransactionManager(
+            transactionTimeoutMs, snowflakeIdGenerator, redisIdGenerator, commitIdStatusService);
     }
 
     @Bean
@@ -42,9 +44,8 @@ public class CustomTransactionConfiguration {
 
     @Bean
     public SqlConnectionTransactionResourceFactory connectionTransactionResourceFactory(
-        CommitIdStatusService commitIdStatusService,
         @Value("${storage.master.name:oqsbigentity}") String tableName) {
-        return new SqlConnectionTransactionResourceFactory(tableName, commitIdStatusService);
+        return new SqlConnectionTransactionResourceFactory(tableName);
     }
 
     @Bean

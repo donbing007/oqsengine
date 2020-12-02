@@ -1,11 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
-import com.xforceplus.ultraman.oqsengine.common.lock.ResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -35,13 +35,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     final Logger logger = LoggerFactory.getLogger(CommitIdStatusServiceImpl.class);
 
-    private static final String DEFAULT_KEY = "com.xforceplus.ultraman.oqsengine.status.commitid";
+    private static final String DEFAULT_COMMITIDS_KEY = "com.xforceplus.ultraman.oqsengine.status.commitids";
+    private static final String DEFAULT_COMMITID_STATUS_KEY_PREFIX = "com.xforceplus.ultraman.oqsengine.status.commitid";
 
     @Resource
     private RedisClient redisClient;
-
-    @Resource
-    private ResourceLocker locker;
 
     private StatefulRedisConnection<String, String> syncConnect;
 
@@ -51,27 +49,32 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     private RedisAsyncCommands<String, String> asyncCommands;
 
-    private String key;
+    private String commitidsKey;
+
+    private String commitidStatusKeyPrefix;
+
+    private long commitidStatusTTLMs = 3 * 10000;
 
     private AtomicLong unSyncCommitIdSize;
 
     public CommitIdStatusServiceImpl() {
-        this(DEFAULT_KEY);
+        this(DEFAULT_COMMITIDS_KEY, DEFAULT_COMMITID_STATUS_KEY_PREFIX);
     }
 
-    public CommitIdStatusServiceImpl(String key) {
-        this.key = key;
-        if (this.key == null || this.key.isEmpty()) {
-            throw new IllegalArgumentException("The KEY is invalid.");
+    public CommitIdStatusServiceImpl(String commitidsKey, String commitIdStatusKeyPreifx) {
+        this.commitidsKey = commitidsKey;
+        if (this.commitidsKey == null || this.commitidsKey.isEmpty()) {
+            throw new IllegalArgumentException("The commits key is invalid.");
         }
 
+        this.commitidStatusKeyPrefix = commitIdStatusKeyPreifx;
+        if (this.commitidStatusKeyPrefix == null || this.commitidStatusKeyPrefix.isEmpty()) {
+            throw new IllegalArgumentException("The commit status key is invalid.");
+        }
     }
 
     @PostConstruct
     public void init() {
-        if (locker == null) {
-            throw new IllegalStateException("Invalid ResourceLocker.");
-        }
         if (redisClient == null) {
             throw new IllegalStateException("Invalid redisClient.");
         }
@@ -89,7 +92,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
             MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(size()));
 
 
-        logger.info("Use {} as the key for the list of submission Numbers.", key);
+        logger.info("Use {} as the key for the list of submission Numbers.", commitidsKey);
 
     }
 
@@ -100,38 +103,45 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     }
 
     @Override
-    public long save(long commitId) {
-        return save(commitId, null);
-    }
-
-    @Override
-    public long save(long commitId, Runnable act) {
-
+    public long save(long commitId, boolean ready) {
         String target = Long.toString(commitId);
+        String statusKey = commitidStatusKeyPrefix + "." + target;
+        String status = ready ? CommitStatus.READY.getSymbol() : CommitStatus.NOT_READY.getSymbol();
 
-        locker.lock(target);
-        try {
-            if (act != null) {
-                act.run();
-            }
-            syncCommands.zadd(key, (double) commitId, target);
-        } finally {
-            locker.unlock(target);
-        }
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Save the new commit number {}.", commitId);
+        syncCommands.zadd(commitidsKey, (double) commitId, target);
+        if (!ready) {
+            syncCommands.set(statusKey, status, SetArgs.Builder.px(commitidStatusTTLMs));
         }
 
         updateMetrics();
 
         return commitId;
+    }
 
+    @Override
+    public boolean isReady(long commitId) {
+        String target = Long.toString(commitId);
+        String statusKey = commitidStatusKeyPrefix + "." + target;
+        String value = syncCommands.get(statusKey);
+
+        CommitStatus status = CommitStatus.getInstance(value);
+
+        /**
+         * 如果没有状态或者标示就绪都认为已经就绪.
+         */
+        return !(CommitStatus.NOT_READY == status);
+    }
+
+    @Override
+    public void ready(long commitId) {
+        String target = Long.toString(commitId);
+        String statusKey = commitidStatusKeyPrefix + "." + target;
+        syncCommands.del(statusKey);
     }
 
     @Override
     public Optional<Long> getMin() {
-        List<String> ids = syncCommands.zrange(key, 0, 0);
+        List<String> ids = syncCommands.zrange(commitidsKey, 0, 0);
         if (ids.isEmpty()) {
 
             if (logger.isDebugEnabled()) {
@@ -153,7 +163,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     @Override
     public Optional<Long> getMax() {
-        List<String> ids = syncCommands.zrevrange(key, 0, 0);
+        List<String> ids = syncCommands.zrevrange(commitidsKey, 0, 0);
         if (ids.isEmpty()) {
 
             if (logger.isDebugEnabled()) {
@@ -176,13 +186,13 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     @Override
     public long[] getAll() {
-        List<String> ids = syncCommands.zrange(key, 0, -1);
+        List<String> ids = syncCommands.zrange(commitidsKey, 0, -1);
         return ids.parallelStream().mapToLong(id -> Long.parseLong(id)).toArray();
     }
 
     @Override
     public long size() {
-        return syncCommands.zcard(key);
+        return syncCommands.zcard(commitidsKey);
     }
 
     @Override
@@ -192,16 +202,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         String target;
         for (long id : commitIds) {
             target = Long.toString(id);
-            locker.lock(target);
-            try {
-
-                futures.add(asyncCommands.zrem(key, target));
-
-            } finally {
-                if (!locker.unlock(target)) {
-                    logger.error("Unable to unlock, target submission number is {}.", target);
-                }
-            }
+            futures.add(asyncCommands.zrem(commitidsKey, target));
         }
 
         asyncCommands.flushCommands();
@@ -211,11 +212,39 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
             logger.debug("The commit`s number {} has been eliminated.", Arrays.toString(commitIds));
         }
         updateMetrics();
+    }
 
-
+    public void setCommitidStatusTTLMs(long commitidStatusTTLMs) {
+        this.commitidStatusTTLMs = commitidStatusTTLMs;
     }
 
     private void updateMetrics() {
         CompletableFuture.runAsync(() -> unSyncCommitIdSize.set(size()));
+    }
+
+    private enum CommitStatus {
+        UNKNOWN("U"),
+        NOT_READY("N"),
+        READY("R");
+
+        private String symbol;
+
+        public String getSymbol() {
+            return symbol;
+        }
+
+        CommitStatus(String symbol) {
+            this.symbol = symbol;
+        }
+
+        public static CommitStatus getInstance(String symbol) {
+            for (CommitStatus status : CommitStatus.values()) {
+                if (status.getSymbol().equals(symbol)) {
+                    return status;
+                }
+            }
+
+            return UNKNOWN;
+        }
     }
 }

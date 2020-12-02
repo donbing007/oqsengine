@@ -3,14 +3,19 @@ package com.xforceplus.ultraman.oqsengine.storage.executor;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
+import com.xforceplus.ultraman.oqsengine.storage.AbstractRedisContainerTest;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -26,18 +31,29 @@ import static org.mockito.Mockito.*;
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
-public class AutoJoinTransactionExecutorTest {
+public class AutoJoinTransactionExecutorTest extends AbstractRedisContainerTest {
 
     private LongIdGenerator idGenerator;
     private LongIdGenerator commitIdGenerator;
     private TransactionManager tm;
+    private RedisClient redisClient;
+    private CommitIdStatusServiceImpl commitIdStatusService;
 
     @Before
     public void before() throws Exception {
 
+        String redisIp = System.getProperty("status.redis.ip");
+        int redisPort = Integer.parseInt(System.getProperty("status.redis.port"));
+        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
+
+        commitIdStatusService = new CommitIdStatusServiceImpl();
+        ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
+        commitIdStatusService.init();
+
         idGenerator = new IncreasingOrderLongIdGenerator();
         commitIdGenerator = new IncreasingOrderLongIdGenerator();
-        tm = new DefaultTransactionManager(idGenerator, commitIdGenerator);
+
+        tm = new DefaultTransactionManager(idGenerator, commitIdGenerator, commitIdStatusService);
     }
 
     @After
@@ -50,6 +66,11 @@ public class AutoJoinTransactionExecutorTest {
 
             tm.finish(t.get());
         }
+
+        commitIdStatusService.destroy();
+        redisClient.connect().sync().flushall();
+        redisClient.shutdown();
+        redisClient = null;
     }
 
     /**

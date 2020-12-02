@@ -2,10 +2,15 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
+import com.xforceplus.ultraman.oqsengine.storage.AbstractRedisContainerTest;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -19,21 +24,36 @@ import java.util.Optional;
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
-public class MultiLocalTransactionTest {
+public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
+
+    private RedisClient redisClient;
+    private CommitIdStatusServiceImpl commitIdStatusService;
 
     @Before
     public void before() throws Exception {
+        String redisIp = System.getProperty("status.redis.ip");
+        int redisPort = Integer.parseInt(System.getProperty("status.redis.port"));
+        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
+
+        commitIdStatusService = new CommitIdStatusServiceImpl();
+        ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
+        commitIdStatusService.init();
     }
 
     @After
     public void after() throws Exception {
+        commitIdStatusService.destroy();
+
+        redisClient.connect().sync().flushall();
+        redisClient.shutdown();
+        redisClient = null;
     }
 
     @Test
     public void testCommit() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator);
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -50,7 +70,7 @@ public class MultiLocalTransactionTest {
     @Test
     public void testRollback() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator);
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -67,7 +87,7 @@ public class MultiLocalTransactionTest {
     @Test
     public void testCommitEx() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator);
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交
@@ -92,7 +112,7 @@ public class MultiLocalTransactionTest {
         }
 
         for (MockResource r : correctResources) {
-            Assert.assertTrue(r.isCommitted());
+            Assert.assertFalse(r.isCommitted());
         }
 
     }
@@ -100,7 +120,7 @@ public class MultiLocalTransactionTest {
     @Test
     public void testRollbackEx() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator);
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交

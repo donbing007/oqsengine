@@ -31,15 +31,13 @@ public abstract class AbstractConnectionTransactionResource extends AbstractTran
 
     @Override
     public void commit(long commitId) throws SQLException {
-        if (!isAutoCommit()) {
-            value().commit();
+        commit();
 
-            Optional<Transaction> transactionOp = getTransaction();
-            if (transactionOp.isPresent()) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("The transaction resource ({}) commits in the transaction ({}) using the ({}) commit id.",
-                        key(), transactionOp.get().id(), commitId);
-                }
+        Optional<Transaction> transactionOp = getTransaction();
+        if (transactionOp.isPresent()) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("The transaction resource ({}) commits in the transaction ({}) using the ({}) commit id.",
+                    key(), transactionOp.get().id(), commitId);
             }
         }
     }

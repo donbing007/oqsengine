@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.transaction;
 
-import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
 
@@ -16,15 +15,12 @@ public class SqlConnectionTransactionResourceFactory implements TransactionResou
 
     private String tableName;
 
-    private CommitIdStatusService commitIdStatusService;
-
-    public SqlConnectionTransactionResourceFactory(String tableName, CommitIdStatusService commitIdStatusService) {
+    public SqlConnectionTransactionResourceFactory(String tableName) {
         this.tableName = tableName;
-        this.commitIdStatusService = commitIdStatusService;
     }
 
     @Override
     public TransactionResource build(String key, Connection resource, boolean autocommit) throws SQLException {
-        return new SqlConnectionTransactionResource(key, resource, autocommit, tableName, commitIdStatusService);
+        return new SqlConnectionTransactionResource(key, resource, autocommit, tableName);
     }
 }

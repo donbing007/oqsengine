@@ -85,7 +85,7 @@ public interface Transaction {
      *
      * @return true readOnly,false not readOnly.
      */
-    boolean isReadOnley();
+    boolean isReadyOnly();
 
     /**
      * Declare a write transaction.

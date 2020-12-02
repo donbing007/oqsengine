@@ -15,19 +15,26 @@ public interface CommitIdStatusService {
      * 保存一个新的提交号.
      *
      * @param commitId 提交号.
+     * @param ready true就绪,false还没就绪.
      * @return 保存的提交号.
      */
-    long save(long commitId);
+    long save(long commitId, boolean ready);
 
     /**
-     * 保存一个新的提交号,在执行前会执行一个预定动作.
-     * 保证在提交号提交之前会执行这个动作,并且不会在此之前进行淘汰.
+     * 判断指定的提交号是否就绪.
+     * 如果判断为就绪,那么之后再次的判断都将为非就绪.
      *
-     * @param commitId 提交号.
-     * @param act      动作.
-     * @return 保存的提交号.
+     * @param commitId 目标提交号.
+     * @return true 就绪,false没有就绪.
      */
-    long save(long commitId, Runnable act);
+    boolean isReady(long commitId);
+
+    /**
+     * 使某个提交个状态进入就绪.
+     *
+     * @param commitId 目标提交号.
+     */
+    void ready(long commitId);
 
     /**
      * 获取当前最小的提交号.

@@ -2,10 +2,16 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
+import com.xforceplus.ultraman.oqsengine.storage.AbstractRedisContainerTest;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.sql.SQLException;
@@ -18,14 +24,29 @@ import java.util.concurrent.*;
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
-public class AbstractTransactionManagerTest {
+public class AbstractTransactionManagerTest extends AbstractRedisContainerTest {
+
+    private RedisClient redisClient;
+    private CommitIdStatusServiceImpl commitIdStatusService;
 
     @Before
     public void before() throws Exception {
+        String redisIp = System.getProperty("status.redis.ip");
+        int redisPort = Integer.parseInt(System.getProperty("status.redis.port"));
+        redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
+
+        commitIdStatusService = new CommitIdStatusServiceImpl();
+        ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
+        commitIdStatusService.init();
     }
 
     @After
     public void after() throws Exception {
+        commitIdStatusService.destroy();
+
+        redisClient.connect().sync().flushall();
+        redisClient.shutdown();
+        redisClient = null;
     }
 
     @Test
@@ -193,6 +214,7 @@ public class AbstractTransactionManagerTest {
         private LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
         private LongIdGenerator commitIdGenerator = new IncreasingOrderLongIdGenerator();
         private long waitMs = 0;
+        private CommitIdStatusService commitIdStatusService;
 
         public MockTransactionManager() {
             this(3000, 0);
@@ -207,11 +229,15 @@ public class AbstractTransactionManagerTest {
             this.waitMs = waitMs;
         }
 
+        public void setCommitIdStatusService(CommitIdStatusService commitIdStatusService) {
+            this.commitIdStatusService = commitIdStatusService;
+        }
+
         @Override
         public Transaction doCreate() {
 
             long id = idGenerator.next();
-            return new MockTransaction(id, waitMs, commitIdGenerator);
+            return new MockTransaction(id, waitMs, commitIdGenerator, this.commitIdStatusService);
 
         }
     }
@@ -222,8 +248,9 @@ public class AbstractTransactionManagerTest {
         private int commitNumber;
         private int rollbackNumber;
 
-        public MockTransaction(long id, long watiMs, LongIdGenerator longIdGenerator) {
-            super(id, longIdGenerator);
+        public MockTransaction(
+            long id, long watiMs, LongIdGenerator longIdGenerator, CommitIdStatusService commitIdStatusService) {
+            super(id, longIdGenerator, commitIdStatusService);
             this.waitMs = watiMs;
         }
 

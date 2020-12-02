@@ -19,6 +19,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
@@ -29,12 +30,12 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import org.junit.*;
+import io.lettuce.core.RedisClient;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
@@ -59,13 +60,10 @@ import java.util.stream.Collectors;
  */
 public class SphinxQLIndexStorageTest {
 
-    private static GenericContainer manticore0;
-    private static GenericContainer manticore1;
-    private static GenericContainer searchManticore;
-
     private TransactionManager transactionManager;
     private SphinxQLIndexStorage storage;
     private DataSourcePackage dataSourcePackage;
+    private RedisClient redisClient;
 
     private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
     private static IEntityField stringField = new EntityField(Long.MAX_VALUE - 1, "string", FieldType.STRING);
@@ -233,6 +231,12 @@ public class SphinxQLIndexStorageTest {
     @Before
     public void before() throws Exception {
 
+        redisClient = RedisClient.create(
+            String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
+        CommitIdStatusServiceImpl commitIdStatusService = new CommitIdStatusServiceImpl();
+        ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
+        commitIdStatusService.init();
+
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector(
             "./src/test/resources/sql_index_storage.conf");
         DataSource searchDataSource = buildSearchDataSourceSelector(
@@ -242,7 +246,7 @@ public class SphinxQLIndexStorageTest {
         TimeUnit.SECONDS.sleep(1L);
 
         transactionManager = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
+            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
 
         TransactionExecutor executor =
             new AutoJoinTransactionExecutor(transactionManager, new SphinxQLTransactionResourceFactory());
@@ -304,6 +308,9 @@ public class SphinxQLIndexStorageTest {
         truncate();
 
         dataSourcePackage.close();
+
+        redisClient.connect().sync().flushall();
+        redisClient.shutdown();
     }
 
     @Test
@@ -836,56 +843,5 @@ public class SphinxQLIndexStorageTest {
             this.refs = refs;
             this.page = page;
         }
-    }
-
-    @AfterClass
-    public static void cleanEnvironment() throws Exception {
-        manticore0.close();
-        manticore1.close();
-        searchManticore.close();
-    }
-
-    @BeforeClass
-    public static void prepareEnvironment() throws Exception {
-        Network network = Network.newNetwork();
-        manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.0").withExposedPorts(9306)
-            .withNetwork(network)
-            .withNetworkAliases("manticore0")
-            .withClasspathResourceMapping("manticore0.conf", "/manticore.conf", BindMode.READ_ONLY)
-            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-            .waitingFor(Wait.forListeningPort());
-        manticore0.start();
-
-        manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.0").withExposedPorts(9306)
-            .withNetwork(network)
-            .withNetworkAliases("manticore1")
-            .withClasspathResourceMapping("manticore1.conf", "/manticore.conf", BindMode.READ_ONLY)
-            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-            .waitingFor(Wait.forListeningPort());
-        manticore1.start();
-
-        searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.0").withExposedPorts(9306)
-            .withNetwork(network)
-            .withNetworkAliases("searchManticore")
-            .withClasspathResourceMapping("search-manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
-            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-            .dependsOn(manticore0, manticore1)
-            .waitingFor(Wait.forListeningPort());
-        searchManticore.start();
-
-        String write0Jdbc = String.format(
-            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
-            manticore0.getContainerIpAddress(), manticore0.getFirstMappedPort());
-        String write1Jdbc = String.format(
-            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
-            manticore1.getContainerIpAddress(), manticore1.getFirstMappedPort());
-
-        String searchJdbc = String.format(
-            "jdbc:mysql://%s:%d/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=UTC",
-            searchManticore.getContainerIpAddress(), searchManticore.getFirstMappedPort());
-
-        System.setProperty("MANTICORE_WRITE0_JDBC_URL", write0Jdbc);
-        System.setProperty("MANTICORE_WRITE1_JDBC_URL", write1Jdbc);
-        System.setProperty("MANTICORE_SEARCH_JDBC_URL", searchJdbc);
     }
 }

@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.lock.LocalResourceLocker;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -151,8 +150,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
 
         DataSource ds = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
 
-        transactionManager = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0));
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
@@ -161,11 +158,13 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
             String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
         CommitIdStatusServiceImpl commitIdStatusService = new CommitIdStatusServiceImpl();
         ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
-        ReflectionTestUtils.setField(commitIdStatusService, "locker", new LocalResourceLocker());
         commitIdStatusService.init();
 
+        transactionManager = new DefaultTransactionManager(
+            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
+
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity", commitIdStatusService));
+            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

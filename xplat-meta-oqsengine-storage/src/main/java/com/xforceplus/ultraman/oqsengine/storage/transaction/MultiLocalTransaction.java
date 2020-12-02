@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
@@ -37,15 +38,17 @@ public class MultiLocalTransaction implements Transaction {
     private Lock lock = new ReentrantLock();
     private LongIdGenerator longIdGenerator;
     private boolean writeTx = false;
+    private CommitIdStatusService commitIdStatusService;
 
     private Timer.Sample durationMetrics;
 
-    public MultiLocalTransaction(long id, LongIdGenerator longIdGenerator) {
+    public MultiLocalTransaction(long id, LongIdGenerator longIdGenerator, CommitIdStatusService commitIdStatusService) {
         transactionResourceHolder = new LinkedList<>();
         committed = false;
         rollback = false;
         this.id = id;
         this.longIdGenerator = longIdGenerator;
+        this.commitIdStatusService = commitIdStatusService;
 
         durationMetrics = Timer.start(Metrics.globalRegistry);
     }
@@ -127,7 +130,7 @@ public class MultiLocalTransaction implements Transaction {
     }
 
     @Override
-    public boolean isReadOnley() {
+    public boolean isReadyOnly() {
         return !writeTx;
     }
 
@@ -185,35 +188,55 @@ public class MultiLocalTransaction implements Transaction {
         }
         try {
             List<SQLException> exHolder = new LinkedList<>();
-            long commitId = 0;
-            if (!isReadOnley()) {
-                commitId = longIdGenerator.next();
-                if (!CommitHelper.isLegal(commitId)) {
-                    throw new SQLException(String.format("The submission number obtained is invalid.[%d]", commitId));
-                }
-
-                if (logger.isDebugEnabled()) {
-                    logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
-                }
-            }
-
-            for (TransactionResource transactionResource : transactionResourceHolder) {
-                try {
-                    if (commit) {
-                        if (isReadOnley()) {
-                            transactionResource.commit();
-                        } else {
-                            transactionResource.commit(commitId);
-                        }
-                    } else {
-                        transactionResource.rollback();
+            if (commit) {
+                long commitId = 0;
+                if (!isReadyOnly()) {
+                    commitId = longIdGenerator.next();
+                    if (!CommitHelper.isLegal(commitId)) {
+                        throw new SQLException(String.format("The submission number obtained is invalid.[%d]", commitId));
                     }
 
-                    transactionResource.destroy();
-                } catch (SQLException ex) {
-                    exHolder.add(0, ex);
-                }
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
+                    }
 
+                    final long finalCommitId = commitId;
+                    for (TransactionResource transactionResource : transactionResourceHolder) {
+                        try {
+                            transactionResource.commit(finalCommitId);
+                            transactionResource.destroy();
+                        } catch (SQLException ex) {
+                            exHolder.add(0, ex);
+                            break;
+                        }
+                    }
+                    commitIdStatusService.save(finalCommitId, false);
+
+                    commitIdStatusService.ready(commitId);
+
+                } else {
+                    // 只读事务提交.
+                    for (TransactionResource transactionResource : transactionResourceHolder) {
+                        try {
+                            transactionResource.commit();
+                            transactionResource.destroy();
+                        } catch (SQLException ex) {
+                            exHolder.add(0, ex);
+                            break;
+                        }
+                    }
+                }
+            } else {
+
+                // 回滚
+                for (TransactionResource transactionResource : transactionResourceHolder) {
+                    try {
+                        transactionResource.rollback();
+                        transactionResource.destroy();
+                    } catch (SQLException ex) {
+                        exHolder.add(0, ex);
+                    }
+                }
             }
 
             throwSQLExceptionIfNecessary(exHolder);
