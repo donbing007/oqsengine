@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
+import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
@@ -40,6 +41,9 @@ public class CompatibilityTest extends AbstractContainerTest {
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;
 
+    @Resource(name = "indexWriteDataSourceSelector")
+    private Selector<DataSource> indexDataSource;
+
     @Resource
     private EntitySearchService entitySearchService;
 
@@ -65,6 +69,14 @@ public class CompatibilityTest extends AbstractContainerTest {
         stat.executeUpdate("truncate table oqsbigentity");
         stat.close();
         conn.close();
+
+        for (DataSource ds : indexDataSource.selects()) {
+            conn = ds.getConnection();
+            Statement st = conn.createStatement();
+            st.executeUpdate("truncate table oqsindex");
+            st.close();
+            conn.close();
+        }
     }
 
     /**
