@@ -66,7 +66,7 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     @Override
     public boolean isReadyCommit(long commitId) {
-        return false;
+        return true;
     }
 
     public AtomicInteger getExecuted() {
