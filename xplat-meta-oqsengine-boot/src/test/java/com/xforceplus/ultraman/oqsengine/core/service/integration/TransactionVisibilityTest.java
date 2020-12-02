@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
+import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
@@ -47,6 +48,9 @@ public class TransactionVisibilityTest extends AbstractContainerTest {
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;
 
+    @Resource(name = "indexWriteDataSourceSelector")
+    private Selector<DataSource> indexWriteDataSourceSelector;
+
     @Resource
     private CommitIdStatusService commitIdStatusService;
 
@@ -71,11 +75,20 @@ public class TransactionVisibilityTest extends AbstractContainerTest {
 
     @After
     public void after() throws Exception {
-        Connection conn = masterDataSource.getConnection();
-        Statement stat = conn.createStatement();
-        stat.executeUpdate("truncate table oqsbigentity");
-        stat.close();
-        conn.close();
+        try (Connection conn = masterDataSource.getConnection()) {
+            try (Statement stat = conn.createStatement()) {
+                stat.executeUpdate("truncate table oqsbigentity");
+            }
+        }
+
+
+        for (DataSource ds : indexWriteDataSourceSelector.selects()) {
+            try (Connection conn = ds.getConnection()) {
+                try (Statement stat = conn.createStatement()) {
+                    stat.executeUpdate("truncate table oqsindex");
+                }
+            }
+        }
     }
 
     /**

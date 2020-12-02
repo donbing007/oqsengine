@@ -25,6 +25,10 @@ public abstract class AbstractConnectionTransactionResource extends AbstractTran
         super(key, value);
         this.autoCommit = autoCommit;
         if (value().getAutoCommit() != autoCommit) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("The current auto-commit status of the resource is {}, set to {}.",
+                    value().getAutoCommit(), autoCommit);
+            }
             value().setAutoCommit(autoCommit);
         }
     }

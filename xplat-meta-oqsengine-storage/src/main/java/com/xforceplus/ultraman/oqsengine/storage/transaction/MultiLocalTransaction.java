@@ -159,11 +159,13 @@ public class MultiLocalTransaction implements Transaction {
             for (SQLException ex : exHolder) {
                 sqlStatue.append("\"").append(ex.getSQLState()).append("\" ");
                 message.append("\"").append(ex.getMessage()).append("\" ");
-
             }
 
             // commit 或者 rollback 的异常都将标示为 rollback 状态.
             rollback = true;
+            committed = false;
+
+            logger.error(message.toString());
 
             throw new SQLException(message.toString(), sqlStatue.toString());
         }
