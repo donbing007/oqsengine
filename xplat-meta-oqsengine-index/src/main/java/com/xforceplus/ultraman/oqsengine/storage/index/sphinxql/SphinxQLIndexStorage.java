@@ -217,12 +217,12 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     public int batchSave(Collection<StorageEntity> storageEntities, boolean replacement, boolean forceRetry) throws SQLException {
 
         //  database key -> table key -> List
-        Map<DataSource, Map<String, List<StorageEntity>>> shardingStorageEntities = new HashMap<>();
+        Map<String, Map<String, List<StorageEntity>>> shardingStorageEntities = new HashMap<>();
         //  分类storageEntity
         for (StorageEntity storageEntity : storageEntities) {
             //  写入到shardingStorageEntities中
             String shardKey = Long.toString(storageEntity.getId());
-            DataSource dataSource = writerDataSourceSelector.select(shardKey);
+            String dataSource = writerDataSourceSelector.select(shardKey).toString();
             String tableShardKey = indexWriteIndexNameSelector.select(shardKey);
 
             //  写入StorageEntity, key使用 dataSourceKey_tableShardKey 这样的结构
