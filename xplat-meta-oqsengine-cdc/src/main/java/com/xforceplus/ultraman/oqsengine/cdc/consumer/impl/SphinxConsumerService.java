@@ -142,10 +142,10 @@ public class SphinxConsumerService implements ConsumerService {
 
                 //  是否MAX_VALUE
                 if (commitId != CommitHelper.getUncommitId()) {
-//                    if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
-//                        //  阻塞直到成功
-//                        cdcMetricsService.isReadyCommit(commitId);
-//                    }
+                    if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
+                        //  阻塞直到成功
+                        cdcMetricsService.isReadyCommit(commitId);
+                    }
                     //  更新
                     cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
                     rawEntries.put(id, new RawEntry(id, commitId,
