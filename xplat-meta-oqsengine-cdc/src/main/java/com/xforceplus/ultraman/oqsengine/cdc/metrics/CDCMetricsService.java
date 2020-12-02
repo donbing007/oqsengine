@@ -111,6 +111,7 @@ public class CDCMetricsService {
     public void isReadyCommit(long commitId) {
         StopWatch timer = new StopWatch();
         try {
+            logger.info("cdc-metrics, do ready to commitId , commitId {}", commitId);
             timer.start();
             while (true) {
                 if (!cdcMetricsCallback.isReadyCommit(commitId)) {
@@ -125,6 +126,7 @@ public class CDCMetricsService {
             }
         } finally {
             timer.stop();
+            logger.info("cdc-metrics, finish check commitId ready, commitId {}", commitId);
             if (timer.getLastTaskTimeMillis() > READ_WARM_MAX_INTERVAL) {
                 logger.warn("cdc-metrics, wait for ready commitId use too much times, commitId {}", commitId);
             }
