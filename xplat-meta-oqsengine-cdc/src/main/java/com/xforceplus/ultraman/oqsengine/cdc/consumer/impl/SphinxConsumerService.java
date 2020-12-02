@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.google.common.base.Stopwatch;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
@@ -10,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCUnCommitMetrics;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StopWatch;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
@@ -138,6 +140,11 @@ public class SphinxConsumerService implements ConsumerService {
 
                 //  是否MAX_VALUE
                 if (commitId != CommitHelper.getUncommitId()) {
+                    if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
+                        //  todo
+                        StopWatch time = new StopWatch();
+
+                    }
                     //  更新
                     cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
                     rawEntries.put(id, new RawEntry(id, commitId,

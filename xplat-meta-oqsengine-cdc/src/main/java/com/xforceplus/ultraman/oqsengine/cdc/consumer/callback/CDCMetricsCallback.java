@@ -40,4 +40,14 @@ public interface CDCMetricsCallback {
      * @return 查询结果.
      */
     CDCMetrics queryLastUnCommit();
+
+    /**
+     * 判断当前的CommitId是否可以插入
+     *
+     * @param commitId
+     */
+    boolean isReadyCommit(long commitId);
 }
+
+
+

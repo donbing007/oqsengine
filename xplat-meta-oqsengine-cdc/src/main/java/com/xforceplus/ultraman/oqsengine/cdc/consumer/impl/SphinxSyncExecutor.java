@@ -60,15 +60,16 @@ public class SphinxSyncExecutor implements SyncExecutor {
         for (RawEntry rawEntry : rawEntries) {
             try {
                 boolean isDelete = getBooleanFromColumn(rawEntry.getColumns(), DELETED);
-                if (isDelete) {
-                    synced += doDelete(rawEntry.getId(), rawEntry.getCommitId());
-                    syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
-                } else {
+                if (!isDelete) {
                     //  加入批量更新Map中
                     startTime = rawEntry.getExecuteTime();
                     storageEntityList.add(
                             prepareForReplace(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId()));
+                } else {
+                    synced += doDelete(rawEntry.getId(), rawEntry.getCommitId());
+                    syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
                 }
+
             } catch (Exception e) {
                 errorRecord(rawEntry.getId(), rawEntry.getCommitId(), e.getMessage());
             }
