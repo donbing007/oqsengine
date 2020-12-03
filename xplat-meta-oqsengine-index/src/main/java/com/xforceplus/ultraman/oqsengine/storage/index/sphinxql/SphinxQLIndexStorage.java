@@ -217,7 +217,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
     public int batchSave(Collection<StorageEntity> storageEntities, boolean replacement, boolean forceRetry) throws SQLException {
 
         //  database key -> table key -> List
-        Map<String, List<StorageEntity>> shardingStorageEntities = new HashMap<>();
+        Map<String, List<StorageEntity>> shardingStorageEntities = new LinkedHashMap<>();
         //  分类storageEntity
         for (StorageEntity storageEntity : storageEntities) {
             //  写入到shardingStorageEntities中
