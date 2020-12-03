@@ -81,9 +81,7 @@ public class CDCMetricsService {
         //  logger.debug("success consumer, cdcStatus : {}", JSON.toJSON(temp));
         cdcMetrics.setCdcUnCommitMetrics(temp.getCdcUnCommitMetrics());
         cdcMetrics.consumeSuccess(originBatchId, temp, isConnectSync);
-        if (originBatchId != EMPTY_BATCH_ID) {
-            callback();
-        }
+        callback();
     }
 
     public void callBackError(CDCStatus cdcStatus) {
