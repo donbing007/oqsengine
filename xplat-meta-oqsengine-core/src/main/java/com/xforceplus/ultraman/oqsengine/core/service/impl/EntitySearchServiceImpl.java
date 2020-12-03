@@ -218,6 +218,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 checkResult = checkCanSearch(c, entityClass);
             }
             if (!checkResult) {
+                if (page != null) {
+                    page.setTotalCount(0);
+                }
                 return Collections.emptyList();
             }
         }
