@@ -52,11 +52,11 @@ public class ConsumerRunner extends Thread {
                 Thread.sleep(MAX_STOP_WAIT_TIME * SECOND);
             } catch (Exception e) {
                 //  ignore
-                logger.warn("shutdown error, message : {}", e.getMessage());
+                logger.warn("cdc-runner] shutdown error, message : {}", e.getMessage());
             }
 
             if (isShutdown()) {
-                logger.info("cdc consumer success stop.");
+                logger.info("[cdc-runner] consumer success stop.");
                 break;
             }
 
@@ -64,7 +64,7 @@ public class ConsumerRunner extends Thread {
         }
 
         if (useTime >= MAX_STOP_WAIT_LOOPS) {
-            logger.warn("cdc consumer force stop after {} seconds.", useTime * MAX_STOP_WAIT_TIME);
+            logger.warn("[cdc-runner] force stop after {} seconds.", useTime * MAX_STOP_WAIT_TIME);
         }
     }
 
@@ -88,7 +88,7 @@ public class ConsumerRunner extends Thread {
                 connectAndReset();
             } catch (Exception e) {
                 closeToNextReconnect(CDCStatus.DIS_CONNECTED,
-                        String.format("%s, %s", "canal-server connection error", e.getMessage()));
+                        String.format("[cdc-runner] %s, %s", "canal-server connection error", e.getMessage()));
                 continue;
             }
             //  连接成功，重置标志位
@@ -99,7 +99,7 @@ public class ConsumerRunner extends Thread {
                 consume();
             } catch (Exception e) {
                 closeToNextReconnect(CDCStatus.CONSUME_FAILED,
-                        String.format("%s, %s", "canal-client consume error", e.getMessage()));
+                        String.format("[cdc-runner] %s, %s", "canal-client consume error", e.getMessage()));
             }
         }
     }
@@ -144,7 +144,7 @@ public class ConsumerRunner extends Thread {
             } catch (Exception e) {
                 //  未获取到数据,回滚
                 cdcConnector.rollback();
-                String error = String.format("cdc get message error, %s", e);
+                String error = String.format("[cdc-runner] get message from canal server error, %s", e);
                 logger.error(error);
                 throw new SQLException(error);
             }
@@ -183,7 +183,7 @@ public class ConsumerRunner extends Thread {
                     error = "sync finish status error";
                 }
                 e.printStackTrace();
-                logger.error("cdc sync error, will reconnect..., message : {}, {}", error, e.getMessage());
+                logger.error("[cdc-runner] sync error, will reconnect..., message : {}, {}", error, e.getMessage());
                 throw new SQLException(error);
             }
         }
@@ -225,7 +225,7 @@ public class ConsumerRunner extends Thread {
             //  回调告知当前成功信息
             callBackSuccess(originBatchId, cdcMetrics, true);
 
-            logger.info("cdc recover from last ackMetrics position success...");
+            logger.info("[cdc-runner] recover from last ackMetrics position success...");
         }
 
         //  确认完毕，需要将当前未提交的数据回滚到当前已确认batchId所对应的初始位置

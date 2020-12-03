@@ -39,11 +39,11 @@ public class CDCMetricsService {
         shutdown = false;
     }
     public void startMetrics() {
-        logger.info("cdc-metrics start, it will start hearBeat thread");
+        logger.info("[cdc-metrics] start, it will start hearBeat thread");
         Thread heartBeat = new Thread(this::heartBeat);
         heartBeat.setName("cdc-heartBeat");
         heartBeat.start();
-        logger.info("cdc-metrics hearBeat thread start ok...");
+        logger.info("[cdc-metrics] hearBeat thread start ok...");
     }
 
     public void heartBeat() {
@@ -60,11 +60,11 @@ public class CDCMetricsService {
                 long now = System.currentTimeMillis();
                 if (now - lastHeartBeatTime > HEART_BEAT_LOG_INTERVAL) {
                     lastHeartBeatTime = now;
-                    logger.debug("cdc-metrics current heartBeat timeStamps : {}", lastHeartBeatTime);
+                    logger.debug("[cdc-metrics] current heartBeat timeStamps : {}", lastHeartBeatTime);
                 }
                 Thread.sleep(HEART_BEAT_INTERVAL);
             } catch (Exception e) {
-                logger.warn("cdc-metrics heartBeat error, message :{}", e.getMessage());
+                logger.warn("[cdc-metrics] heartBeat error, message :{}", e.getMessage());
             }
         }
     }
@@ -101,7 +101,7 @@ public class CDCMetricsService {
         try {
             cdcMetricsCallback.cdcSaveLastUnCommit(cdcMetrics);
         } catch (Exception e) {
-            logger.error("cdc-metrics back up unCommitMetrics to redis error, unCommitMetrics : {}", JSON.toJSON(cdcMetrics));
+            logger.error("[cdc-metrics] back up unCommitMetrics to redis error, unCommitMetrics : {}", JSON.toJSON(cdcMetrics));
         }
     }
 
@@ -109,14 +109,14 @@ public class CDCMetricsService {
         try {
             return cdcMetricsCallback.queryLastUnCommit();
         } catch (Exception e) {
-            throw new SQLException("cdc-metrics query unCommitMetrics from redis error.");
+            throw new SQLException("[cdc-metrics] query unCommitMetrics from redis error.");
         }
     }
 
     public void isReadyCommit(long commitId) {
         StopWatch timer = new StopWatch();
         try {
-            logger.info("cdc-metrics, attempt check ready to commitId , commitId : {}", commitId);
+            logger.info("[cdc-metrics] attempt check ready to commitId , commitId : {}", commitId);
             timer.start();
             int loops = 0;
             while (true) {
@@ -129,7 +129,7 @@ public class CDCMetricsService {
                     loops++;
                     if (loops > COMMIT_ID_LOG_MAX_LOOPS) {
                         logger.warn(
-                                "cdc-metrics, loops for wait ready commit missed current check point, current-loops : {}, commitId : {}"
+                                "[cdc-metrics] loops for wait ready commit missed current check point, current-loops : {}, commitId : {}"
                                                         , loops, commitId);
                     }
                     continue;
@@ -138,9 +138,9 @@ public class CDCMetricsService {
             }
         } finally {
             timer.stop();
-            logger.info("cdc-metrics, success check ready to commitId, commitId : {}", commitId);
+            logger.info("[cdc-metrics] success check ready to commitId, commitId : {}", commitId);
             if (timer.getLastTaskTimeMillis() > READY_WARM_MAX_INTERVAL) {
-                logger.warn("cdc-metrics, wait for ready commitId use too much times, commitId {}, use time : {}ms"
+                logger.warn("[cdc-metrics] wait for ready commitId use too much times, commitId {}, use time : {}ms"
                         , commitId, timer.getLastTaskTimeMillis());
             }
         }
@@ -157,9 +157,9 @@ public class CDCMetricsService {
         cdcMetrics.getCdcAckMetrics().setLastUpdateTime(System.currentTimeMillis());
 
         try {
-            logger.debug("callback ack metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
+            logger.debug("[cdc-metrics] callback ack metrics : {}", JSON.toJSON(cdcMetrics.getCdcAckMetrics()));
         } catch (Exception ex) {
-            logger.debug("print ack metrics error, message : {}", ex.getMessage());
+            logger.debug("[cdc-metrics] print ack metrics error, message : {}", ex.getMessage());
         }
 
         //  执行回调
@@ -167,7 +167,7 @@ public class CDCMetricsService {
             cdcMetricsCallback.cdcAck(cdcMetrics.getCdcAckMetrics());
         } catch (Exception e) {
             try {
-                logger.error("callback error, metrics : {}, message : {}",
+                logger.error("[cdc-metrics] callback error, metrics : {}, message : {}",
                                 JSON.toJSON(cdcMetrics.getCdcAckMetrics()), e.getMessage());
             } catch (Exception ee) {
                 //  ignore

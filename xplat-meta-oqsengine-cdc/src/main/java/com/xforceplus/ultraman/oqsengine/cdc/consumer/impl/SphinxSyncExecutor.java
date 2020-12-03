@@ -83,8 +83,9 @@ public class SphinxSyncExecutor implements SyncExecutor {
     }
 
     public void errorRecord(long id, long commitId, String message) throws SQLException {
-        logger.warn("sphinx consume error will be record in cdcerrors,  id : {}, commitId : {}, message : {}", id, commitId, null == message ? "unknow" : message);
-        cdcErrorStorage.buildCdcError(CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, null == message ? "unknow" : message));
+        logger.warn("[cdc-sync-executor] sphinx consume error will be record in cdcerrors,  id : {}, commitId : {}, message : {}"
+                , id, commitId, null == message ? "unKnow" : message);
+        cdcErrorStorage.buildCdcError(CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, null == message ? "unKnow" : message));
     }
 
     //  删除,不停的循环删除, 直到成功为止
@@ -94,7 +95,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
                 return sphinxQLIndexStorage.delete(id);
             } catch (Exception e) {
                 //  delete error
-                logger.error("delete error, will retry, id : {}, commitId : {}, message : {}",
+                logger.error("[cdc-sync-executor] delete error, will retry, id : {}, commitId : {}, message : {}",
                                                                                 id, commitId, e.getMessage());
                 if (e instanceof SQLException) {
                     SQLException el = (SQLException) e;
@@ -166,7 +167,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
             try {
                 return masterStorage.selectEntityValue(pref).orElse(null);
             } catch (Exception e) {
-                logger.warn("entityValueGet from master db error, will retry..., id : {}, " +
+                logger.warn("[cdc-sync-executor] entityValueGet from master db error, will retry..., id : {}, " +
                         "message : {}", pref, e.getMessage());
                 sleepNoInterrupted(SECOND);
             }

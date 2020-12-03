@@ -26,11 +26,14 @@ public class CDCMetricsRecorder {
         //  将上一次的剩余信息设置回来
         cdcMetrics = new CDCMetrics();
 
+        cdcMetrics.setBatchId(batchId);
+        logger.debug("[cdc-metrics-record] start consume batch, batchId : {}", batchId);
         if (null != cdcUnCommitMetrics) {
             cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(cdcUnCommitMetrics.getUnCommitIds());
-            logger.debug("cdc-metrics-record start new batch, sync un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            logger.debug("[cdc-metrics-record] sync last batch unCommitIds : {}"
+                    , JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
         }
-        cdcMetrics.setBatchId(batchId);
+
         return this;
     }
 
@@ -39,8 +42,7 @@ public class CDCMetricsRecorder {
         cdcMetrics.getCdcAckMetrics().setExecuteRows(syncCount);
         cdcMetrics.getCdcAckMetrics().setTotalUseTime(timeRecorder.getTotalTimeMillis());
 
-
-        logger.info("cdc-metrics-record finish batch, batchId {}, success sync raw data : {}, totalUseTime : {}",
+        logger.info("[cdc-metrics-record] finish consume batch, batchId : {}, success sync rows : {}, totalUseTime : {}",
                 cdcMetrics.getBatchId(), cdcMetrics.getCdcAckMetrics().getExecuteRows(), cdcMetrics.getCdcAckMetrics().getTotalUseTime());
 
         return this;

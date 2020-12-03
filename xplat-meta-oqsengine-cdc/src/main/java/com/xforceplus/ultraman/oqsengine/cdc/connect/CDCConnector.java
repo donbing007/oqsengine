@@ -37,7 +37,7 @@ public abstract class CDCConnector {
                 close();
             }
         } catch (Exception e) {
-            logger.warn("shutdown error, message : {}", e.getMessage());
+            logger.warn("[cdc-connector] shutdown error, message : {}", e.getMessage());
         }
     }
 
@@ -50,7 +50,7 @@ public abstract class CDCConnector {
             canalConnector.connect();
             //  订阅destination
             canalConnector.subscribe(subscribeFilter);
-            logger.info("connect to canal server...");
+            logger.info("[cdc-connector] connect to canal server...");
             isClosed = false;
         }
     }
@@ -61,11 +61,11 @@ public abstract class CDCConnector {
     public void close() {
         if (null != canalConnector && !isClosed) {
             try {
-                logger.error("close canal connector...");
+                logger.error("[cdc-connector] close canal connector...");
                 //  关闭连接CanalServer
                 canalConnector.disconnect();
             } catch (Exception e) {
-                logger.error("close error, ex : {}", e.getMessage());
+                logger.error("[cdc-connector] close error, ex : {}", e.getMessage());
             } finally {
                 isClosed = true;
             }
@@ -94,7 +94,7 @@ public abstract class CDCConnector {
     }
 
     private void notInitException() throws SQLException {
-        throw new SQLException("canal connector not init.");
+        throw new SQLException("[cdc-connector] canal connector not init.");
     }
 
     public void setSubscribeFilter(String subscribeFilter) {

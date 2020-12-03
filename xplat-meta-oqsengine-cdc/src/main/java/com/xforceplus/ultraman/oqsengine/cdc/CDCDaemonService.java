@@ -43,10 +43,10 @@ public class CDCDaemonService {
 
     public void stopDaemon() {
         if (isStart) {
-            logger.info("try close CDC daemon process thread...");
+            logger.info("[cdc-daemon] try close CDC daemon process thread...");
             consumerRunner.shutdown();
             isStart = false;
-            logger.info("try close CDC daemon process thread success...");
+            logger.info("[cdc-daemon] try close CDC daemon process thread success...");
         }
     }
 
@@ -55,13 +55,13 @@ public class CDCDaemonService {
 
         Integer nodeId = nodeIdGenerator.next();
 
-        logger.info("current node = {}", nodeId);
+        logger.info("[cdc-daemon] current node = {}", nodeId);
         if (nodeId == DAEMON_NODE_ID && !isStart) {
-            logger.info("node-{} start CDC daemon process thread...", nodeId);
+            logger.info("[cdc-daemon] node-{} start CDC daemon process thread...", nodeId);
             consumerRunner = new ConsumerRunner(consumerService, cdcMetricsService, cdcConnector);
             consumerRunner.start();
             isStart = true;
-            logger.info("node-{} start CDC daemon process thread success...", nodeId);
+            logger.info("[cdc-daemon] node-{} start CDC daemon process thread success...", nodeId);
         }
     }
 }
