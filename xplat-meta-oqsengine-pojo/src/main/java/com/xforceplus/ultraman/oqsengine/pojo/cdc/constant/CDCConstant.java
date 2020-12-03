@@ -55,8 +55,11 @@ public class CDCConstant {
     public static final int SECOND = 1000;
 
     //  检查commitID是否ready的间隔
-    public static final int READ_CHECK_INTERVAL = 10;
+    public static final int COMMIT_ID_READY_CHECK_INTERVAL = 10;
+
+    //  检查commitID是否ready的间隔
+    public static final int COMMIT_ID_LOG_MAX_LOOPS = 1000;
 
     //  检查commitID是否ready方法的执行时间，打印WARM日志的最大时间容忍值
-    public static final int READ_WARM_MAX_INTERVAL = 100;
+    public static final int READY_WARM_MAX_INTERVAL = 100;
 }

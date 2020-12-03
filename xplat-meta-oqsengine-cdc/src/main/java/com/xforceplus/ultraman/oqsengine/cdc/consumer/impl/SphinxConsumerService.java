@@ -86,9 +86,9 @@ public class SphinxConsumerService implements ConsumerService {
 
     private void logCommitId(CDCMetrics cdcMetrics) {
         if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
-            logger.debug("un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            logger.debug("cdc consumer un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
             if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > UNEXPECTED_COMMIT_ID_COUNT) {
-                logger.warn("one transaction has more than one commitId, ids : {}",
+                logger.warn("cdc consumer one transaction has more than one commitId, ids : {}",
                         JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
             }
         }

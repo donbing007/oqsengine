@@ -28,7 +28,7 @@ public class CDCMetricsRecorder {
 
         if (null != cdcUnCommitMetrics) {
             cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(cdcUnCommitMetrics.getUnCommitIds());
-            logger.debug("start new batch, sync un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            logger.debug("cdc-metrics-record start new batch, sync un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
         }
         cdcMetrics.setBatchId(batchId);
         return this;
@@ -40,7 +40,7 @@ public class CDCMetricsRecorder {
         cdcMetrics.getCdcAckMetrics().setTotalUseTime(timeRecorder.getTotalTimeMillis());
 
 
-        logger.info("finish job, batchId {}, success sync raw data : {}, totalUseTime : {}",
+        logger.info("cdc-metrics-record finish batch, batchId {}, success sync raw data : {}, totalUseTime : {}",
                 cdcMetrics.getBatchId(), cdcMetrics.getCdcAckMetrics().getExecuteRows(), cdcMetrics.getCdcAckMetrics().getTotalUseTime());
 
         return this;

@@ -48,6 +48,7 @@ public class CDCMetricsService {
 
     public void heartBeat() {
         shutdown = false;
+        long lastHeartBeatTime = 0;
         //  设置心跳
         while (true) {
             if (shutdown) {
@@ -56,7 +57,11 @@ public class CDCMetricsService {
 
             try {
                 cdcMetricsCallback.heartBeat();
-                logger.debug("cdc-metrics current heartBeat timeStamps : {}", System.currentTimeMillis());
+                long now = System.currentTimeMillis();
+                if (now - lastHeartBeatTime > HEART_BEAT_LOG_INTERVAL) {
+                    lastHeartBeatTime = now;
+                    logger.debug("cdc-metrics current heartBeat timeStamps : {}", lastHeartBeatTime);
+                }
                 Thread.sleep(HEART_BEAT_INTERVAL);
             } catch (Exception e) {
                 logger.warn("cdc-metrics heartBeat error, message :{}", e.getMessage());
@@ -111,14 +116,21 @@ public class CDCMetricsService {
     public void isReadyCommit(long commitId) {
         StopWatch timer = new StopWatch();
         try {
-            logger.info("cdc-metrics, do ready to commitId , commitId {}", commitId);
+            logger.info("cdc-metrics, attempt check ready to commitId , commitId : {}", commitId);
             timer.start();
+            int loops = 0;
             while (true) {
                 if (!cdcMetricsCallback.isReadyCommit(commitId)) {
                     try {
-                        Thread.sleep(READ_CHECK_INTERVAL);
+                        Thread.sleep(COMMIT_ID_READY_CHECK_INTERVAL);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
+                    }
+                    loops++;
+                    if (loops > COMMIT_ID_LOG_MAX_LOOPS) {
+                        logger.warn(
+                                "cdc-metrics, loops for wait ready commit missed current check point, current-loops : {}, commitId : {}"
+                                                        , loops, commitId);
                     }
                     continue;
                 }
@@ -126,9 +138,10 @@ public class CDCMetricsService {
             }
         } finally {
             timer.stop();
-            logger.info("cdc-metrics, finish check commitId ready, commitId {}", commitId);
-            if (timer.getLastTaskTimeMillis() > READ_WARM_MAX_INTERVAL) {
-                logger.warn("cdc-metrics, wait for ready commitId use too much times, commitId {}", commitId);
+            logger.info("cdc-metrics, success check ready to commitId, commitId : {}", commitId);
+            if (timer.getLastTaskTimeMillis() > READY_WARM_MAX_INTERVAL) {
+                logger.warn("cdc-metrics, wait for ready commitId use too much times, commitId {}, use time : {}ms"
+                        , commitId, timer.getLastTaskTimeMillis());
             }
         }
 
