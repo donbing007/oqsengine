@@ -12,6 +12,10 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
+import java.util.Arrays;
+
+import static com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator.MULTIPLE_EQUALS;
+
 /**
  * @author dongbin
  * @version 0.1 2020/11/4 15:56
@@ -51,8 +55,26 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
 
         // id查询.
         if (field.config().isIdentifie()) {
-            StorageValue idStorageValue = storageStrategy.toStorageValue(condition.getFirstValue());
-            sql.append("id ").append(condition.getOperator().getSymbol()).append(' ').append(idStorageValue.value());
+
+            sql.append("id ").append(condition.getOperator().getSymbol()).append(' ');
+
+            if (condition.getOperator().getSymbol().equals(MULTIPLE_EQUALS.getSymbol())) {
+                sql.append("(");
+                boolean isFirst = true;
+                for(IValue value : condition.getValues()) {
+                    if (!isFirst) {
+                        sql.append(",");
+                    }
+                    StorageValue idStorageValue = storageStrategy.toStorageValue(value);
+                    sql.append(idStorageValue.value());
+                    isFirst = false;
+                }
+                sql.append(")");
+            } else {
+                StorageValue idStorageValue = storageStrategy.toStorageValue(condition.getFirstValue());
+                sql.append(idStorageValue.value());
+            }
+//            sql.append(idStorageValue.value());
             return sql.toString();
         }
 
@@ -65,7 +87,7 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
             .append(' ');
 
         StorageValue storageValue = null;
-        if (ConditionOperator.MULTIPLE_EQUALS == condition.getOperator()) {
+        if (MULTIPLE_EQUALS == condition.getOperator()) {
 
             sql.append("(");
             final int emptySize = sql.length();

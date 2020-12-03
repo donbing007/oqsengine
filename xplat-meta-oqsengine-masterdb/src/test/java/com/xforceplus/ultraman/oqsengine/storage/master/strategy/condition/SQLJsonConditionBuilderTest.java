@@ -70,6 +70,27 @@ public class SQLJsonConditionBuilderTest {
                 "id = 100"
             )
             ,
+                new Case(
+                        new Condition(
+                                idField,
+                                ConditionOperator.MULTIPLE_EQUALS,
+                                new LongValue(idField, 100L)
+                        ),
+                        "id IN (100)"
+                )
+                ,
+
+                new Case(
+                        new Condition(
+                                idField,
+                                ConditionOperator.MULTIPLE_EQUALS,
+                                new LongValue(idField, 100L),
+                                new LongValue(idField, 200L)
+                        ),
+
+                        "id IN (100,200)"
+                )
+                ,
             new Case(
                 new Condition(
                     longField,

@@ -79,7 +79,7 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
     private static IEntityField stringsField = new EntityField(Long.MAX_VALUE - 6, "strings", FieldType.STRINGS);
 
     private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "test",
-        Arrays.asList(longField, stringField, boolField, dateTimeField, decimalField, enumField, stringsField));
+            Arrays.asList(longField, stringField, boolField, dateTimeField, decimalField, enumField, stringsField));
 
     private static IEntity[] entityes;
 
@@ -89,58 +89,58 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
         long id = Long.MAX_VALUE;
         IEntityValue values = new EntityValue(id);
         values.addValues(Arrays.asList(
-            new LongValue(longField, 1L),
-            new StringValue(stringField, "v1"),
-            new BooleanValue(boolField, true),
-            new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1)),
-            new DecimalValue(decimalField, BigDecimal.ZERO), new EnumValue(enumField, "1"),
-            new StringsValue(stringsField, "value1", "value2"),
-            new EnumValue(enumField, "1")
-            )
+                new LongValue(longField, 1L),
+                new StringValue(stringField, "v1"),
+                new BooleanValue(boolField, true),
+                new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1)),
+                new DecimalValue(decimalField, BigDecimal.ZERO), new EnumValue(enumField, "1"),
+                new StringsValue(stringsField, "value1", "value2"),
+                new EnumValue(enumField, "1")
+                )
         );
         entityes[0] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 1;
         values = new EntityValue(id);
         values.addValues(Arrays.asList(new LongValue(longField, 2L), new StringValue(stringField, "v2"),
-            new BooleanValue(boolField, true),
-            new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 9, 0, 1)),
-            new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3"),
-            new EnumValue(enumField, "2")
+                new BooleanValue(boolField, true),
+                new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 9, 0, 1)),
+                new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
+                new StringsValue(stringsField, "value1", "value2", "value3"),
+                new EnumValue(enumField, "2")
         ));
         entityes[1] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 2;
         values = new EntityValue(id);
         values.addValues(Arrays.asList(new LongValue(longField, 2L), new StringValue(stringField, "hello world"),
-            new BooleanValue(boolField, false),
-            new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 11, 18, 1)),
-            new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3"),
-            new EnumValue(enumField, "3")
+                new BooleanValue(boolField, false),
+                new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 11, 18, 1)),
+                new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
+                new StringsValue(stringsField, "value1", "value2", "value3"),
+                new EnumValue(enumField, "3")
         ));
         entityes[2] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 3;
         values = new EntityValue(id);
         values.addValues(Arrays.asList(new LongValue(longField, 76L), new StringValue(stringField, "中文测试chinese test"),
-            new BooleanValue(boolField, false),
-            new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1)),
-            new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3"),
-            new EnumValue(enumField, "4")
+                new BooleanValue(boolField, false),
+                new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1)),
+                new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
+                new StringsValue(stringsField, "value1", "value2", "value3"),
+                new EnumValue(enumField, "4")
         ));
         entityes[3] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         id = Long.MAX_VALUE - 4;
         values = new EntityValue(id);
         values.addValues(Arrays.asList(new LongValue(longField, 86L), new StringValue(stringField, "\"@带有符号的中文@\"\'"),
-            new BooleanValue(boolField, false),
-            new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
-            new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN"),
-            new EnumValue(enumField, "5")
+                new BooleanValue(boolField, false),
+                new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
+                new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
+                new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN"),
+                new EnumValue(enumField, "5")
         ));
         entityes[4] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
     }
@@ -155,16 +155,16 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
         TimeUnit.SECONDS.sleep(1L);
 
         redisClient = RedisClient.create(
-            String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
+                String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
         CommitIdStatusServiceImpl commitIdStatusService = new CommitIdStatusServiceImpl();
         ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
         commitIdStatusService.init();
 
         transactionManager = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
+                new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"));
+                transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
@@ -236,24 +236,24 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
     public void testUncommittedTransactionSelect() throws Exception {
         IEntityValue uncommitEntityValue = new EntityValue(100L);
         uncommitEntityValue.addValues(Arrays.asList(
-            new LongValue(longField, 2L),
-            new StringValue(stringField, "\"@带有符号的中文@\"\'"),
-            new BooleanValue(boolField, false),
-            new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
-            new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN")));
+                new LongValue(longField, 2L),
+                new StringValue(stringField, "\"@带有符号的中文@\"\'"),
+                new BooleanValue(boolField, false),
+                new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
+                new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
+                new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN")));
         IEntity uncommitEntity = new Entity(100L, entityClass, uncommitEntityValue, OqsVersion.MAJOR);
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
         storage.build(uncommitEntity);
 
         Collection<EntityRef> refs = storage.select(
-            0L, // 每一个测试准备的数据中提交号都为0.
-            Conditions.buildEmtpyConditions().addAnd(
-                new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 2L))
-            ),
-            entityClass,
-            Sort.buildOutOfSort());
+                0L, // 每一个测试准备的数据中提交号都为0.
+                Conditions.buildEmtpyConditions().addAnd(
+                        new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 2L))
+                ),
+                entityClass,
+                Sort.buildOutOfSort());
         transactionManager.getCurrent().get().rollback();
         transactionManager.finish();
 
@@ -287,327 +287,344 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
     private Collection<Case> buildSelectCase() {
 
         return Arrays.asList(
-            // enum no eq
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        enumField, ConditionOperator.NOT_EQUALS, new EnumValue(enumField, "1")
-                    )),
-                entityClass,
-                r -> {
-                    Assert.assertEquals(4, r.size());
-                }
-            )
-            ,
-            // id eq
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        idField, ConditionOperator.EQUALS, new LongValue(idField, Long.MAX_VALUE)
-                    )),
-                entityClass,
-                result -> {
-                    Assert.assertEquals(1, result.size());
-                    Assert.assertEquals(Long.MAX_VALUE, result.stream().findFirst().get().getId());
-                }
-            )
-            ,
-            // long eq
-            new Case(
-                Conditions.buildEmtpyConditions().addAnd(
-                    new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 2L))),
-                entityClass,
-                result -> {
-                    Assert.assertEquals(2, result.size());
-                    Assert.assertEquals(0, result.stream().filter(r ->
-                        !(r.getId() == Long.MAX_VALUE - 1)).filter(r -> !(r.getId() == Long.MAX_VALUE - 2)).count());
+                // enum no eq
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(
+                                        enumField, ConditionOperator.NOT_EQUALS, new EnumValue(enumField, "1")
+                                )),
+                        entityClass,
+                        r -> {
+                            Assert.assertEquals(4, r.size());
+                        }
+                )
+                ,
+                // id eq
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(
+                                        idField, ConditionOperator.EQUALS, new LongValue(idField, Long.MAX_VALUE)
+                                )),
+                        entityClass,
+                        result -> {
+                            Assert.assertEquals(1, result.size());
+                            Assert.assertEquals(Long.MAX_VALUE, result.stream().findFirst().get().getId());
+                        }
+                )
+                ,
+                // id in
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(
+                                        idField, ConditionOperator.MULTIPLE_EQUALS
+                                        , new LongValue(idField, Long.MAX_VALUE), new LongValue(idField, Long.MAX_VALUE - 1)
+                                )),
+                        entityClass,
+                        result -> {
+                            Assert.assertEquals(2, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
+                                    .count());
+                        }
+                )
+                ,
+                // long eq
+                new Case(
+                        Conditions.buildEmtpyConditions().addAnd(
+                                new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 2L))),
+                        entityClass,
+                        result -> {
+                            Assert.assertEquals(2, result.size());
+                            Assert.assertEquals(0, result.stream().filter(r ->
+                                    !(r.getId() == Long.MAX_VALUE - 1)).filter(r -> !(r.getId() == Long.MAX_VALUE - 2)).count());
+                        })
+                ,
+                // long not eq
+                new Case(
+                        Conditions.buildEmtpyConditions().addAnd(
+                                new Condition(longField, ConditionOperator.NOT_EQUALS, new LongValue(longField, 2L))),
+                        entityClass,
+                        result -> {
+                            Assert.assertEquals(3, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
+                                    .count());
+                        })
+                ,
+                // long >
+                new Case(
+                        Conditions.buildEmtpyConditions().addAnd(
+                                new Condition(longField, ConditionOperator.GREATER_THAN, new LongValue(longField, 2L))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(2, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
+                                    .count());
+                        })
+                ,
+                // long >=
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(longField, ConditionOperator.GREATER_THAN_EQUALS,
+                                        new LongValue(longField, 2L))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(4, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
+                                    .count());
+                        })
+                ,
+                // long <
+                new Case(
+                        Conditions.buildEmtpyConditions().addAnd(
+                                new Condition(longField, ConditionOperator.LESS_THAN, new LongValue(longField, 2L))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(1, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE))
+                                    .count());
+                        })
+                ,
+                // long <=
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(longField, ConditionOperator.LESS_THAN_EQUALS,
+                                        new LongValue(longField, 2L))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(3, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE))
+                                    .count());
+                        })
+                ,
+                // long in
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(longField, ConditionOperator.MULTIPLE_EQUALS,
+                                        new LongValue(longField, 2L), new LongValue(longField, 76L))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(3, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
+                                    .count());
+
+                        })
+                ,
+                // string eq
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(stringField, ConditionOperator.EQUALS,
+                                        new StringValue(stringField, "\"@带有符号的中文@\"\'"))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(1, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
+                                    .count());
+
+                        })
+                ,
+                // string no eq
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(stringField, ConditionOperator.NOT_EQUALS,
+                                        new StringValue(stringField, "\"@带有符号的中文@\"\'"))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(4, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE))
+                                    .count());
+
+                        })
+                ,
+                // string like
+                new Case(
+                        Conditions.buildEmtpyConditions().addAnd(
+                                new Condition(stringField, ConditionOperator.LIKE, new StringValue(stringField, "中文"))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(2, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
+                                    .count());
+
+                        })
+                ,
+                // decimal eq
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(decimalField, ConditionOperator.EQUALS,
+                                        new DecimalValue(decimalField, BigDecimal.ONE))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(3, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
+                                    .count());
+
+                        })
+                ,
+                // decimal no eq
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(decimalField, ConditionOperator.NOT_EQUALS,
+                                        new DecimalValue(decimalField, BigDecimal.ONE))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(2, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
+                                    .count());
+
+                        })
+                ,
+                // decimal >
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(decimalField, ConditionOperator.GREATER_THAN,
+                                        new DecimalValue(decimalField, BigDecimal.ONE))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(1, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
+                                    .count());
+
+                        })
+                ,
+                // decimal >=
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(decimalField, ConditionOperator.GREATER_THAN_EQUALS,
+                                        new DecimalValue(decimalField, BigDecimal.ONE))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(4, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
+                                    .count());
+
+                        })
+                ,
+                // dateTimeField between
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(dateTimeField, ConditionOperator.GREATER_THAN,
+                                        new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1))))
+                                .addAnd(new Condition(dateTimeField, ConditionOperator.LESS_THAN,
+                                        new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1)))),
+                        entityClass,
+                        result -> {
+
+                            Assert.assertEquals(2, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
+                                    .count());
+                        })
+                ,
+                // stringsField =
+                new Case(
+                        Conditions.buildEmtpyConditions()
+                                .addAnd(new Condition(stringsField, ConditionOperator.EQUALS,
+                                        new StringsValue(stringsField, "UNKNOWN"))),
+                        entityClass,
+                        result -> {
+                            Assert.assertEquals(1, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
+                                    .count());
+                        })
+                ,
+                // stringsField in
+                new Case(Conditions.buildEmtpyConditions()
+                        .addAnd(
+                                new Condition(
+                                        stringsField,
+                                        ConditionOperator.MULTIPLE_EQUALS,
+                                        new StringsValue(stringsField, "UNKNOWN"),
+                                        new StringsValue(stringsField, "value3"))),
+                        entityClass,
+                        result -> {
+                            Assert.assertEquals(4, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
+                                    .count());
+                        })
+                ,
+                // emtpy condition
+                new Case(Conditions.buildEmtpyConditions(), entityClass, result -> {
+                    Assert.assertEquals(5, result.size());
                 })
-            ,
-            // long not eq
-            new Case(
-                Conditions.buildEmtpyConditions().addAnd(
-                    new Condition(longField, ConditionOperator.NOT_EQUALS, new LongValue(longField, 2L))),
-                entityClass,
-                result -> {
-                    Assert.assertEquals(3, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-                })
-            ,
-            // long >
-            new Case(
-                Conditions.buildEmtpyConditions().addAnd(
-                    new Condition(longField, ConditionOperator.GREATER_THAN, new LongValue(longField, 2L))),
-                entityClass,
-                result -> {
+                ,
+                // strings in no row.
+                new Case(Conditions.buildEmtpyConditions()
+                        .addAnd(new Condition(stringsField, ConditionOperator.MULTIPLE_EQUALS,
+                                new StringsValue(stringsField, "iqoweiqweq"), new StringsValue(stringsField, "nbbbb"))),
+                        entityClass,
+                        result -> {
+                            Assert.assertEquals(0, result.size());
+                        })
+                ,
+                // sort
+                new Case(
+                        Conditions.buildEmtpyConditions().addAnd(
+                                new Condition(longField, ConditionOperator.NOT_EQUALS, new LongValue(longField, 2L))),
+                        entityClass,
+                        result -> {
+                            Assert.assertEquals(3, result.size());
+                            Assert.assertEquals(0, result.stream()
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
+                                    .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
+                                    .count());
 
-                    Assert.assertEquals(2, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-                })
-            ,
-            // long >=
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(longField, ConditionOperator.GREATER_THAN_EQUALS,
-                        new LongValue(longField, 2L))),
-                entityClass,
-                result -> {
-
-                    Assert.assertEquals(4, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-                })
-            ,
-            // long <
-            new Case(
-                Conditions.buildEmtpyConditions().addAnd(
-                    new Condition(longField, ConditionOperator.LESS_THAN, new LongValue(longField, 2L))),
-                entityClass,
-                result -> {
-
-                    Assert.assertEquals(1, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .count());
-                })
-            ,
-            // long <=
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(longField, ConditionOperator.LESS_THAN_EQUALS,
-                        new LongValue(longField, 2L))),
-                entityClass,
-                result -> {
-
-                    Assert.assertEquals(3, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .count());
-                })
-            ,
-            // long in
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(longField, ConditionOperator.MULTIPLE_EQUALS,
-                        new LongValue(longField, 2L), new LongValue(longField, 76L))),
-                entityClass,
-                result -> {
-
-                    Assert.assertEquals(3, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .count());
-
-                })
-            ,
-            // string eq
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(stringField, ConditionOperator.EQUALS,
-                        new StringValue(stringField, "\"@带有符号的中文@\"\'"))),
-                entityClass,
-                result -> {
-
-                    Assert.assertEquals(1, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-
-                })
-            ,
-            // string no eq
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(stringField, ConditionOperator.NOT_EQUALS,
-                        new StringValue(stringField, "\"@带有符号的中文@\"\'"))),
-                entityClass,
-                result -> {
-
-                    Assert.assertEquals(4, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .count());
-
-                })
-            ,
-            // string like
-            new Case(
-                Conditions.buildEmtpyConditions().addAnd(
-                    new Condition(stringField, ConditionOperator.LIKE, new StringValue(stringField, "中文"))),
-                entityClass,
-                result -> {
-
-                    Assert.assertEquals(2, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .count());
-
-                })
-            ,
-            // decimal eq
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(decimalField, ConditionOperator.EQUALS,
-                        new DecimalValue(decimalField, BigDecimal.ONE))),
-                entityClass,
-                result -> {
-
-                    Assert.assertEquals(3, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .count());
-
-                })
-            ,
-            // decimal no eq
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(decimalField, ConditionOperator.NOT_EQUALS,
-                        new DecimalValue(decimalField, BigDecimal.ONE))),
-                entityClass,
-                result -> {
-
-                    Assert.assertEquals(2, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-
-                })
-            ,
-            // decimal >
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(decimalField, ConditionOperator.GREATER_THAN,
-                        new DecimalValue(decimalField, BigDecimal.ONE))),
-                entityClass,
-                result -> {
-
-                    Assert.assertEquals(1, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-
-                })
-            ,
-            // decimal >=
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(decimalField, ConditionOperator.GREATER_THAN_EQUALS,
-                        new DecimalValue(decimalField, BigDecimal.ONE))),
-                entityClass,
-                result -> {
-
-                    Assert.assertEquals(4, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-
-                })
-            ,
-            // dateTimeField between
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(dateTimeField, ConditionOperator.GREATER_THAN,
-                        new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1))))
-                    .addAnd(new Condition(dateTimeField, ConditionOperator.LESS_THAN,
-                        new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1)))),
-                entityClass,
-                result -> {
-
-                    Assert.assertEquals(2, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .count());
-                })
-            ,
-            // stringsField =
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(stringsField, ConditionOperator.EQUALS,
-                        new StringsValue(stringsField, "UNKNOWN"))),
-                entityClass,
-                result -> {
-                    Assert.assertEquals(1, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-                })
-            ,
-            // stringsField in
-            new Case(Conditions.buildEmtpyConditions()
-                .addAnd(
-                    new Condition(
-                        stringsField,
-                        ConditionOperator.MULTIPLE_EQUALS,
-                        new StringsValue(stringsField, "UNKNOWN"),
-                        new StringsValue(stringsField, "value3"))),
-                entityClass,
-                result -> {
-                    Assert.assertEquals(4, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-                })
-            ,
-            // emtpy condition
-            new Case(Conditions.buildEmtpyConditions(), entityClass, result -> {
-                Assert.assertEquals(5, result.size());
-            })
-            ,
-            // strings in no row.
-            new Case(Conditions.buildEmtpyConditions()
-                .addAnd(new Condition(stringsField, ConditionOperator.MULTIPLE_EQUALS,
-                    new StringsValue(stringsField, "iqoweiqweq"), new StringsValue(stringsField, "nbbbb"))),
-                entityClass,
-                result -> {
-                    Assert.assertEquals(0, result.size());
-                })
-            ,
-            // sort
-            new Case(
-                Conditions.buildEmtpyConditions().addAnd(
-                    new Condition(longField, ConditionOperator.NOT_EQUALS, new LongValue(longField, 2L))),
-                entityClass,
-                result -> {
-                    Assert.assertEquals(3, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-
-                    Assert.assertEquals(3, result.stream().filter(e -> e.getOrderValue() != null).count());
-                },
-                Sort.buildDescSort(dateTimeField)
-            )
+                            Assert.assertEquals(3, result.stream().filter(e -> e.getOrderValue() != null).count());
+                        },
+                        Sort.buildDescSort(dateTimeField)
+                )
         );
     }
 
@@ -656,14 +673,14 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
 
         AtomicInteger index = new AtomicInteger(0);
         Map<String, DataSource> dsMap = dataSourcePackage.getMaster().stream().collect(Collectors.toMap(
-            d -> "ds" + index.getAndIncrement(), d -> d));
+                d -> "ds" + index.getAndIncrement(), d -> d));
 
         TableRuleConfiguration tableRuleConfiguration = new TableRuleConfiguration(
-            "oqsbigentity", "ds${0..1}.oqsbigentity${0..2}");
+                "oqsbigentity", "ds${0..1}.oqsbigentity${0..2}");
         tableRuleConfiguration.setDatabaseShardingStrategyConfig(
-            new StandardShardingStrategyConfiguration("id", new HashPreciseShardingAlgorithm()));
+                new StandardShardingStrategyConfiguration("id", new HashPreciseShardingAlgorithm()));
         tableRuleConfiguration.setTableShardingStrategyConfig(
-            new StandardShardingStrategyConfiguration("id", new SuffixNumberHashPreciseShardingAlgorithm()));
+                new StandardShardingStrategyConfiguration("id", new SuffixNumberHashPreciseShardingAlgorithm()));
 
 
         ShardingRuleConfiguration shardingRuleConfig = new ShardingRuleConfiguration();
