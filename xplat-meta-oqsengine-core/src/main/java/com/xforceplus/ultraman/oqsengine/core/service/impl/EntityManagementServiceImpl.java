@@ -376,8 +376,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                                 entity.family().child(),
                                 AnyEntityClass.getInstance(),
                                 new EntityValue(entity.family().child()),
-                                entity.version()
+                                entity.version(),
+                                OqsVersion.MAJOR
                             );
+                            chlidEntity.markTime(entity.time());
 
                             if (isConflict(masterStorage.delete(chlidEntity))) {
                                 hint.setRollback(true);

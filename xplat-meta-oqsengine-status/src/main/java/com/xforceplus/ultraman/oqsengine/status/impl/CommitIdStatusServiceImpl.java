@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -51,6 +52,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     private String commitidsKey;
 
     private String commitidStatusKeyPrefix;
+
+    private long commitidStatusTTLMs = 1000 * 60 * 30;
 
     private AtomicLong unSyncCommitIdSize;
 
@@ -105,8 +108,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         String statusKey = commitidStatusKeyPrefix + "." + target;
         String status = ready ? CommitStatus.READY.getSymbol() : CommitStatus.NOT_READY.getSymbol();
 
-        syncCommands.set(statusKey, status);
         syncCommands.zadd(commitidsKey, (double) commitId, target);
+        syncCommands.set(statusKey, status, SetArgs.Builder.px(commitidStatusTTLMs));
 
         updateMetrics();
 
