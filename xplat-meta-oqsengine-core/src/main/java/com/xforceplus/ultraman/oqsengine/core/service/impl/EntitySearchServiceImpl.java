@@ -81,6 +81,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     private long maxVisibleTotalCount;
     private int maxJoinEntityNumber;
     private int maxJoinDriverLineNumber;
+    private boolean showResult = false;
 
 
     @PostConstruct
@@ -127,6 +128,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         this.maxVisibleTotalCount = maxVisibleTotalCount;
     }
 
+    public boolean isShowResult() {
+        return showResult;
+    }
+
+    public void setShowResult(boolean showResult) {
+        this.showResult = showResult;
+    }
+
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "one"})
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
@@ -138,8 +147,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 entityOptional = Optional.of(
                     buildEntitiesFromEntities(Arrays.asList(entityOptional.get()), entityClass).get(onlyOne));
 
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Select one result: [{}].", entityOptional.get());
+                if (isShowResult()) {
+                    logger.info("Select one result: [{}].", entityOptional.get());
                 }
             }
 
@@ -164,9 +173,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         try {
             Collection<IEntity> entities = buildEntitiesFromEntities(combinedStorage.selectMultiple(request), entityClass);
 
-            if (logger.isDebugEnabled()) {
+            if (isShowResult()) {
                 entities.stream().forEach(e -> {
-                    logger.debug("Select multiple result: [{}].", e.toString());
+                    logger.info("Select multiple result: [{}].", e.toString());
                 });
             }
 
@@ -292,14 +301,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             List<IEntity> entities = buildEntitiesFromRefs(refs, entityClass);
 
-            if (logger.isDebugEnabled()) {
+            if (isShowResult()) {
                 if (entities.size() == 0) {
 
-                    logger.debug("Select conditions result: []");
+                    logger.info("Select conditions result: []");
 
                 } else {
                     entities.stream().forEach(e -> {
-                        logger.debug("Select conditions result: [{}]", e.toString());
+                        logger.info("Select conditions result: [{}]", e.toString());
                     });
                 }
             }

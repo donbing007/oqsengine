@@ -21,11 +21,15 @@ import org.springframework.context.annotation.Configuration;
 public class ServiceConfiguration {
 
     @Bean
-    public EntitySearchService entitySearchService(@Value("${maxVisibleNumber:10000}") long maxVisibelNumber) {
+    public EntitySearchService entitySearchService(
+        @Value("${maxVisibleNumber:10000}") long maxVisibelNumber,
+        @Value("${storage.debug.showsql:false}") boolean showSql) {
         EntitySearchServiceImpl impl = new EntitySearchServiceImpl();
         impl.setMaxJoinEntityNumber(2);
         impl.setMaxJoinDriverLineNumber(1000);
         impl.setMaxVisibleTotalCount(maxVisibelNumber);
+        impl.setShowResult(showSql);
+
         return impl;
     }
 

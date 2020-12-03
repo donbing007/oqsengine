@@ -31,7 +31,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
-import com.zaxxer.hikari.HikariDataSource;
 import io.micrometer.core.annotation.Timed;
 import io.vavr.Tuple;
 import org.slf4j.Logger;
@@ -213,6 +212,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         return doBuildReplaceStorageEntity(storageEntity, replacement);
     }
 
+    @Override
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "index", "action", "save"})
     public int batchSave(Collection<StorageEntity> storageEntities, boolean replacement, boolean forceRetry) throws SQLException {
 
@@ -227,7 +227,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
             //  写入StorageEntity, key使用 dataSourceKey_tableShardKey 这样的结构
             shardingStorageEntities.computeIfAbsent(dataSourceKey + "_" + tableShardKey, k -> new ArrayList<>())
-                    .add(storageEntity);
+                .add(storageEntity);
         }
 
         //  开始按照数据库/表进行分片插入
@@ -239,8 +239,8 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                     int batchExecuted = doBatchSave(storageEntityList, replacement);
                     if (batchExecuted != storageEntityList.size()) {
                         throw new SQLException(
-                                String.format("batchExecute size [%d] not match storageEntities size [%d], will retry by single executor.",
-                                        batchExecuted, storageEntities.size()));
+                            String.format("batchExecute size [%d] not match storageEntities size [%d], will retry by single executor.",
+                                batchExecuted, storageEntities.size()));
                     }
                     executed += batchExecuted;
                 } catch (Exception ex1) {
@@ -263,7 +263,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                                     } catch (Exception ex3) {
                                         //  delete error
                                         logger.error("replace error, will retry..., id : {}, commitId : {}, message : {}",
-                                                se.getId(), se.getCommitId(), ex3.getMessage());
+                                            se.getId(), se.getCommitId(), ex3.getMessage());
                                         try {
                                             Thread.sleep(SECOND);
                                         } catch (InterruptedException e) {
@@ -274,7 +274,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                             } else {
                                 //  delete error
                                 logger.error("replace error, id : {}, commitId : {}, message : {}",
-                                        se.getId(), se.getCommitId(), ex2.getMessage());
+                                    se.getId(), se.getCommitId(), ex2.getMessage());
                                 throw ex2;
                             }
                         }

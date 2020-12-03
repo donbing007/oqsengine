@@ -75,19 +75,6 @@
         </dependency>
     </dependencies>
 
-    <profiles>
-        <profile>
-            <id>sdk</id>
-            <dependencies>
-                <dependency>
-                    <groupId>${project.groupId}</groupId>
-                    <artifactId>xplat-meta-oqsengine-sdk</artifactId>
-                    <version>${project.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
-
     <build>
         <plugins>
             <plugin>

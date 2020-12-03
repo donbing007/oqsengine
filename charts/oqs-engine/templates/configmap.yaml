@@ -23,7 +23,7 @@ data:
             io:
               lettuce: info
           pattern:
-            console: "%d{yyyy-MM-dd} %d{hhh:mm:ss},%red(%d{SSS}) %green(%-5level) [%thread] %cyan(%logger{36}) : %msg%n"
+            console: "%d{yyyy-MM-dd hhh:mm:ss,SSS} %-5level [%thread] %logger{36} : %msg%n"
         management:
           health:
             redis:
