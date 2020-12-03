@@ -214,19 +214,19 @@ public class ConsumerRunner extends Thread {
         //  如果是服务重启，则需要对齐canal ack信息及redis中的ackMetrics指标
         //  查询
         CDCMetrics cdcMetrics = cdcMetricsService.query();
-
+        long originBatchId = EMPTY_BATCH_ID;
         if (null != cdcMetrics) {
             //  当前的BatchId != -1时，表示需要进行Canal batchId ACK操作
-            long originBatchId = cdcMetrics.getBatchId();
+            originBatchId = cdcMetrics.getBatchId();
             if (originBatchId != IS_BACK_UP_ID && originBatchId != EMPTY_BATCH_ID) {
                 // ack确认， 回写uncommit信息
                 backAfterAck(originBatchId, cdcMetrics);
             }
-            //  回调告知当前成功信息
-            callBackSuccess(originBatchId, cdcMetrics, true);
-
-            logger.info("[cdc-runner] recover from last ackMetrics position success...");
         }
+        //  回调告知当前成功信息
+        callBackSuccess(originBatchId, null == cdcMetrics ? new CDCMetrics() : cdcMetrics, true);
+
+        logger.info("[cdc-runner] recover from last ackMetrics position success...");
 
         //  确认完毕，需要将当前未提交的数据回滚到当前已确认batchId所对应的初始位置
         cdcConnector.rollback();
