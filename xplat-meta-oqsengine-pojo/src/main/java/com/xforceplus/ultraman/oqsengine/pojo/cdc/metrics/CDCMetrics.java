@@ -67,6 +67,7 @@ public class CDCMetrics {
     public void consumeSuccess(long originBatchId, CDCMetrics temp, boolean isConnectSync) {
         this.batchId = originBatchId;
 
+        this.cdcAckMetrics.setCdcConsumerStatus(CDCStatus.CONNECTED);
         //  启动则更新LastConnectedTime, 否则为成功消费
         if (!isConnectSync) {
             this.cdcAckMetrics.setLastConsumerTime(System.currentTimeMillis());
