@@ -61,7 +61,7 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
             if (condition.getOperator().getSymbol().equals(MULTIPLE_EQUALS.getSymbol())) {
                 sql.append("(");
                 boolean isFirst = true;
-                for(IValue value : condition.getValues()) {
+                for (IValue value : condition.getValues()) {
                     if (!isFirst) {
                         sql.append(",");
                     }
@@ -74,7 +74,6 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
                 StorageValue idStorageValue = storageStrategy.toStorageValue(condition.getFirstValue());
                 sql.append(idStorageValue.value());
             }
-//            sql.append(idStorageValue.value());
             return sql.toString();
         }
 
