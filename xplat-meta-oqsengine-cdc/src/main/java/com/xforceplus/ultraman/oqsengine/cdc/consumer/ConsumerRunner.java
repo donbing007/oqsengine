@@ -226,12 +226,13 @@ public class ConsumerRunner extends Thread {
 
             //  回调告知当前成功信息
             callBackSuccess(originBatchId, cdcMetrics, true);
+
+            logger.info("[cdc-runner] recover from last ackMetrics position success..., originBatchId : {}", originBatchId);
         } else {
             //  回调告知当前为一个新的开始
             cdcMetricsService.newConnectCallBack();
+            logger.info("[cdc-runner] new connect callBack success, originBatchId : {}", originBatchId);
         }
-
-        logger.info("[cdc-runner] recover from last ackMetrics position success..., originBatchId : {}", originBatchId);
 
         //  确认完毕，需要将当前未提交的数据回滚到当前已确认batchId所对应的初始位置
         cdcConnector.rollback();
