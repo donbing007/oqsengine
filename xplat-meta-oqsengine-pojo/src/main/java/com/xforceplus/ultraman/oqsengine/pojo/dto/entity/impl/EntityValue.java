@@ -165,6 +165,10 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     // 比较两个 map.
     private boolean equalsValues(EntityValue that) {
+        if (that == null) {
+            return false;
+        }
+
         Map<Long, IValue> thatValues = that.values;
         if (this.values == thatValues) {
             return true;

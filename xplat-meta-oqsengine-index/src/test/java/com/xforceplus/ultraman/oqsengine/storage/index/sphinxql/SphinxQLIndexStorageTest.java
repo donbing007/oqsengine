@@ -374,7 +374,13 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
         Assert.assertFalse(transactionManager.getCurrent().isPresent());
 
         Collection<EntityRef> entityRefs =
-            storage.select(Conditions.buildEmtpyConditions(), batchDeleteClass, null, new Page(1, 1000), null, 1000L);
+            storage.select(
+                Conditions.buildEmtpyConditions(),
+                batchDeleteClass,
+                null,
+                Page.newSinglePage(1000),
+                null,
+                1000L);
 
         Assert.assertNotNull(entityRefs);
         Assert.assertEquals(batchDeleteEntities.length - expectedBatchDeleteIds.size(), entityRefs.size());
@@ -436,12 +442,51 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
         limitOnePage.setVisibleTotalCount(1);
 
         return Arrays.asList(
+            // sort with id asc
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 2L))),
+                entityClass, Page.newSinglePage(100),
+                result -> {
+
+                    Assert.assertEquals(2, result.refs.size());
+                    Assert.assertTrue(result.refs.stream().findFirst().get().getId() < result.refs.stream().skip(1).findFirst().get().getId());
+                    // 比较主键id和排序值是否一致.
+                    Assert.assertEquals(Long.toString(result.refs.stream().findFirst().get().getId()),
+                        result.refs.stream().findFirst().get().getOrderValue());
+                    Assert.assertEquals(Long.toString(result.refs.stream().skip(1).findFirst().get().getId()),
+                        result.refs.stream().skip(1).findFirst().get().getOrderValue());
+
+                    return true;
+                },
+                Sort.buildAscSort(new EntityField(0, "id", FieldType.LONG, FieldConfig.build().identifie(true)))
+            )
+            ,
+            // sort with id dsc
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 2L))),
+                entityClass, Page.newSinglePage(100),
+                result -> {
+
+                    Assert.assertEquals(2, result.refs.size());
+                    Assert.assertTrue(result.refs.stream().findFirst().get().getId() > result.refs.stream().skip(1).findFirst().get().getId());
+                    // 比较主键id和排序值是否一致.
+                    Assert.assertEquals(Long.toString(result.refs.stream().findFirst().get().getId()),
+                        result.refs.stream().findFirst().get().getOrderValue());
+                    Assert.assertEquals(Long.toString(result.refs.stream().skip(1).findFirst().get().getId()),
+                        result.refs.stream().skip(1).findFirst().get().getOrderValue());
+
+                    return true;
+                },
+                Sort.buildDescSort(new EntityField(0, "id", FieldType.LONG, FieldConfig.build().identifie(true)))
+            )
+            ,
             // page 1
             new Case(
                 Conditions.buildEmtpyConditions().addAnd(
                     new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 2L))),
                 entityClass, new Page(200, 10), result -> {
-//                Assert.assertEquals(0, result.refs.size());
                 Assert.assertEquals(2, result.refs.size());
                 Assert.assertEquals(2, result.page.getTotalCount());
                 return true;
@@ -796,7 +841,7 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
         if (dataSourcePackage == null) {
             System.setProperty(DataSourceFactory.CONFIG_FILE, file);
 
-            dataSourcePackage = DataSourceFactory.build();
+            dataSourcePackage = DataSourceFactory.build(true);
         }
 
         return new HashSelector<>(dataSourcePackage.getIndexWriter());

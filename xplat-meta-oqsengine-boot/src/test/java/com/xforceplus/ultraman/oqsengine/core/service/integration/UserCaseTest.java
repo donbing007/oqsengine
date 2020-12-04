@@ -16,6 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -43,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class TransactionVisibilityTest extends AbstractContainerTest {
+public class UserCaseTest extends AbstractContainerTest {
 
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;
@@ -205,5 +206,40 @@ public class TransactionVisibilityTest extends AbstractContainerTest {
         TimeUnit.SECONDS.sleep(1);
 
         Assert.assertEquals(0, commitIdStatusService.size());
+    }
+
+    @Test
+    public void testSort() throws Exception {
+        IEntity e0 = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 100000L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+        IEntity e1 = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 200000L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+        IEntity e2 = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 300000L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+
+        entityManagementService.build(e0);
+        entityManagementService.build(e1);
+        entityManagementService.build(e2);
+
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(childClass.field("c3").get(), ConditionOperator.EQUALS,
+                    new EnumValue(childClass.field("c3").get(), "0"))
+            ),
+            childClass, Sort.buildAscSort(fatherClass.field("c1").get()), Page.newSinglePage(100));
+
+        Assert.assertEquals(3, entities.size());
+        Assert.assertEquals(100000L,
+            entities.stream().findFirst().get().entityValue().getValue("c1").get().valueToLong());
+        Assert.assertEquals(200000L,
+            entities.stream().skip(1).findFirst().get().entityValue().getValue("c1").get().valueToLong());
+        Assert.assertEquals(300000L,
+            entities.stream().skip(2).findFirst().get().entityValue().getValue("c1").get().valueToLong());
     }
 }

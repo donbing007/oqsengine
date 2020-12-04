@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -227,8 +228,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         Conditions useConditions = conditions;
         Sort useSort = sort;
-        if (useSort == null) {
-            useSort = Sort.buildOutOfSort();
+        if (useSort == null || useSort.isOutOfOrder()) {
+            // 如果没有指定排序,以id降序排列.
+            useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
         }
 
         Page usePage = page;
@@ -240,10 +242,17 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         Optional<Long> minUnSyncCommitIdOp = commitIdStatusService.getMin();
         long minUnSyncCommitId;
         if (!minUnSyncCommitIdOp.isPresent()) {
-            logger.warn("Unable to fetch the commit number, use the default commit number 0.");
             minUnSyncCommitId = 0;
+            if (logger.isDebugEnabled()) {
+                logger.debug("Unable to fetch the commit number, use the default commit number 0.");
+            }
         } else {
             minUnSyncCommitId = minUnSyncCommitIdOp.get();
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "The minimum commit number {} that is currently uncommitted was successfully obtained.",
+                    minUnSyncCommitId);
+            }
         }
         try {
             // join
