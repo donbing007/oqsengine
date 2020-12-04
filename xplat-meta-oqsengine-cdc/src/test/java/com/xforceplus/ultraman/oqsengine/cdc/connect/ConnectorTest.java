@@ -6,7 +6,9 @@ import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 
 import org.junit.Test;
@@ -27,36 +29,33 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
  */
 public class ConnectorTest extends AbstractContainer  {
 
-    private static final boolean isDoTest = false;
-
     private MockRedisCallbackService mockRedisCallbackService;
 
     private CDCDaemonService cdcDaemonService;
 
+    private CDCMetricsService cdcMetricsService;
+
     @Before
     public void before() throws Exception {
-        if (isDoTest) {
             initDaemonService();
             clear();
-        }
     }
 
     @After
     public void after() throws SQLException {
-        if (isDoTest) {
             clear();
             closeAll();
-        }
     }
 
     private void initDaemonService() throws Exception {
-        CDCMetricsService cdcMetricsService = new CDCMetricsService();
+        cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService();
+
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init("172.18.31.7", 11111,
-                "oqsengine-cdc-0", "canal", "canal");
+        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
+                "nly-v1", "root", "xplat");
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));
@@ -65,22 +64,18 @@ public class ConnectorTest extends AbstractContainer  {
         ReflectionTestUtils.setField(cdcDaemonService, "cdcConnector", singleCDCConnector);
     }
 
+
+
     @Test
-    public void testServerStartAndStop() throws InterruptedException {
-        if (isDoTest) {
-            cdcDaemonService.startDaemon();
+    public void testStartFromDIS_CONNECTED() throws InterruptedException {
+        cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setCdcConsumerStatus(CDCStatus.DIS_CONNECTED);
+        mockRedisCallbackService.cdcSaveLastUnCommit(cdcMetricsService.getCdcMetrics());
 
-            Thread.sleep(10_000);
+        cdcDaemonService.startDaemon();
 
-            while (true) {
-                Thread.sleep(60_000);
-//                System.out.println("canal server down.");
-//                cannal.stop();
-//                Thread.sleep(30_000);
-//                cannal.start();
-//                Thread.sleep(30_000);
-//                System.out.println("canal server start.");
-            }
-        }
+        Thread.sleep(1);
+
+        Assert.assertEquals(CDCStatus.CONNECTED, cdcMetricsService.getCdcMetrics().getCdcAckMetrics().getCdcConsumerStatus());
+        Assert.assertEquals(CDCStatus.CONNECTED, mockRedisCallbackService.getAckMetrics().getCdcConsumerStatus());
     }
 }
