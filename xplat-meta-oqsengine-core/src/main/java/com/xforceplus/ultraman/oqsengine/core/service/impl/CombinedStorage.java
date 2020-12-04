@@ -34,28 +34,42 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
 
     private IndexStorage indexStorage;
 
-    private Map<FieldType, EntityRefComparator> refMapping = new HashMap<>();
+    private static final Map<FieldType, EntityRefComparator> REF_MAPPING;
 
     private Logger logger = LoggerFactory.getLogger(CombinedStorage.class);
+
+    final static Map<FieldType, String> SORT_DEFAULT_VALUE;
+
+    static {
+        REF_MAPPING = new HashMap<>();
+        REF_MAPPING.put(FieldType.BOOLEAN, new EntityRefComparator(FieldType.BOOLEAN));
+        REF_MAPPING.put(FieldType.DATETIME, new EntityRefComparator(FieldType.DATETIME));
+        REF_MAPPING.put(FieldType.DECIMAL, new EntityRefComparator(FieldType.DECIMAL));
+        REF_MAPPING.put(FieldType.ENUM, new EntityRefComparator(FieldType.ENUM));
+        REF_MAPPING.put(FieldType.LONG, new EntityRefComparator(FieldType.LONG));
+        REF_MAPPING.put(FieldType.STRING, new EntityRefComparator(FieldType.STRING));
+        REF_MAPPING.put(FieldType.STRINGS, new EntityRefComparator(FieldType.STRINGS));
+
+        SORT_DEFAULT_VALUE = new HashMap();
+        SORT_DEFAULT_VALUE.put(FieldType.BOOLEAN, Boolean.FALSE.toString());
+        SORT_DEFAULT_VALUE.put(FieldType.DATETIME, Long.toString(new Date(0).getTime()));
+        SORT_DEFAULT_VALUE.put(FieldType.LONG, "0");
+        SORT_DEFAULT_VALUE.put(FieldType.DECIMAL, "0.0");
+        SORT_DEFAULT_VALUE.put(FieldType.ENUM, "");
+        SORT_DEFAULT_VALUE.put(FieldType.STRING, "");
+        SORT_DEFAULT_VALUE.put(FieldType.UNKNOWN, "");
+    }
 
     public CombinedStorage(MasterStorage masterStorage, IndexStorage indexStorage) {
         this.masterStorage = masterStorage;
         this.indexStorage = indexStorage;
-
-        refMapping.put(FieldType.BOOLEAN, new EntityRefComparator(FieldType.BOOLEAN));
-        refMapping.put(FieldType.DATETIME, new EntityRefComparator(FieldType.DATETIME));
-        refMapping.put(FieldType.DECIMAL, new EntityRefComparator(FieldType.DECIMAL));
-        refMapping.put(FieldType.ENUM, new EntityRefComparator(FieldType.ENUM));
-        refMapping.put(FieldType.LONG, new EntityRefComparator(FieldType.LONG));
-        refMapping.put(FieldType.STRING, new EntityRefComparator(FieldType.STRING));
-        refMapping.put(FieldType.STRINGS, new EntityRefComparator(FieldType.STRINGS));
     }
 
     private List<EntityRef> merge(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs, Sort sort) {
         StreamMerger<EntityRef> streamMerger = new StreamMerger<>();
         FieldType type = sort.getField().type();
 
-        EntityRefComparator entityRefComparator = refMapping.get(type);
+        EntityRefComparator entityRefComparator = REF_MAPPING.get(type);
 
         if (entityRefComparator == null) {
             //default
@@ -65,7 +79,7 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
 
         //sort masterRefs first
         List<EntityRef> sortedMasterRefs = masterRefs.stream().sorted(sort.isAsc() ? entityRefComparator : entityRefComparator.reversed()).collect(toList());
-        return streamMerger.merge(sortedMasterRefs.stream(), indexRefs.stream(), refMapping.get(type), sort.isAsc()).collect(toList());
+        return streamMerger.merge(sortedMasterRefs.stream(), indexRefs.stream(), REF_MAPPING.get(type), sort.isAsc()).collect(toList());
 
     }
 
@@ -144,6 +158,8 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
             masterRefs = masterStorage.select(commitId, conditions, entityClass, sort);
         }
 
+        masterRefs = fixNullSortValue(masterRefs, sort);
+
         /**
          * filter ids
          */
@@ -175,6 +191,19 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
         long skips = scope == null ? 0 : scope.getStartLine();
         List<EntityRef> limitedSelect = retRefs.stream().skip(skips < 0 ? 0 : skips).limit(pageSize).collect(toList());
         return limitedSelect;
+    }
+
+    // 如果排序,但是查询结果没有值.
+    private Collection<EntityRef> fixNullSortValue(Collection<EntityRef> refs, Sort sort) {
+        if (sort != null && !sort.isOutOfOrder()) {
+            refs.parallelStream().forEach(r -> {
+                if (r.getOrderValue() == null || r.getOrderValue().isEmpty()) {
+                    r.setOrderValue(SORT_DEFAULT_VALUE.get(sort.getField().type()));
+                }
+            });
+        }
+
+        return refs;
     }
 
     @Override
