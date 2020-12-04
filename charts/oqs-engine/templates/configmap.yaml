@@ -112,6 +112,8 @@ data:
             password: {{ .Values.cdc.connect.password }}
             subscribeFilter: {{ .Values.cdc.connect.subscribeFilter | quote }}
             batchSize: {{ .Values.cdc.connect.batchSize | default "2048" | quote }}
+          consumer:
+            checkCommitReady: {{ .Values.cdc.consumer.checkCommitReady | default "true" }}
 
     oqsengine-ds.conf: |
         {

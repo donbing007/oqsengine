@@ -35,7 +35,11 @@ public class SphinxConsumerService implements ConsumerService {
     @Resource(name = "syncExecutor")
     private SyncExecutor sphinxSyncExecutor;
 
+    private boolean checkCommitReady = true;
 
+    public void setCheckCommitReady(boolean checkCommitReady) {
+        this.checkCommitReady = checkCommitReady;
+    }
 
     @Override
     public CDCMetrics consume(List<CanalEntry.Entry> entries, long batchId, CDCMetricsService cdcMetricsService) throws SQLException {
@@ -142,9 +146,11 @@ public class SphinxConsumerService implements ConsumerService {
 
                 //  是否MAX_VALUE
                 if (commitId != CommitHelper.getUncommitId()) {
-                    if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
-                        //  阻塞直到成功
-                        cdcMetricsService.isReadyCommit(commitId);
+                    if (checkCommitReady) {
+                        if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
+                            //  阻塞直到成功
+                            cdcMetricsService.isReadyCommit(commitId);
+                        }
                     }
                     //  更新
                     cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);

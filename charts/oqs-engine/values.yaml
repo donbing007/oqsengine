@@ -70,6 +70,8 @@ cdc:
     password: root
     subscribeFilter: .*\.oqsbigentity.*
     batchSize: 2048
+  consumer:
+    checkCommitReady: true
 
 storage:
   debug:

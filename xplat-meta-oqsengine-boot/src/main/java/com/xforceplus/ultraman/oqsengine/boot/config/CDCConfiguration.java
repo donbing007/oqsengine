@@ -27,9 +27,10 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EM
 public class CDCConfiguration {
 
     @Bean("sphinxConsumerService")
-    public ConsumerService sphinxConsumerService() {
+    public ConsumerService sphinxConsumerService(
+            @Value("${cdc.consumer.checkCommitReady:true}") boolean checkCommitReady) {
         SphinxConsumerService consumerService = new SphinxConsumerService();
-
+        consumerService.setCheckCommitReady(checkCommitReady);
         return consumerService;
     }
 
