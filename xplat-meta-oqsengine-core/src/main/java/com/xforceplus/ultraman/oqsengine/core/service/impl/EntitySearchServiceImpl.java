@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -81,6 +82,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     private long maxVisibleTotalCount;
     private int maxJoinEntityNumber;
     private int maxJoinDriverLineNumber;
+    private boolean showResult = false;
 
 
     @PostConstruct
@@ -127,6 +129,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         this.maxVisibleTotalCount = maxVisibleTotalCount;
     }
 
+    public boolean isShowResult() {
+        return showResult;
+    }
+
+    public void setShowResult(boolean showResult) {
+        this.showResult = showResult;
+    }
+
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "one"})
     @Override
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
@@ -138,8 +148,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 entityOptional = Optional.of(
                     buildEntitiesFromEntities(Arrays.asList(entityOptional.get()), entityClass).get(onlyOne));
 
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Select one result: [{}].", entityOptional.get());
+                if (isShowResult()) {
+                    logger.info("Select one result: [{}].", entityOptional.get());
                 }
             }
 
@@ -164,9 +174,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         try {
             Collection<IEntity> entities = buildEntitiesFromEntities(combinedStorage.selectMultiple(request), entityClass);
 
-            if (logger.isDebugEnabled()) {
+            if (isShowResult()) {
                 entities.stream().forEach(e -> {
-                    logger.debug("Select multiple result: [{}].", e.toString());
+                    logger.info("Select multiple result: [{}].", e.toString());
                 });
             }
 
@@ -209,14 +219,18 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 checkResult = checkCanSearch(c, entityClass);
             }
             if (!checkResult) {
+                if (page != null) {
+                    page.setTotalCount(0);
+                }
                 return Collections.emptyList();
             }
         }
 
         Conditions useConditions = conditions;
         Sort useSort = sort;
-        if (useSort == null) {
-            useSort = Sort.buildOutOfSort();
+        if (useSort == null || useSort.isOutOfOrder()) {
+            // 如果没有指定排序,以id降序排列.
+            useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
         }
 
         Page usePage = page;
@@ -228,10 +242,17 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         Optional<Long> minUnSyncCommitIdOp = commitIdStatusService.getMin();
         long minUnSyncCommitId;
         if (!minUnSyncCommitIdOp.isPresent()) {
-            logger.warn("Unable to fetch the commit number, use the default commit number 0.");
             minUnSyncCommitId = 0;
+            if (logger.isDebugEnabled()) {
+                logger.debug("Unable to fetch the commit number, use the default commit number 0.");
+            }
         } else {
             minUnSyncCommitId = minUnSyncCommitIdOp.get();
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                    "The minimum commit number {} that is currently uncommitted was successfully obtained.",
+                    minUnSyncCommitId);
+            }
         }
         try {
             // join
@@ -292,14 +313,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             List<IEntity> entities = buildEntitiesFromRefs(refs, entityClass);
 
-            if (logger.isDebugEnabled()) {
+            if (isShowResult()) {
                 if (entities.size() == 0) {
 
-                    logger.debug("Select conditions result: []");
+                    logger.info("Select conditions result: []");
 
                 } else {
                     entities.stream().forEach(e -> {
-                        logger.debug("Select conditions result: [{}]", e.toString());
+                        logger.info("Select conditions result: [{}]", e.toString());
                     });
                 }
             }

@@ -64,7 +64,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     private Long buffer = 10_000L;
 
-    private Logger logger = LoggerFactory.getLogger(EntityServicePowerApi.class);
+    private Logger logger = LoggerFactory.getLogger(EntityServiceOqs.class);
 
     private <T> CompletableFuture<T> async(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
@@ -87,7 +87,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 .setCode(OperationResult.Code.OK)
                 .setTransactionResult(String.valueOf(transId)).buildPartial());
         } catch (Exception e) {
-            logger.error("{}", e);
+            logger.error(e.getMessage(), e);
             return CompletableFuture.completedFuture(
                 OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
@@ -106,7 +106,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
-                    logger.error("{}", e);
+                    logger.error(e.getMessage(), e);
                     //fast fail
                     return OperationResult.newBuilder()
                         .setCode(OperationResult.Code.EXCEPTION)
@@ -130,7 +130,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                 result = builder.setCode(OperationResult.Code.OK).buildPartial();
             } catch (Exception e) {
-                logger.error("{}", e);
+                logger.error(e.getMessage(), e);
                 result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
                     .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
@@ -201,13 +201,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             result = OperationResult.newBuilder()
                                 .setAffectedRow(0)
                                 .setCode(OperationResult.Code.FAILED)
-                                .setMessage("产生了未知的错误")
+                                .setMessage(
+                                    String.format("Unknown response status %s.",
+                                        replaceStatus != null ? replaceStatus.name() : "NULL"))
                                 .buildPartial();
                     }
                 } else {
                     result = OperationResult.newBuilder()
                         .setCode(OperationResult.Code.FAILED)
-                        .setMessage("没有找到该记录")
+                        .setMessage("No record found.")
                         .buildPartial();
                 }
             } catch (Exception e) {
@@ -235,7 +237,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
-                    logger.error("{}", e);
+                    logger.error(e.getMessage(), e);
                     //fast fail
                     return OperationResult.newBuilder()
                         .setCode(OperationResult.Code.EXCEPTION)
@@ -324,7 +326,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                             affected.incrementAndGet();
                         } catch (SQLException e) {
                             //TODO
-                            logger.error("{}", e);
+                            logger.error(e.getMessage(), e);
                         }
                     });
 
@@ -335,12 +337,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 } else {
                     result = OperationResult.newBuilder()
                         .setCode(OperationResult.Code.OK)
-                        .setMessage("没有更新任何记录")
+                        .setMessage("No records have been updated.")
                         .setAffectedRow(0)
                         .buildPartial();
                 }
             } catch (Exception e) {
-                logger.error("{}", e);
+                logger.error(e.getMessage(), e);
                 result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
                     .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
@@ -369,7 +371,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
-                    logger.error("{}", e);
+                    logger.error(e.getMessage(), e);
                     //fast fail
                     return OperationResult.newBuilder()
                         .setCode(OperationResult.Code.EXCEPTION)
@@ -382,7 +384,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             try {
                 force = metadata.getText("force").orElse("false");
                 String finalForce = force;
-                logInfo(metadata, (displayname, username) -> String.format("Attempt to delete %s:%s by %s:%s with %s", in.getId(), in.getObjId(), displayname, username, finalForce));
+                logInfo(metadata, (displayname, username) ->
+                    String.format("Attempt to delete %s:%s by %s:%s with %s",
+                        in.getId(), in.getObjId(), displayname, username, finalForce));
 
             } catch (Exception ex) {
                 logger.error("{}", ex);
@@ -423,7 +427,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 result = OperationResult.newBuilder()
                                     .setAffectedRow(0)
                                     .setCode(OperationResult.Code.FAILED)
-                                    .setMessage("产生了未知的错误")
+                                    .setMessage(
+                                        String.format("Unknown response status %s.",
+                                            deleteStatus != null ? deleteStatus.name() : "NULL"))
                                     .buildPartial();
                         }
                     } else {
@@ -440,7 +446,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                 result = OperationResult.newBuilder()
                                     .setAffectedRow(0)
                                     .setCode(OperationResult.Code.FAILED)
-                                    .setMessage("产生了未知的错误")
+                                    .setMessage(
+                                        String.format("Unknown response status %s.",
+                                            resultStatus != null ? resultStatus.name() : "NULL"))
                                     .buildPartial();
                         }
                     }
@@ -451,7 +459,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .buildPartial();
                 }
             } catch (Exception e) {
-                logger.error("{}", e);
+                logger.error(e.getMessage(), e);
                 result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
                     .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
@@ -476,7 +484,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 try {
                     transactionManagementService.restore(id);
                 } catch (Exception e) {
-                    logger.error("{}", e);
+                    logger.error(e.getMessage(), e);
                     //fast fail
                     return OperationResult.newBuilder()
                         .setCode(OperationResult.Code.EXCEPTION)
@@ -525,7 +533,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .setTotalRow(0)
                     .buildPartial());
             } catch (Exception e) {
-                logger.error("{}", e);
+                logger.error(e.getMessage(), e);
                 result = OperationResult.newBuilder()
                     .setCode(OperationResult.Code.EXCEPTION)
                     .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
@@ -783,26 +791,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         entity.entityValue().addValue(iValue);
     }
 
-//    /**
-//     * TODO
-//     * related
-//     * only one to one || many to one
-//     *
-//     * @param entityClass
-//     * @param subEntityClassId
-//     * @return
-//     */
-//    private Optional<IEntityField> findRelationField(IEntityClass entityClass, long subEntityClassId) {
-//        return entityClass.relations()
-//                .stream()
-//                .filter(rel -> ("onetoone".equalsIgnoreCase(rel.getRelationType())
-//                        || "manytoone".equalsIgnoreCase(rel.getRelationType()))
-//                        && rel.getEntityClassId() == subEntityClassId
-//                )
-//                .map(Relation::getEntityField)
-//                .findFirst();
-//    }
-
     @Override
     public CompletionStage<OperationResult> commit(TransactionUp in, Metadata metadata) {
         Long id = Long.parseLong(in.getId());
@@ -814,10 +802,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             transactionManagementService.commit();
             result = OperationResult.newBuilder()
                 .setCode(OperationResult.Code.OK)
-                .setMessage("事务提交成功")
+                .setMessage("Transaction committed successfully.")
                 .buildPartial();
         } catch (Exception e) {
-            logger.error("{}", e);
+            logger.error(e.getMessage(), e);
             result = OperationResult.newBuilder()
                 .setCode(OperationResult.Code.EXCEPTION)
                 .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))
@@ -837,10 +825,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             transactionManagementService.rollback();
             result = OperationResult.newBuilder()
                 .setCode(OperationResult.Code.OK)
-                .setMessage("事务提交成功")
+                .setMessage("Transaction rollback successful.")
                 .buildPartial();
         } catch (Exception e) {
-            logger.error("{}", e);
+            logger.error(e.getMessage(), e);
             result = OperationResult.newBuilder()
                 .setCode(OperationResult.Code.EXCEPTION)
                 .setMessage(Optional.ofNullable(e.getMessage()).orElseGet(e::toString))

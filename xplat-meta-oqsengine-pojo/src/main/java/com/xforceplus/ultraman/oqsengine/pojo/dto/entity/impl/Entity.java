@@ -191,13 +191,25 @@ public class Entity implements IEntity, Serializable {
             return false;
         }
         Entity entity = (Entity) o;
-        return id == entity.id &&
-            time == entity.time &&
-            version == entity.version &&
-            major == entity.major &&
-            Objects.equals(entityClass, entity.entityClass) &&
-            Objects.equals(entityValue, entity.entityValue) &&
-            Objects.equals(family, entity.family);
+        if (id != entity.id) {
+            return false;
+        }
+        if (version != entity.version) {
+            return false;
+        }
+        if (major != entity.major) {
+            return false;
+        }
+        if (!entityClass.equals(entity.entityClass)) {
+            return false;
+        }
+        if (!entityValue.equals(entity.entityValue)) {
+            return false;
+        }
+        if (!family.equals(entity.family)) {
+            return false;
+        }
+        return true;
     }
 
     @Override

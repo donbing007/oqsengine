@@ -1,11 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.page;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 /**
  * 分页对象的测试.
@@ -172,6 +167,18 @@ public class PageTest {
         } catch (Exception ex) {
 
         }
+    }
+
+    @Test
+    public void testZeroTotalCount() {
+        Page page = new Page(2, 10);
+        page.setTotalCount(0);
+
+        Assert.assertEquals(0, page.getTotalCount());
+        Assert.assertEquals(0, page.getPageCount());
+        PageScope scope = page.getNextPage();
+        Assert.assertEquals(0, scope.startLine);
+        Assert.assertEquals(0, scope.endLine);
 
     }
 

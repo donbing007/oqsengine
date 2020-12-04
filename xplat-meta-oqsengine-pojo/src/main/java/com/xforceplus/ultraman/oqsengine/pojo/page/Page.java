@@ -111,6 +111,7 @@ public class Page implements Externalizable, Cloneable {
         final long fixOne = 1;
         Page page = new Page(fixOne, fixOne);
         page.emptyPage = true;
+        page.setTotalCount(0);
         return page;
     }
 

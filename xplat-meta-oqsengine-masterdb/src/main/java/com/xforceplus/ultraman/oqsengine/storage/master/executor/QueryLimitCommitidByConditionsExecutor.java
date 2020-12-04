@@ -115,7 +115,11 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
         ref.setOp(rs.getInt(FieldDefine.OP));
         ref.setMajor(rs.getInt(FieldDefine.OQS_MAJOR));
         if (sort != null && !sort.isOutOfOrder()) {
-            ref.setOrderValue(rs.getString(SELECT_SORT_COLUMN));
+            if (sort.getField().config().isIdentifie()) {
+                ref.setOrderValue(Long.toString(ref.getId()));
+            } else {
+                ref.setOrderValue(rs.getString(SELECT_SORT_COLUMN));
+            }
         }
         return ref;
     }
@@ -129,7 +133,8 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
                 String.join(
                     ",",
                     FieldDefine.ID, FieldDefine.PREF, FieldDefine.CREF, FieldDefine.OP, FieldDefine.OQS_MAJOR));
-        if (sort != null && !sort.isOutOfOrder()) {
+        if (sort != null && !sort.isOutOfOrder() && !sort.getField().config().isIdentifie()) {
+
             /**
              * 这里没有使用mysql的->>符号原因是,shard-jdbc解析会出现错误.
              * JSON_UNQUOTE(JSON_EXTRACT())
@@ -142,6 +147,7 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
                 .append(FieldDefine.ATTRIBUTE_PREFIX)
                 .append(storageStrategy.toStorageNames(sort.getField()).stream().findFirst().get())
                 .append("')) AS ").append(SELECT_SORT_COLUMN);
+
         }
         sql.append(" FROM ").append(getTableName())
             .append(" WHERE (")

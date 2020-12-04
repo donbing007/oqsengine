@@ -268,10 +268,28 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
         }
 
         if (!useSort.isOutOfOrder()) {
-            storageStrategy = storageStrategyFactory.getStrategy(useSort.getField().type());
-            sortFields = buildSortValues(useSort);
-            orderBySqlSegment = buildOrderBySqlSegment(sortFields, useSort.isDes());
-            sortSelectValuesSegment = buildSortSelectValuesSegment(sortFields);
+            // id 排序处理.
+            if (useSort.getField().config().isIdentifie()) {
+                StringBuilder buff = new StringBuilder();
+                buff.append(SqlKeywordDefine.ORDER);
+                buff.append(" ").append(FieldDefine.ID);
+                buff.append(" ");
+                if (useSort.isAsc()) {
+                    buff.append(SqlKeywordDefine.ORDER_TYPE_ASC);
+                } else {
+                    buff.append(SqlKeywordDefine.ORDER_TYPE_DESC);
+                }
+                sortFields = Collections.emptyList();
+                orderBySqlSegment = buff.toString();
+                sortSelectValuesSegment = "";
+
+            } else {
+                // 普通属性
+                storageStrategy = storageStrategyFactory.getStrategy(useSort.getField().type());
+                sortFields = buildSortValues(useSort);
+                orderBySqlSegment = buildOrderBySqlSegment(sortFields, useSort.isDes());
+                sortSelectValuesSegment = buildSortSelectValuesSegment(sortFields);
+            }
         }
 
         String sql = String.format(SQLConstant.SELECT_SQL, sortSelectValuesSegment, indexTableName, whereCondition, orderBySqlSegment);
@@ -296,46 +314,49 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
                     entityRef.setMajor(rs.getInt(FieldDefine.OQS_MAJOR));
 
                     if (!useSort.isOutOfOrder()) {
-                        ResultSet finalRs = rs;
-                        AtomicInteger index = new AtomicInteger(0);
+                        if (useSort.getField().config().isIdentifie()) {
+                            entityRef.setOrderValue(Long.toString(entityRef.getId()));
+                        } else {
+                            ResultSet finalRs = rs;
+                            AtomicInteger index = new AtomicInteger(0);
 
-                        StorageStrategy finalStorageStrategy = storageStrategy;
-                        Optional<StorageValue> reduce = sortFields.stream().map(x -> {
-                            //get sort value
-                            try {
-                                switch (finalStorageStrategy.storageType()) {
-                                    case LONG:
-                                        return StorageValueFactory.buildStorageValue(
-                                            finalStorageStrategy.storageType(),
-                                            x.fieldName,
-                                            finalRs.getLong("sort" + index.getAndIncrement()));
-                                    case STRING:
-                                        return StorageValueFactory.buildStorageValue(
-                                            finalStorageStrategy.storageType(),
-                                            x.fieldName,
-                                            finalRs.getString("sort" + index.getAndIncrement()));
-                                    default:
-                                        return null;
+                            StorageStrategy finalStorageStrategy = storageStrategy;
+                            Optional<StorageValue> reduce = sortFields.stream().map(x -> {
+                                //get sort value
+                                try {
+                                    switch (finalStorageStrategy.storageType()) {
+                                        case LONG:
+                                            return StorageValueFactory.buildStorageValue(
+                                                finalStorageStrategy.storageType(),
+                                                x.fieldName,
+                                                finalRs.getLong("sort" + index.getAndIncrement()));
+                                        case STRING:
+                                            return StorageValueFactory.buildStorageValue(
+                                                finalStorageStrategy.storageType(),
+                                                x.fieldName,
+                                                finalRs.getString("sort" + index.getAndIncrement()));
+                                        default:
+                                            return null;
+                                    }
+                                } catch (Exception ex) {
+                                    logger.error(ex.getMessage(), ex);
+                                    return null;
                                 }
-                            } catch (Exception ex) {
-                                logger.error("{}", ex);
-                                return null;
+                            }).filter(Objects::nonNull).reduce(StorageValue::stick);
+
+                            if (reduce.isPresent()) {
+
+                                IValue iValue = storageStrategy.toLogicValue(useSort.getField(), reduce.get());
+
+                                if (iValue.compareByString()) {
+                                    entityRef.setOrderValue(iValue.valueToString());
+                                } else {
+                                    entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
+                                }
+
                             }
-                        }).filter(Objects::nonNull).reduce(StorageValue::stick);
-
-                        if (reduce.isPresent()) {
-
-                            IValue iValue = storageStrategy.toLogicValue(useSort.getField(), reduce.get());
-
-                            if (iValue.compareByString()) {
-                                entityRef.setOrderValue(iValue.valueToString());
-                            } else {
-                                entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
-                            }
-
                         }
                     }
-
                     refs.add(entityRef);
                 }
 

@@ -77,4 +77,9 @@ public class AnyEntityClass implements IEntityClass {
     public boolean isAny() {
         return true;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return AnyEntityClass.class.isInstance(obj);
+    }
 }

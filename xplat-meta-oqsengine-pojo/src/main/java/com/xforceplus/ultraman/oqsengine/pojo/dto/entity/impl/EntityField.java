@@ -18,6 +18,12 @@ import java.util.Objects;
 public class EntityField implements IEntityField, Serializable {
 
     /**
+     * 表示主键字段.
+     */
+    public static final IEntityField ID_ENTITY_FIELD =
+        new EntityField(0, "id", FieldType.LONG, FieldConfig.build().identifie(true));
+
+    /**
      * 字段的标识.
      */
     private long id;
