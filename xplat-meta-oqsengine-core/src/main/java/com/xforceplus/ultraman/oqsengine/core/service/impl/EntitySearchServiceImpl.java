@@ -231,6 +231,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         if (useSort == null || useSort.isOutOfOrder()) {
             // 如果没有指定排序,以id降序排列.
             useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
+        } else {
+            if (!useSort.getField().config().isSearchable()) {
+                useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
+            }
         }
 
         Page usePage = page;

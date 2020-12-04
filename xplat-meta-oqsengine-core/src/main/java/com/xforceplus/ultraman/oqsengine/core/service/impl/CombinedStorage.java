@@ -30,18 +30,21 @@ import static java.util.stream.Collectors.toList;
  */
 public class CombinedStorage implements MasterStorage, IndexStorage {
 
+    private Logger logger = LoggerFactory.getLogger(CombinedStorage.class);
+
     private MasterStorage masterStorage;
 
     private IndexStorage indexStorage;
 
-    private Map<FieldType, EntityRefComparator> refMapping = new HashMap<>();
+    private final Map<FieldType, EntityRefComparator> refMapping;
 
-    private Logger logger = LoggerFactory.getLogger(CombinedStorage.class);
+    private final Map<FieldType, String> sortDefaultValue;
 
     public CombinedStorage(MasterStorage masterStorage, IndexStorage indexStorage) {
         this.masterStorage = masterStorage;
         this.indexStorage = indexStorage;
 
+        refMapping = new HashMap<>();
         refMapping.put(FieldType.BOOLEAN, new EntityRefComparator(FieldType.BOOLEAN));
         refMapping.put(FieldType.DATETIME, new EntityRefComparator(FieldType.DATETIME));
         refMapping.put(FieldType.DECIMAL, new EntityRefComparator(FieldType.DECIMAL));
@@ -49,6 +52,15 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
         refMapping.put(FieldType.LONG, new EntityRefComparator(FieldType.LONG));
         refMapping.put(FieldType.STRING, new EntityRefComparator(FieldType.STRING));
         refMapping.put(FieldType.STRINGS, new EntityRefComparator(FieldType.STRINGS));
+
+        sortDefaultValue = new HashMap();
+        sortDefaultValue.put(FieldType.BOOLEAN, Boolean.FALSE.toString());
+        sortDefaultValue.put(FieldType.DATETIME, Long.toString(new Date(0).getTime()));
+        sortDefaultValue.put(FieldType.LONG, "0");
+        sortDefaultValue.put(FieldType.DECIMAL, "0.0");
+        sortDefaultValue.put(FieldType.ENUM, "");
+        sortDefaultValue.put(FieldType.STRING, "");
+        sortDefaultValue.put(FieldType.UNKNOWN, "0");
     }
 
     private List<EntityRef> merge(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs, Sort sort) {
@@ -144,13 +156,15 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
             masterRefs = masterStorage.select(commitId, conditions, entityClass, sort);
         }
 
+        masterRefs = fixNullSortValue(masterRefs, sort);
+
         /**
          * filter ids
          */
         List<Long> filterIdsFromMaster = masterRefs.stream()
-                .filter(x -> x.getOp() == OperationType.DELETE.getValue() || x.getOp() == OperationType.UPDATE.getValue())
-                .map(EntityRef::getId)
-                .collect(toList());
+            .filter(x -> x.getOp() == OperationType.DELETE.getValue() || x.getOp() == OperationType.UPDATE.getValue())
+            .map(EntityRef::getId)
+            .collect(toList());
 
         Page indexPage = new Page(page.getIndex(), page.getPageSize());
         Collection<EntityRef> refs = indexStorage.select(
@@ -175,6 +189,23 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
         long skips = scope == null ? 0 : scope.getStartLine();
         List<EntityRef> limitedSelect = retRefs.stream().skip(skips < 0 ? 0 : skips).limit(pageSize).collect(toList());
         return limitedSelect;
+    }
+
+    // 如果排序,但是查询结果没有值.
+    private Collection<EntityRef> fixNullSortValue(Collection<EntityRef> refs, Sort sort) {
+        if (sort != null && !sort.isOutOfOrder()) {
+            refs.parallelStream().forEach(r -> {
+                if (r.getOrderValue() == null || r.getOrderValue().isEmpty()) {
+                    r.setOrderValue(sortDefaultValue.get(sort.getField().type()));
+                    // 如果是意外的字段,那么设置为一个字符串0,数字和字符串都可以正常转型.
+                    if (r.getOrderValue() == null) {
+                        r.setOrderValue("0");
+                    }
+                }
+            });
+        }
+
+        return refs;
     }
 
     @Override

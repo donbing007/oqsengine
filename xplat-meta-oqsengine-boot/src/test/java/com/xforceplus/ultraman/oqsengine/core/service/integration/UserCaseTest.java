@@ -242,4 +242,40 @@ public class UserCaseTest extends AbstractContainerTest {
         Assert.assertEquals(300000L,
             entities.stream().skip(2).findFirst().get().entityValue().getValue("c1").get().valueToLong());
     }
+
+    // 测试排序,但是记录中没有排序的值.应该使用默认值作为排序字段.
+    @Test
+    public void testSortButNoValue() throws Exception {
+        Entity e0 = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 100000L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+        IEntity e1 = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 200000L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+        IEntity e2 = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+
+        entityManagementService.build(e0);
+        entityManagementService.build(e1);
+        entityManagementService.build(e2);
+
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(childClass.field("c3").get(), ConditionOperator.EQUALS,
+                    new EnumValue(childClass.field("c3").get(), "0"))
+            ),
+            childClass, Sort.buildAscSort(fatherClass.field("c1").get()), Page.newSinglePage(100));
+
+        Assert.assertEquals(3, entities.size());
+
+        Assert.assertFalse(entities.stream().findFirst().get().entityValue().getValue("c1").isPresent());
+
+        Assert.assertEquals(100000L,
+            entities.stream().skip(1).findFirst().get().entityValue().getValue("c1").get().valueToLong());
+        Assert.assertEquals(200000L,
+            entities.stream().skip(2).findFirst().get().entityValue().getValue("c1").get().valueToLong());
+    }
 }
