@@ -27,7 +27,7 @@ public class RebuildIndexTest extends AbstractContainer {
     final Logger logger = LoggerFactory.getLogger(RebuildIndexTest.class);
 
     private int totalSize = 1000;
-    private int testResumeCount = 3000;
+    private int testResumeCount = 1000;
     private int defaultSleepInterval = 3_000;
     private int maxSleepWaitLoops = 100;
     long txId = 0;

@@ -71,6 +71,8 @@ public class CDCMetrics {
         //  启动则更新LastConnectedTime, 否则为成功消费
         if (!isConnectSync) {
             this.cdcAckMetrics.setLastConsumerTime(System.currentTimeMillis());
+        } else {
+            this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
         }
 
         if (!temp.getCdcAckMetrics().getCommitList().isEmpty()) {

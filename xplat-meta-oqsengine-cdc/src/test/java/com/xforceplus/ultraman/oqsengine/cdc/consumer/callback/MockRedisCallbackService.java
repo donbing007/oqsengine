@@ -34,6 +34,10 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
 
     private long lastConsumerTime = 0;
 
+    public CDCAckMetrics getAckMetrics() {
+        return ackMetrics;
+    }
+
     @Override
     public void cdcAck(CDCAckMetrics ackMetrics) {
         this.ackMetrics = ackMetrics;
