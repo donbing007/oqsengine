@@ -145,8 +145,12 @@ public class CDCMetricsService {
 
     }
 
-    public void connectedOk() {
+    public void connectOk() {
         cdcMetrics.resetStatus();
+    }
+
+    public void newConnectCallBack() {
+        callback();
     }
 
     private void callback() {

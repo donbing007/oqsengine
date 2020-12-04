@@ -144,6 +144,7 @@ public class ConsumerRunner extends Thread {
             } catch (Exception e) {
                 //  未获取到数据,回滚
                 cdcConnector.rollback();
+                e.printStackTrace();
                 String error = String.format("[cdc-runner] get message from canal server error, %s", e);
                 logger.error(error);
                 throw new SQLException(error);
@@ -209,7 +210,7 @@ public class ConsumerRunner extends Thread {
     private void syncAndRecover() throws SQLException {
 
         //  设置cdc连接成功
-        cdcMetricsService.connectedOk();
+        cdcMetricsService.connectOk();
 
         //  如果是服务重启，则需要对齐canal ack信息及redis中的ackMetrics指标
         //  查询
@@ -222,11 +223,15 @@ public class ConsumerRunner extends Thread {
                 // ack确认， 回写uncommit信息
                 backAfterAck(originBatchId, cdcMetrics);
             }
-        }
-        //  回调告知当前成功信息
-        callBackSuccess(originBatchId, null == cdcMetrics ? new CDCMetrics() : cdcMetrics, true);
 
-        logger.info("[cdc-runner] recover from last ackMetrics position success...");
+            //  回调告知当前成功信息
+            callBackSuccess(originBatchId, cdcMetrics, true);
+        } else {
+            //  回调告知当前为一个新的开始
+            cdcMetricsService.newConnectCallBack();
+        }
+
+        logger.info("[cdc-runner] recover from last ackMetrics position success..., originBatchId : {}", originBatchId);
 
         //  确认完毕，需要将当前未提交的数据回滚到当前已确认batchId所对应的初始位置
         cdcConnector.rollback();
@@ -238,7 +243,7 @@ public class ConsumerRunner extends Thread {
     private void syncSuccess(CDCMetrics cdcMetrics) throws SQLException {
         if (null != cdcMetrics) {
             long originBatchId = cdcMetrics.getBatchId();
-            // ack确认， 回写uncommit信息
+            // ack确认， 回写unCommit信息
             backAfterAck(originBatchId, cdcMetrics);
 
             //  回调告知当前成功信息
@@ -247,7 +252,7 @@ public class ConsumerRunner extends Thread {
     }
     /*
         由于采用2阶段prepare -> confirm模式，当进入backAfterAck的逻辑时,必须保证一致性（成功）
-        所以需要在ack成功后标记batchId为-Long.MAX_VALUE，并覆盖uncommitMetrics。
+        所以需要在ack成功后标记batchId为-Long.MAX_VALUE，并覆盖unCommitMetrics。
         启动时重复该步骤
      */
     private void backAfterAck(long originBatchId, CDCMetrics cdcMetrics) throws SQLException {
@@ -261,7 +266,7 @@ public class ConsumerRunner extends Thread {
 
     private void threadSleep(int waitInSeconds) {
         try {
-            //  当前没有Binlog消费
+            //  当前没有binlog消费
             Thread.sleep(waitInSeconds * SECOND);
         } catch (InterruptedException e) {
             // ignore

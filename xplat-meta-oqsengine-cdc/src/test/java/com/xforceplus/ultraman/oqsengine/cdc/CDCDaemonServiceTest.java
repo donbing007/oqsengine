@@ -31,17 +31,19 @@ public class CDCDaemonServiceTest extends AbstractContainer {
 
     private CDCDaemonService cdcDaemonService;
 
-    private boolean isTest = false;
+    private boolean isTest = true;
 
     private MockRedisCallbackService testCallbackService;
 
     @Before
     public void before() throws Exception {
         initDaemonService();
+        cdcDaemonService.startDaemon();
     }
 
     @After
     public void after() {
+        cdcDaemonService.stopDaemon();
         closeAll();
     }
 
@@ -65,11 +67,7 @@ public class CDCDaemonServiceTest extends AbstractContainer {
     @Test
     public void binlogSyncTest() throws InterruptedException {
         if (isTest) {
-            cdcDaemonService.startDaemon();
-
             Thread.sleep(10_000);
-
-            cdcDaemonService.stopDaemon();
         }
     }
 }

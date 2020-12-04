@@ -27,7 +27,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
  * date : 2020/11/19
  * @since : 1.8
  */
-public class ConnectorTest extends AbstractContainer  {
+public class ConnectorTest extends AbstractContainer {
 
     private MockRedisCallbackService mockRedisCallbackService;
 
@@ -37,14 +37,15 @@ public class ConnectorTest extends AbstractContainer  {
 
     @Before
     public void before() throws Exception {
-            initDaemonService();
-            clear();
+        initDaemonService();
+        clear();
     }
 
     @After
     public void after() throws SQLException {
-            clear();
-            closeAll();
+        cdcDaemonService.stopDaemon();
+        clear();
+        closeAll();
     }
 
     private void initDaemonService() throws Exception {
@@ -65,7 +66,6 @@ public class ConnectorTest extends AbstractContainer  {
     }
 
 
-
     @Test
     public void testStartFromDIS_CONNECTED() throws InterruptedException {
         cdcMetricsService.getCdcMetrics().getCdcAckMetrics().setCdcConsumerStatus(CDCStatus.DIS_CONNECTED);
@@ -73,7 +73,7 @@ public class ConnectorTest extends AbstractContainer  {
 
         cdcDaemonService.startDaemon();
 
-        Thread.sleep(1);
+        Thread.sleep(10_000);
 
         Assert.assertEquals(CDCStatus.CONNECTED, cdcMetricsService.getCdcMetrics().getCdcAckMetrics().getCdcConsumerStatus());
         Assert.assertEquals(CDCStatus.CONNECTED, mockRedisCallbackService.getAckMetrics().getCdcConsumerStatus());

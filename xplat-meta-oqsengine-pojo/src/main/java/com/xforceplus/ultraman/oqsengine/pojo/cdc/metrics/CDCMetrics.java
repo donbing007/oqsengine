@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics;
 
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_ID;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
 /**
@@ -19,6 +20,7 @@ public class CDCMetrics {
     private CDCUnCommitMetrics cdcUnCommitMetrics;
 
     public CDCMetrics() {
+        this.batchId = EMPTY_BATCH_ID;
         this.cdcAckMetrics = new CDCAckMetrics(CDCStatus.CONNECTED);
         this.cdcAckMetrics.setLastConnectedTime(System.currentTimeMillis());
         this.cdcUnCommitMetrics = new CDCUnCommitMetrics();
