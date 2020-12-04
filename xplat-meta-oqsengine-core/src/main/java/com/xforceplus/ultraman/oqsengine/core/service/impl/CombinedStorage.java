@@ -60,7 +60,7 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
         sortDefaultValue.put(FieldType.DECIMAL, "0.0");
         sortDefaultValue.put(FieldType.ENUM, "");
         sortDefaultValue.put(FieldType.STRING, "");
-        sortDefaultValue.put(FieldType.UNKNOWN, "");
+        sortDefaultValue.put(FieldType.UNKNOWN, "0");
     }
 
     private List<EntityRef> merge(Collection<EntityRef> masterRefs, Collection<EntityRef> indexRefs, Sort sort) {
@@ -197,6 +197,10 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
             refs.parallelStream().forEach(r -> {
                 if (r.getOrderValue() == null || r.getOrderValue().isEmpty()) {
                     r.setOrderValue(sortDefaultValue.get(sort.getField().type()));
+                    // 如果是意外的字段,那么设置为一个字符串0,数字和字符串都可以正常转型.
+                    if (r.getOrderValue() == null) {
+                        r.setOrderValue("0");
+                    }
                 }
             });
         }
