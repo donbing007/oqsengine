@@ -453,7 +453,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 entityClass.extendEntityClass().fields().stream().collect(Collectors.toMap(v -> v, v -> "")));
         }
 
-        IEntityValue newValues = new EntityValue(entityClass.id());
+        IEntityValue newValues = new EntityValue(entity.id());
         entity.entityValue().values().stream()
             .filter(v -> fieldTable.containsKey(v.getField()))
             .forEach(v -> {

@@ -106,10 +106,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     public long save(long commitId, boolean ready) {
         String target = Long.toString(commitId);
         String statusKey = commitidStatusKeyPrefix + "." + target;
-        String status = ready ? CommitStatus.READY.getSymbol() : CommitStatus.NOT_READY.getSymbol();
 
         syncCommands.zadd(commitidsKey, (double) commitId, target);
-        syncCommands.set(statusKey, status, SetArgs.Builder.px(commitidStatusTTLMs));
+        if (!ready) {
+            syncCommands.set(statusKey, CommitStatus.NOT_READY.getSymbol(), SetArgs.Builder.px(commitidStatusTTLMs));
+        }
 
         updateMetrics();
 
@@ -135,7 +136,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     public void ready(long commitId) {
         String target = Long.toString(commitId);
         String statusKey = commitidStatusKeyPrefix + "." + target;
-        syncCommands.set(statusKey, CommitStatus.READY.getSymbol());
+        syncCommands.set(statusKey, CommitStatus.READY.getSymbol(), SetArgs.Builder.px(commitidStatusTTLMs));
     }
 
     @Override

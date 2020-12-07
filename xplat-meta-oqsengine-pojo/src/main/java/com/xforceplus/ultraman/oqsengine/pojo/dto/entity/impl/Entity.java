@@ -197,6 +197,9 @@ public class Entity implements IEntity, Serializable {
         if (version != entity.version) {
             return false;
         }
+        if (time != entity.time) {
+            return false;
+        }
         if (major != entity.major) {
             return false;
         }

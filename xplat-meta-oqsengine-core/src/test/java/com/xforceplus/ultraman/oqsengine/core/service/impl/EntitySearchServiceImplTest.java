@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
 /**
  * EntitySearchServiceImpl Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 03/01/2020
  * @since <pre>Mar 1, 2020</pre>
  */
@@ -374,7 +374,7 @@ public class EntitySearchServiceImplTest {
                         .collect(Collectors.joining(", "))
                         + ")."
                         + parentEntityClass.id()
-                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true"
+                        + ".asc:true|des:false|outoforder:false.empty:false|single:false|ready:true"
                 )
             )
             ,
@@ -416,7 +416,7 @@ public class EntitySearchServiceImplTest {
                         .collect(Collectors.joining(", "))
                         + ")."
                         + parentEntityClass.id()
-                        + ".asc:false|des:true|outoforder:true.empty:false|single:false|ready:true"
+                        + ".asc:true|des:false|outoforder:false.empty:false|single:false|ready:true"
                 )
             )
             ,
@@ -617,24 +617,6 @@ public class EntitySearchServiceImplTest {
         public void reset() {
             histories.clear();
         }
-
-//        @Override
-//        public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
-//            throws SQLException {
-//            histories.add(new SelectHistory(conditions, entityClass, sort, page));
-//
-//            Collection<EntityRef> refs = pool.get(entityClass);
-//            if (refs == null) {
-//                page.setTotalCount(0);
-//            } else {
-//                page.setTotalCount(refs.size());
-//            }
-//            if (page.isEmptyPage()) {
-//                refs = null;
-//            }
-//
-//            return refs == null ? Collections.emptyList() : refs;
-//        }
 
         @Override
         public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, Long commitId) throws SQLException {

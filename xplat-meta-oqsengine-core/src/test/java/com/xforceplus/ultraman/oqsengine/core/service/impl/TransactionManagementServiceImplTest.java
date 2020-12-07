@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
 /**
  * TransactionManagementServiceImpl Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 06/30/2020
  * @since <pre>Jun 30, 2020</pre>
  */
