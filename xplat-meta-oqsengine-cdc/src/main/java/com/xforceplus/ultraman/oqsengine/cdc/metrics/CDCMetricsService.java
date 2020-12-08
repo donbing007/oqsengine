@@ -133,8 +133,8 @@ public class CDCMetricsService {
                         totalLoops += loops;
                         loops = 0;
                         logger.warn(
-                            "[cdc-metrics] loops for wait ready commit missed current check point, current-wait-time : {}ms, commitId : {}"
-                            , totalLoops * COMMIT_ID_READY_CHECK_INTERVAL, commitId);
+                                "[cdc-metrics] loops for wait ready commit missed current check point, current-wait-time : {}ms, commitId : {}"
+                                , totalLoops * COMMIT_ID_READY_CHECK_INTERVAL, commitId);
                     }
                     continue;
                 }
