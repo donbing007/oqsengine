@@ -1,7 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -113,7 +116,7 @@ public class SQLMasterStorage implements MasterStorage {
             List<Future<TableSummary>> futures = new ArrayList<Future<TableSummary>>(tables.size());
             for (String tableName : tables) {
                 futures.add(threadPool.submit(
-                        new CountByTableSummaryCallable(latch, batchCondition, tableName, queryTimeout)));
+                    new CountByTableSummaryCallable(latch, batchCondition, tableName, queryTimeout)));
             }
 
             try {
@@ -141,15 +144,15 @@ public class SQLMasterStorage implements MasterStorage {
                 }
                 if (tableSummaries.size() > 0) {
                     DataSourceSummary dataSourceSummary = new DataSourceSummary(dataSources.get(i),
-                            String.format("%s-%d", dataSourceName, i), tableSummaries);
+                        String.format("%s-%d", dataSourceName, i), tableSummaries);
                     dataSourceSummaries.add(dataSourceSummary);
                 }
             }
         }
 
         return 0 < dataSourceSummaries.size() ?
-                new DataQueryIterator(batchCondition, dataSourceSummaries, this, threadPool,
-                        queryTimeout, pageSize) : null;
+            new DataQueryIterator(batchCondition, dataSourceSummaries, this, threadPool,
+                queryTimeout, pageSize) : null;
     }
 
 
@@ -274,6 +277,65 @@ public class SQLMasterStorage implements MasterStorage {
 
     }
 
+    @Override
+    public int synchronizeToChild(IEntity entity) throws SQLException {
+        Optional<StorageEntity> childEntityOp = (Optional<StorageEntity>) transactionExecutor.execute(
+            new DataSourceNoShardResourceTask(masterDataSource) {
+                @Override
+                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                    return QueryExecutor.buildHaveAllDetail(tableName, resource, queryTimeout).execute(entity.family().child());
+                }
+            }
+        );
+
+        if (childEntityOp.isPresent()) {
+
+            return (int) transactionExecutor.execute(
+                new DataSourceNoShardResourceTask(masterDataSource) {
+
+                    @Override
+                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                        StorageEntity childEntity = childEntityOp.get();
+                        childEntity.setOp(OperationType.UPDATE.getValue());
+                        childEntity.setOqsMajor(OqsVersion.MAJOR);
+                        childEntity.setTime(entity.time());
+
+                        fullTransactionInformation(childEntity, resource);
+
+                        //继承自父类属性
+                        childEntity.setTime(entity.time());
+                        JSONObject fatherAttribute = toJson(entity.entityValue());
+                        JSONObject childAttribute;
+                        if (childEntity.getAttribute() == null) {
+                            childAttribute = JSON.parseObject("{}");
+                        } else {
+                            childAttribute = JSON.parseObject(childEntity.getAttribute());
+                        }
+                        childAttribute.putAll(fatherAttribute);
+                        childEntity.setAttribute(childAttribute.toJSONString());
+
+                        //合并自父类的meta信息.
+                        JSONArray fatherMeta = buildSearchAbleSyncMeta(entity.entityClass());
+                        JSONArray childMeta;
+                        if (childEntity.getMeta() == null) {
+                            childMeta = JSON.parseArray("[]");
+                        } else {
+                            childMeta = JSON.parseArray(childEntity.getMeta());
+                        }
+                        childMeta.addAll(fatherMeta);
+                        childEntity.setMeta(childMeta.toJSONString());
+
+                        hint.setReadOnly(false);
+                        return ReplaceExecutor.build(tableName, resource, queryTimeout).execute(childEntity);
+                    }
+                });
+
+        } else {
+            throw new SQLException(String.format("Unable to synchronize, unable to find subclass {} with object {}.",
+                entity.entityClass().code(), entity.family().child()));
+        }
+    }
+
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "build"})
     @Override
     public int build(IEntity entity) throws SQLException {
@@ -291,19 +353,11 @@ public class SQLMasterStorage implements MasterStorage {
                     storageEntity.setCref(entity.family().child());
                     storageEntity.setTime(entity.time());
                     storageEntity.setDeleted(false);
-                    storageEntity.setAttribute(toJson(entity.entityValue()));
-                    storageEntity.setMeta(buildSearchAbleSyncMeta(entity.entityClass()));
+                    storageEntity.setAttribute(toJson(entity.entityValue()).toJSONString());
+                    storageEntity.setMeta(buildSearchAbleSyncMeta(entity.entityClass()).toJSONString());
 
                     storageEntity.setOp(OperationType.CREATE.getValue());
-                    Optional<Transaction> tOp = resource.getTransaction();
-                    if (tOp.isPresent()) {
-                        storageEntity.setTx(tOp.get().id());
-                        storageEntity.setCommitid(CommitHelper.getUncommitId());
-                    } else {
-                        logger.warn("Build run with no transaction, unable to get the transaction ID.");
-                        storageEntity.setTx(0);
-                        storageEntity.setCommitid(0);
-                    }
+                    fullTransactionInformation(storageEntity, resource);
 
                     hint.setReadOnly(false);
                     return BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
@@ -328,18 +382,11 @@ public class SQLMasterStorage implements MasterStorage {
                     storageEntity.setPref(entity.family().parent());
                     storageEntity.setCref(entity.family().child());
                     storageEntity.setTime(entity.time());
-                    storageEntity.setAttribute(toJson(entity.entityValue()));
-                    storageEntity.setMeta(buildSearchAbleSyncMeta(entity.entityClass()));
+                    storageEntity.setAttribute(toJson(entity.entityValue()).toJSONString());
+                    storageEntity.setMeta(buildSearchAbleSyncMeta(entity.entityClass()).toJSONString());
 
                     storageEntity.setOp(OperationType.UPDATE.getValue());
-                    Optional<Transaction> tOp = resource.getTransaction();
-                    if (tOp.isPresent()) {
-                        storageEntity.setTx(tOp.get().id());
-                    } else {
-                        logger.warn("Replace run with no transaction, unable to get the transaction ID.");
-                        storageEntity.setTx(0);
-                    }
-                    storageEntity.setCommitid(CommitHelper.getUncommitId());
+                    fullTransactionInformation(storageEntity, resource);
 
                     hint.setReadOnly(false);
                     return ReplaceExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
@@ -367,14 +414,7 @@ public class SQLMasterStorage implements MasterStorage {
                     storageEntity.setTime(entity.time());
 
                     storageEntity.setOp(OperationType.DELETE.getValue());
-                    Optional<Transaction> tOp = resource.getTransaction();
-                    if (tOp.isPresent()) {
-                        storageEntity.setTx(tOp.get().id());
-                    } else {
-                        logger.warn("Delete run with no transaction, unable to get the transaction ID.");
-                        storageEntity.setTx(0);
-                    }
-                    storageEntity.setCommitid(CommitHelper.getUncommitId());
+                    fullTransactionInformation(storageEntity, resource);
 
                     hint.setReadOnly(false);
                     return DeleteExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
@@ -408,7 +448,7 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     // 属性名称使用的是属性 F + {id}.
-    private String toJson(IEntityValue value) {
+    private JSONObject toJson(IEntityValue value) {
 
         JSONObject object = new JSONObject();
         StorageStrategy storageStrategy;
@@ -421,7 +461,7 @@ public class SQLMasterStorage implements MasterStorage {
                 storageValue = storageValue.next();
             }
         }
-        return object.toJSONString();
+        return object;
 
     }
 
@@ -458,30 +498,19 @@ public class SQLMasterStorage implements MasterStorage {
      * @param entityClass entity信息.
      * @return 字符串表示.
      */
-    private String buildSearchAbleSyncMeta(IEntityClass entityClass) {
-        StringBuffer buff = new StringBuffer();
-        buff.append('[');
-        int emptyLen = buff.length();
-
-        buff.append(entityClass.fields().stream()
-            .filter(f -> f.config().isSearchable())
-            .map(f -> "\"" + String.join("-", Long.toString(f.id()), f.type().getType()) + "\"")
-            .collect(Collectors.joining(",")));
+    private JSONArray buildSearchAbleSyncMeta(IEntityClass entityClass) {
+        JSONArray jsonArray = new JSONArray();
+        entityClass.fields().stream().filter(f -> f.config().isSearchable())
+            .map(f -> String.join("-", Long.toString(f.id()), f.type().getType()))
+            .forEach(s -> jsonArray.add(0, s));
 
         if (entityClass.extendEntityClass() != null) {
-            if (buff.length() > emptyLen) {
-                buff.append(",");
-            }
-            buff.append(entityClass.extendEntityClass().fields().stream()
-                .filter(f -> f.config().isSearchable())
-                .map(f -> "\"" + String.join("-", Long.toString(f.id()), f.type().getType()) + "\"")
-                .collect(Collectors.joining(",")));
+            entityClass.extendEntityClass().fields().stream().filter(f -> f.config().isSearchable())
+                .map(f -> String.join("-", Long.toString(f.id()), f.type().getType()))
+                .forEach(s -> jsonArray.add(0, s));
         }
-        buff.append(']');
-
-        return buff.toString();
+        return jsonArray;
     }
-
 
     /**
      * 统一EntityClass在每一个库->表中的数量
@@ -508,23 +537,23 @@ public class SQLMasterStorage implements MasterStorage {
         public TableSummary call() throws Exception {
             try {
                 return (TableSummary) transactionExecutor.execute(
-                        new DataSourceNoShardResourceTask(masterDataSource) {
+                    new DataSourceNoShardResourceTask(masterDataSource) {
 
-                            @Override
-                            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                        @Override
+                        public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
 
-                                TableSummary tableSummary = new TableSummary(tableName);
+                            TableSummary tableSummary = new TableSummary(tableName);
 
-                                Optional<Integer> integer = BatchQueryCountExecutor.build(tableName, resource, timeout,
-                                        batchCondition.getEntityClass().id(), batchCondition.getStartTime(), batchCondition.getEndTime()).execute(1L);
+                            Optional<Integer> integer = BatchQueryCountExecutor.build(tableName, resource, timeout,
+                                batchCondition.getEntityClass().id(), batchCondition.getStartTime(), batchCondition.getEndTime()).execute(1L);
 
-                                if (integer.isPresent()) {
-                                    tableSummary.setCount(integer.get());
-                                    return tableSummary;
-                                }
-                                throw new SQLException("query count failed, empty result.");
+                            if (integer.isPresent()) {
+                                tableSummary.setCount(integer.get());
+                                return tableSummary;
                             }
-                        });
+                            throw new SQLException("query count failed, empty result.");
+                        }
+                    });
             } finally {
                 latch.countDown();
             }
@@ -569,31 +598,45 @@ public class SQLMasterStorage implements MasterStorage {
         public List<IEntity> call() throws Exception {
             try {
                 return (List<IEntity>) transactionExecutor.execute(
-                        new DataSourceNoShardResourceTask(dataSource) {
+                    new DataSourceNoShardResourceTask(dataSource) {
 
-                            @Override
-                            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                        @Override
+                        public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
 
-                                Collection<StorageEntity> seCollection = BatchQueryExecutor.build(tableName, resource, timeout,
-                                        batchCondition.getEntityClass().id(), batchCondition.getStartTime(), batchCondition.getEndTime(),
-                                        startId, pageSize).execute(1L);
-                                hint.setReadOnly(true);
+                            Collection<StorageEntity> seCollection = BatchQueryExecutor.build(tableName, resource, timeout,
+                                batchCondition.getEntityClass().id(), batchCondition.getStartTime(), batchCondition.getEndTime(),
+                                startId, pageSize).execute(1L);
+                            hint.setReadOnly(true);
 
-                                List<IEntity> entities = new ArrayList<>(seCollection.size());
-                                for (StorageEntity se : seCollection) {
-                                    Optional<IEntity> entityOp = buildEntityFromStorageEntity(se, batchCondition.getEntityClass());
-                                    if (entityOp.isPresent()) {
-                                        entities.add(entityOp.get());
-                                    } else {
-                                        throw new SQLException("batch query failed, empty result.");
-                                    }
+                            List<IEntity> entities = new ArrayList<>(seCollection.size());
+                            for (StorageEntity se : seCollection) {
+                                Optional<IEntity> entityOp = buildEntityFromStorageEntity(se, batchCondition.getEntityClass());
+                                if (entityOp.isPresent()) {
+                                    entities.add(entityOp.get());
+                                } else {
+                                    throw new SQLException("batch query failed, empty result.");
                                 }
-                                return entities;
                             }
-                        });
+                            return entities;
+                        }
+                    });
             } finally {
                 latch.countDown();
             }
         }
+    }
+
+    // 填充事务信息.
+    private void fullTransactionInformation(StorageEntity entity, TransactionResource resource) {
+        Optional<Transaction> tOp = resource.getTransaction();
+        if (tOp.isPresent()) {
+            entity.setTx(tOp.get().id());
+            entity.setCommitid(CommitHelper.getUncommitId());
+        } else {
+            logger.warn("With no transaction, unable to get the transaction ID.");
+            entity.setTx(0);
+            entity.setCommitid(0);
+        }
+
     }
 }

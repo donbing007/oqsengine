@@ -338,24 +338,24 @@ public class SearchTest extends AbstractContainerTest {
 
     private void clear() throws SQLException {
         for (DataSource ds : dataSourcePackage.getMaster()) {
-            Connection conn = ds.getConnection();
-            Statement st = conn.createStatement();
-            st.executeUpdate("truncate table oqsbigentity");
-            st.close();
-            conn.close();
+            try (Connection conn = ds.getConnection()) {
+                try (Statement st = conn.createStatement()) {
+                    st.executeUpdate("truncate table oqsbigentity");
+                }
+            }
         }
 
         for (DataSource ds : dataSourcePackage.getIndexWriter()) {
-            Connection conn = ds.getConnection();
-            Statement st = conn.createStatement();
-            st.executeUpdate("truncate table oqsindex");
-            st.close();
-            conn.close();
+            try (Connection conn = ds.getConnection()) {
+                try (Statement st = conn.createStatement()) {
+                    st.executeUpdate("truncate table oqsindex");
+                }
+            }
         }
 
-        StatefulRedisConnection<String, String> conn = redisClient.connect();
-        conn.sync().flushall();
-        conn.close();
+        try (StatefulRedisConnection<String, String> conn = redisClient.connect()) {
+            conn.sync().flushall();
+        }
     }
 
     @Test

@@ -47,10 +47,8 @@ public class CDCStatusServiceImpl implements CDCStatusService {
     private long lastHeartBeatValue = -1;
     private AtomicLong cdcSyncTime = new AtomicLong(0);
     private AtomicLong cdcExecutedCount = new AtomicLong(0);
-    private AtomicLong cdcMaxUseTime = new AtomicLong(0);
     private TimeGauge.Builder<AtomicLong> cdcSyncTimeGauge;
     private TimeGauge.Builder<AtomicLong> cdcExecutedCountGauge;
-    private TimeGauge.Builder<AtomicLong> cdcMaxUseTimeGauge;
 
     public CDCStatusServiceImpl() {
         this(DEFAULT_CDC_METRICS_KEY, DEFAULT_CDC_ACK_METRICS_KEY, DEFAULT_HEART_BEAT_KEY);
@@ -81,19 +79,14 @@ public class CDCStatusServiceImpl implements CDCStatusService {
 
         cdcSyncTimeGauge =
             TimeGauge.builder(
-                MetricsDefine.CDC_SYNC_DELAY_LATENCY_SECONDS, cdcSyncTime, TimeUnit.SECONDS, AtomicLong::get);
+                MetricsDefine.CDC_SYNC_DELAY_LATENCY_SECONDS, cdcSyncTime, TimeUnit.MILLISECONDS, AtomicLong::get);
 
         cdcExecutedCountGauge =
             TimeGauge.builder(
-                MetricsDefine.CDC_SYNC_EXECUTED_COUNT, cdcExecutedCount, TimeUnit.SECONDS, AtomicLong::get);
-
-        cdcMaxUseTimeGauge =
-            TimeGauge.builder(
-                MetricsDefine.CDC_SYNC_MAX_HANDLE_LATENCY_SECONDS, cdcMaxUseTime, TimeUnit.SECONDS, AtomicLong::get);
+                MetricsDefine.CDC_SYNC_EXECUTED_COUNT, cdcExecutedCount, TimeUnit.MILLISECONDS, AtomicLong::get);
 
         cdcSyncTimeGauge.register(Metrics.globalRegistry);
         cdcExecutedCountGauge.register(Metrics.globalRegistry);
-        cdcMaxUseTimeGauge.register(Metrics.globalRegistry);
     }
 
     @PreDestroy
@@ -154,11 +147,9 @@ public class CDCStatusServiceImpl implements CDCStatusService {
         try {
             return save(ackMetrics, ackKey);
         } finally {
-            cdcSyncTime.set(ackMetrics.getTotalUseTime() / 1000);
+            cdcSyncTime.set(ackMetrics.getTotalUseTime());
 
             cdcExecutedCount.set(ackMetrics.getExecuteRows());
-
-            cdcMaxUseTime.set(ackMetrics.getMaxSyncUseTime());
         }
     }
 

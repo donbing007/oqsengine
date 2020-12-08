@@ -10,14 +10,8 @@ import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -143,6 +137,56 @@ public class SQLMasterStorageTest extends AbstractContainerTest {
 
         redisClient.connect().sync().flushall();
         redisClient.shutdown();
+    }
+
+    @Test
+    public void testSynchronizedChild() throws SQLException {
+        IEntityClass fatherClass = new EntityClass(100, "father", Arrays.asList(
+            new EntityField(123, "c1", FieldType.LONG, FieldConfig.build().searchable(true)),
+            new EntityField(456, "c2", FieldType.STRING, FieldConfig.build().searchable(true))
+        ));
+        IEntityClass childClass = new EntityClass(200, "child", null, null, fatherClass,
+            Arrays.asList(
+                new EntityField(789, "c3", FieldType.ENUM, FieldConfig.build().searchable(true)),
+                new EntityField(910, "c4", FieldType.BOOLEAN, FieldConfig.build().searchable(true))
+            )
+        );
+
+        IEntity father = new Entity(10000, fatherClass, new EntityValue(100).addValues(
+            Arrays.asList(
+                new LongValue(fatherClass.field("c1").get(), 100),
+                new StringValue(fatherClass.field("c2").get(), "father.value")
+            )
+        ),
+            new EntityFamily(0, 20000),
+            0,
+            OqsVersion.MAJOR
+        );
+        IEntity child = new Entity(20000, childClass, new EntityValue(200).addValues(
+            Arrays.asList(
+                new LongValue(fatherClass.field("c1").get(), 100),
+                new StringValue(fatherClass.field("c2").get(), "father.value"),
+                new EnumValue(childClass.field("c3").get(), "是"),
+                new BooleanValue(childClass.field("c4").get(), false)
+            )
+        ),
+            new EntityFamily(10000, 0),
+            0,
+            OqsVersion.MAJOR
+        );
+
+        storage.build(father);
+        storage.build(child);
+
+        father.entityValue().addValue(new LongValue(fatherClass.field("c1").get(), 200));
+        Assert.assertEquals(1, storage.replace(father));
+        Assert.assertEquals(1, storage.synchronizeToChild(father));
+
+        child = storage.selectOne(child.id(), childClass).get();
+        Assert.assertEquals(200, child.entityValue().getValue("c1").get().valueToLong());
+        Assert.assertEquals("father.value", child.entityValue().getValue("c2").get().valueToString());
+        Assert.assertEquals("是", child.entityValue().getValue("c3").get().valueToString());
+        Assert.assertEquals(false, child.entityValue().getValue("c4").get().getValue());
     }
 
     @Test

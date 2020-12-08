@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
@@ -131,10 +133,10 @@ public class EntityValueBuildTest extends AbstractContainer {
             StorageEntity storageEntity = new StorageEntity();
             storageEntity.setId(e.id());
             storageEntity.setAttribute(
-                    (String) m1.invoke(masterStorage, new Object[]{e.entityValue()}));
+                ((JSONObject) m1.invoke(masterStorage, new Object[]{e.entityValue()})).toJSONString());
 
             storageEntity.setMeta(
-                    (String) m2.invoke(masterStorage, new Object[]{e.entityClass()}));
+                ((JSONArray) m2.invoke(masterStorage, new Object[]{e.entityClass()})).toJSONString());
 
             storageEntities.add(storageEntity);
         }

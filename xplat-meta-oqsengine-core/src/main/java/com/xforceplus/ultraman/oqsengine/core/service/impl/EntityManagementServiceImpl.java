@@ -308,11 +308,10 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         // 有子类
                         if (entityClone.family().child() > 0) {
                             // 父子同步
-                            if (isConflict(masterStorage.synchronize(entityClone.id(), entityClone.family().child()))) {
+                            if (isConflict(masterStorage.synchronizeToChild(entityClone))) {
                                 hint.setRollback(true);
                                 return ResultStatus.CONFLICT;
                             }
-
                             eliminateIndex(entityClone.family().child());
                         }
                     }

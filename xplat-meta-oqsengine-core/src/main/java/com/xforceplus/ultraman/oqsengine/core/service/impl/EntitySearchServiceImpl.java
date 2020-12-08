@@ -324,7 +324,11 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
                 } else {
                     entities.stream().forEach(e -> {
-                        logger.info("Select conditions result: [{}]", e.toString());
+                        if (e == null) {
+                            logger.info("Select conditions result: [NULL]");
+                        } else {
+                            logger.info("Select conditions result: [{}]", e.toString());
+                        }
                     });
                 }
             }

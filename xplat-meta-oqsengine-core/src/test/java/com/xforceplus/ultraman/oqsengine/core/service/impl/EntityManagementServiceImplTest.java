@@ -223,7 +223,7 @@ public class EntityManagementServiceImplTest {
     public void testReplaceFather() throws Exception {
         when(masterStorage.selectOne(fatherEntity.id(), fatherEntity.entityClass())).thenReturn(Optional.of(fatherEntity));
         when(masterStorage.replace(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)))).thenReturn(1);
-        when(masterStorage.synchronize(fatherEntity.id(), fatherEntity.family().child())).thenReturn(1);
+        when(masterStorage.synchronizeToChild(fatherEntity)).thenReturn(1);
         when(indexStorage.delete(fatherEntity.id())).thenReturn(1);
         when(indexStorage.delete(fatherEntity.family().child())).thenReturn(1);
 
@@ -231,7 +231,7 @@ public class EntityManagementServiceImplTest {
 
         verify(masterStorage).selectOne(fatherEntity.id(), fatherEntityClass);
         verify(masterStorage).replace(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)));
-        verify(masterStorage).synchronize(fatherEntity.id(), fatherEntity.family().child());
+        verify(masterStorage).synchronizeToChild(fatherEntity);
         verify(indexStorage).delete(fatherEntity.id());
         verify(indexStorage).delete(fatherEntity.family().child());
     }

@@ -61,12 +61,6 @@ public class MetricsDefine {
      */
     public static final String CDC_SYNC_EXECUTED_COUNT = PREFIX + ".cdc.sync.executed.count";
 
-
-    /**
-     * CDC同步的延时.
-     */
-    public static final String CDC_SYNC_MAX_HANDLE_LATENCY_SECONDS = PREFIX + ".cdc.sync.max.handle.latency";
-
     /**
      * 当前OQS的工作模式.
      */

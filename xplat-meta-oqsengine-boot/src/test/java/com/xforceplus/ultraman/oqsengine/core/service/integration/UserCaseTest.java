@@ -19,6 +19,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EnumValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import org.junit.After;
@@ -90,6 +91,33 @@ public class UserCaseTest extends AbstractContainerTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void testUpdateFatherSearchChild() throws Exception {
+        IEntity childEntity = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 100000L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+        childEntity = entityManagementService.build(childEntity);
+        IEntity fatherEntity = entitySearchService.selectOne(childEntity.family().parent(), fatherClass).get();
+        fatherEntity.entityValue().addValue(new StringValue(fatherClass.field("c2").get(), "newValue"));
+
+        entityManagementService.replace(fatherEntity);
+
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions()
+                .addAnd(new Condition(
+                    fatherClass.field("c2").get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(fatherClass.field("c2").get(), "newValue")
+                )),
+            childClass,
+            Page.newSinglePage(100)
+        );
+
+        Assert.assertEquals(1, entities.size());
+
     }
 
     /**

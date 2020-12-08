@@ -203,38 +203,44 @@ public class MultiLocalTransaction implements Transaction {
                     }
 
                     for (TransactionResource transactionResource : transactionResourceHolder) {
-                        try {
-                            transactionResource.commit(commitId);
-                            transactionResource.destroy();
-                        } catch (SQLException ex) {
-                            exHolder.add(0, ex);
-                            break;
+                        if (exHolder.isEmpty()) {
+                            try {
+                                transactionResource.commit(commitId);
+                            } catch (SQLException ex) {
+                                exHolder.add(0, ex);
+                            }
                         }
+                        transactionResource.destroy();
                     }
-                    commitIdStatusService.save(commitId, true);
+                    if (exHolder.isEmpty()) {
+                        commitIdStatusService.save(commitId, true);
+                    }
 
                 } else {
                     // 只读事务提交.
                     for (TransactionResource transactionResource : transactionResourceHolder) {
-                        try {
-                            transactionResource.commit();
-                            transactionResource.destroy();
-                        } catch (SQLException ex) {
-                            exHolder.add(0, ex);
-                            break;
+                        if (exHolder.isEmpty()) {
+                            try {
+                                transactionResource.commit();
+                            } catch (SQLException ex) {
+                                exHolder.add(0, ex);
+                            }
                         }
+                        transactionResource.destroy();
                     }
                 }
             } else {
 
                 // 回滚
                 for (TransactionResource transactionResource : transactionResourceHolder) {
-                    try {
-                        transactionResource.rollback();
-                        transactionResource.destroy();
-                    } catch (SQLException ex) {
-                        exHolder.add(0, ex);
+                    if (exHolder.isEmpty()) {
+                        try {
+                            transactionResource.rollback();
+                        } catch (SQLException ex) {
+                            exHolder.add(0, ex);
+                        }
                     }
+                    transactionResource.destroy();
                 }
             }
 

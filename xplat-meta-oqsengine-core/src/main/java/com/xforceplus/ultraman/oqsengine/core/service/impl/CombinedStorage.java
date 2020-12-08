@@ -214,6 +214,11 @@ public class CombinedStorage implements MasterStorage, IndexStorage {
     }
 
     @Override
+    public int synchronizeToChild(IEntity entity) throws SQLException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public int build(IEntity entity) throws SQLException {
         throw new UnsupportedOperationException();
     }

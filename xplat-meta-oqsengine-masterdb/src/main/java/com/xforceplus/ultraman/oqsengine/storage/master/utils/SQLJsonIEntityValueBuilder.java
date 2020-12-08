@@ -116,6 +116,7 @@ public class SQLJsonIEntityValueBuilder implements IEntityValueBuilder<String> {
     // 兼容老版本数据.
     private String compatibleStorageName(String name) {
         if (name.startsWith(FieldDefine.ATTRIBUTE_PREFIX)) {
+            //去除开头的F.
             return name.substring(1);
         } else {
             return name;

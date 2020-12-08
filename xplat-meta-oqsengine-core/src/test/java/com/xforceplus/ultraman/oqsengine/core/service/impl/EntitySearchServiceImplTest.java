@@ -585,6 +585,11 @@ public class EntitySearchServiceImplTest {
         }
 
         @Override
+        public int synchronizeToChild(IEntity entity) throws SQLException {
+            return 0;
+        }
+
+        @Override
         public int build(IEntity entity) throws SQLException {
             return 0;
         }

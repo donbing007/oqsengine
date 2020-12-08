@@ -79,6 +79,10 @@ public abstract class AbstractConnectionTransactionResource extends AbstractTran
     @Override
     public void destroy() throws SQLException {
         value().close();
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Resource {} destroy!", key());
+        }
     }
 
     @Override

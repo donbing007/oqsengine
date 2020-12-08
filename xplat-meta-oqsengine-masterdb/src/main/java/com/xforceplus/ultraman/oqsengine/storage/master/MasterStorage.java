@@ -81,4 +81,15 @@ public interface MasterStorage extends Storage {
      * @return 同步的数量.
      */
     int synchronize(long id, long child) throws SQLException;
+
+    /**
+     * entity信息同步,如果当前entity含有子类那么此方法需要保证如下.
+     * 1. 除了包含自己的属性还需要包含父类属性.
+     * 2. 事务,提交号必须和父类保持一致.
+     *
+     * @param entity
+     * @return
+     * @throws SQLException
+     */
+    int synchronizeToChild(IEntity entity) throws SQLException;
 }

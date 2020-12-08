@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -45,7 +46,11 @@ public class CompatibilityTest extends AbstractContainerTest {
     private Selector<DataSource> indexDataSource;
 
     @Resource
+    private CommitIdStatusService commitIdStatusService;
+
+    @Resource
     private EntitySearchService entitySearchService;
+
 
     @Resource
     private EntityManagementService entityManagementService;
@@ -64,18 +69,18 @@ public class CompatibilityTest extends AbstractContainerTest {
 
     @After
     public void after() throws Exception {
-        Connection conn = masterDataSource.getConnection();
-        Statement stat = conn.createStatement();
-        stat.executeUpdate("truncate table oqsbigentity");
-        stat.close();
-        conn.close();
+        try (Connection conn = masterDataSource.getConnection()) {
+            try (Statement stat = conn.createStatement()) {
+                stat.executeUpdate("truncate table oqsbigentity");
+            }
+        }
 
         for (DataSource ds : indexDataSource.selects()) {
-            conn = ds.getConnection();
-            Statement st = conn.createStatement();
-            st.executeUpdate("truncate table oqsindex");
-            st.close();
-            conn.close();
+            try (Connection indexConn = ds.getConnection()) {
+                try (Statement st = indexConn.createStatement()) {
+                    st.executeUpdate("truncate table oqsindex");
+                }
+            }
         }
     }
 
@@ -95,7 +100,6 @@ public class CompatibilityTest extends AbstractContainerTest {
                 "(2, 200, 0, 0, 1, 0, 0,1,0,0,'{\"789S\":\"0\", \"910L\":0}','[]',0)");
         st.close();
         conn.close();
-
         IEntity entity = entitySearchService.selectOne(2, childClass).get();
         Assert.assertEquals(2, entity.id());
         Assert.assertEquals(0, entity.major());
@@ -220,6 +224,7 @@ public class CompatibilityTest extends AbstractContainerTest {
         );
         st.close();
         conn.close();
+        commitIdStatusService.save(3, true);
 
         Collection<IEntity> entities = entitySearchService.selectMultiple(new long[]{2, 4}, childClass);
         Assert.assertEquals(2, entities.size());

@@ -79,48 +79,48 @@ public abstract class AbstractContainer {
     static {
         Network network = Network.newNetwork();
         mysql = new GenericContainer("mysql:5.7")
-                .withNetwork(network)
-                .withNetworkAliases("mysql")
-                .withExposedPorts(3306)
-                .withEnv("MYSQL_DATABASE", "oqsengine")
-                .withEnv("MYSQL_ROOT_USERNAME", "root")
-                .withEnv("MYSQL_ROOT_PASSWORD", "root")
-                .withClasspathResourceMapping("mastdb.sql", "/docker-entrypoint-initdb.d/1.sql", BindMode.READ_ONLY)
-                .waitingFor(Wait.forListeningPort());
+            .withNetwork(network)
+            .withNetworkAliases("mysql")
+            .withExposedPorts(3306)
+            .withEnv("MYSQL_DATABASE", "oqsengine")
+            .withEnv("MYSQL_ROOT_USERNAME", "root")
+            .withEnv("MYSQL_ROOT_PASSWORD", "root")
+            .withClasspathResourceMapping("mastdb.sql", "/docker-entrypoint-initdb.d/1.sql", BindMode.READ_ONLY)
+            .waitingFor(Wait.forListeningPort());
         mysql.start();
 
         manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.0")
-                .withExposedPorts(9306)
-                .withNetwork(network)
-                .withNetworkAliases("manticore0")
-                .withClasspathResourceMapping("manticore0.conf", "/manticore.conf", BindMode.READ_ONLY)
-                .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-                .waitingFor(Wait.forListeningPort());
+            .withExposedPorts(9306)
+            .withNetwork(network)
+            .withNetworkAliases("manticore0")
+            .withClasspathResourceMapping("manticore0.conf", "/manticore.conf", BindMode.READ_ONLY)
+            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+            .waitingFor(Wait.forListeningPort());
         manticore0.start();
 
         manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.0")
-                .withExposedPorts(9306)
-                .withNetwork(network)
-                .withNetworkAliases("manticore1")
-                .withClasspathResourceMapping("manticore1.conf", "/manticore.conf", BindMode.READ_ONLY)
-                .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-                .waitingFor(Wait.forListeningPort());
+            .withExposedPorts(9306)
+            .withNetwork(network)
+            .withNetworkAliases("manticore1")
+            .withClasspathResourceMapping("manticore1.conf", "/manticore.conf", BindMode.READ_ONLY)
+            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+            .waitingFor(Wait.forListeningPort());
         manticore1.start();
 
         searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.0")
-                .withExposedPorts(9306)
-                .withNetwork(network)
-                .withNetworkAliases("searchManticore")
-                .withClasspathResourceMapping("search-manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
-                .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-                .dependsOn(manticore0, manticore1)
-                .waitingFor(Wait.forListeningPort());
+            .withExposedPorts(9306)
+            .withNetwork(network)
+            .withNetworkAliases("searchManticore")
+            .withClasspathResourceMapping("search-manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
+            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
+            .dependsOn(manticore0, manticore1)
+            .waitingFor(Wait.forListeningPort());
         searchManticore.start();
 
         redis = new GenericContainer("redis:6.0.9-alpine3.12")
-                .withNetworkAliases("redis")
-                .withExposedPorts(6379)
-                .waitingFor(Wait.forListeningPort());
+            .withNetworkAliases("redis")
+            .withExposedPorts(6379)
+            .waitingFor(Wait.forListeningPort());
         redis.start();
 
         System.setProperty("MYSQL_HOST", mysql.getContainerIpAddress());
@@ -136,21 +136,21 @@ public abstract class AbstractContainer {
         System.setProperty("SEARCH_MANTICORE_PORT", searchManticore.getFirstMappedPort().toString());
 
         System.setProperty(
-                "MYSQL_JDBC_URL",
-                String.format("jdbc:p6spy:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
-                        System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));
+            "MYSQL_JDBC_URL",
+            String.format("jdbc:p6spy:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
+                System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));
 
         System.setProperty("MANTICORE_WRITE0_JDBC_URL",
-                String.format("jdbc:p6spy:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
-                        System.getProperty("MANTICORE0_HOST"), System.getProperty("MANTICORE0_PORT")));
+            String.format("jdbc:p6spy:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
+                System.getProperty("MANTICORE0_HOST"), System.getProperty("MANTICORE0_PORT")));
 
         System.setProperty("MANTICORE_WRITE1_JDBC_URL",
-                String.format("jdbc:p6spy:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
-                        System.getProperty("MANTICORE1_HOST"), System.getProperty("MANTICORE1_PORT")));
+            String.format("jdbc:p6spy:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
+                System.getProperty("MANTICORE1_HOST"), System.getProperty("MANTICORE1_PORT")));
 
         System.setProperty("MANTICORE_SEARCH_JDBC_URL",
-                String.format("jdbc:p6spy:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
-                        System.getProperty("SEARCH_MANTICORE_HOST"), System.getProperty("SEARCH_MANTICORE_PORT")));
+            String.format("jdbc:p6spy:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
+                System.getProperty("SEARCH_MANTICORE_HOST"), System.getProperty("SEARCH_MANTICORE_PORT")));
 
         System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
 
@@ -166,7 +166,7 @@ public abstract class AbstractContainer {
 
         if (transactionManager == null) {
             redisClient = RedisClient.create(
-                    String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
+                String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
             commitIdStatusService = new CommitIdStatusServiceImpl();
             ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
             commitIdStatusService.init();
@@ -228,7 +228,7 @@ public abstract class AbstractContainer {
         DataSource searchDataSource = buildSearchDataSource();
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(transactionManager,
-                new SphinxQLTransactionResourceFactory());
+            new SphinxQLTransactionResourceFactory());
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
@@ -238,7 +238,7 @@ public abstract class AbstractContainer {
         sphinxQLConditionsBuilderFactory.init();
 
         Selector<String> indexWriteIndexNameSelector =
-                new SuffixNumberHashSelector("oqsindex", 3);
+            new SuffixNumberHashSelector("oqsindex", 3);
 
         indexStorage = new SphinxQLIndexStorage();
         ReflectionTestUtils.setField(indexStorage, "writerDataSourceSelector", writeDataSourceSelector);
@@ -275,7 +275,7 @@ public abstract class AbstractContainer {
 //                new LocalResourceLocker());
 
         taskExecutor = new DevOpsRebuildIndexExecutor(10, 3000, 30000,
-                 30, 300,  100);
+            30, 300, 100);
 
         ReflectionTestUtils.setField(taskExecutor, "indexStorage", indexStorage);
         ReflectionTestUtils.setField(taskExecutor, "sqlTaskStorage", sqlTaskStorage);
@@ -300,29 +300,29 @@ public abstract class AbstractContainer {
 
     public void clear() throws SQLException {
         for (DataSource ds : dataSourcePackage.getMaster()) {
-            Connection conn = ds.getConnection();
-            Statement st = conn.createStatement();
-            st.executeUpdate("truncate table oqsbigentity");
-            st.close();
-            conn.close();
+            try (Connection conn = ds.getConnection()) {
+                try (Statement st = conn.createStatement()) {
+                    st.executeUpdate("truncate table oqsbigentity");
+                }
+            }
         }
 
         for (DataSource ds : dataSourcePackage.getIndexWriter()) {
-            Connection conn = ds.getConnection();
-            Statement st = conn.createStatement();
-            st.executeUpdate("truncate table oqsindex0");
-            st.executeUpdate("truncate table oqsindex1");
-            st.executeUpdate("truncate table oqsindex2");
-            st.close();
-            conn.close();
+            try (Connection conn = ds.getConnection()) {
+                try (Statement st = conn.createStatement()) {
+                    st.executeUpdate("truncate table oqsindex0");
+                    st.executeUpdate("truncate table oqsindex1");
+                    st.executeUpdate("truncate table oqsindex2");
+                }
+            }
         }
 
         DataSource ds = dataSourcePackage.getDevOps();
-        Connection conn = ds.getConnection();
-        Statement st = conn.createStatement();
-        st.executeUpdate("truncate table " + cdcErrorsTableName);
-        st.executeUpdate("truncate table " + rebuildTableName);
-        st.close();
-        conn.close();
+        try (Connection conn = ds.getConnection()) {
+            try (Statement st = conn.createStatement()) {
+                st.executeUpdate("truncate table " + cdcErrorsTableName);
+                st.executeUpdate("truncate table " + rebuildTableName);
+            }
+        }
     }
 }
