@@ -100,6 +100,8 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
             tx.join(resource);
         }
 
+        // 非只读事务.
+        tx.declareWriteTransaction();
         try {
             tx.commit();
             Assert.fail("No expected exception was thrown.");
@@ -112,7 +114,7 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
         }
 
         for (MockResource r : correctResources) {
-            Assert.assertFalse(r.isCommitted());
+            Assert.assertTrue(r.isRollback());
         }
 
     }
@@ -137,7 +139,7 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
             tx.rollback();
             Assert.fail("No expected exception was thrown.");
         } catch (SQLException ex) {
-
+            ex.printStackTrace();
         }
 
         for (MockResource r : exResources) {

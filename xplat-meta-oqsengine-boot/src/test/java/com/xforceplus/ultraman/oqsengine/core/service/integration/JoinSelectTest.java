@@ -19,7 +19,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.api.StatefulRedisConnection;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -250,11 +249,6 @@ public class JoinSelectTest extends AbstractContainerTest {
                 }
             }
         }
-
-        try (StatefulRedisConnection<String, String> conn = redisClient.connect()) {
-            conn.sync().flushall();
-        }
-
     }
 
     private void buildEntities(List<IEntity> entities) throws SQLException {

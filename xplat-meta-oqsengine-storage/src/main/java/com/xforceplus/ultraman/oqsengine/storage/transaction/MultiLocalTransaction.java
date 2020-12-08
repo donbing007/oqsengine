@@ -202,13 +202,17 @@ public class MultiLocalTransaction implements Transaction {
                         logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
                     }
 
+                    boolean commitEx = false;
                     for (TransactionResource transactionResource : transactionResourceHolder) {
-                        if (exHolder.isEmpty()) {
-                            try {
+                        try {
+                            if (commitEx) {
+                                transactionResource.rollback();
+                            } else {
                                 transactionResource.commit(commitId);
-                            } catch (SQLException ex) {
-                                exHolder.add(0, ex);
                             }
+                        } catch (SQLException ex) {
+                            exHolder.add(0, ex);
+                            commitEx = true;
                         }
                         transactionResource.destroy();
                     }
@@ -219,12 +223,10 @@ public class MultiLocalTransaction implements Transaction {
                 } else {
                     // 只读事务提交.
                     for (TransactionResource transactionResource : transactionResourceHolder) {
-                        if (exHolder.isEmpty()) {
-                            try {
-                                transactionResource.commit();
-                            } catch (SQLException ex) {
-                                exHolder.add(0, ex);
-                            }
+                        try {
+                            transactionResource.commit();
+                        } catch (SQLException ex) {
+                            exHolder.add(0, ex);
                         }
                         transactionResource.destroy();
                     }
@@ -233,12 +235,10 @@ public class MultiLocalTransaction implements Transaction {
 
                 // 回滚
                 for (TransactionResource transactionResource : transactionResourceHolder) {
-                    if (exHolder.isEmpty()) {
-                        try {
-                            transactionResource.rollback();
-                        } catch (SQLException ex) {
-                            exHolder.add(0, ex);
-                        }
+                    try {
+                        transactionResource.rollback();
+                    } catch (SQLException ex) {
+                        exHolder.add(0, ex);
                     }
                     transactionResource.destroy();
                 }

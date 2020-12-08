@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.boot.OqsengineBootApplication;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
@@ -48,6 +49,12 @@ public class CompatibilityTest extends AbstractContainerTest {
     @Resource
     private CommitIdStatusService commitIdStatusService;
 
+    @Resource(name = "redisIdGenerator")
+    private LongIdGenerator commitIdGenerator;
+
+    @Resource(name = "snowflakeIdGenerator")
+    private LongIdGenerator txIdGenerator;
+
     @Resource
     private EntitySearchService entitySearchService;
 
@@ -93,13 +100,17 @@ public class CompatibilityTest extends AbstractContainerTest {
     public void testReadMajor0Entity() throws Exception {
         Connection conn = masterDataSource.getConnection();
         Statement st = conn.createStatement();
+        long txId = txIdGenerator.next();
+        long commitId = commitIdGenerator.next();
         st.executeUpdate(
             "insert into oqsbigentity (id,entity,tx,commitid,op,version,time,pref,cref,deleted,attribute,meta,oqsmajor) " +
                 "values" +
-                "(1, 100, 0, 0, 1, 0, 0,0,2,0,'{\"123L\":0, \"456S\":\"v1\"}','[]',0)," +
-                "(2, 200, 0, 0, 1, 0, 0,1,0,0,'{\"789S\":\"0\", \"910L\":0}','[]',0)");
+                String.format("(1, 100, %d, %d, 1, 0, 0,0,2,0,'{\"123L\":0, \"456S\":\"v1\"}','[]',0),", txId, commitId) +
+                String.format("(2, 200, %d, %d, 1, 0, 0,1,0,0,'{\"789S\":\"0\", \"910L\":0}','[]',0)", txId, commitId));
         st.close();
         conn.close();
+        commitIdStatusService.save(commitId, true);
+
         IEntity entity = entitySearchService.selectOne(2, childClass).get();
         Assert.assertEquals(2, entity.id());
         Assert.assertEquals(0, entity.major());
@@ -139,13 +150,16 @@ public class CompatibilityTest extends AbstractContainerTest {
     public void testReplaceMajor0Entity() throws Exception {
         Connection conn = masterDataSource.getConnection();
         Statement st = conn.createStatement();
+        long txId = txIdGenerator.next();
+        long commitId = commitIdGenerator.next();
         st.executeUpdate(
             "insert into oqsbigentity (id,entity,tx,commitid,op,version,time,pref,cref,deleted,attribute,meta,oqsmajor) " +
                 "values" +
-                "(1, 100, 0, 0, 1, 0, 0,0,2,0,'{\"123L\":0, \"456S\":\"v1\"}','[]',0)," +
-                "(2, 200, 0, 0, 1, 0, 0,1,0,0,'{\"789S\":\"0\", \"910L\":0}','[]',0)");
+                String.format("(1, 100, %d, %d, 1, 0, 0,0,2,0,'{\"123L\":0, \"456S\":\"v1\"}','[]',0),", txId, commitId) +
+                String.format("(2, 200, %d, %d, 1, 0, 0,1,0,0,'{\"789S\":\"0\", \"910L\":0}','[]',0)", txId, commitId));
         st.close();
         conn.close();
+        commitIdStatusService.save(commitId, true);
         IEntity entity = entitySearchService.selectOne(2, childClass).get();
         Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity));
 
@@ -214,17 +228,19 @@ public class CompatibilityTest extends AbstractContainerTest {
     public void testReadMajor0MultipleEntity() throws Exception {
         Connection conn = masterDataSource.getConnection();
         Statement st = conn.createStatement();
+        long txId = txIdGenerator.next();
+        long commitId = commitIdGenerator.next();
         st.executeUpdate(
             "insert into oqsbigentity (id,entity,tx,commitid,op,version,time,pref,cref,deleted,attribute,meta,oqsmajor) " +
                 "values" +
-                "(1, 100, 0, 3, 1, 0, 0,0,2,0,'{\"123L\":0, \"456S\":\"v1\"}','[]',0)," +
-                "(2, 200, 0, 3, 1, 0, 0,1,0,0,'{\"789S\":\"0\", \"910L\":0}','[]',0)," +
-                "(3, 100, 0, 3, 1, 0, 0,0,4,0,'{\"123L\":10, \"456S\":\"v2\"}','[]',0)," +
-                "(4, 200, 0, 3, 1, 0, 0,3,0,0,'{\"789S\":\"12\", \"910L\":1}','[]',0)"
+                String.format("(1, 100, %d, %d, 1, 0, 0,0,2,0,'{\"123L\":0, \"456S\":\"v1\"}','[]',0),", txId, commitId) +
+                String.format("(2, 200, %d, %d, 1, 0, 0,1,0,0,'{\"789S\":\"0\", \"910L\":0}','[]',0),", txId, commitId) +
+                String.format("(3, 100, %d, %d, 1, 0, 0,0,4,0,'{\"123L\":10, \"456S\":\"v2\"}','[]',0),", txId, commitId) +
+                String.format("(4, 200, %d, %d, 1, 0, 0,3,0,0,'{\"789S\":\"12\", \"910L\":1}','[]',0)", txId, commitId)
         );
         st.close();
         conn.close();
-        commitIdStatusService.save(3, true);
+        commitIdStatusService.save(commitId, true);
 
         Collection<IEntity> entities = entitySearchService.selectMultiple(new long[]{2, 4}, childClass);
         Assert.assertEquals(2, entities.size());
@@ -277,13 +293,18 @@ public class CompatibilityTest extends AbstractContainerTest {
     public void testReadCurrentMajorEntity() throws Exception {
         Connection conn = masterDataSource.getConnection();
         Statement st = conn.createStatement();
+        long txId = txIdGenerator.next();
+        long commitId = commitIdGenerator.next();
         st.executeUpdate(
             "insert into oqsbigentity (id,entity,tx,commitid,op,version,time,pref,cref,deleted,attribute,meta,oqsmajor) " +
                 "values" +
-                "(1, 100, 0, 0, 1, 0, 0,0,2,0,'{\"123L\":0, \"456S\":\"v1\"}','[]'," + OqsVersion.MAJOR + ")," +
-                "(2, 200, 0, 0, 1, 0, 0,1,0,0,'{\"123L\":0, \"456S\":\"v1\",\"789S\":\"0\", \"910L\":0}','[]'," + OqsVersion.MAJOR + ")");
+                String.format("(1, 100, %d, %d, 1, 0, 0,0,2,0,'{\"123L\":0, \"456S\":\"v1\"}','[]',%d),",
+                    txId, commitId, OqsVersion.MAJOR) +
+                String.format("(2, 200, %d, %d, 1, 0, 0,1,0,0,'{\"123L\":0, \"456S\":\"v1\",\"789S\":\"0\", \"910L\":0}','[]',%d)",
+                    txId, commitId, OqsVersion.MAJOR));
         st.close();
         conn.close();
+        commitIdStatusService.save(commitId, true);
 
         IEntity entity = entitySearchService.selectOne(2, childClass).get();
         Assert.assertEquals(2, entity.id());

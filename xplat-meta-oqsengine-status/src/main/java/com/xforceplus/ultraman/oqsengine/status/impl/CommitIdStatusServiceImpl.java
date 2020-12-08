@@ -214,6 +214,13 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     @Override
     public void obsolete(long... commitIds) {
 
+        if (commitIds.length == 0) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("No submission number needs to be eliminated.");
+            }
+            return;
+        }
+
         List<RedisFuture<Long>> futures = new ArrayList<>(commitIds.length);
         String target;
         String statusKey;

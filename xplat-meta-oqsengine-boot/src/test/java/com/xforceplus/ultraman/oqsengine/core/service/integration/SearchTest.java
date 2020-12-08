@@ -21,7 +21,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.junit.After;
@@ -351,10 +350,6 @@ public class SearchTest extends AbstractContainerTest {
                     st.executeUpdate("truncate table oqsindex");
                 }
             }
-        }
-
-        try (StatefulRedisConnection<String, String> conn = redisClient.connect()) {
-            conn.sync().flushall();
         }
     }
 
