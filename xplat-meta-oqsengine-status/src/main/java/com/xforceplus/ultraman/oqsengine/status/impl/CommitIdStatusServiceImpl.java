@@ -5,7 +5,6 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisFuture;
-import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -52,8 +51,6 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     private String commitidsKey;
 
     private String commitidStatusKeyPrefix;
-
-    private long commitidStatusTTLMs = 1000 * 60 * 30;
 
     private AtomicLong unSyncCommitIdSize;
 
@@ -108,8 +105,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         String statusKey = commitidStatusKeyPrefix + "." + target;
 
         syncCommands.zadd(commitidsKey, (double) commitId, target);
-        if (!ready) {
-            syncCommands.set(statusKey, CommitStatus.NOT_READY.getSymbol(), SetArgs.Builder.px(commitidStatusTTLMs));
+        if (ready) {
+            syncCommands.set(statusKey, CommitStatus.READY.getSymbol());
+        } else {
+            syncCommands.set(statusKey, CommitStatus.NOT_READY.getSymbol());
         }
 
         updateMetrics();
@@ -125,7 +124,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
         CommitStatus status = CommitStatus.getInstance(value);
 
-        if (CommitStatus.READY == status || CommitStatus.UNKNOWN == status) {
+        if (CommitStatus.READY == status) {
             return true;
         } else {
             return false;
@@ -136,7 +135,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     public void ready(long commitId) {
         String target = Long.toString(commitId);
         String statusKey = commitidStatusKeyPrefix + "." + target;
-        syncCommands.set(statusKey, CommitStatus.READY.getSymbol(), SetArgs.Builder.px(commitidStatusTTLMs));
+        syncCommands.set(statusKey, CommitStatus.READY.getSymbol());
     }
 
     @Override
@@ -200,9 +199,15 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
         List<RedisFuture<Long>> futures = new ArrayList<>(commitIds.length);
         String target;
+        String statusKey;
         for (long id : commitIds) {
             target = Long.toString(id);
+            statusKey = commitidStatusKeyPrefix + "." + target;
+
+            // 清理未同步列表中的提交号,表示此提交号已经同步.
             futures.add(asyncCommands.zrem(commitidsKey, target));
+            // 清理未同步列表状态.
+            futures.add(asyncCommands.del(statusKey));
         }
 
         asyncCommands.flushCommands();

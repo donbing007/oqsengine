@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.status.impl;
 import com.xforceplus.ultraman.oqsengine.status.AbstractRedisContainerTest;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -13,7 +15,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
+import java.util.Queue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 
@@ -42,6 +45,8 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
         impl = new CommitIdStatusServiceImpl(key, statusKeyPreifx);
         ReflectionTestUtils.setField(impl, "redisClient", redisClient);
         impl.init();
+
+        TimeUnit.MILLISECONDS.sleep(100L);
     }
 
     @After
@@ -58,7 +63,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
      * Method: save(long commitId)
      */
     @Test
-    public void testSave() throws Exception {
+    public void testSaveNotReady() throws Exception {
         long expectedTotal = LongStream.rangeClosed(1, 1000).map(i -> impl.save(i, false)).sum();
 
         long[] allIds = impl.getAll();
@@ -67,6 +72,19 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
 
         Arrays.stream(allIds).forEach(id -> {
             Assert.assertFalse(impl.isReady(id));
+        });
+    }
+
+    @Test
+    public void testSaveReady() throws Exception {
+        long expectedTotal = LongStream.rangeClosed(1, 1000).map(i -> impl.save(i, true)).sum();
+
+        long[] allIds = impl.getAll();
+        long actualTotal = Arrays.stream(allIds).sum();
+        Assert.assertEquals(expectedTotal, actualTotal);
+
+        Arrays.stream(allIds).forEach(id -> {
+            Assert.assertTrue(impl.isReady(id));
         });
     }
 
@@ -85,6 +103,22 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
          */
         Assert.assertTrue(impl.isReady(commitId));
         Assert.assertTrue(impl.isReady(commitId));
+    }
+
+    @Test
+    public void testStatusClean() throws Exception {
+        long commitId = 100;
+        impl.save(commitId, false);
+        Assert.assertEquals(commitId, impl.getMin().get().longValue());
+        impl.ready(commitId);
+        impl.obsolete(commitId);
+
+        Assert.assertFalse(impl.isReady(commitId));
+        try (StatefulRedisConnection<String, String> connect = redisClient.connect()) {
+            RedisCommands<String, String> commands = connect.sync();
+            long size = commands.exists(statusKeyPreifx + "." + commitId);
+            Assert.assertEquals(0, size);
+        }
     }
 
     /**
@@ -172,5 +206,59 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
         unSyncCommitIdSizeField.setAccessible(true);
         AtomicLong unSyncCommitIdSize = (AtomicLong) unSyncCommitIdSizeField.get(impl);
         Assert.assertEquals(989L, unSyncCommitIdSize.longValue());
+    }
+
+    /**
+     * 测试协同.
+     * 调用者应该只有在isReady()给出true的情况下才能进行提交号的淘汰.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSynergy() throws Exception {
+        ExecutorService worker = Executors.newFixedThreadPool(10);
+        AtomicLong commitId = new AtomicLong(0);
+        BlockingQueue<Long> queue = new ArrayBlockingQueue(1000);
+        Queue<Long> finishdQueue = new ConcurrentLinkedQueue();
+        int size = 1000;
+        //写入提交号.
+        worker.submit(() -> {
+            for (int i = 0; i < size; i++) {
+                worker.submit(() -> {
+
+                    long commitid = commitId.incrementAndGet();
+
+                    queue.offer(commitid);
+
+                    impl.save(commitid, true);
+                });
+            }
+        });
+
+        while (finishdQueue.size() != size) {
+            worker.submit(() -> {
+                Long id = null;
+                try {
+                    id = queue.take();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                while (!impl.isReady(id)) {
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(100L);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                impl.obsolete(id);
+                finishdQueue.offer(id);
+            });
+        }
+
+        worker.shutdown();
+
+        Assert.assertEquals(0, impl.getAll().length);
+        Assert.assertEquals(size, finishdQueue.size());
     }
 }

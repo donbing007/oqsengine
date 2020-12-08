@@ -12,7 +12,8 @@ import javax.annotation.Resource;
 import java.sql.SQLException;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCMetricsConstant.*;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCMetricsConstant.HEART_BEAT_INTERVAL;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCMetricsConstant.HEART_BEAT_LOG_INTERVAL;
 
 
 /**
@@ -114,7 +115,9 @@ public class CDCMetricsService {
     public void isReadyCommit(long commitId) {
         StopWatch timer = new StopWatch();
         try {
-            logger.info("[cdc-metrics] attempt check ready to commitId , commitId : {}", commitId);
+            if (logger.isDebugEnabled()) {
+                logger.debug("[cdc-metrics] attempt check ready to commitId , commitId : {}", commitId);
+            }
             timer.start();
             int loops = 0;
             while (true) {
@@ -136,7 +139,9 @@ public class CDCMetricsService {
             }
         } finally {
             timer.stop();
-            logger.info("[cdc-metrics] success check ready to commitId, commitId : {}", commitId);
+            if (logger.isDebugEnabled()) {
+                logger.debug("[cdc-metrics] success check ready to commitId, commitId : {}", commitId);
+            }
             if (timer.getLastTaskTimeMillis() > READY_WARM_MAX_INTERVAL) {
                 logger.warn("[cdc-metrics] wait for ready commitId use too much times, commitId {}, use time : {}ms"
                         , commitId, timer.getLastTaskTimeMillis());
