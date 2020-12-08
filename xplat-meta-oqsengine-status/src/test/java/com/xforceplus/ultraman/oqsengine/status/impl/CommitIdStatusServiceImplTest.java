@@ -222,7 +222,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
         AtomicLong commitId = new AtomicLong(0);
         BlockingQueue<Long> queue = new ArrayBlockingQueue(1000);
         Queue<Long> finishdQueue = new ConcurrentLinkedQueue();
-        int size = 1000;
+        int size = 100;
         //写入提交号.
         worker.submit(() -> {
             for (int i = 0; i < size; i++) {
