@@ -193,6 +193,8 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
             .rangeClosed(9, 1000).map(i -> impl.save(i, false)).filter(i -> i != 20).filter(i -> i != 9).filter(i -> i != 1000)
             .sorted().toArray();
         impl.obsolete(20, 9, 1000);
+        // Idempotent
+        impl.obsolete(20, 9, 1000);
         Assert.assertEquals(expected.length, impl.size());
         Assert.assertArrayEquals(expected, impl.getAll());
 
