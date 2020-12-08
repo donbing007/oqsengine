@@ -132,6 +132,8 @@ public class CDCMetricsService {
                         logger.warn(
                                 "[cdc-metrics] loops for wait ready commit missed current check point, current-loops : {}, commitId : {}"
                                                         , loops, commitId);
+
+                        loops = 0;
                     }
                     continue;
                 }

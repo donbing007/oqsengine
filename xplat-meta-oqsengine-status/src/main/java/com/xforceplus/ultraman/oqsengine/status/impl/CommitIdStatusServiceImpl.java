@@ -37,6 +37,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     private static final String DEFAULT_COMMITIDS_KEY = "com.xforceplus.ultraman.oqsengine.status.commitids";
     private static final String DEFAULT_COMMITID_STATUS_KEY_PREFIX = "com.xforceplus.ultraman.oqsengine.status.commitid";
 
+    /**
+     * 小于等于此值的判定为无效的commitid.
+     */
+    private static final long INVALID_COMMITID = 0;
+
     @Resource
     private RedisClient redisClient;
 
@@ -101,6 +106,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     @Override
     public long save(long commitId, boolean ready) {
+        if (commitId <= INVALID_COMMITID) {
+            return commitId;
+        }
+
         String target = Long.toString(commitId);
         String statusKey = commitidStatusKeyPrefix + "." + target;
 
@@ -118,6 +127,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     @Override
     public boolean isReady(long commitId) {
+        if (commitId <= INVALID_COMMITID) {
+            return true;
+        }
+
         String target = Long.toString(commitId);
         String statusKey = commitidStatusKeyPrefix + "." + target;
         String value = syncCommands.get(statusKey);
@@ -133,6 +146,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     @Override
     public void ready(long commitId) {
+        if (commitId <= INVALID_COMMITID) {
+            return;
+        }
+
         String target = Long.toString(commitId);
         String statusKey = commitidStatusKeyPrefix + "." + target;
         syncCommands.set(statusKey, CommitStatus.READY.getSymbol());
