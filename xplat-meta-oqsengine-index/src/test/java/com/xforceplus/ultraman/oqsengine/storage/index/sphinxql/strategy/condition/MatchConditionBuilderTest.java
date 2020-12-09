@@ -91,7 +91,7 @@ public class MatchConditionBuilderTest {
                     ConditionOperator.LIKE,
                     new StringValue(new EntityField(11111, "test", FieldType.STRING), "test")
                 ),
-                "\"*test*\""
+                "(ZONESPAN:F11111S \"*test*\")"
             ),
             new Case(
                 new Condition(

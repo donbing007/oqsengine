@@ -87,7 +87,7 @@ public class NoOrNoRanageConditionsBuilderTest {
                         new StringValue(new EntityField(1, "c1", FieldType.STRING), "test")
                     )
                 ),
-                String.format("entity = %d AND %s\"*test*\")%s", entityClass.id(), expectPrefix, expectAfter)
+                String.format("entity = %d AND %s(ZONESPAN:F1S \"*test*\"))%s", entityClass.id(), expectPrefix, expectAfter)
             )
             ,
             new Case(
