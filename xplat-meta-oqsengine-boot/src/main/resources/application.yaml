@@ -23,6 +23,9 @@ threadPool:
   call:
     worker: 0
     queue: 1000
+    rebuild:
+      worker: 0
+      queue: 1000
   cdc:
     worker: 0
 

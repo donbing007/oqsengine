@@ -54,6 +54,9 @@ data:
           call:
             worker: {{ .Values.storage.threadPool.call.worker | default "0" }}
             queue: {{ .Values.storage.threadPool.call.queue | default "500" }}
+            rebuild:
+              worker: {{ .Values.storage.threadPool.call.rebuild.worker | default "0" }}
+              queue:{{ .Values.storage.threadPool.call.rebuild.queue | default "500" }}
           cdc:
             worker: {{ .Values.storage.threadPool.cdc.worker | default "1" }}
         maxVisibleNumber: {{ .Values.storage.maxVisibleNumber | default "10000" }}

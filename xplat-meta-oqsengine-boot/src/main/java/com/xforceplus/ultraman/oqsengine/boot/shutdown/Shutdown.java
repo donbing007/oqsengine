@@ -37,6 +37,9 @@ public class Shutdown {
     @Resource(name = "callThreadPool")
     private ExecutorService callThreadPool;
 
+    @Resource(name = "callRebuildThreadPool")
+    private ExecutorService callRebuildThreadPool;
+
     @Resource
     private CDCDaemonService cdcDaemonService;
 
@@ -73,6 +76,10 @@ public class Shutdown {
         logger.info("Start closing the IO worker thread...");
         ExecutorHelper.shutdownAndAwaitTermination(callThreadPool, 3600);
         logger.info("Succeed closing the IO worker thread...ok!");
+
+        logger.info("Start closing the callRebuild worker thread...");
+        ExecutorHelper.shutdownAndAwaitTermination(callRebuildThreadPool, 3600);
+        logger.info("Succeed closing the callRebuild worker thread...ok!");
 
         logger.info("Start closing the cdc consumer service...");
         cdcDaemonService.stopDaemon();
