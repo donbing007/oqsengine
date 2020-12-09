@@ -18,7 +18,11 @@
             <artifactId>xplat-meta-oqsengine-index</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.xforceplus.ultraman</groupId>
+            <artifactId>xplat-meta-oqsengine-devops</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-masterdb</artifactId>
