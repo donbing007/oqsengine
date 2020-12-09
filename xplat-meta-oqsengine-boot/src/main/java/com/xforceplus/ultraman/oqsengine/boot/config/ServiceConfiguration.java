@@ -1,8 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.DevOpsManagementServiceImpl;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.EntityManagementServiceImpl;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.EntitySearchServiceImpl;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.TransactionManagementServiceImpl;
@@ -48,6 +50,11 @@ public class ServiceConfiguration {
             impl.setAllowMaxUnSyncCommitIdSize(allowMaxUnSyncCommitIdSize);
         }
         return impl;
+    }
+
+    @Bean
+    public DevOpsManagementService devOpsManagementService() {
+        return new DevOpsManagementServiceImpl();
     }
 
     @Bean
