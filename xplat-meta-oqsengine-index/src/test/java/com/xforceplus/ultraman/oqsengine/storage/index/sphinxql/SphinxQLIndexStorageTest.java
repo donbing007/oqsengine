@@ -637,7 +637,8 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
                     .filter(r -> Arrays.binarySearch(expectedIds, r.getId()) < 0).count());
 
                 return true;
-            }),
+            })
+            ,
             // decimal eq
             new Case(
                 Conditions.buildEmtpyConditions()

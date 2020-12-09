@@ -192,6 +192,19 @@ public class UserCaseTest extends AbstractContainerTest {
         Assert.assertEquals(0, commitIdStatusService.size());
     }
 
+    @Test
+    public void testBuildAfterDelete() throws Exception {
+        IEntity childEntity = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 100000L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+        for (int i = 0; i < 100; i++) {
+            childEntity = entityManagementService.build(childEntity);
+            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(childEntity));
+        }
+
+    }
+
     /**
      * 测试不断的更新已有数据,并立即查询后的结果.
      *

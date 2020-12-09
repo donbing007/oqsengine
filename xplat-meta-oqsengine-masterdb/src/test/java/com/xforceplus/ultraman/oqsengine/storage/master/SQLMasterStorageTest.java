@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
+import com.alibaba.fastjson.JSONArray;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.CommonRangeShardingAlgorithm;
@@ -38,9 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -187,6 +186,26 @@ public class SQLMasterStorageTest extends AbstractContainerTest {
         Assert.assertEquals("father.value", child.entityValue().getValue("c2").get().valueToString());
         Assert.assertEquals("是", child.entityValue().getValue("c3").get().valueToString());
         Assert.assertEquals(false, child.entityValue().getValue("c4").get().getValue());
+
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stat = conn.prepareStatement("select meta from oqsbigentity where id = ?")) {
+                stat.setLong(1, child.id());
+
+                try (ResultSet rs = stat.executeQuery()) {
+                    rs.next();
+                    String meta = rs.getString(1);
+                    JSONArray metas = JSONArray.parseArray(meta);
+                    Map<String, Integer> numbers = new HashMap();
+                    for (String m : metas.toJavaList(String.class)) {
+                        if (numbers.containsKey(m)) {
+                            Assert.fail(String.format("Duplicate meta definitions found.[%s]", m));
+                        } else {
+                            numbers.put(m, 0);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Test

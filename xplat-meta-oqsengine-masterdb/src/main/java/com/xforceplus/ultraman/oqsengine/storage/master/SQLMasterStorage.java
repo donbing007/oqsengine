@@ -323,6 +323,10 @@ public class SQLMasterStorage implements MasterStorage {
                             childMeta = JSON.parseArray(childEntity.getMeta());
                         }
                         childMeta.addAll(fatherMeta);
+                        // 去重
+                        Set<String> duplicateSet = new HashSet(childMeta.toJavaList(String.class));
+                        childMeta.clear();
+                        childMeta.addAll(duplicateSet);
                         childEntity.setMeta(childMeta.toJSONString());
 
                         hint.setReadOnly(false);
