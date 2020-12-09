@@ -156,6 +156,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     }
 
     @Override
+    public long[] getUnreadiness() {
+        return Arrays.stream(getAll()).filter(commitid -> !isReady(commitid)).toArray();
+    }
+
+    @Override
     public Optional<Long> getMin() {
         List<String> ids = syncCommands.zrange(commitidsKey, 0, 0);
         if (ids.isEmpty()) {
@@ -241,6 +246,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
             logger.debug("The commit`s number {} has been eliminated.", Arrays.toString(commitIds));
         }
         updateMetrics();
+    }
+
+    @Override
+    public boolean isObsolete(long commitId) {
+        return syncCommands.zrank(commitidsKey, Long.toString(commitId)) == null;
     }
 
     private void updateMetrics() {

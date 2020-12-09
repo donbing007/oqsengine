@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -217,7 +218,11 @@ public class MultiLocalTransaction implements Transaction {
                         transactionResource.destroy();
                     }
                     if (exHolder.isEmpty()) {
+
                         commitIdStatusService.save(commitId, true);
+
+                        awit(commitId);
+
                     }
 
                 } else {
@@ -247,6 +252,27 @@ public class MultiLocalTransaction implements Transaction {
             throwSQLExceptionIfNecessary(exHolder);
         } finally {
             durationMetrics.stop(Metrics.globalRegistry.timer(MetricsDefine.TRANSACTION_DURATION_SECONDS));
+        }
+    }
+
+    private void awit(long commitId) {
+        final int maxWaitTimces = 2000;
+        for (int i = 0; i < maxWaitTimces; i++) {
+            if (commitIdStatusService.isObsolete(commitId)) {
+                break;
+            } else {
+
+                if (i % 10 == 0) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Wait 3 ms for commitId sync!");
+                    }
+                }
+
+                try {
+                    TimeUnit.MILLISECONDS.sleep(3L);
+                } catch (InterruptedException e) {
+                }
+            }
         }
     }
 

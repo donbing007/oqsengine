@@ -263,4 +263,25 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
         Assert.assertEquals(0, impl.getAll().length);
         Assert.assertEquals(size, finishdQueue.size());
     }
+
+    @Test
+    public void testGetUnreadiness() throws Exception {
+        impl.save(1, false);
+        impl.save(2, false);
+        impl.save(3, true);
+
+        Assert.assertEquals(2, Arrays.stream(impl.getUnreadiness()).filter(i -> i == 1 | i == 2).count());
+    }
+
+    @Test
+    public void testIsObsolete() throws Exception {
+        impl.save(1, true);
+        impl.save(2, true);
+        Assert.assertFalse(impl.isObsolete(1));
+        Assert.assertFalse(impl.isObsolete(2));
+
+        impl.obsolete(1, 2);
+        Assert.assertTrue(impl.isObsolete(1));
+        Assert.assertTrue(impl.isObsolete(2));
+    }
 }

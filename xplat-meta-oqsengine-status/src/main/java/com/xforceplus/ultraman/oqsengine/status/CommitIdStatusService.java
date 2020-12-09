@@ -37,6 +37,13 @@ public interface CommitIdStatusService {
     void ready(long commitId);
 
     /**
+     * 返回所有未就绪的提交号.
+     *
+     * @return 未就绪的提交号.
+     */
+    long[] getUnreadiness();
+
+    /**
      * 获取当前最小的提交号.
      *
      * @return 提交号.
@@ -70,4 +77,10 @@ public interface CommitIdStatusService {
      * @param commitIds 需要淘汰的提交号.
      */
     void obsolete(long... commitIds);
+
+    /**
+     * @param commitId
+     * @return
+     */
+    boolean isObsolete(long commitId);
 }

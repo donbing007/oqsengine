@@ -8,9 +8,14 @@ import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import org.junit.After;
 import org.junit.Assert;
@@ -88,6 +93,42 @@ public class CompatibilityTest extends AbstractContainerTest {
                     st.executeUpdate("truncate table oqsindex");
                 }
             }
+        }
+    }
+
+    @Test
+    public void testUpdateAfterCount() throws Exception {
+        try (Connection conn = masterDataSource.getConnection()) {
+            try (Statement st = conn.createStatement()) {
+                long txId = txIdGenerator.next();
+                long commitId = commitIdGenerator.next();
+                st.executeUpdate(
+                    "insert into oqsbigentity (id,entity,tx,commitid,op,version,time,pref,cref,deleted,attribute,meta,oqsmajor) " +
+                        "values" +
+                        String.format("(1, 100, %d, %d, 1, 0, 0,0,2,0,'{\"123L\":0, \"456S\":\"v1\"}','[]',0),", txId, commitId) +
+                        String.format("(2, 200, %d, %d, 1, 0, 0,1,0,0,'{\"789S\":\"0\", \"910L\":0}','[]',0)", txId, commitId));
+                commitIdStatusService.save(commitId, true);
+            }
+        }
+
+        for (int i = 0; i < 100; i++) {
+            IEntity entity = entitySearchService.selectOne(2, childClass).get();
+            entity.entityValue().addValue(new LongValue(fatherClass.field("c1").get(), i));
+            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(entity));
+
+            Page page = new Page(1, 10);
+            entitySearchService.selectByConditions(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        fatherClass.field("c1").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(fatherClass.field("c1").get(), i))
+                ),
+                fatherClass,
+                page
+            );
+
+            Assert.assertEquals(1, page.getPageCount());
         }
     }
 

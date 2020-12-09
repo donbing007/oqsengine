@@ -27,6 +27,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -46,6 +48,8 @@ import java.util.concurrent.TimeUnit;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UserCaseTest extends AbstractContainerTest {
+
+    final Logger logger = LoggerFactory.getLogger(UserCaseTest.class);
 
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;
@@ -318,5 +322,34 @@ public class UserCaseTest extends AbstractContainerTest {
             entities.stream().skip(1).findFirst().get().entityValue().getValue("c1").get().valueToLong());
         Assert.assertEquals(200000L,
             entities.stream().skip(2).findFirst().get().entityValue().getValue("c1").get().valueToLong());
+    }
+
+    @Test
+    public void testUpdateAfterCount() throws Exception {
+        IEntity childEntity = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 200000L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+
+        childEntity = entityManagementService.build(childEntity);
+        for (int i = 0; i < 100; i++) {
+            childEntity = entitySearchService.selectOne(childEntity.id(), childClass).get();
+            childEntity.entityValue().addValue(new LongValue(fatherClass.field("c1").get(), i));
+            Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(childEntity));
+
+            Page page = new Page(1, 10);
+            entitySearchService.selectByConditions(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        fatherClass.field("c1").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(fatherClass.field("c1").get(), i))
+                ),
+                fatherClass,
+                page
+            );
+
+            Assert.assertEquals(1, page.getPageCount());
+        }
     }
 }
