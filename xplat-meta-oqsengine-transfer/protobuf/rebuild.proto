@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+import "transfer.proto";
+
+option java_multiple_files = true;
+option java_package = "com.xforceplus.ultraman.oqsengine.sdk";
+option java_outer_classname = "EntityRebuildResourceProto";
+
+
+service EntityRebuildService {
+
+    rpc rebuildIndex ( RebuildRequest ) returns ( RebuildTaskInfo );
+
+    rpc showProgress ( ShowTask ) returns (stream RebuildTaskInfo );
+
+    rpc listActiveTasks ( QueryPage ) returns ( stream RebuildTaskInfo );
+
+    rpc getActiveTask ( EntityUp ) returns ( RebuildTaskInfo );
+
+    rpc listAllTasks ( QueryPage ) returns ( stream RebuildTaskInfo );
+
+    rpc cancelTask ( ShowTask ) returns ( RebuildTaskInfo );
+
+}
+
+message QueryPage {
+   int32 size = 1;
+   int32 number = 2;
+}
+
+message ShowTask {
+    int64 id = 1;
+}
+
+message RebuildRequest {
+    EntityUp entity = 1;
+    string start = 2;
+    string end = 3;
+}
+
+message RebuildTaskInfo {
+    int64 tid = 1;
+    bool isDone = 2;
+    bool isCancel = 3;
+    int32 percentage = 4;
+    string status = 5;
+    int64 entityId = 6;
+    int64 starts = 7;
+    int64 ends = 8;
+    int32 batchSize = 9;
+    int32 finishSize = 10;
+    string errCode = 11;
+    string message = 12;
+}
