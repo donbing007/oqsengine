@@ -91,8 +91,8 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
         try (PreparedStatement st = getResource().value().prepareStatement(
             sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
 
-            st.setLong(1, entityClass.id());
-            st.setLong(2, commitid);
+            st.setLong(1, commitid);
+            st.setLong(2, entityClass.id());
 
             checkTimeout(st);
 
@@ -151,9 +151,9 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
         }
         sql.append(" FROM ").append(getTableName())
             .append(" WHERE (")
-            .append(FieldDefine.ENTITY).append(" = ").append("?")
-            .append(" AND ")
             .append(FieldDefine.COMMITID).append(" >= ").append("?")
+            .append(" AND ")
+            .append(FieldDefine.ENTITY).append(" = ").append("?")
             .append(")");
         if (where.length() > 0 && !where.isEmpty()) {
             sql.append(" AND (").append(where).append(")");

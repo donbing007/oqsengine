@@ -46,9 +46,8 @@ public class CDCStatusServiceImpl implements CDCStatusService {
 
     private long lastHeartBeatValue = -1;
     private AtomicLong cdcSyncTime = new AtomicLong(0);
-    private AtomicLong cdcExecutedCount = new AtomicLong(0);
     private TimeGauge.Builder<AtomicLong> cdcSyncTimeGauge;
-    private TimeGauge.Builder<AtomicLong> cdcExecutedCountGauge;
+    private AtomicLong cdcExecutedCountGauge;
 
     public CDCStatusServiceImpl() {
         this(DEFAULT_CDC_METRICS_KEY, DEFAULT_CDC_ACK_METRICS_KEY, DEFAULT_HEART_BEAT_KEY);
@@ -82,11 +81,9 @@ public class CDCStatusServiceImpl implements CDCStatusService {
                 MetricsDefine.CDC_SYNC_DELAY_LATENCY_SECONDS, cdcSyncTime, TimeUnit.MILLISECONDS, AtomicLong::get);
 
         cdcExecutedCountGauge =
-            TimeGauge.builder(
-                MetricsDefine.CDC_SYNC_EXECUTED_COUNT, cdcExecutedCount, TimeUnit.MILLISECONDS, AtomicLong::get);
+            Metrics.gauge(MetricsDefine.CDC_SYNC_EXECUTED_COUNT, new AtomicLong(0));
 
         cdcSyncTimeGauge.register(Metrics.globalRegistry);
-        cdcExecutedCountGauge.register(Metrics.globalRegistry);
     }
 
     @PreDestroy
@@ -149,7 +146,7 @@ public class CDCStatusServiceImpl implements CDCStatusService {
         } finally {
             cdcSyncTime.set(ackMetrics.getTotalUseTime());
 
-            cdcExecutedCount.set(ackMetrics.getExecuteRows());
+            cdcExecutedCountGauge.set(ackMetrics.getExecuteRows());
         }
     }
 
