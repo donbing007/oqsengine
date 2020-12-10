@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -40,16 +41,25 @@ public class MultiLocalTransaction implements Transaction {
     private LongIdGenerator longIdGenerator;
     private boolean writeTx = false;
     private CommitIdStatusService commitIdStatusService;
+    private long maxWaitCommitIdSyncMs;
+    // 每一次检查不通过的等待时间.
+    private final long checkCommitIdSyncMs = 30;
 
     private Timer.Sample durationMetrics;
 
     public MultiLocalTransaction(long id, LongIdGenerator longIdGenerator, CommitIdStatusService commitIdStatusService) {
+        this(id, longIdGenerator, commitIdStatusService, TimeUnit.MINUTES.toMillis(1));
+    }
+
+    public MultiLocalTransaction(
+        long id, LongIdGenerator longIdGenerator, CommitIdStatusService commitIdStatusService, long maxWaitCommitIdSyncMs) {
         transactionResourceHolder = new LinkedList<>();
         committed = false;
         rollback = false;
         this.id = id;
         this.longIdGenerator = longIdGenerator;
         this.commitIdStatusService = commitIdStatusService;
+        this.maxWaitCommitIdSyncMs = maxWaitCommitIdSyncMs;
 
         durationMetrics = Timer.start(Metrics.globalRegistry);
     }
@@ -221,7 +231,12 @@ public class MultiLocalTransaction implements Transaction {
 
                         commitIdStatusService.save(commitId, true);
 
-                        awit(commitId);
+                        long waitMs = awitCommitSync(commitId);
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(
+                                "Transaction {}, commit number {} wait for commit number to confirm {} milliseconds.",
+                                id, commitId, waitMs);
+                        }
 
                     }
 
@@ -255,25 +270,36 @@ public class MultiLocalTransaction implements Transaction {
         }
     }
 
-    private void awit(long commitId) {
-        final int maxWaitTimces = 2000;
-        for (int i = 0; i < maxWaitTimces; i++) {
+    // 等待提交号被同步成功或者超时.
+    private long awitCommitSync(long commitId) {
+
+        if (maxWaitCommitIdSyncMs <= 0) {
+            return 0;
+        }
+
+        int maxLoop = 1;
+        if (maxWaitCommitIdSyncMs > checkCommitIdSyncMs) {
+            maxLoop = (int) (maxWaitCommitIdSyncMs / checkCommitIdSyncMs);
+        }
+
+        for (int i = 0; i < maxLoop; i++) {
+
             if (commitIdStatusService.isObsolete(commitId)) {
-                break;
+
+                return i * checkCommitIdSyncMs;
+
             } else {
 
-                if (i % 10 == 0) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Wait 3 ms for commitId sync!");
-                    }
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The commit number {} has not been phased out, wait {} milliseconds.",
+                        commitId, checkCommitIdSyncMs);
                 }
 
-                try {
-                    TimeUnit.MILLISECONDS.sleep(3L);
-                } catch (InterruptedException e) {
-                }
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(checkCommitIdSyncMs));
             }
         }
+
+        return maxWaitCommitIdSyncMs;
     }
 
     @Override

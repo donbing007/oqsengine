@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
 public class SQLMasterStorageQueryTest extends AbstractContainerTest {
 
     private TransactionManager transactionManager;
+    private CommitIdStatusServiceImpl commitIdStatusService;
 
     private DataSource dataSource;
     private SQLMasterStorage storage;
@@ -156,12 +157,15 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
 
         redisClient = RedisClient.create(
             String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
-        CommitIdStatusServiceImpl commitIdStatusService = new CommitIdStatusServiceImpl();
+        commitIdStatusService = new CommitIdStatusServiceImpl();
         ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
         commitIdStatusService.init();
 
         transactionManager = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
+            new IncreasingOrderLongIdGenerator(0),
+            new IncreasingOrderLongIdGenerator(0),
+            commitIdStatusService,
+            false);
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
             transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"));
@@ -215,6 +219,8 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
 
         transactionManager.finish();
 
+        storage.destroy();
+
         Connection conn = dataSource.getConnection();
         Statement stat = conn.createStatement();
         stat.execute("truncate table oqsbigentity");
@@ -222,6 +228,8 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
         conn.close();
 
         ((ShardingDataSource) dataSource).close();
+
+        commitIdStatusService.destroy();
 
         redisClient.connect().sync().flushall();
         redisClient.shutdown();
@@ -676,6 +684,7 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex.getMessage(), ex);
                 }
+                commitIdStatusService.obsoleteAll();
             });
         } catch (Exception ex) {
             transactionManager.getCurrent().get().rollback();

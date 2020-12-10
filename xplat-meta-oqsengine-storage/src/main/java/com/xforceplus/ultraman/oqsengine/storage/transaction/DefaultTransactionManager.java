@@ -15,22 +15,35 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
     private LongIdGenerator txIdGenerator;
     private LongIdGenerator commitIdGenerator;
     private CommitIdStatusService commitIdStatusService;
+    private boolean waitCommitSync;
 
     public DefaultTransactionManager(
-        LongIdGenerator txIdGenerator, LongIdGenerator commitIdGenerator, CommitIdStatusService commitIdStatusService) {
-        this(3000, txIdGenerator, commitIdGenerator, commitIdStatusService);
+        LongIdGenerator txIdGenerator,
+        LongIdGenerator commitIdGenerator,
+        CommitIdStatusService commitIdStatusService) {
+        this(3000, txIdGenerator, commitIdGenerator, commitIdStatusService, false);
+    }
+
+    public DefaultTransactionManager(
+        LongIdGenerator txIdGenerator,
+        LongIdGenerator commitIdGenerator,
+        CommitIdStatusService commitIdStatusService,
+        boolean waitCommitSync) {
+        this(3000, txIdGenerator, commitIdGenerator, commitIdStatusService, waitCommitSync);
     }
 
     public DefaultTransactionManager(
         int survivalTimeMs,
         LongIdGenerator txIdGenerator,
         LongIdGenerator commitIdGenerator,
-        CommitIdStatusService commitIdStatusService) {
+        CommitIdStatusService commitIdStatusService,
+        boolean waitCommitSync) {
 
         super(survivalTimeMs);
         this.txIdGenerator = txIdGenerator;
         this.commitIdGenerator = commitIdGenerator;
         this.commitIdStatusService = commitIdStatusService;
+        this.waitCommitSync = waitCommitSync;
 
         if (!txIdGenerator.isPartialOrder()) {
             throw new IllegalArgumentException(
@@ -47,8 +60,10 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
     public Transaction doCreate() {
         long txId = txIdGenerator.next();
 
-        Transaction tx = new MultiLocalTransaction(txId, commitIdGenerator, commitIdStatusService);
-
-        return tx;
+        if (waitCommitSync) {
+            return new MultiLocalTransaction(txId, commitIdGenerator, commitIdStatusService);
+        } else {
+            return new MultiLocalTransaction(txId, commitIdGenerator, commitIdStatusService, 0);
+        }
     }
 }

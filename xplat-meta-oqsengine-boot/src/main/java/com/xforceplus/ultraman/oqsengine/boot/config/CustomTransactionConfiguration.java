@@ -28,7 +28,7 @@ public class CustomTransactionConfiguration {
         @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs,
         CommitIdStatusService commitIdStatusService) {
         return new DefaultTransactionManager(
-            transactionTimeoutMs, snowflakeIdGenerator, redisIdGenerator, commitIdStatusService);
+            transactionTimeoutMs, snowflakeIdGenerator, redisIdGenerator, commitIdStatusService, true);
     }
 
     @Bean

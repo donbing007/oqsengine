@@ -79,8 +79,14 @@ public interface CommitIdStatusService {
     void obsolete(long... commitIds);
 
     /**
-     * @param commitId
-     * @return
+     * 淘汰所有提交号.
+     */
+    void obsoleteAll();
+
+    /**
+     * 判断指定提交号是否已经淘汰.
+     * @param commitId 目标提交号.
+     * @return true 淘汰,false没有淘汰.
      */
     boolean isObsolete(long commitId);
 }

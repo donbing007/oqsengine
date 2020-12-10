@@ -246,7 +246,10 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
         TimeUnit.SECONDS.sleep(1L);
 
         transactionManager = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
+            new IncreasingOrderLongIdGenerator(0),
+            new IncreasingOrderLongIdGenerator(0),
+            commitIdStatusService,
+            false);
 
         TransactionExecutor executor =
             new AutoJoinTransactionExecutor(transactionManager, new SphinxQLTransactionResourceFactory());

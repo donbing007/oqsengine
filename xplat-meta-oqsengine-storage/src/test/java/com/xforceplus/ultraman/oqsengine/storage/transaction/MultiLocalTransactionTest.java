@@ -16,11 +16,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * MultiLocalTransaction Tester.
  *
- * @author <Authors name>
+ * @author dongbin
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
@@ -53,6 +56,27 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
     public void testCommit() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService, 0);
+
+        List<MockResource> resources = buildResources(10, false);
+
+        for (MockResource resource : resources) {
+            tx.join(resource);
+        }
+
+        tx.declareWriteTransaction();
+
+        tx.commit();
+
+        for (MockResource resource : resources) {
+            Assert.assertTrue(resource.isCommitted());
+        }
+    }
+
+    @Test
+    public void testCommitWaitSync() throws Exception {
+        LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
+
         MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
 
         List<MockResource> resources = buildResources(10, false);
@@ -61,7 +85,14 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
             tx.join(resource);
         }
 
+        tx.declareWriteTransaction();
+
+        CompletableFuture.runAsync(() -> {
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(200));
+            commitIdStatusService.obsoleteAll();
+        });
         tx.commit();
+
         for (MockResource resource : resources) {
             Assert.assertTrue(resource.isCommitted());
         }
@@ -87,7 +118,7 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
     @Test
     public void testCommitEx() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService, 0);
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交
@@ -102,6 +133,7 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
 
         // 非只读事务.
         tx.declareWriteTransaction();
+
         try {
             tx.commit();
             Assert.fail("No expected exception was thrown.");

@@ -94,7 +94,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
             MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(size()));
 
 
-        logger.info("Use {} as the key for the list of submission Numbers.", commitidsKey);
+        logger.info("Use {} as the key for the list of commit Numbers.", commitidsKey);
+        logger.info("Use {} as the prefix key for the commit number status.", commitidStatusKeyPrefix);
 
     }
 
@@ -249,8 +250,14 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     }
 
     @Override
+    public void obsoleteAll() {
+        obsolete(getAll());
+    }
+
+    @Override
     public boolean isObsolete(long commitId) {
-        return syncCommands.zrank(commitidsKey, Long.toString(commitId)) == null;
+        String statusKey = commitidStatusKeyPrefix + "." + commitId;
+        return syncCommands.exists(statusKey) <= 0;
     }
 
     private void updateMetrics() {
