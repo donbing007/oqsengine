@@ -323,7 +323,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
 
             Collection<EntityRef> refs = combinedStorage.select(
-                minUnSyncCommitId, useConditions, entityClass, useSort, page);
+                minUnSyncCommitId, useConditions, entityClass, useSort, usePage);
 
             List<IEntity> entities = buildEntitiesFromRefs(refs, entityClass);
 
@@ -337,7 +337,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                         if (e == null) {
                             logger.info("Select conditions result: [NULL]");
                         } else {
-                            logger.info("Select conditions result: [{}]", e.toString());
+                            logger.info("Select conditions result: [{}],totalCount:[{}]", e.toString(), page.getTotalCount());
                         }
                     });
                 }
