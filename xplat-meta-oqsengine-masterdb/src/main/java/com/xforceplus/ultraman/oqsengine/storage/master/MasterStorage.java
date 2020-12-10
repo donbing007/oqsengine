@@ -7,7 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
-import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
+import com.xforceplus.ultraman.oqsengine.storage.master.iterator.QueryIterator;
 
 import java.sql.SQLException;
 import java.util.Collection;
@@ -28,19 +28,23 @@ public interface MasterStorage extends Storage {
      * 产生一个批量搜索迭代器
      *
      * @param entityClass 目标实例类型.
-     * @param start 开始时间
-     * @param end 结束时间
-     * @param threadPool 外部传入执行线程池，如为null表示采用默认的线程池
+     * @param startTimeMs 开始时间
+     * @param endTimeMs   结束时间
+     * @param threadPool  外部传入执行线程池，如为null表示采用默认的线程池
      * @return 目标实例.
      */
-    DataQueryIterator newIterator(IEntityClass entityClass, long start, long end,
-                                  ExecutorService threadPool, int queryTimeout, int pageSize) throws SQLException;
+    QueryIterator newIterator(IEntityClass entityClass,
+                              long startTimeMs,
+                              long endTimeMs,
+                              ExecutorService threadPool,
+                              int queryTimeout,
+                              int pageSize) throws SQLException;
 
 
     /**
      * 根据唯一标识查找相应的实例.
      *
-     * @param id 目标实例标识.
+     * @param id          目标实例标识.
      * @param entityClass 目标实例类型.
      * @return 目标实例.
      */
@@ -76,7 +80,8 @@ public interface MasterStorage extends Storage {
 
     /**
      * 同步两个 id 表示的信息.实际需要同步的信息由实现定义.
-     * @param id 源数据标识.
+     *
+     * @param id    源数据标识.
      * @param child 目标数据标识.
      * @return 同步的数量.
      */

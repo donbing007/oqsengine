@@ -55,15 +55,6 @@ public class CommonConfiguration {
         return buildThreadPool(useWorker, useQueue, "oqsengine-call-rebuild", false);
     }
 
-    private ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {
-        return new ThreadPoolExecutor(worker, worker,
-            0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(queue),
-            ExecutorHelper.buildNameThreadFactory(namePrefix, daemon),
-            new ThreadPoolExecutor.AbortPolicy()
-        );
-    }
-
     @Bean(value = "redisClient")
     public RedisClient redisClient(LettuceConfiguration configuration) {
 
@@ -80,6 +71,15 @@ public class CommonConfiguration {
     @Bean("entityValueBuilder")
     public IEntityValueBuilder entityValueBuilder() {
         return new SQLJsonIEntityValueBuilder();
+    }
+
+    private ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {
+        return new ThreadPoolExecutor(worker, worker,
+            0L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(queue),
+            ExecutorHelper.buildNameThreadFactory(namePrefix, daemon),
+            new ThreadPoolExecutor.AbortPolicy()
+        );
     }
 
 }

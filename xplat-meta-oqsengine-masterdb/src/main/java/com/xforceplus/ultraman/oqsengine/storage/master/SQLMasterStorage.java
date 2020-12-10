@@ -26,6 +26,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.*;
 import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
+import com.xforceplus.ultraman.oqsengine.storage.master.iterator.QueryIterator;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
@@ -99,14 +100,19 @@ public class SQLMasterStorage implements MasterStorage {
 
 
     @Override
-    public DataQueryIterator newIterator(IEntityClass entityClass, long start, long end,
-                                         ExecutorService threadPool, int queryTimeout, int pageSize) throws SQLException {
+    public QueryIterator newIterator(
+        IEntityClass entityClass,
+        long startTimeMs,
+        long endTimeMs,
+        ExecutorService threadPool,
+        int queryTimeout,
+        int pageSize) throws SQLException {
 
         List<DataSource> dataSources = new ArrayList<>();
         dataSources.add(masterDataSource);
 
         List<DataSourceSummary> dataSourceSummaries = new LinkedList<>();
-        BatchCondition batchCondition = new BatchCondition(start, end, entityClass);
+        BatchCondition batchCondition = new BatchCondition(startTimeMs, endTimeMs, entityClass);
         for (int i = 0; i < dataSources.size(); i++) {
             List<String> tables = new ArrayList<>();
 

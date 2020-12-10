@@ -1,13 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
-import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
-import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
-import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
-import com.xforceplus.ultraman.oqsengine.core.service.impl.DevOpsManagementServiceImpl;
-import com.xforceplus.ultraman.oqsengine.core.service.impl.EntityManagementServiceImpl;
-import com.xforceplus.ultraman.oqsengine.core.service.impl.EntitySearchServiceImpl;
-import com.xforceplus.ultraman.oqsengine.core.service.impl.TransactionManagementServiceImpl;
+import com.xforceplus.ultraman.oqsengine.core.service.*;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -60,5 +54,10 @@ public class ServiceConfiguration {
     @Bean
     public TransactionManagementService transactionManagementService() {
         return new TransactionManagementServiceImpl();
+    }
+
+    @Bean
+    public UpgradeMaintenanceService upgradeMaintenanceService() {
+        return new UpgradeMaintenanceServiceImpl();
     }
 }

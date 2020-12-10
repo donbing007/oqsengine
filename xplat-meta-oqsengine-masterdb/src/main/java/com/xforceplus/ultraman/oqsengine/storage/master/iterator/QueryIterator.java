@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.iterator;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.OffsetSnapShot;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -19,4 +20,8 @@ public interface QueryIterator {
     public boolean hasNext();
 
     public List<IEntity> next() throws SQLException;
+
+    public OffsetSnapShot snapShot();
+
+    public boolean resetCheckPoint(OffsetSnapShot offsetSnapShot);
 }
