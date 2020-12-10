@@ -66,6 +66,8 @@ public class UserCaseTest extends AbstractContainerTest {
     @Resource
     private EntityManagementService entityManagementService;
 
+    private static final int TEST_LOOPS = 10;
+
     IEntityClass fatherClass = new EntityClass(100, "father", Arrays.asList(
         new EntityField(123, "c1", FieldType.LONG, FieldConfig.build().searchable(true)),
         new EntityField(456, "c2", FieldType.STRING, FieldConfig.build().searchable(true))
@@ -137,7 +139,7 @@ public class UserCaseTest extends AbstractContainerTest {
         );
         entityManagementService.build(targetEntity);
 
-        for (int i = 1; i <= 200; i++) {
+        for (int i = 1; i <= TEST_LOOPS; i++) {
             targetEntity = entitySearchService.selectOne(targetEntity.id(), childClass).get();
             targetEntity.entityValue().addValue(
                 new EnumValue(childClass.field("c3").get(), Long.toString(i))
@@ -181,7 +183,7 @@ public class UserCaseTest extends AbstractContainerTest {
             .addValue(new EnumValue(childClass.field("c3").get(), "0"))
         );
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < TEST_LOOPS; i++) {
             newFatherEntity = entityManagementService.build(newFatherEntity);
             IEntity selectEntity = entitySearchService.selectOne(newFatherEntity.id(), childClass).get();
 
@@ -202,7 +204,7 @@ public class UserCaseTest extends AbstractContainerTest {
             .addValue(new LongValue(fatherClass.field("c1").get(), 100000L))
             .addValue(new EnumValue(childClass.field("c3").get(), "0"))
         );
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < TEST_LOOPS; i++) {
             childEntity = entityManagementService.build(childEntity);
             Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(childEntity));
         }
@@ -223,7 +225,7 @@ public class UserCaseTest extends AbstractContainerTest {
 
         newFatherEntity = entityManagementService.build(newFatherEntity);
         Assert.assertTrue(newFatherEntity.id() != 0);
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < TEST_LOOPS; i++) {
             newFatherEntity = entitySearchService.selectOne(newFatherEntity.id(), childClass).get();
             newFatherEntity.entityValue().addValue(
                 new EnumValue(childClass.field("c3").get(), Long.toString(i))
@@ -332,7 +334,7 @@ public class UserCaseTest extends AbstractContainerTest {
         );
 
         childEntity = entityManagementService.build(childEntity);
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < TEST_LOOPS; i++) {
             childEntity = entitySearchService.selectOne(childEntity.id(), childClass).get();
             childEntity.entityValue().addValue(new LongValue(fatherClass.field("c1").get(), i));
             Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.replace(childEntity));
