@@ -39,7 +39,7 @@ storage:
   debug:
     showsql: true
   timeoutMs:
-    query: 3000
+    query: 10000
   master:
     name: "oqsbigentity"
     shard:
