@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.RunningStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StopWatch;
 
 import java.sql.SQLException;
 
@@ -130,6 +131,7 @@ public class ConsumerRunner extends Thread {
     }
 
     public void consume() throws SQLException {
+        StopWatch getMessageWatch = new StopWatch("getMessage");
         while (true) {
             //  服务被终止
             if (runningStatus.ordinal() >= RunningStatus.TRY_STOP.ordinal()) {
@@ -138,9 +140,19 @@ public class ConsumerRunner extends Thread {
             }
 
             Message message = null;
+            long batchId;
             try {
+                getMessageWatch.start();
                 //获取指定数量的数据
                 message = cdcConnector.getMessageWithoutAck();
+                getMessageWatch.stop();
+
+                batchId = message.getId();
+
+                if (getMessageWatch.getLastTaskTimeMillis() > MESSAGE_GET_WARM_INTERVAL && batchId != EMPTY_BATCH_ID) {
+                    logger.info("[cdc-runner] get message from canal server use too much times, use timeMs : {}, batchId : {}"
+                            , getMessageWatch.getLastTaskTimeMillis(), message.getId());
+                }
             } catch (Exception e) {
                 //  未获取到数据,回滚
                 cdcConnector.rollback();
@@ -150,12 +162,13 @@ public class ConsumerRunner extends Thread {
                 throw new SQLException(error);
             }
 
+
             //  当synced标志位设置为True时，表示后续的操作必须通过最终一致性操作保持成功
             boolean synced = false;
             try {
                 CDCMetrics cdcMetrics = null;
-                long batchId = message.getId();
                 if (batchId != EMPTY_BATCH_ID || message.getEntries().size() != EMPTY_BATCH_SIZE) {
+
                     //  消费binlog
                     cdcMetrics = consumerService.consume(message.getEntries(), batchId, cdcMetricsService);
                     //  binlog处理，同步指标到cdcMetrics中
