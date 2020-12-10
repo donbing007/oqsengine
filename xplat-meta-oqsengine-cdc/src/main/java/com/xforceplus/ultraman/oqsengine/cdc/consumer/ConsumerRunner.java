@@ -117,7 +117,7 @@ public class ConsumerRunner extends Thread {
         logger.error(errorMessage);
 
         //  这里将进行睡眠->同步错误信息->进入下次循环
-        callBackError(RECONNECT_WAIT_IN_SECONDS, cdcStatus);
+        callBackError(RECONNECT_WAIT_IN_SECONDS * SECOND, cdcStatus);
     }
 
     private boolean checkForStop() {
@@ -268,7 +268,7 @@ public class ConsumerRunner extends Thread {
     private void threadSleep(int waitInSeconds) {
         try {
             //  当前没有binlog消费
-            Thread.sleep(waitInSeconds * SECOND);
+            Thread.sleep(waitInSeconds);
         } catch (InterruptedException e) {
             // ignore
         }
