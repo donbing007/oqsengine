@@ -43,7 +43,7 @@ public class MultiLocalTransaction implements Transaction {
     private CommitIdStatusService commitIdStatusService;
     private long maxWaitCommitIdSyncMs;
     // 每一次检查不通过的等待时间.
-    private final long checkCommitIdSyncMs = 30;
+    private final long checkCommitIdSyncMs = 5;
 
     private Timer.Sample durationMetrics;
 
