@@ -20,7 +20,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
@@ -82,9 +81,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Resource(name = "callThreadPool")
     private ExecutorService threadPool;
-
-    @Resource(name = "serviceTransactionExecutor")
-    private TransactionExecutor transactionExecutor;
 
     @Resource
     private CommitIdStatusService commitIdStatusService;
@@ -321,6 +317,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 }
 
                 if (useConditions.size() == 0) {
+                    page.setTotalCount(0);
                     return Collections.emptyList();
                 }
             }

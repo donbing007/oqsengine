@@ -114,7 +114,26 @@ public class JoinSelectTest extends AbstractContainerTest {
     }
 
     @Test
+    public void testDriverEmpty() throws Exception {
+        Conditions conditions = Conditions.buildEmtpyConditions()
+            .addAnd(
+                new Condition(
+                    driverEntityClass,
+                    driverFields.stream().findFirst().get(),
+                    ConditionOperator.EQUALS,
+                    new StringValue(driverFields.stream().findFirst().get(), "name3"))
+            );
+
+        Page page = new Page(1, 100);
+        Collection<IEntity> results =
+            entitySearchService.selectByConditions(conditions, mainEntityClass, page);
+        Assert.assertEquals(0, results.size());
+        Assert.assertEquals(0, page.getTotalCount());
+    }
+
+    @Test
     public void testJoinSearch() throws Exception {
+
         Conditions conditions = Conditions.buildEmtpyConditions()
             .addAnd(
                 new Condition(
