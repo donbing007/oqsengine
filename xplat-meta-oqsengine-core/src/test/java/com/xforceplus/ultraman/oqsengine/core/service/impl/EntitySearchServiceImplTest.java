@@ -105,13 +105,12 @@ public class EntitySearchServiceImplTest {
 
         threadPool = Executors.newFixedThreadPool(3);
 
-        CombinedStorage combinedStorage = new CombinedStorage(masterStorage, indexStorage);
-
         CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
         when(commitIdStatusService.getMin()).thenReturn(Optional.of(0L));
 
         instance = new EntitySearchServiceImpl();
-        ReflectionTestUtils.setField(instance, "combinedStorage", combinedStorage);
+        ReflectionTestUtils.setField(instance, "masterStorage", masterStorage);
+        ReflectionTestUtils.setField(instance, "indexStorage", indexStorage);
         ReflectionTestUtils.setField(instance, "threadPool", threadPool);
         ReflectionTestUtils.setField(instance, "commitIdStatusService", commitIdStatusService);
 
@@ -546,7 +545,7 @@ public class EntitySearchServiceImplTest {
         }
 
         @Override
-        public DataQueryIterator newIterator(IEntityClass entityClass, long start, long end, ExecutorService threadPool, int queryTimeout, int pageSize) throws SQLException {
+        public DataQueryIterator newIterator(IEntityClass entityClass, long startTimeMs, long endTimeMs, ExecutorService threadPool, int queryTimeout, int pageSize) throws SQLException {
             return null;
         }
 

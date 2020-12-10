@@ -18,7 +18,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
+import com.xforceplus.ultraman.oqsengine.storage.master.iterator.QueryIterator;
 import io.vavr.control.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,9 +126,9 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         return true;
     }
 
-    private Optional<DataQueryIterator> initDataQueryIterator(DevOpsTaskInfo taskInfo, boolean isBuild, OffsetSnapShot offsetSnapShot) throws Exception {
+    private Optional<QueryIterator> initDataQueryIterator(DevOpsTaskInfo taskInfo, boolean isBuild, OffsetSnapShot offsetSnapShot) throws Exception {
 
-        DataQueryIterator dataQueryIterator = masterStorage.newIterator(taskInfo.getEntityClass(), taskInfo.getStarts(), taskInfo.getEnds(),
+        QueryIterator dataQueryIterator = masterStorage.newIterator(taskInfo.getEntityClass(), taskInfo.getStarts(), taskInfo.getEnds(),
                 taskThreadPool, executionTimeout, pageSize);
 
         if (null == dataQueryIterator ||
@@ -332,7 +332,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         try {
             //  初始化迭代器
             DevOpsTaskInfo devOpsTaskInfo = (DevOpsTaskInfo) taskHandler.devOpsTaskInfo();
-            Optional<DataQueryIterator> dataQueryIterator = initDataQueryIterator(devOpsTaskInfo, isBuild, devOpsTaskInfo.getOffsetSnapShot());
+            Optional<QueryIterator> dataQueryIterator = initDataQueryIterator(devOpsTaskInfo, isBuild, devOpsTaskInfo.getOffsetSnapShot());
 
             if (dataQueryIterator.isPresent()) {
                 //   更新TaskHandler中的状态为RUNNING
@@ -342,7 +342,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                     throw new SQLException("task maybe canceled, operation will intercept immediately!");
                 }
 
-                DataQueryIterator iterator = dataQueryIterator.get();
+                QueryIterator iterator = dataQueryIterator.get();
 
                 while (iterator.hasNext()) {
                     //  记录最后成功的snap-shot

@@ -16,7 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
+import com.xforceplus.ultraman.oqsengine.storage.master.iterator.QueryIterator;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
@@ -225,7 +225,7 @@ public class SQLMasterStorageTest extends AbstractContainerTest {
 
         long startId = timeId + 23;
         long endId = timeId + 74;
-        DataQueryIterator dataQueryIterator =
+        QueryIterator dataQueryIterator =
             storage.newIterator(expectEntityClass, startId, endId, consumerPool, 3000, 10);
 
         Assert.assertNotNull(dataQueryIterator);

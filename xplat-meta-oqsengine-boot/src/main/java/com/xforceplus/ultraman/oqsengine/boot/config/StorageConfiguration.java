@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
-import com.xforceplus.ultraman.oqsengine.core.service.impl.CombinedStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexStorage;
@@ -49,12 +48,6 @@ public class StorageConfiguration {
         storage.setMaxSearchTimeoutMs(maxQueryTimeMs);
         storage.setMaxBatchSize(maxBatchSize);
         return storage;
-    }
-
-    @Bean
-    public CombinedStorage combinedStorage(MasterStorage masterStorage, IndexStorage indexStorage) {
-        CombinedStorage combinedStorage = new CombinedStorage(masterStorage, indexStorage);
-        return combinedStorage;
     }
 
     @Bean

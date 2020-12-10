@@ -6,8 +6,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.BatchSummary;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.DataSourceSummary;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.OffsetSnapShot;
 import com.xforceplus.ultraman.oqsengine.storage.master.SQLMasterStorage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -28,9 +26,6 @@ import java.util.stream.Collectors;
  */
 public class DataQueryIterator implements QueryIterator {
 
-    final Logger logger = LoggerFactory.getLogger(DataQueryIterator.class);
-
-    private static final int START_ID_OFF_SET = 1;
     private static final int EMPTY_COLLECTION_SIZE = 0;
     private static final int EMPTY_ID = 0;
 
@@ -63,6 +58,7 @@ public class DataQueryIterator implements QueryIterator {
     public int size() {
         return null != batchSummary ? batchSummary.count() : EMPTY_COLLECTION_SIZE;
     }
+
     @Override
     public boolean hasNext() {
         return null != batchSummary && batchSummary.hasNext();
@@ -73,20 +69,17 @@ public class DataQueryIterator implements QueryIterator {
         return batchQuery();
     }
 
+    @Override
     public OffsetSnapShot snapShot() {
         return batchSummary.snapShot();
     }
 
+    @Override
     public boolean resetCheckPoint(OffsetSnapShot offsetSnapShot) {
         return batchSummary.resetCheckPoint(offsetSnapShot);
     }
 
-    /*
-        batchQuery by iterator
-        traverse checkPoint(ds->table) -> next(ds->table) ....produce CallableList
-        then doBatchSelect
-    */
-    public List<IEntity> batchQuery() throws SQLException {
+    private List<IEntity> batchQuery() throws SQLException {
         if (hasNext()) {
             int lefts = pageSize;
 
@@ -100,8 +93,8 @@ public class DataQueryIterator implements QueryIterator {
                 int part = Math.min(lefts, checkPointOffset.left());
 
                 callableList.add(sqlMasterStorage.new BathQueryByTableSummaryCallable(batchCondition,
-                        checkPointOffset.offset(), part, checkPointOffset.getActiveDataSource(),
-                        checkPointOffset.offsetSnapShot().getTableName(), queryTimeout));
+                    checkPointOffset.offset(), part, checkPointOffset.getActiveDataSource(),
+                    checkPointOffset.offsetSnapShot().getTableName(), queryTimeout));
 
                 checkPointOffset.decrease(part);
 
@@ -162,17 +155,17 @@ public class DataQueryIterator implements QueryIterator {
                     get prefs
                  */
                 Collection<IEntity> pEntity = sqlMasterStorage.selectMultiple(
-                        entities.stream()
-                                .collect(Collectors.toMap(f -> f.family().parent(), f -> f.entityClass().extendEntityClass(), (f0, f1) -> f0))
+                    entities.stream()
+                        .collect(Collectors.toMap(f -> f.family().parent(), f -> f.entityClass().extendEntityClass(), (f0, f1) -> f0))
                 );
 
                 Map<Long, IEntity> entityMap = pEntity
-                        .stream()
-                        .collect(Collectors.toMap(IEntity::id, f -> f, (f0, f1) -> f0));
+                    .stream()
+                    .collect(Collectors.toMap(IEntity::id, f -> f, (f0, f1) -> f0));
 
                 if (entityMap.size() != entities.size()) {
                     throw new SQLException(String.format("merge pref failed, pref's size %d not equals child's %d",
-                            entityMap.size(), entities.size()));
+                        entityMap.size(), entities.size()));
                 }
                 /*
                     merge prefs
