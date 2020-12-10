@@ -213,8 +213,6 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
         throws SQLException {
 
-        page.setTotalCount(0);
-
         if (conditions == null) {
             throw new SQLException("Incorrect query condition.");
         }

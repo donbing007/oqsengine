@@ -385,7 +385,7 @@ public class SearchTest extends AbstractContainerTest {
             entitySearchService.selectByConditions(
                 Conditions.buildEmtpyConditions(),
                 childEntityClass,
-                Sort.buildAscSort(mainFields.stream().skip(2).findFirst().get()),
+                Sort.buildAscSort(fatherEntityClass.field("c3").get()),
                 new Page(1, 1));
 
         Assert.assertEquals(1, iEntitiesFirst.size());
@@ -399,7 +399,7 @@ public class SearchTest extends AbstractContainerTest {
             entitySearchService.selectByConditions(
                 Conditions.buildEmtpyConditions(),
                 childEntityClass,
-                Sort.buildAscSort(mainFields.stream().skip(2).findFirst().get()),
+                Sort.buildAscSort(fatherEntityClass.field("c3").get()),
                 new Page(2, 1));
 
         Assert.assertEquals(1, iEntitiesSecond.size());
