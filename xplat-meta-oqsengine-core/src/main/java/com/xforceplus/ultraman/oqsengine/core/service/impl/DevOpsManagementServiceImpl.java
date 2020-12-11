@@ -33,7 +33,9 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.ERROR.VALID
  * @since : 1.8
  */
 public class DevOpsManagementServiceImpl implements DevOpsManagementService {
+
     final Logger logger = LoggerFactory.getLogger(DevOpsManagementServiceImpl.class);
+
     @Resource
     private RebuildIndexExecutor devOpsRebuildIndexExecutor;
 
@@ -77,7 +79,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     }
 
     @Override
-    public Optional<IDevOpsTaskInfo> SyncTask(String taskId) throws SQLException {
+    public Optional<IDevOpsTaskInfo> syncTask(String taskId) throws SQLException {
         try {
             return sqlTaskStorage.selectUnique(Long.parseLong(taskId));
         } catch (Exception e) {

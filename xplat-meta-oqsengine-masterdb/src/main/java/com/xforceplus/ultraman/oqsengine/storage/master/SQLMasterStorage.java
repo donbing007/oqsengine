@@ -7,10 +7,7 @@ import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
@@ -344,6 +341,18 @@ public class SQLMasterStorage implements MasterStorage {
             throw new SQLException(String.format("Unable to synchronize, unable to find subclass {} with object {}.",
                 entity.entityClass().code(), entity.family().child()));
         }
+    }
+
+    @Override
+    public Optional<Long> maxCommitId() throws SQLException {
+        return (Optional<Long>) transactionExecutor.execute(
+                new DataSourceNoShardResourceTask(masterDataSource) {
+
+                    @Override
+                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                        return MaxColumnExecutor.build(tableName, resource, queryTimeout).execute(FieldDefine.COMMITID);
+                    }
+                });
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "master", "action", "build"})

@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.pojo.devops.cdc;
+package com.xforceplus.ultraman.oqsengine.pojo.devops;
 
 /**
  * desc :
