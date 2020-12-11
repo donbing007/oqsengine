@@ -40,7 +40,7 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.ERROR.VALID
  */
 public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
-    final static Logger logger = LoggerFactory.getLogger(DevOpsManagementServiceImpl.class);
+    static final Logger logger = LoggerFactory.getLogger(DevOpsManagementServiceImpl.class);
 
     @Resource
     private RebuildIndexExecutor devOpsRebuildIndexExecutor;

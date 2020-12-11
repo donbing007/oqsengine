@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 import com.xforceplus.ultraman.oqsengine.core.service.*;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.*;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
-import com.xforceplus.ultraman.oqsengine.core.service.UpgradeMaintenanceService;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.DevOpsManagementServiceImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -59,8 +58,4 @@ public class ServiceConfiguration {
         return new TransactionManagementServiceImpl();
     }
 
-    @Bean
-    public UpgradeMaintenanceService upgradeMaintenanceService() {
-        return new UpgradeMaintenanceServiceImpl();
-    }
 }

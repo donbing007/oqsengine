@@ -29,31 +29,32 @@ import java.util.concurrent.Executors;
 
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
 
 /**
- * UpgradeMaintenanceServiceImpl Tester.
+ * desc :
+ * name : DevOpsManagementServiceImplTest
  *
- * @author <Authors name>
- * @version 1.0 12/10/2020
- * @since <pre>Dec 10, 2020</pre>
+ * @author : xujia
+ * date : 2020/12/11
+ * @since : 1.8
  */
-public class UpgradeMaintenanceServiceImplTest {
-
+public class DevOpsManagementServiceImplTest {
     private IEntityClass fatherEntityClass = new EntityClass(1, "father", Arrays.asList(
-        new EntityField(1, "f1", FieldType.LONG, FieldConfig.build().searchable(true)),
-        new EntityField(2, "f2", FieldType.STRING, FieldConfig.build().searchable(false)),
-        new EntityField(3, "f3", FieldType.DECIMAL, FieldConfig.build().searchable(true))
+            new EntityField(1, "f1", FieldType.LONG, FieldConfig.build().searchable(true)),
+            new EntityField(2, "f2", FieldType.STRING, FieldConfig.build().searchable(false)),
+            new EntityField(3, "f3", FieldType.DECIMAL, FieldConfig.build().searchable(true))
     ));
 
     private IEntityClass childEntityClass = new EntityClass(
-        2,
-        "chlid",
-        null,
-        null,
-        fatherEntityClass,
-        Arrays.asList(
-            new EntityField(4, "c1", FieldType.LONG, FieldConfig.build().searchable(true))
-        )
+            2,
+            "chlid",
+            null,
+            null,
+            fatherEntityClass,
+            Arrays.asList(
+                    new EntityField(4, "c1", FieldType.LONG, FieldConfig.build().searchable(true))
+            )
     );
 
     private List<IEntity> entities;
@@ -63,14 +64,14 @@ public class UpgradeMaintenanceServiceImplTest {
         entities = new ArrayList<>();
         for (int i = 0; i < 25; i++) {
             entities.add(
-                new Entity(2000, childEntityClass, new EntityValue(2000).addValues(
-                    Arrays.asList(
-                        new LongValue(fatherEntityClass.field("f1").get(), 10000L),
-                        new StringValue(fatherEntityClass.field("f2").get(), "v1"),
-                        new DecimalValue(fatherEntityClass.field("f3").get(), new BigDecimal("123.456")),
-                        new LongValue(childEntityClass.field("c1").get(), 20000L)
-                    )
-                ), new EntityFamily(1000, 0), 0, OqsVersion.MAJOR)
+                    new Entity(2000, childEntityClass, new EntityValue(2000).addValues(
+                            Arrays.asList(
+                                    new LongValue(fatherEntityClass.field("f1").get(), 10000L),
+                                    new StringValue(fatherEntityClass.field("f2").get(), "v1"),
+                                    new DecimalValue(fatherEntityClass.field("f3").get(), new BigDecimal("123.456")),
+                                    new LongValue(childEntityClass.field("c1").get(), 20000L)
+                            )
+                    ), new EntityFamily(1000, 0), 0, OqsVersion.MAJOR)
             );
         }
     }
@@ -85,24 +86,24 @@ public class UpgradeMaintenanceServiceImplTest {
         ExecutorService worker = Executors.newFixedThreadPool(10);
         MasterStorage masterStorage = mock(MasterStorage.class);
         when(masterStorage.newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 0, 100))
-            .thenReturn(new MockQueryIterator());
+                .thenReturn(new MockQueryIterator());
 
         EntityManagementService entityManagementService = mock(EntityManagementService.class);
         when(entityManagementService.replace(argThat(argument -> true))).thenReturn(ResultStatus.SUCCESS);
 
-        UpgradeMaintenanceServiceImpl impl = new UpgradeMaintenanceServiceImpl();
+        DevOpsManagementServiceImpl impl = new DevOpsManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "worker", worker);
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         ReflectionTestUtils.setField(impl, "entityManagementService", entityManagementService);
 
-        impl.repairData(childEntityClass);
+        impl.entityRepair(childEntityClass);
 
         // wait done
-        while (!impl.isDone()) {
+        while (!impl.isEntityRepaired()) {
         }
 
         verify(masterStorage, times(1))
-            .newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 0, 100);
+                .newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 0, 100);
         verify(entityManagementService, times(entities.size())).replace(argThat(argument -> true));
 
         worker.shutdown();
