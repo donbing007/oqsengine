@@ -21,7 +21,7 @@ import java.util.Optional;
 public interface DevOpsManagementService {
 
     /**
-      rebuild index
+     * rebuild index
      */
 
     /**
@@ -35,13 +35,13 @@ public interface DevOpsManagementService {
     Optional<IDevOpsTaskInfo> rebuildIndex(IEntityClass entityClass, LocalDateTime start, LocalDateTime end) throws Exception;
 
     /**
-     * 任务断点继续执行
+     * 任务断点继续执行（从失败点checkpoint开始继续往后执行）
      * @param entityClass 需要重建的EntityClass
      * @param taskId      任务ID
      * @return IDevOpsTaskInfo 当前任务信息
      * @throws Exception
      */
-    Optional<IDevOpsTaskInfo> resumeIndex(IEntityClass entityClass, String taskId) throws Exception;
+    Optional<IDevOpsTaskInfo> resumeRebuild(IEntityClass entityClass, String taskId) throws Exception;
 
     /**
      * 看出当前活动状态下的任务列表
@@ -59,13 +59,33 @@ public interface DevOpsManagementService {
      */
     Optional<IDevOpsTaskInfo> getActiveTask(IEntityClass entityClass) throws SQLException;
 
+    /**
+     * 列出当前所有活动任务
+     * @param page 翻页信息
+     * @return Collection<IDevOpsTaskInfo> 当前任务信息列表
+     * @throws SQLException
+     */
     Collection<IDevOpsTaskInfo> listAllTasks(Page page) throws SQLException;
 
+    /**
+     * 同步当前任务状态（从数据库->本地）
+     * @param taskId 任务ID
+     * @return 当前任务信息
+     * @throws Exception
+     */
     Optional<IDevOpsTaskInfo> syncTask(String taskId) throws Exception;
 
+    /**
+     * 取消运行中的任务
+     * @param taskId 任务ID
+     * @throws SQLException
+     */
     void cancel(String taskId) throws SQLException;
 
 
+    /**
+     * repair
+     */
 
     /**
      * 修复小于当前主版本号的oqs产生的数据.
@@ -74,15 +94,30 @@ public interface DevOpsManagementService {
      * @param classes 目标对象信息列表.
      * @throws SQLException
      */
-    public void repairData(IEntityClass... classes) throws SQLException;
+    void entityRepair(IEntityClass... classes) throws SQLException;
 
     /**
      * 取消正在执行的修复任务.
      */
-    public void cancel();
+    void cancelEntityRepair();
 
     /**
      * 是否已经完成.
      */
-    public boolean isDone();
+    boolean isEntityRepaired();
+
+    /**
+        根据id列表清理Redis中的CommitId
+     */
+    void removeCommitIds(long... ids);
+
+    /**
+        修复redis中的commitId，当参数commitId为NULL时，取目前数据库中最大CommitId + 1
+     */
+    void initNewCommitId(Optional<Long> commitId) throws SQLException;
+
+
+    /**
+     * CDC_ERRORS
+     */
 }

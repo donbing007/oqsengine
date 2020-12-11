@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecut
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.LockExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.repair.CommitIdRepairExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.repair.CommitIdRepairExecutorImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,5 +53,10 @@ public class DevOpsConfiguration {
     @Bean
     public SQLTaskStorage sqlTaskStorage() {
         return new SQLTaskStorage();
+    }
+
+    @Bean
+    public CommitIdRepairExecutor commitIdRepairExecutor() {
+        return new CommitIdRepairExecutorImpl();
     }
 }

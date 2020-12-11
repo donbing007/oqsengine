@@ -17,7 +17,7 @@ import static com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServic
  * date : 2020/12/11
  * @since : 1.8
  */
-public class CommitIdRepairImpl implements CommitIdRepair {
+public class CommitIdRepairExecutorImpl implements CommitIdRepairExecutor {
     @Resource
     private MasterStorage masterStorage;
 

@@ -70,7 +70,7 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
     }
 
     @Override
-    public Source<RebuildTaskInfo, NotUsed> showProgress(ShowTask in, Metadata metadata) {10
+    public Source<RebuildTaskInfo, NotUsed> showProgress(ShowTask in, Metadata metadata) {
         return Source.tick(Duration.ofSeconds(1), Duration.ofSeconds(3), in.getId())
                 .map(i -> devOpsManagementService.syncTask(Long.toString(i)))
                 .takeWhile(x -> x.isPresent())

@@ -11,7 +11,7 @@ import java.util.Optional;
  * date : 2020/12/11
  * @since : 1.8
  */
-public interface CommitIdRepair {
+public interface CommitIdRepairExecutor {
     /*
         根据id列表清理Redis中的CommitId
      */
