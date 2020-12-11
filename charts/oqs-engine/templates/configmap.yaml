@@ -52,8 +52,12 @@ data:
           timeoutMs: {{ .Values.storage.transaction.timeoutMs | default "2000" }}
         threadPool:
           call:
-            worker: {{ .Values.storage.threadPool.call.worker | default "0" }}
-            queue: {{ .Values.storage.threadPool.call.queue | default "500" }}
+            read:
+              worker: {{ .Values.storage.threadPool.call.read.worker | default "0" }}
+              queue: {{ .Values.storage.threadPool.call.read.queue | default "500" }}
+            write:
+              worker: {{ .Values.storage.threadPool.call.write.worker | default "0" }}
+              queue: {{ .Values.storage.threadPool.call.write.queue | default "500" }}
             rebuild:
               worker: {{ .Values.storage.threadPool.call.rebuild.worker | default "0" }}
               queue: {{ .Values.storage.threadPool.call.rebuild.queue | default "500" }}

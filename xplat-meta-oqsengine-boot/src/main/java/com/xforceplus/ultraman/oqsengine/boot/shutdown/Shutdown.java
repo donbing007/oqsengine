@@ -34,8 +34,11 @@ public class Shutdown {
     @Resource
     private TransactionManager tm;
 
-    @Resource(name = "callThreadPool")
-    private ExecutorService callThreadPool;
+    @Resource(name = "callReadThreadPool")
+    private ExecutorService callReadThreadPool;
+
+    @Resource(name = "callWriteThreadPool")
+    private ExecutorService callWriteThreadPool;
 
     @Resource(name = "callRebuildThreadPool")
     private ExecutorService callRebuildThreadPool;
@@ -73,9 +76,13 @@ public class Shutdown {
         }
 
         // wait shutdown
-        logger.info("Start closing the IO worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(callThreadPool, 3600);
-        logger.info("Succeed closing the IO worker thread...ok!");
+        logger.info("Start closing the IO read worker thread...");
+        ExecutorHelper.shutdownAndAwaitTermination(callReadThreadPool, 3600);
+        logger.info("Succeed closing the IO read worker thread...ok!");
+
+        logger.info("Start closing the IO write worker thread...");
+        ExecutorHelper.shutdownAndAwaitTermination(callWriteThreadPool, 3600);
+        logger.info("Succeed closing the IO write worker thread...ok!");
 
         logger.info("Start closing the callRebuild worker thread...");
         ExecutorHelper.shutdownAndAwaitTermination(callRebuildThreadPool, 3600);

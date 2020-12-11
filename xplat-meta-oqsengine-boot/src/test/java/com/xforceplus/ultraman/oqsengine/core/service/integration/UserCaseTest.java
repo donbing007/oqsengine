@@ -354,4 +354,109 @@ public class UserCaseTest extends AbstractContainerTest {
             Assert.assertEquals(1, page.getPageCount());
         }
     }
+
+    @Test
+    public void testCount() throws Exception {
+        for (int i = 0; i < 10; i++) {
+            IEntity childEntity = new Entity(0, childClass, new EntityValue(0)
+                .addValue(new LongValue(fatherClass.field("c1").get(), i))
+                .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+            );
+
+            entityManagementService.build(childEntity);
+        }
+
+        Page page = new Page(1, 1);
+        Collection<IEntity> entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(
+                    fatherClass.field("c1").get(),
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new LongValue(fatherClass.field("c1").get(), 1),
+                    new LongValue(fatherClass.field("c1").get(), 2),
+                    new LongValue(fatherClass.field("c1").get(), 3),
+                    new LongValue(fatherClass.field("c1").get(), 4),
+                    new LongValue(fatherClass.field("c1").get(), 5),
+                    new LongValue(fatherClass.field("c1").get(), 6),
+                    new LongValue(fatherClass.field("c1").get(), 7),
+                    new LongValue(fatherClass.field("c1").get(), 8),
+                    new LongValue(fatherClass.field("c1").get(), 9)
+                )
+            ),
+            fatherClass,
+            page
+        );
+
+        Assert.assertEquals(1, entities.size());
+        Assert.assertEquals(9, page.getTotalCount());
+
+        page = new Page(1, 1);
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(
+                    fatherClass.field("c1").get(),
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new LongValue(fatherClass.field("c1").get(), 1),
+                    new LongValue(fatherClass.field("c1").get(), 2),
+                    new LongValue(fatherClass.field("c1").get(), 3),
+                    new LongValue(fatherClass.field("c1").get(), 4),
+                    new LongValue(fatherClass.field("c1").get(), 5),
+                    new LongValue(fatherClass.field("c1").get(), 6),
+                    new LongValue(fatherClass.field("c1").get(), 7),
+                    new LongValue(fatherClass.field("c1").get(), 8),
+                    new LongValue(fatherClass.field("c1").get(), 9)
+                )
+            ),
+            fatherClass,
+            page
+        );
+        Assert.assertEquals(1, entities.size());
+        Assert.assertEquals(9, page.getTotalCount());
+
+        page = new Page(1, 1);
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(
+                    fatherClass.field("c1").get(),
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new LongValue(fatherClass.field("c1").get(), 1),
+                    new LongValue(fatherClass.field("c1").get(), 2),
+                    new LongValue(fatherClass.field("c1").get(), 3),
+                    new LongValue(fatherClass.field("c1").get(), 4),
+                    new LongValue(fatherClass.field("c1").get(), 5),
+                    new LongValue(fatherClass.field("c1").get(), 6),
+                    new LongValue(fatherClass.field("c1").get(), 7),
+                    new LongValue(fatherClass.field("c1").get(), 8),
+                    new LongValue(fatherClass.field("c1").get(), 9)
+                )
+            ),
+            fatherClass,
+            page
+        );
+        Assert.assertEquals(1, entities.size());
+        Assert.assertEquals(9, page.getTotalCount());
+
+        page = new Page(1, 1);
+        entities = entitySearchService.selectByConditions(
+            Conditions.buildEmtpyConditions().addAnd(
+                new Condition(
+                    fatherClass.field("c1").get(),
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new LongValue(fatherClass.field("c1").get(), 1),
+                    new LongValue(fatherClass.field("c1").get(), 2),
+                    new LongValue(fatherClass.field("c1").get(), 3),
+                    new LongValue(fatherClass.field("c1").get(), 4),
+                    new LongValue(fatherClass.field("c1").get(), 5),
+                    new LongValue(fatherClass.field("c1").get(), 6),
+                    new LongValue(fatherClass.field("c1").get(), 7),
+                    new LongValue(fatherClass.field("c1").get(), 8),
+                    new LongValue(fatherClass.field("c1").get(), 9)
+                )
+            ),
+            fatherClass,
+            page
+        );
+        Assert.assertEquals(1, entities.size());
+        Assert.assertEquals(9, page.getTotalCount());
+    }
 }

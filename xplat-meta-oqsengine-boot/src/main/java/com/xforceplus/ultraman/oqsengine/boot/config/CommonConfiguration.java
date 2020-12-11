@@ -23,9 +23,9 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class CommonConfiguration {
 
-    @Bean("callThreadPool")
-    public ExecutorService callThreadPool(
-        @Value("${threadPool.call.worker:0}") int worker, @Value("${threadPool.call.queue:500}") int queue) {
+    @Bean("callReadThreadPool")
+    public ExecutorService callReadThreadPool(
+        @Value("${threadPool.call.read.worker:0}") int worker, @Value("${threadPool.call.read.queue:500}") int queue) {
         int useWorker = worker;
         int useQueue = queue;
         if (useWorker == 0) {
@@ -36,7 +36,23 @@ public class CommonConfiguration {
             useQueue = 500;
         }
 
-        return buildThreadPool(useWorker, useQueue, "oqsengine-call", false);
+        return buildThreadPool(useWorker, useQueue, "oqsengine-call-read", false);
+    }
+
+    @Bean("callWriteThreadPool")
+    public ExecutorService callWriteThreadPool(
+            @Value("${threadPool.call.write.worker:0}") int worker, @Value("${threadPool.call.write.queue:500}") int queue) {
+        int useWorker = worker;
+        int useQueue = queue;
+        if (useWorker == 0) {
+            useWorker = Runtime.getRuntime().availableProcessors() + 1;
+        }
+
+        if (useQueue < 500) {
+            useQueue = 500;
+        }
+
+        return buildThreadPool(useWorker, useQueue, "oqsengine-call-write", false);
     }
 
     @Bean("callRebuildThreadPool")
