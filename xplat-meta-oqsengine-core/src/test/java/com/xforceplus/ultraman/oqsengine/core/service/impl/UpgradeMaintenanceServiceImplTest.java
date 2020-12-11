@@ -105,6 +105,7 @@ public class UpgradeMaintenanceServiceImplTest {
             .newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 0, 100);
         verify(entityManagementService, times(entities.size())).replace(argThat(argument -> true));
 
+        worker.shutdown();
     }
 
     class MockQueryIterator implements QueryIterator {
