@@ -12,6 +12,9 @@ import org.springframework.context.annotation.Configuration;
 import javax.annotation.Resource;
 import java.util.concurrent.ExecutorService;
 
+import static com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine.READ_THREAD_POOL;
+import static com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine.WRITE_THREAD_POOL;
+
 /**
  * 指标配置.
  *
@@ -22,12 +25,22 @@ import java.util.concurrent.ExecutorService;
 @Configuration
 public class MetricsConfiguration {
 
-    @Resource(name = "callThreadPool")
-    private ExecutorService callThreadPool;
+    @Resource(name = "callReadThreadPool")
+    private ExecutorService callReadThreadPool;
+
+    @Resource(name = "callWriteThreadPool")
+    private ExecutorService callWriteThreadPool;
 
     @Bean
-    public ExecutorServiceMetrics callExecutorServiceMetrics() {
-        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(callThreadPool, MetricsDefine.PREFIX + ".call", Tags.empty());
+    public ExecutorServiceMetrics callReadExecutorServiceMetrics() {
+        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(callReadThreadPool, MetricsDefine.PREFIX + READ_THREAD_POOL, Tags.empty());
+        esm.bindTo(Metrics.globalRegistry);
+        return esm;
+    }
+
+    @Bean
+    public ExecutorServiceMetrics callWriteExecutorServiceMetrics() {
+        ExecutorServiceMetrics esm = new ExecutorServiceMetrics(callWriteThreadPool, MetricsDefine.PREFIX + WRITE_THREAD_POOL, Tags.empty());
         esm.bindTo(Metrics.globalRegistry);
         return esm;
     }

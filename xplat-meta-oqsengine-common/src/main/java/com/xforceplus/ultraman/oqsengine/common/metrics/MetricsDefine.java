@@ -14,6 +14,18 @@ public class MetricsDefine {
     public static final String PREFIX = "oqs";
 
     /**
+     * 读线程池
+     */
+    public static final String READ_THREAD_POOL = ".read-call";
+
+
+    /**
+     * 写线程池
+     */
+    public static final String WRITE_THREAD_POOL = ".write-call";
+
+
+    /**
      * 写入的总数.
      * 标签 action(build|replace|delete)
      */

@@ -79,7 +79,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Resource
     private IndexStorage indexStorage;
 
-    @Resource(name = "callThreadPool")
+    @Resource(name = "callReadThreadPool")
     private ExecutorService threadPool;
 
     @Resource

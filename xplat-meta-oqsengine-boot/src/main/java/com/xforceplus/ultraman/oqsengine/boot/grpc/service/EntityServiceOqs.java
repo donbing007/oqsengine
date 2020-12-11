@@ -56,8 +56,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Autowired(required = false)
     private TransactionManagementService transactionManagementService;
 
-    @Resource(name = "callThreadPool")
-    private ExecutorService asyncDispatcher;
+    @Resource(name = "callReadThreadPool")
+    private ExecutorService asyncReadDispatcher;
+
+    @Resource(name = "callWriteThreadPool")
+    private ExecutorService asyncWriteDispatcher;
 
     @Autowired
     private TransactionManager transactionManager;
@@ -66,8 +69,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     private Logger logger = LoggerFactory.getLogger(EntityServiceOqs.class);
 
-    private <T> CompletableFuture<T> async(Supplier<T> supplier) {
-        return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
+    private <T> CompletableFuture<T> asyncRead(Supplier<T> supplier) {
+        return CompletableFuture.supplyAsync(supplier, asyncReadDispatcher);
+    }
+
+    private <T> CompletableFuture<T> asyncWrite(Supplier<T> supplier) {
+        return CompletableFuture.supplyAsync(supplier, asyncWriteDispatcher);
     }
 
     @Override
@@ -99,7 +106,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> build(EntityUp in, Metadata metadata) {
 
-        return async(() -> {
+        return asyncWrite(() -> {
 
             if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
@@ -146,7 +153,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Override
     public CompletionStage<OperationResult> replace(EntityUp in, Metadata metadata) {
-        return async(() -> {
+        return asyncWrite(() -> {
 
             if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
@@ -230,7 +237,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Override
     public CompletionStage<OperationResult> replaceByCondition(SelectByCondition in, Metadata metadata) {
-        return async(() -> {
+        return asyncWrite(() -> {
 
             if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
@@ -364,7 +371,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Override
     public CompletionStage<OperationResult> remove(EntityUp in, Metadata metadata) {
-        return async(() -> {
+        return asyncWrite(() -> {
 
             if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
@@ -477,7 +484,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Override
     public CompletionStage<OperationResult> selectOne(EntityUp in, Metadata metadata) {
-        return async(() -> {
+        return asyncRead(() -> {
 
             if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
@@ -558,7 +565,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
      */
     @Override
     public CompletionStage<OperationResult> selectByConditions(SelectByCondition in, Metadata metadata) {
-        return async(() -> {
+        return asyncRead(() -> {
 
             if (extractTransaction(metadata).isPresent()) {
                 Long id = extractTransaction(metadata).get();
