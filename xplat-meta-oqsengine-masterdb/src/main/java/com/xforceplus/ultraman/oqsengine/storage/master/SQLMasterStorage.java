@@ -169,7 +169,6 @@ public class SQLMasterStorage implements MasterStorage {
         return (Collection<EntityRef>) transactionExecutor.execute(new DataSourceNoShardResourceTask(masterDataSource) {
             @Override
             public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                hint.setReadOnly(true);
                 return QueryLimitCommitidByConditionsExecutor.build(
                     tableName,
                     resource,
@@ -192,7 +191,6 @@ public class SQLMasterStorage implements MasterStorage {
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                     Optional<StorageEntity> seOP = QueryExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
-                    hint.setReadOnly(true);
                     if (seOP.isPresent()) {
                         return buildEntityFromStorageEntity(seOP.get(), entityClass);
                     } else {
@@ -211,7 +209,6 @@ public class SQLMasterStorage implements MasterStorage {
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                     Optional<StorageEntity> seOP = QueryExecutor.buildHaveAllDetail(tableName, resource, queryTimeout).execute(id);
-                    hint.setReadOnly(true);
                     if (seOP.isPresent()) {
                         return Optional.ofNullable(entityValueBuilder.build(id, metaToFieldTypeMap(seOP.get().getMeta()), seOP.get().getAttribute()));
                     } else {
@@ -270,7 +267,8 @@ public class SQLMasterStorage implements MasterStorage {
                         StorageEntity targetEntity = oldOp.get();
                         targetEntity.setId(targetId);
 
-                        hint.setReadOnly(false);
+                        // 累加器更新次+1.
+                        hint.getAccumulator().accumulateReplace();
                         return UpdateVersionAndTxExecutor.build(tableName, resource, queryTimeout).execute(targetEntity);
                     }
                 }
@@ -335,7 +333,8 @@ public class SQLMasterStorage implements MasterStorage {
                         childMeta.addAll(duplicateSet);
                         childEntity.setMeta(childMeta.toJSONString());
 
-                        hint.setReadOnly(false);
+                        // 累加器更新次+1.
+                        hint.getAccumulator().accumulateReplace();
                         return ReplaceExecutor.build(tableName, resource, queryTimeout).execute(childEntity);
                     }
                 });
@@ -369,7 +368,8 @@ public class SQLMasterStorage implements MasterStorage {
                     storageEntity.setOp(OperationType.CREATE.getValue());
                     fullTransactionInformation(storageEntity, resource);
 
-                    hint.setReadOnly(false);
+                    // 累加器创建次+1.
+                    hint.getAccumulator().accumulateBuild();
                     return BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
                 }
             });
@@ -398,7 +398,8 @@ public class SQLMasterStorage implements MasterStorage {
                     storageEntity.setOp(OperationType.UPDATE.getValue());
                     fullTransactionInformation(storageEntity, resource);
 
-                    hint.setReadOnly(false);
+                    // 累加器更新次数+1.
+                    hint.getAccumulator().accumulateReplace();
                     return ReplaceExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
 
                 }
@@ -426,7 +427,8 @@ public class SQLMasterStorage implements MasterStorage {
                     storageEntity.setOp(OperationType.DELETE.getValue());
                     fullTransactionInformation(storageEntity, resource);
 
-                    hint.setReadOnly(false);
+                    // 累加器删除次数+1.
+                    hint.getAccumulator().accumulateDelete();
                     return DeleteExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
                 }
             });
@@ -616,7 +618,6 @@ public class SQLMasterStorage implements MasterStorage {
                             Collection<StorageEntity> seCollection = BatchQueryExecutor.build(tableName, resource, timeout,
                                 batchCondition.getEntityClass().id(), batchCondition.getStartTime(), batchCondition.getEndTime(),
                                 startId, pageSize).execute(1L);
-                            hint.setReadOnly(true);
 
                             List<IEntity> entities = new ArrayList<>(seCollection.size());
                             for (StorageEntity se : seCollection) {

@@ -67,7 +67,7 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
                 tx.get().join(resource);
             }
         } else {
-            // 无事务运行.
+
             Connection conn = targetDataSource.getConnection();
             try {
                 resource = this.transactionResourceFactory.build(dbKey, conn, true);
@@ -76,16 +76,15 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
             }
         }
 
-        ExecutorHint hint = new DefaultExecutorHint();
+        ExecutorHint hint;
+        if (tx.isPresent()) {
+            hint = new DefaultExecutorHint(tx.get().getAccumulator());
+        } else {
+            hint = new DefaultExecutorHint();
+        }
         try {
             return resourceTask.run(resource, hint);
         } finally {
-            if (tx.isPresent()) {
-                Transaction t = tx.get();
-                if (!hint.isReadOnly()) {
-                    t.declareWriteTransaction();
-                }
-            }
 
             if (!tx.isPresent()) {
                 resource.destroy();

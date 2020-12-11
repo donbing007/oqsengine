@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.DefaultTransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
@@ -39,11 +41,15 @@ public class MultiLocalTransaction implements Transaction {
     private boolean rollback;
     private Lock lock = new ReentrantLock();
     private LongIdGenerator longIdGenerator;
-    private boolean writeTx = false;
     private CommitIdStatusService commitIdStatusService;
     private long maxWaitCommitIdSyncMs;
+    private TransactionAccumulator accumulator;
     // 每一次检查不通过的等待时间.
     private final long checkCommitIdSyncMs = 5;
+    /**
+     * 一个标记,最终提交时是否进行过等待提交号同步.
+     */
+    private boolean waitedSync = false;
 
     private Timer.Sample durationMetrics;
 
@@ -60,6 +66,7 @@ public class MultiLocalTransaction implements Transaction {
         this.longIdGenerator = longIdGenerator;
         this.commitIdStatusService = commitIdStatusService;
         this.maxWaitCommitIdSyncMs = maxWaitCommitIdSyncMs;
+        this.accumulator = new DefaultTransactionAccumulator();
 
         durationMetrics = Timer.start(Metrics.globalRegistry);
     }
@@ -142,12 +149,12 @@ public class MultiLocalTransaction implements Transaction {
 
     @Override
     public boolean isReadyOnly() {
-        return !writeTx;
+        return (accumulator.getBuildTimes() + accumulator.getReplaceTimes() + accumulator.getDeleteTimes()) == 0;
     }
 
     @Override
-    public void declareWriteTransaction() {
-        writeTx = true;
+    public TransactionAccumulator getAccumulator() {
+        return this.accumulator;
     }
 
     @Override
@@ -161,6 +168,10 @@ public class MultiLocalTransaction implements Transaction {
             logger.debug("The exclusive operation of the transaction({}) ends.", this.id());
         }
 
+    }
+
+    public boolean isWaitedSync() {
+        return waitedSync;
     }
 
     private void throwSQLExceptionIfNecessary(List<SQLException> exHolder) throws SQLException {
@@ -231,11 +242,26 @@ public class MultiLocalTransaction implements Transaction {
 
                         commitIdStatusService.save(commitId, true);
 
-                        long waitMs = awitCommitSync(commitId);
-                        if (logger.isDebugEnabled()) {
-                            logger.debug(
-                                "Transaction {}, commit number {} wait for commit number to confirm {} milliseconds.",
-                                id, commitId, waitMs);
+                        /**
+                         * 事务中存在更新操作,需要等待提交号同步.
+                         */
+                        if (accumulator.getReplaceTimes() > 0) {
+                            waitedSync = true;
+                            long waitMs = awitCommitSync(commitId);
+
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(
+                                    "The transaction {} contains an update operation, the wait commit number {} synchronizes successfully. Wait {} milliseconds.",
+                                    id, commitId, waitMs);
+                            }
+                        } else {
+
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(
+                                    "Transaction {} has no update operation, no need to wait for the commit number {} to synchronize successfully.",
+                                    id, commitId
+                                );
+                            }
                         }
 
                     }

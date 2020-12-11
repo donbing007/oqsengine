@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction;
 
+import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -88,9 +90,10 @@ public interface Transaction {
     boolean isReadyOnly();
 
     /**
-     * Declare a write transaction.
+     * Returns the transaction accumulator.
+     * @return
      */
-    void declareWriteTransaction();
+    TransactionAccumulator getAccumulator();
 
     /**
      * Exclusive actions ensure that only one thread executes per transaction.

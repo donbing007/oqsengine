@@ -64,7 +64,7 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
             tx.join(resource);
         }
 
-        tx.declareWriteTransaction();
+        tx.getAccumulator().accumulateBuild();
 
         tx.commit();
 
@@ -73,6 +73,11 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
         }
     }
 
+    /**
+     * 提交时应该进行等等同步.
+     *
+     * @throws Exception
+     */
     @Test
     public void testCommitWaitSync() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
@@ -85,13 +90,15 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
             tx.join(resource);
         }
 
-        tx.declareWriteTransaction();
+        tx.getAccumulator().accumulateReplace();
 
         CompletableFuture.runAsync(() -> {
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(200));
             commitIdStatusService.obsoleteAll();
         });
         tx.commit();
+
+        Assert.assertTrue(tx.isWaitedSync());
 
         for (MockResource resource : resources) {
             Assert.assertTrue(resource.isCommitted());
@@ -131,8 +138,7 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
             tx.join(resource);
         }
 
-        // 非只读事务.
-        tx.declareWriteTransaction();
+        tx.getAccumulator().accumulateDelete();
 
         try {
             tx.commit();
@@ -181,6 +187,33 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
         for (MockResource r : correctResources) {
             Assert.assertTrue(r.isRollback());
         }
+    }
+
+    @Test
+    public void testIsReady() throws Exception {
+        LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
+        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
+        tx.getAccumulator().accumulateDelete();
+        Assert.assertFalse(tx.isReadyOnly());
+        tx.getAccumulator().reset();
+
+        tx.getAccumulator().accumulateBuild();
+        Assert.assertFalse(tx.isReadyOnly());
+        tx.getAccumulator().reset();
+
+        tx.getAccumulator().accumulateReplace();
+        Assert.assertFalse(tx.isReadyOnly());
+        tx.getAccumulator().reset();
+
+        tx.getAccumulator().accumulateReplace();
+        tx.getAccumulator().accumulateBuild();
+        tx.getAccumulator().accumulateDelete();
+        tx.getAccumulator().accumulateDelete();
+        tx.getAccumulator().accumulateDelete();
+        Assert.assertFalse(tx.isReadyOnly());
+        tx.getAccumulator().reset();
+
+        Assert.assertTrue(tx.isReadyOnly());
     }
 
     private List<MockResource> buildResources(int size, boolean ex) {

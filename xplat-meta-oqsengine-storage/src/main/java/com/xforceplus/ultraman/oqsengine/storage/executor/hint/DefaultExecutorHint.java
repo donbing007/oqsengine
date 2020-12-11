@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor.hint;
 
+import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.DefaultTransactionAccumulator;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
+
 /**
  * 执行器的提示默认实现.
  * @author dongbin
@@ -8,14 +11,19 @@ package com.xforceplus.ultraman.oqsengine.storage.executor.hint;
  */
 public class DefaultExecutorHint implements ExecutorHint {
 
-    private static DefaultExecutorHint EMPTY_HINT = new DefaultExecutorHint();
+    private boolean rollback = false;
+    private TransactionAccumulator accumulator;
 
-    public static ExecutorHint buildEmptyHint() {
-        return EMPTY_HINT;
+    public DefaultExecutorHint() {
+        this(null);
     }
 
-    private boolean rollback = false;
-    private boolean readOnley = true;
+    public DefaultExecutorHint(TransactionAccumulator accumulator) {
+        this.accumulator = accumulator;
+        if (this.accumulator == null) {
+            this.accumulator = new DefaultTransactionAccumulator();
+        }
+    }
 
     @Override
     public boolean isRollback() {
@@ -28,12 +36,7 @@ public class DefaultExecutorHint implements ExecutorHint {
     }
 
     @Override
-    public boolean isReadOnly() {
-        return readOnley;
-    }
-
-    @Override
-    public void setReadOnly(boolean readOnly) {
-        readOnley = readOnly;
+    public TransactionAccumulator getAccumulator() {
+        return accumulator;
     }
 }
