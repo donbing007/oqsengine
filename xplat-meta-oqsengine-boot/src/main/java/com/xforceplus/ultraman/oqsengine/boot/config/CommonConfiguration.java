@@ -25,7 +25,7 @@ public class CommonConfiguration {
 
     @Bean("callReadThreadPool")
     public ExecutorService callReadThreadPool(
-        @Value("${threadPool.call.worker:0}") int worker, @Value("${threadPool.call.queue:500}") int queue) {
+        @Value("${threadPool.call.read.worker:0}") int worker, @Value("${threadPool.call.read.queue:500}") int queue) {
         int useWorker = worker;
         int useQueue = queue;
         if (useWorker == 0) {
@@ -41,7 +41,7 @@ public class CommonConfiguration {
 
     @Bean("callWriteThreadPool")
     public ExecutorService callWriteThreadPool(
-            @Value("${threadPool.call.worker:0}") int worker, @Value("${threadPool.call.queue:500}") int queue) {
+            @Value("${threadPool.call.write.worker:0}") int worker, @Value("${threadPool.call.write.queue:500}") int queue) {
         int useWorker = worker;
         int useQueue = queue;
         if (useWorker == 0) {

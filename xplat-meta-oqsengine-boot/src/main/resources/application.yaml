@@ -21,8 +21,12 @@ transaction:
 threadPool:
   # 0 or not exist use cpu core + 1
   call:
-    worker: 0
-    queue: 1000
+    read:
+      worker: 0
+      queue: 1000
+    write:
+      worker: 0
+      queue: 1000
     rebuild:
       worker: 0
       queue: 1000
