@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.Default
 import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +50,7 @@ public class MultiLocalTransaction implements Transaction {
      */
     private boolean waitedSync = false;
 
-    private Timer.Sample durationMetrics;
+    private long startMs;
 
     public MultiLocalTransaction(long id, LongIdGenerator longIdGenerator, CommitIdStatusService commitIdStatusService) {
         this(id, longIdGenerator, commitIdStatusService, TimeUnit.MINUTES.toMillis(1));
@@ -68,7 +67,7 @@ public class MultiLocalTransaction implements Transaction {
         this.maxWaitCommitIdSyncMs = maxWaitCommitIdSyncMs;
         this.accumulator = new DefaultTransactionAccumulator();
 
-        durationMetrics = Timer.start(Metrics.globalRegistry);
+        startMs = System.currentTimeMillis();
     }
 
     @Override
@@ -292,7 +291,8 @@ public class MultiLocalTransaction implements Transaction {
 
             throwSQLExceptionIfNecessary(exHolder);
         } finally {
-            durationMetrics.stop(Metrics.globalRegistry.timer(MetricsDefine.TRANSACTION_DURATION_SECONDS));
+            Metrics.timer(MetricsDefine.TRANSACTION_DURATION_SECONDS).record(
+                System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);
         }
     }
 
