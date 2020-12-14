@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -99,12 +100,25 @@ public interface DevOpsManagementService {
     /**
      * 取消正在执行的修复任务.
      */
-    void cancelEntityRepair();
+    void cancelEntityRepair(Long... ids);
 
     /**
      * 是否已经完成.
      */
-    boolean isEntityRepaired();
+    boolean isEntityRepaired(Long... ids);
+
+    /**
+     * 查看修复任务列表
+     * @param ids
+     * @return
+     */
+    Collection<IDevOpsTaskInfo> repairedInfoList(Long... ids);
+
+    /**
+     * 清除任务信息
+     * @param ids
+     */
+    void clearRepairedInfos(Long... ids);
 
     /**
         根据id列表清理Redis中的CommitId

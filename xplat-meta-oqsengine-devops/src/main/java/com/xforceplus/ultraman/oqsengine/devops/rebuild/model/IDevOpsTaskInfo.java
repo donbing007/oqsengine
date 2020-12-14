@@ -76,8 +76,11 @@ public interface IDevOpsTaskInfo {
 
     void setOffsetSnapShot(OffsetSnapShot offsetSnapShot);
 
+    void setBatchSize(int size);
 
     int failedRecovers();
 
     void resetFailedRecovers(int recovers);
+
+    void setFinishSize(int size);
 }

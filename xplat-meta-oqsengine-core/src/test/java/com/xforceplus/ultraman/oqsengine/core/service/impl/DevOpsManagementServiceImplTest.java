@@ -1,7 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -15,6 +19,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.iterator.QueryIterator;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -23,10 +28,12 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.DONE;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
@@ -58,11 +65,11 @@ public class DevOpsManagementServiceImplTest {
     );
 
     private List<IEntity> entities;
-
+    private int expectSize = 25;
     @Before
     public void before() throws Exception {
         entities = new ArrayList<>();
-        for (int i = 0; i < 25; i++) {
+        for (int i = 0; i < expectSize; i++) {
             entities.add(
                     new Entity(2000, childEntityClass, new EntityValue(2000).addValues(
                             Arrays.asList(
@@ -91,16 +98,29 @@ public class DevOpsManagementServiceImplTest {
         EntityManagementService entityManagementService = mock(EntityManagementService.class);
         when(entityManagementService.replace(argThat(argument -> true))).thenReturn(ResultStatus.SUCCESS);
 
+        LongIdGenerator idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(1));
         DevOpsManagementServiceImpl impl = new DevOpsManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "worker", worker);
         ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
         ReflectionTestUtils.setField(impl, "entityManagementService", entityManagementService);
+        ReflectionTestUtils.setField(impl, "idGenerator", idGenerator);
 
         impl.entityRepair(childEntityClass);
 
         // wait done
-        while (!impl.isEntityRepaired()) {
+        while (!impl.isEntityRepaired(childEntityClass.id())) {
         }
+
+        Collection<IDevOpsTaskInfo> devOpsTaskInfos =
+                impl.repairedInfoList(childEntityClass.id());
+        Assert.assertNotNull(devOpsTaskInfos);
+        Assert.assertEquals(1, devOpsTaskInfos.size());
+        devOpsTaskInfos.forEach(
+                devOpsTaskInfo -> {
+                    Assert.assertEquals(expectSize, devOpsTaskInfo.getFinishSize());
+                    Assert.assertEquals(DONE.getCode(), devOpsTaskInfo.getStatus());
+                }
+        );
 
         verify(masterStorage, times(1))
                 .newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 0, 100);
