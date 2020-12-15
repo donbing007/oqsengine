@@ -21,6 +21,19 @@ service EntityRebuildService {
 
     rpc cancelTask ( ShowTask ) returns ( RebuildTaskInfo );
 
+    rpc entityRepair ( EntityUpList ) returns ( OperationResult );
+
+    rpc cancelEntityRepair ( RepairRequest ) returns ( OperationResult );
+
+    rpc clearRepairedInfos ( RepairRequest ) returns ( OperationResult );
+
+    rpc repairedInfoList ( RepairRequest ) returns ( stream RebuildTaskInfo );
+
+    rpc isEntityRepaired ( RepairRequest ) returns ( OperationResult );
+
+    rpc removeCommitIds ( RepairRequest ) returns ( OperationResult );
+
+    rpc initNewCommitId ( RepairRequest ) returns ( OperationResult );
 }
 
 message QueryPage {
@@ -30,6 +43,10 @@ message QueryPage {
 
 message ShowTask {
     int64 id = 1;
+}
+
+message EntityUpList {
+    repeated EntityUp ups = 1;
 }
 
 message RebuildRequest {
@@ -51,4 +68,8 @@ message RebuildTaskInfo {
     int32 finishSize = 10;
     string errCode = 11;
     string message = 12;
+}
+
+message RepairRequest {
+    repeated int64 rid = 1;
 }

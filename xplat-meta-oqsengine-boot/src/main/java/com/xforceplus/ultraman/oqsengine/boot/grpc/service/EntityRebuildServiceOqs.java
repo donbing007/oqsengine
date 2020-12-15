@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityHelper.toEntityClass;
 
@@ -80,6 +81,7 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
 
     /**
      * list all active tasks
+     *
      * @param in
      * @param metadata
      * @return
@@ -94,7 +96,6 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
     }
 
     /**
-     *
      * @param in
      * @param metadata
      * @return
@@ -134,7 +135,76 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
         });
     }
 
-    RebuildTaskInfo toTaskInfo(IDevOpsTaskInfo taskInfo){
+    @Override
+    public CompletionStage<OperationResult> entityRepair(EntityUpList in, Metadata metadata) {
+        return async(() -> {
+            try {
+                devOpsManagementService.entityRepair(in.getUpsList().stream().map(x -> toEntityClass(x)).toArray(IEntityClass[]::new));
+                return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
+            } catch (Exception ex) {
+                return OperationResult.newBuilder().setCode(OperationResult.Code.EXCEPTION).setMessage(ex.getMessage()).build();
+            }
+        });
+    }
+
+    @Override
+    public CompletionStage<OperationResult> cancelEntityRepair(RepairRequest in, Metadata metadata) {
+        return async(() -> {
+            devOpsManagementService.cancelEntityRepair(in.getRidList().stream().toArray(Long[]::new));
+            return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
+        });
+    }
+
+    @Override
+    public CompletionStage<OperationResult> clearRepairedInfos(RepairRequest in, Metadata metadata) {
+        return async(() -> {
+            devOpsManagementService.clearRepairedInfos(in.getRidList().stream().toArray(Long[]::new));
+            return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
+        });
+    }
+
+    @Override
+    public Source<RebuildTaskInfo, NotUsed> repairedInfoList(RepairRequest in, Metadata metadata) {
+        try {
+            return Source.from(devOpsManagementService.repairedInfoList(in.getRidList().stream().toArray(Long[]::new)).stream().map(this::toTaskInfo).collect(Collectors.toList()));
+        } catch (Exception e) {
+            logger.error("{}", e);
+            return Source.single(RebuildTaskInfo.newBuilder().setErrCode("-1").setMessage(e.getMessage()).buildPartial());
+        }
+    }
+
+    @Override
+    public CompletionStage<OperationResult> isEntityRepaired(RepairRequest in, Metadata metadata) {
+        return async(() -> {
+            boolean entityRepaired = devOpsManagementService.isEntityRepaired(in.getRidList().stream().toArray(Long[]::new));
+            return OperationResult.newBuilder().setCode(OperationResult.Code.OK).setMessage(entityRepaired + "").build();
+        });
+    }
+
+    @Override
+    public CompletionStage<OperationResult> removeCommitIds(RepairRequest in, Metadata metadata) {
+        return async(() -> {
+            devOpsManagementService.removeCommitIds(in.getRidList().stream().toArray(Long[]::new));
+            return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
+        });
+    }
+
+    @Override
+    public CompletionStage<OperationResult> initNewCommitId(RepairRequest in, Metadata metadata) {
+        return async(() -> {
+            if(in.getRidCount() > 0) {
+                try {
+                    devOpsManagementService.initNewCommitId(Optional.ofNullable(in.getRid(0)));
+                    return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
+                } catch (SQLException ex) {
+                    return OperationResult.newBuilder().setCode(OperationResult.Code.EXCEPTION).setMessage(ex.getMessage()).build();
+                }
+            }
+            return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
+        });
+    }
+
+    RebuildTaskInfo toTaskInfo(IDevOpsTaskInfo taskInfo) {
         return RebuildTaskInfo.newBuilder()
                 .setTid(Long.parseLong(taskInfo.id()))
                 .setIsCancel(taskInfo.isCancel())

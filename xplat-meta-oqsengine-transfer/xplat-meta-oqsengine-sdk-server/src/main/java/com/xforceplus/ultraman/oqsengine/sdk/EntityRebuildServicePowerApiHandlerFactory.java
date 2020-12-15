@@ -158,6 +158,48 @@ public class EntityRebuildServicePowerApiHandlerFactory {
               .thenApply(e -> GrpcMarshalling.marshal(e, RebuildTaskInfoSerializer, writer, system, eHandler));
             break;
           
+          case "entityRepair":
+            response = GrpcMarshalling.unmarshal(request.entity().getDataBytes(), EntityUpListSerializer, mat, reader)
+              .thenCompose(e -> implementation.entityRepair(e, metadata))
+              .thenApply(e -> GrpcMarshalling.marshal(e, OperationResultSerializer, writer, system, eHandler));
+            break;
+          
+          case "cancelEntityRepair":
+            response = GrpcMarshalling.unmarshal(request.entity().getDataBytes(), RepairRequestSerializer, mat, reader)
+              .thenCompose(e -> implementation.cancelEntityRepair(e, metadata))
+              .thenApply(e -> GrpcMarshalling.marshal(e, OperationResultSerializer, writer, system, eHandler));
+            break;
+          
+          case "clearRepairedInfos":
+            response = GrpcMarshalling.unmarshal(request.entity().getDataBytes(), RepairRequestSerializer, mat, reader)
+              .thenCompose(e -> implementation.clearRepairedInfos(e, metadata))
+              .thenApply(e -> GrpcMarshalling.marshal(e, OperationResultSerializer, writer, system, eHandler));
+            break;
+          
+          case "repairedInfoList":
+            response = GrpcMarshalling.unmarshal(request.entity().getDataBytes(), RepairRequestSerializer, mat, reader)
+              .thenApply(e -> implementation.repairedInfoList(e, metadata))
+              .thenApply(e -> GrpcMarshalling.marshalStream(e, RebuildTaskInfoSerializer, writer, system, eHandler));
+            break;
+          
+          case "isEntityRepaired":
+            response = GrpcMarshalling.unmarshal(request.entity().getDataBytes(), RepairRequestSerializer, mat, reader)
+              .thenCompose(e -> implementation.isEntityRepaired(e, metadata))
+              .thenApply(e -> GrpcMarshalling.marshal(e, OperationResultSerializer, writer, system, eHandler));
+            break;
+          
+          case "removeCommitIds":
+            response = GrpcMarshalling.unmarshal(request.entity().getDataBytes(), RepairRequestSerializer, mat, reader)
+              .thenCompose(e -> implementation.removeCommitIds(e, metadata))
+              .thenApply(e -> GrpcMarshalling.marshal(e, OperationResultSerializer, writer, system, eHandler));
+            break;
+          
+          case "initNewCommitId":
+            response = GrpcMarshalling.unmarshal(request.entity().getDataBytes(), RepairRequestSerializer, mat, reader)
+              .thenCompose(e -> implementation.initNewCommitId(e, metadata))
+              .thenApply(e -> GrpcMarshalling.marshal(e, OperationResultSerializer, writer, system, eHandler));
+            break;
+          
           default:
             CompletableFuture<HttpResponse> result = new CompletableFuture<>();
             result.completeExceptionally(new UnsupportedOperationException("Not implemented: " + method));
