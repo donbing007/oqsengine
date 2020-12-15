@@ -143,13 +143,13 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
             return;
         }
 
-        if (taskFutures == null) {
+        if (null == taskFutures) {
             taskFutures = new HashMap();
         } else {
             taskFutures.clear();
         }
 
-        if (taskInfoMap == null) {
+        if (null == taskInfoMap) {
             taskInfoMap = new HashMap<>();
         }
 
@@ -180,14 +180,14 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     @Override
     public synchronized void cancelEntityRepair(Long... ids) {
         for (Long id : ids) {
-            if (taskFutures != null) {
+            if (null != taskFutures) {
                 Future f = taskFutures.remove(id);
                 if (null != f) {
                     f.cancel(true);
                 }
             }
 
-            if (taskInfoMap != null) {
+            if (null != taskInfoMap) {
                 IDevOpsTaskInfo devOpsTaskInfo = taskInfoMap.get(id);
                 if (null != devOpsTaskInfo) {
                     devOpsTaskInfo.resetStatus(CANCEL.getCode());
@@ -198,19 +198,22 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
     @Override
     public void clearRepairedInfos(Long... ids) {
-        if (taskInfoMap != null) {
-            for (Long id : ids) {
-                taskInfoMap.remove(id);
+        if (null != taskInfoMap) {
+            if (null != ids && ids.length > 0) {
+                for (Long id : ids) {
+                    taskInfoMap.remove(id);
+                }
+            } else {
+                taskInfoMap.clear();
+                taskInfoMap = null;
             }
-        } else {
-            taskInfoMap.clear();
-            taskInfoMap = null;
         }
     }
+
     @Override
     public Collection<IDevOpsTaskInfo> repairedInfoList(Long... ids) {
         List<IDevOpsTaskInfo> devOpsTaskInfos = new ArrayList<>();
-        if (taskInfoMap != null) {
+        if (null != taskInfoMap) {
             if (null != ids && ids.length > 0) {
                 for (Long id : ids) {
                     IDevOpsTaskInfo devOpsTaskInfo = taskInfoMap.get(id);
@@ -231,7 +234,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
     @Override
     public synchronized boolean isEntityRepaired(Long... ids) {
-        if (taskInfoMap != null) {
+        if (null != taskInfoMap) {
             List<Long> notReady = new ArrayList<>();
             List<Long> readyTask = new ArrayList<>();
             for (Long id : ids) {

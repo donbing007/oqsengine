@@ -32,7 +32,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.CANCEL;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.DONE;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
@@ -66,8 +68,76 @@ public class DevOpsManagementServiceImplTest {
 
     private List<IEntity> entities;
     private int expectSize = 25;
+    private int expectCancelSize = expectSize * 400;
+
+    private DevOpsManagementServiceImpl impl;
+    private MasterStorage masterStorage;
+    private EntityManagementService entityManagementService;
+    private ExecutorService worker;
+
     @Before
     public void before() throws Exception {
+        worker = Executors.newFixedThreadPool(10);
+        masterStorage = mock(MasterStorage.class);
+        when(masterStorage.newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 0, 100))
+                .thenReturn(new MockQueryIterator());
+
+        entityManagementService = mock(EntityManagementService.class);
+        when(entityManagementService.replace(argThat(argument -> true))).thenReturn(ResultStatus.SUCCESS);
+
+        LongIdGenerator idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(1));
+        impl = new DevOpsManagementServiceImpl();
+        ReflectionTestUtils.setField(impl, "worker", worker);
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+        ReflectionTestUtils.setField(impl, "entityManagementService", entityManagementService);
+        ReflectionTestUtils.setField(impl, "idGenerator", idGenerator);
+    }
+
+    @After
+    public void after() throws Exception {
+        entities = null;
+        impl.clearRepairedInfos();
+        worker.shutdown();
+    }
+
+    @Test
+    public void testCancel() throws Exception {
+        entities = new ArrayList<>();
+        for (int i = 0; i < expectCancelSize; i++) {
+            entities.add(
+                    new Entity(2000, childEntityClass, new EntityValue(2000).addValues(
+                            Arrays.asList(
+                                    new LongValue(fatherEntityClass.field("f1").get(), 10000L),
+                                    new StringValue(fatherEntityClass.field("f2").get(), "v1"),
+                                    new DecimalValue(fatherEntityClass.field("f3").get(), new BigDecimal("123.456")),
+                                    new LongValue(childEntityClass.field("c1").get(), 20000L)
+                            )
+                    ), new EntityFamily(1000, 0), 0, OqsVersion.MAJOR)
+            );
+        }
+
+        impl.entityRepair(childEntityClass);
+
+        TimeUnit.SECONDS.sleep(1);
+
+        impl.cancelEntityRepair(childEntityClass.id());
+
+        Collection<IDevOpsTaskInfo> devOpsTaskInfos = impl.repairedInfoList(childEntityClass.id());
+
+        Assert.assertNotNull(devOpsTaskInfos);
+
+        Assert.assertEquals(1, devOpsTaskInfos.size());
+
+        devOpsTaskInfos.forEach(
+                devOpsTaskInfo -> {
+                    Assert.assertEquals(expectCancelSize, devOpsTaskInfo.getBatchSize());
+                    Assert.assertEquals(CANCEL.getCode(), devOpsTaskInfo.getStatus());
+                }
+        );
+    }
+
+    @Test
+    public void testRepair() throws Exception {
         entities = new ArrayList<>();
         for (int i = 0; i < expectSize; i++) {
             entities.add(
@@ -81,29 +151,6 @@ public class DevOpsManagementServiceImplTest {
                     ), new EntityFamily(1000, 0), 0, OqsVersion.MAJOR)
             );
         }
-    }
-
-    @After
-    public void after() throws Exception {
-        entities = null;
-    }
-
-    @Test
-    public void testRepair() throws Exception {
-        ExecutorService worker = Executors.newFixedThreadPool(10);
-        MasterStorage masterStorage = mock(MasterStorage.class);
-        when(masterStorage.newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 0, 100))
-                .thenReturn(new MockQueryIterator());
-
-        EntityManagementService entityManagementService = mock(EntityManagementService.class);
-        when(entityManagementService.replace(argThat(argument -> true))).thenReturn(ResultStatus.SUCCESS);
-
-        LongIdGenerator idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(1));
-        DevOpsManagementServiceImpl impl = new DevOpsManagementServiceImpl();
-        ReflectionTestUtils.setField(impl, "worker", worker);
-        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
-        ReflectionTestUtils.setField(impl, "entityManagementService", entityManagementService);
-        ReflectionTestUtils.setField(impl, "idGenerator", idGenerator);
 
         impl.entityRepair(childEntityClass);
 
@@ -125,8 +172,6 @@ public class DevOpsManagementServiceImplTest {
         verify(masterStorage, times(1))
                 .newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 0, 100);
         verify(entityManagementService, times(entities.size())).replace(argThat(argument -> true));
-
-        worker.shutdown();
     }
 
     class MockQueryIterator implements QueryIterator {
