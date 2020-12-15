@@ -130,11 +130,8 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
             message = String.format("task %s can not be cancel, taskId is invalid.", taskId);
         }
 
-        if (null != message) {
-            logger.error(message);
-            throw new SQLException(message, VALIDATION_ERROR.name(), VALIDATION_ERROR.ordinal());
-        }
-
+        logger.error(message);
+        throw new SQLException(message, VALIDATION_ERROR.name(), VALIDATION_ERROR.ordinal());
     }
 
     @Override
