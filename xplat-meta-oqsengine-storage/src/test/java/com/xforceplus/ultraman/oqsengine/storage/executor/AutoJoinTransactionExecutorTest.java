@@ -2,10 +2,10 @@ package com.xforceplus.ultraman.oqsengine.storage.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.AbstractRedisContainerTest;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
@@ -87,16 +87,15 @@ public class AutoJoinTransactionExecutorTest extends AbstractRedisContainerTest 
 
         AutoJoinTransactionExecutor te = new AutoJoinTransactionExecutor(tm,
             (TransactionResourceFactory<Connection>) (key, resource, autocommit) ->
-                new MockConnectionTransactionResource(key, resource, autocommit));
+                new MockConnectionTransactionResource(key, resource, autocommit), dataSourceSelector,
+            new NoSelector<>("table"));
         // 分片键不关心
-        te.execute(new DataSourceShardingResourceTask(dataSourceSelector, "") {
-            @Override
-            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                Connection conn = (Connection) resource.value();
-                Assert.assertEquals(expectedConn, conn);
+        te.execute((resource, hint) -> {
 
-                return null;
-            }
+            Connection conn = (Connection) resource.value();
+            Assert.assertEquals(expectedConn, conn);
+
+            return null;
         });
 
 
@@ -116,22 +115,20 @@ public class AutoJoinTransactionExecutorTest extends AbstractRedisContainerTest 
 
         AutoJoinTransactionExecutor te = new AutoJoinTransactionExecutor(tm,
             (TransactionResourceFactory<Connection>) (key, resource, autocommit) ->
-                new MockConnectionTransactionResource(key, resource, autocommit));
+                new MockConnectionTransactionResource(key, resource, autocommit), dataSourceSelector,
+            new NoSelector<>("table"));
         // 分片键不关心
-        te.execute(new DataSourceShardingResourceTask(dataSourceSelector, "") {
-            @Override
-            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                Connection conn = (Connection) resource.value();
-                Assert.assertEquals(expectedConn, conn);
+        te.execute((resource, hint) -> {
+            Connection conn = (Connection) resource.value();
+            Assert.assertEquals(expectedConn, conn);
 
-                return null;
-            }
+            return null;
         });
 
         Optional<Transaction> t = tm.getCurrent();
         Assert.assertTrue(t.isPresent());
 
-        Optional<TransactionResource> resource = t.get().query(mockDataSource.toString());
+        Optional<TransactionResource> resource = t.get().query(mockDataSource.toString() + ".table");
         Assert.assertTrue(resource.isPresent());
         Assert.assertEquals(expectedConn, resource.get().value());
 
@@ -151,21 +148,19 @@ public class AutoJoinTransactionExecutorTest extends AbstractRedisContainerTest 
 
         AutoJoinTransactionExecutor te = new AutoJoinTransactionExecutor(tm,
             (TransactionResourceFactory<Connection>) (key, resource, autocommit) ->
-                new MockConnectionTransactionResource(key, resource, autocommit));
+                new MockConnectionTransactionResource(key, resource, autocommit), dataSourceSelector,
+            new NoSelector<>("table"));
         // 分片键不关心
-        te.execute(new DataSourceShardingResourceTask(dataSourceSelector, "") {
-            @Override
-            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                Assert.assertEquals(currentT.query(mockDataSource.toString()).get(), resource);
+        te.execute((resource, hint) -> {
+            Assert.assertEquals(currentT.query(mockDataSource.toString() + ".table").get(), resource);
 
-                return null;
-            }
+            return null;
         });
 
         Optional<Transaction> t = tm.getCurrent();
         Assert.assertTrue(t.isPresent());
 
-        Optional<TransactionResource> resource = t.get().query(mockDataSource.toString());
+        Optional<TransactionResource> resource = t.get().query(mockDataSource.toString() + ".table");
         Assert.assertTrue(resource.isPresent());
         Assert.assertEquals(expectedConn, resource.get().value());
 

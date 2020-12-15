@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.executor;
 
+import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.DefaultExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
@@ -26,21 +27,31 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
 
     private TransactionResourceFactory transactionResourceFactory;
 
+    private Selector<DataSource> dataSourceSelector;
+    private Selector<String> tableSelector;
+
     /**
      * 构造一个事务执行器,需要一个事务管理器.
      *
      * @param transactionManager 事务管理器.
      */
-    public AutoJoinTransactionExecutor(TransactionManager transactionManager, TransactionResourceFactory transactionResourceFactory) {
+    public AutoJoinTransactionExecutor(
+        TransactionManager transactionManager,
+        TransactionResourceFactory transactionResourceFactory,
+        Selector<DataSource> dataSourceSelector,
+        Selector<String> tableSelector) {
         this.transactionManager = transactionManager;
         this.transactionResourceFactory = transactionResourceFactory;
+        this.dataSourceSelector = dataSourceSelector;
+        this.tableSelector = tableSelector;
     }
 
     @Override
     public Object execute(ResourceTask resourceTask) throws SQLException {
-        DataSource targetDataSource = resourceTask.getDataSource();
+        DataSource targetDataSource = dataSourceSelector.select(resourceTask.key());
+        String tableName = tableSelector.select(resourceTask.key());
 
-        String dbKey = buildResourceKey(targetDataSource);
+        String dbKey = buildResourceKey(targetDataSource, tableName);
 
         TransactionResource resource;
         Optional<Transaction> tx = transactionManager.getCurrent();
@@ -92,8 +103,8 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
         }
     }
 
-    private String buildResourceKey(DataSource dataSource) {
-        return dataSource == null ? "" : dataSource.toString();
+    private String buildResourceKey(DataSource dataSource, String tableName) {
+        return dataSource.toString() + "." + tableName;
     }
 
 }

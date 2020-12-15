@@ -264,7 +264,8 @@ public class JoinSelectTest extends AbstractContainerTest {
         for (DataSource ds : dataSourcePackage.getIndexWriter()) {
             try (Connection conn = ds.getConnection()) {
                 try (Statement st = conn.createStatement()) {
-                    st.executeUpdate("truncate table oqsindex");
+                    st.executeUpdate("truncate table oqsindex0");
+                    st.executeUpdate("truncate table oqsindex1");
                 }
             }
         }

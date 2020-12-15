@@ -90,7 +90,8 @@ public class CompatibilityTest extends AbstractContainerTest {
         for (DataSource ds : indexDataSource.selects()) {
             try (Connection indexConn = ds.getConnection()) {
                 try (Statement st = indexConn.createStatement()) {
-                    st.executeUpdate("truncate table oqsindex");
+                    st.executeUpdate("truncate table oqsindex0");
+                    st.executeUpdate("truncate table oqsindex1");
                 }
             }
         }

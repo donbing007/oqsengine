@@ -227,8 +227,10 @@ public abstract class AbstractContainer {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        TransactionExecutor executor = new AutoJoinTransactionExecutor(transactionManager,
-            new SphinxQLTransactionResourceFactory());
+        TransactionExecutor writeExecutor = new AutoJoinTransactionExecutor(transactionManager,
+            new SphinxQLTransactionResourceFactory(), writeDataSourceSelector, NoSelector.build("oqsindex"));
+        TransactionExecutor searchExecutor = new AutoJoinTransactionExecutor(transactionManager,
+            new SphinxQLTransactionResourceFactory(), NoSelector.build(searchDataSource), NoSelector.build("oqsindex"));
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
@@ -242,8 +244,8 @@ public abstract class AbstractContainer {
 
         indexStorage = new SphinxQLIndexStorage();
         ReflectionTestUtils.setField(indexStorage, "writerDataSourceSelector", writeDataSourceSelector);
-        ReflectionTestUtils.setField(indexStorage, "searchDataSource", searchDataSource);
-        ReflectionTestUtils.setField(indexStorage, "transactionExecutor", executor);
+        ReflectionTestUtils.setField(indexStorage, "writeTransactionExecutor", writeExecutor);
+        ReflectionTestUtils.setField(indexStorage, "searchTransactionExecutor", searchExecutor);
         ReflectionTestUtils.setField(indexStorage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(indexStorage, "storageStrategyFactory", storageStrategyFactory);
         ReflectionTestUtils.setField(indexStorage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
@@ -298,7 +300,8 @@ public abstract class AbstractContainer {
         dataSource = buildDataSourceSelectorMaster();
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory(tableName));
+            transactionManager, new SqlConnectionTransactionResourceFactory(tableName),
+            NoSelector.build(dataSource), NoSelector.build(tableName));
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();

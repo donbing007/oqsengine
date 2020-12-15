@@ -17,12 +17,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -32,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
@@ -195,45 +191,37 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         try {
 
-            return (IEntity) transactionExecutor.execute(new ResourceTask() {
-                @Override
-                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+            return (IEntity) transactionExecutor.execute((resource, hint) -> {
 
-                    if (EntityManagementServiceImpl.this.isSub(entityClone)) {
-                        // 处理父类
-                        long fatherId = idGenerator.next();
-                        long childId = idGenerator.next();
+                if (EntityManagementServiceImpl.this.isSub(entityClone)) {
+                    // 处理父类
+                    long fatherId = idGenerator.next();
+                    long childId = idGenerator.next();
 
-                        IEntity fathcerEntity = buildFatherEntity(entityClone, childId);
-                        fathcerEntity.resetId(fatherId);
+                    IEntity fathcerEntity = buildFatherEntity(entityClone, childId);
+                    fathcerEntity.resetId(fatherId);
 
-                        IEntity childEntity = buildChildEntity(entityClone, fatherId);
-                        childEntity.resetId(childId);
+                    IEntity childEntity = buildChildEntity(entityClone, fatherId);
+                    childEntity.resetId(childId);
 
-                        // master
-                        masterStorage.build(fathcerEntity);
-                        masterStorage.build(childEntity); // child
+                    // master
+                    masterStorage.build(fathcerEntity);
+                    masterStorage.build(childEntity); // child
 
-                        entity.resetId(childId);
-                        entityClone.resetId(childId);
-                        entity.resetFamily(childEntity.family());
+                    entity.resetId(childId);
+                    entityClone.resetId(childId);
+                    entity.resetFamily(childEntity.family());
 
-                    } else {
+                } else {
 
-                        entity.resetId(idGenerator.next());
-                        entityClone.resetId(entity.id());
+                    entity.resetId(idGenerator.next());
+                    entityClone.resetId(entity.id());
 
-                        masterStorage.build(entityClone);
+                    masterStorage.build(entityClone);
 
-                    }
-
-                    return entity;
                 }
 
-                @Override
-                public DataSource getDataSource() {
-                    return null;
-                }
+                return entity;
             });
         } catch (Exception ex) {
 
@@ -269,55 +257,52 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         }
 
         try {
-            return (ResultStatus) transactionExecutor.execute(new ResourceTask() {
-                @Override
-                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+            return (ResultStatus) transactionExecutor.execute((resource, hint) -> {
 
-                    if (EntityManagementServiceImpl.this.isSub(entity)) {
+                if (EntityManagementServiceImpl.this.isSub(entity)) {
 
-                        /**
-                         * 拆分为父与子.
-                         */
-                        IEntity fatherEntity = buildFatherEntity(entityClone, entityClone.id());
-                        fatherEntity.resetId(entity.family().parent());
+                    /**
+                     * 拆分为父与子.
+                     */
+                    IEntity fatherEntity = buildFatherEntity(entityClone, entityClone.id());
+                    fatherEntity.resetId(entity.family().parent());
 
-                        IEntity childEntity = buildChildEntity(entityClone, entityClone.family().parent());
+                    IEntity childEntity = buildChildEntity(entityClone, entityClone.family().parent());
 
-                        if (isConflict(masterStorage.replace(fatherEntity))) {
-                            hint.setRollback(true);
-                            return ResultStatus.CONFLICT;
-                        }
-
-                        if (isConflict(masterStorage.replace(childEntity))) {
-                            hint.setRollback(true);
-                            return ResultStatus.CONFLICT;
-                        }
-
-                        eliminateIndex(fatherEntity.id());
-                        eliminateIndex(childEntity.id());
-
-                    } else {
-
-                        if (isConflict(masterStorage.replace(entityClone))) {
-                            hint.setRollback(true);
-                            return ResultStatus.CONFLICT;
-                        }
-
-                        eliminateIndex(entityClone.id());
-
-                        // 有子类
-                        if (entityClone.family().child() > 0) {
-                            // 父子同步
-                            if (isConflict(masterStorage.synchronizeToChild(entityClone))) {
-                                hint.setRollback(true);
-                                return ResultStatus.CONFLICT;
-                            }
-                            eliminateIndex(entityClone.family().child());
-                        }
+                    if (isConflict(masterStorage.replace(fatherEntity))) {
+                        hint.setRollback(true);
+                        return ResultStatus.CONFLICT;
                     }
 
-                    return ResultStatus.SUCCESS;
+                    if (isConflict(masterStorage.replace(childEntity))) {
+                        hint.setRollback(true);
+                        return ResultStatus.CONFLICT;
+                    }
+
+                    eliminateIndex(fatherEntity.id());
+                    eliminateIndex(childEntity.id());
+
+                } else {
+
+                    if (isConflict(masterStorage.replace(entityClone))) {
+                        hint.setRollback(true);
+                        return ResultStatus.CONFLICT;
+                    }
+
+                    eliminateIndex(entityClone.id());
+
+                    // 有子类
+                    if (entityClone.family().child() > 0) {
+                        // 父子同步
+                        if (isConflict(masterStorage.synchronizeToChild(entityClone))) {
+                            hint.setRollback(true);
+                            return ResultStatus.CONFLICT;
+                        }
+                        eliminateIndex(entityClone.family().child());
+                    }
                 }
+
+                return ResultStatus.SUCCESS;
             });
         } catch (Exception ex) {
             failCountTotal.increment();
@@ -335,71 +320,67 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         markTime(entity);
 
         try {
-            return (ResultStatus) transactionExecutor.execute(new ResourceTask() {
+            return (ResultStatus) transactionExecutor.execute((resource, hint) -> {
 
-                @Override
-                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                if (EntityManagementServiceImpl.this.isSub(entity)) {
 
-                    if (EntityManagementServiceImpl.this.isSub(entity)) {
+                    IEntity fatherEntity = buildFatherEntity(entity, entity.id());
+                    fatherEntity.resetId(entity.family().parent());
 
-                        IEntity fatherEntity = buildFatherEntity(entity, entity.id());
-                        fatherEntity.resetId(entity.family().parent());
+                    IEntity childEntity = buildChildEntity(entity, entity.family().parent());
 
-                        IEntity childEntity = buildChildEntity(entity, entity.family().parent());
-
-                        if (isConflict(masterStorage.delete(fatherEntity))) {
-                            hint.setRollback(true);
-                            return ResultStatus.CONFLICT;
-                        }
-                        if (isConflict(masterStorage.delete(childEntity))) {
-                            hint.setRollback(true);
-                            return ResultStatus.CONFLICT;
-                        }
-
-                        eliminateIndex(fatherEntity.id());
-                        eliminateIndex(childEntity.id());
-
-                    } else {
-
-                        if (isConflict(masterStorage.delete(entity))) {
-                            hint.setRollback(true);
-                            return ResultStatus.CONFLICT;
-                        }
-
-                        eliminateIndex(entity.id());
-
-                        // 有子类需要删除.
-                        if (entity.family().child() > 0) {
-
-                            IEntity chlidEntity = new Entity(
-                                entity.family().child(),
-                                AnyEntityClass.getInstance(),
-                                new EntityValue(entity.family().child()),
-                                entity.version(),
-                                OqsVersion.MAJOR
-                            );
-                            chlidEntity.markTime(entity.time());
-
-                            if (isConflict(masterStorage.delete(chlidEntity))) {
-                                hint.setRollback(true);
-                                return ResultStatus.CONFLICT;
-                            }
-
-                            /**
-                             * 删除索引中的相应数据.由CDC重建.
-                             */
-                            eliminateIndex(entity.family().child());
-                        }
-
+                    if (isConflict(masterStorage.delete(fatherEntity))) {
+                        hint.setRollback(true);
+                        return ResultStatus.CONFLICT;
+                    }
+                    if (isConflict(masterStorage.delete(childEntity))) {
+                        hint.setRollback(true);
+                        return ResultStatus.CONFLICT;
                     }
 
-                    if (logger.isInfoEnabled()) {
-                        logger.info("Entity({}), Class({}), Version({}) was successfully deleted.",
-                            entity.id(), entity.entityClass().id(), entity.version());
+                    eliminateIndex(fatherEntity.id());
+                    eliminateIndex(childEntity.id());
+
+                } else {
+
+                    if (isConflict(masterStorage.delete(entity))) {
+                        hint.setRollback(true);
+                        return ResultStatus.CONFLICT;
                     }
 
-                    return ResultStatus.SUCCESS;
+                    eliminateIndex(entity.id());
+
+                    // 有子类需要删除.
+                    if (entity.family().child() > 0) {
+
+                        IEntity chlidEntity = new Entity(
+                            entity.family().child(),
+                            AnyEntityClass.getInstance(),
+                            new EntityValue(entity.family().child()),
+                            entity.version(),
+                            OqsVersion.MAJOR
+                        );
+                        chlidEntity.markTime(entity.time());
+
+                        if (isConflict(masterStorage.delete(chlidEntity))) {
+                            hint.setRollback(true);
+                            return ResultStatus.CONFLICT;
+                        }
+
+                        /**
+                         * 删除索引中的相应数据.由CDC重建.
+                         */
+                        eliminateIndex(entity.family().child());
+                    }
+
                 }
+
+                if (logger.isInfoEnabled()) {
+                    logger.info("Entity({}), Class({}), Version({}) was successfully deleted.",
+                        entity.id(), entity.entityClass().id(), entity.version());
+                }
+
+                return ResultStatus.SUCCESS;
             });
         } catch (Exception ex) {
             failCountTotal.increment();

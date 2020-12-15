@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
+import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
@@ -199,7 +200,8 @@ public abstract class AbstractContainer {
         dataSource = buildDataSourceSelectorMaster();
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory(tableName));
+            transactionManager, new SqlConnectionTransactionResourceFactory(tableName),
+            NoSelector.build(dataSource), NoSelector.build(tableName));
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
@@ -227,8 +229,12 @@ public abstract class AbstractContainer {
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector();
         DataSource searchDataSource = buildSearchDataSource();
 
-        TransactionExecutor executor = new AutoJoinTransactionExecutor(transactionManager,
-            new SphinxQLTransactionResourceFactory());
+        Selector<String> indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 3);
+
+        TransactionExecutor searchTransactionExecutor = new AutoJoinTransactionExecutor(transactionManager,
+            new SphinxQLTransactionResourceFactory(), NoSelector.build(searchDataSource), NoSelector.build("oqsindex"));
+        TransactionExecutor writeTransactionExecutor = new AutoJoinTransactionExecutor(transactionManager,
+            new SphinxQLTransactionResourceFactory(), writeDataSourceSelector, indexWriteIndexNameSelector);
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
@@ -237,13 +243,10 @@ public abstract class AbstractContainer {
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
         sphinxQLConditionsBuilderFactory.init();
 
-        Selector<String> indexWriteIndexNameSelector =
-            new SuffixNumberHashSelector("oqsindex", 3);
-
         indexStorage = new SphinxQLIndexStorage();
         ReflectionTestUtils.setField(indexStorage, "writerDataSourceSelector", writeDataSourceSelector);
-        ReflectionTestUtils.setField(indexStorage, "searchDataSource", searchDataSource);
-        ReflectionTestUtils.setField(indexStorage, "transactionExecutor", executor);
+        ReflectionTestUtils.setField(indexStorage, "writeTransactionExecutor", writeTransactionExecutor);
+        ReflectionTestUtils.setField(indexStorage, "searchTransactionExecutor", searchTransactionExecutor);
         ReflectionTestUtils.setField(indexStorage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(indexStorage, "storageStrategyFactory", storageStrategyFactory);
         ReflectionTestUtils.setField(indexStorage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);

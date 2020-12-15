@@ -16,6 +16,10 @@ public class NoSelector<V> implements Selector<V> {
 
     private V fixed;
 
+    public static <V> Selector<V> build(V value) {
+        return new NoSelector<>(value);
+    }
+
     public NoSelector(V fixed) {
         this.fixed = fixed;
     }

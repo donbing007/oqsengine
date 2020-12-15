@@ -34,7 +34,8 @@ public class SphinxQLTransactionResourceTest extends AbstractContainerTest {
         for (DataSource ds : dataSourcePackage.getIndexWriter()) {
             try (Connection conn = ds.getConnection()) {
                 try (Statement statement = conn.createStatement()) {
-                    statement.executeUpdate("truncate table oqsindex");
+                    statement.executeUpdate("truncate table oqsindex0");
+                    statement.executeUpdate("truncate table oqsindex1");
                 }
             }
         }
@@ -48,8 +49,7 @@ public class SphinxQLTransactionResourceTest extends AbstractContainerTest {
         Connection conn = ds.getConnection();
         SphinxQLTransactionResource sqtr = new SphinxQLTransactionResource("test", conn, false);
         try (Statement stat = conn.createStatement()) {
-            stat.executeUpdate("insert into oqsindex (id,entity,fullfields) values(1,100,'v1')");
-            stat.executeUpdate("insert into oqsindex (id,entity,fullfields) values(2,100,'v2')");
+            stat.executeUpdate("insert into oqsindex0 (id,entity,fullfields) values(1,100,'v1')");
         }
         sqtr.commit();
         sqtr.destroy();
@@ -59,7 +59,7 @@ public class SphinxQLTransactionResourceTest extends AbstractContainerTest {
             try (Statement statement = conn1.createStatement()) {
                 ResultSet rs = statement.executeQuery("select count(*)  from oqsindex");
                 rs.next();
-                Assert.assertEquals(2, rs.getInt(1));
+                Assert.assertEquals(1, rs.getInt(1));
             }
         }
     }
