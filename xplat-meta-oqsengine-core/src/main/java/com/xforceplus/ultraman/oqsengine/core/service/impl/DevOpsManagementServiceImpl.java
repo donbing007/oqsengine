@@ -245,11 +245,11 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
                     readyTask.add(id);
                 }
             }
-            logger.info("ready tasks finish, ids : {}, not ready tasks finish, ids : {}"
+            logger.debug("ready tasks finish, ids : {}, not ready tasks finish, ids : {}"
                     , readyTask.toString(), notReady.toString());
             return notReady.isEmpty();
         }
-        logger.info("taskInfoMap is empty");
+        logger.debug("taskInfoMap is empty");
         return true;
     }
 
