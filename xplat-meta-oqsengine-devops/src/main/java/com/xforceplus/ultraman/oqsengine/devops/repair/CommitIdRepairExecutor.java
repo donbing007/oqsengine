@@ -15,7 +15,7 @@ public interface CommitIdRepairExecutor {
     /*
         根据id列表清理Redis中的CommitId
      */
-    void clean(long... ids);
+    void clean(Long... ids);
 
     /*
         修复redis中的commitId，当参数commitId为NULL时，取目前数据库中最大CommitId + 1

@@ -249,9 +249,8 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         logger.debug("taskInfoMap is empty");
         return true;
     }
-
     @Override
-    public void removeCommitIds(long... ids) {
+    public void removeCommitIds(Long... ids) {
         commitIdRepairExecutor.clean(ids);
     }
 

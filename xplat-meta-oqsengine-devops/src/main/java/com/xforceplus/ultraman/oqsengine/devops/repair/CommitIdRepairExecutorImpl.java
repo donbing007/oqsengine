@@ -5,7 +5,10 @@ import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl.INVALID_COMMITID;
 
@@ -27,13 +30,18 @@ public class CommitIdRepairExecutorImpl implements CommitIdRepairExecutor {
     private static final long INIT_COMMIT_ID = INVALID_COMMITID + 1;
 
     @Override
-    public void clean(long... ids) {
+    public void clean(Long... ids) {
         //  全清除
         if (null == ids || ids.length == 0) {
             commitIdStatusService.obsoleteAll();
         } else {
             //  根据ID列表清除
-            commitIdStatusService.obsolete(ids);
+            long[] arrayIds = new long[ids.length];
+            for (int i = 0; i < ids.length; i++) {
+                arrayIds[i] = ids[i];
+            }
+
+            commitIdStatusService.obsolete(arrayIds);
         }
     }
 

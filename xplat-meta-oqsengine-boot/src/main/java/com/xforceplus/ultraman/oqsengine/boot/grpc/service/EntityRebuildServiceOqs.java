@@ -192,7 +192,7 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
     @Override
     public CompletionStage<OperationResult> initNewCommitId(RepairRequest in, Metadata metadata) {
         return async(() -> {
-            if(in.getRidCount() > 0) {
+            if (in.getRidCount() > 0) {
                 try {
                     devOpsManagementService.initNewCommitId(Optional.ofNullable(in.getRid(0)));
                     return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
