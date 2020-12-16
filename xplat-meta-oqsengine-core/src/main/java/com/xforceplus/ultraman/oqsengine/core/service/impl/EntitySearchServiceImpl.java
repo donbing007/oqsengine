@@ -763,6 +763,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
 
             page.setTotalCount(indexPage.getTotalCount() + masterRefsWithoutDeleted.size());
+            if (!page.hasNextPage()) {
+                return Collections.emptyList();
+            }
+
             PageScope scope = page.getNextPage();
             long pageSize = page.getPageSize();
 

@@ -356,6 +356,19 @@ public class SearchTest extends AbstractContainer {
     }
 
     @Test
+    public void testOverflowPage() throws Exception {
+        initData();
+        Collection<IEntity> iEntities =
+            entitySearchService.selectByConditions(
+                Conditions.buildEmtpyConditions(),
+                childEntityClass,
+                Sort.buildDescSort(mainFields.stream().skip(2).findFirst().get()),
+                new Page(3, 10));
+
+        Assert.assertEquals(0, iEntities.size());
+    }
+
+    @Test
     public void testChildSearch() throws Exception {
         initData();
 

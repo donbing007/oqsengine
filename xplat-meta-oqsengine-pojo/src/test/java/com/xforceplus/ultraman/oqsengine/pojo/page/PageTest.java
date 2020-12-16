@@ -167,6 +167,16 @@ public class PageTest {
         } catch (Exception ex) {
 
         }
+
+        page = new Page(4, 199);
+        page.setVisibleTotalCount(200);
+        page.setTotalCount(3000);
+
+        Assert.assertEquals(3000, page.getTotalCount());
+        Assert.assertEquals(2, page.getPageCount());
+        Assert.assertEquals(4, page.getIndex());
+        Assert.assertFalse(page.hasNextPage());
+        Assert.assertNull(page.getNextPage());
     }
 
     @Test
@@ -176,10 +186,9 @@ public class PageTest {
 
         Assert.assertEquals(0, page.getTotalCount());
         Assert.assertEquals(0, page.getPageCount());
+        Assert.assertFalse(page.hasNextPage());
         PageScope scope = page.getNextPage();
-        Assert.assertEquals(0, scope.startLine);
-        Assert.assertEquals(0, scope.endLine);
-
+        Assert.assertNull(scope);
     }
 
     /**

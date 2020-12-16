@@ -214,9 +214,6 @@ public class Page implements Externalizable, Cloneable {
         }
 
         pageCount = this.countPageCount(getPageSize(), useTotalCount);
-        if (pageIndex > pageCount) {
-            pageIndex = pageCount;
-        }
         if (lastPage) {
             pageIndex = pageCount;
         }
