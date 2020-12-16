@@ -56,7 +56,7 @@ public class MetricsDefine {
     /**
      * 事务持续时间分布.
      */
-    public static final String TRANSACTION_DURATION_SECONDS = PREFIX + ".transaction.duration.seconds";
+    public static final String TRANSACTION_DURATION_SECONDS = PREFIX + ".transaction.duration";
 
     /**
      * 未同步的提交号数量.
