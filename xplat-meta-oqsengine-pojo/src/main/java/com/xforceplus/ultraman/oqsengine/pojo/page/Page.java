@@ -242,7 +242,7 @@ public class Page implements Externalizable, Cloneable {
         checkReady();
 
         if (!hasNextPage()) {
-            return new PageScope(0, 0);
+            return null;
         }
 
         long startLine = (getIndex() * getPageSize()) - (getPageSize() - 1);
