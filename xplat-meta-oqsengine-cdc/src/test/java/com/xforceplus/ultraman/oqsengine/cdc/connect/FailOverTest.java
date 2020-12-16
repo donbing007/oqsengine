@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
@@ -27,7 +27,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
  * date : 2020/11/11
  * @since : 1.8
  */
-public class FailOverTest extends AbstractContainer {
+public class FailOverTest extends CDCAbstractContainer {
     private MockRedisCallbackService mockRedisCallbackService;
 
     private CDCDaemonService cdcDaemonService;
@@ -37,13 +37,6 @@ public class FailOverTest extends AbstractContainer {
     private static final int max = 100;
 
     private volatile boolean isTetOver = false;
-
-    private static SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-
-    static {
-        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
-                "nly-v1", "root", "xplat");
-    }
 
     @Before
     public void before() throws Exception {

@@ -1,12 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +27,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.*;
  * date : 2020/11/9
  * @since : 1.8
  */
-public class SphinxConsumerServiceTest extends AbstractContainer {
+public class SphinxConsumerServiceTest extends CDCAbstractContainer {
     private ConsumerService sphinxConsumerService;
 
     private static final Long EXPECTED_PREF = Long.MAX_VALUE - 1;

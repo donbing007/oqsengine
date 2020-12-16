@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.core.service.integration;
+package com.xforceplus.ultraman.oqsengine.testcontainer.container;
 
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import org.junit.Ignore;
@@ -9,8 +9,16 @@ import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.util.Random;
 
+/**
+ * desc :
+ * name : AbstractContainer
+ *
+ * @author : xujia
+ * date : 2020/12/16
+ * @since : 1.8
+ */
 @Ignore
-public abstract class AbstractContainerTest {
+public abstract class AbstractContainer {
 
     static GenericContainer mysql;
     static GenericContainer manticore0;
@@ -21,16 +29,17 @@ public abstract class AbstractContainerTest {
 
     static {
         Network network = Network.newNetwork();
+
         mysql = new GenericContainer("mysql:5.7")
-            .withNetwork(network)
-            .withNetworkAliases("mysql")
-            .withExposedPorts(3306)
-            .withEnv("MYSQL_DATABASE", "oqsengine")
-            .withEnv("MYSQL_ROOT_USERNAME", "root")
-            .withEnv("MYSQL_ROOT_PASSWORD", "root")
-            .withClasspathResourceMapping("mastdb.sql", "/docker-entrypoint-initdb.d/1.sql", BindMode.READ_ONLY)
-            .withClasspathResourceMapping("mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
-            .waitingFor(Wait.forListeningPort());
+                .withNetwork(network)
+                .withNetworkAliases("mysql")
+                .withExposedPorts(3306)
+                .withEnv("MYSQL_DATABASE", "oqsengine")
+                .withEnv("MYSQL_ROOT_USERNAME", "root")
+                .withEnv("MYSQL_ROOT_PASSWORD", "root")
+                .withClasspathResourceMapping("mastdb.sql", "/docker-entrypoint-initdb.d/1.sql", BindMode.READ_ONLY)
+                .withClasspathResourceMapping("mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
+                .waitingFor(Wait.forListeningPort());
         mysql.start();
 
         manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.0")
@@ -120,10 +129,10 @@ public abstract class AbstractContainerTest {
             String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
                 System.getProperty("SEARCH_MANTICORE_HOST"), System.getProperty("SEARCH_MANTICORE_PORT")));
 
-        System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
-
         System.out.println(System.getProperty("MANTICORE0_JDBC"));
         System.out.println(System.getProperty("MANTICORE1_JDBC"));
+
+        System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
     }
 
     private static String getRandomString(int length) {

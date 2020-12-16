@@ -17,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,7 +44,7 @@ import java.util.Map;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class CompatibilityTest extends AbstractContainerTest {
+public class CompatibilityTest extends AbstractContainer {
 
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;

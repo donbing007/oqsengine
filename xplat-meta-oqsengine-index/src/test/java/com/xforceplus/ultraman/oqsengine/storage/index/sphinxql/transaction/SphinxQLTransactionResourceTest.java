@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.AbstractContainerTest;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -20,7 +20,7 @@ import java.sql.Statement;
  * @version 1.0 12/02/2020
  * @since <pre>Dec 2, 2020</pre>
  */
-public class SphinxQLTransactionResourceTest extends AbstractContainerTest {
+public class SphinxQLTransactionResourceTest extends AbstractContainer {
 
     private DataSourcePackage dataSourcePackage;
 
@@ -66,8 +66,6 @@ public class SphinxQLTransactionResourceTest extends AbstractContainerTest {
 
     private void buildDataSourcePackage() {
         if (dataSourcePackage == null) {
-            System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/sql_index_storage.conf");
-
             dataSourcePackage = DataSourceFactory.build();
         }
 

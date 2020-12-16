@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.connect;
 
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
-
+import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
@@ -27,7 +26,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
  * date : 2020/11/19
  * @since : 1.8
  */
-public class ConnectorTest extends AbstractContainer {
+public class ConnectorTest extends CDCAbstractContainer {
 
     private MockRedisCallbackService mockRedisCallbackService;
 
@@ -53,10 +52,6 @@ public class ConnectorTest extends AbstractContainer {
         mockRedisCallbackService = new MockRedisCallbackService();
 
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
-
-        SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
-                "nly-v1", "root", "xplat");
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));

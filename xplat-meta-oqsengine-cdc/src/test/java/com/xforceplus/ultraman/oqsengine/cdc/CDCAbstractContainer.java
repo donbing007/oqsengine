@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
+import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxSyncExecutor;
@@ -30,14 +31,10 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
 import io.lettuce.core.RedisClient;
 import org.junit.Ignore;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.DockerComposeContainer;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -54,17 +51,7 @@ import java.util.concurrent.TimeUnit;
  * @since : 1.8
  */
 @Ignore
-public abstract class AbstractContainer {
-    protected static GenericContainer manticore0;
-    protected static GenericContainer manticore1;
-    protected static GenericContainer searchManticore;
-    protected static GenericContainer redis;
-
-    protected static DockerComposeContainer environment;
-
-    protected static GenericContainer mysql;
-    protected static GenericContainer cannal;
-
+public abstract class CDCAbstractContainer extends AbstractContainer {
 
     protected StorageStrategyFactory masterStorageStrategyFactory;
 
@@ -82,110 +69,14 @@ public abstract class AbstractContainer {
     protected String tableName = "oqsbigentity";
     protected String cdcErrors = "cdcerrors";
 
+    protected static SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
+
     static {
-        Network network = Network.newNetwork();
-        mysql = new GenericContainer("mysql:5.7")
-            .withNetwork(network)
-            .withNetworkAliases("mysql")
-            .withExposedPorts(3306)
-            .withEnv("MYSQL_DATABASE", "oqsengine")
-            .withEnv("MYSQL_ROOT_USERNAME", "root")
-            .withEnv("MYSQL_ROOT_PASSWORD", "xplat")
-            .withClasspathResourceMapping("mastdb.sql", "/docker-entrypoint-initdb.d/1.sql", BindMode.READ_ONLY)
-            .withClasspathResourceMapping("mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
-            .waitingFor(Wait.forListeningPort());
-        mysql.start();
-
-        manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.0")
-            .withExposedPorts(9306)
-            .withNetwork(network)
-            .withNetworkAliases("manticore0")
-            .withClasspathResourceMapping("manticore0.conf", "/manticore.conf", BindMode.READ_ONLY)
-            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-            .waitingFor(Wait.forListeningPort());
-        manticore0.start();
-
-        manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.0")
-            .withExposedPorts(9306)
-            .withNetwork(network)
-            .withNetworkAliases("manticore1")
-            .withClasspathResourceMapping("manticore1.conf", "/manticore.conf", BindMode.READ_ONLY)
-            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-            .waitingFor(Wait.forListeningPort());
-        manticore1.start();
-
-        searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.0")
-            .withExposedPorts(9306)
-            .withNetwork(network)
-            .withNetworkAliases("searchManticore")
-            .withClasspathResourceMapping("search-manticore.conf", "/manticore.conf", BindMode.READ_ONLY)
-            .withCommand("/usr/bin/searchd", "--nodetach", "--config", "/manticore.conf")
-            .dependsOn(manticore0, manticore1)
-            .waitingFor(Wait.forListeningPort());
-        searchManticore.start();
-
-        cannal = new GenericContainer("canal/canal-server:v1.1.4")
-            .withNetwork(network)
-            .withNetworkAliases("cannal")
-            .withExposedPorts(11111)
-            .withEnv("canal.instance.mysql.slaveId", "12")
-            .withEnv("canal.auto.scan", "false")
-            .withEnv("canal.destinations", "nly-v1")
-            .withEnv("canal.instance.master.address", "mysql:3306")
-            .withEnv("canal.instance.dbUsername", "root")
-            .withEnv("canal.instance.dbPassword", "xplat")
-            .withEnv("canal.instance.filter.regex", ".*\\.oqsbigentity.*")
-            .dependsOn(mysql)
-            .waitingFor(Wait.forListeningPort());
-        cannal.start();
-
-        redis = new GenericContainer("redis:6.0.9-alpine3.12")
-            .withNetworkAliases("redis")
-            .withExposedPorts(6379)
-            .waitingFor(Wait.forListeningPort());
-        redis.start();
-
-        System.setProperty("MYSQL_HOST", mysql.getContainerIpAddress());
-        System.setProperty("MYSQL_PORT", mysql.getFirstMappedPort().toString());
-
-        System.setProperty("MANTICORE0_HOST", manticore0.getContainerIpAddress());
-        System.setProperty("MANTICORE0_PORT", manticore0.getFirstMappedPort().toString());
-
-        System.setProperty("MANTICORE1_HOST", manticore1.getContainerIpAddress());
-        System.setProperty("MANTICORE1_PORT", manticore1.getFirstMappedPort().toString());
-
-        System.setProperty("SEARCH_MANTICORE_HOST", searchManticore.getContainerIpAddress());
-        System.setProperty("SEARCH_MANTICORE_PORT", searchManticore.getFirstMappedPort().toString());
-
-        System.setProperty("CANAL_HOST", cannal.getContainerIpAddress());
-        System.setProperty("CANAL_PORT", cannal.getFirstMappedPort().toString());
-
-        System.setProperty("REDIS_HOST", redis.getContainerIpAddress());
-        System.setProperty("REDIS_PORT", redis.getFirstMappedPort().toString());
-
-        System.setProperty(
-            "MYSQL_JDBC_URL",
-            String.format("jdbc:mysql://%s:%s/oqsengine?useUnicode=true&serverTimezone=GMT&useSSL=false&characterEncoding=utf8",
-                System.getProperty("MYSQL_HOST"), System.getProperty("MYSQL_PORT")));
-
-        System.setProperty("MANTICORE_WRITE0_JDBC_URL",
-            String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
-                System.getProperty("MANTICORE0_HOST"), System.getProperty("MANTICORE0_PORT")));
-
-        System.setProperty("MANTICORE_WRITE1_JDBC_URL",
-            String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
-                System.getProperty("MANTICORE1_HOST"), System.getProperty("MANTICORE1_PORT")));
-
-        System.setProperty("MANTICORE_SEARCH_JDBC_URL",
-            String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
-                System.getProperty("SEARCH_MANTICORE_HOST"), System.getProperty("SEARCH_MANTICORE_PORT")));
-
-        System.out.println(System.getProperty("MANTICORE_WRITE0_JDBC_URL"));
-        System.out.println(System.getProperty("MANTICORE_WRITE1_JDBC_URL"));
+        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
+                System.getProperty("CANAL_DESTINATION"), "root", "root");
     }
 
     protected ConsumerService initAll() throws Exception {
-        System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
         dataSourcePackage = DataSourceFactory.build();
 
         if (transactionManager == null) {

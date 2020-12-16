@@ -97,7 +97,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
                 return sphinxQLIndexStorage.delete(id);
             } catch (Exception e) {
                 //  delete error
-                logger.error("[cdc-sync-executor] delete error, will retry, id : {}, commitId : {}, message : {}",
+                logger.warn("[cdc-sync-executor] delete error, will retry, id : {}, commitId : {}, message : {}",
                                                                                 id, commitId, e.getMessage());
                 if (e instanceof SQLException) {
                     SQLException el = (SQLException) e;

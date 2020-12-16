@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer;
 
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
@@ -29,7 +29,7 @@ import java.sql.SQLException;
  * date : 2020/11/9
  * @since : 1.8
  */
-public class ConsumerRunnerTest extends AbstractContainer {
+public class ConsumerRunnerTest extends CDCAbstractContainer {
     final Logger logger = LoggerFactory.getLogger(ConsumerRunnerTest.class);
     private ConsumerRunner consumerRunner;
 
@@ -56,10 +56,6 @@ public class ConsumerRunnerTest extends AbstractContainer {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService();
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
-
-        SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
-                "nly-v1", "root", "xplat");
 
         return new ConsumerRunner(initAll(), cdcMetricsService, singleCDCConnector);
     }

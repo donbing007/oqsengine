@@ -2,8 +2,8 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.ByteString;
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
 
+import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,7 +23,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUt
  * date : 2020/11/6
  * @since : 1.8
  */
-public class SphinxConsumerToolsTest extends AbstractContainer {
+public class SphinxConsumerToolsTest extends CDCAbstractContainer {
 
     private static final int attrMaxSize = 3;
 

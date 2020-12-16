@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -34,7 +34,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar.string
  * date : 2020/11/9
  * @since : 1.8
  */
-public class EntityValueBuildTest extends AbstractContainer {
+public class EntityValueBuildTest extends CDCAbstractContainer {
 
     private ConsumerService sphinxConsumerService;
 

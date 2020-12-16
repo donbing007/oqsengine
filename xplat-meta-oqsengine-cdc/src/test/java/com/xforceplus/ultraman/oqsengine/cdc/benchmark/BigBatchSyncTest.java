@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
 
-import com.xforceplus.ultraman.oqsengine.cdc.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
@@ -33,7 +33,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
  * date : 2020/11/23
  * @since : 1.8
  */
-public class BigBatchSyncTest extends AbstractContainer {
+public class BigBatchSyncTest extends CDCAbstractContainer {
     final Logger logger = LoggerFactory.getLogger(BigBatchSyncTest.class);
 
     private static int expectedSize = 0;
@@ -60,10 +60,6 @@ public class BigBatchSyncTest extends AbstractContainer {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         mockRedisCallbackService = new MockRedisCallbackService();
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", mockRedisCallbackService);
-
-        SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
-            "nly-v1", "root", "xplat");
 
         return new ConsumerRunner(initAll(), cdcMetricsService, singleCDCConnector);
     }

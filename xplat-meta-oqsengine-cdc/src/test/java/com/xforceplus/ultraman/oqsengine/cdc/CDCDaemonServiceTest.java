@@ -27,7 +27,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
  * date : 2020/11/5
  * @since : 1.8
  */
-public class CDCDaemonServiceTest extends AbstractContainer {
+public class CDCDaemonServiceTest extends CDCAbstractContainer {
 
     private CDCDaemonService cdcDaemonService;
 

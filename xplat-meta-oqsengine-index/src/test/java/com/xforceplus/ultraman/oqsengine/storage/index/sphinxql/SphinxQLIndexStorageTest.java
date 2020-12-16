@@ -31,6 +31,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
 import io.lettuce.core.RedisClient;
 import org.junit.After;
 import org.junit.Assert;
@@ -60,7 +61,7 @@ import java.util.stream.Collectors;
  * Feb 26, 2020
  *        </pre>
  */
-public class SphinxQLIndexStorageTest extends AbstractContainerTest {
+public class SphinxQLIndexStorageTest extends AbstractContainer {
 
     private TransactionManager transactionManager;
     private SphinxQLIndexStorage storage;
@@ -241,10 +242,8 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
         ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
         commitIdStatusService.init();
 
-        writeDataSourceSelector = buildWriteDataSourceSelector(
-            "./src/test/resources/sql_index_storage.conf");
-        DataSource searchDataSource = buildSearchDataSourceSelector(
-            "./src/test/resources/sql_index_storage.conf");
+        writeDataSourceSelector = buildWriteDataSourceSelector();
+        DataSource searchDataSource = buildSearchDataSourceSelector();
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
@@ -875,10 +874,8 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
         }
     }
 
-    private Selector<DataSource> buildWriteDataSourceSelector(String file) {
+    private Selector<DataSource> buildWriteDataSourceSelector() {
         if (dataSourcePackage == null) {
-            System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-
             dataSourcePackage = DataSourceFactory.build(true);
         }
 
@@ -886,10 +883,8 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
 
     }
 
-    private DataSource buildSearchDataSourceSelector(String file) {
+    private DataSource buildSearchDataSourceSelector() {
         if (dataSourcePackage == null) {
-            System.setProperty(DataSourceFactory.CONFIG_FILE, file);
-
             dataSourcePackage = DataSourceFactory.build(true);
         }
 

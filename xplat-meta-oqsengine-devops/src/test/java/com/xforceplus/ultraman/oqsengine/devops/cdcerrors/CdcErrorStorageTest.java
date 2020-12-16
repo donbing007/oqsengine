@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.devops.cdcerrors;
 
-import com.xforceplus.ultraman.oqsengine.devops.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.devops.DevOpsAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
@@ -16,7 +16,7 @@ import java.util.Collection;
  * date : 2020/11/22
  * @since : 1.8
  */
-public class CdcErrorStorageTest extends AbstractContainer {
+public class CdcErrorStorageTest extends DevOpsAbstractContainer {
 
     private static long unExpectedSeqNo = Long.MAX_VALUE;
     private static long unExpectedId = Long.MAX_VALUE;

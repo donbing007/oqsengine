@@ -105,6 +105,7 @@
         <module>xplat-meta-oqsengine-pojo</module>
         <module>xplat-meta-oqsengine-status</module>
         <module>xplat-meta-oqsengine-storage</module>
+        <module>xplat-meta-oqsengine-testcontainer</module>
         <module>xplat-meta-oqsengine-masterdb</module>
         <module>xplat-meta-oqsengine-index</module>
         <module>xplat-meta-oqsengine-devops</module>
