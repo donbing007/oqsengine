@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.impl;
 
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.CdcErrorExecutor;
-import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.CdcErrorTask;
-import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.ErrorFieldDefine;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.ErrorFieldDefine;
 
 import javax.sql.DataSource;
 import java.sql.Connection;

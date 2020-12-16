@@ -1,6 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.pojo.devops.cdc;
-
-import static com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.DevOpsConstant.*;
+package com.xforceplus.ultraman.oqsengine.pojo.devops;
 
 /**
  * desc :
@@ -24,11 +22,11 @@ public class CdcErrorTask {
         cdcErrorTask.setSeqNo(seqNo);
         cdcErrorTask.setId(id);
         cdcErrorTask.setCommitId(commitId);
-        cdcErrorTask.setMessage(message.length() > MAX_ERROR_MESSAGE_LENGTH ?
-                            message.substring(DEFAULT_START_POS, MAX_ERROR_MESSAGE_LENGTH) : message);
+        cdcErrorTask.setMessage(message.length() > DevOpsConstant.MAX_ERROR_MESSAGE_LENGTH ?
+                            message.substring(DevOpsConstant.DEFAULT_START_POS, DevOpsConstant.MAX_ERROR_MESSAGE_LENGTH) : message);
         cdcErrorTask.setExecuteTime(System.currentTimeMillis());
         cdcErrorTask.setStatus(FixedStatus.NOT_FIXED.ordinal());
-        cdcErrorTask.setFixedTime(NOT_INIT_TIMESTAMP);
+        cdcErrorTask.setFixedTime(DevOpsConstant.NOT_INIT_TIMESTAMP);
         return cdcErrorTask;
     }
 

@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.devops.cdcerror;
 
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.condition.CdcErrorQueryCondition;
-import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.CdcErrorTask;
-import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.FixedStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 
 import java.sql.SQLException;
 import java.util.Collection;

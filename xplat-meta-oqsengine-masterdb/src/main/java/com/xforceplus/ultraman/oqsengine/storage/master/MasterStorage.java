@@ -97,4 +97,9 @@ public interface MasterStorage extends Storage {
      * @throws SQLException
      */
     int synchronizeToChild(IEntity entity) throws SQLException;
+
+    /**
+     *  获取当前主库中最大的CommitId + 1
+     */
+    Optional<Long> maxCommitId() throws SQLException;
 }

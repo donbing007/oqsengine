@@ -26,21 +26,48 @@ public interface EntityRebuildService {
   
   java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.RebuildTaskInfo> cancelTask(com.xforceplus.ultraman.oqsengine.sdk.ShowTask in);
   
+  
+  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> entityRepair(com.xforceplus.ultraman.oqsengine.sdk.EntityUpList in);
+  
+  
+  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> cancelEntityRepair(com.xforceplus.ultraman.oqsengine.sdk.RepairRequest in);
+  
+  
+  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> clearRepairedInfos(com.xforceplus.ultraman.oqsengine.sdk.RepairRequest in);
+  
+  
+  akka.stream.javadsl.Source<com.xforceplus.ultraman.oqsengine.sdk.RebuildTaskInfo, akka.NotUsed> repairedInfoList(com.xforceplus.ultraman.oqsengine.sdk.RepairRequest in);
+  
+  
+  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> isEntityRepaired(com.xforceplus.ultraman.oqsengine.sdk.RepairRequest in);
+  
+  
+  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> removeCommitIds(com.xforceplus.ultraman.oqsengine.sdk.RepairRequest in);
+  
+  
+  java.util.concurrent.CompletionStage<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> initNewCommitId(com.xforceplus.ultraman.oqsengine.sdk.RepairRequest in);
+  
 
   static String name = "EntityRebuildService";
   static akka.grpc.ServiceDescription description = new akka.grpc.internal.ServiceDescriptionImpl(name, EntityRebuildResourceProto.getDescriptor());
 
   public static class Serializers {
     
-      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> EntityUpSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.EntityUp.class);
-    
-      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.ShowTask> ShowTaskSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.ShowTask.class);
+      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.EntityUpList> EntityUpListSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.EntityUpList.class);
     
       public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.RebuildRequest> RebuildRequestSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.RebuildRequest.class);
+    
+      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.ShowTask> ShowTaskSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.ShowTask.class);
     
       public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.QueryPage> QueryPageSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.QueryPage.class);
     
       public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.RebuildTaskInfo> RebuildTaskInfoSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.RebuildTaskInfo.class);
+    
+      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.EntityUp> EntityUpSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.EntityUp.class);
+    
+      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.RepairRequest> RepairRequestSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.RepairRequest.class);
+    
+      public static ProtobufSerializer<com.xforceplus.ultraman.oqsengine.sdk.OperationResult> OperationResultSerializer = new GoogleProtobufSerializer<>(com.xforceplus.ultraman.oqsengine.sdk.OperationResult.class);
     
   }
 }

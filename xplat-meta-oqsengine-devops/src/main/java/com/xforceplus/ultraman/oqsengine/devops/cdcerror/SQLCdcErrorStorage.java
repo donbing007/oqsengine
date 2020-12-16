@@ -4,8 +4,8 @@ import com.xforceplus.ultraman.oqsengine.devops.cdcerror.condition.CdcErrorQuery
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.impl.CdcErrorBuildExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.impl.CdcErrorQueryExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.impl.CdcErrorUpdateExecutor;
-import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.CdcErrorTask;
-import com.xforceplus.ultraman.oqsengine.pojo.devops.cdc.FixedStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
+import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;

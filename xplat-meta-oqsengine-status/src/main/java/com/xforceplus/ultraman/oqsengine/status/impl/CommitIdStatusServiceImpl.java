@@ -40,7 +40,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     /**
      * 小于等于此值的判定为无效的commitid.
      */
-    private static final long INVALID_COMMITID = 0;
+    public static final long INVALID_COMMITID = 0;
 
     @Resource
     private RedisClient redisClient;

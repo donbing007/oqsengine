@@ -20,7 +20,7 @@ public class DevOpsTaskInfo implements IDevOpsTaskInfo {
     private long ends;
     private int batchSize;
     private int finishSize;
-    private int status;
+    private volatile int status;
     private long createTime;
     private long updateTime;
     private String message = "";

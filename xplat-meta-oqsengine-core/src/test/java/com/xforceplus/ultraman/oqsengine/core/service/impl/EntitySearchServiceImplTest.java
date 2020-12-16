@@ -589,6 +589,11 @@ public class EntitySearchServiceImplTest {
         }
 
         @Override
+        public Optional<Long> maxCommitId() throws SQLException {
+            return Optional.ofNullable(1L);
+        }
+
+        @Override
         public int build(IEntity entity) throws SQLException {
             return 0;
         }

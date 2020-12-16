@@ -25,6 +25,11 @@ public final class EntityRebuildResourceProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_ShowTask_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_EntityUpList_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_EntityUpList_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_RebuildRequest_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -34,6 +39,11 @@ public final class EntityRebuildResourceProto {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_RebuildTaskInfo_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_RepairRequest_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_RepairRequest_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -45,24 +55,35 @@ public final class EntityRebuildResourceProto {
     java.lang.String[] descriptorData = {
       "\n\rrebuild.proto\032\016transfer.proto\")\n\tQuery" +
       "Page\022\014\n\004size\030\001 \001(\005\022\016\n\006number\030\002 \001(\005\"\026\n\010Sh" +
-      "owTask\022\n\n\002id\030\001 \001(\003\"G\n\016RebuildRequest\022\031\n\006" +
+      "owTask\022\n\n\002id\030\001 \001(\003\"&\n\014EntityUpList\022\026\n\003up" +
+      "s\030\001 \003(\0132\t.EntityUp\"G\n\016RebuildRequest\022\031\n\006" +
       "entity\030\001 \001(\0132\t.EntityUp\022\r\n\005start\030\002 \001(\t\022\013" +
       "\n\003end\030\003 \001(\t\"\335\001\n\017RebuildTaskInfo\022\013\n\003tid\030\001" +
       " \001(\003\022\016\n\006isDone\030\002 \001(\010\022\020\n\010isCancel\030\003 \001(\010\022\022" +
       "\n\npercentage\030\004 \001(\005\022\016\n\006status\030\005 \001(\t\022\020\n\010en" +
       "tityId\030\006 \001(\003\022\016\n\006starts\030\007 \001(\003\022\014\n\004ends\030\010 \001" +
       "(\003\022\021\n\tbatchSize\030\t \001(\005\022\022\n\nfinishSize\030\n \001(" +
-      "\005\022\017\n\007errCode\030\013 \001(\t\022\017\n\007message\030\014 \001(\t2\264\002\n\024" +
-      "EntityRebuildService\0221\n\014rebuildIndex\022\017.R" +
-      "ebuildRequest\032\020.RebuildTaskInfo\022-\n\014showP" +
-      "rogress\022\t.ShowTask\032\020.RebuildTaskInfo0\001\0221" +
-      "\n\017listActiveTasks\022\n.QueryPage\032\020.RebuildT" +
-      "askInfo0\001\022,\n\rgetActiveTask\022\t.EntityUp\032\020." +
-      "RebuildTaskInfo\022.\n\014listAllTasks\022\n.QueryP" +
-      "age\032\020.RebuildTaskInfo0\001\022)\n\ncancelTask\022\t." +
-      "ShowTask\032\020.RebuildTaskInfoBE\n%com.xforce" +
-      "plus.ultraman.oqsengine.sdkB\032EntityRebui" +
-      "ldResourceProtoP\001b\006proto3"
+      "\005\022\017\n\007errCode\030\013 \001(\t\022\017\n\007message\030\014 \001(\t\"\034\n\rR" +
+      "epairRequest\022\013\n\003rid\030\001 \003(\0032\255\005\n\024EntityRebu" +
+      "ildService\0221\n\014rebuildIndex\022\017.RebuildRequ" +
+      "est\032\020.RebuildTaskInfo\022-\n\014showProgress\022\t." +
+      "ShowTask\032\020.RebuildTaskInfo0\001\0221\n\017listActi" +
+      "veTasks\022\n.QueryPage\032\020.RebuildTaskInfo0\001\022" +
+      ",\n\rgetActiveTask\022\t.EntityUp\032\020.RebuildTas" +
+      "kInfo\022.\n\014listAllTasks\022\n.QueryPage\032\020.Rebu" +
+      "ildTaskInfo0\001\022)\n\ncancelTask\022\t.ShowTask\032\020" +
+      ".RebuildTaskInfo\022/\n\014entityRepair\022\r.Entit" +
+      "yUpList\032\020.OperationResult\0226\n\022cancelEntit" +
+      "yRepair\022\016.RepairRequest\032\020.OperationResul" +
+      "t\0226\n\022clearRepairedInfos\022\016.RepairRequest\032" +
+      "\020.OperationResult\0226\n\020repairedInfoList\022\016." +
+      "RepairRequest\032\020.RebuildTaskInfo0\001\0224\n\020isE" +
+      "ntityRepaired\022\016.RepairRequest\032\020.Operatio" +
+      "nResult\0223\n\017removeCommitIds\022\016.RepairReque" +
+      "st\032\020.OperationResult\0223\n\017initNewCommitId\022" +
+      "\016.RepairRequest\032\020.OperationResultBE\n%com" +
+      ".xforceplus.ultraman.oqsengine.sdkB\032Enti" +
+      "tyRebuildResourceProtoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -81,18 +102,30 @@ public final class EntityRebuildResourceProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ShowTask_descriptor,
         new java.lang.String[] { "Id", });
-    internal_static_RebuildRequest_descriptor =
+    internal_static_EntityUpList_descriptor =
       getDescriptor().getMessageTypes().get(2);
+    internal_static_EntityUpList_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_EntityUpList_descriptor,
+        new java.lang.String[] { "Ups", });
+    internal_static_RebuildRequest_descriptor =
+      getDescriptor().getMessageTypes().get(3);
     internal_static_RebuildRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_RebuildRequest_descriptor,
         new java.lang.String[] { "Entity", "Start", "End", });
     internal_static_RebuildTaskInfo_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_RebuildTaskInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_RebuildTaskInfo_descriptor,
         new java.lang.String[] { "Tid", "IsDone", "IsCancel", "Percentage", "Status", "EntityId", "Starts", "Ends", "BatchSize", "FinishSize", "ErrCode", "Message", });
+    internal_static_RepairRequest_descriptor =
+      getDescriptor().getMessageTypes().get(5);
+    internal_static_RepairRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_RepairRequest_descriptor,
+        new java.lang.String[] { "Rid", });
     com.xforceplus.ultraman.oqsengine.sdk.EntityResourceProto.getDescriptor();
   }
 

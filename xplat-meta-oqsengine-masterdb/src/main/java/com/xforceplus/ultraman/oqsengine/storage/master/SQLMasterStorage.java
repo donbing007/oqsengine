@@ -327,6 +327,14 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
+    public Optional<Long> maxCommitId() throws SQLException {
+        return (Optional<Long>) transactionExecutor.execute(
+                (resource, hint) -> {
+                    return MaxColumnExecutor.build(tableName, resource, queryTimeout).execute(FieldDefine.COMMITID);
+                });
+    }
+
+    @Override
     public int build(IEntity entity) throws SQLException {
         long startMs = System.currentTimeMillis();
         try {
