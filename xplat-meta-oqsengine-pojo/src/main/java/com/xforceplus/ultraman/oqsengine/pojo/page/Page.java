@@ -214,9 +214,6 @@ public class Page implements Externalizable, Cloneable {
         }
 
         pageCount = this.countPageCount(getPageSize(), useTotalCount);
-        if (pageIndex > pageCount) {
-            pageIndex = pageCount;
-        }
         if (lastPage) {
             pageIndex = pageCount;
         }
@@ -245,7 +242,7 @@ public class Page implements Externalizable, Cloneable {
         checkReady();
 
         if (!hasNextPage()) {
-            return null;
+            return new PageScope(0, 0);
         }
 
         long startLine = (getIndex() * getPageSize()) - (getPageSize() - 1);

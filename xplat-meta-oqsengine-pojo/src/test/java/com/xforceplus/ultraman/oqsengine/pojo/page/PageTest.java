@@ -97,7 +97,8 @@ public class PageTest {
 
         //已经为最后一页,再次获取返回null.
         scope = lastPage.getNextPage();
-        Assert.assertNull(scope);
+        Assert.assertEquals(0, scope.getStartLine());
+        Assert.assertEquals(0, scope.getEndLine());
         Assert.assertEquals(lastPage.hasNextPage(), false);
 
     }
@@ -167,6 +168,15 @@ public class PageTest {
         } catch (Exception ex) {
 
         }
+
+        page = new Page(4, 199);
+        page.setVisibleTotalCount(200);
+        page.setTotalCount(3000);
+
+        Assert.assertEquals(3000, page.getTotalCount());
+        Assert.assertEquals(2, page.getPageCount());
+        Assert.assertEquals(4, page.getIndex());
+        Assert.assertFalse(page.hasNextPage());
     }
 
     @Test
