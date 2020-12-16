@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.storage.executor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 
-import javax.sql.DataSource;
 import java.sql.SQLException;
 
 /**
@@ -26,12 +25,11 @@ public interface ResourceTask<RES> {
     RES run(TransactionResource resource, ExecutorHint hint) throws SQLException;
 
     /**
-     * 获取数据源.
-     *
-     * @return
+     * 任务key.
+     * @return 任务key.
      */
-    default DataSource getDataSource() {
-        return null;
+    default String key() {
+        return "";
     }
 
 }

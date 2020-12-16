@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -40,6 +41,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
@@ -64,6 +66,8 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
     private SphinxQLIndexStorage storage;
     private DataSourcePackage dataSourcePackage;
     private RedisClient redisClient;
+    private Selector<String> indexWriteIndexNameSelector;
+    private Selector<DataSource> writeDataSourceSelector;
 
     private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
     private static IEntityField stringField = new EntityField(Long.MAX_VALUE - 1, "string", FieldType.STRING);
@@ -237,7 +241,7 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
         ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
         commitIdStatusService.init();
 
-        Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector(
+        writeDataSourceSelector = buildWriteDataSourceSelector(
             "./src/test/resources/sql_index_storage.conf");
         DataSource searchDataSource = buildSearchDataSourceSelector(
             "./src/test/resources/sql_index_storage.conf");
@@ -251,8 +255,15 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
             commitIdStatusService,
             false);
 
-        TransactionExecutor executor =
-            new AutoJoinTransactionExecutor(transactionManager, new SphinxQLTransactionResourceFactory());
+        indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
+
+        TransactionExecutor searchExecutor =
+            new AutoJoinTransactionExecutor(transactionManager, new SphinxQLTransactionResourceFactory(),
+                new NoSelector<>(searchDataSource), new NoSelector<>("oqsindex"));
+        TransactionExecutor writeExecutor =
+            new AutoJoinTransactionExecutor(
+                transactionManager, new SphinxQLTransactionResourceFactory(),
+                writeDataSourceSelector, indexWriteIndexNameSelector);
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
@@ -261,12 +272,11 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
         sphinxQLConditionsBuilderFactory.init();
 
-        Selector<String> indexWriteIndexNameSelector = new NoSelector("oqsindex");
 
         storage = new SphinxQLIndexStorage();
         ReflectionTestUtils.setField(storage, "writerDataSourceSelector", writeDataSourceSelector);
-        ReflectionTestUtils.setField(storage, "searchDataSource", searchDataSource);
-        ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
+        ReflectionTestUtils.setField(storage, "searchTransactionExecutor", searchExecutor);
+        ReflectionTestUtils.setField(storage, "writeTransactionExecutor", writeExecutor);
         ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         ReflectionTestUtils.setField(storage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
@@ -285,7 +295,8 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
         for (DataSource ds : dataSources) {
             Connection conn = ds.getConnection();
             Statement st = conn.createStatement();
-            st.executeUpdate("truncate table oqsindex");
+            st.executeUpdate("truncate table oqsindex0");
+            st.executeUpdate("truncate table oqsindex1");
 
             st.close();
             conn.close();
@@ -311,6 +322,29 @@ public class SphinxQLIndexStorageTest extends AbstractContainerTest {
 
         redisClient.connect().sync().flushall();
         redisClient.shutdown();
+    }
+
+    @Test
+    public void testShard() throws Exception {
+        String shardKey;
+        for (IEntity entity : entityes) {
+            shardKey = Long.toString(entity.id());
+
+            DataSource ds = writeDataSourceSelector.select(shardKey);
+            String indexName = indexWriteIndexNameSelector.select(shardKey);
+
+            try (Connection conn = ds.getConnection()) {
+                try (Statement stat = conn.createStatement()) {
+                    try (ResultSet rs =
+                             stat.executeQuery(
+                                 String.format("select count(*) c from %s where id = %d", indexName, entity.id()))) {
+
+                        rs.next();
+                        Assert.assertEquals(1, rs.getInt("c"));
+                    }
+                }
+            }
+        }
     }
 
     @Test

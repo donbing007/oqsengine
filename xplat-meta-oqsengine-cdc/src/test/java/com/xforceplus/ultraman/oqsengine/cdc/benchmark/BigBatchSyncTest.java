@@ -6,18 +6,9 @@ import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
-import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityFamily;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
-import com.xforceplus.ultraman.oqsengine.storage.executor.DataSourceNoShardResourceTask;
-import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.AbstractMasterExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import org.junit.After;
 import org.junit.Assert;
@@ -28,14 +19,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.shaded.org.apache.commons.lang.time.StopWatch;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar.*;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
 /**
@@ -76,7 +63,7 @@ public class BigBatchSyncTest extends AbstractContainer {
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
         singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
-                "nly-v1", "root", "xplat");
+            "nly-v1", "root", "xplat");
 
         return new ConsumerRunner(initAll(), cdcMetricsService, singleCDCConnector);
     }
@@ -163,14 +150,10 @@ public class BigBatchSyncTest extends AbstractContainer {
 
     private int replace(long commitId) throws SQLException {
         return (Integer) masterTransactionExecutor.execute(
-                new DataSourceNoShardResourceTask(dataSource) {
-
-                    @Override
-                    public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                        BigBatchSyncExecutor bigBatchSyncExecutor = new BigBatchSyncExecutor(tableName, resource, 3000);
-                        return bigBatchSyncExecutor.execute(commitId);
-                    }
-                });
+            (resource, hint) -> {
+                BigBatchSyncExecutor bigBatchSyncExecutor = new BigBatchSyncExecutor(tableName, resource, 3000);
+                return bigBatchSyncExecutor.execute(commitId);
+            });
     }
 
     private class BigBatchSyncExecutor extends AbstractMasterExecutor<Long, Integer> {
@@ -203,8 +186,8 @@ public class BigBatchSyncTest extends AbstractContainer {
         private String buildSQL() {
             StringBuilder sql = new StringBuilder();
             sql.append("UPDATE ").append(getTableName())
-                    .append(" SET ")
-                    .append(FieldDefine.COMMITID).append("=").append("?");
+                .append(" SET ")
+                .append(FieldDefine.COMMITID).append("=").append("?");
             return sql.toString();
         }
     }

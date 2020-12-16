@@ -93,7 +93,8 @@ public class UserCaseTest extends AbstractContainerTest {
         for (DataSource ds : indexWriteDataSourceSelector.selects()) {
             try (Connection conn = ds.getConnection()) {
                 try (Statement stat = conn.createStatement()) {
-                    stat.executeUpdate("truncate table oqsindex");
+                    stat.executeUpdate("truncate table oqsindex0");
+                    stat.executeUpdate("truncate table oqsindex1");
                 }
             }
         }
