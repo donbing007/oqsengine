@@ -167,6 +167,10 @@ public class SphinxConsumerService implements ConsumerService {
                             }
                         }
                         //  更新
+                        if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
+                            logger.debug("convert commitId, new commitId : {}, oldList : {}"
+                                    , commitId, JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+                        }
                         cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
                         rawEntries.put(id, new RawEntry(id, commitId,
                                 entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
