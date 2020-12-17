@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.testcontainer.container;
 
-import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import org.junit.Ignore;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
@@ -31,15 +30,15 @@ public abstract class AbstractContainer {
         Network network = Network.newNetwork();
 
         mysql = new GenericContainer("mysql:5.7")
-                .withNetwork(network)
-                .withNetworkAliases("mysql")
-                .withExposedPorts(3306)
-                .withEnv("MYSQL_DATABASE", "oqsengine")
-                .withEnv("MYSQL_ROOT_USERNAME", "root")
-                .withEnv("MYSQL_ROOT_PASSWORD", "root")
-                .withClasspathResourceMapping("mastdb.sql", "/docker-entrypoint-initdb.d/1.sql", BindMode.READ_ONLY)
-                .withClasspathResourceMapping("mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
-                .waitingFor(Wait.forListeningPort());
+            .withNetwork(network)
+            .withNetworkAliases("mysql")
+            .withExposedPorts(3306)
+            .withEnv("MYSQL_DATABASE", "oqsengine")
+            .withEnv("MYSQL_ROOT_USERNAME", "root")
+            .withEnv("MYSQL_ROOT_PASSWORD", "root")
+            .withClasspathResourceMapping("mastdb.sql", "/docker-entrypoint-initdb.d/1.sql", BindMode.READ_ONLY)
+            .withClasspathResourceMapping("mysql.cnf", "/etc/my.cnf", BindMode.READ_ONLY)
+            .waitingFor(Wait.forListeningPort());
         mysql.start();
 
         manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.0")
@@ -132,7 +131,7 @@ public abstract class AbstractContainer {
         System.out.println(System.getProperty("MANTICORE0_JDBC"));
         System.out.println(System.getProperty("MANTICORE1_JDBC"));
 
-        System.setProperty(DataSourceFactory.CONFIG_FILE, "./src/test/resources/oqsengine-ds.conf");
+        System.setProperty("ds", "./src/test/resources/oqsengine-ds.conf");
     }
 
     private static String getRandomString(int length) {
