@@ -4,8 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
 
 /**
  * desc :
@@ -39,12 +38,12 @@ public class CDCAckMetrics {
     private int executeRows;
 
     //  上一次成功消费后的tx事务列表
-    private List<Long> commitList;
+    private LinkedHashSet<Long> commitList;
 
     @JsonCreator
     public CDCAckMetrics(@JsonProperty("cdcConsumerStatus")CDCStatus cdcConsumerStatus) {
         this.cdcConsumerStatus = cdcConsumerStatus;
-        this.commitList = new ArrayList<>();
+        this.commitList = new LinkedHashSet<Long>();
     }
 
     public long getLastUpdateTime() {
@@ -87,11 +86,11 @@ public class CDCAckMetrics {
         this.lastUpdateTime = lastUpdateTime;
     }
 
-    public List<Long> getCommitList() {
+    public LinkedHashSet<Long> getCommitList() {
         return commitList;
     }
 
-    public void setCommitList(List<Long> commitList) {
+    public void setCommitList(LinkedHashSet<Long> commitList) {
         this.commitList = commitList;
     }
 

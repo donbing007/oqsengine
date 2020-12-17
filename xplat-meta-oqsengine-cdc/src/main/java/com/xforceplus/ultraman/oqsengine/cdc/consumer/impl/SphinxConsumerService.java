@@ -111,7 +111,7 @@ public class SphinxConsumerService implements ConsumerService {
                                                 , JSON.toJSON(cdcMetrics.getCdcAckMetrics().getCommitList()));
 
         //  每个Transaction的结束需要将unCommitEntityValues清空
-        cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(new LinkedHashSet<>());
+        cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().clear();
     }
 
 
@@ -166,11 +166,21 @@ public class SphinxConsumerService implements ConsumerService {
                                 cdcMetricsService.isReadyCommit(commitId);
                             }
                         }
-                        //  更新
-                        if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
-                            logger.debug("convert commitId, new commitId : {}, oldList : {}"
+                        /**
+                         * 遭遇 No TransactionEnd，需要进行commitId切换，同时记录错误日志
+                         */
+                        if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().isEmpty() &&
+                                !cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
+
+                            logger.warn("[cdc-consumer] convert commitId without transaction, new commitId : {}, oldList : {}"
                                     , commitId, JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+
+                            cdcMetrics.getCdcAckMetrics().getCommitList().addAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds());
+
+                            cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().clear();
                         }
+
+                        //  更新
                         cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
                         rawEntries.put(id, new RawEntry(id, commitId,
                                 entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));

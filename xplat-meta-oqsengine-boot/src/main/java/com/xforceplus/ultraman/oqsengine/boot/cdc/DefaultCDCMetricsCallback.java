@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,7 +33,7 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
     @Override
     public void cdcAck(CDCAckMetrics ackMetrics) {
         try {
-            List<Long> idList = ackMetrics.getCommitList();
+            LinkedHashSet<Long> idList = ackMetrics.getCommitList();
             long[] ids = idList.stream().mapToLong(id -> id).toArray();
             commitIdStatusService.obsolete(ids);
 
