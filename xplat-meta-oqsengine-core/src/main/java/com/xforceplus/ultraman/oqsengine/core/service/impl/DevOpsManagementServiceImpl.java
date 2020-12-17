@@ -204,11 +204,6 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
                     taskInfoMap.remove(id);
                 }
             }
-        } else {
-            if (null != taskInfoMap) {
-                taskInfoMap.clear();
-                taskInfoMap = null;
-            }
         }
     }
 
