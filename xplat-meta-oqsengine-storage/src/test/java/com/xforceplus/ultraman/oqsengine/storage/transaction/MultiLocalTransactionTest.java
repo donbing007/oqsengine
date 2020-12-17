@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.transaction;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
-import com.xforceplus.ultraman.oqsengine.storage.AbstractRedisContainerTest;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractRedisContainerTest;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import org.junit.After;

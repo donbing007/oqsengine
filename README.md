@@ -134,9 +134,10 @@ oqsengine 会在 /actuator/prometheus 公开一系列指标来输出当前系统
 | oqs_transaction_duration_seconds | | 事务的持续时间 |
 | oqs_fail_count_total | | 错误总量 |
 | oqs_read_count_total | action(one,nultiple,serch) | 读取数据总量 |
-| oqs_process_delay_latency_seconds_max | action(one,condition) | 操作延时最大值(秒) |
-| oqs_process_delay_latency_seconds_count | action(one,condition) | 操作延时统计数量 |
-| oqs_process_delay_latency_seconds_sum | action(one,condition) | 操作延时总和 |
+| oqs_process_delay_latency_seconds_max | initiator(all,master,index), action(one,condition) | 操作延时最大值(秒) |
+| oqs_process_delay_latency_seconds_count | initiator(all,master,index) action(one,condition) | 操作延时统计数量 |
+| oqs_process_delay_latency_seconds_sum | initiator(all,master,index) action(one,condition) | 操作延时总和 |
 | oqs_unsync_commitid_count_total | | 提交但未同步的提交号数量 |
 | oqs_cdc_sync_delay_latency | | CDC 同步的延时 |
 | oqs_mode | | 当前工作模式(1 正常, 2 只读) |
+| oqs_now_commitid | | 当前最大提交号 |

@@ -1,11 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.common.id;
 
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisStringCommands;
+import io.micrometer.core.instrument.Metrics;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Continuous partial ID generator based on redis.
@@ -23,6 +26,8 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
 
     private String key;
 
+    private AtomicLong commitIdNumber = Metrics.gauge(MetricsDefine.NOW_COMMITID, new AtomicLong(0));
+
     public RedisOrderContinuousLongIdGenerator(RedisClient redisClient) {
         this(redisClient, DEFAULT_KEY);
     }
@@ -36,7 +41,13 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
     @Override
     public Long next() {
         RedisStringCommands<String, String> sync = connection.sync();
-        return sync.incr(key);
+        Long newId = sync.incr(key);
+
+        try {
+            return newId;
+        } finally {
+            commitIdNumber.set(newId);
+        }
     }
 
     @PostConstruct

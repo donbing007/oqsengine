@@ -74,6 +74,11 @@ public class MetricsDefine {
     public static final String CDC_SYNC_EXECUTED_COUNT = PREFIX + ".cdc.sync.executed.count";
 
     /**
+     * 当前的提交号.
+     */
+    public static final String NOW_COMMITID = PREFIX + ".now.commitid";
+
+    /**
      * 当前OQS的工作模式.
      */
     public static final String MODE = PREFIX + ".mode";
