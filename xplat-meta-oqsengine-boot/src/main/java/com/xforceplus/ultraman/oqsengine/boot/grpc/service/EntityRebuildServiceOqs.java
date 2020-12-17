@@ -150,8 +150,12 @@ public class EntityRebuildServiceOqs implements EntityRebuildServicePowerApi {
     @Override
     public CompletionStage<OperationResult> cancelEntityRepair(RepairRequest in, Metadata metadata) {
         return async(() -> {
-            devOpsManagementService.cancelEntityRepair(in.getRidList().stream().toArray(Long[]::new));
-            return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
+            try {
+                devOpsManagementService.cancelEntityRepair(in.getRidList().stream().toArray(Long[]::new));
+                return OperationResult.newBuilder().setCode(OperationResult.Code.OK).build();
+            } catch (SQLException ex) {
+                return OperationResult.newBuilder().setCode(OperationResult.Code.EXCEPTION).setMessage(ex.getMessage()).build();
+            }
         });
     }
 

@@ -100,7 +100,7 @@ public interface DevOpsManagementService {
     /**
      * 取消正在执行的修复任务.
      */
-    void cancelEntityRepair(Long... ids);
+    void cancelEntityRepair(Long... ids) throws SQLException;
 
     /**
      * 是否已经完成.

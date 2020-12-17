@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
@@ -58,6 +59,10 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     private Map<Long, Future> taskFutures;
 
     private Map<Long, IDevOpsTaskInfo> taskInfoMap;
+
+    private static final int REPAIRED_TASK_TIME_OUT = 60_000;
+
+    private static final int REPAIRED_TASK_PAGE_SIZE = 128;
 
     @Resource
     private TaskStorage sqlTaskStorage;
@@ -151,15 +156,20 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         }
 
         for (IEntityClass c : classes) {
-            if (c.extendEntityClass() != null && taskInfoMap.containsKey(c.id())) {
-                throw new SQLException(String.format("must cancel entityClass task before redo repair. entity : %d", c.id()));
+
+            if (null == c.extendEntityClass()) {
+                throw new SQLException(String.format("entity class must have extendEntityClass, entity : %d", c.id()));
+            }
+            IDevOpsTaskInfo devOpsTaskInfo = taskInfoMap.get(c.id());
+            if (null != devOpsTaskInfo && devOpsTaskInfo.status().getCode() < DONE.getCode()) {
+                throw new SQLException(String.format("must cancel/clear entityClass task before redo repair. entity : %d", c.id()));
             }
         }
 
         for (IEntityClass c : classes) {
             // 只处理子类.
             if (c.extendEntityClass() != null) {
-                QueryIterator queryIterator = masterStorage.newIterator(c, 0, Long.MAX_VALUE, worker, 30 * 1000, 100);
+                QueryIterator queryIterator = masterStorage.newIterator(c, 0, Long.MAX_VALUE, worker, REPAIRED_TASK_TIME_OUT, REPAIRED_TASK_PAGE_SIZE);
                 if (null != queryIterator) {
                     IDevOpsTaskInfo devOpsTaskInfo = new DevOpsTaskInfo(idGenerator.next(), c, 0, Long.MAX_VALUE);
                     devOpsTaskInfo.setBatchSize(queryIterator.size());
@@ -174,33 +184,28 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         }
     }
 
-    @Override
-    public synchronized void cancelEntityRepair(Long... ids) {
-        for (Long id : ids) {
-            if (null != taskFutures) {
-                Future f = taskFutures.remove(id);
-                if (null != f) {
-                    f.cancel(true);
-                }
-            }
 
-            if (null != taskInfoMap) {
-                IDevOpsTaskInfo devOpsTaskInfo = taskInfoMap.get(id);
-                if (null != devOpsTaskInfo) {
-                    devOpsTaskInfo.resetStatus(CANCEL.getCode());
-                }
-            }
-        }
+    @Override
+    @Deprecated
+    public synchronized void cancelEntityRepair(Long... ids) throws SQLException {
+        throw new SQLException("Deprecated function");
     }
 
     @Override
     public void clearRepairedInfos(Long... ids) {
-        if (null != taskInfoMap) {
-            if (null != ids && ids.length > 0) {
-                for (Long id : ids) {
+        if (null != ids && ids.length > 0) {
+            for (Long id : ids) {
+                Future f = taskFutures.remove(id);
+                if (null != f) {
+                    f.cancel(true);
+                }
+
+                if (null != taskInfoMap) {
                     taskInfoMap.remove(id);
                 }
-            } else {
+            }
+        } else {
+            if (null != taskInfoMap) {
                 taskInfoMap.clear();
                 taskInfoMap = null;
             }
@@ -264,9 +269,9 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         private QueryIterator dataQueryIterator;
         private IDevOpsTaskInfo devOpsTaskInfo;
         private EntityManagementService entityManagementService;
-        private int dealSize;
         private Consumer<Long> callback;
         private IEntityClass entityClass;
+        private int dealSize;
 
         public RepairTask(
                 QueryIterator dataQueryIterator, IDevOpsTaskInfo devOpsTaskInfo, EntityManagementService entityManagementService, Consumer<Long> callback) {
@@ -297,7 +302,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
                     try {
                         entityManagementService.replace(entity);
-                        devOpsTaskInfo.setFinishSize(++dealSize);
+                        dealSize++;
 
                         logger.info("Repair schedule: entityClass {}, {}/{}.", entity.entityClass().code(),
                                 dealSize, dataQueryIterator.size());
@@ -309,6 +314,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
                         return;
                     }
                 }
+                devOpsTaskInfo.setFinishSize(dealSize);
             }
             devOpsTaskInfo.resetStatus(DONE.getCode());
             callback.accept(entityClass.id());

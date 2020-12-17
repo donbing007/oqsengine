@@ -79,7 +79,7 @@ public class DevOpsManagementServiceImplTest {
     public void before() throws Exception {
         worker = Executors.newFixedThreadPool(10);
         masterStorage = mock(MasterStorage.class);
-        when(masterStorage.newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 0, 100))
+        when(masterStorage.newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 60_000, 128))
                 .thenReturn(new MockQueryIterator());
 
         entityManagementService = mock(EntityManagementService.class);
@@ -120,20 +120,13 @@ public class DevOpsManagementServiceImplTest {
 
         TimeUnit.SECONDS.sleep(1);
 
-        impl.cancelEntityRepair(childEntityClass.id());
+        impl.clearRepairedInfos(childEntityClass.id());
 
         Collection<IDevOpsTaskInfo> devOpsTaskInfos = impl.repairedInfoList(childEntityClass.id());
 
         Assert.assertNotNull(devOpsTaskInfos);
 
-        Assert.assertEquals(1, devOpsTaskInfos.size());
-
-        devOpsTaskInfos.forEach(
-                devOpsTaskInfo -> {
-                    Assert.assertEquals(expectCancelSize, devOpsTaskInfo.getBatchSize());
-                    Assert.assertEquals(CANCEL.getCode(), devOpsTaskInfo.getStatus());
-                }
-        );
+        Assert.assertEquals(0, devOpsTaskInfos.size());
     }
 
     @Test
@@ -170,7 +163,7 @@ public class DevOpsManagementServiceImplTest {
         );
 
         verify(masterStorage, times(1))
-                .newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 0, 100);
+                .newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 60_000, 128);
         verify(entityManagementService, times(entities.size())).replace(argThat(argument -> true));
     }
 
