@@ -195,9 +195,11 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
     public void clearRepairedInfos(Long... ids) {
         if (null != ids && ids.length > 0) {
             for (Long id : ids) {
-                Future f = taskFutures.remove(id);
-                if (null != f) {
-                    f.cancel(true);
+                if (null != taskFutures) {
+                    Future f = taskFutures.remove(id);
+                    if (null != f) {
+                        f.cancel(true);
+                    }
                 }
 
                 if (null != taskInfoMap) {
