@@ -297,7 +297,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
                     try {
                         entityManagementService.replace(entity);
-                        dealSize++;
+                        devOpsTaskInfo.setFinishSize(++dealSize);
 
                         logger.info("Repair schedule: entityClass {}, {}/{}.", entity.entityClass().code(),
                                 dealSize, dataQueryIterator.size());
@@ -311,7 +311,6 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
                 }
             }
             devOpsTaskInfo.resetStatus(DONE.getCode());
-            devOpsTaskInfo.setFinishSize(dealSize);
             callback.accept(entityClass.id());
         }
     }
