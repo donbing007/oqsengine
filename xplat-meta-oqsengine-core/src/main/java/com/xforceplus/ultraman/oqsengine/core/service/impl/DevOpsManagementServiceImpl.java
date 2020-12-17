@@ -298,7 +298,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
                     }
 
                     if (0 == dealSize) {
-                        logger.debug("current  entity : {}, entities iterator size : {}", entityClass.id(), entities.size());
+                        logger.debug("current entity : {}, entities iterator size : {}", entityClass.id(), entities.size());
                     }
 
                     try {

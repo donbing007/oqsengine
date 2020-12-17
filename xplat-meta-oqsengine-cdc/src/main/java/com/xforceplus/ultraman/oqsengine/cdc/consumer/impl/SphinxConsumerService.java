@@ -106,8 +106,9 @@ public class SphinxConsumerService implements ConsumerService {
 
     private void cleanUnCommit(CDCMetrics cdcMetrics) {
         cdcMetrics.getCdcAckMetrics().getCommitList().addAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds());
-        //  每次Transaction结束,将unCommitId同步到commitList中
-        logCommitId(cdcMetrics);
+
+        logger.debug("[cdc-consumer] transaction end, current batch commit ids : {}"
+                                                , JSON.toJSON(cdcMetrics.getCdcAckMetrics().getCommitList()));
 
         //  每个Transaction的结束需要将unCommitEntityValues清空
         cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(new LinkedHashSet<>());
