@@ -278,6 +278,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         @Override
         public void run() {
             List<IEntity> entities = null;
+            devOpsTaskInfo.resetStatus(RUNNING.getCode());
             while (dataQueryIterator.hasNext()) {
                 try {
                     entities = dataQueryIterator.next();
