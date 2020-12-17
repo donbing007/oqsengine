@@ -104,7 +104,7 @@ public class SQLMasterStorage implements MasterStorage {
         long startTimeMs,
         long endTimeMs,
         ExecutorService threadPool,
-        int queryTimeout,
+        int batchTimeout,
         int pageSize) throws SQLException {
 
         List<DataSource> dataSources = new ArrayList<>();
@@ -121,11 +121,11 @@ public class SQLMasterStorage implements MasterStorage {
             List<Future<TableSummary>> futures = new ArrayList<Future<TableSummary>>(tables.size());
             for (String tableName : tables) {
                 futures.add(threadPool.submit(
-                    new CountByTableSummaryCallable(latch, batchCondition, tableName, queryTimeout)));
+                    new CountByTableSummaryCallable(latch, batchCondition, tableName, batchTimeout)));
             }
 
             try {
-                if (!latch.await(this.queryTimeout, TimeUnit.MILLISECONDS)) {
+                if (!latch.await(batchTimeout, TimeUnit.MILLISECONDS)) {
                     for (Future<TableSummary> f : futures) {
                         f.cancel(true);
                     }
@@ -157,7 +157,7 @@ public class SQLMasterStorage implements MasterStorage {
 
         return 0 < dataSourceSummaries.size() ?
             new DataQueryIterator(batchCondition, dataSourceSummaries, this, threadPool,
-                queryTimeout, pageSize) : null;
+                    batchTimeout, pageSize) : null;
     }
 
     @Override
