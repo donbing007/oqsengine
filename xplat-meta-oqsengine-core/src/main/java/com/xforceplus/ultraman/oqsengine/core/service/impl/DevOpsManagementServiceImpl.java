@@ -293,6 +293,9 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
                 for (IEntity entity : entities) {
                     if (entityClass == null) {
                         entityClass = entity.entityClass();
+                    }
+
+                    if (0 == dealSize) {
                         logger.debug("current  entity : {}, entities iterator size : {}", entityClass.id(), entities.size());
                     }
 
