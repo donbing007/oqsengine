@@ -288,10 +288,12 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
                     devOpsTaskInfo.resetMessage(ex.getMessage());
                     return;
                 }
+
                 int dealSize = 0;
                 for (IEntity entity : entities) {
                     if (entityClass == null) {
                         entityClass = entity.entityClass();
+                        logger.debug("current  entity : {}, entities iterator size : {}", entityClass.id(), entities.size());
                     }
 
                     try {
