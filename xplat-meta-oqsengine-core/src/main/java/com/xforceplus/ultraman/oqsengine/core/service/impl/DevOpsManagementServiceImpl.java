@@ -159,7 +159,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         for (IEntityClass c : classes) {
             // 只处理子类.
             if (c.extendEntityClass() != null) {
-                QueryIterator queryIterator = masterStorage.newIterator(c, 0, Long.MAX_VALUE, worker, 0, 100);
+                QueryIterator queryIterator = masterStorage.newIterator(c, 0, Long.MAX_VALUE, worker, 30 * 1000, 100);
                 if (null != queryIterator) {
                     IDevOpsTaskInfo devOpsTaskInfo = new DevOpsTaskInfo(idGenerator.next(), c, 0, Long.MAX_VALUE);
                     devOpsTaskInfo.setBatchSize(queryIterator.size());

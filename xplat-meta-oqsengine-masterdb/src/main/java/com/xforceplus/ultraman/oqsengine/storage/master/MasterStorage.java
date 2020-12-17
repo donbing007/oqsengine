@@ -31,6 +31,8 @@ public interface MasterStorage extends Storage {
      * @param startTimeMs 开始时间
      * @param endTimeMs   结束时间
      * @param threadPool  外部传入执行线程池，如为null表示采用默认的线程池
+     * @param queryTimeout 超时时间
+     * @param pageSize 页大小
      * @return 目标实例.
      */
     QueryIterator newIterator(IEntityClass entityClass,
