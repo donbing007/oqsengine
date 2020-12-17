@@ -129,6 +129,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     @Override
     public boolean isReady(long commitId) {
         if (commitId <= INVALID_COMMITID) {
+            logger.warn("Invalid COMMITID {}.", commitId);
             return true;
         }
 
@@ -137,6 +138,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         String value = syncCommands.get(statusKey);
 
         CommitStatus status = CommitStatus.getInstance(value);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Check that the status of the submission number {} is {}.", commitId, status.name());
+        }
 
         if (CommitStatus.READY == status) {
             return true;
