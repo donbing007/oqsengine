@@ -83,4 +83,6 @@ public interface IDevOpsTaskInfo {
     void resetFailedRecovers(int recovers);
 
     void setFinishSize(int size);
+
+    void addFinishSize(int addSize);
 }

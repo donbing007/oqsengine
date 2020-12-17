@@ -266,7 +266,6 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         private EntityManagementService entityManagementService;
         private Consumer<Long> callback;
         private IEntityClass entityClass;
-        private int dealSize;
 
         public RepairTask(
                 QueryIterator dataQueryIterator, IDevOpsTaskInfo devOpsTaskInfo, EntityManagementService entityManagementService, Consumer<Long> callback) {
@@ -274,7 +273,6 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
             this.devOpsTaskInfo = devOpsTaskInfo;
             this.entityManagementService = entityManagementService;
             this.callback = callback;
-            this.dealSize = 0;
         }
 
         @Override
@@ -289,7 +287,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
                     devOpsTaskInfo.resetMessage(ex.getMessage());
                     return;
                 }
-
+                int dealSize = 0;
                 for (IEntity entity : entities) {
                     if (entityClass == null) {
                         entityClass = entity.entityClass();
@@ -309,7 +307,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
                         return;
                     }
                 }
-                devOpsTaskInfo.setFinishSize(dealSize);
+                devOpsTaskInfo.addFinishSize(dealSize);
             }
             devOpsTaskInfo.resetStatus(DONE.getCode());
             callback.accept(entityClass.id());

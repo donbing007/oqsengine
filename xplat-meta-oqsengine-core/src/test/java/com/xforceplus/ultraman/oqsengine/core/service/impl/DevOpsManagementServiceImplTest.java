@@ -132,7 +132,7 @@ public class DevOpsManagementServiceImplTest {
     @Test
     public void testRepair() throws Exception {
         entities = new ArrayList<>();
-        for (int i = 0; i < expectSize; i++) {
+        for (int i = 0; i < expectCancelSize; i++) {
             entities.add(
                     new Entity(2000, childEntityClass, new EntityValue(2000).addValues(
                             Arrays.asList(
@@ -157,7 +157,7 @@ public class DevOpsManagementServiceImplTest {
         Assert.assertEquals(1, devOpsTaskInfos.size());
         devOpsTaskInfos.forEach(
                 devOpsTaskInfo -> {
-                    Assert.assertEquals(expectSize, devOpsTaskInfo.getFinishSize());
+                    Assert.assertEquals(expectCancelSize, devOpsTaskInfo.getFinishSize());
                     Assert.assertEquals(DONE.getCode(), devOpsTaskInfo.getStatus());
                 }
         );
