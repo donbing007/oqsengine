@@ -121,6 +121,7 @@ data:
             batchSize: {{ .Values.cdc.connect.batchSize | default "2048" | quote }}
           consumer:
             checkCommitReady: {{ .Values.cdc.consumer.checkCommitReady | default "true" }}
+            skipCommitId: {{ .Values.cdc.consumer.skipCommitId | default "-1" | quote }}
 
     oqsengine-ds.conf: |
         {

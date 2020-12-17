@@ -35,7 +35,13 @@ public class SphinxConsumerService implements ConsumerService {
     @Resource(name = "syncExecutor")
     private SyncExecutor sphinxSyncExecutor;
 
+    private long skipCommitId = INIT_ID;
+
     private boolean checkCommitReady = true;
+
+    public void setSkipCommitId(long skipCommitId) {
+        this.skipCommitId = skipCommitId;
+    }
 
     public void setCheckCommitReady(boolean checkCommitReady) {
         this.checkCommitReady = checkCommitReady;
@@ -140,22 +146,33 @@ public class SphinxConsumerService implements ConsumerService {
                     //  获取CommitID
                     commitId = getLongFromColumn(columns, COMMITID);
                 } catch (Exception e) {
-                    sphinxSyncExecutor.errorRecord(id, commitId, String.format("parse id, commit from columns failed, message : %s", e.getMessage()));
+                    sphinxSyncExecutor.errorRecord(id, commitId,
+                            String.format("parse id, commitid from columns failed, message : %s", e.getMessage()));
                     continue;
                 }
 
                 //  是否MAX_VALUE
                 if (commitId != CommitHelper.getUncommitId()) {
-                    if (checkCommitReady) {
-                        if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
-                            //  阻塞直到成功
-                            cdcMetricsService.isReadyCommit(commitId);
+                    /** 检查是否为跳过不处理的commitId
+                     *  满足 commitId > skipCommitId || (commitId == 0 && skipCommitId != 0)
+                     *  否则跳过
+                     */
+                    if (commitId > skipCommitId || (commitId == NO_TRANSACTION_COMMIT_ID
+                            && skipCommitId != NO_TRANSACTION_COMMIT_ID)) {
+                        if (checkCommitReady) {
+                            if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
+                                //  阻塞直到成功
+                                cdcMetricsService.isReadyCommit(commitId);
+                            }
                         }
+                        //  更新
+                        cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
+                        rawEntries.put(id, new RawEntry(id, commitId,
+                                entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
+                    } else {
+                        logger.warn("ignore commitId less than skipCommitId, current id : {}, commitId : {}, skipCommitId : {}"
+                                , id, commitId, skipCommitId);
                     }
-                    //  更新
-                    cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
-                    rawEntries.put(id, new RawEntry(id, commitId,
-                            entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
                 }
             }
         }
