@@ -53,7 +53,7 @@ public class SphinxConsumerService implements ConsumerService {
         CDCMetricsRecorder cdcMetricsRecorder = init(cdcMetricsService.getCdcMetrics().getCdcUnCommitMetrics(), batchId);
 
         //  同步逻辑
-        int syncs = syncAfterDataFilter(entries, cdcMetricsRecorder.getCdcMetrics(), cdcMetricsService);
+        int syncs = syncAfterDataFilter(entries, cdcMetricsRecorder.getCdcMetrics(), cdcMetricsService, batchId);
 
         //  完成指标记录器
         return cdcMetricsRecorder.finishRecord(syncs).getCdcMetrics();
@@ -68,7 +68,7 @@ public class SphinxConsumerService implements ConsumerService {
     /*
         数据清洗、同步
     * */
-    private int syncAfterDataFilter(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics, CDCMetricsService cdcMetricsService) throws SQLException {
+    private int syncAfterDataFilter(List<CanalEntry.Entry> entries, CDCMetrics cdcMetrics, CDCMetricsService cdcMetricsService, long batchId) throws SQLException {
         int syncCount = ZERO;
         //  需要同步的列表
         Map<Long, RawEntry> rawEntries = new HashMap<>();
@@ -76,10 +76,10 @@ public class SphinxConsumerService implements ConsumerService {
             //  不是TransactionEnd/RowData类型数据, 将被过滤
             switch (entry.getEntryType()) {
                 case TRANSACTIONEND:
-                    cleanUnCommit(cdcMetrics);
+                    cleanUnCommit(cdcMetrics, batchId);
                     break;
                 case ROWDATA:
-                    internalDataSync(entry, cdcMetrics, cdcMetricsService, rawEntries);
+                    internalDataSync(entry, cdcMetrics, cdcMetricsService, rawEntries, batchId);
                     break;
             }
         }
@@ -90,25 +90,26 @@ public class SphinxConsumerService implements ConsumerService {
             syncCount += sphinxSyncExecutor.execute(rawEntries.values(), cdcMetrics);
         }
 
-        logCommitId(cdcMetrics);
+        logCommitId(cdcMetrics, batchId);
         return syncCount;
     }
 
-    private void logCommitId(CDCMetrics cdcMetrics) {
+    private void logCommitId(CDCMetrics cdcMetrics, long batchId) {
         if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
-            logger.debug("[cdc-consumer] current batch un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
-            if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > UNEXPECTED_COMMIT_ID_COUNT) {
-                logger.warn("[cdc-consumer] one transaction has more than one commitId, ids : {}",
-                        JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
-            }
+            logger.debug("[cdc-consumer] current batch : {} end with un-commit ids : {}"
+                    , batchId, JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+//            if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > UNEXPECTED_COMMIT_ID_COUNT) {
+//                logger.warn("[cdc-consumer] one transaction has more than one commitId, ids : {}",
+//                        JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+//            }
         }
     }
 
-    private void cleanUnCommit(CDCMetrics cdcMetrics) {
+    private void cleanUnCommit(CDCMetrics cdcMetrics, long batchId) {
         cdcMetrics.getCdcAckMetrics().getCommitList().addAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds());
 
-        logger.debug("[cdc-consumer] transaction end, current batch commit ids : {}"
-                                                , JSON.toJSON(cdcMetrics.getCdcAckMetrics().getCommitList()));
+        logger.debug("[cdc-consumer] transaction end, current batchId : {}, commitIds : {}"
+                                                , batchId, JSON.toJSON(cdcMetrics.getCdcAckMetrics().getCommitList()));
 
         //  每个Transaction的结束需要将unCommitEntityValues清空
         cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().clear();
@@ -116,7 +117,7 @@ public class SphinxConsumerService implements ConsumerService {
 
 
     private void internalDataSync(CanalEntry.Entry entry, CDCMetrics cdcMetrics, CDCMetricsService cdcMetricsService,
-                                  Map<Long, RawEntry> rawEntries) throws SQLException {
+                                  Map<Long, RawEntry> rawEntries, long batchId) throws SQLException {
         CanalEntry.RowChange rowChange = null;
         try {
             rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
@@ -172,8 +173,8 @@ public class SphinxConsumerService implements ConsumerService {
                         if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().isEmpty() &&
                                 !cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
 
-                            logger.warn("[cdc-consumer] convert commitId without transaction, new commitId : {}, oldList : {}"
-                                    , commitId, JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+                            logger.warn("[cdc-consumer] convert commitId without transaction, new commitId : {}, oldList : {}， batchId : {}"
+                                    , commitId, JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()), batchId);
 
                             cdcMetrics.getCdcAckMetrics().getCommitList().addAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds());
 
@@ -185,8 +186,8 @@ public class SphinxConsumerService implements ConsumerService {
                         rawEntries.put(id, new RawEntry(id, commitId,
                                 entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
                     } else {
-                        logger.warn("ignore commitId less than skipCommitId, current id : {}, commitId : {}, skipCommitId : {}"
-                                , id, commitId, skipCommitId);
+                        logger.warn("[cdc-consumer] ignore commitId less than skipCommitId, current id : {}, commitId : {}, skipCommitId : {}，batchId : {}"
+                                , id, commitId, skipCommitId, batchId);
                     }
                 }
             }

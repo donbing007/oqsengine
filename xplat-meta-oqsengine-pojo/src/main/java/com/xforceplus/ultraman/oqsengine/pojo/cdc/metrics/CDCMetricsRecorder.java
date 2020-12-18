@@ -30,8 +30,8 @@ public class CDCMetricsRecorder {
         logger.debug("[cdc-metrics-record] start consume batch, batchId : {}", batchId);
         if (null != cdcUnCommitMetrics) {
             cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(cdcUnCommitMetrics.getUnCommitIds());
-            logger.debug("[cdc-metrics-record] sync last batch unCommitIds : {}"
-                    , JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            logger.debug("[cdc-metrics-record] current batch : {} have last batch un-commit ids : {}"
+                    , batchId, JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
         }
 
         return this;
