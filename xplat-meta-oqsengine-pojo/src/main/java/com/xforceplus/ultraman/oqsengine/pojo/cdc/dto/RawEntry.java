@@ -18,19 +18,13 @@ public class RawEntry implements Serializable {
     private long executeTime;
     private long id;
     private long commitId;
-    private CanalEntry.EventType eventType;
     private List<CanalEntry.Column> columns;
 
-    public RawEntry(long id, long commitId, long executeTime, CanalEntry.EventType eventType, List<CanalEntry.Column> columns) {
+    public RawEntry(long id, long commitId, long executeTime, List<CanalEntry.Column> columns) {
         this.id = id;
         this.commitId = commitId;
         this.executeTime = executeTime;
-        this.eventType = eventType;
         this.columns = columns;
-    }
-
-    public CanalEntry.EventType getEventType() {
-        return eventType;
     }
 
     public List<CanalEntry.Column> getColumns() {

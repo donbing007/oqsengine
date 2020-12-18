@@ -15,7 +15,7 @@ public class CDCConstant {
     public static final int EMPTY_BATCH_SIZE = 0;
     public static final int EMPTY_COLUMN_SIZE = 0;
     public static final int INIT_ID = -1;
-    public static final int UNEXPECTED_COMMIT_ID_COUNT = 1;
+    public static final int EXPECTED_COMMIT_ID_COUNT = 1;
     public static final int ZERO = 0;
     public static final int OLD_MAJOR = 0;
     public static final int NO_TRANSACTION_COMMIT_ID = 0;

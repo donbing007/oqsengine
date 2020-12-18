@@ -33,8 +33,7 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
     @Override
     public void cdcAck(CDCAckMetrics ackMetrics) {
         try {
-            LinkedHashSet<Long> idList = ackMetrics.getCommitList();
-            long[] ids = idList.stream().mapToLong(id -> id).toArray();
+            long[] ids = ackMetrics.getCommitList().stream().mapToLong(id -> id).toArray();
             commitIdStatusService.obsolete(ids);
 
             cdcStatusService.saveAck(ackMetrics);

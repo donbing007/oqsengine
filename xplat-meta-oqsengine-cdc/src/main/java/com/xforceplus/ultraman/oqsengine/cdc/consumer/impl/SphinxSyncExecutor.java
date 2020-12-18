@@ -68,12 +68,12 @@ public class SphinxSyncExecutor implements SyncExecutor {
                     storageEntityList.add(
                             prepareForReplace(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId()));
                 } else {
-                    synced += doDelete(rawEntry.getId(), rawEntry.getCommitId());
+                    synced += doDelete(rawEntry.getId(), rawEntry.getCommitId(), cdcMetrics.getBatchId());
                     syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                errorRecord(rawEntry.getId(), rawEntry.getCommitId(), e.getMessage());
+                errorRecord(cdcMetrics.getBatchId(), rawEntry.getId(), rawEntry.getCommitId(), e.getMessage());
             }
         }
 
@@ -84,26 +84,26 @@ public class SphinxSyncExecutor implements SyncExecutor {
         return synced;
     }
 
-    public void errorRecord(long id, long commitId, String message) throws SQLException {
-        logger.warn("[cdc-sync-executor] sphinx consume error will be record in cdcerrors,  id : {}, commitId : {}, message : {}"
-                , id, commitId, null == message ? "unKnow" : message);
+    public void errorRecord(long batchId, long id, long commitId, String message) throws SQLException {
+        logger.warn("[cdc-sync-executor] batch : {}, sphinx consume error will be record in cdcerrors,  id : {}, commitId : {}, message : {}"
+                , batchId, id, commitId, null == message ? "unKnow" : message);
         cdcErrorStorage.buildCdcError(CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, null == message ? "unKnow" : message));
     }
 
     //  删除,不停的循环删除, 直到成功为止
-    private int doDelete(long id, long commitId) throws SQLException {
+    private int doDelete(long id, long commitId, long batchId) throws SQLException {
         while (true) {
             try {
                 return sphinxQLIndexStorage.delete(id);
             } catch (Exception e) {
                 //  delete error
-                logger.warn("[cdc-sync-executor] delete error, will retry, id : {}, commitId : {}, message : {}",
-                                                                                id, commitId, e.getMessage());
+                logger.warn("[cdc-sync-executor] batch : {}, delete error, will retry, id : {}, commitId : {}, message : {}",
+                                                                        batchId, id, commitId, e.getMessage());
                 if (e instanceof SQLException) {
                     SQLException el = (SQLException) e;
                     if (el.getSQLState().equals(INVALID_ENTITY_ID.name())) {
-                        throw new SQLException(String.format("replace-delete error, id : %d, commitId : %d, message : %s",
-                                id, commitId, e.getMessage()));
+                        throw new SQLException(String.format("batch : %d, replace-delete error, id : %d, commitId : %d, message : %s",
+                                batchId, id, commitId, e.getMessage()));
                     }
                 }
                 sleepNoInterrupted(SECOND);

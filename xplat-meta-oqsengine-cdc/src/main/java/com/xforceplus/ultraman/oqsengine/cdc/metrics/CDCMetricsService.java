@@ -96,8 +96,8 @@ public class CDCMetricsService {
         try {
             cdcMetricsCallback.cdcSaveLastUnCommit(cdcMetrics);
         } catch (Exception e) {
-            logger.error("[cdc-metrics] back up unCommitMetrics to redis error, batchId : {}, unCommitMetrics : {}"
-                    , cdcMetrics.getBatchId(),JSON.toJSON(cdcMetrics));
+            logger.error("[cdc-metrics] back up unCommitMetrics to redis error, batch : {}, unCommitMetrics : {}"
+                    , cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics));
         }
     }
 

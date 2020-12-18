@@ -17,5 +17,5 @@ import java.util.Collection;
 public interface SyncExecutor {
     int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException;
 
-    void errorRecord(long id, long commitId, String message) throws SQLException;
+    void errorRecord(long batchId, long id, long commitId, String message) throws SQLException;
 }
