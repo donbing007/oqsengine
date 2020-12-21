@@ -235,7 +235,7 @@ public class MultiLocalTransaction implements Transaction {
                     // 主库提交.
                     for (TransactionResource tr : transactionResourceHolder) {
                         if (tr.type() == TransactionResourceType.MASTER) {
-                            tr.commit();
+                            tr.commit(commitId);
                         }
                     }
 
@@ -245,7 +245,7 @@ public class MultiLocalTransaction implements Transaction {
                         for (TransactionResource tr : transactionResourceHolder) {
                             if (tr.type() == TransactionResourceType.INDEX) {
                                 try {
-                                    tr.commit();
+                                    tr.commit(commitId);
                                 } catch (Exception ex) {
                                     logger.error(ex.getMessage(), ex);
                                 }

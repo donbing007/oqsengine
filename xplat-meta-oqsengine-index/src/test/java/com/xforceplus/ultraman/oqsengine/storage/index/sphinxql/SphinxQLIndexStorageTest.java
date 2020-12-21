@@ -357,6 +357,8 @@ public class SphinxQLIndexStorageTest extends AbstractContainer {
             .addValue(new StringsValue(stringsField, "\\\'新的字段,会有特殊字符.\'\\", "value3"));
 
         storage.replaceAttribute(expectedEntity.entityValue());
+
+        tx.getAccumulator().accumulateReplace();
         transactionManager.getCurrent().get().commit();
         transactionManager.finish();
 
@@ -384,6 +386,8 @@ public class SphinxQLIndexStorageTest extends AbstractContainer {
 
         IEntity expectedEntity = (IEntity) entityes[0].clone();
         storage.delete(expectedEntity);
+
+        tx.getAccumulator().accumulateDelete();
 
         transactionManager.getCurrent().get().commit();
         transactionManager.finish();
