@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.status.AbstractRedisContainerTest;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.sync.RedisCommands;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -113,11 +112,8 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
         impl.ready(commitId);
         impl.obsolete(commitId);
 
-        Assert.assertFalse(impl.isReady(commitId));
-        try (StatefulRedisConnection<String, String> connect = redisClient.connect()) {
-            RedisCommands<String, String> commands = connect.sync();
-            long size = commands.exists(statusKeyPreifx + "." + commitId);
-            Assert.assertEquals(0, size);
+        for (int i = 0; i < 10; i++) {
+            Assert.assertFalse(impl.isReady(commitId));
         }
     }
 
@@ -182,6 +178,11 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
         Assert.assertArrayEquals(expected, impl.getAll());
 
         Assert.assertEquals(10L, impl.getMin().get().longValue());
+
+        try (StatefulRedisConnection<String, String> conn = redisClient.connect()) {
+            Assert.assertEquals(0, conn.sync().exists("test.status.20").longValue());
+            Assert.assertEquals(0, conn.sync().exists("test.status.9").longValue());
+        }
     }
 
     /**
@@ -283,5 +284,18 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
         impl.obsolete(1, 2);
         Assert.assertTrue(impl.isObsolete(1));
         Assert.assertTrue(impl.isObsolete(2));
+    }
+
+    /**
+     * 测试如果状态为unknown,isReady在检查到一个阀值时会自动设置为就绪状态.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testUnknownNumber() throws Exception {
+        for (int i = 0; i < 10; i++) {
+            Assert.assertFalse(impl.isReady(Integer.MAX_VALUE));
+        }
+        Assert.assertTrue(impl.isReady(Integer.MAX_VALUE));
     }
 }

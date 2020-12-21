@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.common.datasource;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValue;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.micrometer.core.instrument.Metrics;
@@ -156,6 +157,8 @@ public class DataSourceFactory {
                 hikariConfig.setJdbcUrl(loggerJdbc.toString());
             }
         }
+
+        hikariConfig.setThreadFactory(ExecutorHelper.buildNameThreadFactory("jdbc-pool", false));
 
         return new HikariDataSource(hikariConfig);
     }
