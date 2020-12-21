@@ -80,6 +80,21 @@ public class UserCaseTest extends AbstractContainer {
 
     @Before
     public void before() throws Exception {
+        try (Connection conn = masterDataSource.getConnection()) {
+            try (Statement stat = conn.createStatement()) {
+                stat.executeUpdate("truncate table oqsbigentity");
+            }
+        }
+
+
+        for (DataSource ds : indexWriteDataSourceSelector.selects()) {
+            try (Connection conn = ds.getConnection()) {
+                try (Statement stat = conn.createStatement()) {
+                    stat.executeUpdate("truncate table oqsindex0");
+                    stat.executeUpdate("truncate table oqsindex1");
+                }
+            }
+        }
     }
 
     @After
