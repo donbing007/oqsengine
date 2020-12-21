@@ -93,6 +93,8 @@ redis:
   # ns 纳秒
   uri: "redis://127.0.0.1:6379"
   maxReqQueue: 10000
+  host:
+  port:
   userName:
   passWord:
 

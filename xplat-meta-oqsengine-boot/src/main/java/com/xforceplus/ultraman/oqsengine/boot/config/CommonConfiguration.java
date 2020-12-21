@@ -79,7 +79,7 @@ public class CommonConfiguration {
                 || (null == configuration.getPassWord() || configuration.getPassWord().length() == 0)) {
             redisClient = RedisClient.create(configuration.getUri());
         } else {
-            RedisURI redisURI = RedisURI.create(configuration.getUri());
+            RedisURI redisURI = RedisURI.create(configuration.getHost(), configuration.getPort());
             redisURI.setUsername(configuration.getUserName());
             redisURI.setPassword(configuration.getPassWord().toCharArray());
             redisClient = RedisClient.create(redisURI);
