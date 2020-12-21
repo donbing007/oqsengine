@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.EMPTY_BATCH_SIZE;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.INIT_ID;
 
 /**
  * desc :
@@ -28,9 +29,13 @@ public class CDCConfiguration {
 
     @Bean("sphinxConsumerService")
     public ConsumerService sphinxConsumerService(
-            @Value("${cdc.consumer.checkCommitReady:true}") boolean checkCommitReady) {
+            @Value("${cdc.consumer.checkCommitReady:true}") boolean checkCommitReady,
+            @Value("${cdc.consumer.skipCommitId:-1}") long skipCommitId) {
         SphinxConsumerService consumerService = new SphinxConsumerService();
         consumerService.setCheckCommitReady(checkCommitReady);
+        if (skipCommitId > INIT_ID) {
+            consumerService.setSkipCommitId(skipCommitId);
+        }
         return consumerService;
     }
 

@@ -53,7 +53,7 @@ public class ConsumerRunner extends Thread {
                 Thread.sleep(MAX_STOP_WAIT_TIME * SECOND);
             } catch (Exception e) {
                 //  ignore
-                logger.warn("cdc-runner] shutdown error, message : {}", e.getMessage());
+                logger.warn("[cdc-runner] shutdown error, message : {}", e.getMessage());
             }
 
             if (isShutdown()) {
@@ -157,8 +157,8 @@ public class ConsumerRunner extends Thread {
                 //  未获取到数据,回滚
                 cdcConnector.rollback();
                 e.printStackTrace();
-                String error = String.format("[cdc-runner] get message from canal server error, %s", e);
-                logger.error(error);
+                String error = String.format("get message from canal server error, %s", e);
+                logger.error("[cdc-runner] {}", error);
                 throw new SQLException(error);
             }
 
@@ -171,6 +171,7 @@ public class ConsumerRunner extends Thread {
 
                     //  消费binlog
                     cdcMetrics = consumerService.consume(message.getEntries(), batchId, cdcMetricsService);
+
                     //  binlog处理，同步指标到cdcMetrics中
                     synced = backMetrics(cdcMetrics);
 
@@ -272,10 +273,12 @@ public class ConsumerRunner extends Thread {
     private void backAfterAck(long originBatchId, CDCMetrics cdcMetrics) throws SQLException {
         //  1.确认ack batchId
         cdcConnector.ack(originBatchId);
+        logger.debug("ack batch success, batchId : {}", originBatchId);
         //  2.设置当前batchId为-LONG.MAX_VALUE
         cdcMetrics.setBatchId(IS_BACK_UP_ID);
         //  3.重置redis unCommit数据
         cdcMetricsService.backup(cdcMetrics);
+        logger.debug("rest cdcMetrics with buckUpId success, origin batchId : {}", originBatchId);
     }
 
     private void threadSleep(int waitInSeconds) {

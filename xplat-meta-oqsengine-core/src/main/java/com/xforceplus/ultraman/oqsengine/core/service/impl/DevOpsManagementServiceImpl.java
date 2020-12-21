@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import com.google.common.collect.Lists;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
@@ -8,10 +9,12 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.sql.SQL;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.TaskStorage;
 import com.xforceplus.ultraman.oqsengine.devops.repair.CommitIdRepairExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.TableSummary;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.iterator.QueryIterator;
@@ -22,8 +25,10 @@ import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -60,10 +65,13 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
     private Map<Long, IDevOpsTaskInfo> taskInfoMap;
 
-    private static final int REPAIRED_TASK_TIME_OUT = 60_000;
+    private static final int REPAIRED_TASK_TIME_OUT = 30_000;
 
-    private static final int REPAIRED_TASK_PAGE_SIZE = 128;
+    private static final int REPLACE_BATCH_TIME_OUT = 150_000;
 
+    private static final int REPAIRED_TASK_PAGE_SIZE = 1024;
+
+    private static final int REPAIRED_PART_SIZE = 128;
     @Resource
     private TaskStorage sqlTaskStorage;
 
@@ -169,7 +177,8 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         for (IEntityClass c : classes) {
             // 只处理子类.
             if (c.extendEntityClass() != null) {
-                QueryIterator queryIterator = masterStorage.newIterator(c, 0, Long.MAX_VALUE, worker, REPAIRED_TASK_TIME_OUT, REPAIRED_TASK_PAGE_SIZE);
+                QueryIterator queryIterator = masterStorage.newIterator(c, 0,
+                                                Long.MAX_VALUE, worker, REPAIRED_TASK_TIME_OUT, REPAIRED_TASK_PAGE_SIZE);
                 if (null != queryIterator) {
                     IDevOpsTaskInfo devOpsTaskInfo = new DevOpsTaskInfo(idGenerator.next(), c, 0, Long.MAX_VALUE);
                     devOpsTaskInfo.setBatchSize(queryIterator.size());
@@ -251,6 +260,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         logger.debug("taskInfoMap is empty");
         return true;
     }
+
     @Override
     public void removeCommitIds(Long... ids) {
         commitIdRepairExecutor.clean(ids);
@@ -261,13 +271,12 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
         commitIdRepairExecutor.repair(commitId);
     }
 
-    static class RepairTask implements Runnable {
+    private class RepairTask implements Runnable {
 
         private QueryIterator dataQueryIterator;
         private IDevOpsTaskInfo devOpsTaskInfo;
         private EntityManagementService entityManagementService;
         private Consumer<Long> callback;
-        private IEntityClass entityClass;
 
         public RepairTask(
                 QueryIterator dataQueryIterator, IDevOpsTaskInfo devOpsTaskInfo, EntityManagementService entityManagementService, Consumer<Long> callback) {
@@ -291,34 +300,85 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
                     return;
                 }
 
-                int dealSize = 0;
-                for (IEntity entity : entities) {
-                    if (entityClass == null) {
-                        entityClass = entity.entityClass();
-                    }
-
-                    if (0 == dealSize) {
-                        logger.debug("current  entity : {}, entities iterator size : {}", entityClass.id(), entities.size());
-                    }
-
-                    try {
-                        entityManagementService.replace(entity);
-                        dealSize++;
-
-                        logger.info("Repair schedule: entityClass {}, {}/{}.", entity.entityClass().code(),
-                                dealSize, dataQueryIterator.size());
-
-                    } catch (SQLException e) {
-                        devOpsTaskInfo.resetStatus(ERROR.getCode());
-                        devOpsTaskInfo.resetMessage(e.getMessage());
-                        logger.error(e.getMessage(), e);
-                        return;
-                    }
+                if (null == entities || entities.isEmpty()) {
+                    String error = "entities could not be null when dataQueryIterator has next batch.";
+                    logger.error(error);
+                    devOpsTaskInfo.resetStatus(ERROR.getCode());
+                    devOpsTaskInfo.resetMessage(error);
+                    return;
                 }
-                devOpsTaskInfo.addFinishSize(dealSize);
+
+                Collection<List<IEntity>> partTasks = Lists.partition(entities, REPAIRED_PART_SIZE);
+                CountDownLatch latch = new CountDownLatch(partTasks.size());
+                List<Future> replaceFutureTasks = new ArrayList<>(partTasks.size());
+
+                partTasks.forEach(
+                        parts -> {
+                            replaceFutureTasks.add(
+                                    worker.submit(new ReplaceTask(devOpsTaskInfo, entityManagementService, parts, latch))
+                            );
+                        }
+                );
+
+                try {
+                    if (!latch.await(REPLACE_BATCH_TIME_OUT, TimeUnit.MILLISECONDS)) {
+                        for (Future<TableSummary> f : replaceFutureTasks) {
+                            f.cancel(true);
+                        }
+
+                        devOpsTaskInfo.resetStatus(ERROR.getCode());
+                        devOpsTaskInfo.resetMessage("replace entity error.");
+
+                        throw new RuntimeException("Query failed, timeout.");
+                    }
+                } catch (Exception e) {
+                    devOpsTaskInfo.resetStatus(ERROR.getCode());
+                    devOpsTaskInfo.resetMessage("replace entity error.");
+                    throw new RuntimeException(e.getMessage(), e);
+                }
             }
             devOpsTaskInfo.resetStatus(DONE.getCode());
-            callback.accept(entityClass.id());
+            callback.accept(devOpsTaskInfo.getEntityClass().id());
+        }
+    }
+
+    private class ReplaceTask implements Runnable {
+        private IDevOpsTaskInfo devOpsTaskInfo;
+        private EntityManagementService entityManagementService;
+        private List<IEntity> entities;
+        private CountDownLatch latch;
+
+        public ReplaceTask(
+                IDevOpsTaskInfo devOpsTaskInfo, EntityManagementService entityManagementService,
+                List<IEntity> entities, CountDownLatch latch) {
+            this.devOpsTaskInfo = devOpsTaskInfo;
+            this.entityManagementService = entityManagementService;
+            this.entities = entities;
+            this.latch = latch;
+        }
+
+        @Override
+        public void run() {
+            int dealSize = 0;
+            IEntityClass entityClass = entities.get(0).entityClass();
+            logger.debug("current entity : {}, entities splite size : {}"
+                    , entityClass.id(), entities.size());
+
+            for (IEntity entity : entities) {
+                try {
+                    entityManagementService.replace(entity);
+                    dealSize++;
+
+                    logger.debug("Repair schedule: entityClass {}, {}/{}.", entity.entityClass().code(),
+                            dealSize, entities.size());
+
+                } catch (SQLException e) {
+                    logger.error(e.getMessage(), e);
+                    return;
+                }
+            }
+            devOpsTaskInfo.addFinishSize(dealSize);
+            latch.countDown();
         }
     }
 }

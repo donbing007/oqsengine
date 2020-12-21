@@ -79,28 +79,25 @@ public class CDCMetricsService {
     }
 
     public void callBackSuccess(long originBatchId, CDCMetrics temp, boolean isConnectSync) {
-        //  logger.debug("success consumer, cdcStatus : {}", JSON.toJSON(temp));
+
         cdcMetrics.setCdcUnCommitMetrics(temp.getCdcUnCommitMetrics());
         cdcMetrics.consumeSuccess(originBatchId, temp, isConnectSync);
         callback();
+        logger.debug("[cdc-metrics] success consumer, cdcMetrics : {}, batchId : {}", JSON.toJSON(temp), originBatchId);
     }
 
     public void callBackError(CDCStatus cdcStatus) {
-//        logger.debug("error, cdcStatus : {}", cdcStatus);
+        logger.warn("error, cdcStatus : {}", cdcStatus);
         cdcMetrics.getCdcAckMetrics().setCdcConsumerStatus(cdcStatus);
         callback();
-    }
-
-    public void syncFreeMessage(long batchId) {
-        cdcMetrics.syncFreeMessage(batchId);
-        //callback();
     }
 
     public void backup(CDCMetrics cdcMetrics) {
         try {
             cdcMetricsCallback.cdcSaveLastUnCommit(cdcMetrics);
         } catch (Exception e) {
-            logger.error("[cdc-metrics] back up unCommitMetrics to redis error, unCommitMetrics : {}", JSON.toJSON(cdcMetrics));
+            logger.error("[cdc-metrics] back up unCommitMetrics to redis error, batch : {}, unCommitMetrics : {}"
+                    , cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics));
         }
     }
 

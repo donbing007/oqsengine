@@ -35,7 +35,13 @@ public class SphinxConsumerService implements ConsumerService {
     @Resource(name = "syncExecutor")
     private SyncExecutor sphinxSyncExecutor;
 
+    private long skipCommitId = INIT_ID;
+
     private boolean checkCommitReady = true;
+
+    public void setSkipCommitId(long skipCommitId) {
+        this.skipCommitId = skipCommitId;
+    }
 
     public void setCheckCommitReady(boolean checkCommitReady) {
         this.checkCommitReady = checkCommitReady;
@@ -84,27 +90,34 @@ public class SphinxConsumerService implements ConsumerService {
             syncCount += sphinxSyncExecutor.execute(rawEntries.values(), cdcMetrics);
         }
 
-        logCommitId(cdcMetrics);
+        batchLogged(cdcMetrics);
         return syncCount;
     }
 
-    private void logCommitId(CDCMetrics cdcMetrics) {
+    private void batchLogged(CDCMetrics cdcMetrics) {
         if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
-            logger.debug("[cdc-consumer] current batch un-commit ids : {}", JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
-            if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > UNEXPECTED_COMMIT_ID_COUNT) {
-                logger.warn("[cdc-consumer] one transaction has more than one commitId, ids : {}",
-                        JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            logger.info("[cdc-consumer] batch : {} end with un-commit ids : {}"
+                    , cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+            if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EXPECTED_COMMIT_ID_COUNT) {
+                logger.warn("[cdc-consumer] batch : {}, one transaction has more than one commitId, ids : {}",
+                        cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
             }
         }
     }
 
     private void cleanUnCommit(CDCMetrics cdcMetrics) {
+        if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EXPECTED_COMMIT_ID_COUNT) {
+            logger.warn("[cdc-consumer] transaction end, batch : {}, one transaction has more than one commitId, ids : {}",
+                    cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+        }
+
         cdcMetrics.getCdcAckMetrics().getCommitList().addAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds());
-        //  每次Transaction结束,将unCommitId同步到commitList中
-        logCommitId(cdcMetrics);
+
+        logger.info("[cdc-consumer] transaction end, batchId : {}, commitIds : {}"
+                                                , cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcAckMetrics().getCommitList()));
 
         //  每个Transaction的结束需要将unCommitEntityValues清空
-        cdcMetrics.getCdcUnCommitMetrics().setUnCommitIds(new LinkedHashSet<>());
+        cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().clear();
     }
 
 
@@ -115,7 +128,8 @@ public class SphinxConsumerService implements ConsumerService {
             rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
 
         } catch (Exception e) {
-            throw new SQLException(String.format("parse entry value failed, [%s], [%s]", entry.getStoreValue(), e));
+            throw new SQLException(String.format("batch : %d, parse entry value failed, [%s], [%s]"
+                                                    , cdcMetrics.getBatchId(), entry.getStoreValue(), e));
         }
 
         CanalEntry.EventType eventType = rowChange.getEventType();
@@ -129,7 +143,7 @@ public class SphinxConsumerService implements ConsumerService {
                 //  由于主库同步后会在最后commit时再更新一次commit_id，所以对于binlog同步来说，
                 //  只需同步commit_id小于Long.MAX_VALUE的row
                 if (null == columns || columns.size() == EMPTY_COLUMN_SIZE) {
-                    throw new SQLException("columns must not be null");
+                    throw new SQLException(String.format("batch : %d, columns must not be null", cdcMetrics.getBatchId()));
                 }
 
                 Long id = UN_KNOW_ID;
@@ -140,22 +154,35 @@ public class SphinxConsumerService implements ConsumerService {
                     //  获取CommitID
                     commitId = getLongFromColumn(columns, COMMITID);
                 } catch (Exception e) {
-                    sphinxSyncExecutor.errorRecord(id, commitId, String.format("parse id, commit from columns failed, message : %s", e.getMessage()));
+                    sphinxSyncExecutor.errorRecord(cdcMetrics.getBatchId(), id, commitId,
+                            String.format("batch : %d, parse id, commitid from columns failed, message : %s"
+                                                                    , cdcMetrics.getBatchId(), e.getMessage()));
                     continue;
                 }
 
                 //  是否MAX_VALUE
                 if (commitId != CommitHelper.getUncommitId()) {
-                    if (checkCommitReady) {
-                        if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
-                            //  阻塞直到成功
-                            cdcMetricsService.isReadyCommit(commitId);
+                    /** 检查是否为跳过不处理的commitId
+                     *  满足 commitId > skipCommitId || (commitId == 0 && skipCommitId != 0)
+                     *  否则跳过
+                     */
+                    if (commitId > skipCommitId || (commitId == NO_TRANSACTION_COMMIT_ID
+                            && skipCommitId != NO_TRANSACTION_COMMIT_ID)) {
+                        if (checkCommitReady) {
+                            if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
+                                //  阻塞直到成功
+                                cdcMetricsService.isReadyCommit(commitId);
+                            }
                         }
+
+                        //  更新
+                        cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
+                        rawEntries.put(id, new RawEntry(id, commitId,
+                                entry.getHeader().getExecuteTime(), rowData.getAfterColumnsList()));
+                    } else {
+                        logger.warn("[cdc-consumer] batch : {}, ignore commitId less than skipCommitId, current id : {}, commitId : {}, skipCommitId : {}"
+                                , cdcMetrics.getBatchId(), id, commitId, skipCommitId);
                     }
-                    //  更新
-                    cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().add(commitId);
-                    rawEntries.put(id, new RawEntry(id, commitId,
-                            entry.getHeader().getExecuteTime(), eventType, rowData.getAfterColumnsList()));
                 }
             }
         }

@@ -49,7 +49,6 @@ public class RawEntryTest {
     }
 
     private RawEntry buildRawEntry(int i) {
-        return new RawEntry(i, 1L, System.currentTimeMillis(),
-                i % 2 == 0 ? CanalEntry.EventType.UPDATE : CanalEntry.EventType.DELETE, new ArrayList<>());
+        return new RawEntry(i, 1L, System.currentTimeMillis(), new ArrayList<>());
     }
 }
