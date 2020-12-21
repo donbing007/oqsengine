@@ -82,7 +82,7 @@ public class CommonConfiguration {
                     .withHost(configuration.getHost())
                     .withPort(configuration.getPort());
 
-            if ((null != configuration.getHost() && configuration.getHost().length() > 0) &&
+            if ((null != configuration.getUserName() && configuration.getUserName().length() > 0) &&
                     (null != configuration.getPassWord() && configuration.getPassWord().length() > 0)) {
                 redisURIBuild.withAuthentication(configuration.getUserName(), configuration.getPassWord().toCharArray());
             }
