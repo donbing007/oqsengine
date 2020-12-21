@@ -34,7 +34,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.CANCEL;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.DONE;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
@@ -79,7 +78,7 @@ public class DevOpsManagementServiceImplTest {
     public void before() throws Exception {
         worker = Executors.newFixedThreadPool(10);
         masterStorage = mock(MasterStorage.class);
-        when(masterStorage.newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 60_000, 128))
+        when(masterStorage.newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 30_000, 1024))
                 .thenReturn(new MockQueryIterator());
 
         entityManagementService = mock(EntityManagementService.class);
@@ -163,7 +162,7 @@ public class DevOpsManagementServiceImplTest {
         );
 
         verify(masterStorage, times(1))
-                .newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 60_000, 128);
+                .newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 30_000, 1024);
         verify(entityManagementService, times(entities.size())).replace(argThat(argument -> true));
     }
 
