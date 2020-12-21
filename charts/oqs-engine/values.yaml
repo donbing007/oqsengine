@@ -136,6 +136,8 @@ storage:
 redis:
   uri: "redis://localhost:6379"
   maxReqQueue: 2147483647
+  userName:
+  passWord:
 
 sync:
   # The heartbeat delay of data synchronization. Milliseconds.

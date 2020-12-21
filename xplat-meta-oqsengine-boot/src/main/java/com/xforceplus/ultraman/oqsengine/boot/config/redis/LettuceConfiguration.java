@@ -14,6 +14,8 @@ public class LettuceConfiguration {
 
     private int maxReqQueue = Integer.MAX_VALUE;
     private String uri = "redis://localhost:6379";
+    private String userName;
+    private String passWord;
 
     public int getMaxReqQueue() {
         return maxReqQueue;
@@ -29,5 +31,21 @@ public class LettuceConfiguration {
 
     public void setUri(String uri) {
         this.uri = uri;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getPassWord() {
+        return passWord;
+    }
+
+    public void setPassWord(String passWord) {
+        this.passWord = passWord;
     }
 }
