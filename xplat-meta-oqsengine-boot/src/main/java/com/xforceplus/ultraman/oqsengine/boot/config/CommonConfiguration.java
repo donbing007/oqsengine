@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValu
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -73,13 +74,12 @@ public class CommonConfiguration {
 
     @Bean(value = "redisClient")
     public RedisClient redisClient(LettuceConfiguration configuration) {
-
         RedisClient redisClient = RedisClient.create(configuration.getUri());
 
         redisClient.setOptions(ClientOptions.builder()
-            .autoReconnect(true)
-            .requestQueueSize(configuration.getMaxReqQueue())
-            .build()
+                .autoReconnect(true)
+                .requestQueueSize(configuration.getMaxReqQueue())
+                .build()
         );
         return redisClient;
     }

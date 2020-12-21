@@ -71,7 +71,8 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
     private static final int REPAIRED_TASK_PAGE_SIZE = 1024;
 
-    private static final int REPAIRED_PART_SIZE = 128;
+    private static final int REPAIRED_PART_SIZE = 64;
+
     @Resource
     private TaskStorage sqlTaskStorage;
 
