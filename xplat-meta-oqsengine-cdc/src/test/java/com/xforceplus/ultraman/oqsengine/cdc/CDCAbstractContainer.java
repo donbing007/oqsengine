@@ -77,7 +77,7 @@ public abstract class CDCAbstractContainer extends AbstractContainer {
     }
 
     protected ConsumerService initAll() throws Exception {
-        dataSourcePackage = DataSourceFactory.build();
+        dataSourcePackage = DataSourceFactory.build(true);
 
         if (transactionManager == null) {
             redisClient = RedisClient.create(

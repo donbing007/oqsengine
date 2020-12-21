@@ -5,10 +5,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl.INVALID_COMMITID;
 
@@ -59,6 +56,6 @@ public class CommitIdRepairExecutorImpl implements CommitIdRepairExecutor {
             repairId = commitId.get();
         }
 
-        commitIdStatusService.save(repairId,true);
+        commitIdStatusService.save(repairId, true);
     }
 }

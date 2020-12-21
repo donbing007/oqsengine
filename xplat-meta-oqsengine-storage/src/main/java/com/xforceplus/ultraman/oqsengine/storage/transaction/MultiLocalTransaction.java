@@ -11,10 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
@@ -173,23 +170,31 @@ public class MultiLocalTransaction implements Transaction {
         return waitedSync;
     }
 
-    private void throwSQLExceptionIfNecessary(List<SQLException> exHolder) throws SQLException {
-        if (!exHolder.isEmpty()) {
-            StringBuilder sqlStatue = new StringBuilder();
-            StringBuilder message = new StringBuilder();
-            for (SQLException ex : exHolder) {
-                sqlStatue.append("\"").append(ex.getSQLState()).append("\" ");
-                message.append("\"").append(ex.getMessage()).append("\" ");
-            }
-
-            // commit 或者 rollback 的异常都将标示为 rollback 状态.
-            rollback = true;
-            committed = false;
-
-            logger.error(message.toString());
-
-            throw new SQLException(message.toString(), sqlStatue.toString());
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
         }
+        if (!(o instanceof MultiLocalTransaction)) {
+            return false;
+        }
+        MultiLocalTransaction that = (MultiLocalTransaction) o;
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "MultiLocalTransaction{" +
+            "id=" + id +
+            ", attachment=" + attachment +
+            ", committed=" + committed +
+            ", rollback=" + rollback +
+            '}';
     }
 
     private void check() throws SQLException {
@@ -210,7 +215,6 @@ public class MultiLocalTransaction implements Transaction {
 
         }
         try {
-            List<SQLException> exHolder = new LinkedList<>();
             if (commit) {
                 long commitId = 0;
                 if (!isReadyOnly()) {
@@ -223,21 +227,30 @@ public class MultiLocalTransaction implements Transaction {
                         logger.debug("To commit the transaction ({}), a new commit id ({}) is prepared.", id, commitId);
                     }
 
-                    boolean commitEx = false;
-                    for (TransactionResource transactionResource : transactionResourceHolder) {
-                        try {
-                            if (commitEx) {
-                                transactionResource.rollback();
-                            } else {
-                                transactionResource.commit(commitId);
-                            }
-                        } catch (SQLException ex) {
-                            exHolder.add(0, ex);
-                            commitEx = true;
+                    /**
+                     * 主库事务为主事务,成功与否决定了OQS事务是否成功.
+                     * 索引事务不会影响OQS事务的成功与否,如果索引事务发生错误最终由CDC来最终达成一致.
+                     */
+
+                    // 主库提交.
+                    for (TransactionResource tr : transactionResourceHolder) {
+                        if (tr.type() == TransactionResourceType.MASTER) {
+                            tr.commit(commitId);
                         }
-                        transactionResource.destroy();
                     }
-                    if (exHolder.isEmpty()) {
+
+                    // ===========之后的操作不能影响最终OQS事务的成功返回事实.===================
+                    try {
+                        // 索引提交,如果提交错误也不影响事务成功.
+                        for (TransactionResource tr : transactionResourceHolder) {
+                            if (tr.type() == TransactionResourceType.INDEX) {
+                                try {
+                                    tr.commit(commitId);
+                                } catch (Exception ex) {
+                                    logger.error(ex.getMessage(), ex);
+                                }
+                            }
+                        }
 
                         commitIdStatusService.save(commitId, true);
 
@@ -250,47 +263,56 @@ public class MultiLocalTransaction implements Transaction {
 
                             if (logger.isDebugEnabled()) {
                                 logger.debug(
-                                    "The transaction {} contains an update operation, the wait commit number {} synchronizes successfully. Wait {} milliseconds.",
+                                    "The transaction {} contains an update operation, the wait commit number {} " +
+                                        "synchronizes successfully. Wait {} milliseconds.",
                                     id, commitId, waitMs);
                             }
                         } else {
 
                             if (logger.isDebugEnabled()) {
                                 logger.debug(
-                                    "Transaction {} has no update operation, no need to wait for the commit number {} to synchronize successfully.",
+                                    "Transaction {} has no update operation, no need to wait for " +
+                                        "the commit number {} to synchronize successfully.",
                                     id, commitId
                                 );
                             }
                         }
-
+                    } catch (Exception ex) {
+                        logger.error(ex.getMessage(), ex);
                     }
-
                 } else {
-                    // 只读事务提交.
-                    for (TransactionResource transactionResource : transactionResourceHolder) {
-                        try {
-                            transactionResource.commit();
-                        } catch (SQLException ex) {
-                            exHolder.add(0, ex);
-                        }
-                        transactionResource.destroy();
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("The transaction {} is a read-only transaction and does not require a commit.", id);
                     }
+
                 }
+
             } else {
 
                 // 回滚
+                List<SQLException> exHolder = new ArrayList<>(transactionResourceHolder.size());
                 for (TransactionResource transactionResource : transactionResourceHolder) {
                     try {
                         transactionResource.rollback();
                     } catch (SQLException ex) {
-                        exHolder.add(0, ex);
+                        exHolder.add(ex);
                     }
-                    transactionResource.destroy();
+                }
+
+                throwSQLExceptionIfNecessary(exHolder);
+            }
+
+        } finally {
+
+            for (TransactionResource tr : transactionResourceHolder) {
+                try {
+                    tr.destroy();
+                } catch (Exception ex) {
+                    logger.error(ex.getMessage(), ex);
                 }
             }
 
-            throwSQLExceptionIfNecessary(exHolder);
-        } finally {
             Metrics.timer(MetricsDefine.TRANSACTION_DURATION_SECONDS).record(
                 System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);
         }
@@ -328,30 +350,20 @@ public class MultiLocalTransaction implements Transaction {
         return maxWaitCommitIdSyncMs;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof MultiLocalTransaction)) {
-            return false;
-        }
-        MultiLocalTransaction that = (MultiLocalTransaction) o;
-        return id == that.id;
-    }
+    private void throwSQLExceptionIfNecessary(List<SQLException> exHolder) throws SQLException {
+        if (!exHolder.isEmpty()) {
+            StringBuilder sqlStatue = new StringBuilder();
+            StringBuilder message = new StringBuilder();
+            for (SQLException ex : exHolder) {
+                sqlStatue.append("\"").append(ex.getSQLState()).append("\" ");
+                message.append("\"").append(ex.getMessage()).append("\" ");
+            }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+            // commit 或者 rollback 的异常都将标示为 rollback 状态.
+            rollback = true;
+            committed = false;
 
-    @Override
-    public String toString() {
-        return "MultiLocalTransaction{" +
-            "id=" + id +
-            ", attachment=" + attachment +
-            ", committed=" + committed +
-            ", rollback=" + rollback +
-            '}';
+            throw new SQLException(message.toString(), sqlStatue.toString());
+        }
     }
 }

@@ -225,6 +225,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             });
         } catch (Exception ex) {
 
+            logger.error(ex.getMessage(), ex);
+
             failCountTotal.increment();
             throw ex;
 
@@ -305,6 +307,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 return ResultStatus.SUCCESS;
             });
         } catch (Exception ex) {
+
+            logger.error(ex.getMessage(), ex);
+
             failCountTotal.increment();
             throw ex;
         } finally {
@@ -383,6 +388,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 return ResultStatus.SUCCESS;
             });
         } catch (Exception ex) {
+
+            logger.error(ex.getMessage(), ex);
+
             failCountTotal.increment();
             throw ex;
         } finally {

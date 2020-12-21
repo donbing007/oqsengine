@@ -149,10 +149,12 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
 
         for (MockResource r : exResources) {
             Assert.assertFalse(r.isCommitted());
+            Assert.assertTrue(r.isDestroyed());
         }
 
         for (MockResource r : correctResources) {
-            Assert.assertTrue(r.isRollback());
+            Assert.assertFalse(r.isRollback());
+            Assert.assertTrue(r.isDestroyed());
         }
 
     }
@@ -303,12 +305,12 @@ public class MultiLocalTransactionTest extends AbstractRedisContainerTest {
 
         @Override
         public TransactionResourceType type() {
-            return TransactionResourceType.INDEX;
+            return TransactionResourceType.MASTER;
         }
 
         @Override
         public boolean isDestroyed() throws SQLException {
-            return false;
+            return this.destroyed;
         }
 
     }

@@ -158,7 +158,9 @@ datasource:
       username: "root",
       password: "root",
       maximumPoolSize: 3,
-      maxLifetime: 25200000
+      maxLifetime: 25200000,
+      connectionTimeout: 30000,
+      validationTimeout: 10000
     }
   index:
     # Note that the url of the index must take the following parameters.
@@ -170,7 +172,10 @@ datasource:
         username: "root",
         password: "root",
         maximumPoolSize: 3,
-        maxLifetime: 600000
+        maxLifetime: 600000,
+        connectionTestQuery: "select 1",
+        connectionTimeout: 30000,
+        validationTimeout: 10000
       }
     search: |-
       {
@@ -179,5 +184,8 @@ datasource:
         username: "root",
         password: "root",
         maximumPoolSize: 3,
-        maxLifetime: 600000
+        maxLifetime: 600000,
+        connectionTestQuery: "select 1",
+        connectionTimeout: 30000,
+        validationTimeout: 10000
       }

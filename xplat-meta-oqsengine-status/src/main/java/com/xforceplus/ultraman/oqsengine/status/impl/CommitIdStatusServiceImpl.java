@@ -25,6 +25,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 提交号状态管理者.
+ * 提交号的状态将有3种,UNKNOWN,READY,UN_READY.
+ * 正常的提交号处于READY或者UN_READY中,但是如果检查的提交号没有保存过那么使用如下策略.
+ * 阻塞最多检查的次数为10次,然后将自动变成READY.虽然实际此提交号并没有状态改变过.
+ * 这样防止检查方一直阻塞在一个不处于受管状态的提交号.
+ * 被淘汰的提交号状态就自动变为UNKNOWN.
  *
  * @author dongbin
  * @version 0.1 2020/11/13 17:33
@@ -34,8 +39,11 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     final Logger logger = LoggerFactory.getLogger(CommitIdStatusServiceImpl.class);
 
+    private static final long DEFAULT_UNKNOWN_LIMIT_NUMBER = 10;
     private static final String DEFAULT_COMMITIDS_KEY = "com.xforceplus.ultraman.oqsengine.status.commitids";
-    private static final String DEFAULT_COMMITID_STATUS_KEY_PREFIX = "com.xforceplus.ultraman.oqsengine.status.commitid";
+    private static final String DEFAULT_COMMITID_STATUS_KEY_PREFIX = "com.xforceplus.ultraman.oqsengine.status.commitid.";
+    private static final String COMMITID_STATUS_UNKNOWN_NUMBER_PREFIX =
+        "com.xforceplus.ultraman.oqsengine.status.commitid.unknown.number.";
 
     /**
      * 小于等于此值的判定为无效的commitid.
@@ -57,6 +65,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     private String commitidStatusKeyPrefix;
 
+    private long limitUnknownNumber;
+
     private AtomicLong unSyncCommitIdSize;
 
     public CommitIdStatusServiceImpl() {
@@ -64,6 +74,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     }
 
     public CommitIdStatusServiceImpl(String commitidsKey, String commitIdStatusKeyPreifx) {
+        this(commitidsKey, commitIdStatusKeyPreifx, DEFAULT_UNKNOWN_LIMIT_NUMBER);
+    }
+
+    public CommitIdStatusServiceImpl(String commitidsKey, String commitIdStatusKeyPreifx, long limitUnknownNumber) {
         this.commitidsKey = commitidsKey;
         if (this.commitidsKey == null || this.commitidsKey.isEmpty()) {
             throw new IllegalArgumentException("The commits key is invalid.");
@@ -72,6 +86,12 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         this.commitidStatusKeyPrefix = commitIdStatusKeyPreifx;
         if (this.commitidStatusKeyPrefix == null || this.commitidStatusKeyPrefix.isEmpty()) {
             throw new IllegalArgumentException("The commit status key is invalid.");
+        }
+
+        this.limitUnknownNumber = limitUnknownNumber;
+        final long minUnknownNumber = 1;
+        if (this.limitUnknownNumber < minUnknownNumber) {
+            this.limitUnknownNumber = DEFAULT_UNKNOWN_LIMIT_NUMBER;
         }
     }
 
@@ -96,6 +116,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
         logger.info("Use {} as the key for the list of commit Numbers.", commitidsKey);
         logger.info("Use {} as the prefix key for the commit number status.", commitidStatusKeyPrefix);
+        logger.info("Use {} as the prefix key for the commit number status unknown.",
+            COMMITID_STATUS_UNKNOWN_NUMBER_PREFIX);
 
     }
 
@@ -112,7 +134,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         }
 
         String target = Long.toString(commitId);
-        String statusKey = commitidStatusKeyPrefix + "." + target;
+        String statusKey = commitidStatusKeyPrefix + target;
 
         syncCommands.zadd(commitidsKey, (double) commitId, target);
         if (ready) {
@@ -134,7 +156,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         }
 
         String target = Long.toString(commitId);
-        String statusKey = commitidStatusKeyPrefix + "." + target;
+        String statusKey = commitidStatusKeyPrefix + target;
         String value = syncCommands.get(statusKey);
 
         CommitStatus status = CommitStatus.getInstance(value);
@@ -144,9 +166,35 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         }
 
         if (CommitStatus.READY == status) {
+
             return true;
+
         } else {
-            return false;
+
+            /**
+             * UNKNOWN的检查次数达到阀值后将被直接认定为ready.
+             */
+            if (CommitStatus.UNKNOWN == status) {
+
+                String unknownNumberKey = COMMITID_STATUS_UNKNOWN_NUMBER_PREFIX + commitId;
+                long newNumber = syncCommands.incr(unknownNumberKey);
+                if (newNumber > limitUnknownNumber) {
+                    if (logger.isWarnEnabled()) {
+                        logger.warn("The commit number {} check is always UNKNOWN, " +
+                                "the check number reaches the threshold {} and the ready state is automatically changed.",
+                            commitId, limitUnknownNumber);
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+
+            } else {
+
+                return false;
+
+            }
+
         }
     }
 
@@ -157,7 +205,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         }
 
         String target = Long.toString(commitId);
-        String statusKey = commitidStatusKeyPrefix + "." + target;
+        String statusKey = commitidStatusKeyPrefix + target;
         syncCommands.set(statusKey, CommitStatus.READY.getSymbol());
     }
 
@@ -235,14 +283,18 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         List<RedisFuture<Long>> futures = new ArrayList<>(commitIds.length);
         String target;
         String statusKey;
+        String unknownKey;
         for (long id : commitIds) {
             target = Long.toString(id);
-            statusKey = commitidStatusKeyPrefix + "." + target;
+            statusKey = commitidStatusKeyPrefix + target;
+            unknownKey = COMMITID_STATUS_UNKNOWN_NUMBER_PREFIX + target;
 
             // 清理未同步列表中的提交号,表示此提交号已经同步.
             futures.add(asyncCommands.zrem(commitidsKey, target));
             // 清理未同步列表状态.
             futures.add(asyncCommands.del(statusKey));
+            // 清理可能的UNKNOWN次数记录.
+            futures.add(asyncCommands.del(unknownKey));
         }
 
         asyncCommands.flushCommands();
@@ -261,7 +313,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     @Override
     public boolean isObsolete(long commitId) {
-        String statusKey = commitidStatusKeyPrefix + "." + commitId;
+        String statusKey = commitidStatusKeyPrefix + commitId;
         return syncCommands.exists(statusKey) <= 0;
     }
 
