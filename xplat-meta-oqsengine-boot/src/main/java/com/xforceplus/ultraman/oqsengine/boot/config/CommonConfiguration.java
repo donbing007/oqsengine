@@ -75,14 +75,19 @@ public class CommonConfiguration {
     @Bean(value = "redisClient")
     public RedisClient redisClient(LettuceConfiguration configuration) {
         RedisClient redisClient = null;
-        if ((null == configuration.getUserName() || configuration.getUserName().length() == 0)
-                || (null == configuration.getPassWord() || configuration.getPassWord().length() == 0)) {
+        if ((null == configuration.getHost() || configuration.getHost().length() == 0)) {
             redisClient = RedisClient.create(configuration.getUri());
         } else {
-            RedisURI redisURI = RedisURI.create(configuration.getHost(), configuration.getPort());
-            redisURI.setUsername(configuration.getUserName());
-            redisURI.setPassword(configuration.getPassWord().toCharArray());
-            redisClient = RedisClient.create(redisURI);
+            RedisURI.Builder redisURIBuild = RedisURI.builder()
+                    .withHost(configuration.getHost())
+                    .withPort(configuration.getPort());
+
+            if ((null != configuration.getHost() && configuration.getHost().length() > 0) &&
+                    (null != configuration.getPassWord() && configuration.getPassWord().length() > 0)) {
+                redisURIBuild.withAuthentication(configuration.getUserName(), configuration.getPassWord().toCharArray());
+            }
+
+            redisClient = RedisClient.create(redisURIBuild.build());
         }
 
         redisClient.setOptions(ClientOptions.builder()
