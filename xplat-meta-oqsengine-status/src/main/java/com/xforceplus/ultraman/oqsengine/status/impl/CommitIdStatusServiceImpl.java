@@ -39,7 +39,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     final Logger logger = LoggerFactory.getLogger(CommitIdStatusServiceImpl.class);
 
-    private static final long DEFAULT_UNKNOWN_LIMIT_NUMBER = 10;
+    private static final long DEFAULT_UNKNOWN_LIMIT_NUMBER = 30;
     private static final String DEFAULT_COMMITIDS_KEY = "com.xforceplus.ultraman.oqsengine.status.commitids";
     private static final String DEFAULT_COMMITID_STATUS_KEY_PREFIX = "com.xforceplus.ultraman.oqsengine.status.commitid.";
     private static final String COMMITID_STATUS_UNKNOWN_NUMBER_PREFIX =
@@ -315,6 +315,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     public boolean isObsolete(long commitId) {
         String statusKey = commitidStatusKeyPrefix + commitId;
         return syncCommands.exists(statusKey) <= 0;
+    }
+
+    public void setLimitUnknownNumber(long limitUnknownNumber) {
+        this.limitUnknownNumber = limitUnknownNumber;
     }
 
     private void updateMetrics() {
