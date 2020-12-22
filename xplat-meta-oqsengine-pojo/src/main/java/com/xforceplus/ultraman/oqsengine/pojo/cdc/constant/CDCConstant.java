@@ -57,7 +57,7 @@ public class CDCConstant {
     public static final int MESSAGE_GET_WARM_INTERVAL = 100;
 
     //  检查commitID是否ready的间隔
-    public static final int COMMIT_ID_READY_CHECK_INTERVAL = 5;
+    public static final int COMMIT_ID_READY_CHECK_INTERVAL = 10;
 
     //  检查commitID是否ready的间隔
     public static final int COMMIT_ID_LOG_MAX_LOOPS = 1000;
