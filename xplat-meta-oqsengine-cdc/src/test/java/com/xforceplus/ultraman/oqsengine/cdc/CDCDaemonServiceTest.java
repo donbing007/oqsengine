@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
-import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 
 
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
@@ -13,8 +12,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-
-import java.sql.SQLException;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
@@ -52,10 +49,6 @@ public class CDCDaemonServiceTest extends CDCAbstractContainer {
         CDCMetricsService cdcMetricsService = new CDCMetricsService();
         testCallbackService = new MockRedisCallbackService();
         ReflectionTestUtils.setField(cdcMetricsService, "cdcMetricsCallback", testCallbackService);
-
-        SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
-                "nly-v1", "root", "xplat");
 
         cdcDaemonService = new CDCDaemonService();
         ReflectionTestUtils.setField(cdcDaemonService, "nodeIdGenerator", new StaticNodeIdGenerator(ZERO));
