@@ -63,7 +63,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainer {
      */
     @Test
     public void testSaveNotReady() throws Exception {
-        long expectedTotal = LongStream.rangeClosed(1, 1000).map(i -> impl.save(i, false)).sum();
+        long expectedTotal = LongStream.rangeClosed(1, 100).map(i -> impl.save(i, false)).sum();
 
         long[] allIds = impl.getAll();
         long actualTotal = Arrays.stream(allIds).sum();
@@ -76,7 +76,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainer {
 
     @Test
     public void testSaveReady() throws Exception {
-        long expectedTotal = LongStream.rangeClosed(1, 1000).map(i -> impl.save(i, true)).sum();
+        long expectedTotal = LongStream.rangeClosed(1, 100).map(i -> impl.save(i, true)).sum();
 
         long[] allIds = impl.getAll();
         long actualTotal = Arrays.stream(allIds).sum();
@@ -123,7 +123,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainer {
     @Test
     public void testGetMin() throws Exception {
         long expectedMin = LongStream
-            .rangeClosed(9, 1000).map(i -> impl.save(i, false)).min().getAsLong();
+            .rangeClosed(9, 100).map(i -> impl.save(i, false)).min().getAsLong();
 
         long actualMin = impl.getMin().get();
         Assert.assertEquals(expectedMin, actualMin);
@@ -135,7 +135,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainer {
     @Test
     public void testGetMax() throws Exception {
         long expectedMax = LongStream
-            .rangeClosed(9, 1000).map(i -> impl.save(i, false)).max().getAsLong();
+            .rangeClosed(9, 100).map(i -> impl.save(i, false)).max().getAsLong();
 
         long actualMax = impl.getMax().get();
         Assert.assertEquals(expectedMax, actualMax);
@@ -147,7 +147,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainer {
     @Test
     public void testGetAll() throws Exception {
         long[] expectedAll = LongStream
-            .rangeClosed(9, 1000).map(i -> impl.save(i, false)).sorted().toArray();
+            .rangeClosed(9, 100).map(i -> impl.save(i, false)).sorted().toArray();
 
         long[] actualAll = impl.getAll();
 
@@ -161,7 +161,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainer {
     @Test
     public void testSize() throws Exception {
         long expectedCount = LongStream
-            .rangeClosed(9, 1000).map(i -> impl.save(i, false)).count();
+            .rangeClosed(9, 100).map(i -> impl.save(i, false)).count();
         Assert.assertEquals(expectedCount, impl.size());
     }
 
@@ -171,7 +171,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainer {
     @Test
     public void testObsoleteCommitId() throws Exception {
         long[] expected = LongStream
-            .rangeClosed(9, 1000).map(i -> impl.save(i, false)).filter(i -> i != 20).filter(i -> i != 9)
+            .rangeClosed(9, 100).map(i -> impl.save(i, false)).filter(i -> i != 20).filter(i -> i != 9)
             .sorted().toArray();
         impl.obsolete(20);
         impl.obsolete(9);
@@ -191,16 +191,16 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainer {
     @Test
     public void testObsoleteCommitIds() throws Exception {
         long[] expected = LongStream
-            .rangeClosed(9, 1000).map(i -> impl.save(i, false)).filter(i -> i != 20).filter(i -> i != 9).filter(i -> i != 1000)
+            .rangeClosed(9, 100).map(i -> impl.save(i, false)).filter(i -> i != 20).filter(i -> i != 9).filter(i -> i != 100)
             .sorted().toArray();
-        impl.obsolete(20, 9, 1000);
+        impl.obsolete(20, 9, 100);
         // Idempotent
-        impl.obsolete(20, 9, 1000);
+        impl.obsolete(20, 9, 100);
         Assert.assertEquals(expected.length, impl.size());
         Assert.assertArrayEquals(expected, impl.getAll());
 
         Assert.assertEquals(10L, impl.getMin().get().longValue());
-        Assert.assertEquals(999L, impl.getMax().get().longValue());
+        Assert.assertEquals(99L, impl.getMax().get().longValue());
 
         // 因为同步指标是异步的,所以等待成功.
         TimeUnit.MILLISECONDS.sleep(10);
@@ -208,7 +208,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainer {
         Field unSyncCommitIdSizeField = impl.getClass().getDeclaredField("unSyncCommitIdSize");
         unSyncCommitIdSizeField.setAccessible(true);
         AtomicLong unSyncCommitIdSize = (AtomicLong) unSyncCommitIdSizeField.get(impl);
-        Assert.assertEquals(989L, unSyncCommitIdSize.longValue());
+        Assert.assertEquals(89L, unSyncCommitIdSize.longValue());
     }
 
     /**
