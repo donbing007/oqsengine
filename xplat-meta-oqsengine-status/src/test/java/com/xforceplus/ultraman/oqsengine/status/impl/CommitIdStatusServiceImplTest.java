@@ -293,7 +293,7 @@ public class CommitIdStatusServiceImplTest extends AbstractRedisContainerTest {
      */
     @Test
     public void testUnknownNumber() throws Exception {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 30; i++) {
             Assert.assertFalse(impl.isReady(Integer.MAX_VALUE));
         }
         Assert.assertTrue(impl.isReady(Integer.MAX_VALUE));
