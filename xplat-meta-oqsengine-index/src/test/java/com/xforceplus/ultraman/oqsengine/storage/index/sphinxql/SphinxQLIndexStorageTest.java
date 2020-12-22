@@ -69,6 +69,7 @@ public class SphinxQLIndexStorageTest extends AbstractContainer {
     private RedisClient redisClient;
     private Selector<String> indexWriteIndexNameSelector;
     private Selector<DataSource> writeDataSourceSelector;
+    private CommitIdStatusServiceImpl commitIdStatusService;
 
     private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
     private static IEntityField stringField = new EntityField(Long.MAX_VALUE - 1, "string", FieldType.STRING);
@@ -238,7 +239,7 @@ public class SphinxQLIndexStorageTest extends AbstractContainer {
 
         redisClient = RedisClient.create(
             String.format("redis://%s:%s", System.getProperty("REDIS_HOST"), System.getProperty("REDIS_PORT")));
-        CommitIdStatusServiceImpl commitIdStatusService = new CommitIdStatusServiceImpl();
+        commitIdStatusService = new CommitIdStatusServiceImpl();
         ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
         commitIdStatusService.init();
 
@@ -318,6 +319,8 @@ public class SphinxQLIndexStorageTest extends AbstractContainer {
         truncate();
 
         dataSourcePackage.close();
+
+        commitIdStatusService.destroy();
 
         redisClient.connect().sync().flushall();
         redisClient.shutdown();

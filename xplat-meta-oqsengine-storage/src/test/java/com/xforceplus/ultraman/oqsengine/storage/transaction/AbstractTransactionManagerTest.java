@@ -4,7 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractRedisContainerTest;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractRedisContainer;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import org.junit.After;
@@ -24,7 +24,7 @@ import java.util.concurrent.*;
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
-public class AbstractTransactionManagerTest extends AbstractRedisContainerTest {
+public class AbstractTransactionManagerTest extends AbstractRedisContainer {
 
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl commitIdStatusService;

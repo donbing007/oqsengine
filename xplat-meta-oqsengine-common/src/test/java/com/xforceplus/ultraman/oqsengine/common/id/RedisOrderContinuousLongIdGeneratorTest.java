@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.common.id;
 
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractRedisContainerTest;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractRedisContainer;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -21,7 +21,7 @@ import java.util.concurrent.CountDownLatch;
  * @version 1.0 12/17/2020
  * @since <pre>Dec 17, 2020</pre>
  */
-public class RedisOrderContinuousLongIdGeneratorTest extends AbstractRedisContainerTest {
+public class RedisOrderContinuousLongIdGeneratorTest extends AbstractRedisContainer {
 
     private RedisClient redisClient;
     private RedisOrderContinuousLongIdGenerator idGenerator;
@@ -47,6 +47,10 @@ public class RedisOrderContinuousLongIdGeneratorTest extends AbstractRedisContai
 
         conn.close();
 
+        conn.close();
+        redisClient.connect().sync().flushall();
+        redisClient.shutdown();
+        redisClient = null;
     }
 
     @Test

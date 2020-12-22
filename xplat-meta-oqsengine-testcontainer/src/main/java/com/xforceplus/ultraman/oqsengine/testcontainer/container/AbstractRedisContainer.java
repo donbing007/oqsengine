@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.status;
+package com.xforceplus.ultraman.oqsengine.testcontainer.container;
 
 import org.testcontainers.containers.GenericContainer;
 
@@ -7,7 +7,7 @@ import org.testcontainers.containers.GenericContainer;
  * @version 0.1 2020/11/12 15:53
  * @since 1.8
  */
-public abstract class AbstractRedisContainerTest {
+public abstract class AbstractRedisContainer {
 
     static GenericContainer redis;
 
