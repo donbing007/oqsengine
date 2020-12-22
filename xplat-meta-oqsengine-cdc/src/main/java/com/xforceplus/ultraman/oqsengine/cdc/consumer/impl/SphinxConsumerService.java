@@ -96,13 +96,19 @@ public class SphinxConsumerService implements ConsumerService {
 
     private void batchLogged(CDCMetrics cdcMetrics) {
         if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EMPTY_BATCH_SIZE) {
-            logger.info("[cdc-consumer] batch : {} end with un-commit ids : {}"
+            logger.warn("[cdc-consumer] batch : {} end with un-commit ids : {}"
                     , cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
             if (cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().size() > EXPECTED_COMMIT_ID_COUNT) {
                 logger.warn("[cdc-consumer] batch : {}, one transaction has more than one commitId, ids : {}",
                         cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
             }
         }
+        logger.info("[cdc-consumer] batch end, batchId : {}, commitIds : {}, un-commitIds : {}"
+                , cdcMetrics.getBatchId()
+                , JSON.toJSON(cdcMetrics.getCdcAckMetrics().getCommitList())
+                , JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
+
+
     }
 
     private void cleanUnCommit(CDCMetrics cdcMetrics) {
@@ -113,8 +119,8 @@ public class SphinxConsumerService implements ConsumerService {
 
         cdcMetrics.getCdcAckMetrics().getCommitList().addAll(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds());
 
-        logger.info("[cdc-consumer] transaction end, batchId : {}, commitIds : {}"
-                                                , cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcAckMetrics().getCommitList()));
+        logger.debug("[cdc-consumer] transaction end, batchId : {}, add new commitIds : {}"
+                                                , cdcMetrics.getBatchId(), JSON.toJSON(cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds()));
 
         //  每个Transaction的结束需要将unCommitEntityValues清空
         cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().clear();
