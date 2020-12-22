@@ -17,17 +17,15 @@ import java.util.Random;
  * @since : 1.8
  */
 @Ignore
-public abstract class AbstractContainer {
+public abstract class AbstractContainer extends AbstractRedisContainer {
 
     static GenericContainer mysql;
     static GenericContainer manticore0;
     static GenericContainer manticore1;
     static GenericContainer searchManticore;
-    static GenericContainer redis;
     static GenericContainer cannal;
 
     static {
-        Network network = Network.newNetwork();
 
         mysql = new GenericContainer("mysql:5.7")
             .withNetwork(network)
@@ -69,13 +67,6 @@ public abstract class AbstractContainer {
             .waitingFor(Wait.forListeningPort());
         searchManticore.start();
 
-        redis = new GenericContainer("redis:6.0.9-alpine3.12")
-            .withNetwork(network)
-            .withNetworkAliases("redis")
-            .withExposedPorts(6379)
-            .waitingFor(Wait.forListeningPort());
-        redis.start();
-
         System.setProperty("CANAL_DESTINATION", getRandomString(6));
 
         cannal = new GenericContainer("canal/canal-server:v1.1.4")
@@ -95,9 +86,6 @@ public abstract class AbstractContainer {
 
         System.setProperty("MYSQL_HOST", mysql.getContainerIpAddress());
         System.setProperty("MYSQL_PORT", mysql.getFirstMappedPort().toString());
-
-        System.setProperty("REDIS_HOST", redis.getContainerIpAddress());
-        System.setProperty("REDIS_PORT", redis.getFirstMappedPort().toString());
 
         System.setProperty("MANTICORE0_HOST", manticore0.getContainerIpAddress());
         System.setProperty("MANTICORE0_PORT", manticore0.getFirstMappedPort().toString());

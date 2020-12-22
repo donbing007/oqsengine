@@ -31,8 +31,8 @@ public class RedisOrderContinuousLongIdGeneratorTest extends AbstractRedisContai
     @Before
     public void before() throws Exception {
 
-        String redisIp = System.getProperty("status.redis.ip");
-        int redisPort = Integer.parseInt(System.getProperty("status.redis.port"));
+        String redisIp = System.getProperty("REDIS_HOST");
+        int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
 
         idGenerator = new RedisOrderContinuousLongIdGenerator(redisClient, "test");

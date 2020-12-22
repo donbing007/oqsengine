@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.testcontainer.container;
 
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 /**
  * @author dongbin
@@ -9,13 +11,19 @@ import org.testcontainers.containers.GenericContainer;
  */
 public abstract class AbstractRedisContainer {
 
+    static Network network = Network.newNetwork();
+
     static GenericContainer redis;
 
     static {
-        redis = new GenericContainer("redis:6.0.9-alpine3.12").withExposedPorts(6379);
+        redis = new GenericContainer("redis:6.0.9-alpine3.12")
+                .withNetwork(network)
+                .withNetworkAliases("redis")
+                .withExposedPorts(6379)
+                .waitingFor(Wait.forListeningPort());
         redis.start();
 
-        System.setProperty("status.redis.ip", redis.getContainerIpAddress());
-        System.setProperty("status.redis.port", redis.getFirstMappedPort().toString());
+        System.setProperty("REDIS_HOST", redis.getContainerIpAddress());
+        System.setProperty("REDIS_PORT", redis.getFirstMappedPort().toString());
     }
 }

@@ -232,7 +232,6 @@ public class SQLMasterStorageQueryTest extends AbstractContainerTest {
         ((ShardingDataSource) dataSource).close();
 
         commitIdStatusService.destroy();
-
         redisClient.connect().sync().flushall();
         redisClient.shutdown();
     }
