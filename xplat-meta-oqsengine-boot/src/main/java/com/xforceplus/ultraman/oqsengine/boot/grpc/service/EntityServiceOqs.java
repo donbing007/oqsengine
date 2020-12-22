@@ -180,7 +180,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     IEntity entity = null;
                     if (mode.filter("replace"::equals).isPresent()) {
                         //reset the version
-                        entity = toEntity(entityClass, in, ds.get().version());
+                        entity = ds.get();
+                        replaceEntity(entity, toEntity(entityClass, in));
                     } else {
                         entity = ds.get();
                         updateEntity(entity, toEntity(entityClass, in));
@@ -366,6 +367,11 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     //TODO test
     private void updateEntity(IEntity src, IEntity update) {
+        src.entityValue().addValues(update.entityValue().values());
+    }
+
+    private void replaceEntity(IEntity src, IEntity update) {
+        src.entityValue().clear();
         src.entityValue().addValues(update.entityValue().values());
     }
 
