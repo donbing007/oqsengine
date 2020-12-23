@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.status;
 
+import java.util.Optional;
+
 /**
  * 提交号状态管理服务.
  *
@@ -46,14 +48,14 @@ public interface CommitIdStatusService {
      *
      * @return 提交号.小于0表示没有.
      */
-    long getMin();
+    Optional<Long> getMin();
 
     /**
      * 获取当前最大提交号.
      *
      * @return 提交号.小于0表示没有.
      */
-    long getMax();
+    Optional<Long> getMax();
 
     /**
      * 获取当前所有提交号的快照.

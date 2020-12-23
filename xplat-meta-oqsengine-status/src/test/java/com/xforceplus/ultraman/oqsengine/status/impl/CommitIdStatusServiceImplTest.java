@@ -89,7 +89,7 @@ public class CommitIdStatusServiceImplTest extends AbstractContainer {
     public void testSetReady() throws Exception {
         long commitId = 100;
         impl.save(commitId, false);
-        Assert.assertEquals(commitId, impl.getMin());
+        Assert.assertEquals(commitId, impl.getMin().get().longValue());
 
         Assert.assertFalse(impl.isReady(commitId));
 
@@ -106,7 +106,7 @@ public class CommitIdStatusServiceImplTest extends AbstractContainer {
     public void testStatusClean() throws Exception {
         long commitId = 100;
         impl.save(commitId, false);
-        Assert.assertEquals(commitId, impl.getMin());
+        Assert.assertEquals(commitId, impl.getMin().get().longValue());
         impl.ready(commitId);
         impl.obsolete(commitId);
 
@@ -123,7 +123,7 @@ public class CommitIdStatusServiceImplTest extends AbstractContainer {
         long expectedMin = LongStream
             .rangeClosed(9, 100).map(i -> impl.save(i, false)).min().getAsLong();
 
-        long actualMin = impl.getMin();
+        long actualMin = impl.getMin().get();
         Assert.assertEquals(expectedMin, actualMin);
     }
 
@@ -135,7 +135,7 @@ public class CommitIdStatusServiceImplTest extends AbstractContainer {
         long expectedMax = LongStream
             .rangeClosed(9, 100).map(i -> impl.save(i, false)).max().getAsLong();
 
-        long actualMax = impl.getMax();
+        long actualMax = impl.getMax().get();
         Assert.assertEquals(expectedMax, actualMax);
     }
 
@@ -175,7 +175,7 @@ public class CommitIdStatusServiceImplTest extends AbstractContainer {
         impl.obsolete(9);
         Assert.assertArrayEquals(expected, impl.getAll());
 
-        Assert.assertEquals(10L, impl.getMin());
+        Assert.assertEquals(10L, impl.getMin().get().longValue());
 
         try (StatefulRedisConnection<String, String> conn = redisClient.connect()) {
             Assert.assertEquals(0, conn.sync().exists("test.status.20").longValue());
@@ -197,8 +197,8 @@ public class CommitIdStatusServiceImplTest extends AbstractContainer {
         Assert.assertEquals(expected.length, impl.size());
         Assert.assertArrayEquals(expected, impl.getAll());
 
-        Assert.assertEquals(10L, impl.getMin());
-        Assert.assertEquals(99L, impl.getMax());
+        Assert.assertEquals(10L, impl.getMin().get().longValue());
+        Assert.assertEquals(99L, impl.getMax().get().longValue());
 
         // 因为同步指标是异步的,所以等待成功.
         TimeUnit.MILLISECONDS.sleep(10);

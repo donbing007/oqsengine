@@ -18,6 +18,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * 提交号状态管理者.
  * 提交号的状态将有3种,UNKNOWN,READY,UN_READY.
  * 正常的提交号处于READY或者UN_READY中,但是如果检查的提交号没有保存过那么使用如下策略.
- * 阻塞最多检查的次数为10次,然后将自动变成READY.虽然实际此提交号并没有状态改变过.
+ * 阻塞最多检查的次数为30次,然后将自动变成READY.虽然实际此提交号并没有状态改变过.
  * 这样防止检查方一直阻塞在一个不处于受管状态的提交号.
  * 被淘汰的提交号状态就自动变为UNKNOWN.
  *
@@ -115,10 +116,10 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
             MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(size()));
 
         unSyncCommitIdMin = Metrics.gauge(
-            MetricsDefine.UN_SYNC_COMMIT_ID_MIN, new AtomicLong(getMin()));
+            MetricsDefine.UN_SYNC_COMMIT_ID_MIN, new AtomicLong(0));
 
         unSyncCommitIdMax = Metrics.gauge(
-            MetricsDefine.UN_SYNC_COMMIT_ID_MAX, new AtomicLong(getMax()));
+            MetricsDefine.UN_SYNC_COMMIT_ID_MAX, new AtomicLong(0));
 
         logger.info("Use {} as the key for the list of commit Numbers.", commitidsKey);
         logger.info("Use {} as the prefix key for the commit number status.", commitidStatusKeyPrefix);
@@ -221,7 +222,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     }
 
     @Override
-    public long getMin() {
+    public Optional<Long> getMin() {
         List<String> ids = syncCommands.zrange(commitidsKey, 0, 0);
         if (ids.isEmpty()) {
 
@@ -229,7 +230,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
                 logger.debug("The current minimum commit number not obtained.");
             }
 
-            return -1;
+            return Optional.empty();
         } else {
             // 首个元素
             final int first = 0;
@@ -238,12 +239,12 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
                 logger.debug("The minimum commit number to get to is {}.", ids.get(first));
             }
 
-            return Long.parseLong(ids.get(first));
+            return Optional.of(Long.parseLong(ids.get(first)));
         }
     }
 
     @Override
-    public long getMax() {
+    public Optional<Long> getMax() {
         List<String> ids = syncCommands.zrevrange(commitidsKey, 0, 0);
         if (ids.isEmpty()) {
 
@@ -251,7 +252,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
                 logger.debug("The current maximum commit number not obtained.");
             }
 
-            return -1;
+            return Optional.empty();
         } else {
 
             // 首个元素
@@ -261,7 +262,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
                 logger.debug("The maximum commit number to get to is {}.", ids.get(first));
             }
 
-            return Long.parseLong(ids.get(first));
+            return Optional.of(Long.parseLong(ids.get(first)));
         }
     }
 
@@ -330,8 +331,19 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     private void updateMetrics() {
         CompletableFuture.runAsync(() -> {
             unSyncCommitIdSize.set(size());
-            unSyncCommitIdMin.set(getMin());
-            unSyncCommitIdMax.set(getMax());
+            Optional<Long> commitId = getMin();
+            if (commitId.isPresent()) {
+                unSyncCommitIdMin.set(getMin().get());
+            } else {
+                unSyncCommitIdMin.set(-1);
+            }
+
+            commitId = getMax();
+            if (commitId.isPresent()) {
+                unSyncCommitIdMax.set(getMax().get());
+            } else {
+                unSyncCommitIdMax.set(-1);
+            }
         });
     }
 
