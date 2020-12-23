@@ -6,12 +6,15 @@ import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.NodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.kubernetesStatefulsetNodeIdGenerator;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import io.lettuce.core.RedisClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.sql.SQLException;
 
 /**
  * @author dongbin
@@ -39,7 +42,13 @@ public class IdGeneratorConfiguration {
     }
 
     @Bean("redisIdGenerator")
-    public LongIdGenerator redisIdGenerator(RedisClient redisClient) {
-        return new RedisOrderContinuousLongIdGenerator(redisClient);
+    public LongIdGenerator redisIdGenerator(RedisClient redisClient, MasterStorage masterStorage) {
+        return new RedisOrderContinuousLongIdGenerator(redisClient, () -> {
+            try {
+                return masterStorage.maxCommitId().get();
+            } catch (SQLException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 }

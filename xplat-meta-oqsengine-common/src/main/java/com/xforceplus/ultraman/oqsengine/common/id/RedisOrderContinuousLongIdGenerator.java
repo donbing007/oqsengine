@@ -8,7 +8,9 @@ import io.micrometer.core.instrument.Metrics;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 /**
  * Continuous partial ID generator based on redis.
@@ -25,17 +27,23 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
     private StatefulRedisConnection<String, String> connection;
 
     private String key;
+    private Supplier<Long> supplier;
 
     private AtomicLong commitIdNumber = Metrics.gauge(MetricsDefine.NOW_COMMITID, new AtomicLong(0));
 
     public RedisOrderContinuousLongIdGenerator(RedisClient redisClient) {
-        this(redisClient, DEFAULT_KEY);
+        this(redisClient, DEFAULT_KEY, () -> 0L);
     }
 
-    public RedisOrderContinuousLongIdGenerator(RedisClient redisClient, String key) {
+    public RedisOrderContinuousLongIdGenerator(RedisClient redisClient, Supplier<Long> supplier) {
+        this(redisClient, DEFAULT_KEY, supplier);
+    }
+
+    public RedisOrderContinuousLongIdGenerator(RedisClient redisClient, String key, Supplier<Long> supplier) {
 
         this.key = key;
         this.connection = redisClient.connect();
+        this.supplier = supplier;
     }
 
     @Override
@@ -46,18 +54,18 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
         try {
             return newId;
         } finally {
-            commitIdNumber.set(newId);
+            Long finalNewId = newId;
+            CompletableFuture.runAsync(() -> commitIdNumber.set(finalNewId));
         }
     }
 
     @PostConstruct
     public void init() {
         //do init will block startup
-        RedisStringCommands<String, String> sync = connection.sync();
         if (key == null || key.isEmpty()) {
             key = DEFAULT_KEY;
         }
-        sync.setnx(key, "0");
+        initializeId();
     }
 
     @PreDestroy
@@ -73,5 +81,10 @@ public class RedisOrderContinuousLongIdGenerator implements LongIdGenerator {
     @Override
     public boolean isPartialOrder() {
         return true;
+    }
+
+    private synchronized void initializeId() {
+        RedisStringCommands<String, String> sync = connection.sync();
+        sync.setnx(key, supplier.get().toString());
     }
 }

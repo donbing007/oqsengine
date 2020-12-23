@@ -37,7 +37,7 @@ public class RedisOrderContinuousLongIdGeneratorTest extends AbstractContainer {
         int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
 
-        idGenerator = new RedisOrderContinuousLongIdGenerator(redisClient, "test");
+        idGenerator = new RedisOrderContinuousLongIdGenerator(redisClient, "test", () -> 0L);
         idGenerator.init();
 
         conn = redisClient.connect();
