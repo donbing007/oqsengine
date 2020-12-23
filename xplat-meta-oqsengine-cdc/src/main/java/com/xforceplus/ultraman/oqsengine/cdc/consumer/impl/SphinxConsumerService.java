@@ -177,7 +177,7 @@ public class SphinxConsumerService implements ConsumerService {
                         if (checkCommitReady) {
                             if (!cdcMetrics.getCdcUnCommitMetrics().getUnCommitIds().contains(commitId)) {
                                 //  阻塞直到成功
-                                cdcMetricsService.isReadyCommit(commitId);
+                                cdcMetricsService.isReadyCommit(commitId, cdcMetricsService);
                             }
                         }
 

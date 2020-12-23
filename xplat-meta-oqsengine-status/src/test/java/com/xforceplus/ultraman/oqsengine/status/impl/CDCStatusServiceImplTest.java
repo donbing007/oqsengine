@@ -25,6 +25,7 @@ public class CDCStatusServiceImplTest extends AbstractContainer {
     private String statusKey = "status-cdc";
     private String ackKey = "ack-cdc";
     private String heartBeatKey = "cdc-heartBeat";
+    private String notReadyKey = "cdc-commitId-notReady";
     private StatefulRedisConnection<String, String> conn;
 
     @BeforeClass
@@ -40,7 +41,7 @@ public class CDCStatusServiceImplTest extends AbstractContainer {
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
 
         ObjectMapper objectMapper = new ObjectMapper();
-        impl = new CDCStatusServiceImpl(statusKey, ackKey, heartBeatKey);
+        impl = new CDCStatusServiceImpl(statusKey, ackKey, heartBeatKey, notReadyKey);
         ReflectionTestUtils.setField(impl, "redisClient", redisClient);
         ReflectionTestUtils.setField(impl, "objectMapper", objectMapper);
         impl.init();

@@ -48,6 +48,11 @@ public class DefaultCDCMetricsCallback implements CDCMetricsCallback {
     }
 
     @Override
+    public void notReady(long commitId) {
+        cdcStatusService.notReady(commitId);
+    }
+
+    @Override
     public void cdcSaveLastUnCommit(CDCMetrics cdcMetrics) {
         cdcStatusService.saveUnCommit(cdcMetrics);
     }

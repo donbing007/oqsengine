@@ -31,6 +31,7 @@ public class CDCStatusServiceImpl implements CDCStatusService {
 
     private static final String DEFAULT_CDC_METRICS_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.metrics";
     private static final String DEFAULT_HEART_BEAT_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.heartBeat";
+    private static final String DEFAULT_NOT_READY_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.notReady";
     private static final String DEFAULT_CDC_ACK_METRICS_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.ack";
 
     final Logger logger = LoggerFactory.getLogger(CDCStatusServiceImpl.class);
@@ -48,16 +49,20 @@ public class CDCStatusServiceImpl implements CDCStatusService {
 
     private String heartBeatKey;
 
+    private String notReadyKey;
+
     private long lastHeartBeatValue = -1;
+    private long lastNotReadyValue = -1;
     private AtomicLong cdcSyncTime = new AtomicLong(0);
     private TimeGauge.Builder<AtomicLong> cdcSyncTimeGauge;
     private AtomicLong cdcExecutedCountGauge;
+    private AtomicLong cdcNotReadyCommitIdGauge;
 
     public CDCStatusServiceImpl() {
-        this(DEFAULT_CDC_METRICS_KEY, DEFAULT_CDC_ACK_METRICS_KEY, DEFAULT_HEART_BEAT_KEY);
+        this(DEFAULT_CDC_METRICS_KEY, DEFAULT_CDC_ACK_METRICS_KEY, DEFAULT_HEART_BEAT_KEY, DEFAULT_NOT_READY_KEY);
     }
 
-    public CDCStatusServiceImpl(String metricsKey, String ack, String heartBeat) {
+    public CDCStatusServiceImpl(String metricsKey, String ack, String heartBeat, String notReady) {
         this.metricsKey = metricsKey;
         if (this.metricsKey == null || this.metricsKey.isEmpty()) {
             throw new IllegalArgumentException("The cdc status metrics is invalid.");
@@ -71,6 +76,11 @@ public class CDCStatusServiceImpl implements CDCStatusService {
         this.heartBeatKey = heartBeat;
         if (this.heartBeatKey == null || this.heartBeatKey.isEmpty()) {
             throw new IllegalArgumentException("The heartBeatKey is invalid.");
+        }
+
+        this.notReadyKey = notReady;
+        if (this.notReadyKey == null || this.notReadyKey.isEmpty()) {
+            throw new IllegalArgumentException("The notReadyKey is invalid.");
         }
     }
 
@@ -88,6 +98,9 @@ public class CDCStatusServiceImpl implements CDCStatusService {
             Metrics.gauge(MetricsDefine.CDC_SYNC_EXECUTED_COUNT, new AtomicLong(0));
 
         cdcSyncTimeGauge.register(Metrics.globalRegistry);
+
+        cdcNotReadyCommitIdGauge =
+                Metrics.gauge(MetricsDefine.CDC_NOT_READY_COMMIT, new AtomicLong(lastNotReadyValue));
     }
 
     @PreDestroy
@@ -108,6 +121,11 @@ public class CDCStatusServiceImpl implements CDCStatusService {
         }
 
         return true;
+    }
+
+    @Override
+    public void notReady(long commitId) {
+        cdcNotReadyCommitIdGauge.set(commitId);
     }
 
     @Override

@@ -21,6 +21,12 @@ public interface CDCStatusService {
     boolean heartBeat();
 
     /**
+     * 当前commitId处于卡住状态
+     *
+     */
+    void notReady(long commitId);
+
+    /**
      * 判断CDC是否健康.
      *
      * @return true健康, false不健康.

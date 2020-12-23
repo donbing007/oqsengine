@@ -84,6 +84,10 @@ public class MetricsDefine {
     public static final String CDC_SYNC_EXECUTED_COUNT = PREFIX + ".cdc.sync.executed.count";
 
     /**
+     * CDC-NOT-READY-COMMIT-ID 当前未获取到Ready状态的ID
+     */
+    public static final String CDC_NOT_READY_COMMIT = PREFIX + ".cdc.not.ready.commit";
+    /**
      * 当前的提交号.
      */
     public static final String NOW_COMMITID = PREFIX + ".now.commitid";

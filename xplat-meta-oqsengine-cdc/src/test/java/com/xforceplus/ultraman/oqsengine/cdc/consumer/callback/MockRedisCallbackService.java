@@ -25,6 +25,7 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
     private CDCMetrics cdcMetrics;
     private CDCAckMetrics ackMetrics;
     private long heartBeat;
+    private long notReady;
 
     public void reset() {
         cdcMetrics = null;
@@ -54,6 +55,11 @@ public class MockRedisCallbackService implements CDCMetricsCallback {
     @Override
     public void heartBeat() {
         this.heartBeat = System.currentTimeMillis();
+    }
+
+    @Override
+    public void notReady(long commitId) {
+        this.notReady = commitId;
     }
 
     @Override

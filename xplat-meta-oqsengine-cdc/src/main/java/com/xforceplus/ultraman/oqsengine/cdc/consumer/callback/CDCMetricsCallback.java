@@ -27,6 +27,12 @@ public interface CDCMetricsCallback {
     void heartBeat();
 
     /**
+     * 当前commitId处于卡住状态
+     *
+     */
+    void notReady(long commitId);
+
+    /**
      * 需要在一个原子操作时保证一致性的信息，保证在宕机后从redis恢复的完整性
      *
      * @param cdcMetrics 指标.

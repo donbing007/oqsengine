@@ -109,14 +109,14 @@ public class CDCMetricsService {
         }
     }
 
-    public void isReadyCommit(long commitId) {
+    public void isReadyCommit(long commitId, CDCMetricsService cdcMetricsService) {
         StopWatch timer = new StopWatch();
+        int loops = 0;
         try {
             if (logger.isDebugEnabled()) {
                 logger.debug("[cdc-metrics] attempt check ready to commitId , commitId : {}", commitId);
             }
             timer.start();
-            int loops = 0;
             while (true) {
                 if (!cdcMetricsCallback.isReadyCommit(commitId)) {
                     try {
@@ -132,6 +132,8 @@ public class CDCMetricsService {
                         logger.warn(
                                 "[cdc-metrics] loops for wait ready commit missed current check point, current-wait-time : {}ms, commitId : {}"
                                 , totalLoops * COMMIT_ID_READY_CHECK_INTERVAL, commitId);
+                        //  输出NotReady指标
+                        notReady(commitId);
                     }
                     continue;
                 }
@@ -146,6 +148,10 @@ public class CDCMetricsService {
                 logger.warn("[cdc-metrics] wait for ready commitId use too much times, commitId {}, use time : {}ms"
                         , commitId, timer.getLastTaskTimeMillis());
             }
+            if (loops > COMMIT_ID_LOG_MAX_LOOPS) {
+                //  恢复isReady指标
+                notReady(INIT_ID);
+            }
         }
 
     }
@@ -156,6 +162,10 @@ public class CDCMetricsService {
 
     public void newConnectCallBack() {
         callback();
+    }
+
+    private void notReady(long commitId) {
+        cdcMetricsCallback.notReady(commitId);
     }
 
     private void callback() {
