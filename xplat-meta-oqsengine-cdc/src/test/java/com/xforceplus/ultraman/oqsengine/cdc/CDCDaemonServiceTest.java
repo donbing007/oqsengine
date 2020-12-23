@@ -15,7 +15,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
-
 /**
  * desc :
  * name : CDCDaemonServiceTest
