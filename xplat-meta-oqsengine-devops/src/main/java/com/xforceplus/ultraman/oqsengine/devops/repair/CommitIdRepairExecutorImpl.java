@@ -42,20 +42,21 @@ public class CommitIdRepairExecutorImpl implements CommitIdRepairExecutor {
         }
     }
 
+    @Deprecated
     @Override
     public void repair(Optional<Long> commitId) throws SQLException {
-        Long repairId = 0L;
-        if (!commitId.isPresent()) {
-            //  获取主库最大的commitId
-            Long dbMinCommitId = masterStorage.maxCommitId().orElseGet(() -> INIT_COMMIT_ID);
-            //  获取redis最大的commitId
-            Long redisMinCommitId = commitIdStatusService.getMax().orElseGet(() -> INIT_COMMIT_ID);
-            //  两者取大
-            repairId = dbMinCommitId > redisMinCommitId ? dbMinCommitId : redisMinCommitId;
-        } else {
-            repairId = commitId.get();
-        }
-
-        commitIdStatusService.save(repairId, true);
+//        Long repairId = 0L;
+//        if (!commitId.isPresent()) {
+//            //  获取主库最大的commitId
+//            Long dbMinCommitId = masterStorage.maxCommitId().orElseGet(() -> INIT_COMMIT_ID);
+//            //  获取redis最大的commitId
+//            Long redisMinCommitId = commitIdStatusService.getMax().orElseGet(() -> INIT_COMMIT_ID);
+//            //  两者取大
+//            repairId = dbMinCommitId > redisMinCommitId ? dbMinCommitId : redisMinCommitId;
+//        } else {
+//            repairId = commitId.get();
+//        }
+//
+//        commitIdStatusService.save(repairId, true);
     }
 }
