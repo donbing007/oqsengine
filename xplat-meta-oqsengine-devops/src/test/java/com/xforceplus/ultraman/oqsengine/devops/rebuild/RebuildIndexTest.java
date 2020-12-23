@@ -3,14 +3,16 @@ package com.xforceplus.ultraman.oqsengine.devops.rebuild;
 import com.xforceplus.ultraman.oqsengine.devops.DevOpsAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.List;
+import java.util.Optional;
 
 import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.*;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.ONE_HUNDRED_PERCENT;
@@ -32,6 +34,13 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
     private int maxSleepWaitLoops = 100;
     long txId = 0;
     long commitId = 0;
+
+    @BeforeClass
+    public static void beforeClass() {
+        startMysql();
+        startManticore();
+        startRedis();
+    }
 
     @Before
     public void before() throws Exception {

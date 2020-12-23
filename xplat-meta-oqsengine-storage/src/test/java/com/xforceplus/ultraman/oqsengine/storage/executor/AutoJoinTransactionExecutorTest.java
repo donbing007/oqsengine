@@ -8,14 +8,10 @@ import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
-
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractRedisContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
@@ -32,13 +28,18 @@ import static org.mockito.Mockito.*;
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
-public class AutoJoinTransactionExecutorTest extends AbstractRedisContainer {
+public class AutoJoinTransactionExecutorTest extends AbstractContainer {
 
     private LongIdGenerator idGenerator;
     private LongIdGenerator commitIdGenerator;
     private TransactionManager tm;
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl commitIdStatusService;
+
+    @BeforeClass
+    public static void beforeTestClass() {
+        startRedis();
+    }
 
     @Before
     public void before() throws Exception {

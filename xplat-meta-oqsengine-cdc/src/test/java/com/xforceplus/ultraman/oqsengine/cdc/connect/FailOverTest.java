@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -37,6 +38,14 @@ public class FailOverTest extends CDCAbstractContainer {
     private static final int max = 100;
 
     private volatile boolean isTetOver = false;
+
+    @BeforeClass
+    public static void beforeClass() {
+        startMysql();
+        startManticore();
+        startRedis();
+        startCannal();
+    }
 
     @Before
     public void before() throws Exception {

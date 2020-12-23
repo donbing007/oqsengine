@@ -24,11 +24,10 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContain
 import io.lettuce.core.RedisClient;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -40,6 +39,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -48,6 +48,8 @@ import static org.junit.Assert.assertTrue;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class SearchTest extends AbstractContainer {
+
+    final Logger logger = LoggerFactory.getLogger(SearchTest.class);
 
     private boolean initialization;
 
@@ -82,6 +84,13 @@ public class SearchTest extends AbstractContainer {
     @Resource
     private TransactionManagementService transactionManagementService;
 
+    @BeforeClass
+    public static void beforeClass() {
+        startMysql();
+        startManticore();
+        startRedis();
+        startCannal();
+    }
 
     private void initData() throws SQLException {
 
@@ -336,7 +345,12 @@ public class SearchTest extends AbstractContainer {
         initialization = false;
     }
 
-    private void clear() throws SQLException {
+    private void clear() throws Exception {
+        while (commitIdStatusService.size() > 0) {
+            logger.info("Wait for CDC synchronization to complete.");
+            TimeUnit.MILLISECONDS.sleep(10);
+        }
+
         for (DataSource ds : dataSourcePackage.getMaster()) {
             try (Connection conn = ds.getConnection()) {
                 try (Statement st = conn.createStatement()) {

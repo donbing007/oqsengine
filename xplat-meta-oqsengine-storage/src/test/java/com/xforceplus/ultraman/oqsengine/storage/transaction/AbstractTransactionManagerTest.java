@@ -4,13 +4,10 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractRedisContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
@@ -24,10 +21,15 @@ import java.util.concurrent.*;
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
-public class AbstractTransactionManagerTest extends AbstractRedisContainer {
+public class AbstractTransactionManagerTest extends AbstractContainer {
 
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl commitIdStatusService;
+
+    @BeforeClass
+    public static void beforeTestClass() {
+        startRedis();
+    }
 
     @Before
     public void before() throws Exception {

@@ -35,10 +35,6 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContain
 import io.lettuce.core.RedisClient;
 import org.junit.Ignore;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.wait.strategy.Wait;
 
 import javax.sql.DataSource;
 import java.sql.Connection;

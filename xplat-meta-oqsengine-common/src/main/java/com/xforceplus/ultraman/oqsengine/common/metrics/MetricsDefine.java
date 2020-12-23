@@ -64,6 +64,16 @@ public class MetricsDefine {
     public static final String UN_SYNC_COMMIT_ID_COUNT_TOTAL = PREFIX + ".unsync.commitid.count.total";
 
     /**
+     * 未同步的提交号最小值.
+     */
+    public static final String UN_SYNC_COMMIT_ID_MIN = PREFIX + ".unsync.commitid.min";
+
+    /**
+     * 未同步的提交号最大值.
+     */
+    public static final String UN_SYNC_COMMIT_ID_MAX = PREFIX + ".unsync.commitid.max";
+
+    /**
      * CDC同步的延时.
      */
     public static final String CDC_SYNC_DELAY_LATENCY_SECONDS = PREFIX + ".cdc.sync.delay.latency";

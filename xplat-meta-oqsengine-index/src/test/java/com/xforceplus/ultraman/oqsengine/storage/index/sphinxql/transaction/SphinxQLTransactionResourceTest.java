@@ -3,10 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -23,6 +20,11 @@ import java.sql.Statement;
 public class SphinxQLTransactionResourceTest extends AbstractContainer {
 
     private DataSourcePackage dataSourcePackage;
+
+    @BeforeClass
+    public static void beforeClass() {
+        startManticore();
+    }
 
     @Before
     public void before() throws Exception {
@@ -66,7 +68,7 @@ public class SphinxQLTransactionResourceTest extends AbstractContainer {
 
     private void buildDataSourcePackage() {
         if (dataSourcePackage == null) {
-            dataSourcePackage = DataSourceFactory.build();
+            dataSourcePackage = DataSourceFactory.build(true);
         }
 
     }

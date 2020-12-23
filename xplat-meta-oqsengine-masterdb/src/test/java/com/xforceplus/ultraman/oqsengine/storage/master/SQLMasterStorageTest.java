@@ -25,16 +25,14 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
 import io.lettuce.core.RedisClient;
 import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.strategy.StandardShardingStrategyConfiguration;
 import org.apache.shardingsphere.shardingjdbc.api.ShardingDataSourceFactory;
 import org.apache.shardingsphere.shardingjdbc.jdbc.core.datasource.ShardingDataSource;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -60,7 +58,7 @@ import static java.util.stream.Collectors.toMap;
  * @version 1.0 02/25/2020
  * @since <pre>Feb 25, 2020</pre>
  */
-public class SQLMasterStorageTest extends AbstractContainerTest {
+public class SQLMasterStorageTest extends AbstractContainer {
 
     final Logger logger = LoggerFactory.getLogger(SQLMasterStorageTest.class);
 
@@ -78,6 +76,12 @@ public class SQLMasterStorageTest extends AbstractContainerTest {
     private long timeId = LocalDateTime.now().toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
 
     private IEntityClass expectEntityClass;
+
+    @BeforeClass
+    public static void beforeTestClass() {
+        startRedis();
+        startMysql();
+    }
 
     @Before
     public void before() throws Exception {
@@ -480,12 +484,12 @@ public class SQLMasterStorageTest extends AbstractContainerTest {
 
         AtomicInteger index = new AtomicInteger(0);
         Map<String, DataSource> dsMap = dataSourcePackage.getMaster().stream().collect(Collectors.toMap(
-            d -> "ds" + index.getAndIncrement(), d -> d));
+            d -> "ds", d -> d));
 
         int dsSize = dsMap.size();
 
         TableRuleConfiguration tableRuleConfiguration = new TableRuleConfiguration(
-            "oqsbigentity", "ds${0..1}.oqsbigentity${0..2}");
+            "oqsbigentity", "ds.oqsbigentity${0..2}");
         tableRuleConfiguration.setDatabaseShardingStrategyConfig(
             new StandardShardingStrategyConfiguration("id", new HashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
         tableRuleConfiguration.setTableShardingStrategyConfig(

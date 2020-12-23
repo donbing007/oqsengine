@@ -18,12 +18,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
-import io.lettuce.core.RedisClient;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 关联查询集成测试.
@@ -69,7 +67,7 @@ public class JoinSelectTest extends AbstractContainer {
     private DataSourcePackage dataSourcePackage;
 
     @Resource
-    private RedisClient redisClient;
+    private CommitIdStatusService commitIdStatusService;
 
     private boolean initialization;
 
@@ -81,6 +79,14 @@ public class JoinSelectTest extends AbstractContainer {
     private List<IEntity> entities;
     private List<IEntity> driverEntities;
     private long bigDriverSelectEntityId;
+
+    @BeforeClass
+    public static void beforeClass() {
+        startMysql();
+        startManticore();
+        startRedis();
+        startCannal();
+    }
 
     @Before
     public void before() throws Exception {
@@ -253,7 +259,12 @@ public class JoinSelectTest extends AbstractContainer {
         bigDriverSelectEntityId = entities.get(entities.size() - 1).id();
     }
 
-    private void clear() throws SQLException {
+    private void clear() throws Exception {
+        while (commitIdStatusService.size() > 0) {
+            logger.info("Wait for CDC synchronization to complete.");
+            TimeUnit.MILLISECONDS.sleep(10);
+        }
+
         for (DataSource ds : dataSourcePackage.getMaster()) {
             try (Connection conn = ds.getConnection()) {
                 try (Statement st = conn.createStatement()) {

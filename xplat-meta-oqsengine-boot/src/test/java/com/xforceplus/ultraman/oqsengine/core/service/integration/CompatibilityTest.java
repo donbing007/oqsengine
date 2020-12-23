@@ -18,10 +18,14 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
+import io.lettuce.core.RedisClient;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -34,6 +38,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 兼容性测试,用以测试读取低版本的正确性.
@@ -45,6 +50,8 @@ import java.util.Map;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class CompatibilityTest extends AbstractContainer {
+
+    final Logger logger = LoggerFactory.getLogger(CompatibilityTest.class);
 
     @Resource(name = "masterDataSource")
     private DataSource masterDataSource;
@@ -64,6 +71,8 @@ public class CompatibilityTest extends AbstractContainer {
     @Resource
     private EntitySearchService entitySearchService;
 
+    @Resource
+    private RedisClient redisClient;
 
     @Resource
     private EntityManagementService entityManagementService;
@@ -80,8 +89,21 @@ public class CompatibilityTest extends AbstractContainer {
         new EntityField(910, "c4", FieldType.BOOLEAN, FieldConfig.build().searchable(true))
     ));
 
+    @BeforeClass
+    public static void beforeClass() {
+        startMysql();
+        startManticore();
+        startRedis();
+        startCannal();
+    }
+
     @After
     public void after() throws Exception {
+        while (commitIdStatusService.size() > 0) {
+            logger.info("Wait for CDC synchronization to complete.");
+            TimeUnit.MILLISECONDS.sleep(10);
+        }
+
         try (Connection conn = masterDataSource.getConnection()) {
             try (Statement stat = conn.createStatement()) {
                 stat.executeUpdate("truncate table oqsbigentity");
@@ -96,6 +118,7 @@ public class CompatibilityTest extends AbstractContainer {
                 }
             }
         }
+
     }
 
     @Test

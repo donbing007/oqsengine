@@ -1,17 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
 
-
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
-
-
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
-
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
@@ -30,6 +27,14 @@ public class CDCDaemonServiceTest extends CDCAbstractContainer {
     private boolean isTest = true;
 
     private MockRedisCallbackService testCallbackService;
+
+    @BeforeClass
+    public static void beforeClass() {
+        startMysql();
+        startManticore();
+        startRedis();
+        startCannal();
+    }
 
     @Before
     public void before() throws Exception {

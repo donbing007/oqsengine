@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
@@ -69,14 +70,13 @@ public abstract class CDCAbstractContainer extends AbstractContainer {
     protected String tableName = "oqsbigentity";
     protected String cdcErrors = "cdcerrors";
 
-    protected static SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
-
-    static {
-        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
-                System.getProperty("CANAL_DESTINATION"), "root", "root");
-    }
+    protected SingleCDCConnector singleCDCConnector;
 
     protected ConsumerService initAll() throws Exception {
+        singleCDCConnector = new SingleCDCConnector();
+        singleCDCConnector.init(System.getProperty("CANAL_HOST"), Integer.parseInt(System.getProperty("CANAL_PORT")),
+            System.getProperty("CANAL_DESTINATION"), "root", "root");
+
         dataSourcePackage = DataSourceFactory.build(true);
 
         if (transactionManager == null) {
@@ -130,8 +130,7 @@ public abstract class CDCAbstractContainer extends AbstractContainer {
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
         sphinxQLConditionsBuilderFactory.init();
 
-        Selector<String> indexWriteIndexNameSelector =
-            new NoSelector<>("oqsindex");
+        Selector<String> indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
 
         indexStorage = new SphinxQLIndexStorage();
         ReflectionTestUtils.setField(indexStorage, "writerDataSourceSelector", writeDataSourceSelector);
@@ -241,7 +240,8 @@ public abstract class CDCAbstractContainer extends AbstractContainer {
         for (DataSource ds : dataSourcePackage.getIndexWriter()) {
             Connection conn = ds.getConnection();
             Statement st = conn.createStatement();
-            st.executeUpdate("truncate table oqsindex");
+            st.executeUpdate("truncate table oqsindex0");
+            st.executeUpdate("truncate table oqsindex1");
             st.close();
             conn.close();
         }

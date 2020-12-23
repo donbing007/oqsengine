@@ -38,8 +38,14 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
 
     private static CDCMetricsService cdcMetricsService;
     private ConsumerService sphinxConsumerService;
+
     @BeforeClass
     public static void beforeClass() {
+        startMysql();
+        startManticore();
+        startRedis();
+        startCannal();
+
         entries = new ArrayList<>(size);
         preWarms = new ArrayList<>(1);
         build(preWarms, 1, Long.MAX_VALUE);

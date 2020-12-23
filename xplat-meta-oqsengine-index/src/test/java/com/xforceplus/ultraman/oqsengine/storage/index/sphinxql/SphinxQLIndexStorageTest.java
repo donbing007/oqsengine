@@ -33,10 +33,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
 import io.lettuce.core.RedisClient;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
@@ -158,6 +155,12 @@ public class SphinxQLIndexStorageTest extends AbstractContainer {
         entityes[6] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         initReIndexData();
+    }
+
+    @BeforeClass
+    public static void beforeClass() {
+        startManticore();
+        startRedis();
     }
 
     private static void initReIndexData() {

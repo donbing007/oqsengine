@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.devops.cdcerror.condition.CdcErrorQuery
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 import org.junit.*;
+
 import java.sql.SQLException;
 import java.util.Collection;
 
@@ -27,6 +28,13 @@ public class CdcErrorStorageTest extends DevOpsAbstractContainer {
 
     private static CdcErrorTask expectedCdcErrorTask =
                 CdcErrorTask.buildErrorTask(expectedSeqNo, expectedId, expectedCommitId, expectedMessage);
+
+    @BeforeClass
+    public static void beforeClass() {
+        startMysql();
+        startManticore();
+        startRedis();
+    }
 
     @Before
     public void before() throws Exception {

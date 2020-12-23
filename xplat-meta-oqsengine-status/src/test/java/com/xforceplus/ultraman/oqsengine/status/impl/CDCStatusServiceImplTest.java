@@ -4,15 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractRedisContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -22,7 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 1.0 11/16/2020
  * @since <pre>Nov 16, 2020</pre>
  */
-public class CDCStatusServiceImplTest extends AbstractRedisContainer {
+public class CDCStatusServiceImplTest extends AbstractContainer {
 
     private RedisClient redisClient;
     private CDCStatusServiceImpl impl;
@@ -30,6 +26,11 @@ public class CDCStatusServiceImplTest extends AbstractRedisContainer {
     private String ackKey = "ack-cdc";
     private String heartBeatKey = "cdc-heartBeat";
     private StatefulRedisConnection<String, String> conn;
+
+    @BeforeClass
+    public static void beforeTestClass() {
+        startRedis();
+    }
 
     @Before
     public void before() throws Exception {

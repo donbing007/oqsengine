@@ -12,6 +12,8 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.TimeGauge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -30,6 +32,8 @@ public class CDCStatusServiceImpl implements CDCStatusService {
     private static final String DEFAULT_CDC_METRICS_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.metrics";
     private static final String DEFAULT_HEART_BEAT_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.heartBeat";
     private static final String DEFAULT_CDC_ACK_METRICS_KEY = "com.xforceplus.ultraman.oqsengine.status.cdc.ack";
+
+    final Logger logger = LoggerFactory.getLogger(CDCStatusServiceImpl.class);
 
     @Resource
     private RedisClient redisClient;
@@ -111,6 +115,9 @@ public class CDCStatusServiceImpl implements CDCStatusService {
         RedisCommands<String, String> commands = connect.sync();
         String value = commands.get(heartBeatKey);
         if (value == null) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("No heartbeat data for object found. Default is CDC alive.");
+            }
             return true;
         }
         long now = Long.parseLong(value);
@@ -118,6 +125,9 @@ public class CDCStatusServiceImpl implements CDCStatusService {
          * 如果当前值和最后值不同,那么表示CDC仍然存活.
          * lastHeartBeatValue 默认等于-1,心跳从0开始.
          */
+        if (logger.isDebugEnabled()) {
+            logger.debug("The current heartbeat is {}, and the final heartbeat is {}.", now, lastHeartBeatValue);
+        }
         try {
             if (now != lastHeartBeatValue) {
                 return true;

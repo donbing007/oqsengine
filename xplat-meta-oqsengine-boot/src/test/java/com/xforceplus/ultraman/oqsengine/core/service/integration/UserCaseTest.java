@@ -23,10 +23,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import io.lettuce.core.RedisClient;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +65,17 @@ public class UserCaseTest extends AbstractContainer {
     @Resource
     private EntityManagementService entityManagementService;
 
+    @Resource
+    private RedisClient redisClient;
+
+    @BeforeClass
+    public static void beforeClass() {
+        startMysql();
+        startManticore();
+        startRedis();
+        startCannal();
+    }
+
     private static final int TEST_LOOPS = 10;
 
     IEntityClass fatherClass = new EntityClass(100, "father", Arrays.asList(
@@ -99,6 +108,11 @@ public class UserCaseTest extends AbstractContainer {
 
     @After
     public void after() throws Exception {
+        while (commitIdStatusService.size() > 0) {
+            logger.info("Wait for CDC synchronization to complete.");
+            TimeUnit.MILLISECONDS.sleep(10);
+        }
+
         try (Connection conn = masterDataSource.getConnection()) {
             try (Statement stat = conn.createStatement()) {
                 stat.executeUpdate("truncate table oqsbigentity");
@@ -114,6 +128,7 @@ public class UserCaseTest extends AbstractContainer {
                 }
             }
         }
+
     }
 
     @Test

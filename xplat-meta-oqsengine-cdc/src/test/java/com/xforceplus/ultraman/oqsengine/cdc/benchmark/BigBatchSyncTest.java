@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
 
 import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.EntityGenerateToolBar;
-import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
@@ -10,10 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.AbstractMasterExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -42,6 +38,14 @@ public class BigBatchSyncTest extends CDCAbstractContainer {
     private ConsumerRunner consumerRunner;
 
     private MockRedisCallbackService mockRedisCallbackService;
+
+    @BeforeClass
+    public static void beforeClass() {
+        startMysql();
+        startManticore();
+        startRedis();
+        startCannal();
+    }
 
     @Before
     public void before() throws Exception {
