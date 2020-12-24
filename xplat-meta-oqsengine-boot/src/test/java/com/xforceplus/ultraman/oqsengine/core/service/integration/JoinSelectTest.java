@@ -19,7 +19,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class JoinSelectTest extends AbstractContainer {
+public class JoinSelectTest {
 
     final Logger logger = LoggerFactory.getLogger(JoinSelectTest.class);
 
@@ -82,10 +82,10 @@ public class JoinSelectTest extends AbstractContainer {
 
     @BeforeClass
     public static void beforeClass() {
-        startMysql();
-        startManticore();
-        startRedis();
-        startCannal();
+        ContainerHelper.startMysql();
+        ContainerHelper.startManticore();
+        ContainerHelper.startRedis();
+        ContainerHelper.startCannal();
     }
 
     @Before

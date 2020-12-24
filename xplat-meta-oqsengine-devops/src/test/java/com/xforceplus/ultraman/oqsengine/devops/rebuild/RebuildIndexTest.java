@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +38,9 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
 
     @BeforeClass
     public static void beforeClass() {
-        startMysql();
-        startManticore();
-        startRedis();
+        ContainerHelper.startMysql();
+        ContainerHelper.startManticore();
+        ContainerHelper.startRedis();
     }
 
     @Before

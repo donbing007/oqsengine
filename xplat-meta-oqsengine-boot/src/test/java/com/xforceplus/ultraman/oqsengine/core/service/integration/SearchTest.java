@@ -20,7 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
 import io.lettuce.core.RedisClient;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -47,7 +47,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = OqsengineBootApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class SearchTest extends AbstractContainer {
+public class SearchTest {
 
     final Logger logger = LoggerFactory.getLogger(SearchTest.class);
 
@@ -86,10 +86,10 @@ public class SearchTest extends AbstractContainer {
 
     @BeforeClass
     public static void beforeClass() {
-        startMysql();
-        startManticore();
-        startRedis();
-        startCannal();
+        ContainerHelper.startMysql();
+        ContainerHelper.startManticore();
+        ContainerHelper.startRedis();
+        ContainerHelper.startCannal();
     }
 
     private void initData() throws SQLException {

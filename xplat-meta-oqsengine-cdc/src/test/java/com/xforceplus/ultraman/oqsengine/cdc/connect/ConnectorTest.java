@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallback
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
 import org.junit.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -32,10 +33,10 @@ public class ConnectorTest extends CDCAbstractContainer {
 
     @BeforeClass
     public static void beforeClass() {
-        startMysql();
-        startManticore();
-        startRedis();
-        startCannal();
+        ContainerHelper.startMysql();
+        ContainerHelper.startManticore();
+        ContainerHelper.startRedis();
+        ContainerHelper.startCannal();
     }
 
     @Before

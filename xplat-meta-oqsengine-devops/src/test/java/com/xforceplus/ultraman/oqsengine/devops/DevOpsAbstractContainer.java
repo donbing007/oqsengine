@@ -31,7 +31,6 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
 import io.lettuce.core.RedisClient;
 import org.junit.Ignore;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -50,7 +49,7 @@ import java.sql.Statement;
  * @since : 1.8
  */
 @Ignore
-public abstract class DevOpsAbstractContainer extends AbstractContainer {
+public abstract class DevOpsAbstractContainer {
     protected DataSourcePackage dataSourcePackage;
 
     protected RedisClient redisClient;

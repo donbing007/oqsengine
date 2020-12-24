@@ -12,10 +12,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import org.junit.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -43,6 +41,14 @@ public class EntityValueBuildTest extends CDCAbstractContainer {
     private List<StorageEntity> storageEntities;
 
     private static final long partitionId = 100000;
+
+    @BeforeClass
+    public static void beforeClass() {
+        ContainerHelper.startMysql();
+        ContainerHelper.startManticore();
+        ContainerHelper.startRedis();
+        ContainerHelper.startCannal();
+    }
 
     @Before
     public void before() throws Exception {

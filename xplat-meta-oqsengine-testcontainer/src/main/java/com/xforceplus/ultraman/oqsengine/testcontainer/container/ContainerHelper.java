@@ -19,9 +19,9 @@ import java.util.Random;
  * @since : 1.8
  */
 @Ignore
-public abstract class AbstractContainer {
+public class ContainerHelper {
 
-    static final Logger logger = LoggerFactory.getLogger(AbstractContainer.class);
+    static final Logger logger = LoggerFactory.getLogger(ContainerHelper.class);
 
     private static GenericContainer redis;
     private static GenericContainer mysql;

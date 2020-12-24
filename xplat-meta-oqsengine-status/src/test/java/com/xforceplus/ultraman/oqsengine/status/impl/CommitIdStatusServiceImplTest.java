@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -21,7 +21,7 @@ import java.util.stream.LongStream;
  * @version 1.0 11/13/2020
  * @since <pre>Nov 13, 2020</pre>
  */
-public class CommitIdStatusServiceImplTest extends AbstractContainer {
+public class CommitIdStatusServiceImplTest {
 
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl impl;
@@ -30,7 +30,7 @@ public class CommitIdStatusServiceImplTest extends AbstractContainer {
 
     @BeforeClass
     public static void beforeTestClass() {
-        startRedis();
+        ContainerHelper.startRedis();
     }
 
     @Before

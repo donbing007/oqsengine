@@ -6,8 +6,10 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -45,6 +47,15 @@ public class SphinxConsumerServiceTest extends CDCAbstractContainer {
     private int expectedSize = 0;
 
     private CDCMetricsService cdcMetricsService;
+
+    @BeforeClass
+    public static void beforeClass() {
+        ContainerHelper.startMysql();
+        ContainerHelper.startManticore();
+        ContainerHelper.startRedis();
+        ContainerHelper.startCannal();
+    }
+
     @Before
     public void before() throws Exception {
         sphinxConsumerService = initAll();

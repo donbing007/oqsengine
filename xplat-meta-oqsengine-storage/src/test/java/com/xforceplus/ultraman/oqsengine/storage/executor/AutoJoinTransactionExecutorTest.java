@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import org.junit.*;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
-public class AutoJoinTransactionExecutorTest extends AbstractContainer {
+public class AutoJoinTransactionExecutorTest {
 
     private LongIdGenerator idGenerator;
     private LongIdGenerator commitIdGenerator;
@@ -38,7 +38,7 @@ public class AutoJoinTransactionExecutorTest extends AbstractContainer {
 
     @BeforeClass
     public static void beforeTestClass() {
-        startRedis();
+        ContainerHelper.startRedis();
     }
 
     @Before

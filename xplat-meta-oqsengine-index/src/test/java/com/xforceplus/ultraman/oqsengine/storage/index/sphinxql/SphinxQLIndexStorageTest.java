@@ -31,7 +31,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
 import io.lettuce.core.RedisClient;
 import org.junit.*;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
  * Feb 26, 2020
  *        </pre>
  */
-public class SphinxQLIndexStorageTest extends AbstractContainer {
+public class SphinxQLIndexStorageTest {
 
     private TransactionManager transactionManager;
     private SphinxQLIndexStorage storage;
@@ -159,8 +159,8 @@ public class SphinxQLIndexStorageTest extends AbstractContainer {
 
     @BeforeClass
     public static void beforeClass() {
-        startManticore();
-        startRedis();
+        ContainerHelper.startManticore();
+        ContainerHelper.startRedis();
     }
 
     private static void initReIndexData() {

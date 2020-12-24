@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -18,7 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 1.0 11/16/2020
  * @since <pre>Nov 16, 2020</pre>
  */
-public class CDCStatusServiceImplTest extends AbstractContainer {
+public class CDCStatusServiceImplTest {
 
     private RedisClient redisClient;
     private CDCStatusServiceImpl impl;
@@ -30,7 +30,7 @@ public class CDCStatusServiceImplTest extends AbstractContainer {
 
     @BeforeClass
     public static void beforeTestClass() {
-        startRedis();
+        ContainerHelper.startRedis();
     }
 
     @Before

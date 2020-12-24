@@ -30,7 +30,7 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.AbstractContainer;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
 import io.lettuce.core.RedisClient;
 import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
  * @version 0.1 2020/11/6 16:16
  * @since 1.8
  */
-public class SQLMasterStorageQueryTest extends AbstractContainer {
+public class SQLMasterStorageQueryTest {
 
     private TransactionManager transactionManager;
     private CommitIdStatusServiceImpl commitIdStatusService;
@@ -147,8 +147,8 @@ public class SQLMasterStorageQueryTest extends AbstractContainer {
 
     @BeforeClass
     public static void beforeTestClass() {
-        startRedis();
-        startMysql();
+        ContainerHelper.startRedis();
+        ContainerHelper.startMysql();
     }
 
     @Before
