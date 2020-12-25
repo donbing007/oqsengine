@@ -42,6 +42,11 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
         ContainerHelper.startCannal();
     }
 
+    @AfterClass
+    public static void afterClass() {
+        ContainerHelper.reset();
+    }
+
     @Before
     public void before() throws Exception {
         consumerRunner = initConsumerRunner();

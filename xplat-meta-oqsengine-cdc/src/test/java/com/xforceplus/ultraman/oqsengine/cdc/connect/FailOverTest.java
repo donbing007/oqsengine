@@ -9,10 +9,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.SQLException;
@@ -46,6 +43,11 @@ public class FailOverTest extends CDCAbstractContainer {
         ContainerHelper.startManticore();
         ContainerHelper.startRedis();
         ContainerHelper.startCannal();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        ContainerHelper.reset();
     }
 
     @Before

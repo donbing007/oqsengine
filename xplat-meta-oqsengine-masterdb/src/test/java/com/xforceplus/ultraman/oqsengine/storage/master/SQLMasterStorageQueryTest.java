@@ -151,6 +151,11 @@ public class SQLMasterStorageQueryTest {
         ContainerHelper.startMysql();
     }
 
+    @AfterClass
+    public static void afterClass() {
+        ContainerHelper.reset();
+    }
+
     @Before
     public void before() throws Exception {
 

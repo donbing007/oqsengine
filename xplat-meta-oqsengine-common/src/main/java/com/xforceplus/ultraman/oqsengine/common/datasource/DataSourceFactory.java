@@ -76,6 +76,7 @@ public class DataSourceFactory {
         String dsConfigFile = System.getProperty(CONFIG_FILE);
 
         Config config;
+        ConfigFactory.invalidateCaches();
         if (dsConfigFile == null) {
             config = ConfigFactory.load("oqsengine-ds.conf");
         } else {

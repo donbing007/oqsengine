@@ -34,6 +34,11 @@ public class MultiLocalTransactionTest {
         ContainerHelper.startRedis();
     }
 
+    @AfterClass
+    public static void afterClass() {
+        ContainerHelper.reset();
+    }
+
     @Before
     public void before() throws Exception {
         String redisIp = System.getProperty("REDIS_HOST");

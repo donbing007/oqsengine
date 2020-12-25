@@ -18,7 +18,7 @@ import java.util.concurrent.CountDownLatch;
  * @version 1.0 12/17/2020
  * @since <pre>Dec 17, 2020</pre>
  */
-public class RedisOrderContinuousLongIdGeneratorTest extends ContainerHelper {
+public class RedisOrderContinuousLongIdGeneratorTest {
 
     private RedisClient redisClient;
     private RedisOrderContinuousLongIdGenerator idGenerator;
@@ -27,7 +27,12 @@ public class RedisOrderContinuousLongIdGeneratorTest extends ContainerHelper {
 
     @BeforeClass
     public static void beforeTestClass() {
-        startRedis();
+        ContainerHelper.startRedis();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        ContainerHelper.reset();
     }
 
     @Before

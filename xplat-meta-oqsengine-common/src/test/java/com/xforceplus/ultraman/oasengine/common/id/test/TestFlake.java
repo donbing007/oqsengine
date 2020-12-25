@@ -22,11 +22,11 @@ public class TestFlake {
     public void testGenID() throws InterruptedException {
         SnowflakeLongIdGenerator generator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(1));
 
-        CountDownLatch latch = new CountDownLatch(5000);
+        CountDownLatch latch = new CountDownLatch(500);
 
         CopyOnWriteArrayList<Long> list = new CopyOnWriteArrayList<>();
 
-        IntStream.range(0 , 5000)
+        IntStream.range(0, 500)
                 .mapToObj(i -> new Thread(() -> {
                     Long id = generator.next();
                     list.add(id);
@@ -39,7 +39,7 @@ public class TestFlake {
         assertTrue("there is no duplicated id",
                 list.stream()
                         .distinct()
-                        .collect(Collectors.toList()).size() == 5000);
+                    .collect(Collectors.toList()).size() == 500);
     }
 
 
@@ -49,10 +49,7 @@ public class TestFlake {
 
         List<Long> list = new ArrayList<>();
 
-//        for(int i = 0 ; i < 200000; i ++){
-//            Long id = generator.next();
-//        }
-        IntStream.range(0 , 200000)
+        IntStream.range(0, 2000)
                 .forEach(i -> {
                     Long id = generator.next();
                     list.add(id);
@@ -63,15 +60,7 @@ public class TestFlake {
                 .distinct()
                 .collect(Collectors.toList()).size();
 
-//        list.stream().collect(Collectors.groupingBy(x -> x)).entrySet()
-//                .stream().filter(x -> x.getValue().size() > 1).forEach(System.out::println);
 
-        assertTrue(size == 200000);
-    }
-
-    @Test
-    public void testLong() {
-        Long x = 1L << 22;
-        System.out.println(x);
+        assertTrue(size == 2000);
     }
 }

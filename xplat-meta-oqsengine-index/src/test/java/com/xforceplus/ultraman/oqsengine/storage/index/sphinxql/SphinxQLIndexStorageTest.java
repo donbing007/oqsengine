@@ -163,6 +163,11 @@ public class SphinxQLIndexStorageTest {
         ContainerHelper.startRedis();
     }
 
+    @AfterClass
+    public static void afterClass() {
+        ContainerHelper.reset();
+    }
+
     private static void initReIndexData() {
         //	reIndex test delete
         expectedBatchDeleteIds = new ArrayList<>();

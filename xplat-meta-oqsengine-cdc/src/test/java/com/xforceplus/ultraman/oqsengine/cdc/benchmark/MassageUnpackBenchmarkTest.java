@@ -58,6 +58,8 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
     @AfterClass
     public static void afterClass() {
         cdcMetricsService.shutdown();
+
+        ContainerHelper.reset();
     }
 
     @Before

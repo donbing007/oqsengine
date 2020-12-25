@@ -9,6 +9,7 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 /**
  * desc :
@@ -19,7 +20,7 @@ import java.util.Random;
  * @since : 1.8
  */
 @Ignore
-public class ContainerHelper {
+public final class ContainerHelper {
 
     static final Logger logger = LoggerFactory.getLogger(ContainerHelper.class);
 
@@ -33,6 +34,93 @@ public class ContainerHelper {
 
     static {
         System.setProperty("ds", "./src/test/resources/oqsengine-ds.conf");
+    }
+
+    private static void waitStop(GenericContainer genericContainer) {
+        while (genericContainer.isRunning()) {
+            try {
+                logger.info("The {} container is not closed, etc. 5 ms.", genericContainer.getDockerImageName());
+                TimeUnit.MILLISECONDS.sleep(5);
+            } catch (Exception ex) {
+                logger.error(ex.getMessage(), ex);
+            }
+        }
+    }
+
+    /**
+     * 重置所有打开过的容器.
+     */
+    public static synchronized void reset() {
+        if (cannal != null) {
+            cannal.stop();
+            waitStop(cannal);
+            cannal = null;
+
+            System.clearProperty("CANAL_DESTINATION");
+            System.clearProperty("CANAL_HOST");
+            System.clearProperty("CANAL_PORT");
+
+            logger.info("Closed cannal container!");
+        }
+
+        if (searchManticore != null) {
+            searchManticore.stop();
+            waitStop(searchManticore);
+            searchManticore = null;
+
+            System.clearProperty("SEARCH_MANTICORE_HOST");
+            System.clearProperty("SEARCH_MANTICORE_PORT");
+            System.clearProperty("SEARCH_MANTICORE_JDBC");
+
+            logger.info("Closed searchManticore container!");
+        }
+
+        if (manticore0 != null) {
+            manticore0.stop();
+            waitStop(manticore0);
+            manticore0 = null;
+
+            System.clearProperty("MANTICORE0_HOST");
+            System.clearProperty("MANTICORE0_PORT");
+            System.clearProperty("MANTICORE0_JDBC");
+
+            logger.info("Closed manticore0 container!");
+        }
+
+        if (manticore1 != null) {
+            manticore1.stop();
+            waitStop(manticore1);
+            manticore1 = null;
+
+            System.clearProperty("MANTICORE1_HOST");
+            System.clearProperty("MANTICORE1_PORT");
+            System.clearProperty("MANTICORE1_JDBC");
+
+            logger.info("Closed manticore1 container!");
+        }
+
+        if (mysql != null) {
+            mysql.stop();
+            waitStop(mysql);
+            mysql = null;
+
+            System.clearProperty("MYSQL_HOST");
+            System.clearProperty("MYSQL_PORT");
+            System.clearProperty("MYSQL_JDBC");
+
+            logger.info("Closed mysql container!");
+        }
+
+        if (redis != null) {
+            redis.stop();
+            waitStop(redis);
+            redis = null;
+
+            System.clearProperty("REDIS_HOST");
+            System.clearProperty("REDIS_PORT");
+
+            logger.info("Closed redis container!");
+        }
     }
 
     public static synchronized void startRedis() {

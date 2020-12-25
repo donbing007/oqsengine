@@ -29,8 +29,13 @@ public class CommitIdStatusServiceImplTest {
     private String statusKeyPreifx = "test.status";
 
     @BeforeClass
-    public static void beforeTestClass() {
+    public static void beforeClass() {
         ContainerHelper.startRedis();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        ContainerHelper.reset();
     }
 
     @Before

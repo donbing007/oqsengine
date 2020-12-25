@@ -29,8 +29,13 @@ public class CDCStatusServiceImplTest {
     private StatefulRedisConnection<String, String> conn;
 
     @BeforeClass
-    public static void beforeTestClass() {
+    public static void beforeClass() {
         ContainerHelper.startRedis();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        ContainerHelper.reset();
     }
 
     @Before

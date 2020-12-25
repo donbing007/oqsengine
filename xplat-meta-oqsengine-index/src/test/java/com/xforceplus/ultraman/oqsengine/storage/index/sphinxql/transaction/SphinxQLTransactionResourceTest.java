@@ -17,13 +17,18 @@ import java.sql.Statement;
  * @version 1.0 12/02/2020
  * @since <pre>Dec 2, 2020</pre>
  */
-public class SphinxQLTransactionResourceTest extends ContainerHelper {
+public class SphinxQLTransactionResourceTest {
 
     private DataSourcePackage dataSourcePackage;
 
     @BeforeClass
     public static void beforeClass() {
-        startManticore();
+        ContainerHelper.startManticore();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        ContainerHelper.reset();
     }
 
     @Before
