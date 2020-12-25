@@ -1,16 +1,21 @@
 package com.xforceplus.ultraman.oqsengine.status.impl;
 
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 
@@ -21,22 +26,14 @@ import java.util.stream.LongStream;
  * @version 1.0 11/13/2020
  * @since <pre>Nov 13, 2020</pre>
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers(ContainerType.REDIS)
 public class CommitIdStatusServiceImplTest {
 
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl impl;
     private String key = "test";
     private String statusKeyPreifx = "test.status";
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerHelper.startRedis();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
-    }
 
     @Before
     public void before() throws Exception {
@@ -212,60 +209,6 @@ public class CommitIdStatusServiceImplTest {
         unSyncCommitIdSizeField.setAccessible(true);
         AtomicLong unSyncCommitIdSize = (AtomicLong) unSyncCommitIdSizeField.get(impl);
         Assert.assertEquals(89L, unSyncCommitIdSize.longValue());
-    }
-
-    /**
-     * 测试协同.
-     * 调用者应该只有在isReady()给出true的情况下才能进行提交号的淘汰.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testSynergy() throws Exception {
-        ExecutorService worker = Executors.newFixedThreadPool(10);
-        AtomicLong commitId = new AtomicLong(0);
-        BlockingQueue<Long> queue = new ArrayBlockingQueue(1000);
-        Queue<Long> finishdQueue = new ConcurrentLinkedQueue();
-        int size = 100;
-        //写入提交号.
-        worker.submit(() -> {
-            for (int i = 0; i < size; i++) {
-                worker.submit(() -> {
-
-                    long commitid = commitId.incrementAndGet();
-
-                    queue.offer(commitid);
-
-                    impl.save(commitid, true);
-                });
-            }
-        });
-
-        while (finishdQueue.size() != size) {
-            worker.submit(() -> {
-                Long id = null;
-                try {
-                    id = queue.take();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                while (!impl.isReady(id)) {
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(100L);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                impl.obsolete(id);
-                finishdQueue.offer(id);
-            });
-        }
-
-        worker.shutdown();
-
-        Assert.assertEquals(0, impl.getAll().length);
-        Assert.assertEquals(size, finishdQueue.size());
     }
 
     @Test

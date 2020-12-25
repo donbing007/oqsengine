@@ -19,7 +19,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -82,10 +82,10 @@ public class JoinSelectTest {
 
     @BeforeClass
     public static void beforeClass() {
-        ContainerHelper.startMysql();
-        ContainerHelper.startManticore();
-        ContainerHelper.startRedis();
-        ContainerHelper.startCannal();
+        ContainerStarter.startMysql();
+        ContainerStarter.startManticore();
+        ContainerStarter.startRedis();
+        ContainerStarter.startCannal();
     }
 
     @Before

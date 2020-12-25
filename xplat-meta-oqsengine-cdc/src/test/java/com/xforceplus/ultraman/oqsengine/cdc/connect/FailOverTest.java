@@ -8,8 +8,13 @@ import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
-import org.junit.*;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.SQLException;
@@ -26,6 +31,8 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
  * date : 2020/11/11
  * @since : 1.8
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
 public class FailOverTest extends CDCAbstractContainer {
     private MockRedisCallbackService mockRedisCallbackService;
 
@@ -36,19 +43,6 @@ public class FailOverTest extends CDCAbstractContainer {
     private static final int max = 100;
 
     private volatile boolean isTetOver = false;
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerHelper.startMysql();
-        ContainerHelper.startManticore();
-        ContainerHelper.startRedis();
-        ContainerHelper.startCannal();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
-    }
 
     @Before
     public void before() throws Exception {
@@ -76,7 +70,7 @@ public class FailOverTest extends CDCAbstractContainer {
     @Test
     public void testFailOver() throws InterruptedException {
         ExecutorService executorService = new ThreadPoolExecutor(2, 2, 0,
-        TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
+            TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
 
         executorService.submit(new MysqlInitCall());
         executorService.submit(new CDCDamonServiceCall());
@@ -121,12 +115,12 @@ public class FailOverTest extends CDCAbstractContainer {
                     int j = 0;
                     while (j < max) {
                         initData(EntityGenerateToolBar.generateFixedEntities(i + j * 10, 0), false);
-                        j ++;
+                        j++;
                     }
                     j = 0;
                     while (j < max) {
                         initData(EntityGenerateToolBar.generateFixedEntities(i + j * 10, 1), true);
-                        j ++;
+                        j++;
                     }
                 } catch (Exception ex) {
                     tx.rollback();

@@ -31,9 +31,15 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
@@ -58,6 +64,8 @@ import java.util.stream.Collectors;
  * Feb 26, 2020
  *        </pre>
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS, ContainerType.MANTICORE})
 public class SphinxQLIndexStorageTest {
 
     private TransactionManager transactionManager;
@@ -155,17 +163,6 @@ public class SphinxQLIndexStorageTest {
         entityes[6] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
 
         initReIndexData();
-    }
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerHelper.startManticore();
-        ContainerHelper.startRedis();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
     }
 
     private static void initReIndexData() {

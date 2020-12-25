@@ -4,11 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -18,6 +24,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @version 1.0 11/16/2020
  * @since <pre>Nov 16, 2020</pre>
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers(ContainerType.REDIS)
 public class CDCStatusServiceImplTest {
 
     private RedisClient redisClient;
@@ -27,16 +35,6 @@ public class CDCStatusServiceImplTest {
     private String heartBeatKey = "cdc-heartBeat";
     private String notReadyKey = "cdc-commitId-notReady";
     private StatefulRedisConnection<String, String> conn;
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerHelper.startRedis();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
-    }
 
     @Before
     public void before() throws Exception {

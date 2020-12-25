@@ -25,14 +25,20 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.strategy.StandardShardingStrategyConfiguration;
 import org.apache.shardingsphere.shardingjdbc.api.ShardingDataSourceFactory;
 import org.apache.shardingsphere.shardingjdbc.jdbc.core.datasource.ShardingDataSource;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -58,6 +64,8 @@ import static java.util.stream.Collectors.toMap;
  * @version 1.0 02/25/2020
  * @since <pre>Feb 25, 2020</pre>
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL})
 public class SQLMasterStorageTest {
 
     final Logger logger = LoggerFactory.getLogger(SQLMasterStorageTest.class);
@@ -76,17 +84,6 @@ public class SQLMasterStorageTest {
     private long timeId = LocalDateTime.now().toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
 
     private IEntityClass expectEntityClass;
-
-    @BeforeClass
-    public static void beforeTestClass() {
-        ContainerHelper.startRedis();
-        ContainerHelper.startMysql();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
-    }
 
     @Before
     public void before() throws Exception {

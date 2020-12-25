@@ -22,7 +22,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import io.lettuce.core.RedisClient;
 import org.junit.*;
 import org.junit.runner.RunWith;
@@ -70,10 +70,10 @@ public class UserCaseTest {
 
     @BeforeClass
     public static void beforeClass() {
-        ContainerHelper.startMysql();
-        ContainerHelper.startManticore();
-        ContainerHelper.startRedis();
-        ContainerHelper.startCannal();
+        ContainerStarter.startMysql();
+        ContainerStarter.startManticore();
+        ContainerStarter.startRedis();
+        ContainerStarter.startCannal();
     }
 
     private static final int TEST_LOOPS = 10;

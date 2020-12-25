@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallback
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerToolsTest;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,10 +42,10 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
 
     @BeforeClass
     public static void beforeClass() {
-        ContainerHelper.startMysql();
-        ContainerHelper.startManticore();
-        ContainerHelper.startRedis();
-        ContainerHelper.startCannal();
+        ContainerStarter.startMysql();
+        ContainerStarter.startManticore();
+        ContainerStarter.startRedis();
+        ContainerStarter.startCannal();
 
         entries = new ArrayList<>(size);
         preWarms = new ArrayList<>(1);
@@ -59,7 +59,7 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
     public static void afterClass() {
         cdcMetricsService.shutdown();
 
-        ContainerHelper.reset();
+        ContainerStarter.reset();
     }
 
     @Before

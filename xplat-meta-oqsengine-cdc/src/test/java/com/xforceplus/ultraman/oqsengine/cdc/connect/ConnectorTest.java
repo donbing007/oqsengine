@@ -6,8 +6,14 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallback
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
-import org.junit.*;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.SQLException;
@@ -23,6 +29,8 @@ import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZE
  * date : 2020/11/19
  * @since : 1.8
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
 public class ConnectorTest extends CDCAbstractContainer {
 
     private MockRedisCallbackService mockRedisCallbackService;
@@ -30,19 +38,6 @@ public class ConnectorTest extends CDCAbstractContainer {
     private CDCDaemonService cdcDaemonService;
 
     private CDCMetricsService cdcMetricsService;
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerHelper.startMysql();
-        ContainerHelper.startManticore();
-        ContainerHelper.startRedis();
-        ContainerHelper.startCannal();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
-    }
 
     @Before
     public void before() throws Exception {

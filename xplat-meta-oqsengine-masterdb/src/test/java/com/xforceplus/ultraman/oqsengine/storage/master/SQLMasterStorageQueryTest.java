@@ -30,14 +30,20 @@ import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionM
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
 import org.apache.shardingsphere.api.config.sharding.strategy.StandardShardingStrategyConfiguration;
 import org.apache.shardingsphere.shardingjdbc.api.ShardingDataSourceFactory;
 import org.apache.shardingsphere.shardingjdbc.jdbc.core.datasource.ShardingDataSource;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
@@ -60,6 +66,8 @@ import java.util.stream.Collectors;
  * @version 0.1 2020/11/6 16:16
  * @since 1.8
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL})
 public class SQLMasterStorageQueryTest {
 
     private TransactionManager transactionManager;
@@ -143,17 +151,6 @@ public class SQLMasterStorageQueryTest {
             new EnumValue(enumField, "5")
         ));
         entityes[4] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
-    }
-
-    @BeforeClass
-    public static void beforeTestClass() {
-        ContainerHelper.startRedis();
-        ContainerHelper.startMysql();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
     }
 
     @Before

@@ -9,7 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.AbstractMasterExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,15 +42,15 @@ public class BigBatchSyncTest extends CDCAbstractContainer {
 
     @BeforeClass
     public static void beforeClass() {
-        ContainerHelper.startMysql();
-        ContainerHelper.startManticore();
-        ContainerHelper.startRedis();
-        ContainerHelper.startCannal();
+        ContainerStarter.startMysql();
+        ContainerStarter.startManticore();
+        ContainerStarter.startRedis();
+        ContainerStarter.startCannal();
     }
 
     @AfterClass
     public static void afterClass() {
-        ContainerHelper.reset();
+        ContainerStarter.reset();
     }
 
     @Before

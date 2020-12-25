@@ -4,8 +4,14 @@ import com.xforceplus.ultraman.oqsengine.devops.DevOpsAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
-import org.junit.*;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.sql.SQLException;
 import java.util.Collection;
@@ -18,6 +24,8 @@ import java.util.Collection;
  * date : 2020/11/22
  * @since : 1.8
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE})
 public class CdcErrorStorageTest extends DevOpsAbstractContainer {
 
     private static long unExpectedSeqNo = Long.MAX_VALUE;
@@ -29,18 +37,6 @@ public class CdcErrorStorageTest extends DevOpsAbstractContainer {
 
     private static CdcErrorTask expectedCdcErrorTask =
                 CdcErrorTask.buildErrorTask(expectedSeqNo, expectedId, expectedCommitId, expectedMessage);
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerHelper.startMysql();
-        ContainerHelper.startManticore();
-        ContainerHelper.startRedis();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
-    }
 
     @Before
     public void before() throws Exception {

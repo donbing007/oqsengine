@@ -5,8 +5,14 @@ import com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
-import org.junit.*;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +32,8 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.Constant
  * date : 2020/8/27
  * @since : 1.8
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE})
 public class RebuildIndexTest extends DevOpsAbstractContainer {
     final Logger logger = LoggerFactory.getLogger(RebuildIndexTest.class);
 
@@ -35,18 +43,6 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
     private int maxSleepWaitLoops = 100;
     long txId = 0;
     long commitId = 0;
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerHelper.startMysql();
-        ContainerHelper.startManticore();
-        ContainerHelper.startRedis();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
-    }
 
     @Before
     public void before() throws Exception {

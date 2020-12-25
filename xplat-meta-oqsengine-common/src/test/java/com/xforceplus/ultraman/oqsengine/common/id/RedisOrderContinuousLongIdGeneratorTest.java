@@ -1,10 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.common.id;
 
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -18,22 +24,14 @@ import java.util.concurrent.CountDownLatch;
  * @version 1.0 12/17/2020
  * @since <pre>Dec 17, 2020</pre>
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS})
 public class RedisOrderContinuousLongIdGeneratorTest {
 
     private RedisClient redisClient;
     private RedisOrderContinuousLongIdGenerator idGenerator;
 
     private StatefulRedisConnection<String, String> conn;
-
-    @BeforeClass
-    public static void beforeTestClass() {
-        ContainerHelper.startRedis();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
-    }
 
     @Before
     public void before() throws Exception {

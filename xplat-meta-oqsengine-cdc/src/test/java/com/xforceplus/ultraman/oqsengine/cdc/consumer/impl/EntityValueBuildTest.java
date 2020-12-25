@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import org.junit.*;
 
 import java.lang.reflect.InvocationTargetException;
@@ -44,10 +44,10 @@ public class EntityValueBuildTest extends CDCAbstractContainer {
 
     @BeforeClass
     public static void beforeClass() {
-        ContainerHelper.startMysql();
-        ContainerHelper.startManticore();
-        ContainerHelper.startRedis();
-        ContainerHelper.startCannal();
+        ContainerStarter.startMysql();
+        ContainerStarter.startManticore();
+        ContainerStarter.startRedis();
+        ContainerStarter.startCannal();
     }
 
     @Before

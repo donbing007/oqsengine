@@ -6,14 +6,19 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallback
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
-import org.junit.*;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.SQLException;
-
 
 
 /**
@@ -24,6 +29,8 @@ import java.sql.SQLException;
  * date : 2020/11/9
  * @since : 1.8
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE, ContainerType.CANNAL})
 public class ConsumerRunnerTest extends CDCAbstractContainer {
     final Logger logger = LoggerFactory.getLogger(ConsumerRunnerTest.class);
     private ConsumerRunner consumerRunner;
@@ -33,19 +40,6 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
     private long t = 0;
 
     private int expectedCount = 0;
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerHelper.startMysql();
-        ContainerHelper.startManticore();
-        ContainerHelper.startRedis();
-        ContainerHelper.startCannal();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
-    }
 
     @Before
     public void before() throws Exception {
@@ -83,7 +77,7 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
             logger.warn("func -> {}, current -> {}, expectedCount -> {}", func, mockRedisCallbackService.getExecuted().get(), expectedCount);
 
             Thread.sleep(1_000);
-            loop ++;
+            loop++;
         }
         logger.debug("result loop : {}, expectedCount : {}, actual : {}", loop, expectedCount, mockRedisCallbackService.getExecuted().get());
         Assert.assertEquals(expectedCount, mockRedisCallbackService.getExecuted().get());

@@ -2,8 +2,14 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction;
 
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
-import org.junit.*;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -17,19 +23,11 @@ import java.sql.Statement;
  * @version 1.0 12/02/2020
  * @since <pre>Dec 2, 2020</pre>
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers({ContainerType.MANTICORE})
 public class SphinxQLTransactionResourceTest {
 
     private DataSourcePackage dataSourcePackage;
-
-    @BeforeClass
-    public static void beforeClass() {
-        ContainerHelper.startManticore();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
-    }
 
     @Before
     public void before() throws Exception {

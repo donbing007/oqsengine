@@ -8,10 +8,16 @@ import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.*;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.AbstractConnectionTransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.resource.TransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerHelper;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
+import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
@@ -28,6 +34,8 @@ import static org.mockito.Mockito.*;
  * @version 1.0 02/20/2020
  * @since <pre>Feb 20, 2020</pre>
  */
+@RunWith(ContainerRunner.class)
+@DependentContainers(ContainerType.REDIS)
 public class AutoJoinTransactionExecutorTest {
 
     private LongIdGenerator idGenerator;
@@ -35,16 +43,6 @@ public class AutoJoinTransactionExecutorTest {
     private TransactionManager tm;
     private RedisClient redisClient;
     private CommitIdStatusServiceImpl commitIdStatusService;
-
-    @BeforeClass
-    public static void beforeTestClass() {
-        ContainerHelper.startRedis();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        ContainerHelper.reset();
-    }
 
     @Before
     public void before() throws Exception {
