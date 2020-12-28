@@ -87,6 +87,7 @@ public final class ContainerStarter {
 
             logger.info("Closed redis container!");
         }
+
     }
 
     public static synchronized void startMysql() {
@@ -190,7 +191,7 @@ public final class ContainerStarter {
                 String.format("jdbc:mysql://%s:%s/oqsengine?characterEncoding=utf8&maxAllowedPacket=512000&useHostsInPrivileges=false&useLocalSessionState=true&serverTimezone=Asia/Shanghai",
                     System.getProperty("SEARCH_MANTICORE_HOST"), System.getProperty("SEARCH_MANTICORE_PORT")));
 
-            logger.info("Start manticore server.({}:{})", searchManticore.getContainerIpAddress(), searchManticore.getFirstMappedPort());
+            logger.info("Start search manticore server.({}:{})", searchManticore.getContainerIpAddress(), searchManticore.getFirstMappedPort());
         }
     }
 
