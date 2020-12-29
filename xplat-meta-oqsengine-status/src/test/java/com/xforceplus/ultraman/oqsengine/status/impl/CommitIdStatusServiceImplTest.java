@@ -203,7 +203,7 @@ public class CommitIdStatusServiceImplTest {
         Assert.assertEquals(99L, impl.getMax().get().longValue());
 
         // 因为同步指标是异步的,所以等待成功.
-        TimeUnit.MILLISECONDS.sleep(10);
+        TimeUnit.MILLISECONDS.sleep(300);
 
         Field unSyncCommitIdSizeField = impl.getClass().getDeclaredField("unSyncCommitIdSize");
         unSyncCommitIdSizeField.setAccessible(true);
