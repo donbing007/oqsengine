@@ -84,7 +84,7 @@ public class TransactionManagementServiceImplTest {
     public void testCommit() throws Exception {
 
         CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
-        when(commitIdStatusService.save(0, true)).thenReturn(0L);
+        when(commitIdStatusService.save(0, true)).thenReturn(true);
         TransactionManager tm = new DefaultTransactionManager(
             new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
 
@@ -107,7 +107,7 @@ public class TransactionManagementServiceImplTest {
     @Test
     public void testRollback() throws Exception {
         CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
-        when(commitIdStatusService.save(0, true)).thenReturn(0L);
+        when(commitIdStatusService.save(0, true)).thenReturn(true);
         TransactionManager tm = new DefaultTransactionManager(
             new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
 
@@ -131,7 +131,7 @@ public class TransactionManagementServiceImplTest {
     @Test(expected = SQLException.class)
     public void testCompleted() throws Exception {
         CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
-        when(commitIdStatusService.save(0, true)).thenReturn(0L);
+        when(commitIdStatusService.save(0, true)).thenReturn(true);
         TransactionManager tm = new DefaultTransactionManager(
             new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
 

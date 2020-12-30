@@ -281,17 +281,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return ResultStatus.CONFLICT;
                     }
 
-                    eliminateIndex(fatherEntity.id());
-                    eliminateIndex(childEntity.id());
-
                 } else {
 
                     if (isConflict(masterStorage.replace(entityClone))) {
                         hint.setRollback(true);
                         return ResultStatus.CONFLICT;
                     }
-
-                    eliminateIndex(entityClone.id());
 
                     // 有子类
                     if (entityClone.family().child() > 0) {
@@ -300,7 +295,6 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             hint.setRollback(true);
                             return ResultStatus.CONFLICT;
                         }
-                        eliminateIndex(entityClone.family().child());
                     }
                 }
 

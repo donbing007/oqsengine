@@ -205,13 +205,11 @@ public class EntityManagementServiceImplTest {
         when(masterStorage.selectOne(
             noExtendEntity.id(), noExtendEntity.entityClass())).thenReturn(Optional.of(noExtendEntity));
         when(masterStorage.replace(argThat(IEntityMatcher.buildIgnoreTime(noExtendEntity)))).thenReturn(1);
-        when(indexStorage.delete(noExtendEntity.id())).thenReturn(1);
 
         Assert.assertEquals(ResultStatus.SUCCESS, service.replace(noExtendEntity));
 
         verify(masterStorage).selectOne(noExtendEntity.id(), noExtendEntity.entityClass());
         verify(masterStorage).replace(argThat(IEntityMatcher.buildIgnoreTime(noExtendEntity)));
-        verify(indexStorage).delete(noExtendEntity.id());
     }
 
     /**
@@ -224,16 +222,12 @@ public class EntityManagementServiceImplTest {
         when(masterStorage.selectOne(fatherEntity.id(), fatherEntity.entityClass())).thenReturn(Optional.of(fatherEntity));
         when(masterStorage.replace(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)))).thenReturn(1);
         when(masterStorage.synchronizeToChild(fatherEntity)).thenReturn(1);
-        when(indexStorage.delete(fatherEntity.id())).thenReturn(1);
-        when(indexStorage.delete(fatherEntity.family().child())).thenReturn(1);
 
         Assert.assertEquals(ResultStatus.SUCCESS, service.replace(fatherEntity));
 
         verify(masterStorage).selectOne(fatherEntity.id(), fatherEntityClass);
         verify(masterStorage).replace(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)));
         verify(masterStorage).synchronizeToChild(fatherEntity);
-        verify(indexStorage).delete(fatherEntity.id());
-        verify(indexStorage).delete(fatherEntity.family().child());
     }
 
     @Test

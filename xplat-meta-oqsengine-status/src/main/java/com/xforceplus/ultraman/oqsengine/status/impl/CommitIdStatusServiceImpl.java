@@ -2,11 +2,9 @@ package com.xforceplus.ultraman.oqsengine.status.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
-import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisFuture;
+import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micrometer.core.instrument.Metrics;
 import org.slf4j.Logger;
@@ -15,17 +13,15 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 提交号状态管理者.
- * 提交号的状态将有3种,UNKNOWN,READY,UN_READY.
+ * 提交号的状态将有3种,UNKNOWN,READY,NOT_READY.
  * 正常的提交号处于READY或者UN_READY中,但是如果检查的提交号没有保存过那么使用如下策略.
  * 阻塞最多检查的次数为30次,然后将自动变成READY.虽然实际此提交号并没有状态改变过.
  * 这样防止检查方一直阻塞在一个不处于受管状态的提交号.
@@ -46,6 +42,62 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         "com.xforceplus.ultraman.oqsengine.status.commitid.unknown.number.";
 
     /**
+     * 接收2个KEY2个参数.
+     * KEYS:
+     * 1 未同步提交号列表key.
+     * 2 当前处理提交号的状态key前辍.
+     * ARGV:
+     * 1 提交号,纯数字.
+     * 2 需要设置的状态字符.
+     * <p>
+     * 脚本会判断是否已经淘汰,不理将设置为指定的状态.
+     * 返回1表示设置成功,0表示没有设置.
+     * 相当于执行这样一个过程.
+     * <p>
+     * long commitId = 123;
+     * CommitStatus newStatus = CommitStatus.READY;
+     * String value = command.get("com.xforceplus.ultraman.oqsengine.status.commitid." + commitId);
+     * if (CommitStatus.ELIMINATION.getSymbol() != value) {
+     * command.zadd("com.xforceplus.ultraman.oqsengine.status.commitids", (double) commitId, Long.toString(commitId));
+     * command.set("com.xforceplus.ultraman.oqsengine.status.commitid." + commitId, newStatus.getSymbol());
+     * return true;
+     * } else {
+     * return false;
+     * }
+     */
+    private static String SAVE_LUA_SCRIPT = String.format(
+        "local statusKey = KEYS[2]..ARGV[1]" +
+            "local status = redis.call('get', statusKey);" +
+            "if status ~= '%s' " +
+            "then " +
+            "redis.call('set', statusKey, ARGV[2]);" +
+            "redis.call('zadd', KEYS[1], ARGV[1], ARGV[1]);" +
+            "return 1;" +
+            "else " +
+            "return 0;" +
+            "end;", CommitStatus.ELIMINATION.getSymbol());
+
+    /**
+     * 循环删除提交号的LUA脚本.
+     * KEYS:
+     * 1. 未同步提交号队列KEY.
+     * 2. 提交号状态KEY前辍.
+     * 3. 记录触发UNKNOWN状态isReady检查的次数KEY.
+     * ARGV: 数量不定,表示需要淘汰的提交号列表.
+     */
+    private static String OBSOLETE_LUA_SCRIPT = String.format(
+        "for i=1, #ARGV, 1 do " +
+            "local statusKey = KEYS[2]..ARGV[i];" +
+            "local unknownKey = KEYS[3]..ARGV[i];" +
+            "redis.call('del', unknownKey);" +
+            "redis.call('set', statusKey, '%s','EX', %d);" +
+            "redis.call('zrem', KEYS[1], ARGV[i]);" +
+            "end;return true"
+        ,
+        CommitStatus.ELIMINATION.getSymbol(), 60 * 60
+    );
+
+    /**
      * 小于等于此值的判定为无效的commitid.
      */
     public static final long INVALID_COMMITID = 0;
@@ -55,15 +107,14 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     private StatefulRedisConnection<String, String> syncConnect;
 
-    private StatefulRedisConnection<String, String> asyncConnect;
-
     private RedisCommands<String, String> syncCommands;
-
-    private RedisAsyncCommands<String, String> asyncCommands;
 
     private String commitidsKey;
 
     private String commitidStatusKeyPrefix;
+
+    private String saveLuaScriptSha;
+    private String obsoleteLuaScriptSha;
 
     private long limitUnknownNumber;
 
@@ -107,10 +158,9 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         syncCommands = syncConnect.sync();
         syncCommands.clientSetname("oqs.sync.commitid");
 
-        asyncConnect = redisClient.connect();
-        asyncCommands = asyncConnect.async();
-        asyncCommands.setAutoFlushCommands(false);
-        asyncCommands.clientSetname("oqs.async.commitid");
+
+        saveLuaScriptSha = syncCommands.scriptLoad(SAVE_LUA_SCRIPT);
+        obsoleteLuaScriptSha = syncCommands.scriptLoad(OBSOLETE_LUA_SCRIPT);
 
         unSyncCommitIdSize = Metrics.gauge(
             MetricsDefine.UN_SYNC_COMMIT_ID_COUNT_TOTAL, new AtomicLong(size()));
@@ -131,28 +181,38 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
     @PreDestroy
     public void destroy() {
         syncConnect.close();
-        asyncConnect.close();
     }
 
     @Override
-    public long save(long commitId, boolean ready) {
+    public boolean save(long commitId, boolean ready) {
         if (commitId <= INVALID_COMMITID) {
-            return commitId;
+            return false;
         }
 
-        String target = Long.toString(commitId);
-        String statusKey = commitidStatusKeyPrefix + target;
+        String[] keys = {
+            commitidsKey,
+            commitidStatusKeyPrefix,
+        };
+        boolean result = syncCommands.evalsha(
+            saveLuaScriptSha,
+            ScriptOutputType.BOOLEAN,
+            keys,
+            Long.toString(commitId),
+            ready ? CommitStatus.READY.getSymbol() : CommitStatus.NOT_READY.getSymbol());
 
-        syncCommands.zadd(commitidsKey, (double) commitId, target);
-        if (ready) {
-            syncCommands.set(statusKey, CommitStatus.READY.getSymbol());
-        } else {
-            syncCommands.set(statusKey, CommitStatus.NOT_READY.getSymbol());
+        if (logger.isDebugEnabled()) {
+            CommitStatus logStatus = ready ? CommitStatus.READY : CommitStatus.NOT_READY;
+            if (result) {
+                logger.debug("The commit number {} was successfully saved with the status {}.",
+                    commitId, logStatus.name());
+            } else {
+                logger.debug("The submission number {} is obsolete and will not be saved.", commitId);
+            }
         }
 
         updateMetrics();
 
-        return commitId;
+        return result;
     }
 
     @Override
@@ -162,15 +222,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
             return true;
         }
 
-        String target = Long.toString(commitId);
-        String statusKey = commitidStatusKeyPrefix + target;
-        String value = syncCommands.get(statusKey);
-
-        CommitStatus status = CommitStatus.getInstance(value);
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Check that the status of the submission number {} is {}.", commitId, status.name());
-        }
+        CommitStatus status = getStatus(commitId);
 
         if (CommitStatus.READY == status) {
 
@@ -211,9 +263,7 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
             return;
         }
 
-        String target = Long.toString(commitId);
-        String statusKey = commitidStatusKeyPrefix + target;
-        syncCommands.set(statusKey, CommitStatus.READY.getSymbol());
+        changeStatus(commitId, CommitStatus.READY);
     }
 
     @Override
@@ -286,26 +336,13 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
             }
             return;
         }
-
-        List<RedisFuture<Long>> futures = new ArrayList<>(commitIds.length);
-        String target;
-        String statusKey;
-        String unknownKey;
-        for (long id : commitIds) {
-            target = Long.toString(id);
-            statusKey = commitidStatusKeyPrefix + target;
-            unknownKey = COMMITID_STATUS_UNKNOWN_NUMBER_PREFIX + target;
-
-            // 清理未同步列表中的提交号,表示此提交号已经同步.
-            futures.add(asyncCommands.zrem(commitidsKey, target));
-            // 清理未同步列表状态.
-            futures.add(asyncCommands.del(statusKey));
-            // 清理可能的UNKNOWN次数记录.
-            futures.add(asyncCommands.del(unknownKey));
-        }
-
-        asyncCommands.flushCommands();
-        LettuceFutures.awaitAll(1, TimeUnit.MINUTES, futures.toArray(new RedisFuture[futures.size()]));
+        String[] keys = {
+            commitidsKey,
+            commitidStatusKeyPrefix,
+            COMMITID_STATUS_UNKNOWN_NUMBER_PREFIX,
+        };
+        String[] ids = Arrays.stream(commitIds).mapToObj(commitId -> Long.toString(commitId)).toArray(String[]::new);
+        syncCommands.evalsha(obsoleteLuaScriptSha, ScriptOutputType.BOOLEAN, keys, ids);
 
         if (logger.isDebugEnabled()) {
             logger.debug("The commit`s number {} has been eliminated.", Arrays.toString(commitIds));
@@ -320,8 +357,8 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
 
     @Override
     public boolean isObsolete(long commitId) {
-        String statusKey = commitidStatusKeyPrefix + commitId;
-        return syncCommands.exists(statusKey) <= 0;
+        CommitStatus status = getStatus(commitId);
+        return CommitStatus.ELIMINATION == status;
     }
 
     public void setLimitUnknownNumber(long limitUnknownNumber) {
@@ -347,10 +384,31 @@ public class CommitIdStatusServiceImpl implements CommitIdStatusService {
         });
     }
 
+    // 获取提交号状态.
+    private CommitStatus getStatus(long commitId) {
+        String statusKey = commitidStatusKeyPrefix + commitId;
+        String value = syncCommands.get(statusKey);
+
+        CommitStatus status = CommitStatus.getInstance(value);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Check that the status of the commit number {} is {}.", commitId, status.name());
+        }
+
+        return status;
+    }
+
+    // 修改提交号状态.
+    private void changeStatus(long commitId, CommitStatus status) {
+        String statusKey = commitidStatusKeyPrefix + commitId;
+        syncCommands.set(statusKey, status.getSymbol());
+    }
+
     private enum CommitStatus {
         UNKNOWN("U"),
         NOT_READY("N"),
-        READY("R");
+        READY("R"),
+        ELIMINATION("E");
 
         private String symbol;
 
