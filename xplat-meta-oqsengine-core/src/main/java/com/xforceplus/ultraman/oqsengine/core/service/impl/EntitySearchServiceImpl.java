@@ -356,8 +356,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      * 以下情况会空返回.
      * 1. 字段不存在.
      * 2. 字段非可搜索.
+     * 注意: 如果字段标示为identifie类型,那么会返回true.
      */
     private boolean checkCanSearch(Condition c, IEntityClass entityClass) {
+        if (c.getField().config().isIdentifie()) {
+            return true;
+        }
 
         IEntityClass useEntityClass = entityClass;
         IEntityField field;
