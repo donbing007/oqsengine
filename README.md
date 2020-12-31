@@ -1,6 +1,3 @@
-[![pipeline status](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/badges/release-0.1.4/pipeline.svg)](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/commits/release-0.1.4)
-[![coverage report](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/badges/release-0.1.4/coverage.svg)](http://gitlab.developer.xforcecloud.com/ultraman-xplat-metadata/oqs-engine/commits/release-0.1.4)
-
 #引言
 
 为元数据提供统一下的对象查询储存引擎
