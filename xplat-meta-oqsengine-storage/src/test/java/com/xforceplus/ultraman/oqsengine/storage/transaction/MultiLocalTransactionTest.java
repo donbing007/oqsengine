@@ -96,6 +96,8 @@ public class MultiLocalTransactionTest {
         }
 
         tx.getAccumulator().accumulateReplace();
+        // 没有真实的操作,这里手动填入一个提交号.
+        commitIdStatusService.save(1, true);
 
         CompletableFuture.runAsync(() -> {
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(200));
