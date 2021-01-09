@@ -129,7 +129,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     private Optional<QueryIterator> initDataQueryIterator(DevOpsTaskInfo taskInfo, boolean isBuild, OffsetSnapShot offsetSnapShot) throws Exception {
 
         QueryIterator dataQueryIterator = masterStorage.newIterator(taskInfo.getEntityClass(), taskInfo.getStarts(), taskInfo.getEnds(),
-                taskThreadPool, executionTimeout, pageSize);
+                taskThreadPool, executionTimeout, pageSize, true);
 
         if (null == dataQueryIterator ||
                 !offsetCountCheck(taskInfo.getBatchSize(), dataQueryIterator.size(), null != offsetSnapShot)) {

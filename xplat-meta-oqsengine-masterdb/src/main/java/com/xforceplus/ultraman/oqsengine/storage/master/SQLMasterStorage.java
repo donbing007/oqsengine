@@ -105,7 +105,8 @@ public class SQLMasterStorage implements MasterStorage {
         long endTimeMs,
         ExecutorService threadPool,
         int batchTimeout,
-        int pageSize) throws SQLException {
+        int pageSize,
+        boolean filterSearchable) throws SQLException {
 
         List<DataSource> dataSources = new ArrayList<>();
         dataSources.add(masterDataSource);
@@ -157,7 +158,7 @@ public class SQLMasterStorage implements MasterStorage {
 
         return 0 < dataSourceSummaries.size() ?
             new DataQueryIterator(batchCondition, dataSourceSummaries, this, threadPool,
-                    batchTimeout, pageSize) : null;
+                    batchTimeout, pageSize, filterSearchable) : null;
     }
 
     @Override

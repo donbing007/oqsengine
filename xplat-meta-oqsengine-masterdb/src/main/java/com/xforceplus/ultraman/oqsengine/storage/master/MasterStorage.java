@@ -40,7 +40,8 @@ public interface MasterStorage extends Storage {
                               long endTimeMs,
                               ExecutorService threadPool,
                               int queryTimeout,
-                              int pageSize) throws SQLException;
+                              int pageSize,
+                              boolean filterSearchable) throws SQLException;
 
 
     /**

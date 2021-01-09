@@ -234,7 +234,7 @@ public class SQLMasterStorageTest {
         long startId = timeId + 23;
         long endId = timeId + 74;
         QueryIterator dataQueryIterator =
-            storage.newIterator(expectEntityClass, startId, endId, consumerPool, 3000, 10);
+            storage.newIterator(expectEntityClass, startId, endId, consumerPool, 3000, 10, true);
 
         Assert.assertNotNull(dataQueryIterator);
 

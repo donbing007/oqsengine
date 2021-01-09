@@ -41,18 +41,23 @@ public class DataQueryIterator implements QueryIterator {
 
     private int queryTimeout;
 
+    private boolean filterSearchable;
+
     public DataQueryIterator(BatchCondition batchCondition,
                              List<DataSourceSummary> dataSourceSummaries,
                              SQLMasterStorage sqlMasterStorage,
                              ExecutorService executorService,
-                             int queryTimeout, int pageSize) throws SQLException {
+                             int queryTimeout, int pageSize, boolean filterSearchable) throws SQLException {
         this.batchSummary = new BatchSummary(dataSourceSummaries);
         this.batchCondition = batchCondition;
         this.sqlMasterStorage = sqlMasterStorage;
         this.executorService = executorService;
         this.queryTimeout = queryTimeout;
         this.pageSize = pageSize;
+        this.filterSearchable = filterSearchable;
     }
+
+
 
     @Override
     public int size() {
@@ -175,14 +180,16 @@ public class DataQueryIterator implements QueryIterator {
                     if (null == fatherEntity) {
                         throw new SQLException(String.format("merge pref failed, pref not found, child %d.", entity.id()));
                     }
-                    //  filter self searchable
-                    if (null != entity.entityValue()) {
-                        entity.entityValue().filter(v -> v.getField().config().isSearchable());
-                    }
+                    if (filterSearchable) {
+                        //  filter self searchable
+                        if (null != entity.entityValue()) {
+                            entity.entityValue().filter(v -> v.getField().config().isSearchable());
+                        }
 
-                    //  filter father searchable
-                    if (null != fatherEntity.entityValue()) {
-                        fatherEntity.entityValue().filter(v -> v.getField().config().isSearchable());
+                        //  filter father searchable
+                        if (null != fatherEntity.entityValue()) {
+                            fatherEntity.entityValue().filter(v -> v.getField().config().isSearchable());
+                        }
                     }
 
                     //  merge father to self
