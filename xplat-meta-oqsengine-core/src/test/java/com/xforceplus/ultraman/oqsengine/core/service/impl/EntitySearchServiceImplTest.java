@@ -545,7 +545,9 @@ public class EntitySearchServiceImplTest {
         }
 
         @Override
-        public DataQueryIterator newIterator(IEntityClass entityClass, long startTimeMs, long endTimeMs, ExecutorService threadPool, int queryTimeout, int pageSize) throws SQLException {
+        public DataQueryIterator newIterator(IEntityClass entityClass, long startTimeMs,
+                                             long endTimeMs, ExecutorService threadPool,
+                                             int queryTimeout, int pageSize, boolean searchable) throws SQLException {
             return null;
         }
 

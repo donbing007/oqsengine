@@ -78,7 +78,7 @@ public class DevOpsManagementServiceImplTest {
     public void before() throws Exception {
         worker = Executors.newFixedThreadPool(10);
         masterStorage = mock(MasterStorage.class);
-        when(masterStorage.newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 30_000, 1024))
+        when(masterStorage.newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 30_000, 1024, false))
                 .thenReturn(new MockQueryIterator());
 
         entityManagementService = mock(EntityManagementService.class);
@@ -162,7 +162,7 @@ public class DevOpsManagementServiceImplTest {
         );
 
         verify(masterStorage, times(1))
-                .newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 30_000, 1024);
+                .newIterator(childEntityClass, 0, Long.MAX_VALUE, worker, 30_000, 1024, false);
         verify(entityManagementService, times(entities.size())).replace(argThat(argument -> true));
     }
 
