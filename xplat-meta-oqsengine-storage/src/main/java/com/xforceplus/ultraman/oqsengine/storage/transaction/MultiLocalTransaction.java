@@ -145,7 +145,7 @@ public class MultiLocalTransaction implements Transaction {
 
     @Override
     public boolean isReadyOnly() {
-        return (accumulator.getBuildTimes() + accumulator.getReplaceTimes() + accumulator.getDeleteTimes()) == 0;
+        return (accumulator.getBuildNumbers() + accumulator.getReplaceNumbers() + accumulator.getDeleteNumbers()) == 0;
     }
 
     @Override
@@ -257,7 +257,7 @@ public class MultiLocalTransaction implements Transaction {
                         /**
                          * 事务中存在更新操作,需要等待提交号同步.
                          */
-                        if (accumulator.getReplaceTimes() > 0) {
+                        if (accumulator.getReplaceNumbers() > 0) {
                             waitedSync = true;
                             long waitMs = awitCommitSync(commitId);
 
@@ -312,6 +312,8 @@ public class MultiLocalTransaction implements Transaction {
                     logger.error(ex.getMessage(), ex);
                 }
             }
+
+            this.accumulator.reset();
 
             Metrics.timer(MetricsDefine.TRANSACTION_DURATION_SECONDS).record(
                 System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);

@@ -5,6 +5,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 /**
  * DefaultTransactionAccumulator Tester.
  *
@@ -28,18 +31,59 @@ public class DefaultTransactionAccumulatorTest {
     @Test
     public void testAccumulate() throws Exception {
         DefaultTransactionAccumulator accumulator = new DefaultTransactionAccumulator();
-        accumulator.accumulateBuild();
-        accumulator.accumulateBuild();
-        accumulator.accumulateBuild();
-        Assert.assertEquals(3, accumulator.getBuildTimes());
+        accumulator.accumulateBuild(1L);
+        accumulator.accumulateBuild(2L);
+        accumulator.accumulateBuild(3L);
+        Assert.assertEquals(3, accumulator.getBuildNumbers());
 
-        accumulator.accumulateDelete();
-        accumulator.accumulateDelete();
-        Assert.assertEquals(2, accumulator.getDeleteTimes());
+        accumulator.accumulateDelete(4L);
+        accumulator.accumulateDelete(5L);
+        Assert.assertEquals(2, accumulator.getDeleteNumbers());
 
-        accumulator.accumulateReplace();
-        Assert.assertEquals(1, accumulator.getReplaceTimes());
+        accumulator.accumulateReplace(6L);
+        Assert.assertEquals(1, accumulator.getReplaceNumbers());
     }
 
+    /**
+     * 重复操作.
+     * @throws Exception
+     */
+    @Test
+    public void testRepeat() throws Exception {
+        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator();
+        acc.accumulateReplace(10);
+        acc.accumulateDelete(10);
+        acc.accumulateReplace(10);
+
+        Assert.assertEquals(2, acc.getReplaceNumbers());
+        Assert.assertEquals(1, acc.getUpdateIds().size());
+        Assert.assertEquals(10, acc.getUpdateIds().stream().findFirst().get().longValue());
+    }
+
+    @Test
+    public void testNoBuild() throws Exception {
+        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator();
+        acc.accumulateBuild(100);
+        Assert.assertEquals(0, acc.getUpdateIds().size());
+
+        Assert.assertEquals(Collections.emptySet(), acc.getUpdateIds());
+    }
+
+    @Test
+    public void testReset() throws Exception {
+        DefaultTransactionAccumulator acc = new DefaultTransactionAccumulator();
+        acc.reset();
+        acc.accumulateReplace(10);
+        acc.accumulateDelete(20);
+        acc.accumulateReplace(30);
+
+        Assert.assertEquals(2, acc.getReplaceNumbers());
+        Assert.assertEquals(1, acc.getDeleteNumbers());
+        long[] expectedIds = new long[] {10, 20, 30};
+        long[] actualIds = acc.getUpdateIds().stream().mapToLong(i -> i.longValue()).toArray();
+        Arrays.sort(expectedIds);
+        Arrays.sort(actualIds);
+        Assert.assertArrayEquals(expectedIds, actualIds);
+    }
 
 } 

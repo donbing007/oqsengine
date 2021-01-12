@@ -69,7 +69,7 @@ public class MultiLocalTransactionTest {
             tx.join(resource);
         }
 
-        tx.getAccumulator().accumulateBuild();
+        tx.getAccumulator().accumulateBuild(1L);
 
         tx.commit();
 
@@ -95,7 +95,7 @@ public class MultiLocalTransactionTest {
             tx.join(resource);
         }
 
-        tx.getAccumulator().accumulateReplace();
+        tx.getAccumulator().accumulateReplace(1L);
         // 没有真实的操作,这里手动填入一个提交号.
         commitIdStatusService.save(1, true);
 
@@ -145,7 +145,7 @@ public class MultiLocalTransactionTest {
             tx.join(resource);
         }
 
-        tx.getAccumulator().accumulateDelete();
+        tx.getAccumulator().accumulateDelete(3L);
 
         try {
             tx.commit();
@@ -202,23 +202,23 @@ public class MultiLocalTransactionTest {
     public void testIsReady() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
         MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
-        tx.getAccumulator().accumulateDelete();
+        tx.getAccumulator().accumulateDelete(8);
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
-        tx.getAccumulator().accumulateBuild();
+        tx.getAccumulator().accumulateBuild(9);
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
-        tx.getAccumulator().accumulateReplace();
+        tx.getAccumulator().accumulateReplace(10);
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 
-        tx.getAccumulator().accumulateReplace();
-        tx.getAccumulator().accumulateBuild();
-        tx.getAccumulator().accumulateDelete();
-        tx.getAccumulator().accumulateDelete();
-        tx.getAccumulator().accumulateDelete();
+        tx.getAccumulator().accumulateReplace(1);
+        tx.getAccumulator().accumulateBuild(2);
+        tx.getAccumulator().accumulateDelete(3);
+        tx.getAccumulator().accumulateDelete(4);
+        tx.getAccumulator().accumulateDelete(5);
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();
 

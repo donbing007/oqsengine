@@ -366,7 +366,7 @@ public class SphinxQLIndexStorageTest {
 
         storage.replaceAttribute(expectedEntity.entityValue());
 
-        tx.getAccumulator().accumulateReplace();
+        tx.getAccumulator().accumulateReplace(expectedEntity.id());
         transactionManager.getCurrent().get().commit();
         transactionManager.finish();
 
@@ -395,7 +395,7 @@ public class SphinxQLIndexStorageTest {
         IEntity expectedEntity = (IEntity) entityes[0].clone();
         storage.delete(expectedEntity);
 
-        tx.getAccumulator().accumulateDelete();
+        tx.getAccumulator().accumulateDelete(expectedEntity.id());
 
         transactionManager.getCurrent().get().commit();
         transactionManager.finish();

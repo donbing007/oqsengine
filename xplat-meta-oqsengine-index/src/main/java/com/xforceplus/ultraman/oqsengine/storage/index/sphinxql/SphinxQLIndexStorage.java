@@ -24,6 +24,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageE
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.*;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
@@ -40,6 +41,8 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.INVALID_ENTITY_ID;
 import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.PARSE_COLUMNS_ERROR;
@@ -123,13 +126,27 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
 
         try {
             return (Collection<EntityRef>) searchTransactionExecutor.execute((resource, hint) -> {
+                Set<Long> useFilterIds = null;
+                if (useFilterIds == null) {
+                    useFilterIds = Collections.emptySet();
+                }
+
+                if (resource.getTransaction().isPresent()) {
+                    Transaction tx = (Transaction) resource.getTransaction().get();
+                    Set<Long> updateIds = tx.getAccumulator().getUpdateIds();
+                    if (updateIds.size() > 0) {
+                        useFilterIds = new HashSet();
+                        useFilterIds.addAll(updateIds);
+                        useFilterIds.addAll(filterIds);
+                    }
+                }
                 return QueryConditionExecutor.build(
                     searchIndexName,
                     resource,
                     sphinxQLConditionsBuilderFactory,
                     storageStrategyFactory,
                     maxSearchTimeoutMs).execute(
-                    Tuple.of(entityClass, conditions, page, sort, filterIds, commitId));
+                    Tuple.of(entityClass, conditions, page, sort, useFilterIds, commitId));
             });
         } finally {
             Metrics.timer(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, "initiator", "index", "action", "condition")

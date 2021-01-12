@@ -22,6 +22,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import io.lettuce.core.RedisClient;
 import org.junit.*;
@@ -66,7 +68,7 @@ public class UserCaseTest {
     private EntityManagementService entityManagementService;
 
     @Resource
-    private RedisClient redisClient;
+    private TransactionManager transactionManager;
 
     @BeforeClass
     public static void beforeClass() {
@@ -129,6 +131,69 @@ public class UserCaseTest {
             }
         }
 
+    }
+
+    @Test
+    public void testUpdateAfterQueryInTx() throws Exception {
+        IEntity childEntity = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 99L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+        childEntity = entityManagementService.build(childEntity);
+
+        // 等待CDC同步.
+        TimeUnit.SECONDS.sleep(3L);
+
+        Transaction tx = transactionManager.create(5000);
+        transactionManager.bind(tx.id());
+
+        childEntity.entityValue().addValue(new LongValue(fatherClass.field("c1").get(), 1L));
+        entityManagementService.replace(childEntity);
+
+        transactionManager.bind(tx.id());
+        Collection<IEntity> result = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions().addAnd(
+            new Condition(
+                fatherClass.field("c1").get(),
+                ConditionOperator.NOT_EQUALS,
+                new LongValue(fatherClass.field("c1").get(), 1L)
+            )
+        ), childClass, Page.newSinglePage(10));
+
+        Assert.assertEquals(0, result.size());
+
+        transactionManager.getCurrent().get().rollback();
+        transactionManager.unbind();
+    }
+
+    @Test
+    public void testDeleteAfterQueryInTx() throws Exception {
+        IEntity childEntity = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 99L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "0"))
+        );
+        childEntity = entityManagementService.build(childEntity);
+
+        // 等待CDC同步.
+        TimeUnit.SECONDS.sleep(3L);
+
+        Transaction tx = transactionManager.create(5000);
+        transactionManager.bind(tx.id());
+
+        entityManagementService.delete(childEntity);
+
+        transactionManager.bind(tx.id());
+        Collection<IEntity> result = entitySearchService.selectByConditions(Conditions.buildEmtpyConditions().addAnd(
+            new Condition(
+                fatherClass.field("c1").get(),
+                ConditionOperator.NOT_EQUALS,
+                new LongValue(fatherClass.field("c1").get(), 1L)
+            )
+        ), childClass, Page.newSinglePage(10));
+
+        Assert.assertEquals(0, result.size());
+
+        transactionManager.getCurrent().get().rollback();
+        transactionManager.unbind();
     }
 
     @Test

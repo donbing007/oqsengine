@@ -32,7 +32,7 @@ import static java.util.stream.Collectors.joining;
 /**
  * Query condition Executor
  */
-public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Conditions, Page, Sort, List<Long>, Long>, List<EntityRef>> {
+public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Conditions, Page, Sort, Set<Long>, Long>, List<EntityRef>> {
 
     Logger logger = LoggerFactory.getLogger(QueryConditionExecutor.class);
 
@@ -60,7 +60,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
         this.maxQueryTimeMs = maxQueryTimeMs;
     }
 
-    public static Executor<Tuple6<IEntityClass, Conditions, Page, Sort, List<Long>, Long>, List<EntityRef>> build(
+    public static Executor<Tuple6<IEntityClass, Conditions, Page, Sort, Set<Long>, Long>, List<EntityRef>> build(
         String indexTableName
         , TransactionResource<Connection> resource
         , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
@@ -215,13 +215,13 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
     }
 
     @Override
-    public List<EntityRef> execute(Tuple6<IEntityClass, Conditions, Page, Sort, List<Long>, Long> queryCondition) throws SQLException {
+    public List<EntityRef> execute(Tuple6<IEntityClass, Conditions, Page, Sort, Set<Long>, Long> queryCondition) throws SQLException {
 
         Conditions conditions = queryCondition._2();
         IEntityClass entityClass = queryCondition._1();
         Page page = queryCondition._3();
         Sort sort = queryCondition._4();
-        List<Long> filterIds = queryCondition._5();
+        Set<Long> filterIds = queryCondition._5();
         Long commitId = queryCondition._6();
 
         String whereCondition = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);

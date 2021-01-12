@@ -259,7 +259,7 @@ public class SQLMasterStorage implements MasterStorage {
                 targetEntity.setId(targetId);
 
                 // 累加器更新次+1.
-                hint.getAccumulator().accumulateReplace();
+                hint.getAccumulator().accumulateReplace(targetId);
                 return UpdateVersionAndTxExecutor.build(tableName, resource, queryTimeout).execute(targetEntity);
                 }
 
@@ -317,7 +317,7 @@ public class SQLMasterStorage implements MasterStorage {
                     childEntity.setMeta(childMeta.toJSONString());
 
                     // 累加器更新次+1.
-                    hint.getAccumulator().accumulateReplace();
+                    hint.getAccumulator().accumulateReplace(childEntity.getId());
                     return ReplaceExecutor.build(tableName, resource, queryTimeout).execute(childEntity);
                 });
 
@@ -357,7 +357,7 @@ public class SQLMasterStorage implements MasterStorage {
                     fullTransactionInformation(storageEntity, resource);
 
                     // 累加器创建次+1.
-                    hint.getAccumulator().accumulateBuild();
+                    hint.getAccumulator().accumulateBuild(entity.id());
                     return BuildExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
                 });
         } finally {
@@ -388,7 +388,7 @@ public class SQLMasterStorage implements MasterStorage {
                     fullTransactionInformation(storageEntity, resource);
 
                     // 累加器更新次数+1.
-                    hint.getAccumulator().accumulateReplace();
+                    hint.getAccumulator().accumulateReplace(entity.id());
                     return ReplaceExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
 
                 });
@@ -419,7 +419,7 @@ public class SQLMasterStorage implements MasterStorage {
                     fullTransactionInformation(storageEntity, resource);
 
                     // 累加器删除次数+1.
-                    hint.getAccumulator().accumulateDelete();
+                    hint.getAccumulator().accumulateDelete(entity.id());
                     return DeleteExecutor.build(tableName, resource, queryTimeout).execute(storageEntity);
                 });
         } finally {
