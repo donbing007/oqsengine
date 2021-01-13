@@ -106,6 +106,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> build(EntityUp in, Metadata metadata) {
 
+        logger.info("{}", in.getValuesList());
+
         return asyncWrite(() -> {
 
             if (extractTransaction(metadata).isPresent()) {
