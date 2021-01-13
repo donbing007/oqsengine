@@ -556,4 +556,33 @@ public class UserCaseTest {
         Assert.assertEquals(1, entities.size());
         Assert.assertEquals(9, page.getTotalCount());
     }
+
+    @Test
+    public void testDeleteAfterCount() throws Exception {
+        IEntity childEntity = new Entity(0, childClass, new EntityValue(0)
+            .addValue(new LongValue(fatherClass.field("c1").get(), 200000L))
+            .addValue(new EnumValue(childClass.field("c3").get(), "yunli票易通"))
+        );
+
+        for (int i = 0; i < TEST_LOOPS; i++) {
+            childEntity = entityManagementService.build(childEntity);
+
+            entityManagementService.deleteForce(childEntity);
+
+            Page page = new Page(1, 10);
+            entitySearchService.selectByConditions(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        childClass.field("c3").get(),
+                        ConditionOperator.EQUALS,
+                        new EnumValue(childClass.field("c3").get(), "yunli票易通"))
+                ),
+                childClass,
+                page
+            );
+
+            Assert.assertEquals(0, page.getTotalCount());
+        }
+
+    }
 }

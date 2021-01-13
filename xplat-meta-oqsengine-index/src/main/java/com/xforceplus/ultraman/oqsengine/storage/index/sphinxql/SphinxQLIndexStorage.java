@@ -41,8 +41,6 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.INVALID_ENTITY_ID;
 import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.PARSE_COLUMNS_ERROR;
@@ -119,7 +117,7 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
      */
     @Override
     public Collection<EntityRef> select(
-        Conditions conditions, IEntityClass entityClass, Sort sort, Page page, List<Long> filterIds, Long commitId)
+        Conditions conditions, IEntityClass entityClass, Sort sort, Page page, Set<Long> filterIds, long commitId)
         throws SQLException {
 
         long startMs = System.currentTimeMillis();
@@ -127,9 +125,6 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         try {
             return (Collection<EntityRef>) searchTransactionExecutor.execute((resource, hint) -> {
                 Set<Long> useFilterIds = null;
-                if (useFilterIds == null) {
-                    useFilterIds = Collections.emptySet();
-                }
 
                 if (resource.getTransaction().isPresent()) {
                     Transaction tx = (Transaction) resource.getTransaction().get();
@@ -139,7 +134,10 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
                         useFilterIds.addAll(updateIds);
                         useFilterIds.addAll(filterIds);
                     }
+                } else {
+                    useFilterIds = filterIds;
                 }
+
                 return QueryConditionExecutor.build(
                     searchIndexName,
                     resource,
@@ -453,22 +451,22 @@ public class SphinxQLIndexStorage implements IndexStorage, StorageStrategyFactor
         String shardKey = Long.toString(storageEntity.getId());
         return (int) writeTransactionExecutor.execute(new ResourceTask() {
 
-                @Override
-                public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                    if (replacement) {
-                        return ReplaceExecutor.build(
-                            resource, indexWriteIndexNameSelector.select(shardKey)).execute(storageEntity);
-                    } else {
-                        return BuildExecutor.build(
-                            resource, indexWriteIndexNameSelector.select(shardKey)).execute(storageEntity);
-                    }
+            @Override
+            public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
+                if (replacement) {
+                    return ReplaceExecutor.build(
+                        resource, indexWriteIndexNameSelector.select(shardKey)).execute(storageEntity);
+                } else {
+                    return BuildExecutor.build(
+                        resource, indexWriteIndexNameSelector.select(shardKey)).execute(storageEntity);
                 }
+            }
 
             @Override
             public String key() {
                 return shardKey;
             }
-            });
+        });
     }
 
     @Override

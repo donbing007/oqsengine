@@ -332,6 +332,34 @@ public class SphinxQLIndexStorageTest {
     }
 
     @Test
+    public void testFilterIdsAutoTx() throws Exception {
+        Collection<EntityRef> refs = storage.select(Conditions.buildEmtpyConditions().addAnd(
+            new Condition(boolField, ConditionOperator.EQUALS, new BooleanValue(boolField, true))),
+            entityClass,
+            Sort.buildOutOfSort(),
+            Page.newSinglePage(100),
+            new HashSet(Arrays.asList(Long.MAX_VALUE)),
+            0
+        );
+
+        Assert.assertEquals(1, refs.size());
+        Assert.assertEquals(Long.MAX_VALUE - 1, refs.stream().findFirst().get().getId());
+
+        refs = storage.select(Conditions.buildEmtpyConditions().addAnd(
+            new Condition(boolField, ConditionOperator.EQUALS, new BooleanValue(boolField, true))),
+            entityClass,
+            Sort.buildOutOfSort(),
+            Page.newSinglePage(100),
+            Collections.emptySet(),
+            0
+        );
+
+        Assert.assertEquals(2, refs.size());
+        Assert.assertEquals(1, refs.stream().filter(r -> r.getId() == Long.MAX_VALUE).count());
+        Assert.assertEquals(1, refs.stream().filter(r -> r.getId() == Long.MAX_VALUE - 1).count());
+    }
+
+    @Test
     public void testShard() throws Exception {
         String shardKey;
         for (IEntity entity : entityes) {
@@ -467,7 +495,7 @@ public class SphinxQLIndexStorageTest {
         // 确认没有事务.
         Assert.assertFalse(transactionManager.getCurrent().isPresent());
 
-        List<Long> ids = Arrays.asList(1L, 2L);
+        Set<Long> ids = new HashSet<>(Arrays.asList(1L, 2L));
 
         // 每一个都以独立事务运行.
         buildSelectCase().stream().forEach(c -> {

@@ -38,8 +38,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 
 /**
  * entity 搜索服务.
@@ -405,7 +404,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             } else {
                 return mainEntityClass;
             }
-        }).collect(Collectors.toSet());
+        }).collect(toSet());
 
         // 防止条件中没有出现非驱动 entity 的字段条件.
         entityClasses.add(mainEntityClass);
@@ -745,10 +744,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             /**
              * filter ids
              */
-            List<Long> filterIdsFromMaster = masterRefs.stream()
+            Set<Long> filterIdsFromMaster = masterRefs.stream()
                 .filter(x -> x.getOp() == OperationType.DELETE.getValue() || x.getOp() == OperationType.UPDATE.getValue())
                 .map(EntityRef::getId)
-                .collect(toList());
+                .collect(toSet());
 
             Page indexPage = new Page(page.getIndex(), page.getPageSize());
             Collection<EntityRef> refs = indexStorage.select(
