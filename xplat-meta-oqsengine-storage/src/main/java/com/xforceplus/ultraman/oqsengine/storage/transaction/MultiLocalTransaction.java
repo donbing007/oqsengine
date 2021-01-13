@@ -257,7 +257,7 @@ public class MultiLocalTransaction implements Transaction {
                         /**
                          * 事务中存在更新操作,需要等待提交号同步.
                          */
-                        if (accumulator.getReplaceNumbers() > 0) {
+                        if (accumulator.getReplaceNumbers() > 0 || accumulator.getDeleteNumbers() > 0) {
                             waitedSync = true;
                             long waitMs = awitCommitSync(commitId);
 

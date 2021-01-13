@@ -304,6 +304,22 @@ public class UserCaseTest {
         for (int i = 0; i < TEST_LOOPS; i++) {
             childEntity = entityManagementService.build(childEntity);
             Assert.assertEquals(ResultStatus.SUCCESS, entityManagementService.deleteForce(childEntity));
+
+            Page page = Page.newSinglePage(100);
+            Collection<IEntity> entities = entitySearchService.selectByConditions(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(
+                        childClass.field("c3").get(),
+                        ConditionOperator.NOT_EQUALS,
+                        new EnumValue(childClass.field("c3").get(), "0")
+                    )
+                ),
+                childClass,
+                page
+            );
+
+            Assert.assertEquals(0, entities.size());
+            Assert.assertEquals(0, page.getTotalCount());
         }
 
     }

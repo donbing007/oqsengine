@@ -193,7 +193,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
             return (IEntity) transactionExecutor.execute((resource, hint) -> {
 
-                if (EntityManagementServiceImpl.this.isSub(entityClone)) {
+                if (isSub(entityClone)) {
                     // 处理父类
                     long fatherId = idGenerator.next();
                     long childId = idGenerator.next();
@@ -212,12 +212,22 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     entityClone.resetId(childId);
                     entity.resetFamily(childEntity.family());
 
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Entity({},{}), Class({}), Version({}) was successfully created.",
+                            fatherId, childId, entityClone.entityClass().id(), entityClone.version());
+                    }
+
                 } else {
 
                     entity.resetId(idGenerator.next());
                     entityClone.resetId(entity.id());
 
                     masterStorage.build(entityClone);
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Entity({}), Class({}), Version({}) was successfully created.",
+                            entityClone.id(), entityClone.entityClass().id(), entityClone.version());
+                    }
 
                 }
 
@@ -261,7 +271,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         try {
             return (ResultStatus) transactionExecutor.execute((resource, hint) -> {
 
-                if (EntityManagementServiceImpl.this.isSub(entity)) {
+                if (isSub(entity)) {
 
                     /**
                      * 拆分为父与子.
@@ -281,6 +291,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return ResultStatus.CONFLICT;
                     }
 
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Entity({},{}), Class({}), Version({}) was successfully replaced.",
+                            fatherEntity.id(), childEntity.id(), entityClone.entityClass().id(), entityClone.version());
+                    }
+
                 } else {
 
                     if (isConflict(masterStorage.replace(entityClone))) {
@@ -295,6 +310,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             hint.setRollback(true);
                             return ResultStatus.CONFLICT;
                         }
+                    }
+
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Entity({}), Class({}), Version({}) was successfully replaced.",
+                            entityClone.id(), entityClone.entityClass().id(), entityClone.version());
                     }
                 }
 
@@ -337,17 +357,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                         return ResultStatus.CONFLICT;
                     }
 
-                    eliminateIndex(fatherEntity.id());
-                    eliminateIndex(childEntity.id());
-
                 } else {
 
                     if (isConflict(masterStorage.delete(entity))) {
                         hint.setRollback(true);
                         return ResultStatus.CONFLICT;
                     }
-
-                    eliminateIndex(entity.id());
 
                     // 有子类需要删除.
                     if (entity.family().child() > 0) {
@@ -365,17 +380,12 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                             hint.setRollback(true);
                             return ResultStatus.CONFLICT;
                         }
-
-                        /**
-                         * 删除索引中的相应数据.由CDC重建.
-                         */
-                        eliminateIndex(entity.family().child());
                     }
 
                 }
 
-                if (logger.isInfoEnabled()) {
-                    logger.info("Entity({}), Class({}), Version({}) was successfully deleted.",
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Entity({}), Class({}), Version({}) was successfully deleted.",
                         entity.id(), entity.entityClass().id(), entity.version());
                 }
 
