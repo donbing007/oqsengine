@@ -469,7 +469,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         return refs.stream().map(ref -> {
             IEntity entity = iEntityMap.get(ref.getId());
             if (entity == null) {
-                logger.warn("The expected Entity{} was not found.", ref.getId());
+                logger.warn("The expected Entity {} was not found.", ref.getId());
                 return null;
             }
 

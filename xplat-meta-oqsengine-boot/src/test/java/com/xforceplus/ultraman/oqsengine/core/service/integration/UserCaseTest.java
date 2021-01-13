@@ -448,7 +448,7 @@ public class UserCaseTest {
                 page
             );
 
-            Assert.assertEquals(1, page.getPageCount());
+            Assert.assertEquals(1, page.getTotalCount());
         }
     }
 
