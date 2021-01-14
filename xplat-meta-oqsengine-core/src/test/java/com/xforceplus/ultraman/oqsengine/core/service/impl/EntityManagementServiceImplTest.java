@@ -134,7 +134,6 @@ public class EntityManagementServiceImplTest {
         Assert.assertEquals(ResultStatus.SUCCESS, service.delete(noExtendEntity));
 
         verify(masterStorage).delete(argThat(IEntityMatcher.buildIgnoreTime(noExtendEntity)));
-        verify(indexStorage).delete(noExtendEntity.id());
     }
 
     /**
@@ -154,17 +153,13 @@ public class EntityManagementServiceImplTest {
         );
 
         when(masterStorage.delete(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)))).thenReturn(1);
-        when(indexStorage.delete(fatherEntity.id())).thenReturn(1);
 
         when(masterStorage.delete(argThat(IEntityMatcher.buildIgnoreTime(anyEntity)))).thenReturn(1);
-        when(indexStorage.delete(anyEntity.id())).thenReturn(1);
 
         Assert.assertEquals(ResultStatus.SUCCESS, service.delete(fatherEntity));
 
         verify(masterStorage).delete(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)));
         verify(masterStorage).delete(argThat(IEntityMatcher.buildIgnoreTime(anyEntity)));
-        verify(indexStorage).delete(fatherEntity.id());
-        verify(indexStorage).delete(anyEntity.id());
     }
 
     /**
@@ -174,16 +169,12 @@ public class EntityManagementServiceImplTest {
     @Test
     public void testDeleteChild() throws Exception {
         when(masterStorage.delete(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)))).thenReturn(1);
-        when(indexStorage.delete(fatherEntity.id())).thenReturn(1);
         when(masterStorage.delete(argThat(IEntityMatcher.buildIgnoreTime(childEntity)))).thenReturn(1);
-        when(indexStorage.delete(childEntity.id())).thenReturn(1);
 
         Assert.assertEquals(ResultStatus.SUCCESS, service.delete(childEntity));
 
         verify(masterStorage).delete(argThat(IEntityMatcher.buildIgnoreTime(fatherEntity)));
         verify(masterStorage).delete(argThat(IEntityMatcher.buildIgnoreTime(childEntity)));
-        verify(indexStorage).delete(fatherEntity.id());
-        verify(indexStorage).delete(childEntity.id());
     }
 
     /**
