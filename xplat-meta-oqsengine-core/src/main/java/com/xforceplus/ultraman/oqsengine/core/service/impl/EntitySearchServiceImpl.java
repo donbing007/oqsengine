@@ -765,14 +765,15 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Collection<EntityRef> refs = indexStorage.select(
                 conditions, entityClass, sort, indexPage, filterIdsFromMaster, commitId);
 
-            List<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().
+            Collection<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().
                 filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());
 
-            List<EntityRef> retRefs = new LinkedList<>();
+            Collection<EntityRef> retRefs;
             //combine two refs
             if (sort != null && !sort.isOutOfOrder()) {
-                retRefs.addAll(merge(masterRefsWithoutDeleted, refs, sort));
+                retRefs = merge(masterRefsWithoutDeleted, refs, sort);
             } else {
+                retRefs = new ArrayList<>(masterRefsWithoutDeleted.size() + refs.size());
                 retRefs.addAll(masterRefsWithoutDeleted);
                 retRefs.addAll(refs);
             }
@@ -786,7 +787,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             long pageSize = page.getPageSize();
 
             long skips = scope == null ? 0 : scope.getStartLine();
-            List<EntityRef> limitedSelect = retRefs.stream().skip(skips < 0 ? 0 : skips).limit(pageSize).collect(toList());
+            Collection<EntityRef> limitedSelect = retRefs.stream().skip(skips < 0 ? 0 : skips).limit(pageSize).collect(toList());
             return limitedSelect;
         }
 
