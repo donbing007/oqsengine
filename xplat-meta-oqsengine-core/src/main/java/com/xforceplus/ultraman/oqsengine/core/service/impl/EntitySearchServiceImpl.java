@@ -234,6 +234,18 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
         }
 
+        if (isOneIdQuery(conditions)) {
+            Condition onlyCondition = conditions.collectCondition().stream().findFirst().get();
+            long id = onlyCondition.getFirstValue().valueToLong();
+            Optional<IEntity> entityOptional = selectOne(id, entityClass);
+            if (entityOptional.isPresent()) {
+                return Arrays.asList(entityOptional.get());
+            } else {
+                return Collections.emptyList();
+            }
+        }
+
+
         Conditions useConditions = conditions;
         Sort useSort = sort;
         if (useSort == null || useSort.isOutOfOrder()) {
@@ -820,4 +832,21 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             return refs;
         }
     }
+
+    // 判断是否为单条件标识查询.
+    private boolean isOneIdQuery(Conditions conditions) {
+        // 只有一个条件.
+        final int onlyOne = 1;
+
+        boolean result = false;
+        if (conditions.size() == onlyOne) {
+            for (Condition condition : conditions.collectCondition()) {
+                result = condition.getField().config().isIdentifie();
+                break;
+            }
+        }
+
+        return result;
+    }
+
 }
