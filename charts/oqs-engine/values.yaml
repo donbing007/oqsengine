@@ -46,9 +46,11 @@ annotations:
   prometheus.io/port: "8086"
   prometheus.io/path: "/actuator/prometheus"
 
+# 推荐-Xmx大小为limit的60%.
 jvm:
   - -server
-  - -XX:+UseParallelGC
+  - -XX:+UseG1GC
+  - -Xmx1228m
 
 jmx:
   enabled: false
