@@ -1,4 +1,4 @@
-FROM openjdk:oraclelinux8
+FROM openjdk:8u275-oraclelinux8
 LABEL maintainer="wangzheng@xforceplus.com"
 LABEL maintainer="dongbin@xxforceplus.com"
 
