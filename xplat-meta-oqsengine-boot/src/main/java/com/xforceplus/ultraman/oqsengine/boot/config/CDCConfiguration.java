@@ -51,14 +51,13 @@ public class CDCConfiguration {
         @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
         @Value("${cdc.connect.password}") String password,
-        @Value("${cdc.connect.subscribeFilter}") String subscribeFilter,
         @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
 
         ClusterCDCConnector clusterCanalConnector = new ClusterCDCConnector();
         clusterCanalConnector.init(host, destination, userName, password);
 
-        initProperties(clusterCanalConnector, subscribeFilter, batchSize);
+        initProperties(clusterCanalConnector, batchSize);
         return clusterCanalConnector;
     }
 
@@ -70,13 +69,12 @@ public class CDCConfiguration {
         @Value("${cdc.connect.destination:}") String destination,
         @Value("${cdc.connect.username}") String userName,
         @Value("${cdc.connect.password}") String password,
-        @Value("${cdc.connect.subscribeFilter}") String subscribeFilter,
         @Value("${cdc.connect.batchSize:2048}") int batchSize) {
 
         SingleCDCConnector singleCDCConnector = new SingleCDCConnector();
         singleCDCConnector.init(host, port, destination, userName, password);
 
-        initProperties(singleCDCConnector, subscribeFilter, batchSize);
+        initProperties(singleCDCConnector, batchSize);
         return singleCDCConnector;
     }
 
@@ -90,11 +88,7 @@ public class CDCConfiguration {
         return new CDCMetricsService();
     }
 
-    private void initProperties(CDCConnector cdcConnector, String subscribeFilter, int batchSize) {
-        if (!subscribeFilter.isEmpty()) {
-            cdcConnector.setSubscribeFilter(subscribeFilter);
-        }
-
+    private void initProperties(CDCConnector cdcConnector, int batchSize) {
         if (batchSize > EMPTY_BATCH_SIZE) {
             cdcConnector.setBatchSize(batchSize);
         }
