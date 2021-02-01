@@ -8,8 +8,6 @@ import org.slf4j.LoggerFactory;
 import java.sql.SQLException;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.DEFAULT_BATCH_SIZE;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.DEFAULT_SUBSCRIBE_FILTER;
-
 
 /**
  * desc :
@@ -23,13 +21,10 @@ public abstract class CDCConnector {
 
     final Logger logger = LoggerFactory.getLogger(CDCConnector.class);
 
-    private String subscribeFilter = DEFAULT_SUBSCRIBE_FILTER;
-
     private int batchSize = DEFAULT_BATCH_SIZE;
 
     protected CanalConnector canalConnector;
 
-    private boolean isClosed = true;
 
     public void shutdown() {
         try {
@@ -49,9 +44,8 @@ public abstract class CDCConnector {
             //  连接CanalServer
             canalConnector.connect();
             //  订阅destination
-            canalConnector.subscribe(subscribeFilter);
+            canalConnector.subscribe();
             logger.info("[cdc-connector] connect to canal server...");
-            isClosed = false;
         }
     }
 
@@ -59,15 +53,13 @@ public abstract class CDCConnector {
      * 关闭canal连接
      */
     public void close() {
-        if (null != canalConnector && !isClosed) {
+        if (null != canalConnector) {
             try {
                 logger.error("[cdc-connector] close canal connector...");
                 //  关闭连接CanalServer
                 canalConnector.disconnect();
             } catch (Exception e) {
                 logger.error("[cdc-connector] close error, ex : {}", e.getMessage());
-            } finally {
-                isClosed = true;
             }
         }
     }
@@ -95,10 +87,6 @@ public abstract class CDCConnector {
 
     private void notInitException() throws SQLException {
         throw new SQLException("[cdc-connector] canal connector not init.");
-    }
-
-    public void setSubscribeFilter(String subscribeFilter) {
-        this.subscribeFilter = subscribeFilter;
     }
 
     public void setBatchSize(int batchSize) {
