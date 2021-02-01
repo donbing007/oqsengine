@@ -131,7 +131,6 @@ public class ConsumerRunner extends Thread {
     }
 
     public void consume() throws SQLException {
-        StopWatch getMessageWatch = new StopWatch("getMessage");
         while (true) {
             //  服务被终止
             if (runningStatus.ordinal() >= RunningStatus.TRY_STOP.ordinal()) {
@@ -142,16 +141,16 @@ public class ConsumerRunner extends Thread {
             Message message = null;
             long batchId;
             try {
-                getMessageWatch.start();
+                long start = System.currentTimeMillis();
                 //获取指定数量的数据
                 message = cdcConnector.getMessageWithoutAck();
-                getMessageWatch.stop();
+                long duration = System.currentTimeMillis() - start;
 
                 batchId = message.getId();
 
-                if (getMessageWatch.getLastTaskTimeMillis() > MESSAGE_GET_WARM_INTERVAL && batchId != EMPTY_BATCH_ID) {
+                if (duration > MESSAGE_GET_WARM_INTERVAL && batchId != EMPTY_BATCH_ID) {
                     logger.info("[cdc-runner] get message from canal server use too much times, use timeMs : {}, batchId : {}"
-                            , getMessageWatch.getLastTaskTimeMillis(), message.getId());
+                            , duration, message.getId());
                 }
             } catch (Exception e) {
                 //  未获取到数据,回滚
