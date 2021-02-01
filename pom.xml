@@ -7,7 +7,7 @@
     <groupId>com.xforceplus.ultraman</groupId>
     <artifactId>xplat-meta-oqsengine</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -116,6 +116,7 @@
         <module>xplat-meta-oqsengine-transfer</module>
         <module>xplat-meta-oqsengine-boot</module>
         <module>xplat-meta-oqsengine-testreport</module>
+        <module>xplat-meta-oqsengine-metadata</module>
     </modules>
 
     <distributionManagement>
