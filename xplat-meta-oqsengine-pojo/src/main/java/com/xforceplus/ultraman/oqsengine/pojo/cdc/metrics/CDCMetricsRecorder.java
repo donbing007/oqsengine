@@ -18,11 +18,10 @@ public class CDCMetricsRecorder {
     final Logger logger = LoggerFactory.getLogger(CDCMetricsRecorder.class);
 
     private CDCMetrics cdcMetrics;
-    private StopWatch timeRecorder = new StopWatch();
-
+    private long start;
 
     public CDCMetricsRecorder startRecord(CDCUnCommitMetrics cdcUnCommitMetrics, long batchId) {
-        timeRecorder.start();
+        start = System.currentTimeMillis();
         //  将上一次的剩余信息设置回来
         cdcMetrics = new CDCMetrics();
 
@@ -38,9 +37,8 @@ public class CDCMetricsRecorder {
     }
 
     public CDCMetricsRecorder finishRecord(int syncCount) {
-        timeRecorder.stop();
         cdcMetrics.getCdcAckMetrics().setExecuteRows(syncCount);
-        cdcMetrics.getCdcAckMetrics().setTotalUseTime(timeRecorder.getTotalTimeMillis());
+        cdcMetrics.getCdcAckMetrics().setTotalUseTime(System.currentTimeMillis() - start);
 
         logger.info("[cdc-metrics-record] finish consume batch, batchId : {}, success sync rows : {}, totalUseTime : {}",
                 cdcMetrics.getBatchId(), cdcMetrics.getCdcAckMetrics().getExecuteRows(), cdcMetrics.getCdcAckMetrics().getTotalUseTime());
