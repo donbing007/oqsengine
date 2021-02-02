@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StopWatch;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
@@ -110,13 +109,12 @@ public class CDCMetricsService {
     }
 
     public void isReadyCommit(long commitId, CDCMetricsService cdcMetricsService) {
-        StopWatch timer = new StopWatch();
+        long start = System.currentTimeMillis();
         int loops = 0;
         try {
             if (logger.isDebugEnabled()) {
                 logger.debug("[cdc-metrics] attempt check ready to commitId , commitId : {}", commitId);
             }
-            timer.start();
             while (true) {
                 if (!cdcMetricsCallback.isReadyCommit(commitId)) {
                     try {
@@ -140,13 +138,13 @@ public class CDCMetricsService {
                 break;
             }
         } finally {
-            timer.stop();
+            long duration = System.currentTimeMillis() - start;
             if (logger.isDebugEnabled()) {
                 logger.debug("[cdc-metrics] success check ready to commitId, commitId : {}", commitId);
             }
-            if (timer.getLastTaskTimeMillis() > READY_WARM_MAX_INTERVAL) {
+            if (duration > READY_WARM_MAX_INTERVAL) {
                 logger.warn("[cdc-metrics] wait for ready commitId use too much times, commitId {}, use time : {}ms"
-                        , commitId, timer.getLastTaskTimeMillis());
+                        , commitId, duration);
             }
             if (loops > COMMIT_ID_LOG_MAX_LOOPS) {
                 //  恢复isReady指标
