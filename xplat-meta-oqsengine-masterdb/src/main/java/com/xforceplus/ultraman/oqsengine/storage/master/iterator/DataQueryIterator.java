@@ -161,7 +161,7 @@ public class DataQueryIterator implements QueryIterator {
                  */
                 Collection<IEntity> pEntity = sqlMasterStorage.selectMultiple(
                     entities.stream()
-                        .collect(Collectors.toMap(f -> f.family().parent(), f -> f.entityClass().extendEntityClass(), (f0, f1) -> f0))
+                        .collect(Collectors.toMap(f -> f.family().parent(), f -> f.entityClass().father(), (f0, f1) -> f0))
                 );
 
                 Map<Long, IEntity> entityMap = pEntity

@@ -188,7 +188,7 @@ public class EntitySearchServiceImplTest {
                 selectEntityOp = instance.selectOne(e.id(), e.entityClass());
 
 
-                if (e.entityClass().extendEntityClass() == null) {
+                if (e.entityClass().father() == null) {
                     Assert.assertEquals(e, selectEntityOp.get());
                 } else {
 
@@ -474,7 +474,7 @@ public class EntitySearchServiceImplTest {
     }
 
     private IEntity[] buildEntity(IEntityClass entityClass) {
-        if (entityClass.extendEntityClass() != null) {
+        if (entityClass.father() != null) {
             long parentId = idGenerator.next();
             long childId = idGenerator.next();
 
@@ -490,8 +490,8 @@ public class EntitySearchServiceImplTest {
                 ,
                 new Entity(
                     parentId,
-                    entityClass.extendEntityClass(),
-                    buildValues(entityClass.extendEntityClass()),
+                    entityClass.father(),
+                    buildValues(entityClass.father()),
                     new EntityFamily(0, childId), 0, OqsVersion.MAJOR
                 )
             };

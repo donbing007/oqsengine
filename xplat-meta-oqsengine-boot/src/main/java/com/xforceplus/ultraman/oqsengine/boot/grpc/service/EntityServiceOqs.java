@@ -517,9 +517,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 Optional<IEntity> ds = entitySearchService.selectOne(in.getObjId(), entityClass);
 
                 if (ds.isPresent()) {
-                    if (ds.get().family() != null && ds.get().family().parent() > 0 && entityClass.extendEntityClass() != null) {
+                    if (ds.get().family() != null && ds.get().family().parent() > 0 && entityClass.father() != null) {
                         Optional<IEntity> parentDS = entitySearchService
-                                .selectOne(ds.get().family().parent(), entityClass.extendEntityClass());
+                            .selectOne(ds.get().family().parent(), entityClass.father());
 
                         Optional<IEntity> finalDs = ds;
                         parentDS.ifPresent(x ->
@@ -786,10 +786,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
-    private Optional<IEntityClass> getRelatedEntityClassById(IEntityClass entityClass, long subEntityClassId) {
-        return entityClass.entityClasss().stream().filter(x -> x.id() == subEntityClassId).findFirst();
-    }
-
     /**
      * @param entity
      * @param leftEntity
@@ -943,8 +939,8 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     private boolean isRelatedField(ColumnField columnField, IEntityClass mainClass) {
         IEntityClass entityClass = columnField.originEntityClass();
 
-        if (mainClass.extendEntityClass() != null) {
-            return mainClass.id() != entityClass.id() && mainClass.extendEntityClass().id() != entityClass.id();
+        if (mainClass.father() != null) {
+            return mainClass.id() != entityClass.id() && mainClass.father().id() != entityClass.id();
         } else {
             return entityClass.id() != mainClass.id();
         }

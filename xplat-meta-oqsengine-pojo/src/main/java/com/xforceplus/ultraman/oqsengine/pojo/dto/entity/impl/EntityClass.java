@@ -141,12 +141,12 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
-    public Set<IEntityClass> entityClasss() {
+    public Set<IEntityClass> relationsEntityClasss() {
         return Collections.unmodifiableSet(entityClasses);
     }
 
     @Override
-    public IEntityClass extendEntityClass() {
+    public IEntityClass father() {
         return extendEntityClass;
     }
 

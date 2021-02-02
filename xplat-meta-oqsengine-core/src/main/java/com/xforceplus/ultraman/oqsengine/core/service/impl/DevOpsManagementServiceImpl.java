@@ -5,11 +5,9 @@ import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.core.service.DevOpsManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
-import com.xforceplus.ultraman.oqsengine.devops.rebuild.sql.SQL;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.TaskStorage;
 import com.xforceplus.ultraman.oqsengine.devops.repair.CommitIdRepairExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
@@ -166,7 +164,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
         for (IEntityClass c : classes) {
 
-            if (null == c.extendEntityClass()) {
+            if (null == c.father()) {
                 throw new SQLException(String.format("entity class must have extendEntityClass, entity : %d", c.id()));
             }
             IDevOpsTaskInfo devOpsTaskInfo = taskInfoMap.get(c.id());
@@ -177,7 +175,7 @@ public class DevOpsManagementServiceImpl implements DevOpsManagementService {
 
         for (IEntityClass c : classes) {
             // 只处理子类.
-            if (c.extendEntityClass() != null) {
+            if (c.father() != null) {
                 QueryIterator queryIterator = masterStorage.newIterator(c, 0,
                                                 Long.MAX_VALUE, worker, REPAIRED_TASK_TIME_OUT, REPAIRED_TASK_PAGE_SIZE, false);
                 if (null != queryIterator) {

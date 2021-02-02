@@ -394,7 +394,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 }
             } else {
 
-                useEntityClass = useEntityClass.extendEntityClass();
+                useEntityClass = useEntityClass.father();
 
             }
         }
@@ -449,7 +449,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
          * 整理出需要加载的id.
          */
         Map<Long, IEntityClass> select;
-        if (entityClass.extendEntityClass() != null) {
+        if (entityClass.father() != null) {
 
             select = new HashMap();
             for (EntityRef ref : refs) {
@@ -459,7 +459,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                      * 大版本为0,数据格式为子类只含有子类部份的字段信息.
                      */
                     select.put(ref.getId(), entityClass);
-                    select.put(ref.getPref(), entityClass.extendEntityClass());
+                    select.put(ref.getPref(), entityClass.father());
 
                 } else {
 
@@ -484,7 +484,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 return null;
             }
 
-            if (ref.getMajor() == 0 && entityClass.extendEntityClass() != null) {
+            if (ref.getMajor() == 0 && entityClass.father() != null) {
                 IEntity father = iEntityMap.get(ref.getPref());
                 if (father != null) {
                     entity.entityValue().addValues(father.entityValue().values());

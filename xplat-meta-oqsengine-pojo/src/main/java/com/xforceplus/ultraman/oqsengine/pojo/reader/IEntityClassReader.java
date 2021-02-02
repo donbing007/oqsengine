@@ -88,7 +88,7 @@ public class IEntityClassReader {
         //self fields and parent fields
         Stream<IEntityField> entityFields = entityClass.fields().stream();
         Stream<IEntityField> entityParentFields = Optional
-                .ofNullable(entityClass.extendEntityClass())
+            .ofNullable(entityClass.father())
                 .map(IEntityClass::fields)
                 .orElse(Collections.emptyList()).stream();
 
@@ -114,7 +114,7 @@ public class IEntityClassReader {
         //init related entities mapping
         //TODO multi
         relatedEntities = entityClass
-                .entityClasss()
+            .relationsEntityClasss()
                 .stream()
                 .collect(Collectors
                         .groupingBy(IEntityClass::id));
@@ -140,14 +140,14 @@ public class IEntityClassReader {
                             ));
 
                     Stream<ColumnField> parentStream = Optional
-                            .ofNullable(relatedEntityClass.extendEntityClass())
+                        .ofNullable(relatedEntityClass.father())
                             .map(IEntityClass::fields)
                             .orElseGet(Collections::emptyList)
                             .stream()
                             .map(field -> new ColumnField(
                                     rel.getName() + "." + field.name()
                                     , field
-                                    , relatedEntityClass.extendEntityClass()
+                                , relatedEntityClass.father()
                             ));
 
                     return Stream.concat(selfStream, parentStream);

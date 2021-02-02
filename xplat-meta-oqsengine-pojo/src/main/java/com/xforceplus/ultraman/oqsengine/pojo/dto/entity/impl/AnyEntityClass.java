@@ -49,12 +49,12 @@ public class AnyEntityClass implements IEntityClass {
     }
 
     @Override
-    public Collection<IEntityClass> entityClasss() {
+    public Collection<IEntityClass> relationsEntityClasss() {
         return Collections.emptyList();
     }
 
     @Override
-    public IEntityClass extendEntityClass() {
+    public IEntityClass father() {
         return null;
     }
 

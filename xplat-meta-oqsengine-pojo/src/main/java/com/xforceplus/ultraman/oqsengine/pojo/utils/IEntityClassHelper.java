@@ -28,7 +28,7 @@ public class IEntityClassHelper {
     public static Optional<IEntityField> findFieldById(IEntityClass entityClass, long fieldId) {
 
         Optional<IEntityField> entityFieldOp = entityClass.field(fieldId);
-        Optional<IEntityField> entityClassFromParent = Optional.ofNullable(entityClass.extendEntityClass())
+        Optional<IEntityField> entityClassFromParent = Optional.ofNullable(entityClass.father())
                 .flatMap(parent -> parent.field(fieldId));
 
         return combine(entityFieldOp, entityClassFromParent);
@@ -37,7 +37,7 @@ public class IEntityClassHelper {
     public static Optional<IEntityField> findFieldByCode(IEntityClass entityClass, String code) {
 
         Optional<IEntityField> entityFieldOp = entityClass.field(code);
-        Optional<IEntityField> entityClassFromParent = Optional.ofNullable(entityClass.extendEntityClass())
+        Optional<IEntityField> entityClassFromParent = Optional.ofNullable(entityClass.father())
                 .flatMap(parent -> parent.field(code));
 
         return combine(entityFieldOp, entityClassFromParent);
@@ -62,7 +62,7 @@ public class IEntityClassHelper {
     public static Optional<Tuple2<IEntityClass, IEntityField>> findFieldByIdInAll(IEntityClass entityClass, long fieldId) {
         Stream<Optional<Tuple2<IEntityClass, IEntityField>>> field =
                 Stream.of(findFieldById(entityClass, fieldId).map(x -> Tuple.of(entityClass, x)));
-        Stream<Optional<Tuple2<IEntityClass, IEntityField>>> subStream = Optional.ofNullable(entityClass.entityClasss())
+        Stream<Optional<Tuple2<IEntityClass, IEntityField>>> subStream = Optional.ofNullable(entityClass.relationsEntityClasss())
                 .orElseGet(Collections::emptyList).stream()
                 .map(x -> findFieldById(x, fieldId).map(y -> Tuple.of(x, y)));
         Stream<Optional<Tuple2<IEntityClass, IEntityField>>> relStream = Optional.ofNullable(entityClass.relations())
@@ -85,7 +85,7 @@ public class IEntityClassHelper {
 
         Optional<IEntityField> fieldInMain = entityClass.field(code);
 
-        Optional<IEntityField> fieldInParent = Optional.ofNullable(entityClass.extendEntityClass()).flatMap(x -> x.field(code));
+        Optional<IEntityField> fieldInParent = Optional.ofNullable(entityClass.father()).flatMap(x -> x.field(code));
 
         Optional<IEntityField> fieldInRel = entityClass.relations().stream().map(x -> findFieldInRel(x, code))
                 .findFirst().filter(Optional::isPresent).map(Optional::get);
@@ -95,7 +95,7 @@ public class IEntityClassHelper {
         Optional<IEntityField> fieldInRelOther;
         if (splitCode.length > 1) {
             // field exists in Related EntityClass
-            fieldInRelOther = entityClass.entityClasss()
+            fieldInRelOther = entityClass.relationsEntityClasss()
                     .stream()
                     .filter(x -> x.code().equals(splitCode[0]))
                     .findFirst().map(x -> x.field(splitCode[1])).filter(Optional::isPresent).map(Optional::get);

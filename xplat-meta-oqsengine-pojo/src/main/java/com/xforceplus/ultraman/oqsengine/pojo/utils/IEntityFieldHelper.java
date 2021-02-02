@@ -73,8 +73,8 @@ public class IEntityFieldHelper {
 
             Optional<IEntityField> fieldOp = fieldTuple.map(Tuple2::_2);
 
-            if (entityClass.extendEntityClass() != null && !fieldOp.isPresent()) {
-                fieldOp = entityClass.extendEntityClass().field(id);
+            if (entityClass.father() != null && !fieldOp.isPresent()) {
+                fieldOp = entityClass.father().field(id);
             }
             if (fieldOp.isPresent()) {
                 return toTypedValue(fieldOp.get(), value);

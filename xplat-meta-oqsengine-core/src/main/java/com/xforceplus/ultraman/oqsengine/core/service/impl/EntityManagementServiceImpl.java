@@ -421,7 +421,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private boolean isSub(IEntity entity) {
-        return entity.entityClass().extendEntityClass() != null;
+        return entity.entityClass().father() != null;
     }
 
     private IEntity buildChildEntity(IEntity entity, long pref) {
@@ -429,7 +429,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private IEntity buildFatherEntity(IEntity entity, long cref) {
-        return build(entity, entity.entityClass().extendEntityClass(), new EntityFamily(0, cref), false);
+        return build(entity, entity.entityClass().father(), new EntityFamily(0, cref), false);
     }
 
     /**
@@ -440,9 +440,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         Map<IEntityField, Object> fieldTable =
             entityClass.fields().stream().collect(Collectors.toMap(v -> v, v -> ""));
 
-        if (includeFather && entityClass.extendEntityClass() != null) {
+        if (includeFather && entityClass.father() != null) {
             fieldTable.putAll(
-                entityClass.extendEntityClass().fields().stream().collect(Collectors.toMap(v -> v, v -> "")));
+                entityClass.father().fields().stream().collect(Collectors.toMap(v -> v, v -> "")));
         }
 
         IEntityValue newValues = new EntityValue(entity.id());

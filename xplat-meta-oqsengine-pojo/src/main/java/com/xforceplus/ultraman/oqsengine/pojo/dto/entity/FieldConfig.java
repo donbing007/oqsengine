@@ -5,6 +5,7 @@ import java.util.Objects;
 
 /**
  * 字段配置信息.
+ *
  * @author dongbin
  * @version 0.1 2020/2/26 14:32
  * @since 1.8
@@ -40,11 +41,22 @@ public class FieldConfig implements Serializable {
      */
     private boolean identifie = false;
 
-    private boolean isRequired = false;
+    /**
+     * 是否必填字段.
+     */
+    private boolean required = false;
 
+    /**
+     * 是否系统字段.
+     */
+    private boolean system = false;
+
+    /**
+     * 校验正则.
+     */
     private String validateRegexString = "";
 
-    private boolean isSplittable = false;
+    private boolean splittable = false;
 
     private String delimiter = "";
 
@@ -52,6 +64,7 @@ public class FieldConfig implements Serializable {
 
     /**
      * 创建一个新的 FieldConfig.
+     *
      * @return 实例.
      */
     public static FieldConfig build() {
@@ -65,6 +78,7 @@ public class FieldConfig implements Serializable {
 
     /**
      * 设置是否可搜索,默认不搜索.
+     *
      * @param searchable true 可搜索, false 不可搜索.
      * @return 当前实例.
      */
@@ -106,6 +120,7 @@ public class FieldConfig implements Serializable {
 
     /**
      * 是否表示一个数据标识.
+     *
      * @return true 数据标识,false 非数据标识.
      */
     public boolean isIdentifie() {
@@ -114,6 +129,7 @@ public class FieldConfig implements Serializable {
 
     /**
      * 是否可搜索.true 可搜索,false 不可搜索.
+     *
      * @return 结果.
      */
     public boolean isSearchable() {
@@ -122,6 +138,7 @@ public class FieldConfig implements Serializable {
 
     /**
      * 获取最大值.
+     *
      * @return 最大值.
      */
     public long getMax() {
@@ -130,6 +147,7 @@ public class FieldConfig implements Serializable {
 
     /**
      * 获取最小值.
+     *
      * @return
      */
     public long getMin() {
@@ -140,42 +158,30 @@ public class FieldConfig implements Serializable {
         return precision;
     }
 
-//    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) {
-//            return true;
-//        }
-//        if (!(o instanceof FieldConfig)) {
-//            return false;
-//        }
-//        FieldConfig that = (FieldConfig) o;
-//        return isSearchable() == that.isSearchable() &&
-//            getMax() == that.getMax() &&
-//            getMin() == that.getMin() &&
-//            isIdentifie() == that.isIdentifie();
-//    }
-
-//    @Override
-//    public int hashCode() {
-//        return Objects.hash(isSearchable(), getMax(), getMin(), isIdentifie());
-//    }
-
-
-    public String getDisplayType(){
+    public String getDisplayType() {
         return this.displayType;
     }
 
-    public FieldConfig displayType(String displayType){
+    public FieldConfig displayType(String displayType) {
         this.displayType = displayType;
         return this;
     }
 
     public boolean isRequired() {
-        return isRequired;
+        return required;
     }
 
     public FieldConfig required(boolean required) {
-        isRequired = required;
+        this.required = required;
+        return this;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public FieldConfig system(boolean system) {
+        this.system = system;
         return this;
     }
 
@@ -189,12 +195,12 @@ public class FieldConfig implements Serializable {
     }
 
     public boolean isSplittable() {
-        return isSplittable;
+        return splittable;
     }
 
     public FieldConfig splittable(boolean splittable) {
 
-        isSplittable = splittable;
+        this.splittable = splittable;
         return this;
     }
 
@@ -207,33 +213,60 @@ public class FieldConfig implements Serializable {
         return this;
     }
 
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof FieldConfig)) {
+            return false;
+        }
         FieldConfig that = (FieldConfig) o;
-        return searchable == that.searchable &&
-                max == that.max &&
-                min == that.min &&
-                precision == that.precision &&
-                identifie == that.identifie;
+        return isSearchable() == that.isSearchable() &&
+            getMax() == that.getMax() &&
+            getMin() == that.getMin() &&
+            getPrecision() == that.getPrecision() &&
+            isIdentifie() == that.isIdentifie() &&
+            isRequired() == that.isRequired() &&
+            isSystem() == that.isSystem() &&
+            isSplittable() == that.isSplittable() &&
+            Objects.equals(getValidateRegexString(), that.getValidateRegexString()) &&
+            Objects.equals(getDelimiter(), that.getDelimiter()) &&
+            Objects.equals(getDisplayType(), that.getDisplayType());
     }
-
-
 
     @Override
     public int hashCode() {
-        return Objects.hash(searchable, max, min, precision, identifie);
+        return Objects.hash(
+            isSearchable(),
+            getMax(),
+            getMin(),
+            getPrecision(),
+            isIdentifie(),
+            isRequired(),
+            isSystem(),
+            getValidateRegexString(),
+            isSplittable(),
+            getDelimiter(),
+            getDisplayType());
     }
 
     @Override
     public String toString() {
-        return "FieldConfig{" +
-                "searchable=" + searchable +
-                ", max=" + max +
-                ", min=" + min +
-                ", precision=" + precision +
-                ", identifie=" + identifie +
-                '}';
+        final StringBuffer sb = new StringBuffer("FieldConfig{");
+        sb.append("searchable=").append(searchable);
+        sb.append(", max=").append(max);
+        sb.append(", min=").append(min);
+        sb.append(", precision=").append(precision);
+        sb.append(", identifie=").append(identifie);
+        sb.append(", required=").append(required);
+        sb.append(", system=").append(system);
+        sb.append(", validateRegexString='").append(validateRegexString).append('\'');
+        sb.append(", splittable=").append(splittable);
+        sb.append(", delimiter='").append(delimiter).append('\'');
+        sb.append(", displayType='").append(displayType).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }

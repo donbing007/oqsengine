@@ -440,9 +440,9 @@ public class SQLMasterStorage implements MasterStorage {
         Map<String, IEntityField> fieldTable = entityClass.fields()
             .stream().collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0));
 
-        if (entityClass.extendEntityClass() != null) {
+        if (entityClass.father() != null) {
             fieldTable.putAll(
-                entityClass.extendEntityClass()
+                entityClass.father()
                     .fields()
                     .stream()
                     .collect(Collectors.toMap(f -> Long.toString(f.id()), f -> f, (f0, f1) -> f0))
@@ -510,8 +510,8 @@ public class SQLMasterStorage implements MasterStorage {
             .map(f -> String.join("-", Long.toString(f.id()), f.type().getType()))
             .forEach(s -> jsonArray.add(0, s));
 
-        if (entityClass.extendEntityClass() != null) {
-            entityClass.extendEntityClass().fields().stream().filter(f -> f.config().isSearchable())
+        if (entityClass.father() != null) {
+            entityClass.father().fields().stream().filter(f -> f.config().isSearchable())
                 .map(f -> String.join("-", Long.toString(f.id()), f.type().getType()))
                 .forEach(s -> jsonArray.add(0, s));
         }
