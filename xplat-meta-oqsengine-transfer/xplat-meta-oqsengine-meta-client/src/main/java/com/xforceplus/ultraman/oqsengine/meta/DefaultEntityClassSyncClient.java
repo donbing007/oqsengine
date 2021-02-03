@@ -15,10 +15,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -160,17 +157,23 @@ public class DefaultEntityClassSyncClient implements EntityClassSyncClient {
         observer = client.channelStub().register(new StreamObserver<EntityClassSyncResponse>() {
             @Override
             public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
-                EntityClassSyncRequest entityClassSyncRequest =
-                        entityClassExecutor.execute(entityClassSyncResponse);
+                if (null != entityClassSyncResponse.getEntityClassSyncRspProtoCheckList() &&
+                                    entityClassSyncResponse.getEntityClassSyncRspProtoCheckList().size() > 0) {
+                    /**
+                     * 执行OQS更新EntityClass
+                     */
+                    EntityClassSyncRequest entityClassSyncRequest =
+                            entityClassExecutor.execute(entityClassSyncResponse);
 
-                /**
-                 * 回写处理结果, entityClassSyncRequest不会为空.
-                 */
-                try {
-                    ack(entityClassSyncRequest);
-                } catch (Exception e) {
-                    logger.error("stream observer ack error, message-[{}].", e.getMessage());
-                    countDownLatch.countDown();
+                    /**
+                     * 回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
+                     */
+                    try {
+                        ack(entityClassSyncRequest);
+                    } catch (Exception ex) {
+                        logger.error("stream observer ack error, message-[{}].", ex.getMessage());
+                        countDownLatch.countDown();
+                    }
                 }
             }
 

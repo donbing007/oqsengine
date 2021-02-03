@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 
 /**
@@ -41,61 +42,55 @@ public class EntityClassExecutorService implements EntityClassExecutor {
 
     /**
      * 执行方法
+     *
      * @param entityClassSyncResponse
      * @return EntityClassSyncRequest
      */
     @Override
+    @SuppressWarnings("unchecked")
     public EntityClassSyncRequest execute(EntityClassSyncResponse entityClassSyncResponse) {
+
         EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
         AtomicInteger index = new AtomicInteger(0);
 
-        entityClassSyncResponse.getEntityClassSyncRspProtoCheckList().forEach(
-                rspProto -> {
-                    async(() -> {
-                        /**
-                         * 该方法返回的错误不会导致重新连接、但会通知服务端本次推送更新失败
-                         */
-                        try {
-                            /**
-                             * md5 check
-                             */
-                            if (!md5Check(rspProto.getMd5(), rspProto.getEntityClassSyncRspProto())) {
-                                return false;
-                            }
+        CompletableFuture<Void> combinedFuture
+                = CompletableFuture.allOf(
+                (CompletableFuture<Boolean>[]) entityClassSyncResponse.getEntityClassSyncRspProtoCheckList().stream().map(
+                        rspProto -> {
+                            return async(() -> {
+                                /**
+                                 * 该方法返回的错误不会导致重新连接、但会通知服务端本次推送更新失败
+                                 */
+                                int status = SYNC_FAIL.ordinal();
+                                try {
+                                    /**
+                                     * md5 check && 是否已存在版本判断
+                                     */
+                                    if (md5Check(rspProto.getMd5(), rspProto.getEntityClassSyncRspProto())
+                                            && versionCheck(rspProto.getEntityClassSyncRspProto().getAppId()
+                                            , rspProto.getEntityClassSyncRspProto().getVersion())) {
 
-                            /**
-                             * 是否已存在版本判断
-                             */
-                            if (!versionCheck(rspProto.getEntityClassSyncRspProto().getAppId()
-                                                , rspProto.getEntityClassSyncRspProto().getVersion())) {
-                                return true;
-                            }
+                                        /**
+                                         * 执行外部传入的执行器
+                                         */
+                                        status = oqsSyncExecutor.sync(rspProto.getEntityClassSyncRspProto()) ?
+                                                RequestStatus.SYNC_OK.ordinal() : SYNC_FAIL.ordinal();
+                                    }
+                                } catch (Exception e) {
+                                    logger.warn("handle entityClassSyncResponse failed, message : {}", e.getMessage());
+                                    status = SYNC_FAIL.ordinal();
+                                }
 
-
-                            /**
-                             * 执行外部传入的执行器
-                             */
-                            return oqsSyncExecutor.sync(rspProto.getEntityClassSyncRspProto());
-                        } catch (Exception e) {
-                            logger.warn("handle entityClassSyncResponse failed, message : {}", e.getMessage());
-                            return false;
-                        }
-                    }).whenComplete((res, ex) -> {
-                        int status;
-                        if (null != ex) {
-                            status = RequestStatus.SYNC_FAIL.ordinal();
-                        } else {
-                            status = res ? RequestStatus.SYNC_OK.ordinal() : RequestStatus.SYNC_FAIL.ordinal();
-                        }
-
-                        builder.setEntityClassSyncReqProtos(index.incrementAndGet(),
-                                EntityClassSyncReqProto.newBuilder()
+                                builder.setEntityClassSyncReqProtos(index.getAndIncrement(), EntityClassSyncReqProto.newBuilder()
                                         .setAppId(rspProto.getEntityClassSyncRspProto().getAppId())
                                         .setVersion(rspProto.getEntityClassSyncRspProto().getVersion())
                                         .setStatus(status).build());
-                    });
-                }
-        );
+
+                                return true;
+                            });
+                        }).toArray());
+
+        combinedFuture.join();
 
         return builder.build();
     }

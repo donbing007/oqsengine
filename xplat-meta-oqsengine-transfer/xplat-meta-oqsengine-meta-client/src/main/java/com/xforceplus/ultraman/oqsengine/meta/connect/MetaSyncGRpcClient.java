@@ -46,7 +46,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
 
         stub = EntityClassSyncGrpc.newStub(channel);
 
-        logger.info("oqs-engine successfully connects to {}:{}!", host, port);
+        logger.info("grpc-client successfully connects to {}:{}!", host, port);
 
         isClientOpen = true;
     }
@@ -55,6 +55,8 @@ public class MetaSyncGRpcClient implements GRpcClient {
     public void destroy() {
         try {
             channel.shutdown().awaitTermination(destroySeconds, TimeUnit.SECONDS);
+
+            logger.info("grpc-client destroy!");
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
