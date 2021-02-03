@@ -124,7 +124,7 @@ public class DefaultEntityClassSyncClient implements EntityClassSyncClient {
                 })
                 .forEach(
                         v -> {
-                            builder.setEntityClassSyncReqProtos(index.incrementAndGet(),
+                            builder.setEntityClassSyncReqProtos(index.getAndIncrement(),
                                     EntityClassSyncReqProto.newBuilder()
                                             .setAppId(v.getKey())
                                             .setVersion(v.getValue())
