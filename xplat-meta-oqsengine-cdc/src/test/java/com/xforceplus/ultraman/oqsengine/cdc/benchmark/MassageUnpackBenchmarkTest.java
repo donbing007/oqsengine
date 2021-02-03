@@ -13,7 +13,6 @@ import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.shaded.org.apache.commons.lang.time.StopWatch;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -78,15 +77,13 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
         //  预热
         sphinxConsumerService.consume(preWarms, 1, cdcMetricsService);
 
-        StopWatch stopWatch = new StopWatch();
-
-        stopWatch.start();
+        long start = System.currentTimeMillis();
         CDCMetrics cdcMetrics = sphinxConsumerService.consume(entries, 2, cdcMetricsService);
-        stopWatch.stop();
+        long duration = System.currentTimeMillis() - start;
 
         Assert.assertEquals(size, cdcMetrics.getCdcAckMetrics().getExecuteRows());
         logger.info("end sphinxConsumerBenchmarkTest loops : {}, use timeMs : {} ms",
-                cdcMetrics.getCdcAckMetrics().getExecuteRows(), stopWatch.getTime());
+                cdcMetrics.getCdcAckMetrics().getExecuteRows(), duration);
     }
 
     @Test
@@ -94,14 +91,13 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
         //  预热
         parse(preWarms.get(0));
 
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
+        long start = System.currentTimeMillis();
         for (CanalEntry.Entry entry : entries) {
             parse(entry);
         }
-        stopWatch.stop();
+        long duration = System.currentTimeMillis() - start;
 
-        logger.info("end parseBenchmarkTest loops : {}, use timeMs : {} ms", size, stopWatch.getTime());
+        logger.info("end parseBenchmarkTest loops : {}, use timeMs : {} ms", size, duration);
     }
 
     private void parse(CanalEntry.Entry entry) throws InvalidProtocolBufferException {

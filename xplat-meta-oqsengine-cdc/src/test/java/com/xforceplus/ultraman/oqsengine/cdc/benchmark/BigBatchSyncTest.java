@@ -14,7 +14,6 @@ import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.shaded.org.apache.commons.lang.time.StopWatch;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -77,24 +76,25 @@ public class BigBatchSyncTest extends CDCAbstractContainer {
     @Test
     public void test() throws InterruptedException, SQLException {
         initData();
-        StopWatch stopWatch = new StopWatch();
 
         boolean isStartUpdate = false;
+        long start = 0;
+        long duration = 0;
         while (true) {
             if (!isStartUpdate && mockRedisCallbackService.getExecuted().get() > ZERO) {
-                stopWatch.start();
+                start = System.currentTimeMillis();
                 isStartUpdate = true;
             }
             if (mockRedisCallbackService.getExecuted().get() < expectedSize) {
                 Thread.sleep(1_000);
             } else {
-                stopWatch.stop();
+                duration = System.currentTimeMillis() - start;
                 break;
             }
         }
 
         Assert.assertEquals(expectedSize, mockRedisCallbackService.getExecuted().get());
-        logger.info("total build use time, {}", stopWatch.getTime());
+        logger.info("total build use time, {}", duration);
 
         mockRedisCallbackService.reset();
         Thread.sleep(5_000);

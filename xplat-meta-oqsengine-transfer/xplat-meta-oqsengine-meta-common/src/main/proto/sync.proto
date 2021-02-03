@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+
+option java_package = "com.xforceplus.ultraman.oqsengine.meta.common.proto";
+
+option java_outer_classname = "EntityClassSyncProto";
+
+
+service EntityClassSync {
+    rpc register (stream EntityClassSyncRequest) returns (stream EntityClassSyncResponse) {}
+}
+
+message EntityClassSyncRequest {
+	repeated EntityClassSyncReqProto entityClassSyncReqProtos = 1;
+}
+
+message EntityClassSyncReqProto {
+	string appId = 1;
+	int32 version = 2;
+	int32 status = 3;
+}
+
+message EntityClassSyncResponse {
+	repeated EntityClassSyncRspProtoCheck entityClassSyncRspProtoCheck = 1;
+}
+
+message EntityClassSyncRspProtoCheck {
+	string md5 = 1;
+	EntityClassSyncRspProto entityClassSyncRspProto = 2;
+}
+
+message EntityClassSyncRspProto {
+	string appId = 1;
+	int32 version = 2;
+	repeated EntityClassInfo entityClassInfos = 3;
+	repeated EntityFieldInfo entityFields = 4;
+	repeated FieldConfigInfo configs = 5;
+	repeated RelationInfo relations = 6;
+}
+
+
+
+message EntityClassInfo {
+	string code = 1;
+	int64 id = 2;
+	string name = 3;
+	int64 extendClassId = 4;
+	repeated int64 entityFieldIds = 5;
+	repeated int64 relationIds = 6;
+	repeated int64 configIds = 7;
+}
+
+message EntityFieldInfo {
+	int64 id = 1;
+	string name = 2;
+	string cname = 3;
+
+	enum FieldType {
+		UNKNOWN = 0;
+		BOOLEAN = 1;
+		ENUM = 2;
+		DATETIME = 3;
+		LONG = 4;
+		STRING = 5;
+		STRINGS = 6;
+		DECIMAL = 7;
+	}
+
+	FieldType fieldType = 4;
+	string dictId = 5;
+	string defaultValue = 6;
+	int64 fieldConfigId = 7;
+}
+
+message FieldConfigInfo {
+	bool searchable = 1;
+	int64 max = 2;
+	int64 min = 3;
+	int32 precision = 4;
+	bool identifie = 5;
+	bool isRequired = 6;
+	string validateRegexString = 7;
+	bool isSplittable = 8;
+	string delimiter = 9;
+	string displayType = 10;
+	string uniqueName = 11;
+	bool isSystem = 12;
+	SystemFieldType systemType = 13;
+
+	enum SystemFieldType {
+		NORMAL = 0;
+		TENANT_ID = 1;
+		TENANT_CODE = 2;
+		CREATE_TIME = 3;
+		UPDATE_TIME = 4;
+		CREATE_USER_ID = 5;
+		UPDATE_USER_ID = 6;
+		CREATE_USER_NAME = 7;
+		UPDATE_USER_NAME = 8;
+		DELETE_FLAG = 9;
+	}
+}
+
+message RelationInfo {
+	int64 id = 1;
+	string name = 2;
+	int64 entityClassId = 3;
+	string entityClassName = 4;
+	int64 relOwnerClassId = 5;
+	string relOwnerClassName = 6;
+	string reltationType = 7;
+	bool identity = 8;
+	int64 entityFieldId = 9;
+}

@@ -11,9 +11,13 @@
 
     <artifactId>xplat-meta-oqsengine-transfer</artifactId>
     <packaging>pom</packaging>
+
     <modules>
         <module>xplat-meta-oqsengine-sdk-client</module>
         <module>xplat-meta-oqsengine-sdk-server</module>
+        <module>xplat-meta-oqsengine-meta-client</module>
+        <module>xplat-meta-oqsengine-meta-server</module>
+        <module>xplat-meta-oqsengine-meta-common</module>
     </modules>
 
     <properties>
