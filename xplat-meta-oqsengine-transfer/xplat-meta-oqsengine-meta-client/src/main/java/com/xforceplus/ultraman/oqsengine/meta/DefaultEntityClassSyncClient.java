@@ -35,10 +35,10 @@ public class DefaultEntityClassSyncClient implements EntityClassSyncClient {
 
     private Logger logger = LoggerFactory.getLogger(DefaultEntityClassSyncClient.class);
 
-    @Resource
+    @Resource(name = "gRpcClient")
     private GRpcClient client;
 
-    @Resource
+    @Resource(name = "entityClassExecutor")
     private EntityClassExecutor entityClassExecutor;
 
     private StreamObserver<EntityClassSyncRequest> observer;
