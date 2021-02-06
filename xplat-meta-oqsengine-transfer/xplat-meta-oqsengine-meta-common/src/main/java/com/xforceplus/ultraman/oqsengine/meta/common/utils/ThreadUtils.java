@@ -3,7 +3,8 @@ package com.xforceplus.ultraman.oqsengine.meta.common.utils;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.defaultSleepDuration;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstant.defaultSleepDuration;
+
 
 /**
  * desc :
