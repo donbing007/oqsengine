@@ -46,7 +46,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
 
         stub = EntityClassSyncGrpc.newStub(channel);
 
-        logger.info("grpc-client successfully connects to {}:{}!", host, port);
+        logger.info("gRpc-client successfully connects to {}:{}!", host, port);
 
         isClientOpen = true;
     }
@@ -56,7 +56,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
         try {
             channel.shutdown().awaitTermination(destroySeconds, TimeUnit.SECONDS);
 
-            logger.info("grpc-client destroy!");
+            logger.info("gRpc-client destroy!");
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {

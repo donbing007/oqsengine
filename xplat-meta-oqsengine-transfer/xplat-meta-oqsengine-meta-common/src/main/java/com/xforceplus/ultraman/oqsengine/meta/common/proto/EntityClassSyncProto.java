@@ -20,20 +20,10 @@ public final class EntityClassSyncProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_EntityClassSyncRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_EntityClassSyncReqProto_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_EntityClassSyncReqProto_fieldAccessorTable;
-  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_EntityClassSyncResponse_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_EntityClassSyncResponse_fieldAccessorTable;
-  static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_EntityClassSyncRspProtoCheck_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_EntityClassSyncRspProtoCheck_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_EntityClassSyncRspProto_descriptor;
   static final 
@@ -68,54 +58,50 @@ public final class EntityClassSyncProto {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\nsync.proto\"T\n\026EntityClassSyncRequest\022:" +
-      "\n\030entityClassSyncReqProtos\030\001 \003(\0132\030.Entit" +
-      "yClassSyncReqProto\"I\n\027EntityClassSyncReq" +
-      "Proto\022\r\n\005appId\030\001 \001(\t\022\017\n\007version\030\002 \001(\005\022\016\n" +
-      "\006status\030\003 \001(\005\"^\n\027EntityClassSyncResponse" +
-      "\022C\n\034entityClassSyncRspProtoCheck\030\001 \003(\0132\035" +
-      ".EntityClassSyncRspProtoCheck\"f\n\034EntityC" +
-      "lassSyncRspProtoCheck\022\013\n\003md5\030\001 \001(\t\0229\n\027en" +
-      "tityClassSyncRspProto\030\002 \001(\0132\030.EntityClas" +
-      "sSyncRspProto\"\322\001\n\027EntityClassSyncRspProt" +
-      "o\022\r\n\005appId\030\001 \001(\t\022\017\n\007version\030\002 \001(\005\022*\n\020ent" +
-      "ityClassInfos\030\003 \003(\0132\020.EntityClassInfo\022&\n" +
-      "\014entityFields\030\004 \003(\0132\020.EntityFieldInfo\022!\n" +
-      "\007configs\030\005 \003(\0132\020.FieldConfigInfo\022 \n\trela" +
-      "tions\030\006 \003(\0132\r.RelationInfo\"\220\001\n\017EntityCla" +
-      "ssInfo\022\014\n\004code\030\001 \001(\t\022\n\n\002id\030\002 \001(\003\022\014\n\004name" +
-      "\030\003 \001(\t\022\025\n\rextendClassId\030\004 \001(\003\022\026\n\016entityF" +
-      "ieldIds\030\005 \003(\003\022\023\n\013relationIds\030\006 \003(\003\022\021\n\tco" +
-      "nfigIds\030\007 \003(\003\"\225\002\n\017EntityFieldInfo\022\n\n\002id\030" +
-      "\001 \001(\003\022\014\n\004name\030\002 \001(\t\022\r\n\005cname\030\003 \001(\t\022-\n\tfi" +
-      "eldType\030\004 \001(\0162\032.EntityFieldInfo.FieldTyp" +
-      "e\022\016\n\006dictId\030\005 \001(\t\022\024\n\014defaultValue\030\006 \001(\t\022" +
-      "\025\n\rfieldConfigId\030\007 \001(\003\"m\n\tFieldType\022\013\n\007U" +
-      "NKNOWN\020\000\022\013\n\007BOOLEAN\020\001\022\010\n\004ENUM\020\002\022\014\n\010DATET" +
-      "IME\020\003\022\010\n\004LONG\020\004\022\n\n\006STRING\020\005\022\013\n\007STRINGS\020\006" +
-      "\022\013\n\007DECIMAL\020\007\"\367\003\n\017FieldConfigInfo\022\022\n\nsea" +
-      "rchable\030\001 \001(\010\022\013\n\003max\030\002 \001(\003\022\013\n\003min\030\003 \001(\003\022" +
-      "\021\n\tprecision\030\004 \001(\005\022\021\n\tidentifie\030\005 \001(\010\022\022\n" +
-      "\nisRequired\030\006 \001(\010\022\033\n\023validateRegexString" +
-      "\030\007 \001(\t\022\024\n\014isSplittable\030\010 \001(\010\022\021\n\tdelimite" +
-      "r\030\t \001(\t\022\023\n\013displayType\030\n \001(\t\022\022\n\nuniqueNa" +
-      "me\030\013 \001(\t\022\020\n\010isSystem\030\014 \001(\010\0224\n\nsystemType" +
-      "\030\r \001(\0162 .FieldConfigInfo.SystemFieldType" +
-      "\"\304\001\n\017SystemFieldType\022\n\n\006NORMAL\020\000\022\r\n\tTENA" +
-      "NT_ID\020\001\022\017\n\013TENANT_CODE\020\002\022\017\n\013CREATE_TIME\020" +
-      "\003\022\017\n\013UPDATE_TIME\020\004\022\022\n\016CREATE_USER_ID\020\005\022\022" +
-      "\n\016UPDATE_USER_ID\020\006\022\024\n\020CREATE_USER_NAME\020\007" +
-      "\022\024\n\020UPDATE_USER_NAME\020\010\022\017\n\013DELETE_FLAG\020\t\"" +
-      "\314\001\n\014RelationInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 \001" +
-      "(\t\022\025\n\rentityClassId\030\003 \001(\003\022\027\n\017entityClass" +
-      "Name\030\004 \001(\t\022\027\n\017relOwnerClassId\030\005 \001(\003\022\031\n\021r" +
-      "elOwnerClassName\030\006 \001(\t\022\025\n\rreltationType\030" +
-      "\007 \001(\t\022\020\n\010identity\030\010 \001(\010\022\025\n\rentityFieldId" +
-      "\030\t \001(\0032V\n\017EntityClassSync\022C\n\010register\022\027." +
-      "EntityClassSyncRequest\032\030.EntityClassSync" +
-      "Response\"\000(\0010\001BM\n3com.xforceplus.ultrama" +
-      "n.oqsengine.meta.common.protoB\024EntityCla" +
-      "ssSyncProtoP\001b\006proto3"
+      "\n\nsync.proto\"U\n\026EntityClassSyncRequest\022\013" +
+      "\n\003uid\030\001 \001(\t\022\r\n\005appId\030\002 \001(\t\022\017\n\007version\030\003 " +
+      "\001(\005\022\016\n\006status\030\004 \001(\005\"\236\001\n\027EntityClassSyncR" +
+      "esponse\022\r\n\005appId\030\001 \001(\t\022\017\n\007version\030\002 \001(\005\022" +
+      "\013\n\003uid\030\003 \001(\t\022\016\n\006status\030\004 \001(\005\022\013\n\003md5\030\005 \001(" +
+      "\t\0229\n\027entityClassSyncRspProto\030\006 \001(\0132\030.Ent" +
+      "ityClassSyncRspProto\"\257\001\n\027EntityClassSync" +
+      "RspProto\022\'\n\rentityClasses\030\001 \003(\0132\020.Entity" +
+      "ClassInfo\022&\n\014entityFields\030\002 \003(\0132\020.Entity" +
+      "FieldInfo\022!\n\007configs\030\003 \003(\0132\020.FieldConfig" +
+      "Info\022 \n\trelations\030\004 \003(\0132\r.RelationInfo\"\220" +
+      "\001\n\017EntityClassInfo\022\014\n\004code\030\001 \001(\t\022\n\n\002id\030\002" +
+      " \001(\003\022\014\n\004name\030\003 \001(\t\022\025\n\rextendClassId\030\004 \001(" +
+      "\003\022\026\n\016entityFieldIds\030\005 \003(\003\022\023\n\013relationIds" +
+      "\030\006 \003(\003\022\021\n\tconfigIds\030\007 \003(\003\"\225\002\n\017EntityFiel" +
+      "dInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 \001(\t\022\r\n\005cname" +
+      "\030\003 \001(\t\022-\n\tfieldType\030\004 \001(\0162\032.EntityFieldI" +
+      "nfo.FieldType\022\016\n\006dictId\030\005 \001(\t\022\024\n\014default" +
+      "Value\030\006 \001(\t\022\025\n\rfieldConfigId\030\007 \001(\003\"m\n\tFi" +
+      "eldType\022\013\n\007UNKNOWN\020\000\022\013\n\007BOOLEAN\020\001\022\010\n\004ENU" +
+      "M\020\002\022\014\n\010DATETIME\020\003\022\010\n\004LONG\020\004\022\n\n\006STRING\020\005\022" +
+      "\013\n\007STRINGS\020\006\022\013\n\007DECIMAL\020\007\"\370\003\n\017FieldConfi" +
+      "gInfo\022\022\n\nsearchable\030\001 \001(\010\022\013\n\003max\030\002 \001(\003\022\013" +
+      "\n\003min\030\003 \001(\003\022\021\n\tprecision\030\004 \001(\005\022\022\n\nidenti" +
+      "fier\030\005 \001(\010\022\022\n\nisRequired\030\006 \001(\010\022\033\n\023valida" +
+      "teRegexString\030\007 \001(\t\022\024\n\014isSplittable\030\010 \001(" +
+      "\010\022\021\n\tdelimiter\030\t \001(\t\022\023\n\013displayType\030\n \001(" +
+      "\t\022\022\n\nuniqueName\030\013 \001(\t\022\020\n\010isSystem\030\014 \001(\010\022" +
+      "4\n\nsystemType\030\r \001(\0162 .FieldConfigInfo.Sy" +
+      "stemFieldType\"\304\001\n\017SystemFieldType\022\n\n\006NOR" +
+      "MAL\020\000\022\r\n\tTENANT_ID\020\001\022\017\n\013TENANT_CODE\020\002\022\017\n" +
+      "\013CREATE_TIME\020\003\022\017\n\013UPDATE_TIME\020\004\022\022\n\016CREAT" +
+      "E_USER_ID\020\005\022\022\n\016UPDATE_USER_ID\020\006\022\024\n\020CREAT" +
+      "E_USER_NAME\020\007\022\024\n\020UPDATE_USER_NAME\020\010\022\017\n\013D" +
+      "ELETE_FLAG\020\t\"\313\001\n\014RelationInfo\022\n\n\002id\030\001 \001(" +
+      "\003\022\014\n\004name\030\002 \001(\t\022\025\n\rentityClassId\030\003 \001(\003\022\027" +
+      "\n\017entityClassName\030\004 \001(\t\022\027\n\017relOwnerClass" +
+      "Id\030\005 \001(\003\022\031\n\021relOwnerClassName\030\006 \001(\t\022\024\n\014r" +
+      "elationType\030\007 \001(\t\022\020\n\010identity\030\010 \001(\010\022\025\n\re" +
+      "ntityFieldId\030\t \001(\0032V\n\017EntityClassSync\022C\n" +
+      "\010register\022\027.EntityClassSyncRequest\032\030.Ent" +
+      "ityClassSyncResponse\"\000(\0010\001BM\n3com.xforce" +
+      "plus.ultraman.oqsengine.meta.common.prot" +
+      "oB\024EntityClassSyncProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -134,55 +120,43 @@ public final class EntityClassSyncProto {
     internal_static_EntityClassSyncRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityClassSyncRequest_descriptor,
-        new java.lang.String[] { "EntityClassSyncReqProtos", });
-    internal_static_EntityClassSyncReqProto_descriptor =
-      getDescriptor().getMessageTypes().get(1);
-    internal_static_EntityClassSyncReqProto_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_EntityClassSyncReqProto_descriptor,
-        new java.lang.String[] { "AppId", "Version", "Status", });
+        new java.lang.String[] { "Uid", "AppId", "Version", "Status", });
     internal_static_EntityClassSyncResponse_descriptor =
-      getDescriptor().getMessageTypes().get(2);
+      getDescriptor().getMessageTypes().get(1);
     internal_static_EntityClassSyncResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityClassSyncResponse_descriptor,
-        new java.lang.String[] { "EntityClassSyncRspProtoCheck", });
-    internal_static_EntityClassSyncRspProtoCheck_descriptor =
-      getDescriptor().getMessageTypes().get(3);
-    internal_static_EntityClassSyncRspProtoCheck_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_EntityClassSyncRspProtoCheck_descriptor,
-        new java.lang.String[] { "Md5", "EntityClassSyncRspProto", });
+        new java.lang.String[] { "AppId", "Version", "Uid", "Status", "Md5", "EntityClassSyncRspProto", });
     internal_static_EntityClassSyncRspProto_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(2);
     internal_static_EntityClassSyncRspProto_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityClassSyncRspProto_descriptor,
-        new java.lang.String[] { "AppId", "Version", "EntityClassInfos", "EntityFields", "Configs", "Relations", });
+        new java.lang.String[] { "EntityClasses", "EntityFields", "Configs", "Relations", });
     internal_static_EntityClassInfo_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(3);
     internal_static_EntityClassInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityClassInfo_descriptor,
         new java.lang.String[] { "Code", "Id", "Name", "ExtendClassId", "EntityFieldIds", "RelationIds", "ConfigIds", });
     internal_static_EntityFieldInfo_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_EntityFieldInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityFieldInfo_descriptor,
         new java.lang.String[] { "Id", "Name", "Cname", "FieldType", "DictId", "DefaultValue", "FieldConfigId", });
     internal_static_FieldConfigInfo_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_FieldConfigInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldConfigInfo_descriptor,
-        new java.lang.String[] { "Searchable", "Max", "Min", "Precision", "Identifie", "IsRequired", "ValidateRegexString", "IsSplittable", "Delimiter", "DisplayType", "UniqueName", "IsSystem", "SystemType", });
+        new java.lang.String[] { "Searchable", "Max", "Min", "Precision", "Identifier", "IsRequired", "ValidateRegexString", "IsSplittable", "Delimiter", "DisplayType", "UniqueName", "IsSystem", "SystemType", });
     internal_static_RelationInfo_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_RelationInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_RelationInfo_descriptor,
-        new java.lang.String[] { "Id", "Name", "EntityClassId", "EntityClassName", "RelOwnerClassId", "RelOwnerClassName", "ReltationType", "Identity", "EntityFieldId", });
+        new java.lang.String[] { "Id", "Name", "EntityClassId", "EntityClassName", "RelOwnerClassId", "RelOwnerClassName", "RelationType", "Identity", "EntityFieldId", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

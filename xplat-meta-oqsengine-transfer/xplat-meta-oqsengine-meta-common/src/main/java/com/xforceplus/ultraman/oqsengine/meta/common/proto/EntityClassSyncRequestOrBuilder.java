@@ -8,26 +8,32 @@ public interface EntityClassSyncRequestOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+   * <code>string uid = 1;</code>
    */
-  java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto> 
-      getEntityClassSyncReqProtosList();
+  java.lang.String getUid();
   /**
-   * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+   * <code>string uid = 1;</code>
    */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto getEntityClassSyncReqProtos(int index);
+  com.google.protobuf.ByteString
+      getUidBytes();
+
   /**
-   * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+   * <code>string appId = 2;</code>
    */
-  int getEntityClassSyncReqProtosCount();
+  java.lang.String getAppId();
   /**
-   * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+   * <code>string appId = 2;</code>
    */
-  java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProtoOrBuilder> 
-      getEntityClassSyncReqProtosOrBuilderList();
+  com.google.protobuf.ByteString
+      getAppIdBytes();
+
   /**
-   * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+   * <code>int32 version = 3;</code>
    */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProtoOrBuilder getEntityClassSyncReqProtosOrBuilder(
-      int index);
+  int getVersion();
+
+  /**
+   * <code>int32 status = 4;</code>
+   */
+  int getStatus();
 }

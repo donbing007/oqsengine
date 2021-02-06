@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.meta.common.dto;
+package com.xforceplus.ultraman.oqsengine.meta.common.constant;
 
 /**
  * desc :
@@ -9,7 +9,9 @@ package com.xforceplus.ultraman.oqsengine.meta.common.dto;
  * @since : 1.8
  */
 public enum  RequestStatus {
+    HEARTBEAT,
     REGISTER,
+    CONFIRM_REGISTER,
     SYNC_OK,
     SYNC_FAIL;
 }

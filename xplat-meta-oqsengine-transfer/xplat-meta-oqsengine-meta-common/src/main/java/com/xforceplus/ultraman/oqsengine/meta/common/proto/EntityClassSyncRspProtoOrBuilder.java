@@ -8,112 +8,97 @@ public interface EntityClassSyncRspProtoOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>string appId = 1;</code>
-   */
-  java.lang.String getAppId();
-  /**
-   * <code>string appId = 1;</code>
-   */
-  com.google.protobuf.ByteString
-      getAppIdBytes();
-
-  /**
-   * <code>int32 version = 2;</code>
-   */
-  int getVersion();
-
-  /**
-   * <code>repeated .EntityClassInfo entityClassInfos = 3;</code>
+   * <code>repeated .EntityClassInfo entityClasses = 1;</code>
    */
   java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassInfo> 
-      getEntityClassInfosList();
+      getEntityClassesList();
   /**
-   * <code>repeated .EntityClassInfo entityClassInfos = 3;</code>
+   * <code>repeated .EntityClassInfo entityClasses = 1;</code>
    */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassInfo getEntityClassInfos(int index);
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassInfo getEntityClasses(int index);
   /**
-   * <code>repeated .EntityClassInfo entityClassInfos = 3;</code>
+   * <code>repeated .EntityClassInfo entityClasses = 1;</code>
    */
-  int getEntityClassInfosCount();
+  int getEntityClassesCount();
   /**
-   * <code>repeated .EntityClassInfo entityClassInfos = 3;</code>
+   * <code>repeated .EntityClassInfo entityClasses = 1;</code>
    */
   java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassInfoOrBuilder> 
-      getEntityClassInfosOrBuilderList();
+      getEntityClassesOrBuilderList();
   /**
-   * <code>repeated .EntityClassInfo entityClassInfos = 3;</code>
+   * <code>repeated .EntityClassInfo entityClasses = 1;</code>
    */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassInfoOrBuilder getEntityClassInfosOrBuilder(
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassInfoOrBuilder getEntityClassesOrBuilder(
       int index);
 
   /**
-   * <code>repeated .EntityFieldInfo entityFields = 4;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 2;</code>
    */
   java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo> 
       getEntityFieldsList();
   /**
-   * <code>repeated .EntityFieldInfo entityFields = 4;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 2;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo getEntityFields(int index);
   /**
-   * <code>repeated .EntityFieldInfo entityFields = 4;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 2;</code>
    */
   int getEntityFieldsCount();
   /**
-   * <code>repeated .EntityFieldInfo entityFields = 4;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 2;</code>
    */
   java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder> 
       getEntityFieldsOrBuilderList();
   /**
-   * <code>repeated .EntityFieldInfo entityFields = 4;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 2;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder getEntityFieldsOrBuilder(
       int index);
 
   /**
-   * <code>repeated .FieldConfigInfo configs = 5;</code>
+   * <code>repeated .FieldConfigInfo configs = 3;</code>
    */
   java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo> 
       getConfigsList();
   /**
-   * <code>repeated .FieldConfigInfo configs = 5;</code>
+   * <code>repeated .FieldConfigInfo configs = 3;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo getConfigs(int index);
   /**
-   * <code>repeated .FieldConfigInfo configs = 5;</code>
+   * <code>repeated .FieldConfigInfo configs = 3;</code>
    */
   int getConfigsCount();
   /**
-   * <code>repeated .FieldConfigInfo configs = 5;</code>
+   * <code>repeated .FieldConfigInfo configs = 3;</code>
    */
   java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfoOrBuilder> 
       getConfigsOrBuilderList();
   /**
-   * <code>repeated .FieldConfigInfo configs = 5;</code>
+   * <code>repeated .FieldConfigInfo configs = 3;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfoOrBuilder getConfigsOrBuilder(
       int index);
 
   /**
-   * <code>repeated .RelationInfo relations = 6;</code>
+   * <code>repeated .RelationInfo relations = 4;</code>
    */
   java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo> 
       getRelationsList();
   /**
-   * <code>repeated .RelationInfo relations = 6;</code>
+   * <code>repeated .RelationInfo relations = 4;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo getRelations(int index);
   /**
-   * <code>repeated .RelationInfo relations = 6;</code>
+   * <code>repeated .RelationInfo relations = 4;</code>
    */
   int getRelationsCount();
   /**
-   * <code>repeated .RelationInfo relations = 6;</code>
+   * <code>repeated .RelationInfo relations = 4;</code>
    */
   java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfoOrBuilder> 
       getRelationsOrBuilderList();
   /**
-   * <code>repeated .RelationInfo relations = 6;</code>
+   * <code>repeated .RelationInfo relations = 4;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfoOrBuilder getRelationsOrBuilder(
       int index);

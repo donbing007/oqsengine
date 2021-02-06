@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.dto.RequestStatus;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
@@ -11,11 +10,11 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.dto.RequestStatus.SYNC_FAIL;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 
 /**
@@ -48,51 +47,55 @@ public class EntityClassExecutorService implements EntityClassExecutor {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public EntityClassSyncRequest execute(EntityClassSyncResponse entityClassSyncResponse) {
+    public EntityClassSyncRequest.Builder execute(EntityClassSyncResponse entityClassSyncResponse) {
 
-        EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
-        AtomicInteger index = new AtomicInteger(0);
+        CompletableFuture<EntityClassSyncRequest.Builder> future = async(() -> {
+            /**
+             * 该方法返回的错误不会导致重新连接、但会通知服务端本次推送更新失败
+             */
+            int status = SYNC_FAIL.ordinal();
+            EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
+            try {
+                /**
+                 * md5 check && 是否已存在版本判断
+                 */
+                EntityClassSyncRspProto result = entityClassSyncResponse.getEntityClassSyncRspProto();
+                if (md5Check(entityClassSyncResponse.getMd5(), result)) {
 
-        CompletableFuture<Void> combinedFuture
-                = CompletableFuture.allOf(
-                (CompletableFuture<Boolean>[]) entityClassSyncResponse.getEntityClassSyncRspProtoCheckList().stream().map(
-                        rspProto -> {
-                            return async(() -> {
-                                /**
-                                 * 该方法返回的错误不会导致重新连接、但会通知服务端本次推送更新失败
-                                 */
-                                int status = SYNC_FAIL.ordinal();
-                                try {
-                                    /**
-                                     * md5 check && 是否已存在版本判断
-                                     */
-                                    if (md5Check(rspProto.getMd5(), rspProto.getEntityClassSyncRspProto())
-                                            && versionCheck(rspProto.getEntityClassSyncRspProto().getAppId()
-                                            , rspProto.getEntityClassSyncRspProto().getVersion())) {
+                    int oqsVersion = version(entityClassSyncResponse.getAppId());
 
-                                        /**
-                                         * 执行外部传入的执行器
-                                         */
-                                        status = oqsSyncExecutor.sync(rspProto.getEntityClassSyncRspProto()) ?
-                                                RequestStatus.SYNC_OK.ordinal() : SYNC_FAIL.ordinal();
-                                    }
-                                } catch (Exception e) {
-                                    logger.warn("handle entityClassSyncResponse failed, message : {}", e.getMessage());
-                                    status = SYNC_FAIL.ordinal();
-                                }
+                    if (oqsVersion < entityClassSyncResponse.getVersion()) {
+                        /**
+                         * 执行外部传入的执行器
+                         */
+                        status = oqsSyncExecutor.sync(result) ?
+                                RequestStatus.SYNC_OK.ordinal() : SYNC_FAIL.ordinal();
 
-                                builder.setEntityClassSyncReqProtos(index.getAndIncrement(), EntityClassSyncReqProto.newBuilder()
-                                        .setAppId(rspProto.getEntityClassSyncRspProto().getAppId())
-                                        .setVersion(rspProto.getEntityClassSyncRspProto().getVersion())
-                                        .setStatus(status).build());
+                    } else {
+                        logger.warn("current oqs-version {} bigger than sync-version : {}, will ignore...",
+                                                                    oqsVersion, entityClassSyncResponse.getVersion());
+                        status = RequestStatus.SYNC_OK.ordinal();
+                    }
+                    return builder.setStatus(status)
+                                    .setAppId(entityClassSyncResponse.getAppId())
+                                    .setVersion(entityClassSyncResponse.getVersion());
+                }
 
-                                return true;
-                            });
-                        }).toArray());
+            } catch (Exception e) {
+                logger.warn("handle entityClassSyncResponse failed, message : {}", e.getMessage());
+            }
 
-        combinedFuture.join();
+            return builder.setStatus(SYNC_FAIL.ordinal());
+        });
 
-        return builder.build();
+        future.join();
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            logger.warn("handle entityClassSyncResponse failed, message : {}", e.getMessage());
+            return EntityClassSyncRequest.newBuilder().setStatus(SYNC_FAIL.ordinal());
+        }
     }
 
     @Override
@@ -100,11 +103,10 @@ public class EntityClassExecutorService implements EntityClassExecutor {
         return oqsSyncExecutor.version(appId);
     }
 
-    private boolean versionCheck(String appId, int rspVersion) {
-        return rspVersion > version(appId);
-    }
-
     private boolean md5Check(String md5, EntityClassSyncRspProto entityClassSyncRspProto) {
+        if (null == md5 || md5.isEmpty() || null == entityClassSyncRspProto) {
+            return false;
+        }
         return md5.equals(getMD5(entityClassSyncRspProto.toByteArray()));
     }
 }

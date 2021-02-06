@@ -53,14 +53,14 @@ public interface RelationInfoOrBuilder extends
       getRelOwnerClassNameBytes();
 
   /**
-   * <code>string reltationType = 7;</code>
+   * <code>string relationType = 7;</code>
    */
-  java.lang.String getReltationType();
+  java.lang.String getRelationType();
   /**
-   * <code>string reltationType = 7;</code>
+   * <code>string relationType = 7;</code>
    */
   com.google.protobuf.ByteString
-      getReltationTypeBytes();
+      getRelationTypeBytes();
 
   /**
    * <code>bool identity = 8;</code>

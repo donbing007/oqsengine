@@ -16,7 +16,10 @@ private static final long serialVersionUID = 0L;
     super(builder);
   }
   private EntityClassSyncRequest() {
-    entityClassSyncReqProtos_ = java.util.Collections.emptyList();
+    uid_ = "";
+    appId_ = "";
+    version_ = 0;
+    status_ = 0;
   }
 
   @java.lang.Override
@@ -51,12 +54,25 @@ private static final long serialVersionUID = 0L;
             break;
           }
           case 10: {
-            if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              entityClassSyncReqProtos_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto>();
-              mutable_bitField0_ |= 0x00000001;
-            }
-            entityClassSyncReqProtos_.add(
-                input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.parser(), extensionRegistry));
+            java.lang.String s = input.readStringRequireUtf8();
+
+            uid_ = s;
+            break;
+          }
+          case 18: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            appId_ = s;
+            break;
+          }
+          case 24: {
+
+            version_ = input.readInt32();
+            break;
+          }
+          case 32: {
+
+            status_ = input.readInt32();
             break;
           }
         }
@@ -67,9 +83,6 @@ private static final long serialVersionUID = 0L;
       throw new com.google.protobuf.InvalidProtocolBufferException(
           e).setUnfinishedMessage(this);
     } finally {
-      if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-        entityClassSyncReqProtos_ = java.util.Collections.unmodifiableList(entityClassSyncReqProtos_);
-      }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
     }
@@ -86,39 +99,90 @@ private static final long serialVersionUID = 0L;
             com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest.Builder.class);
   }
 
-  public static final int ENTITYCLASSSYNCREQPROTOS_FIELD_NUMBER = 1;
-  private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto> entityClassSyncReqProtos_;
+  public static final int UID_FIELD_NUMBER = 1;
+  private volatile java.lang.Object uid_;
   /**
-   * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+   * <code>string uid = 1;</code>
    */
-  public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto> getEntityClassSyncReqProtosList() {
-    return entityClassSyncReqProtos_;
+  public java.lang.String getUid() {
+    java.lang.Object ref = uid_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      uid_ = s;
+      return s;
+    }
   }
   /**
-   * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+   * <code>string uid = 1;</code>
    */
-  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProtoOrBuilder> 
-      getEntityClassSyncReqProtosOrBuilderList() {
-    return entityClassSyncReqProtos_;
+  public com.google.protobuf.ByteString
+      getUidBytes() {
+    java.lang.Object ref = uid_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      uid_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int APPID_FIELD_NUMBER = 2;
+  private volatile java.lang.Object appId_;
+  /**
+   * <code>string appId = 2;</code>
+   */
+  public java.lang.String getAppId() {
+    java.lang.Object ref = appId_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      appId_ = s;
+      return s;
+    }
   }
   /**
-   * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+   * <code>string appId = 2;</code>
    */
-  public int getEntityClassSyncReqProtosCount() {
-    return entityClassSyncReqProtos_.size();
+  public com.google.protobuf.ByteString
+      getAppIdBytes() {
+    java.lang.Object ref = appId_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      appId_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
   }
+
+  public static final int VERSION_FIELD_NUMBER = 3;
+  private int version_;
   /**
-   * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+   * <code>int32 version = 3;</code>
    */
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto getEntityClassSyncReqProtos(int index) {
-    return entityClassSyncReqProtos_.get(index);
+  public int getVersion() {
+    return version_;
   }
+
+  public static final int STATUS_FIELD_NUMBER = 4;
+  private int status_;
   /**
-   * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+   * <code>int32 status = 4;</code>
    */
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProtoOrBuilder getEntityClassSyncReqProtosOrBuilder(
-      int index) {
-    return entityClassSyncReqProtos_.get(index);
+  public int getStatus() {
+    return status_;
   }
 
   private byte memoizedIsInitialized = -1;
@@ -133,8 +197,17 @@ private static final long serialVersionUID = 0L;
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    for (int i = 0; i < entityClassSyncReqProtos_.size(); i++) {
-      output.writeMessage(1, entityClassSyncReqProtos_.get(i));
+    if (!getUidBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, uid_);
+    }
+    if (!getAppIdBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, appId_);
+    }
+    if (version_ != 0) {
+      output.writeInt32(3, version_);
+    }
+    if (status_ != 0) {
+      output.writeInt32(4, status_);
     }
     unknownFields.writeTo(output);
   }
@@ -144,9 +217,19 @@ private static final long serialVersionUID = 0L;
     if (size != -1) return size;
 
     size = 0;
-    for (int i = 0; i < entityClassSyncReqProtos_.size(); i++) {
+    if (!getUidBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, uid_);
+    }
+    if (!getAppIdBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, appId_);
+    }
+    if (version_ != 0) {
       size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(1, entityClassSyncReqProtos_.get(i));
+        .computeInt32Size(3, version_);
+    }
+    if (status_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(4, status_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -164,8 +247,14 @@ private static final long serialVersionUID = 0L;
     com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest other = (com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest) obj;
 
     boolean result = true;
-    result = result && getEntityClassSyncReqProtosList()
-        .equals(other.getEntityClassSyncReqProtosList());
+    result = result && getUid()
+        .equals(other.getUid());
+    result = result && getAppId()
+        .equals(other.getAppId());
+    result = result && (getVersion()
+        == other.getVersion());
+    result = result && (getStatus()
+        == other.getStatus());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -177,10 +266,14 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
-    if (getEntityClassSyncReqProtosCount() > 0) {
-      hash = (37 * hash) + ENTITYCLASSSYNCREQPROTOS_FIELD_NUMBER;
-      hash = (53 * hash) + getEntityClassSyncReqProtosList().hashCode();
-    }
+    hash = (37 * hash) + UID_FIELD_NUMBER;
+    hash = (53 * hash) + getUid().hashCode();
+    hash = (37 * hash) + APPID_FIELD_NUMBER;
+    hash = (53 * hash) + getAppId().hashCode();
+    hash = (37 * hash) + VERSION_FIELD_NUMBER;
+    hash = (53 * hash) + getVersion();
+    hash = (37 * hash) + STATUS_FIELD_NUMBER;
+    hash = (53 * hash) + getStatus();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -306,17 +399,18 @@ private static final long serialVersionUID = 0L;
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
-        getEntityClassSyncReqProtosFieldBuilder();
       }
     }
     public Builder clear() {
       super.clear();
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        entityClassSyncReqProtos_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000001);
-      } else {
-        entityClassSyncReqProtosBuilder_.clear();
-      }
+      uid_ = "";
+
+      appId_ = "";
+
+      version_ = 0;
+
+      status_ = 0;
+
       return this;
     }
 
@@ -339,16 +433,10 @@ private static final long serialVersionUID = 0L;
 
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest buildPartial() {
       com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest(this);
-      int from_bitField0_ = bitField0_;
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
-          entityClassSyncReqProtos_ = java.util.Collections.unmodifiableList(entityClassSyncReqProtos_);
-          bitField0_ = (bitField0_ & ~0x00000001);
-        }
-        result.entityClassSyncReqProtos_ = entityClassSyncReqProtos_;
-      } else {
-        result.entityClassSyncReqProtos_ = entityClassSyncReqProtosBuilder_.build();
-      }
+      result.uid_ = uid_;
+      result.appId_ = appId_;
+      result.version_ = version_;
+      result.status_ = status_;
       onBuilt();
       return result;
     }
@@ -390,31 +478,19 @@ private static final long serialVersionUID = 0L;
 
     public Builder mergeFrom(com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest other) {
       if (other == com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest.getDefaultInstance()) return this;
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        if (!other.entityClassSyncReqProtos_.isEmpty()) {
-          if (entityClassSyncReqProtos_.isEmpty()) {
-            entityClassSyncReqProtos_ = other.entityClassSyncReqProtos_;
-            bitField0_ = (bitField0_ & ~0x00000001);
-          } else {
-            ensureEntityClassSyncReqProtosIsMutable();
-            entityClassSyncReqProtos_.addAll(other.entityClassSyncReqProtos_);
-          }
-          onChanged();
-        }
-      } else {
-        if (!other.entityClassSyncReqProtos_.isEmpty()) {
-          if (entityClassSyncReqProtosBuilder_.isEmpty()) {
-            entityClassSyncReqProtosBuilder_.dispose();
-            entityClassSyncReqProtosBuilder_ = null;
-            entityClassSyncReqProtos_ = other.entityClassSyncReqProtos_;
-            bitField0_ = (bitField0_ & ~0x00000001);
-            entityClassSyncReqProtosBuilder_ = 
-              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
-                 getEntityClassSyncReqProtosFieldBuilder() : null;
-          } else {
-            entityClassSyncReqProtosBuilder_.addAllMessages(other.entityClassSyncReqProtos_);
-          }
-        }
+      if (!other.getUid().isEmpty()) {
+        uid_ = other.uid_;
+        onChanged();
+      }
+      if (!other.getAppId().isEmpty()) {
+        appId_ = other.appId_;
+        onChanged();
+      }
+      if (other.getVersion() != 0) {
+        setVersion(other.getVersion());
+      }
+      if (other.getStatus() != 0) {
+        setStatus(other.getStatus());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -442,246 +518,195 @@ private static final long serialVersionUID = 0L;
       }
       return this;
     }
-    private int bitField0_;
 
-    private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto> entityClassSyncReqProtos_ =
-      java.util.Collections.emptyList();
-    private void ensureEntityClassSyncReqProtosIsMutable() {
-      if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        entityClassSyncReqProtos_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto>(entityClassSyncReqProtos_);
-        bitField0_ |= 0x00000001;
-       }
+    private java.lang.Object uid_ = "";
+    /**
+     * <code>string uid = 1;</code>
+     */
+    public java.lang.String getUid() {
+      java.lang.Object ref = uid_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        uid_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string uid = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getUidBytes() {
+      java.lang.Object ref = uid_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        uid_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string uid = 1;</code>
+     */
+    public Builder setUid(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      uid_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string uid = 1;</code>
+     */
+    public Builder clearUid() {
+      
+      uid_ = getDefaultInstance().getUid();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string uid = 1;</code>
+     */
+    public Builder setUidBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      uid_ = value;
+      onChanged();
+      return this;
     }
 
-    private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProtoOrBuilder> entityClassSyncReqProtosBuilder_;
+    private java.lang.Object appId_ = "";
+    /**
+     * <code>string appId = 2;</code>
+     */
+    public java.lang.String getAppId() {
+      java.lang.Object ref = appId_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        appId_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string appId = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getAppIdBytes() {
+      java.lang.Object ref = appId_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        appId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string appId = 2;</code>
+     */
+    public Builder setAppId(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      appId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string appId = 2;</code>
+     */
+    public Builder clearAppId() {
+      
+      appId_ = getDefaultInstance().getAppId();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string appId = 2;</code>
+     */
+    public Builder setAppIdBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      appId_ = value;
+      onChanged();
+      return this;
+    }
 
+    private int version_ ;
     /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+     * <code>int32 version = 3;</code>
      */
-    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto> getEntityClassSyncReqProtosList() {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        return java.util.Collections.unmodifiableList(entityClassSyncReqProtos_);
-      } else {
-        return entityClassSyncReqProtosBuilder_.getMessageList();
-      }
+    public int getVersion() {
+      return version_;
     }
     /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+     * <code>int32 version = 3;</code>
      */
-    public int getEntityClassSyncReqProtosCount() {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        return entityClassSyncReqProtos_.size();
-      } else {
-        return entityClassSyncReqProtosBuilder_.getCount();
-      }
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto getEntityClassSyncReqProtos(int index) {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        return entityClassSyncReqProtos_.get(index);
-      } else {
-        return entityClassSyncReqProtosBuilder_.getMessage(index);
-      }
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public Builder setEntityClassSyncReqProtos(
-        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto value) {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        ensureEntityClassSyncReqProtosIsMutable();
-        entityClassSyncReqProtos_.set(index, value);
-        onChanged();
-      } else {
-        entityClassSyncReqProtosBuilder_.setMessage(index, value);
-      }
+    public Builder setVersion(int value) {
+      
+      version_ = value;
+      onChanged();
       return this;
     }
     /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+     * <code>int32 version = 3;</code>
      */
-    public Builder setEntityClassSyncReqProtos(
-        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.Builder builderForValue) {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        ensureEntityClassSyncReqProtosIsMutable();
-        entityClassSyncReqProtos_.set(index, builderForValue.build());
-        onChanged();
-      } else {
-        entityClassSyncReqProtosBuilder_.setMessage(index, builderForValue.build());
-      }
+    public Builder clearVersion() {
+      
+      version_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int status_ ;
+    /**
+     * <code>int32 status = 4;</code>
+     */
+    public int getStatus() {
+      return status_;
+    }
+    /**
+     * <code>int32 status = 4;</code>
+     */
+    public Builder setStatus(int value) {
+      
+      status_ = value;
+      onChanged();
       return this;
     }
     /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
+     * <code>int32 status = 4;</code>
      */
-    public Builder addEntityClassSyncReqProtos(com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto value) {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        ensureEntityClassSyncReqProtosIsMutable();
-        entityClassSyncReqProtos_.add(value);
-        onChanged();
-      } else {
-        entityClassSyncReqProtosBuilder_.addMessage(value);
-      }
+    public Builder clearStatus() {
+      
+      status_ = 0;
+      onChanged();
       return this;
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public Builder addEntityClassSyncReqProtos(
-        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto value) {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        ensureEntityClassSyncReqProtosIsMutable();
-        entityClassSyncReqProtos_.add(index, value);
-        onChanged();
-      } else {
-        entityClassSyncReqProtosBuilder_.addMessage(index, value);
-      }
-      return this;
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public Builder addEntityClassSyncReqProtos(
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.Builder builderForValue) {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        ensureEntityClassSyncReqProtosIsMutable();
-        entityClassSyncReqProtos_.add(builderForValue.build());
-        onChanged();
-      } else {
-        entityClassSyncReqProtosBuilder_.addMessage(builderForValue.build());
-      }
-      return this;
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public Builder addEntityClassSyncReqProtos(
-        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.Builder builderForValue) {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        ensureEntityClassSyncReqProtosIsMutable();
-        entityClassSyncReqProtos_.add(index, builderForValue.build());
-        onChanged();
-      } else {
-        entityClassSyncReqProtosBuilder_.addMessage(index, builderForValue.build());
-      }
-      return this;
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public Builder addAllEntityClassSyncReqProtos(
-        java.lang.Iterable<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto> values) {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        ensureEntityClassSyncReqProtosIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, entityClassSyncReqProtos_);
-        onChanged();
-      } else {
-        entityClassSyncReqProtosBuilder_.addAllMessages(values);
-      }
-      return this;
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public Builder clearEntityClassSyncReqProtos() {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        entityClassSyncReqProtos_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000001);
-        onChanged();
-      } else {
-        entityClassSyncReqProtosBuilder_.clear();
-      }
-      return this;
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public Builder removeEntityClassSyncReqProtos(int index) {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        ensureEntityClassSyncReqProtosIsMutable();
-        entityClassSyncReqProtos_.remove(index);
-        onChanged();
-      } else {
-        entityClassSyncReqProtosBuilder_.remove(index);
-      }
-      return this;
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.Builder getEntityClassSyncReqProtosBuilder(
-        int index) {
-      return getEntityClassSyncReqProtosFieldBuilder().getBuilder(index);
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProtoOrBuilder getEntityClassSyncReqProtosOrBuilder(
-        int index) {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        return entityClassSyncReqProtos_.get(index);  } else {
-        return entityClassSyncReqProtosBuilder_.getMessageOrBuilder(index);
-      }
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProtoOrBuilder> 
-         getEntityClassSyncReqProtosOrBuilderList() {
-      if (entityClassSyncReqProtosBuilder_ != null) {
-        return entityClassSyncReqProtosBuilder_.getMessageOrBuilderList();
-      } else {
-        return java.util.Collections.unmodifiableList(entityClassSyncReqProtos_);
-      }
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.Builder addEntityClassSyncReqProtosBuilder() {
-      return getEntityClassSyncReqProtosFieldBuilder().addBuilder(
-          com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.getDefaultInstance());
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.Builder addEntityClassSyncReqProtosBuilder(
-        int index) {
-      return getEntityClassSyncReqProtosFieldBuilder().addBuilder(
-          index, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.getDefaultInstance());
-    }
-    /**
-     * <code>repeated .EntityClassSyncReqProto entityClassSyncReqProtos = 1;</code>
-     */
-    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.Builder> 
-         getEntityClassSyncReqProtosBuilderList() {
-      return getEntityClassSyncReqProtosFieldBuilder().getBuilderList();
-    }
-    private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProtoOrBuilder> 
-        getEntityClassSyncReqProtosFieldBuilder() {
-      if (entityClassSyncReqProtosBuilder_ == null) {
-        entityClassSyncReqProtosBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProto.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReqProtoOrBuilder>(
-                entityClassSyncReqProtos_,
-                ((bitField0_ & 0x00000001) == 0x00000001),
-                getParentForChildren(),
-                isClean());
-        entityClassSyncReqProtos_ = null;
-      }
-      return entityClassSyncReqProtosBuilder_;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

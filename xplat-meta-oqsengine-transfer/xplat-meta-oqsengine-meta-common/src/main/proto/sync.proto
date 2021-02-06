@@ -12,34 +12,27 @@ service EntityClassSync {
 }
 
 message EntityClassSyncRequest {
-	repeated EntityClassSyncReqProto entityClassSyncReqProtos = 1;
-}
-
-message EntityClassSyncReqProto {
-	string appId = 1;
-	int32 version = 2;
-	int32 status = 3;
+	string uid = 1;
+	string appId = 2;
+	int32 version = 3;
+	int32 status = 4;
 }
 
 message EntityClassSyncResponse {
-	repeated EntityClassSyncRspProtoCheck entityClassSyncRspProtoCheck = 1;
-}
-
-message EntityClassSyncRspProtoCheck {
-	string md5 = 1;
-	EntityClassSyncRspProto entityClassSyncRspProto = 2;
+	string appId = 1;
+	int32 version = 2;
+	string uid = 3;
+	int32 status = 4;
+	string md5 = 5;
+	EntityClassSyncRspProto entityClassSyncRspProto = 6;
 }
 
 message EntityClassSyncRspProto {
-	string appId = 1;
-	int32 version = 2;
-	repeated EntityClassInfo entityClassInfos = 3;
-	repeated EntityFieldInfo entityFields = 4;
-	repeated FieldConfigInfo configs = 5;
-	repeated RelationInfo relations = 6;
+	repeated EntityClassInfo entityClasses = 1;
+	repeated EntityFieldInfo entityFields = 2;
+	repeated FieldConfigInfo configs = 3;
+	repeated RelationInfo relations = 4;
 }
-
-
 
 message EntityClassInfo {
 	string code = 1;
@@ -78,7 +71,7 @@ message FieldConfigInfo {
 	int64 max = 2;
 	int64 min = 3;
 	int32 precision = 4;
-	bool identifie = 5;
+	bool identifier = 5;
 	bool isRequired = 6;
 	string validateRegexString = 7;
 	bool isSplittable = 8;
@@ -109,7 +102,7 @@ message RelationInfo {
 	string entityClassName = 4;
 	int64 relOwnerClassId = 5;
 	string relOwnerClassName = 6;
-	string reltationType = 7;
+	string relationType = 7;
 	bool identity = 8;
 	int64 entityFieldId = 9;
 }

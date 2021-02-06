@@ -8,26 +8,55 @@ public interface EntityClassSyncResponseOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>repeated .EntityClassSyncRspProtoCheck entityClassSyncRspProtoCheck = 1;</code>
+   * <code>string appId = 1;</code>
    */
-  java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProtoCheck> 
-      getEntityClassSyncRspProtoCheckList();
+  java.lang.String getAppId();
   /**
-   * <code>repeated .EntityClassSyncRspProtoCheck entityClassSyncRspProtoCheck = 1;</code>
+   * <code>string appId = 1;</code>
    */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProtoCheck getEntityClassSyncRspProtoCheck(int index);
+  com.google.protobuf.ByteString
+      getAppIdBytes();
+
   /**
-   * <code>repeated .EntityClassSyncRspProtoCheck entityClassSyncRspProtoCheck = 1;</code>
+   * <code>int32 version = 2;</code>
    */
-  int getEntityClassSyncRspProtoCheckCount();
+  int getVersion();
+
   /**
-   * <code>repeated .EntityClassSyncRspProtoCheck entityClassSyncRspProtoCheck = 1;</code>
+   * <code>string uid = 3;</code>
    */
-  java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProtoCheckOrBuilder> 
-      getEntityClassSyncRspProtoCheckOrBuilderList();
+  java.lang.String getUid();
   /**
-   * <code>repeated .EntityClassSyncRspProtoCheck entityClassSyncRspProtoCheck = 1;</code>
+   * <code>string uid = 3;</code>
    */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProtoCheckOrBuilder getEntityClassSyncRspProtoCheckOrBuilder(
-      int index);
+  com.google.protobuf.ByteString
+      getUidBytes();
+
+  /**
+   * <code>int32 status = 4;</code>
+   */
+  int getStatus();
+
+  /**
+   * <code>string md5 = 5;</code>
+   */
+  java.lang.String getMd5();
+  /**
+   * <code>string md5 = 5;</code>
+   */
+  com.google.protobuf.ByteString
+      getMd5Bytes();
+
+  /**
+   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+   */
+  boolean hasEntityClassSyncRspProto();
+  /**
+   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto getEntityClassSyncRspProto();
+  /**
+   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProtoOrBuilder getEntityClassSyncRspProtoOrBuilder();
 }

@@ -20,7 +20,7 @@ private static final long serialVersionUID = 0L;
     max_ = 0L;
     min_ = 0L;
     precision_ = 0;
-    identifie_ = false;
+    identifier_ = false;
     isRequired_ = false;
     validateRegexString_ = "";
     isSplittable_ = false;
@@ -84,7 +84,7 @@ private static final long serialVersionUID = 0L;
           }
           case 40: {
 
-            identifie_ = input.readBool();
+            identifier_ = input.readBool();
             break;
           }
           case 48: {
@@ -362,13 +362,13 @@ private static final long serialVersionUID = 0L;
     return precision_;
   }
 
-  public static final int IDENTIFIE_FIELD_NUMBER = 5;
-  private boolean identifie_;
+  public static final int IDENTIFIER_FIELD_NUMBER = 5;
+  private boolean identifier_;
   /**
-   * <code>bool identifie = 5;</code>
+   * <code>bool identifier = 5;</code>
    */
-  public boolean getIdentifie() {
-    return identifie_;
+  public boolean getIdentifier() {
+    return identifier_;
   }
 
   public static final int ISREQUIRED_FIELD_NUMBER = 6;
@@ -574,8 +574,8 @@ private static final long serialVersionUID = 0L;
     if (precision_ != 0) {
       output.writeInt32(4, precision_);
     }
-    if (identifie_ != false) {
-      output.writeBool(5, identifie_);
+    if (identifier_ != false) {
+      output.writeBool(5, identifier_);
     }
     if (isRequired_ != false) {
       output.writeBool(6, isRequired_);
@@ -625,9 +625,9 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(4, precision_);
     }
-    if (identifie_ != false) {
+    if (identifier_ != false) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(5, identifie_);
+        .computeBoolSize(5, identifier_);
     }
     if (isRequired_ != false) {
       size += com.google.protobuf.CodedOutputStream
@@ -681,8 +681,8 @@ private static final long serialVersionUID = 0L;
         == other.getMin());
     result = result && (getPrecision()
         == other.getPrecision());
-    result = result && (getIdentifie()
-        == other.getIdentifie());
+    result = result && (getIdentifier()
+        == other.getIdentifier());
     result = result && (getIsRequired()
         == other.getIsRequired());
     result = result && getValidateRegexString()
@@ -720,9 +720,9 @@ private static final long serialVersionUID = 0L;
         getMin());
     hash = (37 * hash) + PRECISION_FIELD_NUMBER;
     hash = (53 * hash) + getPrecision();
-    hash = (37 * hash) + IDENTIFIE_FIELD_NUMBER;
+    hash = (37 * hash) + IDENTIFIER_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-        getIdentifie());
+        getIdentifier());
     hash = (37 * hash) + ISREQUIRED_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getIsRequired());
@@ -879,7 +879,7 @@ private static final long serialVersionUID = 0L;
 
       precision_ = 0;
 
-      identifie_ = false;
+      identifier_ = false;
 
       isRequired_ = false;
 
@@ -923,7 +923,7 @@ private static final long serialVersionUID = 0L;
       result.max_ = max_;
       result.min_ = min_;
       result.precision_ = precision_;
-      result.identifie_ = identifie_;
+      result.identifier_ = identifier_;
       result.isRequired_ = isRequired_;
       result.validateRegexString_ = validateRegexString_;
       result.isSplittable_ = isSplittable_;
@@ -985,8 +985,8 @@ private static final long serialVersionUID = 0L;
       if (other.getPrecision() != 0) {
         setPrecision(other.getPrecision());
       }
-      if (other.getIdentifie() != false) {
-        setIdentifie(other.getIdentifie());
+      if (other.getIdentifier() != false) {
+        setIdentifier(other.getIdentifier());
       }
       if (other.getIsRequired() != false) {
         setIsRequired(other.getIsRequired());
@@ -1147,28 +1147,28 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private boolean identifie_ ;
+    private boolean identifier_ ;
     /**
-     * <code>bool identifie = 5;</code>
+     * <code>bool identifier = 5;</code>
      */
-    public boolean getIdentifie() {
-      return identifie_;
+    public boolean getIdentifier() {
+      return identifier_;
     }
     /**
-     * <code>bool identifie = 5;</code>
+     * <code>bool identifier = 5;</code>
      */
-    public Builder setIdentifie(boolean value) {
+    public Builder setIdentifier(boolean value) {
       
-      identifie_ = value;
+      identifier_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>bool identifie = 5;</code>
+     * <code>bool identifier = 5;</code>
      */
-    public Builder clearIdentifie() {
+    public Builder clearIdentifier() {
       
-      identifie_ = false;
+      identifier_ = false;
       onChanged();
       return this;
     }
