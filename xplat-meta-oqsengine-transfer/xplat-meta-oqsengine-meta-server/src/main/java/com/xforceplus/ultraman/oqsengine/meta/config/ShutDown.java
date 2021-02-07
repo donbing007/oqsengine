@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.config;
 
-import com.xforceplus.ultraman.oqsengine.meta.executor.IWatchExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.EntityClassSyncResponseHandler;
 import org.springframework.stereotype.Component;
 

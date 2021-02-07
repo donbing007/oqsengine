@@ -2,14 +2,15 @@ package com.xforceplus.ultraman.oqsengine.meta;
 
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
-import com.xforceplus.ultraman.oqsengine.meta.dto.StatusElement;
 import com.xforceplus.ultraman.oqsengine.meta.executor.EntityClassExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,9 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstant.reconnectDuration;
+import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest;
 
 /**
  * desc :
@@ -38,13 +42,10 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
     @Resource(name = "entityClassExecutor")
     private EntityClassExecutor entityClassExecutor;
 
+    @Resource
+    private RequestWatchExecutor requestWatchExecutor;
+
     private volatile boolean isReRegister = false;
-
-    private static final long reconnectDuration = 5_000;
-
-    private RequestWatcher requestWatcher = null;
-
-    private Map<String, Integer> temp = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void start() {
@@ -57,9 +58,7 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
     }
 
     public void destroy() throws InterruptedException {
-        if (null != requestWatcher && requestWatcher.isRemoved()) {
-            requestWatcher.release();
-        }
+        requestWatchExecutor.stop();
 
         if (client.opened()) {
             client.destroy();
@@ -90,35 +89,38 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
                     TimeWaitUtils.wakeupAfter(reconnectDuration, TimeUnit.MILLISECONDS);
                     continue;
                 }
-                if (null == requestWatcher) {
-                    requestWatcher = new RequestWatcher(UUID.randomUUID().toString(), streamObserver);
-                } else {
-                    requestWatcher.reset(UUID.randomUUID().toString(), streamObserver);
-                }
+
+                /**
+                 * 判断是服务重启还是断流
+                 */
+                requestWatchExecutor.create(uid, streamObserver);
+
 
                 /**
                  * 重新注册所有watchList到服务段
                  * 当注册失败时，将直接标记该observer不可用
                  * 注册成功则直接进入wait状态，直到observer上发生错误为止
                  */
-                if (reRegister(requestWatcher)) {
+                if (reRegister(requestWatchExecutor.watcher())) {
                     /**
                      * 设置服务可用
                      */
-                    requestWatcher.canServer();
+                    requestWatchExecutor.watcher().canServer();
                     /**
                      * wait直到countDownLatch = 0;
                      */
                     Uninterruptibles.awaitUninterruptibly(countDownLatch);
-                    /**
-                     * 设置服务不可用
-                     */
-                    requestWatcher.canNotServer();
                 }
-                requestWatcher.release();
+
+                /**
+                 * 设置服务不可用
+                 */
+                requestWatchExecutor.watcher().canNotServer();
 
                 logger.warn("stream has broken, will re-create new one after ({})ms...", reconnectDuration);
                 TimeWaitUtils.wakeupAfter(reconnectDuration, TimeUnit.MILLISECONDS);
+
+                requestWatchExecutor.release();
             }
         }).start();
     }
@@ -130,8 +132,8 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
 
     @Override
     public synchronized boolean register(List<AbstractMap.SimpleEntry<String, Integer>> appIdEntries) {
-
-        if (null == requestWatcher) {
+        RequestWatcher watcher = requestWatchExecutor.watcher();
+        if (null == watcher) {
             logger.warn("current gRpc-client is not init, can't offer appIds:{}."
                     , appIdEntries.stream().map(AbstractMap.SimpleEntry::getKey).collect(Collectors.toList()));
             return false;
@@ -139,7 +141,7 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
 
         appIdEntries.stream()
                 .filter(s -> {
-                    if (requestWatcher.watches().containsKey(s.getKey())) {
+                    if (watcher.watches().containsKey(s.getKey())) {
                         logger.info("appId : {} is already in watchList, will ignore...", s.getKey());
                         return false;
                     } else {
@@ -149,26 +151,31 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
                 })
                 .forEach(
                         v -> {
-                            if (isReRegister || requestWatcher.isRemoved()) {
-                                requestWatcher.addWatch(v.getKey(),
-                                        new StatusElement(v.getKey(), v.getValue(), StatusElement.Status.Wait));
+                            if (isReRegister || watcher.isReleased()) {
+                                watcher.addWatch(
+                                        new WatchElement(v.getKey(), v.getValue(), WatchElement.AppStatus.Init));
                             } else {
                                 EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
 
                                 EntityClassSyncRequest entityClassSyncRequest =
-                                        builder.setUid(requestWatcher.uid()).setAppId(v.getKey()).setVersion(v.getValue())
+                                        builder.setUid(watcher.uid()).setAppId(v.getKey()).setVersion(v.getValue())
                                                 .setStatus(RequestStatus.REGISTER.ordinal()).build();
 
-                                StatusElement.Status status = StatusElement.Status.Register;
-                                if (!internalRegister(requestWatcher, entityClassSyncRequest)) {
-                                    status = StatusElement.Status.Wait;
+                                WatchElement.AppStatus status = WatchElement.AppStatus.Register;
+                                try {
+                                    sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequest,
+                                            requestWatchExecutor.canAccessFunction(), entityClassSyncRequest.getUid());
+                                } catch (Exception e) {
+                                    status = WatchElement.AppStatus.Init;
                                 }
-                                requestWatcher.addWatch(v.getKey(),
-                                        new StatusElement(v.getKey(), v.getValue(), status));
+                                watcher.addWatch(
+                                        new WatchElement(v.getKey(), v.getValue(), status));
                             }
                         }
                 );
-        logger.info("current watchList : {}", requestWatcher.watches().toString());
+
+        logger.info("current watchList status : {}", watcher.watches().toString());
+
         return true;
     }
 
@@ -185,35 +192,33 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
                  * 重启中所有的Response将被忽略
                  * 不是同批次请求将被忽略
                  */
-                if (requestWatcher.isRemoved() ||
-                        !requestWatcher.uid().equals(entityClassSyncResponse.getUid())) {
+                if (!requestWatchExecutor.canAccess(entityClassSyncResponse.getUid())) {
                     return;
                 }
+
                 /**
                  * reset heartbeat
                  */
-                requestWatcher.resetHeartBeat();
+                requestWatchExecutor.resetHeartBeat();
+
                 /**
                  * 更新状态
                  */
                 if (entityClassSyncResponse.getStatus() == RequestStatus.CONFIRM_REGISTER.ordinal()) {
-                    StatusElement element = requestWatcher.watches().get(entityClassSyncResponse.getAppId());
-                    if (requestWatcher.onWatch(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion())) {
-                        element.setVersion(entityClassSyncResponse.getVersion());
-                        element.setStatus(StatusElement.Status.Confirmed);
-                    }
+                   requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(),
+                            entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed));
                 } else {
                     /**
                      * 执行OQS更新EntityClass
                      */
                     EntityClassSyncRequest.Builder entityClassSyncRequestBuilder =
                             entityClassExecutor.execute(entityClassSyncResponse);
-
                     /**
                      * 回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
                      */
                     try {
-                        ack(entityClassSyncRequestBuilder.setUid(uid).build());
+                        sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequestBuilder.setUid(uid).build(),
+                                                requestWatchExecutor.canAccessFunction(), entityClassSyncResponse.getUid());
                     } catch (Exception ex) {
                         logger.error("stream observer ack error, message-[{}].", ex.getMessage());
                         onError(ex);
@@ -259,7 +264,7 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
                                         .setStatus(RequestStatus.REGISTER.ordinal()).build();
 
                                 try {
-                                    requestWatcher.observer().onNext(entityClassSyncRequest);
+                                    sendRequest(requestWatcher, entityClassSyncRequest);
                                 } catch (Exception e) {
                                     throw new MetaSyncClientException(
                                             String.format("reRegister watchers-[%s] failed.", entityClassSyncRequest.toString()), true);
@@ -269,6 +274,7 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
 
                 } catch (Exception e) {
                     logger.warn(e.getMessage());
+                    requestWatcher.observer().onError(e);
                     return false;
                 }
             }
@@ -279,53 +285,4 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
     }
 
 
-    /**
-     * 注册appId列表到元数据
-     *
-     * @param entityClassSyncRequest
-     * @return boolean
-     */
-    private boolean internalRegister(RequestWatcher requestWatcher, EntityClassSyncRequest entityClassSyncRequest) {
-
-        if (null == requestWatcher ||
-                null == requestWatcher.observer() ||
-                    requestWatcher.isRemoved()) {
-            logger.warn("stream observer not exists.");
-            return false;
-        }
-
-        try {
-            requestWatcher.observer().onNext(entityClassSyncRequest);
-        } catch (Exception e) {
-            logger.warn("register error, entityClassSyncRequest : {}, message : {}"
-                                                    , entityClassSyncRequest.toString(), e.getMessage());
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * 响应response处理结果，告知元数据
-     *
-     * @param entityClassSyncRequest
-     */
-    private void ack(EntityClassSyncRequest entityClassSyncRequest) {
-        if(null == requestWatcher) {
-            logger.warn("stream observer not exists.");
-            throw new MetaSyncClientException("stream observer not exists or was expired.", true);
-        }
-        StreamObserver<EntityClassSyncRequest> observer = requestWatcher.observer();
-        if (null != observer ||
-                requestWatcher.isRemoved()) {
-            logger.warn("stream observer not exists.");
-            throw new MetaSyncClientException("stream observer not exists or was expired.", true);
-        }
-
-        try {
-            requestWatcher.observer().onNext(entityClassSyncRequest);
-        } catch (Exception e) {
-
-        }
-    }
 }

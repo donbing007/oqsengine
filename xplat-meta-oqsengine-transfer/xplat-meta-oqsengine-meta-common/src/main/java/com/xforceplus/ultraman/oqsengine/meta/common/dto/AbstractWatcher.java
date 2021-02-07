@@ -1,11 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.dto;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncServerException;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import io.grpc.stub.StreamObserver;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -16,7 +15,7 @@ import java.util.function.Supplier;
  * date : 2021/2/6
  * @since : 1.8
  */
-public abstract class AbstractWatcher<T, V> implements IWatcher<T, V> {
+public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     /**
      * 注册的uid;
@@ -36,12 +35,12 @@ public abstract class AbstractWatcher<T, V> implements IWatcher<T, V> {
     /**
      * 当前关注的appId
      */
-    protected Map<String, V> watches;
+    protected Map<String, WatchElement> watches;
 
     /**
      * 当前是否已被清理状态
      */
-    protected volatile boolean isRemoved = false;
+    private volatile boolean isReleased = false;
 
 
     public AbstractWatcher(String uid, StreamObserver<T> streamObserver) {
@@ -57,13 +56,8 @@ public abstract class AbstractWatcher<T, V> implements IWatcher<T, V> {
     }
 
     @Override
-    public void addWatch(String appId, V v) {
-        watches.put(appId, v);
-    }
-
-    @Override
-    public boolean isRemoved() {
-        return isRemoved;
+    public void addWatch(WatchElement w) {
+        watches.put(w.getAppId(), w);
     }
 
     @Override
@@ -78,13 +72,13 @@ public abstract class AbstractWatcher<T, V> implements IWatcher<T, V> {
 
     @Override
     public void resetHeartBeat() {
-        if (!isRemoved) {
+        if (!isReleased) {
             heartBeat = System.currentTimeMillis();
         }
     }
 
     @Override
-    public <S> void remove(Supplier<S> supplier) {
+    public <S> void release(Supplier<S> supplier) {
         canNotServer();
         try {
             supplier.get();
@@ -100,24 +94,31 @@ public abstract class AbstractWatcher<T, V> implements IWatcher<T, V> {
     }
 
     @Override
-    public void remove() {
-        if (!isRemoved) {
-            release();
-        }
+    public boolean isReleased() {
+        return isReleased;
     }
 
-    /**
-     * 释放当前observer
-     */
-    public abstract void release();
+    @Override
+    public Map<String, WatchElement> watches() {
+        return watches;
+    }
+
+    @Override
+    public boolean runWithCheck(Function<StreamObserver<T>, Boolean> function) {
+        if (!isReleased()) {
+            return function.apply(streamObserver);
+        }
+
+        return false;
+    }
 
     public abstract void reset(String uid, StreamObserver<T> streamObserver);
 
     public void canServer() {
-        isRemoved = true;
+        isReleased = true;
     }
 
     public void canNotServer() {
-        isRemoved = false;
+        isReleased = false;
     }
 }

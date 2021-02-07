@@ -1,9 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.executor.IWatchExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.EntityClassSyncResponseHandler;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
@@ -27,7 +29,7 @@ public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncIm
     private Logger logger = LoggerFactory.getLogger(EntityClassSyncServer.class);
 
     @Resource
-    private IWatchExecutor<EntityClassSyncResponse, Integer> watchExecutor;
+    private IResponseWatchExecutor watchExecutor;
 
     @Resource
     private EntityClassSyncResponseHandler responseHandler;
@@ -53,8 +55,9 @@ public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncIm
                     /**
                      * 处理注册
                      */
-                    watchExecutor.add(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(),
-                                                            entityClassSyncRequest.getUid(), responseStreamObserver);
+                    WatchElement w =
+                            new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(), WatchElement.AppStatus.Register);
+                    watchExecutor.add(entityClassSyncRequest.getUid(), responseStreamObserver, w);
 
                     /**
                      * 确认注册信息
@@ -66,8 +69,9 @@ public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncIm
                     /**
                      * 处理返回结果成功
                      */
-                    watchExecutor.update(entityClassSyncRequest.getAppId(),
-                                            entityClassSyncRequest.getVersion(), entityClassSyncRequest.getUid());
+                    watchExecutor.update(entityClassSyncRequest.getUid(),
+                            new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(),
+                                    WatchElement.AppStatus.Confirmed));
 
                 } else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
                     /**

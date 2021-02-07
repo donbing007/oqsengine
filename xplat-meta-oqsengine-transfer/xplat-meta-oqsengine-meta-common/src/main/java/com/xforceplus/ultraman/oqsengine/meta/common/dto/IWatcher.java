@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.dto;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import io.grpc.stub.StreamObserver;
 
 import java.util.Map;
@@ -15,7 +14,7 @@ import java.util.function.Supplier;
  * date : 2021/2/4
  * @since : 1.8
  */
-public interface IWatcher<T, V> {
+public interface IWatcher<T> {
 
     String uid();
 
@@ -25,22 +24,22 @@ public interface IWatcher<T, V> {
 
     StreamObserver<T> observer();
 
-    boolean onWatch(String appId, Integer version);
+    boolean onWatch(WatchElement watchElement);
 
-    void addWatch(String appId, V v);
+    void addWatch(WatchElement watchElement);
 
-    Map<String, V> watches();
+    Map<String, WatchElement> watches();
 
     /**
      * 执行supplier后remove
      * @param supplier
      * @param <S>
      */
-    <S> void remove(Supplier<S> supplier);
+    <S> void release(Supplier<S> supplier);
 
-    void remove();
+    void release();
 
-    boolean isRemoved();
+    boolean isReleased();
 
     boolean runWithCheck(Function<StreamObserver<T>, Boolean> function);
 

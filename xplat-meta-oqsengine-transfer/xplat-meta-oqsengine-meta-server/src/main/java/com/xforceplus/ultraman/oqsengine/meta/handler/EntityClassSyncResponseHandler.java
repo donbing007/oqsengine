@@ -1,7 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
-import com.xforceplus.ultraman.oqsengine.meta.common.handler.SyncHandler;
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.handler.BasicMessageHandler;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils;
@@ -9,8 +10,8 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.IWatcher;
+import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRetryExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerator;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstant.defaultDelayTaskDuration;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.CONFIRM_HEARTBEAT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.CONFIRM_REGISTER;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Notice;
 
 
 /**
@@ -35,12 +37,12 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStat
  * date : 2021/2/4
  * @since : 1.8
  */
-public class EntityClassSyncResponseHandler implements ResponseHandler<EntityClassSyncResponse>, SyncHandler {
+public class EntityClassSyncResponseHandler implements ResponseHandler<EntityClassSyncResponse>, BasicMessageHandler {
 
     private Logger logger = LoggerFactory.getLogger(EntityClassSyncResponseHandler.class);
 
     @Resource
-    private IWatchExecutor<EntityClassSyncResponse, Integer> watchExecutor;
+    private IResponseWatchExecutor watchExecutor;
 
     @Resource
     private IRetryExecutor retryExecutor;
@@ -103,7 +105,7 @@ public class EntityClassSyncResponseHandler implements ResponseHandler<EntityCla
     @Override
     public boolean pull(String appId, int version, String uid) {
         try {
-            Optional<IWatcher<EntityClassSyncResponse, Integer>> watcherOp = watchExecutor.watcher(uid);
+            Optional<IWatcher<EntityClassSyncResponse>> watcherOp = watchExecutor.watcher(uid);
 
             if (watcherOp.isPresent()) {
                 return response(appId, version, entityClassGenerator.pull(appId, version), watcherOp.get());
@@ -134,7 +136,7 @@ public class EntityClassSyncResponseHandler implements ResponseHandler<EntityCla
      * @param requestStatus
      */
     private void response(String appId, int version, String uid, RequestStatus requestStatus) {
-        Optional<IWatcher<EntityClassSyncResponse, Integer>> watcherOp = watchExecutor.watcher(uid);
+        Optional<IWatcher<EntityClassSyncResponse>> watcherOp = watchExecutor.watcher(uid);
 
         if (watcherOp.isPresent()) {
             EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
@@ -160,7 +162,7 @@ public class EntityClassSyncResponseHandler implements ResponseHandler<EntityCla
      * @return
      */
     private boolean response(String appId, int version, EntityClassSyncRspProto result,
-                                                IWatcher<EntityClassSyncResponse, Integer> watcher) {
+                                                IWatcher<EntityClassSyncResponse> watcher) {
         if (null == appId || appId.isEmpty()) {
             logger.warn("appId is null");
             return false;
@@ -174,7 +176,7 @@ public class EntityClassSyncResponseHandler implements ResponseHandler<EntityCla
         if (null != watcher) {
             responseByWatch(appId, version, generateResponse(appId, version, result), watcher, false);
         } else {
-            List<IWatcher<EntityClassSyncResponse, Integer>> needList = watchExecutor.need(appId, version);
+            List<IWatcher<EntityClassSyncResponse>> needList = watchExecutor.need(new WatchElement(appId, version, Notice));
             if (!needList.isEmpty()) {
                 EntityClassSyncResponse response = generateResponse(appId, version, result);
 
@@ -189,7 +191,7 @@ public class EntityClassSyncResponseHandler implements ResponseHandler<EntityCla
     }
 
     private void responseByWatch(String appId, int version, EntityClassSyncResponse response,
-                                                IWatcher<EntityClassSyncResponse, Integer> watcher, boolean confirm) {
+                                                IWatcher<EntityClassSyncResponse> watcher, boolean confirm) {
         if (null != watcher) {
             if (watcher.runWithCheck(observer -> {
                 try {
@@ -202,7 +204,7 @@ public class EntityClassSyncResponseHandler implements ResponseHandler<EntityCla
                      */
                     TimeWaitUtils.wakeupAfter(1, TimeUnit.MILLISECONDS);
 
-                    watchExecutor.remove(watcher.uid());
+                    watchExecutor.release(watcher.uid());
                 }
                 return false;
             })) {
@@ -246,10 +248,10 @@ public class EntityClassSyncResponseHandler implements ResponseHandler<EntityCla
             }
 
             executor.execute(() -> {
-                Optional<IWatcher<EntityClassSyncResponse, Integer>> watcherOp = watchExecutor.watcher(task.element().getUid());
+                Optional<IWatcher<EntityClassSyncResponse>> watcherOp = watchExecutor.watcher(task.element().getUid());
                 if (watcherOp.isPresent()) {
-                    IWatcher<EntityClassSyncResponse, Integer> watcher = watcherOp.get();
-                    if (!watcher.isRemoved() && watcher.onWatch(task.element().getAppId(), task.element().getVersion())) {
+                    IWatcher<EntityClassSyncResponse> watcher = watcherOp.get();
+                    if (!watcher.isReleased() && watcher.onWatch(new WatchElement(task.element().getAppId(), task.element().getVersion(), Notice))) {
                         /**
                          * 直接拉取
                          */

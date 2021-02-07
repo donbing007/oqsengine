@@ -14,5 +14,5 @@ public class GRpcConstant {
 
     public static final long defaultSleepDuration = 1_000;
     public static final long monitorSleepDuration = 1_000;
-
+    public static final long reconnectDuration = 5_000;
 }

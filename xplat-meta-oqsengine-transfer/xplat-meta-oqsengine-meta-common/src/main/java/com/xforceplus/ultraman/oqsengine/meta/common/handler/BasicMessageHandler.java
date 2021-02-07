@@ -9,7 +9,7 @@ package com.xforceplus.ultraman.oqsengine.meta.common.handler;
  * date : 2021/2/6
  * @since : 1.8
  */
-public interface SyncHandler {
+public interface BasicMessageHandler {
 
     void confirmRegister(String appId, int version, String uid);
 

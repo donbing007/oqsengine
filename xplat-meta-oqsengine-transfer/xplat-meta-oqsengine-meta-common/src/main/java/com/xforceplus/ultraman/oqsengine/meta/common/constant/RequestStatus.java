@@ -12,6 +12,7 @@ public enum  RequestStatus {
     HEARTBEAT,
     REGISTER,
     CONFIRM_REGISTER,
+    CONFIRM_HEARTBEAT,
     SYNC_OK,
     SYNC_FAIL;
 }

@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
@@ -16,13 +18,13 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstan
 
 /**
  * desc :
- * name : WatchExecutor
+ * name : ResponseWatchExecutor
  *
  * @author : xujia
  * date : 2021/2/4
  * @since : 1.8
  */
-public class WatchExecutor implements IWatchExecutor<EntityClassSyncResponse, Integer> {
+public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExecutor {
     /**
      * 记录appId中的watcher的UID
      */
@@ -31,7 +33,7 @@ public class WatchExecutor implements IWatchExecutor<EntityClassSyncResponse, In
     /**
      * 记录UID与Watcher的映射关系
      */
-    private static Map<String, IWatcher<EntityClassSyncResponse, Integer>> watchers = new ConcurrentHashMap<>();
+    private static Map<String, IWatcher<EntityClassSyncResponse>> watchers = new ConcurrentHashMap<>();
 
     private long heartbeatTimeout;
 
@@ -40,11 +42,12 @@ public class WatchExecutor implements IWatchExecutor<EntityClassSyncResponse, In
     /**
      * 启动一个监控线程、当watchers中observer超过阈值未响应后，将调用complete进行关闭并释放
      */
-    public WatchExecutor(long heartbeatTimeout) {
+    public ResponseWatchExecutor(long heartbeatTimeout) {
 
         this.heartbeatTimeout = heartbeatTimeout;
     }
 
+    @Override
     public void start() {
         thread = ThreadUtils.create(() -> {
             while (true) {
@@ -57,7 +60,7 @@ public class WatchExecutor implements IWatchExecutor<EntityClassSyncResponse, In
                              */
                             if (current - v.heartBeat() >=
                                     (heartbeatTimeout - monitorSleepDuration)) {
-                                remove(k);
+                                release(k);
                             }
                         }
                 );
@@ -72,10 +75,35 @@ public class WatchExecutor implements IWatchExecutor<EntityClassSyncResponse, In
 
     @Override
     public void stop() {
-        watchers.forEach((k, v) -> {v.remove();});
+        watchers.forEach(
+                (k, v) -> {
+                        if (!v.isReleased()) {
+                            v.release();
+                        }
+                });
         ThreadUtils.shutdown(thread);
     }
 
+
+    /**
+     * 当注册时，初始化observer的映射关系
+     *
+     * @param uid
+     * @param observer
+     * @param watchElement
+     */
+    @Override
+    public void add(String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement) {
+        IWatcher<EntityClassSyncResponse> watcher = watchers.get(uid);
+        if (null == watcher) {
+            watcher = new ResponseWatcher(uid, observer);
+        }
+
+        watcher.addWatch(watchElement);
+
+        watchers.put(uid, watcher);
+        watchersByApp.computeIfAbsent(watchElement.getAppId(), k -> new HashSet<>()).add(uid);
+    }
 
     @Override
     public void heartBeat(String uid) {
@@ -85,43 +113,27 @@ public class WatchExecutor implements IWatchExecutor<EntityClassSyncResponse, In
         }
     }
 
+
+
     /**
      * 更新版本
-     * @param appId
-     * @param version
      * @param uid
+     * @param watchElement
      */
     @Override
-    public boolean update(String appId, int version, String uid) {
-        IWatcher<EntityClassSyncResponse, Integer> watcher = watchers.get(uid);
+    public boolean update(String uid, WatchElement watchElement) {
+        IWatcher<EntityClassSyncResponse> watcher = watchers.get(uid);
         if (null != watcher) {
-            if (watcher.watches().get(appId) < version) {
-                watcher.addWatch(appId, version);
+            WatchElement we = watcher.watches().get(watchElement.getAppId());
+            if (null == we) {
+                watcher.watches().put(watchElement.getAppId(), watchElement);
+            } else {
+                we.setStatus(watchElement.getStatus());
+                we.setVersion(watchElement.getVersion());
             }
             return true;
         }
         return false;
-    }
-
-    /**
-     * 当注册时，初始化observer的映射关系
-     *
-     * @param appId
-     * @param version
-     * @param uid
-     * @param observer
-     */
-    @Override
-    public synchronized void add(String appId, int version, String uid, StreamObserver<EntityClassSyncResponse> observer) {
-        IWatcher<EntityClassSyncResponse, Integer> watcher = watchers.get(uid);
-        if (null == watcher) {
-            watcher = new ResponseWatcher(uid, observer);
-        }
-
-        watcher.addWatch(appId, version);
-
-        watchers.put(uid, watcher);
-        watchersByApp.computeIfAbsent(appId, k -> new HashSet<>()).add(uid);
     }
 
     /**
@@ -130,11 +142,11 @@ public class WatchExecutor implements IWatchExecutor<EntityClassSyncResponse, In
      * @param uid
      */
     @Override
-    public void remove(String uid) {
-        IWatcher<EntityClassSyncResponse, Integer> watcher = watchers.remove(uid);
+    public void release(String uid) {
+        IWatcher<EntityClassSyncResponse> watcher = watchers.remove(uid);
 
-        if (null != watcher && !watcher.isRemoved()) {
-            watcher.remove(() -> {
+        if (null != watcher && !watcher.isReleased()) {
+            watcher.release(() -> {
                 watcher.watches().forEach(
                         (k, v) -> {
                             Set<String> uidSet = watchersByApp.get(k);
@@ -150,19 +162,17 @@ public class WatchExecutor implements IWatchExecutor<EntityClassSyncResponse, In
 
     /**
      * 当发生observer断流时，将watcher移除
-     *
-     * @param appId
-     * @param version
+     * @param watchElement
      */
     @Override
-    public List<IWatcher<EntityClassSyncResponse, Integer>> need(String appId, int version) {
-        Set<String> res = watchersByApp.get(appId);
-        List<IWatcher<EntityClassSyncResponse, Integer>> needList = new ArrayList<>();
+    public List<IWatcher<EntityClassSyncResponse>> need(WatchElement watchElement) {
+        Set<String> res = watchersByApp.get(watchElement.getAppId());
+        List<IWatcher<EntityClassSyncResponse>> needList = new ArrayList<>();
         if (null != res) {
             res.forEach(
                     r -> {
-                        IWatcher<EntityClassSyncResponse, Integer> watcher = watchers.get(r);
-                        if (null != watcher && watcher.onWatch(appId, version)) {
+                        IWatcher<EntityClassSyncResponse> watcher = watchers.get(r);
+                        if (null != watcher && watcher.onWatch(watchElement)) {
                             needList.add(watcher);
                         }
                     }
@@ -171,10 +181,12 @@ public class WatchExecutor implements IWatchExecutor<EntityClassSyncResponse, In
         return needList;
     }
 
-
+    /**
+     * 返回watcher
+     * @param uid
+     */
     @Override
-    public Optional<IWatcher<EntityClassSyncResponse, Integer>> watcher(String uid) {
+    public Optional<IWatcher<EntityClassSyncResponse>> watcher(String uid) {
         return Optional.of(watchers.get(uid));
     }
-
 }

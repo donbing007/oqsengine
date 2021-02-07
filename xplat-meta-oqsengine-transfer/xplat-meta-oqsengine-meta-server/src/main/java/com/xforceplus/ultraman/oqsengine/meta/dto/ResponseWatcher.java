@@ -1,12 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.meta.dto;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.AbstractWatcher;
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncServerException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import io.grpc.stub.StreamObserver;
 
-import java.util.Map;
-import java.util.function.Function;
 
 /**
  * desc :
@@ -16,8 +15,7 @@ import java.util.function.Function;
  * date : 2021/2/4
  * @since : 1.8
  */
-public class ResponseWatcher extends AbstractWatcher<EntityClassSyncResponse, Integer> {
-
+public class ResponseWatcher extends AbstractWatcher<EntityClassSyncResponse> {
 
     public ResponseWatcher(String uid, StreamObserver<EntityClassSyncResponse> streamObserver) {
         super(uid, streamObserver);
@@ -25,16 +23,10 @@ public class ResponseWatcher extends AbstractWatcher<EntityClassSyncResponse, In
     }
 
     @Override
-    public boolean onWatch(String appId, Integer version) {
-        Integer v = watches.get(appId);
-        return null == v || v < version;
+    public boolean onWatch(WatchElement w) {
+        WatchElement v = watches.get(w.getAppId());
+        return null == v || v.getVersion() < w.getVersion();
     }
-
-    @Override
-    public Map<String, Integer> watches() {
-        return watches;
-    }
-
 
     @Override
     public void release() {
@@ -53,13 +45,4 @@ public class ResponseWatcher extends AbstractWatcher<EntityClassSyncResponse, In
     public void reset(String uid, StreamObserver<EntityClassSyncResponse> streamObserver) {
         throw new MetaSyncServerException("un-support function reset.", false);
     }
-
-    public boolean runWithCheck(Function<StreamObserver<EntityClassSyncResponse>, Boolean> function) {
-
-        if (!isRemoved) {
-            return function.apply(streamObserver);
-        }
-        return false;
-    }
-
 }

@@ -5,9 +5,9 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServerConfiguration;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRetryExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.executor.IWatchExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.executor.WatchExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.EntityClassSyncResponseHandler;
 import com.xforceplus.ultraman.oqsengine.meta.listener.EntityClassListener;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,7 +53,7 @@ public class GRpcBeanConfiguration {
         } else {
             removeThreshold = defaultHeartbeatTimeout;
         }
-        WatchExecutor watchExecutor = new WatchExecutor(removeThreshold);
+        ResponseWatchExecutor watchExecutor = new ResponseWatchExecutor(removeThreshold);
 
         /**
          * 启动监控线程

@@ -4,7 +4,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
-import com.xforceplus.ultraman.oqsengine.meta.executor.outter.OqsSyncExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,7 @@ public class EntityClassExecutorService implements EntityClassExecutor {
     private Logger logger = LoggerFactory.getLogger(EntityClassExecutorService.class);
 
     @Resource
-    private OqsSyncExecutor oqsSyncExecutor;
+    private SyncExecutor syncExecutor;
 
     @Resource(name = "metaSyncThreadPool")
     private ExecutorService asyncDispatcher;
@@ -68,8 +68,8 @@ public class EntityClassExecutorService implements EntityClassExecutor {
                         /**
                          * 执行外部传入的执行器
                          */
-                        status = oqsSyncExecutor.sync(result) ?
-                                RequestStatus.SYNC_OK.ordinal() : SYNC_FAIL.ordinal();
+                        status = syncExecutor.sync(result) ?
+                                        RequestStatus.SYNC_OK.ordinal() : SYNC_FAIL.ordinal();
 
                     } else {
                         logger.warn("current oqs-version {} bigger than sync-version : {}, will ignore...",
@@ -100,7 +100,7 @@ public class EntityClassExecutorService implements EntityClassExecutor {
 
     @Override
     public int version(String appId) {
-        return oqsSyncExecutor.version(appId);
+        return syncExecutor.version(appId);
     }
 
     private boolean md5Check(String md5, EntityClassSyncRspProto entityClassSyncRspProto) {
