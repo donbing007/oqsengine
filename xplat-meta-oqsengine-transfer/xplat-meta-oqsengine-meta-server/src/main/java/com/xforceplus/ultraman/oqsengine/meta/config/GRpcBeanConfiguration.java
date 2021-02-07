@@ -2,11 +2,9 @@ package com.xforceplus.ultraman.oqsengine.meta.config;
 
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncServer;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServerConfiguration;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRetryExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.EntityClassSyncResponseHandler;
@@ -15,10 +13,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper.buildThreadPool;
 
 /**
  * desc :
@@ -59,7 +57,7 @@ public class GRpcBeanConfiguration {
     }
 
     @Bean
-    public IWatchExecutor watchExecutor(
+    public ResponseWatchExecutor watchExecutor(
             @Value("${grpc.watch.remove.threshold.seconds:30}") long removeThreshold) {
 
         removeThreshold = TimeUnit.SECONDS.toMillis(removeThreshold);
@@ -130,14 +128,5 @@ public class GRpcBeanConfiguration {
     @Bean
     public EntityClassListener entityClassListener() {
         return new EntityClassListener();
-    }
-
-    private ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {
-        return new ThreadPoolExecutor(worker, worker,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(queue),
-                ExecutorHelper.buildNameThreadFactory(namePrefix, daemon),
-                new ThreadPoolExecutor.AbortPolicy()
-        );
     }
 }

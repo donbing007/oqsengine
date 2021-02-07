@@ -12,6 +12,11 @@ import java.util.List;
  * @since : 1.8
  */
 public interface IEntityClassSyncClient {
+
+    void start();
+
+    void destroy();
+
     /**
      * 注册一个appId，并开始监听
      * @param appId

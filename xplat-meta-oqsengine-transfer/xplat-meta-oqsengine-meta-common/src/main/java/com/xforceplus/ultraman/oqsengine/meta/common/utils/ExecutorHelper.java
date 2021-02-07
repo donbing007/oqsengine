@@ -1,9 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.utils;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -84,5 +81,14 @@ public class ExecutorHelper {
             }
 
         };
+    }
+
+    public static ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {
+        return new ThreadPoolExecutor(worker, worker,
+                0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(queue),
+                buildNameThreadFactory(namePrefix, daemon),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
     }
 }

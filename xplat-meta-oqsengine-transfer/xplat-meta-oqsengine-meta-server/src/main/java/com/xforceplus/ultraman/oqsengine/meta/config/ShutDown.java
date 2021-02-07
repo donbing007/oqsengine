@@ -1,11 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.meta.config;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.EntityClassSyncResponseHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import java.util.concurrent.ExecutorService;
 
 /**
  * desc :
@@ -18,8 +22,17 @@ import javax.annotation.Resource;
 @Component
 public class ShutDown {
 
+    private Logger logger = LoggerFactory.getLogger(ShutDown.class);
+
     @Resource
-    IWatchExecutor watchExecutor;
+    ResponseWatchExecutor watchExecutor;
+
+    @Resource(name = "gRpcServerExecutor")
+    private ExecutorService gRpcServerExecutor;
+
+    @Resource(name = "gRpcTaskExecutor")
+    private ExecutorService gRpcTaskExecutor;
+
 
     @Resource
     private EntityClassSyncResponseHandler responseHandler;
@@ -29,5 +42,15 @@ public class ShutDown {
         watchExecutor.stop();
 
         responseHandler.stop();
+
+        // wait shutdown
+        logger.info("Start closing the gRpc server worker thread...");
+        ExecutorHelper.shutdownAndAwaitTermination(gRpcServerExecutor, 3600);
+        logger.info("Succeed closing the gRpc server worker thread...ok!");
+
+        // wait shutdown
+        logger.info("Start closing the gRpc task worker thread...");
+        ExecutorHelper.shutdownAndAwaitTermination(gRpcTaskExecutor, 3600);
+        logger.info("Succeed closing the gRpc task worker thread...ok!");
     }
 }

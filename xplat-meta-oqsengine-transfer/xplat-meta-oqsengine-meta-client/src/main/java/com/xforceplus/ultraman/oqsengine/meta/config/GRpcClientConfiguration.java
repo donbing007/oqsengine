@@ -14,7 +14,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper.buildThreadPool;
 
 /**
  * desc :
@@ -41,6 +44,23 @@ public class GRpcClientConfiguration {
         gRpcParamsConfig.setKeepAliveSendDuration(TimeUnit.SECONDS.toMillis(keepAliveSendDuration));
 
         return gRpcParamsConfig;
+    }
+
+    @Bean("oqsSyncThreadPool")
+    public ExecutorService asyncDispatcher(
+            @Value("${threadPool.call.grpc.client.worker:0}") int worker,
+            @Value("${threadPool.call.grpc.client.queue:500}") int queue) {
+        int useWorker = worker;
+        int useQueue = queue;
+        if (useWorker == 0) {
+            useWorker = Runtime.getRuntime().availableProcessors() + 1;
+        }
+
+        if (useQueue < 500) {
+            useQueue = 500;
+        }
+
+        return buildThreadPool(useWorker, useQueue, "gRpc-server-call", false);
     }
 
     @Bean

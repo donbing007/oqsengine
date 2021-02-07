@@ -51,6 +51,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
     private volatile boolean isReRegister = false;
 
     @PostConstruct
+    @Override
     public void start() {
         client.create();
 
@@ -60,7 +61,8 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
         observerStream();
     }
 
-    public void destroy() throws InterruptedException {
+    @Override
+    public void destroy() {
         requestWatchExecutor.stop();
 
         if (client.opened()) {
@@ -97,7 +99,6 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
                  * 判断是服务重启还是断流
                  */
                 requestWatchExecutor.create(uid, streamObserver);
-
 
                 /**
                  * 重新注册所有watchList到服务段

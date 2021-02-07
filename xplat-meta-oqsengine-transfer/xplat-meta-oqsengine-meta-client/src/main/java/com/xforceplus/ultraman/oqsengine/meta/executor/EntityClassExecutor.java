@@ -32,7 +32,7 @@ public class EntityClassExecutor implements IEntityClassExecutor {
     @Resource
     private SyncExecutor syncExecutor;
 
-    @Resource(name = "metaSyncThreadPool")
+    @Resource(name = "oqsSyncThreadPool")
     private ExecutorService asyncDispatcher;
 
     private <T> CompletableFuture<T> async(Supplier<T> supplier) {
