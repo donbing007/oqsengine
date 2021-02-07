@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.EntityClassSyncResponseHandler;
 import io.grpc.stub.StreamObserver;

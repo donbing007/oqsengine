@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.handler.BasicMessageHandler;
@@ -23,7 +24,6 @@ import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstant.defaultDelayTaskDuration;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.CONFIRM_HEARTBEAT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.CONFIRM_REGISTER;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Notice;
@@ -53,6 +53,9 @@ public class EntityClassSyncResponseHandler implements ResponseHandler<EntityCla
     @Resource(name = "gRpcTaskExecutor")
     private Executor executor;
 
+    @Resource
+    private GRpcParamsConfig gRpcParamsConfig;
+
     private Thread thread;
 
     /**
@@ -73,7 +76,7 @@ public class EntityClassSyncResponseHandler implements ResponseHandler<EntityCla
      */
     @Override
     public void stop() {
-        ThreadUtils.shutdown(thread);
+        ThreadUtils.shutdown(thread, gRpcParamsConfig.getMonitorSleepDuration());
     }
 
     /**
@@ -232,7 +235,7 @@ public class EntityClassSyncResponseHandler implements ResponseHandler<EntityCla
     private void offerDelayTask(String appId, int version, String uid) {
         try {
             retryExecutor.offer(
-                    new RetryExecutor.DelayTask(defaultDelayTaskDuration, new RetryExecutor.Element(appId, version, uid)));
+                    new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(), new RetryExecutor.Element(appId, version, uid)));
         } catch (Exception e) {
             logger.error("offer delayTask failed...., appId : {}, version : {}, uid : {}", appId, version, uid);
             e.printStackTrace();

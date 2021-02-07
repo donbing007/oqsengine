@@ -9,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstant.monitorSleepDuration;
 import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest;
 
 /**
@@ -23,10 +22,12 @@ import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest
 public class AppCheckTask implements Runnable {
 
     private RequestWatcher requestWatcher;
+    private long monitorSleepDuration;
     private Function<String, Boolean> canAccessFunction;
 
-    public AppCheckTask(RequestWatcher requestWatcher, Function<String, Boolean> canAccessFunction) {
+    public AppCheckTask(RequestWatcher requestWatcher, long monitorSleepDuration, Function<String, Boolean> canAccessFunction) {
         this.requestWatcher = requestWatcher;
+        this.monitorSleepDuration = monitorSleepDuration;
         this.canAccessFunction = canAccessFunction;
     }
 

@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstant.monitorSleepDuration;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.HEARTBEAT;
 
 /**
@@ -20,9 +19,11 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStat
 public class KeepAliveTask implements Runnable {
 
     private RequestWatcher requestWatcher;
+    private long keepAliveSendDuration;
 
-    public KeepAliveTask(RequestWatcher requestWatcher) {
+    public KeepAliveTask(RequestWatcher requestWatcher, long keepAliveSendDuration) {
         this.requestWatcher = requestWatcher;
+        this.keepAliveSendDuration = keepAliveSendDuration;
     }
 
     @Override
@@ -34,7 +35,7 @@ public class KeepAliveTask implements Runnable {
 
                 requestWatcher.observer().onNext(request);
             }
-            TimeWaitUtils.wakeupAfter(monitorSleepDuration, TimeUnit.MILLISECONDS);
+            TimeWaitUtils.wakeupAfter(keepAliveSendDuration, TimeUnit.MILLISECONDS);
         }
     }
 }

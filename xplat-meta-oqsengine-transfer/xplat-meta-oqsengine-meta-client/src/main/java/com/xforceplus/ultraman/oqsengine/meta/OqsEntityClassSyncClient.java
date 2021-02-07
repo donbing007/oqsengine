@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
@@ -21,7 +22,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstant.reconnectDuration;
 import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest;
 
 /**
@@ -44,6 +44,9 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
 
     @Resource
     private RequestWatchExecutor requestWatchExecutor;
+
+    @Resource
+    private GRpcParamsConfig gRpcParamsConfig;
 
     private volatile boolean isReRegister = false;
 
@@ -85,8 +88,8 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
                      */
                     streamObserver = newObserver(uid, countDownLatch);
                 } catch (Exception e) {
-                    logger.warn("observer init error, message : {}, retry after ({})ms", reconnectDuration, e.getMessage());
-                    TimeWaitUtils.wakeupAfter(reconnectDuration, TimeUnit.MILLISECONDS);
+                    logger.warn("observer init error, message : {}, retry after ({})ms", gRpcParamsConfig.getReconnectDuration(), e.getMessage());
+                    TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
                     continue;
                 }
 
@@ -117,8 +120,8 @@ public class OqsEntityClassSyncClient implements EntityClassSyncClient {
                  */
                 requestWatchExecutor.watcher().canNotServer();
 
-                logger.warn("stream has broken, will re-create new one after ({})ms...", reconnectDuration);
-                TimeWaitUtils.wakeupAfter(reconnectDuration, TimeUnit.MILLISECONDS);
+                logger.warn("stream has broken, will re-create new one after ({})ms...", gRpcParamsConfig.getReconnectDuration());
+                TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
 
                 requestWatchExecutor.release();
             }

@@ -9,7 +9,6 @@ package com.xforceplus.ultraman.oqsengine.meta.common.dto;
  * @since : 1.8
  */
 public class WatchElement {
-    private String uid;
     private String appId;
     private int version;
     private AppStatus status;

@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.config;
 
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncServer;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServerConfiguration;
@@ -14,13 +15,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstant.defaultHeartbeatTimeout;
 
 /**
  * desc :
@@ -32,8 +30,23 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstan
  */
 
 @Configuration
-@ConditionalOnProperty(prefix = "grpc", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "grpc.server", name = "enabled", havingValue = "true")
 public class GRpcBeanConfiguration {
+
+    @Bean
+    public GRpcParamsConfig gRpcParamsConfig(
+            @Value("${grpc.timeout.seconds.heartbeat:30}") long heartbeatTimeoutSec,
+            @Value("${grpc.timeout.seconds.delay.task:30}") long delayTaskDurationSec,
+            @Value("${grpc.sleep.seconds.monitor:1}") long sleepMonitorSec,
+            @Value("${grpc.sleep.seconds.reconnect:5}") long sleepReconnectSec) {
+        GRpcParamsConfig gRpcParamsConfig = new GRpcParamsConfig();
+        gRpcParamsConfig.setDefaultHeartbeatTimeout(TimeUnit.SECONDS.toMillis(heartbeatTimeoutSec));
+        gRpcParamsConfig.setDefaultDelayTaskDuration(TimeUnit.SECONDS.toMillis(delayTaskDurationSec));
+        gRpcParamsConfig.setMonitorSleepDuration(TimeUnit.SECONDS.toMillis(sleepMonitorSec));
+        gRpcParamsConfig.setReconnectDuration(TimeUnit.SECONDS.toMillis(sleepReconnectSec));
+
+        return gRpcParamsConfig;
+    }
 
     @Bean
     public GRpcServerConfiguration gRpcServerConfiguration() {
@@ -46,13 +59,10 @@ public class GRpcBeanConfiguration {
     }
 
     @Bean
-    public IWatchExecutor watchExecutor(@Value("${grpc.watch.remove.threshold.seconds:0}") long removeThreshold) {
+    public IWatchExecutor watchExecutor(
+            @Value("${grpc.watch.remove.threshold.seconds:30}") long removeThreshold) {
 
-        if (removeThreshold > 0) {
-            removeThreshold = TimeUnit.SECONDS.toMillis(removeThreshold);
-        } else {
-            removeThreshold = defaultHeartbeatTimeout;
-        }
+        removeThreshold = TimeUnit.SECONDS.toMillis(removeThreshold);
         ResponseWatchExecutor watchExecutor = new ResponseWatchExecutor(removeThreshold);
 
         /**

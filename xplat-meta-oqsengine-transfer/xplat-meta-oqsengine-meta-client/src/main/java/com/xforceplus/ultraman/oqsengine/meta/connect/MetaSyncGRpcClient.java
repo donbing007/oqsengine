@@ -1,11 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.meta.connect;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -20,15 +22,21 @@ public class MetaSyncGRpcClient implements GRpcClient {
 
     private Logger logger = LoggerFactory.getLogger(MetaSyncGRpcClient.class);
 
+    @Resource
+    private GRpcParamsConfig gRpcParamsConfig;
+
     private ManagedChannel channel;
     private EntityClassSyncGrpc.EntityClassSyncStub stub;
 
     private String host;
     private int port;
-    private static final long heartbeatIntervalSeconds = 30;
-    private static final long heartbeatTimeoutSeconds = 30;
-    private static final long destroySeconds = 30;
     boolean isClientOpen;
+
+    /**
+     * 延时销毁最大值30秒
+     */
+    private static final long destroySeconds = 30_000;
+
 
     public MetaSyncGRpcClient(String host, int port) {
         this.host = host;
@@ -40,8 +48,8 @@ public class MetaSyncGRpcClient implements GRpcClient {
 
         channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
-                .keepAliveTime(heartbeatIntervalSeconds, TimeUnit.SECONDS)
-                .keepAliveTimeout(heartbeatTimeoutSeconds, TimeUnit.SECONDS)
+                .keepAliveTime(gRpcParamsConfig.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
+                .keepAliveTimeout(gRpcParamsConfig.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
                 .build();
 
         stub = EntityClassSyncGrpc.newStub(channel);
@@ -54,7 +62,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
     @Override
     public void destroy() {
         try {
-            channel.shutdown().awaitTermination(destroySeconds, TimeUnit.SECONDS);
+            channel.shutdown().awaitTermination(destroySeconds, TimeUnit.MILLISECONDS);
 
             logger.info("gRpc-client destroy!");
         } catch (InterruptedException e) {

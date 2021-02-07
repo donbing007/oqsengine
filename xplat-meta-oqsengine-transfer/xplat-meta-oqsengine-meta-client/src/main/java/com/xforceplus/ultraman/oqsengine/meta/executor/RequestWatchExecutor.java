@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
@@ -10,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.meta.task.KeepAliveTask;
 import com.xforceplus.ultraman.oqsengine.meta.task.TimeoutCheckTask;
 import io.grpc.stub.StreamObserver;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -30,6 +32,9 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
 
     private List<Thread> executors = new ArrayList<>(clientTaskSize);
 
+    @Resource
+    private GRpcParamsConfig gRpcParamsConfig;
+
     @Override
     public void resetHeartBeat() {
         requestWatcher.resetHeartBeat();
@@ -44,7 +49,6 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
             requestWatcher.reset(uid, observer);
         }
     }
-
 
     @Override
     public void add(WatchElement watchElement) {
@@ -104,17 +108,20 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
         /**
          * 启动TimeoutCheck线程
          */
-        executors.add(ThreadUtils.create(() -> new TimeoutCheckTask(requestWatcher)));
+        executors.add(ThreadUtils.create(() -> new TimeoutCheckTask(requestWatcher,
+                        gRpcParamsConfig.defaultHeartbeatTimeout, gRpcParamsConfig.getMonitorSleepDuration())));
 
         /**
-         * 启动keepAlive线程
+         * 启动keepAlive线程, 1秒check1次
          */
-        executors.add(ThreadUtils.create(() -> new KeepAliveTask(requestWatcher)));
+        executors.add(ThreadUtils.create(() -> new KeepAliveTask(requestWatcher,
+                        gRpcParamsConfig.getKeepAliveSendDuration())));
 
         /**
          * 启动AppCheck线程
          */
-        executors.add(ThreadUtils.create(() -> new AppCheckTask(requestWatcher, canAccessFunction())));
+        executors.add(ThreadUtils.create(() -> new AppCheckTask(requestWatcher,
+                        gRpcParamsConfig.getMonitorSleepDuration(), canAccessFunction())));
     }
 
     @Override
@@ -126,7 +133,9 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
 
             requestWatcher.release();
 
-            executors.forEach(ThreadUtils::shutdown);
+            executors.forEach(s -> {
+                ThreadUtils.shutdown(s, gRpcParamsConfig.getMonitorSleepDuration());
+            });
         }
     }
 

@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
@@ -10,11 +11,10 @@ import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import io.grpc.stub.StreamObserver;
 
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstant.monitorSleepDuration;
 
 /**
  * desc :
@@ -25,6 +25,10 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstan
  * @since : 1.8
  */
 public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExecutor {
+
+    @Resource
+    private GRpcParamsConfig gRpcParamsConfig;
+
     /**
      * 记录appId中的watcher的UID
      */
@@ -59,7 +63,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExec
                              * 可容忍值 = 最大超时时间(heartbeatTimeout) - 1000ms(monitorSleepDuration);
                              */
                             if (current - v.heartBeat() >=
-                                    (heartbeatTimeout - monitorSleepDuration)) {
+                                    (heartbeatTimeout - gRpcParamsConfig.getMonitorSleepDuration())) {
                                 release(k);
                             }
                         }
@@ -67,7 +71,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExec
                 /**
                  * 等待一秒进入下一次循环
                  */
-                TimeWaitUtils.wakeupAfter(monitorSleepDuration, TimeUnit.MILLISECONDS);
+                TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
             }
         });
         thread.start();
@@ -81,7 +85,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExec
                             v.release();
                         }
                 });
-        ThreadUtils.shutdown(thread);
+        ThreadUtils.shutdown(thread, gRpcParamsConfig.getMonitorSleepDuration());
     }
 
 

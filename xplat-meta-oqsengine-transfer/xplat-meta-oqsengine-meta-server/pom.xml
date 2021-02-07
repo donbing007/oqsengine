@@ -15,7 +15,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.xforceplus.ultraman</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-meta-common</artifactId>
             <version>${project.version}</version>
         </dependency>

@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.meta.common.utils;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstant.defaultSleepDuration;
 
 
 /**
@@ -25,7 +24,7 @@ public class ThreadUtils {
      * 默认5秒关闭
      * @param thread
      */
-    public static void shutdown(Thread thread) {
+    public static void shutdown(Thread thread, long timeout) {
         if (null != thread) {
             int count = 0;
             thread.interrupt();
@@ -34,7 +33,7 @@ public class ThreadUtils {
                 if (thread.isInterrupted()) {
                     break;
                 }
-                TimeWaitUtils.wakeupAfter(defaultSleepDuration, TimeUnit.MILLISECONDS);
+                TimeWaitUtils.wakeupAfter(timeout, TimeUnit.MILLISECONDS);
             }
         }
     }

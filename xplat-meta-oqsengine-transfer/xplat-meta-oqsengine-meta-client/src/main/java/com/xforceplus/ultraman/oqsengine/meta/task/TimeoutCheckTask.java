@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta.task;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 
 import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstant.defaultHeartbeatTimeout;
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.GRpcConstant.monitorSleepDuration;
 
 /**
  * desc :
@@ -20,15 +18,20 @@ public class TimeoutCheckTask implements Runnable {
 
     private RequestWatcher requestWatcher;
 
-    public TimeoutCheckTask(RequestWatcher requestWatcher) {
+    private long heartbeatTimeout;
+    private long monitorSleepDuration;
+
+    public TimeoutCheckTask(RequestWatcher requestWatcher, long heartbeatTimeout, long monitorSleepDuration) {
         this.requestWatcher = requestWatcher;
+        this.heartbeatTimeout = heartbeatTimeout;
+        this.monitorSleepDuration = monitorSleepDuration;
     }
 
     @Override
     public void run() {
         while (true) {
             if (!requestWatcher.isReleased()) {
-                if (System.currentTimeMillis() - requestWatcher.heartBeat() > defaultHeartbeatTimeout) {
+                if (System.currentTimeMillis() - requestWatcher.heartBeat() > heartbeatTimeout) {
                     try {
                         requestWatcher.observer().onCompleted();
                     } catch (Exception e) {
