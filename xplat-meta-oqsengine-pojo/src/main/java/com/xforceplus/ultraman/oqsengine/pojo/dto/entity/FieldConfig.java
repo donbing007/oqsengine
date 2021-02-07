@@ -13,6 +13,48 @@ import java.util.Objects;
 public class FieldConfig implements Serializable {
 
     /**
+     * 字段意义.
+     */
+    public static enum FieldSense {
+        UNKNOWN(0),
+        /**
+         * 普通属性.
+         */
+        NORMAL(1),
+        TENANT_ID(2),
+        TENANT_CODE(3),
+        CREATE_TIME(4),
+        UPDATE_TIME(5),
+        CREATE_USER_ID(6),
+        UPDATE_USER_ID(7),
+        CREATE_USER_NAME(8),
+        UPDATE_USER_NAME(9),
+        DELETE_FLAG(10);
+
+        private int symbol;
+
+        private FieldSense(int symbol) {
+            this.symbol = symbol;
+        }
+
+        public int getSymbol() {
+            return symbol;
+        }
+
+        public static FieldSense getInstance(int symbol) {
+            for (FieldSense sense : FieldSense.values()) {
+                if (sense.getSymbol() == symbol) {
+                    return sense;
+                }
+            }
+
+            return null;
+        }
+
+
+    }
+
+    /**
      * 是否可搜索.true 可搜索,false 不可搜索.
      */
     private boolean searchable = false;
@@ -47,9 +89,9 @@ public class FieldConfig implements Serializable {
     private boolean required = false;
 
     /**
-     * 是否系统字段.
+     * 字段意义.
      */
-    private boolean system = false;
+    private FieldSense fieldSense = FieldSense.UNKNOWN;
 
     /**
      * 校验正则.
@@ -176,12 +218,12 @@ public class FieldConfig implements Serializable {
         return this;
     }
 
-    public boolean isSystem() {
-        return system;
+    public FieldSense getFieldSense() {
+        return fieldSense;
     }
 
-    public FieldConfig system(boolean system) {
-        this.system = system;
+    public FieldConfig fieldSense(FieldSense fieldSense) {
+        this.fieldSense = fieldSense;
         return this;
     }
 
@@ -229,8 +271,8 @@ public class FieldConfig implements Serializable {
             getPrecision() == that.getPrecision() &&
             isIdentifie() == that.isIdentifie() &&
             isRequired() == that.isRequired() &&
-            isSystem() == that.isSystem() &&
             isSplittable() == that.isSplittable() &&
+            getFieldSense() == that.getFieldSense() &&
             Objects.equals(getValidateRegexString(), that.getValidateRegexString()) &&
             Objects.equals(getDelimiter(), that.getDelimiter()) &&
             Objects.equals(getDisplayType(), that.getDisplayType());
@@ -245,7 +287,7 @@ public class FieldConfig implements Serializable {
             getPrecision(),
             isIdentifie(),
             isRequired(),
-            isSystem(),
+            getFieldSense(),
             getValidateRegexString(),
             isSplittable(),
             getDelimiter(),
@@ -261,7 +303,7 @@ public class FieldConfig implements Serializable {
         sb.append(", precision=").append(precision);
         sb.append(", identifie=").append(identifie);
         sb.append(", required=").append(required);
-        sb.append(", system=").append(system);
+        sb.append(", fieldSense=").append(fieldSense);
         sb.append(", validateRegexString='").append(validateRegexString).append('\'');
         sb.append(", splittable=").append(splittable);
         sb.append(", delimiter='").append(delimiter).append('\'');

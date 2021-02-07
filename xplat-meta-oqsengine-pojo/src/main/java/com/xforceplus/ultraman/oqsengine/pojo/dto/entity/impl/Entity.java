@@ -121,18 +121,25 @@ public class Entity implements IEntity, Serializable {
         return this.major;
     }
 
+    public Entity() {
+    }
+
+    @Deprecated
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue) {
         this(id, entityClass, entityValue, null, 0, OqsVersion.MAJOR);
     }
 
+    @Deprecated
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, int major) {
         this(id, entityClass, entityValue, null, 0, major);
     }
 
+    @Deprecated
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, int version, int major) {
         this(id, entityClass, entityValue, null, version, major);
     }
 
+    @Deprecated
     public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, IEntityFamily family, int version, int major) {
         if (entityClass == null) {
             throw new IllegalArgumentException("Invalid class meta information.");
@@ -171,10 +178,14 @@ public class Entity implements IEntity, Serializable {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        IEntity newEntity = new Entity(
-            id(), entityClass(), (IEntityValue) entityValue().clone(), family(), version(), OqsVersion.MAJOR);
-        newEntity.markTime(time());
-        return newEntity;
+        return Entity.Builder.anEntity()
+            .withId(id())
+            .withEntityClass(entityClass())
+            .withEntityValue((IEntityValue) entityValue().clone())
+            .withFamily(family())
+            .withVersion(version())
+            .withTime(time())
+            .withMajor(OqsVersion.MAJOR).build();
     }
 
     @Override
@@ -252,5 +263,77 @@ public class Entity implements IEntity, Serializable {
         });
 
         return buff.toString();
+    }
+
+
+    public static final class Builder {
+        private long id;
+        private long time;
+        private IEntityClass entityClass;
+        private IEntityValue entityValue;
+        private IEntityFamily family = EMPTY_FAMILY;
+        private int version;
+        private long maintainid;
+        private int major;
+
+        private Builder() {
+        }
+
+        public static Builder anEntity() {
+            return new Builder();
+        }
+
+        public Builder withId(long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder withTime(long time) {
+            this.time = time;
+            return this;
+        }
+
+        public Builder withEntityClass(IEntityClass entityClass) {
+            this.entityClass = entityClass;
+            return this;
+        }
+
+        public Builder withEntityValue(IEntityValue entityValue) {
+            this.entityValue = entityValue;
+            return this;
+        }
+
+        public Builder withFamily(IEntityFamily family) {
+            this.family = family;
+            return this;
+        }
+
+        public Builder withVersion(int version) {
+            this.version = version;
+            return this;
+        }
+
+        public Builder withMaintainid(long maintainid) {
+            this.maintainid = maintainid;
+            return this;
+        }
+
+        public Builder withMajor(int major) {
+            this.major = major;
+            return this;
+        }
+
+        public Entity build() {
+            Entity entity = new Entity();
+            entity.entityClass = this.entityClass;
+            entity.version = this.version;
+            entity.time = this.time;
+            entity.family = this.family;
+            entity.id = this.id;
+            entity.entityValue = this.entityValue;
+            entity.maintainid = this.maintainid;
+            entity.major = this.major;
+            return entity;
+        }
     }
 }

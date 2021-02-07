@@ -44,6 +44,16 @@ public class AnyEntityClass implements IEntityClass {
     }
 
     @Override
+    public int version() {
+        return 0;
+    }
+
+    @Override
+    public int level() {
+        return 0;
+    }
+
+    @Override
     public Collection<Relation> relations() {
         return Collections.emptyList();
     }

@@ -58,12 +58,17 @@ public class EntityField implements IEntityField, Serializable {
      */
     private FieldConfig config;
 
+    public EntityField() {
+    }
+
     /**
      * 构造一个使用默认配置的字段.
      * @param id 字段标识.
      * @param name 字段名称.
      * @param fieldType 字段类型.
+     * @deprecated 使用builder构造.
      */
+    @Deprecated
     public EntityField(long id, String name, FieldType fieldType) {
         this(id, name, fieldType, null);
     }
@@ -73,7 +78,9 @@ public class EntityField implements IEntityField, Serializable {
      * @param id 字段标识.
      * @param name 字段名称.
      * @param fieldType 字段类型.
+     * @deprecated 使用builder构造.
      */
+    @Deprecated
     public EntityField(long id, String name, FieldType fieldType, FieldConfig config, String dictId, String defaultValue) {
         this(id, name, fieldType, config);
         this.dictId = dictId;
@@ -85,7 +92,9 @@ public class EntityField implements IEntityField, Serializable {
      * @param id 字段标识.
      * @param name 字段名称.
      * @param fieldType 字段类型.
+     * @deprecated 使用builder构造.
      */
+    @Deprecated
     public EntityField(long id, String name, String cnName, FieldType fieldType, FieldConfig config, String dictId, String defaultValue) {
         this(id, name, fieldType, config);
         this.cnName = cnName;
@@ -99,7 +108,9 @@ public class EntityField implements IEntityField, Serializable {
      * @param name 字段名称.
      * @param fieldType 字段类型.
      * @param config 字段配置.
+     * @deprecated 使用builder构造.
      */
+    @Deprecated
     public EntityField(long id, String name, FieldType fieldType, FieldConfig config) {
         this.id = id;
         this.name = name;
@@ -175,11 +186,11 @@ public class EntityField implements IEntityField, Serializable {
         }
         EntityField entityField = (EntityField) o;
         return id == entityField.id &&
-                Objects.equals(name, entityField.name) &&
-                fieldType == entityField.fieldType &&
-                Objects.equals(dictId, entityField.dictId) &&
-                Objects.equals(defaultValue, entityField.defaultValue) &&
-                Objects.equals(config, entityField.config);
+            Objects.equals(name, entityField.name) &&
+            fieldType == entityField.fieldType &&
+            Objects.equals(dictId, entityField.dictId) &&
+            Objects.equals(defaultValue, entityField.defaultValue) &&
+            Objects.equals(config, entityField.config);
     }
 
     @Override
@@ -190,12 +201,77 @@ public class EntityField implements IEntityField, Serializable {
     @Override
     public String toString() {
         return "Field{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", fieldType=" + fieldType +
-                ", dictId='" + dictId + '\'' +
-                ", defaultValue='" + defaultValue + '\'' +
-                ", config=" + config +
-                '}';
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", fieldType=" + fieldType +
+            ", dictId='" + dictId + '\'' +
+            ", defaultValue='" + defaultValue + '\'' +
+            ", config=" + config +
+            '}';
+    }
+
+    public static final class Builder {
+        private long id;
+        private String name;
+        private String cnName;
+        private FieldType fieldType;
+        private String dictId;
+        private String defaultValue;
+        private FieldConfig config;
+
+        private Builder() {
+        }
+
+        public static Builder anEntityField() {
+            return new Builder();
+        }
+
+        public Builder withId(long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder withName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder withCnName(String cnName) {
+            this.cnName = cnName;
+            return this;
+        }
+
+        public Builder withFieldType(FieldType fieldType) {
+            this.fieldType = fieldType;
+            return this;
+        }
+
+        public Builder withDictId(String dictId) {
+            this.dictId = dictId;
+            return this;
+        }
+
+        public Builder withDefaultValue(String defaultValue) {
+            this.defaultValue = defaultValue;
+            return this;
+        }
+
+        public Builder withConfig(FieldConfig config) {
+            this.config = config;
+            return this;
+        }
+
+        public EntityField build() {
+            EntityField entityField = new EntityField();
+            entityField.id = this.id;
+            entityField.name = this.name;
+            entityField.cnName = this.cnName;
+            entityField.fieldType = this.fieldType;
+            entityField.dictId = this.dictId;
+            entityField.defaultValue = this.defaultValue;
+            entityField.config = this.config;
+            return entityField;
+        }
     }
 }
+
