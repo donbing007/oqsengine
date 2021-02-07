@@ -22,7 +22,7 @@ private static final long serialVersionUID = 0L;
     entityClassName_ = "";
     relOwnerClassId_ = 0L;
     relOwnerClassName_ = "";
-    reltationType_ = "";
+    relationType_ = "";
     identity_ = false;
     entityFieldId_ = 0L;
   }
@@ -94,7 +94,7 @@ private static final long serialVersionUID = 0L;
           case 58: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            reltationType_ = s;
+            relationType_ = s;
             break;
           }
           case 64: {
@@ -260,34 +260,34 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int RELTATIONTYPE_FIELD_NUMBER = 7;
-  private volatile java.lang.Object reltationType_;
+  public static final int RELATIONTYPE_FIELD_NUMBER = 7;
+  private volatile java.lang.Object relationType_;
   /**
-   * <code>string reltationType = 7;</code>
+   * <code>string relationType = 7;</code>
    */
-  public java.lang.String getReltationType() {
-    java.lang.Object ref = reltationType_;
+  public java.lang.String getRelationType() {
+    java.lang.Object ref = relationType_;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      reltationType_ = s;
+      relationType_ = s;
       return s;
     }
   }
   /**
-   * <code>string reltationType = 7;</code>
+   * <code>string relationType = 7;</code>
    */
   public com.google.protobuf.ByteString
-      getReltationTypeBytes() {
-    java.lang.Object ref = reltationType_;
+      getRelationTypeBytes() {
+    java.lang.Object ref = relationType_;
     if (ref instanceof java.lang.String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
-      reltationType_ = b;
+      relationType_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
@@ -342,8 +342,8 @@ private static final long serialVersionUID = 0L;
     if (!getRelOwnerClassNameBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 6, relOwnerClassName_);
     }
-    if (!getReltationTypeBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 7, reltationType_);
+    if (!getRelationTypeBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 7, relationType_);
     }
     if (identity_ != false) {
       output.writeBool(8, identity_);
@@ -380,8 +380,8 @@ private static final long serialVersionUID = 0L;
     if (!getRelOwnerClassNameBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, relOwnerClassName_);
     }
-    if (!getReltationTypeBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, reltationType_);
+    if (!getRelationTypeBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, relationType_);
     }
     if (identity_ != false) {
       size += com.google.protobuf.CodedOutputStream
@@ -419,8 +419,8 @@ private static final long serialVersionUID = 0L;
         == other.getRelOwnerClassId());
     result = result && getRelOwnerClassName()
         .equals(other.getRelOwnerClassName());
-    result = result && getReltationType()
-        .equals(other.getReltationType());
+    result = result && getRelationType()
+        .equals(other.getRelationType());
     result = result && (getIdentity()
         == other.getIdentity());
     result = result && (getEntityFieldId()
@@ -451,8 +451,8 @@ private static final long serialVersionUID = 0L;
         getRelOwnerClassId());
     hash = (37 * hash) + RELOWNERCLASSNAME_FIELD_NUMBER;
     hash = (53 * hash) + getRelOwnerClassName().hashCode();
-    hash = (37 * hash) + RELTATIONTYPE_FIELD_NUMBER;
-    hash = (53 * hash) + getReltationType().hashCode();
+    hash = (37 * hash) + RELATIONTYPE_FIELD_NUMBER;
+    hash = (53 * hash) + getRelationType().hashCode();
     hash = (37 * hash) + IDENTITY_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getIdentity());
@@ -600,7 +600,7 @@ private static final long serialVersionUID = 0L;
 
       relOwnerClassName_ = "";
 
-      reltationType_ = "";
+      relationType_ = "";
 
       identity_ = false;
 
@@ -634,7 +634,7 @@ private static final long serialVersionUID = 0L;
       result.entityClassName_ = entityClassName_;
       result.relOwnerClassId_ = relOwnerClassId_;
       result.relOwnerClassName_ = relOwnerClassName_;
-      result.reltationType_ = reltationType_;
+      result.relationType_ = relationType_;
       result.identity_ = identity_;
       result.entityFieldId_ = entityFieldId_;
       onBuilt();
@@ -699,8 +699,8 @@ private static final long serialVersionUID = 0L;
         relOwnerClassName_ = other.relOwnerClassName_;
         onChanged();
       }
-      if (!other.getReltationType().isEmpty()) {
-        reltationType_ = other.reltationType_;
+      if (!other.getRelationType().isEmpty()) {
+        relationType_ = other.relationType_;
         onChanged();
       }
       if (other.getIdentity() != false) {
@@ -1021,71 +1021,71 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object reltationType_ = "";
+    private java.lang.Object relationType_ = "";
     /**
-     * <code>string reltationType = 7;</code>
+     * <code>string relationType = 7;</code>
      */
-    public java.lang.String getReltationType() {
-      java.lang.Object ref = reltationType_;
+    public java.lang.String getRelationType() {
+      java.lang.Object ref = relationType_;
       if (!(ref instanceof java.lang.String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        reltationType_ = s;
+        relationType_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>string reltationType = 7;</code>
+     * <code>string relationType = 7;</code>
      */
     public com.google.protobuf.ByteString
-        getReltationTypeBytes() {
-      java.lang.Object ref = reltationType_;
+        getRelationTypeBytes() {
+      java.lang.Object ref = relationType_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        reltationType_ = b;
+        relationType_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
     /**
-     * <code>string reltationType = 7;</code>
+     * <code>string relationType = 7;</code>
      */
-    public Builder setReltationType(
+    public Builder setRelationType(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
   
-      reltationType_ = value;
+      relationType_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>string reltationType = 7;</code>
+     * <code>string relationType = 7;</code>
      */
-    public Builder clearReltationType() {
+    public Builder clearRelationType() {
       
-      reltationType_ = getDefaultInstance().getReltationType();
+      relationType_ = getDefaultInstance().getRelationType();
       onChanged();
       return this;
     }
     /**
-     * <code>string reltationType = 7;</code>
+     * <code>string relationType = 7;</code>
      */
-    public Builder setReltationTypeBytes(
+    public Builder setRelationTypeBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
       
-      reltationType_ = value;
+      relationType_ = value;
       onChanged();
       return this;
     }

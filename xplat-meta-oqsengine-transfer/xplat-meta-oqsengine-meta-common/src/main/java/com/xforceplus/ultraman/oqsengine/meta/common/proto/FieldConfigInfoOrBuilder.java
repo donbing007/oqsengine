@@ -28,9 +28,9 @@ public interface FieldConfigInfoOrBuilder extends
   int getPrecision();
 
   /**
-   * <code>bool identifie = 5;</code>
+   * <code>bool identifier = 5;</code>
    */
-  boolean getIdentifie();
+  boolean getIdentifier();
 
   /**
    * <code>bool isRequired = 6;</code>

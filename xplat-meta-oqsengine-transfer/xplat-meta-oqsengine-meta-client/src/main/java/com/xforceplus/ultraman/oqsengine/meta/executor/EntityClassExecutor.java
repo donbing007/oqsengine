@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRespon
  * @since : 1.8
  */
 public interface EntityClassExecutor {
-    EntityClassSyncRequest execute(EntityClassSyncResponse entityClassSyncResponse);
+    EntityClassSyncRequest.Builder execute(EntityClassSyncResponse entityClassSyncResponse);
 
     int version(String appId);
 }

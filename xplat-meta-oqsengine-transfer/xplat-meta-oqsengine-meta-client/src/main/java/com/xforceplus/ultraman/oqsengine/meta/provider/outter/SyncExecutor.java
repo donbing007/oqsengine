@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.meta.executor.outter;
+package com.xforceplus.ultraman.oqsengine.meta.provider.outter;
 
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
@@ -11,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspPro
  * date : 2021/2/2
  * @since : 1.8
  */
-public interface OqsSyncExecutor {
+public interface SyncExecutor {
     boolean sync(EntityClassSyncRspProto entityClassSyncRspProto);
 
     int version(String appId);
