@@ -104,6 +104,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
         return status;
     }
 
+    @Override
     public void start() {
         /**
          * 启动TimeoutCheck线程
@@ -140,9 +141,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
     }
 
     public Function<String, Boolean> canAccessFunction() {
-        return s -> {
-            return canAccess(s);
-        };
+        return this::canAccess;
     }
 
 }
