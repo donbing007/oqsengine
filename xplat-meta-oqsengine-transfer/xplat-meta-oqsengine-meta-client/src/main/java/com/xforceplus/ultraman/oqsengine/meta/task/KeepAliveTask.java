@@ -30,7 +30,7 @@ public class KeepAliveTask implements Runnable {
     @Override
     public void run() {
         while (true) {
-            if (!requestWatcher.isReleased()) {
+            if (requestWatcher.isOnServe()) {
                 EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
                         .setUid(requestWatcher.uid()).setStatus(HEARTBEAT.ordinal()).build();
 

@@ -40,7 +40,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     /**
      * 当前是否已被清理状态
      */
-    private volatile boolean isReleased = false;
+    private volatile boolean onServe = true;
 
 
     public AbstractWatcher(String uid, StreamObserver<T> streamObserver) {
@@ -72,14 +72,14 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     @Override
     public void resetHeartBeat() {
-        if (!isReleased) {
+        if (onServe) {
             heartBeat = System.currentTimeMillis();
         }
     }
 
     @Override
     public <S> void release(Supplier<S> supplier) {
-        canNotServer();
+        notServer();
         try {
             supplier.get();
         } catch (Exception e) {
@@ -94,8 +94,8 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     }
 
     @Override
-    public boolean isReleased() {
-        return isReleased;
+    public boolean isOnServe() {
+        return onServe;
     }
 
     @Override
@@ -105,7 +105,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     @Override
     public boolean runWithCheck(Function<StreamObserver<T>, Boolean> function) {
-        if (!isReleased()) {
+        if (onServe) {
             return function.apply(streamObserver);
         }
 
@@ -114,11 +114,11 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     public abstract void reset(String uid, StreamObserver<T> streamObserver);
 
-    public void canServer() {
-        isReleased = true;
+    public void onServe() {
+        onServe = true;
     }
 
-    public void canNotServer() {
-        isReleased = false;
+    public void notServer() {
+        onServe = false;
     }
 }

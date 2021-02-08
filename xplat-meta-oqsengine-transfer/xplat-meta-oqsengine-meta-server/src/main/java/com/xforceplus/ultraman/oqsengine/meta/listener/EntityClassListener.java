@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.listener;
 
 import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
-import com.xforceplus.ultraman.oqsengine.meta.handler.EntityClassSyncResponseHandler;
+import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -21,7 +21,7 @@ public class EntityClassListener {
     private Logger logger = LoggerFactory.getLogger(EntityClassListener.class);
 
     @Resource
-    private EntityClassSyncResponseHandler responseHandler;
+    private SyncResponseHandler responseHandler;
 
     @EventListener
     public boolean appSyncListener(AppUpdateEvent event) {

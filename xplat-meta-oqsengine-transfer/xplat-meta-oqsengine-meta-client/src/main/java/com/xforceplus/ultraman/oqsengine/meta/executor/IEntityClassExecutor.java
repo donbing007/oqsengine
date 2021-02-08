@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
+
+import java.util.AbstractMap;
+import java.util.List;
 
 /**
  * desc :
@@ -12,7 +14,31 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRespon
  * @since : 1.8
  */
 public interface IEntityClassExecutor {
-    EntityClassSyncRequest.Builder execute(EntityClassSyncResponse entityClassSyncResponse);
 
-    int version(String appId);
+    /**
+     * 注册一个appId，并开始监听
+     * @param appId
+     * @param version
+     * @return boolean
+     */
+    boolean register(String appId, int version);
+
+    /**
+     * 注册多个appId，并开始监听
+     * @param appIdEntries
+     * @return boolean
+     */
+    boolean register(List<AbstractMap.SimpleEntry<String, Integer>> appIdEntries);
+
+    /**
+     * 断流重新注册
+     * @return boolean
+     */
+    boolean reRegister();
+
+    /**
+     * 接收处理返回结果
+     * @return boolean
+     */
+    void accept(EntityClassSyncResponse entityClassSyncResponse);
 }

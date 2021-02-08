@@ -34,7 +34,7 @@ public class AppCheckTask implements Runnable {
     @Override
     public void run() {
         while (true) {
-            if (!requestWatcher.isReleased()) {
+            if (!requestWatcher.isOnServe()) {
                 requestWatcher.watches().values().stream().filter(s -> {
                     return s.getStatus().ordinal() == WatchElement.AppStatus.Init.ordinal();
                 }).forEach(

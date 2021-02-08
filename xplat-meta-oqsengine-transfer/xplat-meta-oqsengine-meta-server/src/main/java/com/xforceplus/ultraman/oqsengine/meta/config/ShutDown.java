@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.meta.config;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.handler.EntityClassSyncResponseHandler;
+import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -35,7 +35,7 @@ public class ShutDown {
 
 
     @Resource
-    private EntityClassSyncResponseHandler responseHandler;
+    private SyncResponseHandler responseHandler;
 
     @PreDestroy
     public void showdown() {

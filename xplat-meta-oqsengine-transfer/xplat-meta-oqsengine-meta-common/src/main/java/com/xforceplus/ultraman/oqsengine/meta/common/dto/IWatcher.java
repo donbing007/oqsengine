@@ -39,7 +39,7 @@ public interface IWatcher<T> {
 
     void release();
 
-    boolean isReleased();
+    boolean isOnServe();
 
     boolean runWithCheck(Function<StreamObserver<T>, Boolean> function);
 

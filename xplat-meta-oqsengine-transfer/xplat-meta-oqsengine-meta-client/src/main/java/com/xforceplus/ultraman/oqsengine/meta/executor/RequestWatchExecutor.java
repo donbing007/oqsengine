@@ -74,8 +74,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
 
     @Override
     public void release() {
-        if (null != requestWatcher && !requestWatcher.isReleased()) {
-            requestWatcher.canNotServer();
+        if (null != requestWatcher && requestWatcher.isOnServe()) {
             requestWatcher.release();
         }
     }
@@ -88,9 +87,9 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
     @Override
     public boolean canAccess(String uid) {
         /**
-         * 确保
+         * 判断是否可用
          */
-        boolean status = (null != requestWatcher && !requestWatcher.isReleased());
+        boolean status = (null != requestWatcher && requestWatcher.isOnServe());
         if (null != uid && status) {
             try {
                 return uid.equals(requestWatcher.uid());
@@ -128,9 +127,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
     @Override
     public void stop() {
         if (null != requestWatcher) {
-            if (!requestWatcher.isReleased()) {
-                requestWatcher.canNotServer();
-            }
+            requestWatcher.notServer();
 
             requestWatcher.release();
 
@@ -143,5 +140,4 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
     public Function<String, Boolean> canAccessFunction() {
         return this::canAccess;
     }
-
 }

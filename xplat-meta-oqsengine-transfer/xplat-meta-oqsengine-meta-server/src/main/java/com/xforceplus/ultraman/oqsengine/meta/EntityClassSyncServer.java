@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.handler.EntityClassSyncResponseHandler;
+import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncIm
     private IResponseWatchExecutor watchExecutor;
 
     @Resource
-    private EntityClassSyncResponseHandler responseHandler;
+    private SyncResponseHandler responseHandler;
 
     @Override
     public StreamObserver<EntityClassSyncRequest> register(StreamObserver<EntityClassSyncResponse> responseStreamObserver) {

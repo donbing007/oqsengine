@@ -71,24 +71,12 @@ public class RetryExecutor implements IRetryExecutor {
             return uid;
         }
 
-        public void setUid(String uid) {
-            this.uid = uid;
-        }
-
         public String getAppId() {
             return appId;
         }
 
-        public void setAppId(String appId) {
-            this.appId = appId;
-        }
-
         public int getVersion() {
             return version;
-        }
-
-        public void setVersion(int version) {
-            this.version = version;
         }
     }
 

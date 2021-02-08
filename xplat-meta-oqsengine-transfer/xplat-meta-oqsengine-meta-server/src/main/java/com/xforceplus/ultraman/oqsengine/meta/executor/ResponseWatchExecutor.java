@@ -47,7 +47,6 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExec
      * 启动一个监控线程、当watchers中observer超过阈值未响应后，将调用complete进行关闭并释放
      */
     public ResponseWatchExecutor(long heartbeatTimeout) {
-
         this.heartbeatTimeout = heartbeatTimeout;
     }
 
@@ -81,7 +80,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExec
     public void stop() {
         watchers.forEach(
                 (k, v) -> {
-                        if (!v.isReleased()) {
+                        if (v.isOnServe()) {
                             v.release();
                         }
                 });
@@ -147,7 +146,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExec
     public void release(String uid) {
         IWatcher<EntityClassSyncResponse> watcher = watchers.remove(uid);
 
-        if (null != watcher && !watcher.isReleased()) {
+        if (null != watcher && watcher.isOnServe()) {
             watcher.release(() -> {
                 watcher.watches().forEach(
                         (k, v) -> {

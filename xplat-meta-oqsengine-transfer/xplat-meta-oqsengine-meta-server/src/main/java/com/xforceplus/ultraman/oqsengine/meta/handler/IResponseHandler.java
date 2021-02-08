@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
  * date : 2021/2/4
  * @since : 1.8
  */
-public interface ResponseHandler<T> {
+public interface IResponseHandler<T> {
 
     boolean pull(String appId, int version, String uid);
 
