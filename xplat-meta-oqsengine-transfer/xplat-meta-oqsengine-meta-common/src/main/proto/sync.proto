@@ -39,10 +39,13 @@ message EntityClassInfo {
 	int64 id = 2;
 	string name = 3;
 	int64 fatherClassId = 4;
-	repeated int64 entityFieldIds = 5;
-	repeated int64 relationIds = 6;
-	repeated int64 childClassIds = 7;
-	repeated int64 configIds = 8;
+	int32 level = 5;
+	repeated int64 entityFieldIds = 6;
+	repeated int64 relationIds = 7;
+	repeated int64 childClassIds = 8;
+	repeated int64 configIds = 9;
+	bool isAny = 10;
+	bool isDynamic = 11;
 }
 
 message EntityFieldInfo {

@@ -38,54 +38,69 @@ public interface EntityClassInfoOrBuilder extends
   long getFatherClassId();
 
   /**
-   * <code>repeated int64 entityFieldIds = 5;</code>
+   * <code>int32 level = 5;</code>
+   */
+  int getLevel();
+
+  /**
+   * <code>repeated int64 entityFieldIds = 6;</code>
    */
   java.util.List<java.lang.Long> getEntityFieldIdsList();
   /**
-   * <code>repeated int64 entityFieldIds = 5;</code>
+   * <code>repeated int64 entityFieldIds = 6;</code>
    */
   int getEntityFieldIdsCount();
   /**
-   * <code>repeated int64 entityFieldIds = 5;</code>
+   * <code>repeated int64 entityFieldIds = 6;</code>
    */
   long getEntityFieldIds(int index);
 
   /**
-   * <code>repeated int64 relationIds = 6;</code>
+   * <code>repeated int64 relationIds = 7;</code>
    */
   java.util.List<java.lang.Long> getRelationIdsList();
   /**
-   * <code>repeated int64 relationIds = 6;</code>
+   * <code>repeated int64 relationIds = 7;</code>
    */
   int getRelationIdsCount();
   /**
-   * <code>repeated int64 relationIds = 6;</code>
+   * <code>repeated int64 relationIds = 7;</code>
    */
   long getRelationIds(int index);
 
   /**
-   * <code>repeated int64 childClassIds = 7;</code>
+   * <code>repeated int64 childClassIds = 8;</code>
    */
   java.util.List<java.lang.Long> getChildClassIdsList();
   /**
-   * <code>repeated int64 childClassIds = 7;</code>
+   * <code>repeated int64 childClassIds = 8;</code>
    */
   int getChildClassIdsCount();
   /**
-   * <code>repeated int64 childClassIds = 7;</code>
+   * <code>repeated int64 childClassIds = 8;</code>
    */
   long getChildClassIds(int index);
 
   /**
-   * <code>repeated int64 configIds = 8;</code>
+   * <code>repeated int64 configIds = 9;</code>
    */
   java.util.List<java.lang.Long> getConfigIdsList();
   /**
-   * <code>repeated int64 configIds = 8;</code>
+   * <code>repeated int64 configIds = 9;</code>
    */
   int getConfigIdsCount();
   /**
-   * <code>repeated int64 configIds = 8;</code>
+   * <code>repeated int64 configIds = 9;</code>
    */
   long getConfigIds(int index);
+
+  /**
+   * <code>bool isAny = 10;</code>
+   */
+  boolean getIsAny();
+
+  /**
+   * <code>bool isDynamic = 11;</code>
+   */
+  boolean getIsDynamic();
 }

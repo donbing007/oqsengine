@@ -20,10 +20,13 @@ private static final long serialVersionUID = 0L;
     id_ = 0L;
     name_ = "";
     fatherClassId_ = 0L;
+    level_ = 0;
     entityFieldIds_ = java.util.Collections.emptyList();
     relationIds_ = java.util.Collections.emptyList();
     childClassIds_ = java.util.Collections.emptyList();
     configIds_ = java.util.Collections.emptyList();
+    isAny_ = false;
+    isDynamic_ = false;
   }
 
   @java.lang.Override
@@ -80,19 +83,24 @@ private static final long serialVersionUID = 0L;
             break;
           }
           case 40: {
-            if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+
+            level_ = input.readInt32();
+            break;
+          }
+          case 48: {
+            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
               entityFieldIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000010;
+              mutable_bitField0_ |= 0x00000020;
             }
             entityFieldIds_.add(input.readInt64());
             break;
           }
-          case 42: {
+          case 50: {
             int length = input.readRawVarint32();
             int limit = input.pushLimit(length);
-            if (!((mutable_bitField0_ & 0x00000010) == 0x00000010) && input.getBytesUntilLimit() > 0) {
+            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020) && input.getBytesUntilLimit() > 0) {
               entityFieldIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000010;
+              mutable_bitField0_ |= 0x00000020;
             }
             while (input.getBytesUntilLimit() > 0) {
               entityFieldIds_.add(input.readInt64());
@@ -100,20 +108,20 @@ private static final long serialVersionUID = 0L;
             input.popLimit(limit);
             break;
           }
-          case 48: {
-            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+          case 56: {
+            if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
               relationIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000020;
+              mutable_bitField0_ |= 0x00000040;
             }
             relationIds_.add(input.readInt64());
             break;
           }
-          case 50: {
+          case 58: {
             int length = input.readRawVarint32();
             int limit = input.pushLimit(length);
-            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020) && input.getBytesUntilLimit() > 0) {
+            if (!((mutable_bitField0_ & 0x00000040) == 0x00000040) && input.getBytesUntilLimit() > 0) {
               relationIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000020;
+              mutable_bitField0_ |= 0x00000040;
             }
             while (input.getBytesUntilLimit() > 0) {
               relationIds_.add(input.readInt64());
@@ -121,20 +129,20 @@ private static final long serialVersionUID = 0L;
             input.popLimit(limit);
             break;
           }
-          case 56: {
-            if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+          case 64: {
+            if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
               childClassIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000040;
+              mutable_bitField0_ |= 0x00000080;
             }
             childClassIds_.add(input.readInt64());
             break;
           }
-          case 58: {
+          case 66: {
             int length = input.readRawVarint32();
             int limit = input.pushLimit(length);
-            if (!((mutable_bitField0_ & 0x00000040) == 0x00000040) && input.getBytesUntilLimit() > 0) {
+            if (!((mutable_bitField0_ & 0x00000080) == 0x00000080) && input.getBytesUntilLimit() > 0) {
               childClassIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000040;
+              mutable_bitField0_ |= 0x00000080;
             }
             while (input.getBytesUntilLimit() > 0) {
               childClassIds_.add(input.readInt64());
@@ -142,25 +150,35 @@ private static final long serialVersionUID = 0L;
             input.popLimit(limit);
             break;
           }
-          case 64: {
-            if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
+          case 72: {
+            if (!((mutable_bitField0_ & 0x00000100) == 0x00000100)) {
               configIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000080;
+              mutable_bitField0_ |= 0x00000100;
             }
             configIds_.add(input.readInt64());
             break;
           }
-          case 66: {
+          case 74: {
             int length = input.readRawVarint32();
             int limit = input.pushLimit(length);
-            if (!((mutable_bitField0_ & 0x00000080) == 0x00000080) && input.getBytesUntilLimit() > 0) {
+            if (!((mutable_bitField0_ & 0x00000100) == 0x00000100) && input.getBytesUntilLimit() > 0) {
               configIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000080;
+              mutable_bitField0_ |= 0x00000100;
             }
             while (input.getBytesUntilLimit() > 0) {
               configIds_.add(input.readInt64());
             }
             input.popLimit(limit);
+            break;
+          }
+          case 80: {
+
+            isAny_ = input.readBool();
+            break;
+          }
+          case 88: {
+
+            isDynamic_ = input.readBool();
             break;
           }
         }
@@ -171,16 +189,16 @@ private static final long serialVersionUID = 0L;
       throw new com.google.protobuf.InvalidProtocolBufferException(
           e).setUnfinishedMessage(this);
     } finally {
-      if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+      if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
         entityFieldIds_ = java.util.Collections.unmodifiableList(entityFieldIds_);
       }
-      if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+      if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
         relationIds_ = java.util.Collections.unmodifiableList(relationIds_);
       }
-      if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+      if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
         childClassIds_ = java.util.Collections.unmodifiableList(childClassIds_);
       }
-      if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
+      if (((mutable_bitField0_ & 0x00000100) == 0x00000100)) {
         configIds_ = java.util.Collections.unmodifiableList(configIds_);
       }
       this.unknownFields = unknownFields.build();
@@ -286,97 +304,124 @@ private static final long serialVersionUID = 0L;
     return fatherClassId_;
   }
 
-  public static final int ENTITYFIELDIDS_FIELD_NUMBER = 5;
+  public static final int LEVEL_FIELD_NUMBER = 5;
+  private int level_;
+  /**
+   * <code>int32 level = 5;</code>
+   */
+  public int getLevel() {
+    return level_;
+  }
+
+  public static final int ENTITYFIELDIDS_FIELD_NUMBER = 6;
   private java.util.List<java.lang.Long> entityFieldIds_;
   /**
-   * <code>repeated int64 entityFieldIds = 5;</code>
+   * <code>repeated int64 entityFieldIds = 6;</code>
    */
   public java.util.List<java.lang.Long>
       getEntityFieldIdsList() {
     return entityFieldIds_;
   }
   /**
-   * <code>repeated int64 entityFieldIds = 5;</code>
+   * <code>repeated int64 entityFieldIds = 6;</code>
    */
   public int getEntityFieldIdsCount() {
     return entityFieldIds_.size();
   }
   /**
-   * <code>repeated int64 entityFieldIds = 5;</code>
+   * <code>repeated int64 entityFieldIds = 6;</code>
    */
   public long getEntityFieldIds(int index) {
     return entityFieldIds_.get(index);
   }
   private int entityFieldIdsMemoizedSerializedSize = -1;
 
-  public static final int RELATIONIDS_FIELD_NUMBER = 6;
+  public static final int RELATIONIDS_FIELD_NUMBER = 7;
   private java.util.List<java.lang.Long> relationIds_;
   /**
-   * <code>repeated int64 relationIds = 6;</code>
+   * <code>repeated int64 relationIds = 7;</code>
    */
   public java.util.List<java.lang.Long>
       getRelationIdsList() {
     return relationIds_;
   }
   /**
-   * <code>repeated int64 relationIds = 6;</code>
+   * <code>repeated int64 relationIds = 7;</code>
    */
   public int getRelationIdsCount() {
     return relationIds_.size();
   }
   /**
-   * <code>repeated int64 relationIds = 6;</code>
+   * <code>repeated int64 relationIds = 7;</code>
    */
   public long getRelationIds(int index) {
     return relationIds_.get(index);
   }
   private int relationIdsMemoizedSerializedSize = -1;
 
-  public static final int CHILDCLASSIDS_FIELD_NUMBER = 7;
+  public static final int CHILDCLASSIDS_FIELD_NUMBER = 8;
   private java.util.List<java.lang.Long> childClassIds_;
   /**
-   * <code>repeated int64 childClassIds = 7;</code>
+   * <code>repeated int64 childClassIds = 8;</code>
    */
   public java.util.List<java.lang.Long>
       getChildClassIdsList() {
     return childClassIds_;
   }
   /**
-   * <code>repeated int64 childClassIds = 7;</code>
+   * <code>repeated int64 childClassIds = 8;</code>
    */
   public int getChildClassIdsCount() {
     return childClassIds_.size();
   }
   /**
-   * <code>repeated int64 childClassIds = 7;</code>
+   * <code>repeated int64 childClassIds = 8;</code>
    */
   public long getChildClassIds(int index) {
     return childClassIds_.get(index);
   }
   private int childClassIdsMemoizedSerializedSize = -1;
 
-  public static final int CONFIGIDS_FIELD_NUMBER = 8;
+  public static final int CONFIGIDS_FIELD_NUMBER = 9;
   private java.util.List<java.lang.Long> configIds_;
   /**
-   * <code>repeated int64 configIds = 8;</code>
+   * <code>repeated int64 configIds = 9;</code>
    */
   public java.util.List<java.lang.Long>
       getConfigIdsList() {
     return configIds_;
   }
   /**
-   * <code>repeated int64 configIds = 8;</code>
+   * <code>repeated int64 configIds = 9;</code>
    */
   public int getConfigIdsCount() {
     return configIds_.size();
   }
   /**
-   * <code>repeated int64 configIds = 8;</code>
+   * <code>repeated int64 configIds = 9;</code>
    */
   public long getConfigIds(int index) {
     return configIds_.get(index);
   }
   private int configIdsMemoizedSerializedSize = -1;
+
+  public static final int ISANY_FIELD_NUMBER = 10;
+  private boolean isAny_;
+  /**
+   * <code>bool isAny = 10;</code>
+   */
+  public boolean getIsAny() {
+    return isAny_;
+  }
+
+  public static final int ISDYNAMIC_FIELD_NUMBER = 11;
+  private boolean isDynamic_;
+  /**
+   * <code>bool isDynamic = 11;</code>
+   */
+  public boolean getIsDynamic() {
+    return isDynamic_;
+  }
 
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
@@ -403,33 +448,42 @@ private static final long serialVersionUID = 0L;
     if (fatherClassId_ != 0L) {
       output.writeInt64(4, fatherClassId_);
     }
+    if (level_ != 0) {
+      output.writeInt32(5, level_);
+    }
     if (getEntityFieldIdsList().size() > 0) {
-      output.writeUInt32NoTag(42);
+      output.writeUInt32NoTag(50);
       output.writeUInt32NoTag(entityFieldIdsMemoizedSerializedSize);
     }
     for (int i = 0; i < entityFieldIds_.size(); i++) {
       output.writeInt64NoTag(entityFieldIds_.get(i));
     }
     if (getRelationIdsList().size() > 0) {
-      output.writeUInt32NoTag(50);
+      output.writeUInt32NoTag(58);
       output.writeUInt32NoTag(relationIdsMemoizedSerializedSize);
     }
     for (int i = 0; i < relationIds_.size(); i++) {
       output.writeInt64NoTag(relationIds_.get(i));
     }
     if (getChildClassIdsList().size() > 0) {
-      output.writeUInt32NoTag(58);
+      output.writeUInt32NoTag(66);
       output.writeUInt32NoTag(childClassIdsMemoizedSerializedSize);
     }
     for (int i = 0; i < childClassIds_.size(); i++) {
       output.writeInt64NoTag(childClassIds_.get(i));
     }
     if (getConfigIdsList().size() > 0) {
-      output.writeUInt32NoTag(66);
+      output.writeUInt32NoTag(74);
       output.writeUInt32NoTag(configIdsMemoizedSerializedSize);
     }
     for (int i = 0; i < configIds_.size(); i++) {
       output.writeInt64NoTag(configIds_.get(i));
+    }
+    if (isAny_ != false) {
+      output.writeBool(10, isAny_);
+    }
+    if (isDynamic_ != false) {
+      output.writeBool(11, isDynamic_);
     }
     unknownFields.writeTo(output);
   }
@@ -452,6 +506,10 @@ private static final long serialVersionUID = 0L;
     if (fatherClassId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(4, fatherClassId_);
+    }
+    if (level_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(5, level_);
     }
     {
       int dataSize = 0;
@@ -509,6 +567,14 @@ private static final long serialVersionUID = 0L;
       }
       configIdsMemoizedSerializedSize = dataSize;
     }
+    if (isAny_ != false) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(10, isAny_);
+    }
+    if (isDynamic_ != false) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(11, isDynamic_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -533,6 +599,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getName());
     result = result && (getFatherClassId()
         == other.getFatherClassId());
+    result = result && (getLevel()
+        == other.getLevel());
     result = result && getEntityFieldIdsList()
         .equals(other.getEntityFieldIdsList());
     result = result && getRelationIdsList()
@@ -541,6 +609,10 @@ private static final long serialVersionUID = 0L;
         .equals(other.getChildClassIdsList());
     result = result && getConfigIdsList()
         .equals(other.getConfigIdsList());
+    result = result && (getIsAny()
+        == other.getIsAny());
+    result = result && (getIsDynamic()
+        == other.getIsDynamic());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -562,6 +634,8 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + FATHERCLASSID_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
         getFatherClassId());
+    hash = (37 * hash) + LEVEL_FIELD_NUMBER;
+    hash = (53 * hash) + getLevel();
     if (getEntityFieldIdsCount() > 0) {
       hash = (37 * hash) + ENTITYFIELDIDS_FIELD_NUMBER;
       hash = (53 * hash) + getEntityFieldIdsList().hashCode();
@@ -578,6 +652,12 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + CONFIGIDS_FIELD_NUMBER;
       hash = (53 * hash) + getConfigIdsList().hashCode();
     }
+    hash = (37 * hash) + ISANY_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getIsAny());
+    hash = (37 * hash) + ISDYNAMIC_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getIsDynamic());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -715,14 +795,20 @@ private static final long serialVersionUID = 0L;
 
       fatherClassId_ = 0L;
 
+      level_ = 0;
+
       entityFieldIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000010);
-      relationIds_ = java.util.Collections.emptyList();
       bitField0_ = (bitField0_ & ~0x00000020);
-      childClassIds_ = java.util.Collections.emptyList();
+      relationIds_ = java.util.Collections.emptyList();
       bitField0_ = (bitField0_ & ~0x00000040);
-      configIds_ = java.util.Collections.emptyList();
+      childClassIds_ = java.util.Collections.emptyList();
       bitField0_ = (bitField0_ & ~0x00000080);
+      configIds_ = java.util.Collections.emptyList();
+      bitField0_ = (bitField0_ & ~0x00000100);
+      isAny_ = false;
+
+      isDynamic_ = false;
+
       return this;
     }
 
@@ -751,26 +837,29 @@ private static final long serialVersionUID = 0L;
       result.id_ = id_;
       result.name_ = name_;
       result.fatherClassId_ = fatherClassId_;
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        entityFieldIds_ = java.util.Collections.unmodifiableList(entityFieldIds_);
-        bitField0_ = (bitField0_ & ~0x00000010);
-      }
-      result.entityFieldIds_ = entityFieldIds_;
+      result.level_ = level_;
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        relationIds_ = java.util.Collections.unmodifiableList(relationIds_);
+        entityFieldIds_ = java.util.Collections.unmodifiableList(entityFieldIds_);
         bitField0_ = (bitField0_ & ~0x00000020);
       }
-      result.relationIds_ = relationIds_;
+      result.entityFieldIds_ = entityFieldIds_;
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        childClassIds_ = java.util.Collections.unmodifiableList(childClassIds_);
+        relationIds_ = java.util.Collections.unmodifiableList(relationIds_);
         bitField0_ = (bitField0_ & ~0x00000040);
       }
-      result.childClassIds_ = childClassIds_;
+      result.relationIds_ = relationIds_;
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        configIds_ = java.util.Collections.unmodifiableList(configIds_);
+        childClassIds_ = java.util.Collections.unmodifiableList(childClassIds_);
         bitField0_ = (bitField0_ & ~0x00000080);
       }
+      result.childClassIds_ = childClassIds_;
+      if (((bitField0_ & 0x00000100) == 0x00000100)) {
+        configIds_ = java.util.Collections.unmodifiableList(configIds_);
+        bitField0_ = (bitField0_ & ~0x00000100);
+      }
       result.configIds_ = configIds_;
+      result.isAny_ = isAny_;
+      result.isDynamic_ = isDynamic_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -827,10 +916,13 @@ private static final long serialVersionUID = 0L;
       if (other.getFatherClassId() != 0L) {
         setFatherClassId(other.getFatherClassId());
       }
+      if (other.getLevel() != 0) {
+        setLevel(other.getLevel());
+      }
       if (!other.entityFieldIds_.isEmpty()) {
         if (entityFieldIds_.isEmpty()) {
           entityFieldIds_ = other.entityFieldIds_;
-          bitField0_ = (bitField0_ & ~0x00000010);
+          bitField0_ = (bitField0_ & ~0x00000020);
         } else {
           ensureEntityFieldIdsIsMutable();
           entityFieldIds_.addAll(other.entityFieldIds_);
@@ -840,7 +932,7 @@ private static final long serialVersionUID = 0L;
       if (!other.relationIds_.isEmpty()) {
         if (relationIds_.isEmpty()) {
           relationIds_ = other.relationIds_;
-          bitField0_ = (bitField0_ & ~0x00000020);
+          bitField0_ = (bitField0_ & ~0x00000040);
         } else {
           ensureRelationIdsIsMutable();
           relationIds_.addAll(other.relationIds_);
@@ -850,7 +942,7 @@ private static final long serialVersionUID = 0L;
       if (!other.childClassIds_.isEmpty()) {
         if (childClassIds_.isEmpty()) {
           childClassIds_ = other.childClassIds_;
-          bitField0_ = (bitField0_ & ~0x00000040);
+          bitField0_ = (bitField0_ & ~0x00000080);
         } else {
           ensureChildClassIdsIsMutable();
           childClassIds_.addAll(other.childClassIds_);
@@ -860,12 +952,18 @@ private static final long serialVersionUID = 0L;
       if (!other.configIds_.isEmpty()) {
         if (configIds_.isEmpty()) {
           configIds_ = other.configIds_;
-          bitField0_ = (bitField0_ & ~0x00000080);
+          bitField0_ = (bitField0_ & ~0x00000100);
         } else {
           ensureConfigIdsIsMutable();
           configIds_.addAll(other.configIds_);
         }
         onChanged();
+      }
+      if (other.getIsAny() != false) {
+        setIsAny(other.getIsAny());
+      }
+      if (other.getIsDynamic() != false) {
+        setIsDynamic(other.getIsDynamic());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1085,34 +1183,60 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    private int level_ ;
+    /**
+     * <code>int32 level = 5;</code>
+     */
+    public int getLevel() {
+      return level_;
+    }
+    /**
+     * <code>int32 level = 5;</code>
+     */
+    public Builder setLevel(int value) {
+      
+      level_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 level = 5;</code>
+     */
+    public Builder clearLevel() {
+      
+      level_ = 0;
+      onChanged();
+      return this;
+    }
+
     private java.util.List<java.lang.Long> entityFieldIds_ = java.util.Collections.emptyList();
     private void ensureEntityFieldIdsIsMutable() {
-      if (!((bitField0_ & 0x00000010) == 0x00000010)) {
+      if (!((bitField0_ & 0x00000020) == 0x00000020)) {
         entityFieldIds_ = new java.util.ArrayList<java.lang.Long>(entityFieldIds_);
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000020;
        }
     }
     /**
-     * <code>repeated int64 entityFieldIds = 5;</code>
+     * <code>repeated int64 entityFieldIds = 6;</code>
      */
     public java.util.List<java.lang.Long>
         getEntityFieldIdsList() {
       return java.util.Collections.unmodifiableList(entityFieldIds_);
     }
     /**
-     * <code>repeated int64 entityFieldIds = 5;</code>
+     * <code>repeated int64 entityFieldIds = 6;</code>
      */
     public int getEntityFieldIdsCount() {
       return entityFieldIds_.size();
     }
     /**
-     * <code>repeated int64 entityFieldIds = 5;</code>
+     * <code>repeated int64 entityFieldIds = 6;</code>
      */
     public long getEntityFieldIds(int index) {
       return entityFieldIds_.get(index);
     }
     /**
-     * <code>repeated int64 entityFieldIds = 5;</code>
+     * <code>repeated int64 entityFieldIds = 6;</code>
      */
     public Builder setEntityFieldIds(
         int index, long value) {
@@ -1122,7 +1246,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 entityFieldIds = 5;</code>
+     * <code>repeated int64 entityFieldIds = 6;</code>
      */
     public Builder addEntityFieldIds(long value) {
       ensureEntityFieldIdsIsMutable();
@@ -1131,7 +1255,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 entityFieldIds = 5;</code>
+     * <code>repeated int64 entityFieldIds = 6;</code>
      */
     public Builder addAllEntityFieldIds(
         java.lang.Iterable<? extends java.lang.Long> values) {
@@ -1142,43 +1266,43 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 entityFieldIds = 5;</code>
+     * <code>repeated int64 entityFieldIds = 6;</code>
      */
     public Builder clearEntityFieldIds() {
       entityFieldIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000020);
       onChanged();
       return this;
     }
 
     private java.util.List<java.lang.Long> relationIds_ = java.util.Collections.emptyList();
     private void ensureRelationIdsIsMutable() {
-      if (!((bitField0_ & 0x00000020) == 0x00000020)) {
+      if (!((bitField0_ & 0x00000040) == 0x00000040)) {
         relationIds_ = new java.util.ArrayList<java.lang.Long>(relationIds_);
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000040;
        }
     }
     /**
-     * <code>repeated int64 relationIds = 6;</code>
+     * <code>repeated int64 relationIds = 7;</code>
      */
     public java.util.List<java.lang.Long>
         getRelationIdsList() {
       return java.util.Collections.unmodifiableList(relationIds_);
     }
     /**
-     * <code>repeated int64 relationIds = 6;</code>
+     * <code>repeated int64 relationIds = 7;</code>
      */
     public int getRelationIdsCount() {
       return relationIds_.size();
     }
     /**
-     * <code>repeated int64 relationIds = 6;</code>
+     * <code>repeated int64 relationIds = 7;</code>
      */
     public long getRelationIds(int index) {
       return relationIds_.get(index);
     }
     /**
-     * <code>repeated int64 relationIds = 6;</code>
+     * <code>repeated int64 relationIds = 7;</code>
      */
     public Builder setRelationIds(
         int index, long value) {
@@ -1188,7 +1312,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 relationIds = 6;</code>
+     * <code>repeated int64 relationIds = 7;</code>
      */
     public Builder addRelationIds(long value) {
       ensureRelationIdsIsMutable();
@@ -1197,7 +1321,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 relationIds = 6;</code>
+     * <code>repeated int64 relationIds = 7;</code>
      */
     public Builder addAllRelationIds(
         java.lang.Iterable<? extends java.lang.Long> values) {
@@ -1208,43 +1332,43 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 relationIds = 6;</code>
+     * <code>repeated int64 relationIds = 7;</code>
      */
     public Builder clearRelationIds() {
       relationIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000020);
+      bitField0_ = (bitField0_ & ~0x00000040);
       onChanged();
       return this;
     }
 
     private java.util.List<java.lang.Long> childClassIds_ = java.util.Collections.emptyList();
     private void ensureChildClassIdsIsMutable() {
-      if (!((bitField0_ & 0x00000040) == 0x00000040)) {
+      if (!((bitField0_ & 0x00000080) == 0x00000080)) {
         childClassIds_ = new java.util.ArrayList<java.lang.Long>(childClassIds_);
-        bitField0_ |= 0x00000040;
+        bitField0_ |= 0x00000080;
        }
     }
     /**
-     * <code>repeated int64 childClassIds = 7;</code>
+     * <code>repeated int64 childClassIds = 8;</code>
      */
     public java.util.List<java.lang.Long>
         getChildClassIdsList() {
       return java.util.Collections.unmodifiableList(childClassIds_);
     }
     /**
-     * <code>repeated int64 childClassIds = 7;</code>
+     * <code>repeated int64 childClassIds = 8;</code>
      */
     public int getChildClassIdsCount() {
       return childClassIds_.size();
     }
     /**
-     * <code>repeated int64 childClassIds = 7;</code>
+     * <code>repeated int64 childClassIds = 8;</code>
      */
     public long getChildClassIds(int index) {
       return childClassIds_.get(index);
     }
     /**
-     * <code>repeated int64 childClassIds = 7;</code>
+     * <code>repeated int64 childClassIds = 8;</code>
      */
     public Builder setChildClassIds(
         int index, long value) {
@@ -1254,7 +1378,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 childClassIds = 7;</code>
+     * <code>repeated int64 childClassIds = 8;</code>
      */
     public Builder addChildClassIds(long value) {
       ensureChildClassIdsIsMutable();
@@ -1263,7 +1387,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 childClassIds = 7;</code>
+     * <code>repeated int64 childClassIds = 8;</code>
      */
     public Builder addAllChildClassIds(
         java.lang.Iterable<? extends java.lang.Long> values) {
@@ -1274,43 +1398,43 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 childClassIds = 7;</code>
+     * <code>repeated int64 childClassIds = 8;</code>
      */
     public Builder clearChildClassIds() {
       childClassIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000040);
+      bitField0_ = (bitField0_ & ~0x00000080);
       onChanged();
       return this;
     }
 
     private java.util.List<java.lang.Long> configIds_ = java.util.Collections.emptyList();
     private void ensureConfigIdsIsMutable() {
-      if (!((bitField0_ & 0x00000080) == 0x00000080)) {
+      if (!((bitField0_ & 0x00000100) == 0x00000100)) {
         configIds_ = new java.util.ArrayList<java.lang.Long>(configIds_);
-        bitField0_ |= 0x00000080;
+        bitField0_ |= 0x00000100;
        }
     }
     /**
-     * <code>repeated int64 configIds = 8;</code>
+     * <code>repeated int64 configIds = 9;</code>
      */
     public java.util.List<java.lang.Long>
         getConfigIdsList() {
       return java.util.Collections.unmodifiableList(configIds_);
     }
     /**
-     * <code>repeated int64 configIds = 8;</code>
+     * <code>repeated int64 configIds = 9;</code>
      */
     public int getConfigIdsCount() {
       return configIds_.size();
     }
     /**
-     * <code>repeated int64 configIds = 8;</code>
+     * <code>repeated int64 configIds = 9;</code>
      */
     public long getConfigIds(int index) {
       return configIds_.get(index);
     }
     /**
-     * <code>repeated int64 configIds = 8;</code>
+     * <code>repeated int64 configIds = 9;</code>
      */
     public Builder setConfigIds(
         int index, long value) {
@@ -1320,7 +1444,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 configIds = 8;</code>
+     * <code>repeated int64 configIds = 9;</code>
      */
     public Builder addConfigIds(long value) {
       ensureConfigIdsIsMutable();
@@ -1329,7 +1453,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 configIds = 8;</code>
+     * <code>repeated int64 configIds = 9;</code>
      */
     public Builder addAllConfigIds(
         java.lang.Iterable<? extends java.lang.Long> values) {
@@ -1340,11 +1464,63 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 configIds = 8;</code>
+     * <code>repeated int64 configIds = 9;</code>
      */
     public Builder clearConfigIds() {
       configIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000080);
+      bitField0_ = (bitField0_ & ~0x00000100);
+      onChanged();
+      return this;
+    }
+
+    private boolean isAny_ ;
+    /**
+     * <code>bool isAny = 10;</code>
+     */
+    public boolean getIsAny() {
+      return isAny_;
+    }
+    /**
+     * <code>bool isAny = 10;</code>
+     */
+    public Builder setIsAny(boolean value) {
+      
+      isAny_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>bool isAny = 10;</code>
+     */
+    public Builder clearIsAny() {
+      
+      isAny_ = false;
+      onChanged();
+      return this;
+    }
+
+    private boolean isDynamic_ ;
+    /**
+     * <code>bool isDynamic = 11;</code>
+     */
+    public boolean getIsDynamic() {
+      return isDynamic_;
+    }
+    /**
+     * <code>bool isDynamic = 11;</code>
+     */
+    public Builder setIsDynamic(boolean value) {
+      
+      isDynamic_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>bool isDynamic = 11;</code>
+     */
+    public Builder clearIsDynamic() {
+      
+      isDynamic_ = false;
       onChanged();
       return this;
     }
