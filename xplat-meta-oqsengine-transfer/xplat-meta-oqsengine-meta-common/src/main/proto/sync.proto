@@ -38,10 +38,11 @@ message EntityClassInfo {
 	string code = 1;
 	int64 id = 2;
 	string name = 3;
-	int64 extendClassId = 4;
+	int64 fatherClassId = 4;
 	repeated int64 entityFieldIds = 5;
 	repeated int64 relationIds = 6;
-	repeated int64 configIds = 7;
+	repeated int64 childClassIds = 7;
+	repeated int64 configIds = 8;
 }
 
 message EntityFieldInfo {

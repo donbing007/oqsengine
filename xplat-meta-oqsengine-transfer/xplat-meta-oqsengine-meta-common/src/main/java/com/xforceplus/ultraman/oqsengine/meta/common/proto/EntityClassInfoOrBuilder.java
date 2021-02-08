@@ -33,9 +33,9 @@ public interface EntityClassInfoOrBuilder extends
       getNameBytes();
 
   /**
-   * <code>int64 extendClassId = 4;</code>
+   * <code>int64 fatherClassId = 4;</code>
    */
-  long getExtendClassId();
+  long getFatherClassId();
 
   /**
    * <code>repeated int64 entityFieldIds = 5;</code>
@@ -64,15 +64,28 @@ public interface EntityClassInfoOrBuilder extends
   long getRelationIds(int index);
 
   /**
-   * <code>repeated int64 configIds = 7;</code>
+   * <code>repeated int64 childClassIds = 7;</code>
+   */
+  java.util.List<java.lang.Long> getChildClassIdsList();
+  /**
+   * <code>repeated int64 childClassIds = 7;</code>
+   */
+  int getChildClassIdsCount();
+  /**
+   * <code>repeated int64 childClassIds = 7;</code>
+   */
+  long getChildClassIds(int index);
+
+  /**
+   * <code>repeated int64 configIds = 8;</code>
    */
   java.util.List<java.lang.Long> getConfigIdsList();
   /**
-   * <code>repeated int64 configIds = 7;</code>
+   * <code>repeated int64 configIds = 8;</code>
    */
   int getConfigIdsCount();
   /**
-   * <code>repeated int64 configIds = 7;</code>
+   * <code>repeated int64 configIds = 8;</code>
    */
   long getConfigIds(int index);
 }
