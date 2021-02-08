@@ -21,10 +21,9 @@ private static final long serialVersionUID = 0L;
     name_ = "";
     fatherClassId_ = 0L;
     level_ = 0;
-    entityFieldIds_ = java.util.Collections.emptyList();
-    relationIds_ = java.util.Collections.emptyList();
+    entityFields_ = java.util.Collections.emptyList();
     childClassIds_ = java.util.Collections.emptyList();
-    configIds_ = java.util.Collections.emptyList();
+    relations_ = java.util.Collections.emptyList();
     isAny_ = false;
     isDynamic_ = false;
   }
@@ -87,62 +86,29 @@ private static final long serialVersionUID = 0L;
             level_ = input.readInt32();
             break;
           }
-          case 48: {
-            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
-              entityFieldIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000020;
-            }
-            entityFieldIds_.add(input.readInt64());
-            break;
-          }
           case 50: {
-            int length = input.readRawVarint32();
-            int limit = input.pushLimit(length);
-            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020) && input.getBytesUntilLimit() > 0) {
-              entityFieldIds_ = new java.util.ArrayList<java.lang.Long>();
+            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+              entityFields_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo>();
               mutable_bitField0_ |= 0x00000020;
             }
-            while (input.getBytesUntilLimit() > 0) {
-              entityFieldIds_.add(input.readInt64());
-            }
-            input.popLimit(limit);
+            entityFields_.add(
+                input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.parser(), extensionRegistry));
             break;
           }
           case 56: {
             if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
-              relationIds_ = new java.util.ArrayList<java.lang.Long>();
+              childClassIds_ = new java.util.ArrayList<java.lang.Long>();
               mutable_bitField0_ |= 0x00000040;
             }
-            relationIds_.add(input.readInt64());
+            childClassIds_.add(input.readInt64());
             break;
           }
           case 58: {
             int length = input.readRawVarint32();
             int limit = input.pushLimit(length);
             if (!((mutable_bitField0_ & 0x00000040) == 0x00000040) && input.getBytesUntilLimit() > 0) {
-              relationIds_ = new java.util.ArrayList<java.lang.Long>();
+              childClassIds_ = new java.util.ArrayList<java.lang.Long>();
               mutable_bitField0_ |= 0x00000040;
-            }
-            while (input.getBytesUntilLimit() > 0) {
-              relationIds_.add(input.readInt64());
-            }
-            input.popLimit(limit);
-            break;
-          }
-          case 64: {
-            if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
-              childClassIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000080;
-            }
-            childClassIds_.add(input.readInt64());
-            break;
-          }
-          case 66: {
-            int length = input.readRawVarint32();
-            int limit = input.pushLimit(length);
-            if (!((mutable_bitField0_ & 0x00000080) == 0x00000080) && input.getBytesUntilLimit() > 0) {
-              childClassIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000080;
             }
             while (input.getBytesUntilLimit() > 0) {
               childClassIds_.add(input.readInt64());
@@ -150,33 +116,21 @@ private static final long serialVersionUID = 0L;
             input.popLimit(limit);
             break;
           }
+          case 66: {
+            if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
+              relations_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo>();
+              mutable_bitField0_ |= 0x00000080;
+            }
+            relations_.add(
+                input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.parser(), extensionRegistry));
+            break;
+          }
           case 72: {
-            if (!((mutable_bitField0_ & 0x00000100) == 0x00000100)) {
-              configIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000100;
-            }
-            configIds_.add(input.readInt64());
-            break;
-          }
-          case 74: {
-            int length = input.readRawVarint32();
-            int limit = input.pushLimit(length);
-            if (!((mutable_bitField0_ & 0x00000100) == 0x00000100) && input.getBytesUntilLimit() > 0) {
-              configIds_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000100;
-            }
-            while (input.getBytesUntilLimit() > 0) {
-              configIds_.add(input.readInt64());
-            }
-            input.popLimit(limit);
-            break;
-          }
-          case 80: {
 
             isAny_ = input.readBool();
             break;
           }
-          case 88: {
+          case 80: {
 
             isDynamic_ = input.readBool();
             break;
@@ -190,16 +144,13 @@ private static final long serialVersionUID = 0L;
           e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
-        entityFieldIds_ = java.util.Collections.unmodifiableList(entityFieldIds_);
+        entityFields_ = java.util.Collections.unmodifiableList(entityFields_);
       }
       if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
-        relationIds_ = java.util.Collections.unmodifiableList(relationIds_);
-      }
-      if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
         childClassIds_ = java.util.Collections.unmodifiableList(childClassIds_);
       }
-      if (((mutable_bitField0_ & 0x00000100) == 0x00000100)) {
-        configIds_ = java.util.Collections.unmodifiableList(configIds_);
+      if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
+        relations_ = java.util.Collections.unmodifiableList(relations_);
       }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
@@ -313,111 +264,112 @@ private static final long serialVersionUID = 0L;
     return level_;
   }
 
-  public static final int ENTITYFIELDIDS_FIELD_NUMBER = 6;
-  private java.util.List<java.lang.Long> entityFieldIds_;
+  public static final int ENTITYFIELDS_FIELD_NUMBER = 6;
+  private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo> entityFields_;
   /**
-   * <code>repeated int64 entityFieldIds = 6;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
    */
-  public java.util.List<java.lang.Long>
-      getEntityFieldIdsList() {
-    return entityFieldIds_;
+  public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo> getEntityFieldsList() {
+    return entityFields_;
   }
   /**
-   * <code>repeated int64 entityFieldIds = 6;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
    */
-  public int getEntityFieldIdsCount() {
-    return entityFieldIds_.size();
+  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder> 
+      getEntityFieldsOrBuilderList() {
+    return entityFields_;
   }
   /**
-   * <code>repeated int64 entityFieldIds = 6;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
    */
-  public long getEntityFieldIds(int index) {
-    return entityFieldIds_.get(index);
+  public int getEntityFieldsCount() {
+    return entityFields_.size();
   }
-  private int entityFieldIdsMemoizedSerializedSize = -1;
+  /**
+   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo getEntityFields(int index) {
+    return entityFields_.get(index);
+  }
+  /**
+   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder getEntityFieldsOrBuilder(
+      int index) {
+    return entityFields_.get(index);
+  }
 
-  public static final int RELATIONIDS_FIELD_NUMBER = 7;
-  private java.util.List<java.lang.Long> relationIds_;
-  /**
-   * <code>repeated int64 relationIds = 7;</code>
-   */
-  public java.util.List<java.lang.Long>
-      getRelationIdsList() {
-    return relationIds_;
-  }
-  /**
-   * <code>repeated int64 relationIds = 7;</code>
-   */
-  public int getRelationIdsCount() {
-    return relationIds_.size();
-  }
-  /**
-   * <code>repeated int64 relationIds = 7;</code>
-   */
-  public long getRelationIds(int index) {
-    return relationIds_.get(index);
-  }
-  private int relationIdsMemoizedSerializedSize = -1;
-
-  public static final int CHILDCLASSIDS_FIELD_NUMBER = 8;
+  public static final int CHILDCLASSIDS_FIELD_NUMBER = 7;
   private java.util.List<java.lang.Long> childClassIds_;
   /**
-   * <code>repeated int64 childClassIds = 8;</code>
+   * <code>repeated int64 childClassIds = 7;</code>
    */
   public java.util.List<java.lang.Long>
       getChildClassIdsList() {
     return childClassIds_;
   }
   /**
-   * <code>repeated int64 childClassIds = 8;</code>
+   * <code>repeated int64 childClassIds = 7;</code>
    */
   public int getChildClassIdsCount() {
     return childClassIds_.size();
   }
   /**
-   * <code>repeated int64 childClassIds = 8;</code>
+   * <code>repeated int64 childClassIds = 7;</code>
    */
   public long getChildClassIds(int index) {
     return childClassIds_.get(index);
   }
   private int childClassIdsMemoizedSerializedSize = -1;
 
-  public static final int CONFIGIDS_FIELD_NUMBER = 9;
-  private java.util.List<java.lang.Long> configIds_;
+  public static final int RELATIONS_FIELD_NUMBER = 8;
+  private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo> relations_;
   /**
-   * <code>repeated int64 configIds = 9;</code>
+   * <code>repeated .RelationInfo relations = 8;</code>
    */
-  public java.util.List<java.lang.Long>
-      getConfigIdsList() {
-    return configIds_;
+  public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo> getRelationsList() {
+    return relations_;
   }
   /**
-   * <code>repeated int64 configIds = 9;</code>
+   * <code>repeated .RelationInfo relations = 8;</code>
    */
-  public int getConfigIdsCount() {
-    return configIds_.size();
+  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfoOrBuilder> 
+      getRelationsOrBuilderList() {
+    return relations_;
   }
   /**
-   * <code>repeated int64 configIds = 9;</code>
+   * <code>repeated .RelationInfo relations = 8;</code>
    */
-  public long getConfigIds(int index) {
-    return configIds_.get(index);
+  public int getRelationsCount() {
+    return relations_.size();
   }
-  private int configIdsMemoizedSerializedSize = -1;
+  /**
+   * <code>repeated .RelationInfo relations = 8;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo getRelations(int index) {
+    return relations_.get(index);
+  }
+  /**
+   * <code>repeated .RelationInfo relations = 8;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfoOrBuilder getRelationsOrBuilder(
+      int index) {
+    return relations_.get(index);
+  }
 
-  public static final int ISANY_FIELD_NUMBER = 10;
+  public static final int ISANY_FIELD_NUMBER = 9;
   private boolean isAny_;
   /**
-   * <code>bool isAny = 10;</code>
+   * <code>bool isAny = 9;</code>
    */
   public boolean getIsAny() {
     return isAny_;
   }
 
-  public static final int ISDYNAMIC_FIELD_NUMBER = 11;
+  public static final int ISDYNAMIC_FIELD_NUMBER = 10;
   private boolean isDynamic_;
   /**
-   * <code>bool isDynamic = 11;</code>
+   * <code>bool isDynamic = 10;</code>
    */
   public boolean getIsDynamic() {
     return isDynamic_;
@@ -451,39 +403,24 @@ private static final long serialVersionUID = 0L;
     if (level_ != 0) {
       output.writeInt32(5, level_);
     }
-    if (getEntityFieldIdsList().size() > 0) {
-      output.writeUInt32NoTag(50);
-      output.writeUInt32NoTag(entityFieldIdsMemoizedSerializedSize);
-    }
-    for (int i = 0; i < entityFieldIds_.size(); i++) {
-      output.writeInt64NoTag(entityFieldIds_.get(i));
-    }
-    if (getRelationIdsList().size() > 0) {
-      output.writeUInt32NoTag(58);
-      output.writeUInt32NoTag(relationIdsMemoizedSerializedSize);
-    }
-    for (int i = 0; i < relationIds_.size(); i++) {
-      output.writeInt64NoTag(relationIds_.get(i));
+    for (int i = 0; i < entityFields_.size(); i++) {
+      output.writeMessage(6, entityFields_.get(i));
     }
     if (getChildClassIdsList().size() > 0) {
-      output.writeUInt32NoTag(66);
+      output.writeUInt32NoTag(58);
       output.writeUInt32NoTag(childClassIdsMemoizedSerializedSize);
     }
     for (int i = 0; i < childClassIds_.size(); i++) {
       output.writeInt64NoTag(childClassIds_.get(i));
     }
-    if (getConfigIdsList().size() > 0) {
-      output.writeUInt32NoTag(74);
-      output.writeUInt32NoTag(configIdsMemoizedSerializedSize);
-    }
-    for (int i = 0; i < configIds_.size(); i++) {
-      output.writeInt64NoTag(configIds_.get(i));
+    for (int i = 0; i < relations_.size(); i++) {
+      output.writeMessage(8, relations_.get(i));
     }
     if (isAny_ != false) {
-      output.writeBool(10, isAny_);
+      output.writeBool(9, isAny_);
     }
     if (isDynamic_ != false) {
-      output.writeBool(11, isDynamic_);
+      output.writeBool(10, isDynamic_);
     }
     unknownFields.writeTo(output);
   }
@@ -511,33 +448,9 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(5, level_);
     }
-    {
-      int dataSize = 0;
-      for (int i = 0; i < entityFieldIds_.size(); i++) {
-        dataSize += com.google.protobuf.CodedOutputStream
-          .computeInt64SizeNoTag(entityFieldIds_.get(i));
-      }
-      size += dataSize;
-      if (!getEntityFieldIdsList().isEmpty()) {
-        size += 1;
-        size += com.google.protobuf.CodedOutputStream
-            .computeInt32SizeNoTag(dataSize);
-      }
-      entityFieldIdsMemoizedSerializedSize = dataSize;
-    }
-    {
-      int dataSize = 0;
-      for (int i = 0; i < relationIds_.size(); i++) {
-        dataSize += com.google.protobuf.CodedOutputStream
-          .computeInt64SizeNoTag(relationIds_.get(i));
-      }
-      size += dataSize;
-      if (!getRelationIdsList().isEmpty()) {
-        size += 1;
-        size += com.google.protobuf.CodedOutputStream
-            .computeInt32SizeNoTag(dataSize);
-      }
-      relationIdsMemoizedSerializedSize = dataSize;
+    for (int i = 0; i < entityFields_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(6, entityFields_.get(i));
     }
     {
       int dataSize = 0;
@@ -553,27 +466,17 @@ private static final long serialVersionUID = 0L;
       }
       childClassIdsMemoizedSerializedSize = dataSize;
     }
-    {
-      int dataSize = 0;
-      for (int i = 0; i < configIds_.size(); i++) {
-        dataSize += com.google.protobuf.CodedOutputStream
-          .computeInt64SizeNoTag(configIds_.get(i));
-      }
-      size += dataSize;
-      if (!getConfigIdsList().isEmpty()) {
-        size += 1;
-        size += com.google.protobuf.CodedOutputStream
-            .computeInt32SizeNoTag(dataSize);
-      }
-      configIdsMemoizedSerializedSize = dataSize;
+    for (int i = 0; i < relations_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(8, relations_.get(i));
     }
     if (isAny_ != false) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(10, isAny_);
+        .computeBoolSize(9, isAny_);
     }
     if (isDynamic_ != false) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(11, isDynamic_);
+        .computeBoolSize(10, isDynamic_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -601,14 +504,12 @@ private static final long serialVersionUID = 0L;
         == other.getFatherClassId());
     result = result && (getLevel()
         == other.getLevel());
-    result = result && getEntityFieldIdsList()
-        .equals(other.getEntityFieldIdsList());
-    result = result && getRelationIdsList()
-        .equals(other.getRelationIdsList());
+    result = result && getEntityFieldsList()
+        .equals(other.getEntityFieldsList());
     result = result && getChildClassIdsList()
         .equals(other.getChildClassIdsList());
-    result = result && getConfigIdsList()
-        .equals(other.getConfigIdsList());
+    result = result && getRelationsList()
+        .equals(other.getRelationsList());
     result = result && (getIsAny()
         == other.getIsAny());
     result = result && (getIsDynamic()
@@ -636,21 +537,17 @@ private static final long serialVersionUID = 0L;
         getFatherClassId());
     hash = (37 * hash) + LEVEL_FIELD_NUMBER;
     hash = (53 * hash) + getLevel();
-    if (getEntityFieldIdsCount() > 0) {
-      hash = (37 * hash) + ENTITYFIELDIDS_FIELD_NUMBER;
-      hash = (53 * hash) + getEntityFieldIdsList().hashCode();
-    }
-    if (getRelationIdsCount() > 0) {
-      hash = (37 * hash) + RELATIONIDS_FIELD_NUMBER;
-      hash = (53 * hash) + getRelationIdsList().hashCode();
+    if (getEntityFieldsCount() > 0) {
+      hash = (37 * hash) + ENTITYFIELDS_FIELD_NUMBER;
+      hash = (53 * hash) + getEntityFieldsList().hashCode();
     }
     if (getChildClassIdsCount() > 0) {
       hash = (37 * hash) + CHILDCLASSIDS_FIELD_NUMBER;
       hash = (53 * hash) + getChildClassIdsList().hashCode();
     }
-    if (getConfigIdsCount() > 0) {
-      hash = (37 * hash) + CONFIGIDS_FIELD_NUMBER;
-      hash = (53 * hash) + getConfigIdsList().hashCode();
+    if (getRelationsCount() > 0) {
+      hash = (37 * hash) + RELATIONS_FIELD_NUMBER;
+      hash = (53 * hash) + getRelationsList().hashCode();
     }
     hash = (37 * hash) + ISANY_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
@@ -783,6 +680,8 @@ private static final long serialVersionUID = 0L;
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
+        getEntityFieldsFieldBuilder();
+        getRelationsFieldBuilder();
       }
     }
     public Builder clear() {
@@ -797,14 +696,20 @@ private static final long serialVersionUID = 0L;
 
       level_ = 0;
 
-      entityFieldIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000020);
-      relationIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000040);
+      if (entityFieldsBuilder_ == null) {
+        entityFields_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000020);
+      } else {
+        entityFieldsBuilder_.clear();
+      }
       childClassIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000080);
-      configIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000100);
+      bitField0_ = (bitField0_ & ~0x00000040);
+      if (relationsBuilder_ == null) {
+        relations_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000080);
+      } else {
+        relationsBuilder_.clear();
+      }
       isAny_ = false;
 
       isDynamic_ = false;
@@ -838,26 +743,29 @@ private static final long serialVersionUID = 0L;
       result.name_ = name_;
       result.fatherClassId_ = fatherClassId_;
       result.level_ = level_;
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        entityFieldIds_ = java.util.Collections.unmodifiableList(entityFieldIds_);
-        bitField0_ = (bitField0_ & ~0x00000020);
+      if (entityFieldsBuilder_ == null) {
+        if (((bitField0_ & 0x00000020) == 0x00000020)) {
+          entityFields_ = java.util.Collections.unmodifiableList(entityFields_);
+          bitField0_ = (bitField0_ & ~0x00000020);
+        }
+        result.entityFields_ = entityFields_;
+      } else {
+        result.entityFields_ = entityFieldsBuilder_.build();
       }
-      result.entityFieldIds_ = entityFieldIds_;
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        relationIds_ = java.util.Collections.unmodifiableList(relationIds_);
+        childClassIds_ = java.util.Collections.unmodifiableList(childClassIds_);
         bitField0_ = (bitField0_ & ~0x00000040);
       }
-      result.relationIds_ = relationIds_;
-      if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        childClassIds_ = java.util.Collections.unmodifiableList(childClassIds_);
-        bitField0_ = (bitField0_ & ~0x00000080);
-      }
       result.childClassIds_ = childClassIds_;
-      if (((bitField0_ & 0x00000100) == 0x00000100)) {
-        configIds_ = java.util.Collections.unmodifiableList(configIds_);
-        bitField0_ = (bitField0_ & ~0x00000100);
+      if (relationsBuilder_ == null) {
+        if (((bitField0_ & 0x00000080) == 0x00000080)) {
+          relations_ = java.util.Collections.unmodifiableList(relations_);
+          bitField0_ = (bitField0_ & ~0x00000080);
+        }
+        result.relations_ = relations_;
+      } else {
+        result.relations_ = relationsBuilder_.build();
       }
-      result.configIds_ = configIds_;
       result.isAny_ = isAny_;
       result.isDynamic_ = isDynamic_;
       result.bitField0_ = to_bitField0_;
@@ -919,45 +827,67 @@ private static final long serialVersionUID = 0L;
       if (other.getLevel() != 0) {
         setLevel(other.getLevel());
       }
-      if (!other.entityFieldIds_.isEmpty()) {
-        if (entityFieldIds_.isEmpty()) {
-          entityFieldIds_ = other.entityFieldIds_;
-          bitField0_ = (bitField0_ & ~0x00000020);
-        } else {
-          ensureEntityFieldIdsIsMutable();
-          entityFieldIds_.addAll(other.entityFieldIds_);
+      if (entityFieldsBuilder_ == null) {
+        if (!other.entityFields_.isEmpty()) {
+          if (entityFields_.isEmpty()) {
+            entityFields_ = other.entityFields_;
+            bitField0_ = (bitField0_ & ~0x00000020);
+          } else {
+            ensureEntityFieldsIsMutable();
+            entityFields_.addAll(other.entityFields_);
+          }
+          onChanged();
         }
-        onChanged();
-      }
-      if (!other.relationIds_.isEmpty()) {
-        if (relationIds_.isEmpty()) {
-          relationIds_ = other.relationIds_;
-          bitField0_ = (bitField0_ & ~0x00000040);
-        } else {
-          ensureRelationIdsIsMutable();
-          relationIds_.addAll(other.relationIds_);
+      } else {
+        if (!other.entityFields_.isEmpty()) {
+          if (entityFieldsBuilder_.isEmpty()) {
+            entityFieldsBuilder_.dispose();
+            entityFieldsBuilder_ = null;
+            entityFields_ = other.entityFields_;
+            bitField0_ = (bitField0_ & ~0x00000020);
+            entityFieldsBuilder_ = 
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getEntityFieldsFieldBuilder() : null;
+          } else {
+            entityFieldsBuilder_.addAllMessages(other.entityFields_);
+          }
         }
-        onChanged();
       }
       if (!other.childClassIds_.isEmpty()) {
         if (childClassIds_.isEmpty()) {
           childClassIds_ = other.childClassIds_;
-          bitField0_ = (bitField0_ & ~0x00000080);
+          bitField0_ = (bitField0_ & ~0x00000040);
         } else {
           ensureChildClassIdsIsMutable();
           childClassIds_.addAll(other.childClassIds_);
         }
         onChanged();
       }
-      if (!other.configIds_.isEmpty()) {
-        if (configIds_.isEmpty()) {
-          configIds_ = other.configIds_;
-          bitField0_ = (bitField0_ & ~0x00000100);
-        } else {
-          ensureConfigIdsIsMutable();
-          configIds_.addAll(other.configIds_);
+      if (relationsBuilder_ == null) {
+        if (!other.relations_.isEmpty()) {
+          if (relations_.isEmpty()) {
+            relations_ = other.relations_;
+            bitField0_ = (bitField0_ & ~0x00000080);
+          } else {
+            ensureRelationsIsMutable();
+            relations_.addAll(other.relations_);
+          }
+          onChanged();
         }
-        onChanged();
+      } else {
+        if (!other.relations_.isEmpty()) {
+          if (relationsBuilder_.isEmpty()) {
+            relationsBuilder_.dispose();
+            relationsBuilder_ = null;
+            relations_ = other.relations_;
+            bitField0_ = (bitField0_ & ~0x00000080);
+            relationsBuilder_ = 
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getRelationsFieldBuilder() : null;
+          } else {
+            relationsBuilder_.addAllMessages(other.relations_);
+          }
+        }
       }
       if (other.getIsAny() != false) {
         setIsAny(other.getIsAny());
@@ -1209,166 +1139,274 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.util.List<java.lang.Long> entityFieldIds_ = java.util.Collections.emptyList();
-    private void ensureEntityFieldIdsIsMutable() {
+    private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo> entityFields_ =
+      java.util.Collections.emptyList();
+    private void ensureEntityFieldsIsMutable() {
       if (!((bitField0_ & 0x00000020) == 0x00000020)) {
-        entityFieldIds_ = new java.util.ArrayList<java.lang.Long>(entityFieldIds_);
+        entityFields_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo>(entityFields_);
         bitField0_ |= 0x00000020;
        }
     }
-    /**
-     * <code>repeated int64 entityFieldIds = 6;</code>
-     */
-    public java.util.List<java.lang.Long>
-        getEntityFieldIdsList() {
-      return java.util.Collections.unmodifiableList(entityFieldIds_);
-    }
-    /**
-     * <code>repeated int64 entityFieldIds = 6;</code>
-     */
-    public int getEntityFieldIdsCount() {
-      return entityFieldIds_.size();
-    }
-    /**
-     * <code>repeated int64 entityFieldIds = 6;</code>
-     */
-    public long getEntityFieldIds(int index) {
-      return entityFieldIds_.get(index);
-    }
-    /**
-     * <code>repeated int64 entityFieldIds = 6;</code>
-     */
-    public Builder setEntityFieldIds(
-        int index, long value) {
-      ensureEntityFieldIdsIsMutable();
-      entityFieldIds_.set(index, value);
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>repeated int64 entityFieldIds = 6;</code>
-     */
-    public Builder addEntityFieldIds(long value) {
-      ensureEntityFieldIdsIsMutable();
-      entityFieldIds_.add(value);
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>repeated int64 entityFieldIds = 6;</code>
-     */
-    public Builder addAllEntityFieldIds(
-        java.lang.Iterable<? extends java.lang.Long> values) {
-      ensureEntityFieldIdsIsMutable();
-      com.google.protobuf.AbstractMessageLite.Builder.addAll(
-          values, entityFieldIds_);
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>repeated int64 entityFieldIds = 6;</code>
-     */
-    public Builder clearEntityFieldIds() {
-      entityFieldIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000020);
-      onChanged();
-      return this;
-    }
 
-    private java.util.List<java.lang.Long> relationIds_ = java.util.Collections.emptyList();
-    private void ensureRelationIdsIsMutable() {
-      if (!((bitField0_ & 0x00000040) == 0x00000040)) {
-        relationIds_ = new java.util.ArrayList<java.lang.Long>(relationIds_);
-        bitField0_ |= 0x00000040;
-       }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder> entityFieldsBuilder_;
+
+    /**
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+     */
+    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo> getEntityFieldsList() {
+      if (entityFieldsBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(entityFields_);
+      } else {
+        return entityFieldsBuilder_.getMessageList();
+      }
     }
     /**
-     * <code>repeated int64 relationIds = 7;</code>
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
      */
-    public java.util.List<java.lang.Long>
-        getRelationIdsList() {
-      return java.util.Collections.unmodifiableList(relationIds_);
+    public int getEntityFieldsCount() {
+      if (entityFieldsBuilder_ == null) {
+        return entityFields_.size();
+      } else {
+        return entityFieldsBuilder_.getCount();
+      }
     }
     /**
-     * <code>repeated int64 relationIds = 7;</code>
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
      */
-    public int getRelationIdsCount() {
-      return relationIds_.size();
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo getEntityFields(int index) {
+      if (entityFieldsBuilder_ == null) {
+        return entityFields_.get(index);
+      } else {
+        return entityFieldsBuilder_.getMessage(index);
+      }
     }
     /**
-     * <code>repeated int64 relationIds = 7;</code>
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
      */
-    public long getRelationIds(int index) {
-      return relationIds_.get(index);
-    }
-    /**
-     * <code>repeated int64 relationIds = 7;</code>
-     */
-    public Builder setRelationIds(
-        int index, long value) {
-      ensureRelationIdsIsMutable();
-      relationIds_.set(index, value);
-      onChanged();
+    public Builder setEntityFields(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo value) {
+      if (entityFieldsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureEntityFieldsIsMutable();
+        entityFields_.set(index, value);
+        onChanged();
+      } else {
+        entityFieldsBuilder_.setMessage(index, value);
+      }
       return this;
     }
     /**
-     * <code>repeated int64 relationIds = 7;</code>
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
      */
-    public Builder addRelationIds(long value) {
-      ensureRelationIdsIsMutable();
-      relationIds_.add(value);
-      onChanged();
+    public Builder setEntityFields(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder builderForValue) {
+      if (entityFieldsBuilder_ == null) {
+        ensureEntityFieldsIsMutable();
+        entityFields_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        entityFieldsBuilder_.setMessage(index, builderForValue.build());
+      }
       return this;
     }
     /**
-     * <code>repeated int64 relationIds = 7;</code>
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
      */
-    public Builder addAllRelationIds(
-        java.lang.Iterable<? extends java.lang.Long> values) {
-      ensureRelationIdsIsMutable();
-      com.google.protobuf.AbstractMessageLite.Builder.addAll(
-          values, relationIds_);
-      onChanged();
+    public Builder addEntityFields(com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo value) {
+      if (entityFieldsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureEntityFieldsIsMutable();
+        entityFields_.add(value);
+        onChanged();
+      } else {
+        entityFieldsBuilder_.addMessage(value);
+      }
       return this;
     }
     /**
-     * <code>repeated int64 relationIds = 7;</code>
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
      */
-    public Builder clearRelationIds() {
-      relationIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000040);
-      onChanged();
+    public Builder addEntityFields(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo value) {
+      if (entityFieldsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureEntityFieldsIsMutable();
+        entityFields_.add(index, value);
+        onChanged();
+      } else {
+        entityFieldsBuilder_.addMessage(index, value);
+      }
       return this;
+    }
+    /**
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+     */
+    public Builder addEntityFields(
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder builderForValue) {
+      if (entityFieldsBuilder_ == null) {
+        ensureEntityFieldsIsMutable();
+        entityFields_.add(builderForValue.build());
+        onChanged();
+      } else {
+        entityFieldsBuilder_.addMessage(builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+     */
+    public Builder addEntityFields(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder builderForValue) {
+      if (entityFieldsBuilder_ == null) {
+        ensureEntityFieldsIsMutable();
+        entityFields_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        entityFieldsBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+     */
+    public Builder addAllEntityFields(
+        java.lang.Iterable<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo> values) {
+      if (entityFieldsBuilder_ == null) {
+        ensureEntityFieldsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, entityFields_);
+        onChanged();
+      } else {
+        entityFieldsBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+     */
+    public Builder clearEntityFields() {
+      if (entityFieldsBuilder_ == null) {
+        entityFields_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+      } else {
+        entityFieldsBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+     */
+    public Builder removeEntityFields(int index) {
+      if (entityFieldsBuilder_ == null) {
+        ensureEntityFieldsIsMutable();
+        entityFields_.remove(index);
+        onChanged();
+      } else {
+        entityFieldsBuilder_.remove(index);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder getEntityFieldsBuilder(
+        int index) {
+      return getEntityFieldsFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder getEntityFieldsOrBuilder(
+        int index) {
+      if (entityFieldsBuilder_ == null) {
+        return entityFields_.get(index);  } else {
+        return entityFieldsBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+     */
+    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder> 
+         getEntityFieldsOrBuilderList() {
+      if (entityFieldsBuilder_ != null) {
+        return entityFieldsBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(entityFields_);
+      }
+    }
+    /**
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder addEntityFieldsBuilder() {
+      return getEntityFieldsFieldBuilder().addBuilder(
+          com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder addEntityFieldsBuilder(
+        int index) {
+      return getEntityFieldsFieldBuilder().addBuilder(
+          index, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+     */
+    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder> 
+         getEntityFieldsBuilderList() {
+      return getEntityFieldsFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder> 
+        getEntityFieldsFieldBuilder() {
+      if (entityFieldsBuilder_ == null) {
+        entityFieldsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder>(
+                entityFields_,
+                ((bitField0_ & 0x00000020) == 0x00000020),
+                getParentForChildren(),
+                isClean());
+        entityFields_ = null;
+      }
+      return entityFieldsBuilder_;
     }
 
     private java.util.List<java.lang.Long> childClassIds_ = java.util.Collections.emptyList();
     private void ensureChildClassIdsIsMutable() {
-      if (!((bitField0_ & 0x00000080) == 0x00000080)) {
+      if (!((bitField0_ & 0x00000040) == 0x00000040)) {
         childClassIds_ = new java.util.ArrayList<java.lang.Long>(childClassIds_);
-        bitField0_ |= 0x00000080;
+        bitField0_ |= 0x00000040;
        }
     }
     /**
-     * <code>repeated int64 childClassIds = 8;</code>
+     * <code>repeated int64 childClassIds = 7;</code>
      */
     public java.util.List<java.lang.Long>
         getChildClassIdsList() {
       return java.util.Collections.unmodifiableList(childClassIds_);
     }
     /**
-     * <code>repeated int64 childClassIds = 8;</code>
+     * <code>repeated int64 childClassIds = 7;</code>
      */
     public int getChildClassIdsCount() {
       return childClassIds_.size();
     }
     /**
-     * <code>repeated int64 childClassIds = 8;</code>
+     * <code>repeated int64 childClassIds = 7;</code>
      */
     public long getChildClassIds(int index) {
       return childClassIds_.get(index);
     }
     /**
-     * <code>repeated int64 childClassIds = 8;</code>
+     * <code>repeated int64 childClassIds = 7;</code>
      */
     public Builder setChildClassIds(
         int index, long value) {
@@ -1378,7 +1416,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 childClassIds = 8;</code>
+     * <code>repeated int64 childClassIds = 7;</code>
      */
     public Builder addChildClassIds(long value) {
       ensureChildClassIdsIsMutable();
@@ -1387,7 +1425,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 childClassIds = 8;</code>
+     * <code>repeated int64 childClassIds = 7;</code>
      */
     public Builder addAllChildClassIds(
         java.lang.Iterable<? extends java.lang.Long> values) {
@@ -1398,90 +1436,264 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>repeated int64 childClassIds = 8;</code>
+     * <code>repeated int64 childClassIds = 7;</code>
      */
     public Builder clearChildClassIds() {
       childClassIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000080);
+      bitField0_ = (bitField0_ & ~0x00000040);
       onChanged();
       return this;
     }
 
-    private java.util.List<java.lang.Long> configIds_ = java.util.Collections.emptyList();
-    private void ensureConfigIdsIsMutable() {
-      if (!((bitField0_ & 0x00000100) == 0x00000100)) {
-        configIds_ = new java.util.ArrayList<java.lang.Long>(configIds_);
-        bitField0_ |= 0x00000100;
+    private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo> relations_ =
+      java.util.Collections.emptyList();
+    private void ensureRelationsIsMutable() {
+      if (!((bitField0_ & 0x00000080) == 0x00000080)) {
+        relations_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo>(relations_);
+        bitField0_ |= 0x00000080;
        }
     }
+
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfoOrBuilder> relationsBuilder_;
+
     /**
-     * <code>repeated int64 configIds = 9;</code>
+     * <code>repeated .RelationInfo relations = 8;</code>
      */
-    public java.util.List<java.lang.Long>
-        getConfigIdsList() {
-      return java.util.Collections.unmodifiableList(configIds_);
+    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo> getRelationsList() {
+      if (relationsBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(relations_);
+      } else {
+        return relationsBuilder_.getMessageList();
+      }
     }
     /**
-     * <code>repeated int64 configIds = 9;</code>
+     * <code>repeated .RelationInfo relations = 8;</code>
      */
-    public int getConfigIdsCount() {
-      return configIds_.size();
+    public int getRelationsCount() {
+      if (relationsBuilder_ == null) {
+        return relations_.size();
+      } else {
+        return relationsBuilder_.getCount();
+      }
     }
     /**
-     * <code>repeated int64 configIds = 9;</code>
+     * <code>repeated .RelationInfo relations = 8;</code>
      */
-    public long getConfigIds(int index) {
-      return configIds_.get(index);
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo getRelations(int index) {
+      if (relationsBuilder_ == null) {
+        return relations_.get(index);
+      } else {
+        return relationsBuilder_.getMessage(index);
+      }
     }
     /**
-     * <code>repeated int64 configIds = 9;</code>
+     * <code>repeated .RelationInfo relations = 8;</code>
      */
-    public Builder setConfigIds(
-        int index, long value) {
-      ensureConfigIdsIsMutable();
-      configIds_.set(index, value);
-      onChanged();
+    public Builder setRelations(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo value) {
+      if (relationsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureRelationsIsMutable();
+        relations_.set(index, value);
+        onChanged();
+      } else {
+        relationsBuilder_.setMessage(index, value);
+      }
       return this;
     }
     /**
-     * <code>repeated int64 configIds = 9;</code>
+     * <code>repeated .RelationInfo relations = 8;</code>
      */
-    public Builder addConfigIds(long value) {
-      ensureConfigIdsIsMutable();
-      configIds_.add(value);
-      onChanged();
+    public Builder setRelations(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.Builder builderForValue) {
+      if (relationsBuilder_ == null) {
+        ensureRelationsIsMutable();
+        relations_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        relationsBuilder_.setMessage(index, builderForValue.build());
+      }
       return this;
     }
     /**
-     * <code>repeated int64 configIds = 9;</code>
+     * <code>repeated .RelationInfo relations = 8;</code>
      */
-    public Builder addAllConfigIds(
-        java.lang.Iterable<? extends java.lang.Long> values) {
-      ensureConfigIdsIsMutable();
-      com.google.protobuf.AbstractMessageLite.Builder.addAll(
-          values, configIds_);
-      onChanged();
+    public Builder addRelations(com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo value) {
+      if (relationsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureRelationsIsMutable();
+        relations_.add(value);
+        onChanged();
+      } else {
+        relationsBuilder_.addMessage(value);
+      }
       return this;
     }
     /**
-     * <code>repeated int64 configIds = 9;</code>
+     * <code>repeated .RelationInfo relations = 8;</code>
      */
-    public Builder clearConfigIds() {
-      configIds_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000100);
-      onChanged();
+    public Builder addRelations(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo value) {
+      if (relationsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureRelationsIsMutable();
+        relations_.add(index, value);
+        onChanged();
+      } else {
+        relationsBuilder_.addMessage(index, value);
+      }
       return this;
+    }
+    /**
+     * <code>repeated .RelationInfo relations = 8;</code>
+     */
+    public Builder addRelations(
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.Builder builderForValue) {
+      if (relationsBuilder_ == null) {
+        ensureRelationsIsMutable();
+        relations_.add(builderForValue.build());
+        onChanged();
+      } else {
+        relationsBuilder_.addMessage(builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .RelationInfo relations = 8;</code>
+     */
+    public Builder addRelations(
+        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.Builder builderForValue) {
+      if (relationsBuilder_ == null) {
+        ensureRelationsIsMutable();
+        relations_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        relationsBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .RelationInfo relations = 8;</code>
+     */
+    public Builder addAllRelations(
+        java.lang.Iterable<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo> values) {
+      if (relationsBuilder_ == null) {
+        ensureRelationsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, relations_);
+        onChanged();
+      } else {
+        relationsBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .RelationInfo relations = 8;</code>
+     */
+    public Builder clearRelations() {
+      if (relationsBuilder_ == null) {
+        relations_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000080);
+        onChanged();
+      } else {
+        relationsBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .RelationInfo relations = 8;</code>
+     */
+    public Builder removeRelations(int index) {
+      if (relationsBuilder_ == null) {
+        ensureRelationsIsMutable();
+        relations_.remove(index);
+        onChanged();
+      } else {
+        relationsBuilder_.remove(index);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .RelationInfo relations = 8;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.Builder getRelationsBuilder(
+        int index) {
+      return getRelationsFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <code>repeated .RelationInfo relations = 8;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfoOrBuilder getRelationsOrBuilder(
+        int index) {
+      if (relationsBuilder_ == null) {
+        return relations_.get(index);  } else {
+        return relationsBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <code>repeated .RelationInfo relations = 8;</code>
+     */
+    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfoOrBuilder> 
+         getRelationsOrBuilderList() {
+      if (relationsBuilder_ != null) {
+        return relationsBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(relations_);
+      }
+    }
+    /**
+     * <code>repeated .RelationInfo relations = 8;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.Builder addRelationsBuilder() {
+      return getRelationsFieldBuilder().addBuilder(
+          com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .RelationInfo relations = 8;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.Builder addRelationsBuilder(
+        int index) {
+      return getRelationsFieldBuilder().addBuilder(
+          index, com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .RelationInfo relations = 8;</code>
+     */
+    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.Builder> 
+         getRelationsBuilderList() {
+      return getRelationsFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfoOrBuilder> 
+        getRelationsFieldBuilder() {
+      if (relationsBuilder_ == null) {
+        relationsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfoOrBuilder>(
+                relations_,
+                ((bitField0_ & 0x00000080) == 0x00000080),
+                getParentForChildren(),
+                isClean());
+        relations_ = null;
+      }
+      return relationsBuilder_;
     }
 
     private boolean isAny_ ;
     /**
-     * <code>bool isAny = 10;</code>
+     * <code>bool isAny = 9;</code>
      */
     public boolean getIsAny() {
       return isAny_;
     }
     /**
-     * <code>bool isAny = 10;</code>
+     * <code>bool isAny = 9;</code>
      */
     public Builder setIsAny(boolean value) {
       
@@ -1490,7 +1702,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>bool isAny = 10;</code>
+     * <code>bool isAny = 9;</code>
      */
     public Builder clearIsAny() {
       
@@ -1501,13 +1713,13 @@ private static final long serialVersionUID = 0L;
 
     private boolean isDynamic_ ;
     /**
-     * <code>bool isDynamic = 11;</code>
+     * <code>bool isDynamic = 10;</code>
      */
     public boolean getIsDynamic() {
       return isDynamic_;
     }
     /**
-     * <code>bool isDynamic = 11;</code>
+     * <code>bool isDynamic = 10;</code>
      */
     public Builder setIsDynamic(boolean value) {
       
@@ -1516,7 +1728,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>bool isDynamic = 11;</code>
+     * <code>bool isDynamic = 10;</code>
      */
     public Builder clearIsDynamic() {
       

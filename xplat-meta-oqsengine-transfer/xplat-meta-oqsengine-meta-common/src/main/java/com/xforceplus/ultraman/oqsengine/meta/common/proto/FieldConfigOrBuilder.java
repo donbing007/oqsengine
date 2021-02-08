@@ -3,8 +3,8 @@
 
 package com.xforceplus.ultraman.oqsengine.meta.common.proto;
 
-public interface FieldConfigInfoOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:FieldConfigInfo)
+public interface FieldConfigOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:FieldConfig)
     com.google.protobuf.MessageOrBuilder {
 
   /**
@@ -88,11 +88,11 @@ public interface FieldConfigInfoOrBuilder extends
   boolean getIsSystem();
 
   /**
-   * <code>.FieldConfigInfo.SystemFieldType systemType = 13;</code>
+   * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
    */
   int getSystemTypeValue();
   /**
-   * <code>.FieldConfigInfo.SystemFieldType systemType = 13;</code>
+   * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
    */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.SystemFieldType getSystemType();
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType getSystemType();
 }

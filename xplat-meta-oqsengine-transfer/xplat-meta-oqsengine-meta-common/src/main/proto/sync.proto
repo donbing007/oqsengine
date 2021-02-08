@@ -29,9 +29,6 @@ message EntityClassSyncResponse {
 
 message EntityClassSyncRspProto {
 	repeated EntityClassInfo entityClasses = 1;
-	repeated EntityFieldInfo entityFields = 2;
-	repeated FieldConfigInfo configs = 3;
-	repeated RelationInfo relations = 4;
 }
 
 message EntityClassInfo {
@@ -40,12 +37,11 @@ message EntityClassInfo {
 	string name = 3;
 	int64 fatherClassId = 4;
 	int32 level = 5;
-	repeated int64 entityFieldIds = 6;
-	repeated int64 relationIds = 7;
-	repeated int64 childClassIds = 8;
-	repeated int64 configIds = 9;
-	bool isAny = 10;
-	bool isDynamic = 11;
+	repeated EntityFieldInfo entityFields = 6;
+	repeated int64 childClassIds = 7;
+	repeated RelationInfo relations = 8;
+	bool isAny = 9;
+	bool isDynamic = 10;
 }
 
 message EntityFieldInfo {
@@ -67,10 +63,10 @@ message EntityFieldInfo {
 	FieldType fieldType = 4;
 	string dictId = 5;
 	string defaultValue = 6;
-	int64 fieldConfigId = 7;
+	repeated FieldConfig fieldConfig = 7;
 }
 
-message FieldConfigInfo {
+message FieldConfig {
 	bool searchable = 1;
 	int64 max = 2;
 	int64 min = 3;
