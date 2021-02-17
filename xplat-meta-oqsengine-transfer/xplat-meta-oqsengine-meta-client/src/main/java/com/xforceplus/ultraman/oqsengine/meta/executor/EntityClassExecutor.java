@@ -196,7 +196,7 @@ public class EntityClassExecutor implements IEntityClassExecutor {
                         /**
                          * 执行外部传入的执行器
                          */
-                        status = syncExecutor.sync(result) ?
+                        status = syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(), result) ?
                                 RequestStatus.SYNC_OK.ordinal() : SYNC_FAIL.ordinal();
 
                     } else {
