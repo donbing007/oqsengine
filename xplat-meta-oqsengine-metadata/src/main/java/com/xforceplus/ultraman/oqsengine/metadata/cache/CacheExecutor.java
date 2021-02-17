@@ -47,6 +47,8 @@ public class CacheExecutor implements ICacheExecutor {
      * script
      */
     private String prepareVersionScriptSha;
+    private String endPrepareVersionScriptSha;
+
     private String cleanExpiredEntityClassScriptSha;
     private String metadataAppRelScriptSha;
     private String entityClassStorageScriptSha;
@@ -101,6 +103,8 @@ public class CacheExecutor implements ICacheExecutor {
         syncCommands.clientSetname("oqs.sync.metadata");
 
         prepareVersionScriptSha = syncCommands.scriptLoad(PREPARE_VERSION_SCRIPT);
+
+        endPrepareVersionScriptSha = syncCommands.scriptLoad(END_PREPARE_VERSION_SCRIPT);
 
         cleanExpiredEntityClassScriptSha = syncCommands.scriptLoad(EXPIRED_VERSION_ENTITY_CLASS);
 
@@ -350,9 +354,19 @@ public class CacheExecutor implements ICacheExecutor {
      */
     @Override
     public boolean endPrepare(String appId) {
-        String key = metadataPrepareKey + ".." + appId;
-        syncCommands.del(key);
-        return true;
+        if (null == appId || appId.isEmpty()) {
+            return false;
+        }
+        String[] keys = {
+                metadataPrepareKey
+        };
+        return syncCommands.evalsha(
+                endPrepareVersionScriptSha,
+                ScriptOutputType.BOOLEAN,
+                keys, appId);
+//
+////        String key = metadataPrepareKey + ".." + appId;
+////        return syncCommands.del(key) == 1;
     }
 
     /**

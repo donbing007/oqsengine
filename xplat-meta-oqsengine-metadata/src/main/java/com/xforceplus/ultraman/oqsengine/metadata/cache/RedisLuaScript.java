@@ -26,12 +26,10 @@ public class RedisLuaScript {
      */
     public static String PREPARE_VERSION_SCRIPT =
             "local appVersion = redis.call('hget', KEYS[1], ARGV[2]);" +
-            "if appVersion == false or (tonumber(appVersion) < tonumber(ARGV[1])) then " +
-                "print(appVersion)" +
+            "if appVersion == false or appVersion < ARGV[1] then " +
                 "local prePareKey = KEYS[2]..ARGV[2]" +
-                "if (redis.call('exists', prePareKey) == 0) then " +
-                    "redis.call('set', prePareKey, '1');" +
-                    "redis.call('expire', prePareKey, 60);" +
+                "if (redis.call('setnx', prePareKey, '1') == 1) then " +
+                    "redis.call('expire', prePareKey, 600);" +
                     "return 1;" +
                 "else " +
                     "return 0;" +
@@ -39,6 +37,10 @@ public class RedisLuaScript {
             "else " +
                 "return 0;" +
             "end;";
+
+
+    public static String END_PREPARE_VERSION_SCRIPT =
+            "return redis.call('del', KEYS[1]..ARGV[1])";
 
     /**
      * 删除对应AppId，Version版本的过期信息
@@ -65,7 +67,7 @@ public class RedisLuaScript {
             "if value ~= false then " +
                 "return redis.call('hget', KEYS[2], value);" +
             "end;" +
-            "return nil;";
+            "return -1;";
 
 
 //
@@ -134,12 +136,12 @@ public class RedisLuaScript {
     public static String ENTITY_CLASS_STORAGE_INFO =
             "local result = {}; " +
             "local baseKey = KEYS[1]..ARGV[1]..ARGV[2]; " +
-            "local keyTable = redis.call('hkeys', baseKey); " +
-            "if keyTable ~= nil then " +
-                "for i=1, #keyTable do " +
-                    "result[keyTable[i]] = redis.call('hget', baseKey, keyTable[i]);" +
+            "local flat_map = redis.call('HGETALL', baseKey); " +
+            "if flat_map ~= false then " +
+                "for i = 1, #flat_map, 2 do " +
+                    "result[flat_map[i]] = flat_map[i + 1];" +
                 "end; " +
-            "end; " +
+            "end;" +
             "return cjson.encode(result);";
 
     /**
@@ -149,19 +151,19 @@ public class RedisLuaScript {
      * ARGV[2-N]-entityClassIds
      */
     public static String ENTITY_CLASS_STORAGE_INFO_LIST =
+            "local empty = {}; " +
             "local result = {}; " +
             "for i=2, #ARGV, 1 do " +
                 "local baseKey = KEYS[1]..ARGV[1]..ARGV[i]; " +
-                "local keyTable = redis.call('hkeys', baseKey); " +
+                "local flat_map = redis.call('HGETALL', baseKey); " +
                 "local ret = {}; " +
-                "if keyTable ~= nil then " +
-                    "for i=1, #keyTable do " +
-                        "ret[keyTable[i]] = redis.call('hget', baseKey, keyTable[i]);" +
-                    "end; " +
-                    "result[ARGV[i]] = ret;" +
-                "else " +
-                    "return cjson.encode('{}');" +
+                "if flat_map == false then " +
+                    "return empty;" +
+                "end;" +
+                "for i = 1, #flat_map, 2 do " +
+                    "ret[flat_map[i]] = flat_map[i + 1];" +
                 "end; " +
+                "result[ARGV[i]] = ret;" +
             "end;" +
             "return cjson.encode(result);";
 }

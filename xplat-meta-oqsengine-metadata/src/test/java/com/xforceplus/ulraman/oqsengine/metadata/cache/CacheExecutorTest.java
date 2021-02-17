@@ -75,18 +75,27 @@ public class CacheExecutorTest {
     }
 
     @Test
-    public void testPrepare() {
-       boolean ret = cacheExecutor.prepare("1", 1);
-       Assert.assertTrue(ret);
+    public void testPrepare() throws InterruptedException {
+        boolean ret = cacheExecutor.prepare("1", 1);
+        Assert.assertTrue(ret);
 
-       ret = cacheExecutor.prepare("1", 0);
-       Assert.assertFalse(ret);
+        ret = cacheExecutor.prepare("1", 0);
+        Assert.assertFalse(ret);
 
-       ret = cacheExecutor.prepare("1", 1);
-       Assert.assertFalse(ret);
+        ret = cacheExecutor.endPrepare("1");
+        Assert.assertTrue(ret);
 
-       ret = cacheExecutor.endPrepare("1");
-       Assert.assertTrue(ret);
+        ret = cacheExecutor.resetVersion("1", 2);
+        Assert.assertTrue(ret);
+
+        ret = cacheExecutor.prepare("1", 1);
+        Assert.assertFalse(ret);
+
+        ret = cacheExecutor.prepare("1", 3);
+        Assert.assertTrue(ret);
+
+        ret = cacheExecutor.endPrepare("1");
+        Assert.assertTrue(ret);
     }
 
 
