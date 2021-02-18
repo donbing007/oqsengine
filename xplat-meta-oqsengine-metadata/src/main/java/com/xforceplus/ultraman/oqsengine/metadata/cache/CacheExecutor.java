@@ -182,7 +182,7 @@ public class CacheExecutor implements ICacheExecutor {
     public boolean save(String appId, int version, List<EntityClassStorage> storageList) {
         //  set data
         for (EntityClassStorage storage : storageList) {
-            String key = entityStorageKeys + version + storage.getId();
+            String key = entityStorageKeys + "." + version + "." + storage.getId();
 
             //  basic elements
             syncCommands.hset(key, ELEMENT_ID, Long.toString(storage.getId()));

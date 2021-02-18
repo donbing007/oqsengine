@@ -27,7 +27,7 @@ public class RedisLuaScript {
     public static String PREPARE_VERSION_SCRIPT =
             "local appVersion = redis.call('hget', KEYS[1], ARGV[2]);" +
             "if appVersion == false or appVersion < ARGV[1] then " +
-                "local prePareKey = KEYS[2]..ARGV[2]" +
+                "local prePareKey = string.format('%s.%s', KEYS[2], ARGV[2]);" +
                 "if (redis.call('setnx', prePareKey, ARGV[1]) == 1) then " +
                     "redis.call('expire', prePareKey, 60);" +
                     "return 1;" +
@@ -40,13 +40,13 @@ public class RedisLuaScript {
 
 
     public static String END_PREPARE_VERSION_SCRIPT =
-            "return redis.call('del', KEYS[1]..ARGV[1])";
+            "return redis.call('del', string.format('%s.%s', KEYS[1], ARGV[1]));";
 
     /**
      * 删除过期信息
      */
     public static String EXPIRED_VERSION_ENTITY_CLASS =
-            "local currentEntity = KEYS[1]..ARGV[1]..ARGV[2]" +
+            "local currentEntity = string.format('%s.%s.%s', KEYS[1],ARGV[1],ARGV[2]);" +
             "local keys = redis.call('hkeys', currentEntity);" +
             "for i, v in ipairs(keys) do " +
                 "redis.call('hdel', currentEntity, v);" +
@@ -96,7 +96,7 @@ public class RedisLuaScript {
      */
     public static String ENTITY_CLASS_STORAGE_INFO =
             "local result = {}; " +
-            "local baseKey = KEYS[1]..ARGV[1]..ARGV[2]; " +
+            "local baseKey = string.format('%s.%s.%s', KEYS[1],ARGV[1],ARGV[2]); " +
             "local flat_map = redis.call('HGETALL', baseKey); " +
             "if flat_map ~= false then " +
                 "for i = 1, #flat_map, 2 do " +
@@ -115,7 +115,7 @@ public class RedisLuaScript {
             "local empty = {}; " +
             "local result = {}; " +
             "for i=2, #ARGV, 1 do " +
-                "local baseKey = KEYS[1]..ARGV[1]..ARGV[i]; " +
+                "local baseKey = string.format('%s.%s.%s', KEYS[1], ARGV[1], ARGV[i]); " +
                 "local flat_map = redis.call('HGETALL', baseKey); " +
                 "local ret = {}; " +
                 "if flat_map == false then " +
