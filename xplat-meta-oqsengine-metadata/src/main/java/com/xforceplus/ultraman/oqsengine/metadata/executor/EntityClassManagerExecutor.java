@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.BUSINESS_HANDLER_ERROR;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.EXPIRED_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.fromProtoBuffer;
 
 /**
@@ -33,10 +34,9 @@ public class EntityClassManagerExecutor implements SyncExecutor, MetaManager {
     public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
 
         // step1 prepare
-        int expiredVersion = -1;
         if (cacheExecutor.prepare(appId, version)) {
             try {
-                expiredVersion = cacheExecutor.version(appId);
+                int expiredVersion = version(appId);
 
                 // step2 convert to storage
                 List<EntityClassStorage> entityClassStorageList = convert(version, entityClassSyncRspProto);
@@ -49,7 +49,9 @@ public class EntityClassManagerExecutor implements SyncExecutor, MetaManager {
                 }
 
                 // todo add expiredVersion to expiredList
+                if (expiredVersion != EXPIRED_VERSION) {
 
+                }
                 return true;
             } catch (Exception e) {
                 return false;
@@ -59,14 +61,11 @@ public class EntityClassManagerExecutor implements SyncExecutor, MetaManager {
 
         }
 
-
-
         return false;
     }
 
     @Override
     public int version(String appId) {
-
         return cacheExecutor.version(appId);
     }
 
@@ -78,10 +77,12 @@ public class EntityClassManagerExecutor implements SyncExecutor, MetaManager {
 
     @Override
     public int need(String appId) {
-
         int version = version(appId);
-        if (version <= 0) {
+        if (version < 0) {
+            //  todo register
+
             //  todo await unit get version
+
         }
         return version;
     }

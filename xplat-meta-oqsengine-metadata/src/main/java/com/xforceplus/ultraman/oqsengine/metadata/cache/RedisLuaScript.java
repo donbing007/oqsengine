@@ -28,8 +28,8 @@ public class RedisLuaScript {
             "local appVersion = redis.call('hget', KEYS[1], ARGV[2]);" +
             "if appVersion == false or appVersion < ARGV[1] then " +
                 "local prePareKey = KEYS[2]..ARGV[2]" +
-                "if (redis.call('setnx', prePareKey, '1') == 1) then " +
-                    "redis.call('expire', prePareKey, 600);" +
+                "if (redis.call('setnx', prePareKey, ARGV[1]) == 1) then " +
+                    "redis.call('expire', prePareKey, 60);" +
                     "return 1;" +
                 "else " +
                     "return 0;" +
@@ -43,9 +43,7 @@ public class RedisLuaScript {
             "return redis.call('del', KEYS[1]..ARGV[1])";
 
     /**
-     * 删除对应AppId，Version版本的过期信息
-     * 一个EntityClass将被存入2个Hash中，分别对应为（Basement）基本信息和EntityField信息
-     * 所以需要删除2次
+     * 删除过期信息
      */
     public static String EXPIRED_VERSION_ENTITY_CLASS =
             "local currentEntity = KEYS[1]..ARGV[1]..ARGV[2]" +
@@ -59,73 +57,36 @@ public class RedisLuaScript {
 
     /**
      * 使用entityClassId获取活动版本信息
-     *
+     * 首先从mapping的关系中找出entity对应的appId信息
+     * 再使用appId获取当前版本
+     * KEYS[1]-app-entity mapping key
+     * KEYS[2]-app-version mapping key
+     * ARGV[1]-appId
      */
     public static String ACTIVE_VERSION =
-            "local entityAppMapping = KEYS[1]..ARGV[1]" +
-            "local value = redis.call('get', entityAppMapping);" +
+            "local value = redis.call('hget', KEYS[1], ARGV[1]);" +
             "if value ~= false then " +
                 "return redis.call('hget', KEYS[2], value);" +
             "end;" +
             "return -1;";
 
-
-//
-//    /**
-//     * 一次性获取EntityClass的信息
-//     */
-//    public static String ENTITY_CLASS_INFO =
-//            "function string:split(sep)" +
-//            "    local sep, fields = sep or ',', {};" +
-//            "    local pattern = string.format('([^%s]+)', sep);" +
-//            "    self:gsub(pattern, function(c) fields[#fields+1] = c end);" +
-//            "    return fields;" +
-//            "end;" +
-//
-//            "function get_entity(baseKey, fieldKey)" +
-//                    "local result = {}; " +
-//                    "result['id'] = redis.call('hget', baseKey, 'id');" +
-//                    "result['name'] = redis.call('hget', baseKey, 'name');" +
-//                    "result['code'] = redis.call('hget', baseKey, 'code');" +
-//                    "result['version'] = redis.call('hget', baseKey, 'version');" +
-//                    "result['level'] = redis.call('hget', baseKey, 'level');" +
-//                    "result['relations'] = redis.call('hget', baseKey, 'relations');" +
-//                    "result['fatherId'] = redis.call('hget', baseKey, 'fatherId');" +
-//                    "result['childIds'] = redis.call('hget', baseKey, 'childIds');" +
-//                    "result['ancestors'] = redis.call('hget', baseKey, 'ancestors');" +
-//                    //  handle EntityFields
-//                    "local entityFieldKeys = redis.call('hgetall', fieldKey)" +
-//                    "if (idStr ~= nil) then" +
-//                    "  result['field'] = redis.call('hmget', currentEntity, unpack(entityFieldKeys));" +
-//                    "end;" +
-//                    "return result;" +
-//            "end;" +
-//
-//            "local ret = {}; " +
-//            "local j = 1;" +
-//            "local baseKey = KEYS[1]..ARGV[1]..ARGV[2]" +
-//            "local fieldKey = KEYS[1]..ARGV[1]..ARGV[2]..ARGV[3]" +
-//            "ret[j] = get_entity(baseKey, fieldKey);" +
-//            "j = j + 1;" +
-//            //  handle ancestors
-//            "if (ret[1].ancestors and ret[1].ancestors ~= '') then " +
-//                "local ancss = ret[1].ancestors:split();" +
-//                "for i, v in ipairs(ancss) do " +
-//                    "local fBaseKey = KEYS[1]..ARGV[v]..ARGV[2]" +
-//                    "local fFieldKey = KEYS[1]..ARGV[v]..ARGV[2]..ARGV[3]" +
-//                    "ret[j] = get_entity(fBaseKey, fFieldKey);" +
-//                "end;" +
-//            "end;" +
-//            //  handle childs
-//            "if (ret[1].childIds and ret[1].childIds ~= '') then " +
-//                "local childs = ret[1].childIds:split();" +
-//                "for i, v in ipairs(childs) do " +
-//                    "local fBaseKey = KEYS[1]..ARGV[v]..ARGV[2]" +
-//                    "local fFieldKey = KEYS[1]..ARGV[v]..ARGV[2]..ARGV[3]" +
-//                    "ret[j] = get_entity(fBaseKey, fFieldKey);" +
-//                "end;" +
-//            "end;" +
-//            "return cjson.encode(ret);";
+    /**
+     * 使用entityClassId获取活动版本信息
+     * KEYS[1]-mapping key
+     * KEYS[2]
+     * ARGV[1]-appId
+     * ARGV[2]-version
+     * ARGV[3-N]-entityId
+     * 首先设置当前的MAPPING关系，设置完毕后再更新当前版本
+     */
+    public static String REST_VERSION =
+            "for i=3, #ARGV, 1 do " +
+                "if (redis.call('hexists', KEYS[1], ARGV[i]) == 0) then " +
+                    "redis.call('hset', KEYS[1], ARGV[i], ARGV[1])" +
+                "end;" +
+            "end; " +
+            "redis.call('hset', KEYS[2], ARGV[1], ARGV[2]);" +
+            "return 1;";
 
     /**
      * 获取单个EntityClassStorage

@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.*;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.EXPIRED_VERSION;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.*;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.valuesToStorage;
 
@@ -42,48 +44,95 @@ public class CacheExecutor implements ICacheExecutor {
 
     private RedisCommands<String, String> syncCommands;
 
-
     /**
      * script
+     */
+    /**
+     * 写入准备检查、结束写入准备
      */
     private String prepareVersionScriptSha;
     private String endPrepareVersionScriptSha;
 
-    private String cleanExpiredEntityClassScriptSha;
-    private String metadataAppRelScriptSha;
+    /**
+     * 写入当前版本、获取当前版本(通过entityClassId获取)
+     */
+    private String versionResetScriptSha;
+    private String versionGetByEntityScriptSha;
+
+    /**
+     * 获取当前的EntityClassStorage
+     */
     private String entityClassStorageScriptSha;
     private String entityClassStorageListScriptSha;
 
     /**
+     * 清理过期的EntityClassStorage
+     */
+    private String cleanExpiredEntityClassScriptSha;
+
+    /**
      * keys
      */
-    private String metadataVersionKeys;
-    private String metadataPrepareKey;
-    private String metadataAppRelKey;
-    private String metadataAppEntityKeys;
+    /**
+     * version key (版本信息)
+     * [redis hash key]
+     * key-appVersionKeys
+     * field-appId
+     * value-version
+     */
+    private String appVersionKeys;
+
+    /**
+     * prepare key prefix with appId (当前正在进行更新中的Key)
+     * [redis key]
+     * key-appPrepareKeyPrefix..appId
+     * value-version
+     */
+    private String appPrepareKeyPrefix;
+
+    /**
+     * entityId-appId mapping key (当前的entityId与appId的mapping Key)
+     * [redis hash key]
+     * key-appEntityMappingKey
+     * field-entityId
+     * value-appId
+     */
+    private String appEntityMappingKey;
+
+    /**
+     * entityStorage key prefix (当前的entityStorage key前缀)
+     * [redis hash key]
+     * key - entityStorageKeys + version + storage.getId()
+     * field - entityStroage elements name
+     * value - entityStroage elements value
+     */
+    private String entityStorageKeys;
 
     public CacheExecutor() {
-        this(DEFAULT_METADATA_APP_VERSIONS, DEFAULT_METADATA_APP_PREPARE, DEFAULT_METADATA_APP_ENTITY, DEFAULT_METADATA_ENTITY_APP_REL);
+        this(DEFAULT_METADATA_APP_VERSIONS,
+                DEFAULT_METADATA_APP_PREPARE,
+                DEFAULT_METADATA_APP_ENTITY,
+                DEFAULT_METADATA_ENTITY_APP_REL);
     }
 
-    public CacheExecutor(String metadataVersionKeys, String metadataPrepareKey, String metadataAppEntityKeys, String metadataAppRelKey) {
-        this.metadataVersionKeys = metadataVersionKeys;
-        if (this.metadataVersionKeys == null || this.metadataVersionKeys.isEmpty()) {
+    public CacheExecutor(String appVersionKeys, String appPrepareKeyPrefix, String entityStorageKeys, String appEntityMappingKey) {
+        this.appVersionKeys = appVersionKeys;
+        if (this.appVersionKeys == null || this.appVersionKeys.isEmpty()) {
             throw new IllegalArgumentException("The metadataVersion keys is invalid.");
         }
 
-        this.metadataPrepareKey = metadataPrepareKey;
-        if (this.metadataPrepareKey == null || this.metadataPrepareKey.isEmpty()) {
+        this.appPrepareKeyPrefix = appPrepareKeyPrefix;
+        if (this.appPrepareKeyPrefix == null || this.appPrepareKeyPrefix.isEmpty()) {
             throw new IllegalArgumentException("The metadataPrepare key is invalid.");
         }
 
-        this.metadataAppEntityKeys = metadataAppEntityKeys;
-        if (this.metadataAppEntityKeys == null || this.metadataAppEntityKeys.isEmpty()) {
+        this.entityStorageKeys = entityStorageKeys;
+        if (this.entityStorageKeys == null || this.entityStorageKeys.isEmpty()) {
             throw new IllegalArgumentException("The metadataAppEntity key is invalid.");
         }
 
-        this.metadataAppRelKey = metadataAppRelKey;
-        if (this.metadataAppRelKey == null || this.metadataAppRelKey.isEmpty()) {
+        this.appEntityMappingKey = appEntityMappingKey;
+        if (this.appEntityMappingKey == null || this.appEntityMappingKey.isEmpty()) {
             throw new IllegalArgumentException("The metadataAppRel key is invalid.");
         }
 
@@ -97,22 +146,31 @@ public class CacheExecutor implements ICacheExecutor {
         }
 
         syncConnect = redisClient.connect();
-
         syncCommands = syncConnect.sync();
-
         syncCommands.clientSetname("oqs.sync.metadata");
 
+        /**
+         * prepare & endPrepare
+         */
         prepareVersionScriptSha = syncCommands.scriptLoad(PREPARE_VERSION_SCRIPT);
-
         endPrepareVersionScriptSha = syncCommands.scriptLoad(END_PREPARE_VERSION_SCRIPT);
 
-        cleanExpiredEntityClassScriptSha = syncCommands.scriptLoad(EXPIRED_VERSION_ENTITY_CLASS);
+        /**
+         * version get/set
+         */
+        versionGetByEntityScriptSha = syncCommands.scriptLoad(ACTIVE_VERSION);
+        versionResetScriptSha = syncCommands.scriptLoad(REST_VERSION);
 
-        metadataAppRelScriptSha = syncCommands.scriptLoad(ACTIVE_VERSION);
-
+        /**
+         * entityClassStorage(s) get
+         */
         entityClassStorageScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO);
-
         entityClassStorageListScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO_LIST);
+
+        /**
+         * clean expired entityClassStorage
+         */
+        cleanExpiredEntityClassScriptSha = syncCommands.scriptLoad(EXPIRED_VERSION_ENTITY_CLASS);
     }
 
     @PreDestroy
@@ -122,10 +180,9 @@ public class CacheExecutor implements ICacheExecutor {
 
     @Override
     public boolean save(String appId, int version, List<EntityClassStorage> storageList) {
-
         //  set data
         for (EntityClassStorage storage : storageList) {
-            String key = metadataAppEntityKeys + version + storage.getId();
+            String key = entityStorageKeys + version + storage.getId();
 
             //  basic elements
             syncCommands.hset(key, ELEMENT_ID, Long.toString(storage.getId()));
@@ -176,13 +233,8 @@ public class CacheExecutor implements ICacheExecutor {
             }
         }
 
-        //  set relation
-        resetMapping(storageList.stream().map(EntityClassStorage::getId).collect(Collectors.toList()), appId);
-
-        //  set version
-        resetVersion(appId, version);
-
-        return true;
+        //  reset version
+        return resetVersion(appId, version, storageList.stream().map(EntityClassStorage::getId).collect(Collectors.toList()));
     }
 
     @Override
@@ -190,7 +242,7 @@ public class CacheExecutor implements ICacheExecutor {
         int version = version(entityClassId);
         if (-1 != version) {
             String[] keys = {
-                    metadataAppEntityKeys
+                    entityStorageKeys
             };
 
             //  todo get from local cache
@@ -265,11 +317,40 @@ public class CacheExecutor implements ICacheExecutor {
      */
     @Override
     public int version(String appId) {
-        String versionStr = syncCommands.hget(metadataVersionKeys, appId);
+        String versionStr = syncCommands.hget(appVersionKeys, appId);
         if (null != versionStr) {
             return Integer.parseInt(versionStr);
         }
         return -1;
+    }
+
+
+    /**
+     * 通过entityClassId获取当前活动版本
+     * @param entityClassId
+     * @return
+     */
+    private int version(Long entityClassId) {
+        if (null == entityClassId || entityClassId <= 0) {
+            return -1;
+        }
+//        String key = metadataAppRelKey + ".." + entityClassId;
+//        String appId = syncCommands.get(key);
+//
+//        return version(appId);
+
+
+        String[] keys = {
+                appEntityMappingKey,
+                appVersionKeys
+        };
+
+        String v = syncCommands.evalsha(
+                versionGetByEntityScriptSha,
+                ScriptOutputType.VALUE,
+                keys, Long.toString(entityClassId));
+
+        return null != v ? Integer.parseInt(v) : NOT_EXIST_VERSION;
     }
 
     /**
@@ -278,46 +359,44 @@ public class CacheExecutor implements ICacheExecutor {
      * @return
      */
     @Override
-    public boolean resetVersion(String appId, int version) {
-        syncCommands.hset(metadataVersionKeys, appId, Integer.toString(version));
-        return true;
-    }
-
-    /**
-     * 删除过期版本的EntityClass信息
-     * @param entityId
-     * @param version
-     * @return
-     */
-    @Override
-    public boolean clean(Long entityId, int version) {
-        if (null == entityId) {
+    public boolean resetVersion(String appId, int version, List<Long> ids) {
+        if (null == appId || appId.isEmpty()) {
             return false;
         }
 
-        if (version <= 0) {
+        if (version < 0) {
             return false;
         }
 
         String[] keys = {
-                metadataAppEntityKeys
+                appEntityMappingKey,
+                appVersionKeys
         };
 
-        return syncCommands.evalsha(
-                    cleanExpiredEntityClassScriptSha,
-                    ScriptOutputType.BOOLEAN,
-                    keys, Long.toString(entityId), Integer.toString(version), "FIELD");
-    }
+        /**
+         * 这里多出2个位置分别为appId、version
+         * 当
+         */
+        String[] values = null;
 
-    @Override
-    public boolean resetMapping(List<Long> entityId, String appId) {
-        entityId.forEach(
-                e -> {
-                    String key = metadataAppRelKey + ".." + e;
-                    syncCommands.set(key, appId);
-                }
-        );
-        return true;
+        if (null != ids && ids.size() > 0) {
+            values = new String[ids.size() + 2];
+            int j = 2;
+            for (Long id : ids) {
+                values[j] = Long.toString(id);
+                j++;
+            }
+        } else {
+            values = new String[2];
+        }
+
+        values[0] = appId;
+        values[1] = Integer.toString(version);
+
+        return syncCommands.evalsha(
+                versionResetScriptSha,
+                ScriptOutputType.BOOLEAN,
+                keys, values);
     }
 
     /**
@@ -337,8 +416,8 @@ public class CacheExecutor implements ICacheExecutor {
         }
 
         String[] keys = {
-                metadataVersionKeys,
-                metadataPrepareKey,
+                appVersionKeys,
+                appPrepareKeyPrefix,
         };
 
         return syncCommands.evalsha(
@@ -358,40 +437,39 @@ public class CacheExecutor implements ICacheExecutor {
             return false;
         }
         String[] keys = {
-                metadataPrepareKey
+                appPrepareKeyPrefix
         };
         return syncCommands.evalsha(
                 endPrepareVersionScriptSha,
                 ScriptOutputType.BOOLEAN,
                 keys, appId);
-//
-////        String key = metadataPrepareKey + ".." + appId;
-////        return syncCommands.del(key) == 1;
     }
 
+
+
     /**
-     * 通过entityClassId获取当前活动版本
-     * @param entityClassId
+     * 删除过期版本的EntityClass信息
+     * @param entityId
+     * @param version
      * @return
      */
-    private int version(Long entityClassId) {
-        if (null == entityClassId || entityClassId <= 0) {
-            return -1;
+    @Override
+    public boolean clean(Long entityId, int version) {
+        if (null == entityId) {
+            return false;
         }
-        String key = metadataAppRelKey + ".." + entityClassId;
-        String appId = syncCommands.get(key);
 
-        return version(appId);
+        if (version < 0) {
+            return false;
+        }
 
-//
-//        String[] keys = {
-//                metadataAppRelKey,
-//                metadataVersionKeys
-//        };
-//
-//        return syncCommands.evalsha(
-//                metadataAppRelScriptSha,
-//                ScriptOutputType.INTEGER,
-//                keys, Long.toString(entityClassId));
+        String[] keys = {
+                entityStorageKeys
+        };
+
+        return syncCommands.evalsha(
+                cleanExpiredEntityClassScriptSha,
+                ScriptOutputType.BOOLEAN,
+                keys, Long.toString(entityId), Integer.toString(version), "FIELD");
     }
 }

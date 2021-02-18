@@ -21,10 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.*;
 
@@ -85,7 +82,7 @@ public class CacheExecutorTest {
         ret = cacheExecutor.endPrepare("1");
         Assert.assertTrue(ret);
 
-        ret = cacheExecutor.resetVersion("1", 2);
+        ret = cacheExecutor.resetVersion("1", 2, null);
         Assert.assertTrue(ret);
 
         ret = cacheExecutor.prepare("1", 1);
@@ -146,7 +143,9 @@ public class CacheExecutorTest {
         entityClassStorage.setRelations(Arrays.asList(relations));
 
         //  set storage
-        cacheExecutor.save(appId, version, Collections.singletonList(entityClassStorage));
+        if (!cacheExecutor.save(appId, version, Collections.singletonList(entityClassStorage))) {
+            throw new RuntimeException("save error.");
+        }
     }
 
 

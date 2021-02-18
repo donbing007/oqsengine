@@ -39,12 +39,9 @@ public interface ICacheExecutor {
      */
     boolean clean(Long entityId, int version);
 
-
-    boolean resetMapping(List<Long> entityId, String appId);
-
     int version(String appId);
 
-    boolean resetVersion(String appId, int version);
+    boolean resetVersion(String appId, int version, List<Long> ids);
 
     boolean prepare(String appId, int version);
 
