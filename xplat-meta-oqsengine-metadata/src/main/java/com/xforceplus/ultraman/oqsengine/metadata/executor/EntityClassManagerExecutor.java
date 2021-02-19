@@ -61,14 +61,20 @@ public class EntityClassManagerExecutor implements MetaManager {
 
     @Override
     public int need(String appId) {
-        if (!entityClassExecutor.register(appId, NOT_EXIST_VERSION)) {
-            throw new RuntimeException("register failed, gRpc sync client not read.");
-        }
 
         int version = cacheExecutor.version(appId);
+
+        boolean ret = entityClassExecutor.register(appId, NOT_EXIST_VERSION);
+
         if (version < 0) {
+            if (!ret) {
+                throw new RuntimeException("register failed, gRpc sync client not read.");
+            }
             CompletableFuture<Integer> future = async(() -> {
                 int ver;
+                /**
+                 * 这里每10毫秒获取一次当前版本、直到获取到版本或者超时
+                 */
                 while (true) {
                     ver = cacheExecutor.version(appId);
                     if (ver < 0) {

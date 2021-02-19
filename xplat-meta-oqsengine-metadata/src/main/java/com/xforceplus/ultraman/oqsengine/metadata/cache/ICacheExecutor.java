@@ -16,28 +16,10 @@ import java.util.Map;
  */
 public interface ICacheExecutor {
 
-    /**
-     * 存储appId级别的所有EntityClassStorage对象
-     * @param appId
-     * @param version
-     * @param storageList
-     * @return
-     */
     boolean save(String appId, int version, List<EntityClassStorage> storageList);
 
-    /**
-     * 读取当前版本entityClassId所对应的EntityClass及所有父对象、子对象
-     * @param entityClassId
-     * @return
-     */
     Map<Long, EntityClassStorage> read(long entityClassId) throws JsonProcessingException;
 
-    /**
-     * 删除已经过期AppId版本
-     * @param appId
-     * @param version
-     * @return
-     */
     boolean clean(String appId, int version, boolean force);
 
     int version(String appId);

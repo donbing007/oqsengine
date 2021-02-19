@@ -63,6 +63,12 @@ public class EntityClassExecutor implements IEntityClassExecutor {
         if (null == watcher) {
             logger.warn("current gRpc-client is not init, can't offer appIds:{}."
                     , appIdEntries.stream().map(AbstractMap.SimpleEntry::getKey).collect(Collectors.toList()));
+            appIdEntries.forEach(
+                    a -> {
+                        requestWatchExecutor.addForgot(a.getKey(), a.getValue());
+                    }
+            );
+
             return false;
         }
 

@@ -16,7 +16,6 @@ public class EntityClassElements {
     public static final String ELEMENT_VERSION = "version";
     public static final String ELEMENT_FATHER = "father";
     public static final String ELEMENT_ANCESTORS = "ancestors";
-    public static final String ELEMENT_CHILDREN = "children";
     public static final String ELEMENT_RELATIONS = "relations";
     public static final String ELEMENT_FIELDS = "fields";
 }

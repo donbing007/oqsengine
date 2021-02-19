@@ -4,6 +4,7 @@ import io.grpc.stub.StreamObserver;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -47,7 +48,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
         this.uid = uid;
         this.streamObserver = streamObserver;
         this.heartBeat = System.currentTimeMillis();
-        this.watches = new HashMap<>();
+        this.watches = new ConcurrentHashMap<>();
     }
 
     @Override

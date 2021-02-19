@@ -7,7 +7,6 @@ import com.google.common.cache.CacheBuilder;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -26,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.*;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.NOT_EXIST_VERSION;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.*;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateEntityCacheKey;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.valuesToStorage;
@@ -144,15 +143,38 @@ public class CacheExecutor implements ICacheExecutor {
     private String entityStorageKeys;
 
     public CacheExecutor() {
-        this(DEFAULT_METADATA_APP_VERSIONS,
+        this(NOT_INIT_INTEGER_PARAMETER, NOT_INIT_INTEGER_PARAMETER, NOT_INIT_INTEGER_PARAMETER, DEFAULT_METADATA_APP_VERSIONS,
                 DEFAULT_METADATA_APP_PREPARE,
                 DEFAULT_METADATA_APP_ENTITY,
                 DEFAULT_METADATA_ENTITY_APP_REL,
                 DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS);
     }
 
-    public CacheExecutor(String appVersionKeys, String appPrepareKeyPrefix, String entityStorageKeys,
+    public CacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds) {
+        this(maxCacheSize, prepareExpireSeconds, cacheExpireSeconds,
+                DEFAULT_METADATA_APP_VERSIONS,
+                DEFAULT_METADATA_APP_PREPARE,
+                DEFAULT_METADATA_APP_ENTITY,
+                DEFAULT_METADATA_ENTITY_APP_REL,
+                DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS);
+    }
+
+    public CacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds,
+                         String appVersionKeys, String appPrepareKeyPrefix, String entityStorageKeys,
                                                     String appEntityMappingKey, String appEntityCollectionsKey) {
+
+        if (maxCacheSize > NOT_INIT_INTEGER_PARAMETER) {
+            this.maxCacheSize = maxCacheSize;
+        }
+
+        if (prepareExpireSeconds > NOT_INIT_INTEGER_PARAMETER) {
+            this.prepareExpire = prepareExpireSeconds;
+        }
+
+        if (cacheExpireSeconds > NOT_INIT_INTEGER_PARAMETER) {
+            this.cacheExpire = cacheExpireSeconds;
+        }
+
         this.appVersionKeys = appVersionKeys;
         if (this.appVersionKeys == null || this.appVersionKeys.isEmpty()) {
             throw new IllegalArgumentException("The metadataVersion keys is invalid.");
@@ -238,6 +260,13 @@ public class CacheExecutor implements ICacheExecutor {
         syncConnect.close();
     }
 
+    /**
+     * 存储appId级别的所有EntityClassStorage对象
+     * @param appId
+     * @param version
+     * @param storageList
+     * @return
+     */
     @Override
     public boolean save(String appId, int version, List<EntityClassStorage> storageList) {
         //  set data
@@ -291,6 +320,11 @@ public class CacheExecutor implements ICacheExecutor {
         return resetVersion(appId, version, storageList.stream().map(EntityClassStorage::getId).collect(Collectors.toList()));
     }
 
+    /**
+     * 读取当前版本entityClassId所对应的EntityClass及所有父对象、子对象
+     * @param entityClassId
+     * @return
+     */
     @Override
     public Map<Long, EntityClassStorage> read(long entityClassId) throws JsonProcessingException {
         int version = version(entityClassId);
@@ -481,6 +515,7 @@ public class CacheExecutor implements ICacheExecutor {
     }
 
     /**
+     * 删除已经过期AppId版本
      * 删除只能进行一次，当删除进行中由于某些原因导致redis删除失败时，需要手动进入redis清理过期信息
      * @param appId
      * @param version

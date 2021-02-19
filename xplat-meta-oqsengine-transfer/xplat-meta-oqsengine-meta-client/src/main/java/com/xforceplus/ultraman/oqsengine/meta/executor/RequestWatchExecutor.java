@@ -14,6 +14,9 @@ import io.grpc.stub.StreamObserver;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
 import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.clientTaskSize;
@@ -29,6 +32,8 @@ import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.cli
 public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecutor {
 
     private RequestWatcher requestWatcher;
+
+    private Set<WatchElement> forgotSets = new ConcurrentSkipListSet<>();
 
     private List<Thread> executors = new ArrayList<>(clientTaskSize);
 
@@ -48,6 +53,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
         } else {
             requestWatcher.reset(uid, observer);
         }
+
     }
 
     @Override
@@ -104,6 +110,11 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
     }
 
     @Override
+    public void addForgot(String appId, int version) {
+        forgotSets.add(new WatchElement(appId, version, WatchElement.AppStatus.Init));
+    }
+
+    @Override
     public void start() {
         /**
          * 启动TimeoutCheck线程
@@ -121,7 +132,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
          * 启动AppCheck线程
          */
         executors.add(ThreadUtils.create(() -> new AppCheckTask(requestWatcher,
-                        gRpcParamsConfig.getMonitorSleepDuration(), gRpcParamsConfig.getDefaultDelayTaskDuration(), canAccessFunction())));
+                forgotSets, gRpcParamsConfig.getMonitorSleepDuration(), gRpcParamsConfig.getDefaultDelayTaskDuration(), canAccessFunction())));
     }
 
     @Override

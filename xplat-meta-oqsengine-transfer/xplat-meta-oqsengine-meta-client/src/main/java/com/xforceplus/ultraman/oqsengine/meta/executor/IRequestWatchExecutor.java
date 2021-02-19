@@ -28,4 +28,6 @@ public interface IRequestWatchExecutor {
     void release();
 
     boolean canAccess(String uid);
+
+    void addForgot(String appId, int version);
 }
