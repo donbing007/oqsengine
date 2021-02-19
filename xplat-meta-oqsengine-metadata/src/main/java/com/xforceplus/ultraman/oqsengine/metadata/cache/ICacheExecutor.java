@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
 
 import java.util.List;
@@ -29,17 +30,19 @@ public interface ICacheExecutor {
      * @param entityClassId
      * @return
      */
-    Map<Long, EntityClassStorage> read(long entityClassId);
+    Map<Long, EntityClassStorage> read(long entityClassId) throws JsonProcessingException;
 
     /**
-     * 删除已经过期EntityClass版本
-     * @param entityId
+     * 删除已经过期AppId版本
+     * @param appId
      * @param version
      * @return
      */
-    boolean clean(Long entityId, int version);
+    boolean clean(String appId, int version, boolean force);
 
     int version(String appId);
+
+    int version(Long entityClassId);
 
     boolean resetVersion(String appId, int version, List<Long> ids);
 

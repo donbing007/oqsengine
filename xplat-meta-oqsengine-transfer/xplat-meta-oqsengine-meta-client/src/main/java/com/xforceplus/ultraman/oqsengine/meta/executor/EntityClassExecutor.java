@@ -216,8 +216,6 @@ public class EntityClassExecutor implements IEntityClassExecutor {
             return builder.setStatus(SYNC_FAIL.ordinal());
         });
 
-        future.join();
-
         try {
             return future.get();
         } catch (InterruptedException | ExecutionException e) {

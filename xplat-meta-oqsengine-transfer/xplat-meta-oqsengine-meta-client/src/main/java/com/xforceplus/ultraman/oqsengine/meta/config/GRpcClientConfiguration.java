@@ -34,11 +34,13 @@ public class GRpcClientConfiguration {
     @Bean
     public GRpcParamsConfig gRpcParamsConfig(
             @Value("${grpc.timeout.seconds.heartbeat:30}") long heartbeatTimeoutSec,
+            @Value("${grpc.timeout.seconds.delay.task:30}") long delayTaskDurationSec,
             @Value("${grpc.sleep.seconds.monitor:1}") long sleepMonitorSec,
             @Value("${grpc.sleep.seconds.reconnect:5}") long sleepReconnectSec,
             @Value("${grpc.keep.alive.seconds.duration:5}") long keepAliveSendDuration) {
         GRpcParamsConfig gRpcParamsConfig = new GRpcParamsConfig();
         gRpcParamsConfig.setDefaultHeartbeatTimeout(TimeUnit.SECONDS.toMillis(heartbeatTimeoutSec));
+        gRpcParamsConfig.setDefaultDelayTaskDuration(TimeUnit.SECONDS.toMillis(delayTaskDurationSec));
         gRpcParamsConfig.setMonitorSleepDuration(TimeUnit.SECONDS.toMillis(sleepMonitorSec));
         gRpcParamsConfig.setReconnectDuration(TimeUnit.SECONDS.toMillis(sleepReconnectSec));
         gRpcParamsConfig.setKeepAliveSendDuration(TimeUnit.SECONDS.toMillis(keepAliveSendDuration));

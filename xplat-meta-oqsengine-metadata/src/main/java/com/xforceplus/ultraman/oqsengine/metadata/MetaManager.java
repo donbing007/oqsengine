@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.metadata;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 
+import java.sql.SQLException;
+
 /**
  * oqs 元数据管理
  *
@@ -18,6 +20,14 @@ public interface MetaManager {
      * @return 元信息的实例.
      */
     IEntityClass load(long id);
+
+    /**
+     * 加载指定的IEntityCalss + version实例.
+     *
+     * @param id 元信息的标识.
+     * @return 元信息的实例.
+     */
+    IEntityClass loadHistory(long id, int version);
 
     /**
      * 表示需要关注此appid代表的应用的元信息.

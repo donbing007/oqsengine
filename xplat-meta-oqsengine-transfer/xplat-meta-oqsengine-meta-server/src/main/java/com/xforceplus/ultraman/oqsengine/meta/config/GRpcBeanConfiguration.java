@@ -2,9 +2,9 @@ package com.xforceplus.ultraman.oqsengine.meta.config;
 
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncServer;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServerConfiguration;
-import com.xforceplus.ultraman.oqsengine.meta.executor.IRetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
@@ -72,7 +72,7 @@ public class GRpcBeanConfiguration {
     }
 
     @Bean
-    public IRetryExecutor retryExecutor() {
+    public IDelayTaskExecutor<RetryExecutor.DelayTask> retryExecutor() {
         return new RetryExecutor();
     }
 

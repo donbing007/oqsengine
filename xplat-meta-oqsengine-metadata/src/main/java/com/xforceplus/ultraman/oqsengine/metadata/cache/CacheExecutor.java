@@ -2,26 +2,33 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.*;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.EXPIRED_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.*;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateEntityCacheKey;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.valuesToStorage;
 
 /**
@@ -34,24 +41,42 @@ import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorag
  */
 public class CacheExecutor implements ICacheExecutor {
 
+    final Logger logger = LoggerFactory.getLogger(CacheExecutor.class);
+
     @Resource
     private RedisClient redisClient;
 
     @Resource
     private ObjectMapper objectMapper;
 
+    private Cache<String, EntityClassStorage> entityClassStorageCache;
+
     private StatefulRedisConnection<String, String> syncConnect;
 
     private RedisCommands<String, String> syncCommands;
 
     /**
+     * 默认存放在cache中的最大数量为1024
+     */
+    private int maxCacheSize = 1024;
+
+    /**
+     * prepare的超时时间
+     */
+    private int prepareExpire = 60;
+
+    /**
+     * 默认一天过期
+     */
+    private int cacheExpire = 24 * 60 * 60;
+
+    /**
      * script
      */
     /**
-     * 写入准备检查、结束写入准备
+     * 写入准备检查
      */
     private String prepareVersionScriptSha;
-    private String endPrepareVersionScriptSha;
 
     /**
      * 写入当前版本、获取当前版本(通过entityClassId获取)
@@ -100,6 +125,16 @@ public class CacheExecutor implements ICacheExecutor {
     private String appEntityMappingKey;
 
     /**
+     * all entityIds in one appId with version key (当前的appId + version下所有的entityId列表)
+     * [redis hash key]
+     * key-appEntityCollectionsKey
+     * field-(appId + version)
+     * value-appIds
+     */
+    private String appEntityCollectionsKey;
+
+
+    /**
      * entityStorage key prefix (当前的entityStorage key前缀)
      * [redis hash key]
      * key - entityStorageKeys + version + storage.getId()
@@ -112,10 +147,12 @@ public class CacheExecutor implements ICacheExecutor {
         this(DEFAULT_METADATA_APP_VERSIONS,
                 DEFAULT_METADATA_APP_PREPARE,
                 DEFAULT_METADATA_APP_ENTITY,
-                DEFAULT_METADATA_ENTITY_APP_REL);
+                DEFAULT_METADATA_ENTITY_APP_REL,
+                DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS);
     }
 
-    public CacheExecutor(String appVersionKeys, String appPrepareKeyPrefix, String entityStorageKeys, String appEntityMappingKey) {
+    public CacheExecutor(String appVersionKeys, String appPrepareKeyPrefix, String entityStorageKeys,
+                                                    String appEntityMappingKey, String appEntityCollectionsKey) {
         this.appVersionKeys = appVersionKeys;
         if (this.appVersionKeys == null || this.appVersionKeys.isEmpty()) {
             throw new IllegalArgumentException("The metadataVersion keys is invalid.");
@@ -136,11 +173,35 @@ public class CacheExecutor implements ICacheExecutor {
             throw new IllegalArgumentException("The metadataAppRel key is invalid.");
         }
 
+        this.appEntityCollectionsKey = appEntityCollectionsKey;
+        if (this.appEntityCollectionsKey == null || this.appEntityCollectionsKey.isEmpty()) {
+            throw new IllegalArgumentException("The appEntityCollections key is invalid.");
+        }
+
+        entityClassStorageCache = initCache();
+    }
+
+    public void setMaxCacheSize(int maxCacheSize) {
+        this.maxCacheSize = maxCacheSize;
+    }
+
+    public void setCacheExpire(int cacheExpire) {
+        this.cacheExpire = cacheExpire;
+    }
+
+    public void setPrepareExpire(int prepareExpire) {
+        this.prepareExpire = prepareExpire;
+    }
+
+    private <V> Cache<String, V> initCache() {
+        return CacheBuilder.newBuilder()
+                .maximumSize(maxCacheSize)
+                .expireAfterAccess(cacheExpire, TimeUnit.SECONDS)
+                .build();
     }
 
     @PostConstruct
     public void init() {
-
         if (redisClient == null) {
             throw new IllegalStateException("Invalid redisClient.");
         }
@@ -150,10 +211,9 @@ public class CacheExecutor implements ICacheExecutor {
         syncCommands.clientSetname("oqs.sync.metadata");
 
         /**
-         * prepare & endPrepare
+         * prepare
          */
         prepareVersionScriptSha = syncCommands.scriptLoad(PREPARE_VERSION_SCRIPT);
-        endPrepareVersionScriptSha = syncCommands.scriptLoad(END_PREPARE_VERSION_SCRIPT);
 
         /**
          * version get/set
@@ -196,26 +256,19 @@ public class CacheExecutor implements ICacheExecutor {
                 syncCommands.hset(key, ELEMENT_FATHER, Long.toString(storage.getFatherId()));
                 if (null != storage.getAncestors() && storage.getAncestors().size() > 0) {
                     try {
-                        syncCommands.hset(key, ELEMENT_ANCESTORS, objectMapper.writeValueAsString(storage.getAncestors()));
+                        String ancestorStr = objectMapper.writeValueAsString(storage.getAncestors());
+                        syncCommands.hset(key, ELEMENT_ANCESTORS, ancestorStr);
                     } catch (JsonProcessingException e) {
                         throw new MetaSyncClientException("parse ancestors failed.", false);
                     }
                 }
             }
 
-            //  children
-            if (null != storage.getChildIds() && storage.getChildIds().size() > 0) {
-                try {
-                    syncCommands.hset(key, ELEMENT_CHILDREN, objectMapper.writeValueAsString(storage.getChildIds()));
-                } catch (JsonProcessingException e) {
-                    throw new MetaSyncClientException("parse children failed.", false);
-                }
-            }
-
             //  relations
             if (null != storage.getRelations() && storage.getRelations().size() > 0) {
                 try {
-                    syncCommands.hset(key, ELEMENT_RELATIONS, objectMapper.writeValueAsString(storage.getRelations()));
+                    String relationStr = objectMapper.writeValueAsString(storage.getRelations());
+                    syncCommands.hset(key, ELEMENT_RELATIONS, relationStr);
                 } catch (JsonProcessingException e) {
                     throw new MetaSyncClientException("parse children failed.", false);
                 }
@@ -225,7 +278,8 @@ public class CacheExecutor implements ICacheExecutor {
             if (null != storage.getFields()) {
                 for (IEntityField entityField : storage.getFields()) {
                     try {
-                        syncCommands.hset(key, ELEMENT_FIELDS + ".." + entityField.id(), objectMapper.writeValueAsString(entityField));
+                        String entityFieldStr = objectMapper.writeValueAsString(entityField);
+                        syncCommands.hset(key, ELEMENT_FIELDS + "." + entityField.id(), entityFieldStr);
                     } catch (JsonProcessingException e) {
                         throw new MetaSyncClientException("parse entityField failed.", false);
                     }
@@ -238,77 +292,50 @@ public class CacheExecutor implements ICacheExecutor {
     }
 
     @Override
-    public Map<Long, EntityClassStorage> read(long entityClassId) {
+    public Map<Long, EntityClassStorage> read(long entityClassId) throws JsonProcessingException {
         int version = version(entityClassId);
-        if (-1 != version) {
-            String[] keys = {
-                    entityStorageKeys
-            };
+        /**
+         * 不存在时抛出异常
+         */
+        if (NOT_EXIST_VERSION == version) {
+            throw new RuntimeException(String.format("invalid entityClassId : [%s], no version pair", entityClassId));
+        }
 
-            //  todo get from local cache
-
-            try {
-                //  get from redis
-                String redisValue = syncCommands.evalsha(
-                        entityClassStorageScriptSha,
-                        ScriptOutputType.VALUE,
-                        keys, version + "" , Long.toString(entityClassId));
-
-                Map<Long, EntityClassStorage> entityClassStorageMap = new HashMap<>();
-                //  get self
-                Map<String, String> keyValues = objectMapper.readValue(redisValue, Map.class);
-                EntityClassStorage entityClassStorage =
-                        valuesToStorage(objectMapper, keyValues);
-
-                entityClassStorageMap.put(entityClassStorage.getId(), entityClassStorage);
-
-                //  get father, Children
-                int extraSize = entityClassStorage.getAncestors().size() + entityClassStorage.getChildIds().size();
-                if (extraSize > 0) {
-                    String[] extraEntityIds = new String[extraSize + 1];
-                    extraEntityIds[0] = version + "";
-                    int j = 1;
-
-                    /**
-                     * set ancestors
-                     */
-                    for (int i = 0; i < entityClassStorage.getAncestors().size(); i++) {
-                        extraEntityIds[j] = Long.toString(entityClassStorage.getAncestors().get(i));
-                        j++;
+        EntityClassStorage entityClassStorage = getFromLocal(entityClassId, version);
+        Map<Long, EntityClassStorage> entityClassStorageMap = null;
+        if (null == entityClassStorage) {
+            entityClassStorageMap = getFromRemote(entityClassId, version);
+            entityClassStorageMap.forEach(
+                    (k, v) -> {
+                        addToLocal(generateEntityCacheKey(k, version), v);
                     }
+            );
+        } else {
+            entityClassStorageMap = new HashMap<>();
+            entityClassStorageMap.put(entityClassStorage.getId(), entityClassStorage);
+            List<Long> ids = new ArrayList<>();
 
-                    /**
-                     * set children
-                     */
-                    for (int i = 0; i < entityClassStorage.getChildIds().size(); i ++) {
-                        extraEntityIds[j] = Long.toString(entityClassStorage.getChildIds().get(i));
-                        j++;
-                    }
+            if (null != entityClassStorage.getAncestors()) {
+                ids.addAll(entityClassStorage.getAncestors());
+            }
 
-                    redisValue = syncCommands.evalsha(
-                            entityClassStorageListScriptSha,
-                            ScriptOutputType.VALUE,
-                            keys, extraEntityIds);
-
-                    Map<String, Map<String, String>> valuePairs = objectMapper.readValue(redisValue, Map.class);
-                    for (Map.Entry<String, Map<String, String>> value : valuePairs.entrySet()) {
-                        EntityClassStorage storage =
-                                valuesToStorage(objectMapper, value.getValue());
-
-                        entityClassStorageMap.put(storage.getId(), storage);
-                    }
+            for (Long r : ids) {
+                EntityClassStorage e = getFromLocal(r, version);
+                /**
+                 * 当缓存中没有该EntityClass时,从Redis中获取并写入缓存中
+                 */
+                if (null == e) {
+                    e = getOneFromRemote(r, version);
+                    addToLocal(generateEntityCacheKey(r, version), e);
                 }
-                //   todo rewrite into local cache and set 1 day expire time
 
-                return entityClassStorageMap;
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-                throw new MetaSyncClientException(e.getMessage(), false);
+                entityClassStorageMap.put(r, e);
             }
         }
 
-        throw new MetaSyncClientException("invalid version -1", false);
+        return entityClassStorageMap;
     }
+
 
     /**
      * 获取当前appId对应的版本信息
@@ -330,15 +357,11 @@ public class CacheExecutor implements ICacheExecutor {
      * @param entityClassId
      * @return
      */
-    private int version(Long entityClassId) {
+    @Override
+    public int version(Long entityClassId) {
         if (null == entityClassId || entityClassId <= 0) {
             return -1;
         }
-//        String key = metadataAppRelKey + ".." + entityClassId;
-//        String appId = syncCommands.get(key);
-//
-//        return version(appId);
-
 
         String[] keys = {
                 appEntityMappingKey,
@@ -392,11 +415,28 @@ public class CacheExecutor implements ICacheExecutor {
 
         values[0] = appId;
         values[1] = Integer.toString(version);
-
-        return syncCommands.evalsha(
+        /**
+         * 设置版本、entity-appId mapping关系
+         */
+        boolean ret = syncCommands.evalsha(
                 versionResetScriptSha,
                 ScriptOutputType.BOOLEAN,
                 keys, values);
+
+        /**
+         * 记录当前appId+version下的所有entityIds，用于过期清理
+         */
+        if (ret) {
+            try {
+                String fieldName = String.format("%s.%s", appId, version);
+                syncCommands.hset(appEntityCollectionsKey,
+                        fieldName, objectMapper.writeValueAsString(ids));
+            } catch (Exception e) {
+                //  ignore
+            }
+        }
+
+        return ret;
     }
 
     /**
@@ -423,7 +463,7 @@ public class CacheExecutor implements ICacheExecutor {
         return syncCommands.evalsha(
                     prepareVersionScriptSha,
                     ScriptOutputType.BOOLEAN,
-                    keys, Integer.toString(version), appId);
+                    keys, Integer.toString(version), appId, Integer.toString(prepareExpire));
     }
 
     /**
@@ -436,15 +476,49 @@ public class CacheExecutor implements ICacheExecutor {
         if (null == appId || appId.isEmpty()) {
             return false;
         }
-        String[] keys = {
-                appPrepareKeyPrefix
-        };
-        return syncCommands.evalsha(
-                endPrepareVersionScriptSha,
-                ScriptOutputType.BOOLEAN,
-                keys, appId);
+
+        return syncCommands.del(String.format("%s.%s", appPrepareKeyPrefix, appId)) > 0;
     }
 
+    /**
+     * 删除只能进行一次，当删除进行中由于某些原因导致redis删除失败时，需要手动进入redis清理过期信息
+     * @param appId
+     * @param version
+     * @param force
+     * @return
+     */
+    @Override
+    public boolean clean(String appId, int version, boolean force) {
+        //check version
+        if (!force) {
+            int activeVersion = version(appId);
+            if (version >= activeVersion) {
+                return false;
+            }
+        }
+
+        String fieldName = String.format("%s.%s", appId, version);
+
+        //  获取 appId + version 映射的 entityIds列表
+        String v = syncCommands.hget(appEntityCollectionsKey,
+                fieldName);
+
+        if (null != v && !v.isEmpty()) {
+            try {
+                List<Long> ids = objectMapper.readValue(v,
+                        objectMapper.getTypeFactory().constructParametricType(List.class, Long.class));
+                for (Long id : ids) {
+                    clean(id, version);
+                }
+                //  删除 appId + version 映射的 entityIds列表
+                syncCommands.hdel(appEntityCollectionsKey, fieldName);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return true;
+    }
 
 
     /**
@@ -453,8 +527,7 @@ public class CacheExecutor implements ICacheExecutor {
      * @param version
      * @return
      */
-    @Override
-    public boolean clean(Long entityId, int version) {
+    private boolean clean(Long entityId, int version) {
         if (null == entityId) {
             return false;
         }
@@ -463,13 +536,124 @@ public class CacheExecutor implements ICacheExecutor {
             return false;
         }
 
+        //  删除本地
+        delFromLocal(entityId, version);
+
+        //  删除redis
+        delFromRemote(entityId, version);
+
+        return true;
+    }
+
+    private void delFromRemote(Long entityId, int version) {
         String[] keys = {
                 entityStorageKeys
         };
 
-        return syncCommands.evalsha(
-                cleanExpiredEntityClassScriptSha,
-                ScriptOutputType.BOOLEAN,
-                keys, Long.toString(entityId), Integer.toString(version), "FIELD");
+        try {
+            syncCommands.evalsha(
+                    cleanExpiredEntityClassScriptSha,
+                    ScriptOutputType.BOOLEAN,
+                    keys, Integer.toString(version), Long.toString(entityId));
+        } catch (Exception e) {
+            logger.warn("delete remote failed, entityId:[{}], version:[{}], message:[{}]", entityId, version, e.getMessage());
+        }
+    }
+
+    private Map<Long, EntityClassStorage> getFromRemote(long entityClassId, int version) {
+        try {
+            Map<Long, EntityClassStorage> entityClassStorageMap = new HashMap<>();
+            //  self
+            EntityClassStorage entityClassStorage = getOneFromRemote(entityClassId, version);
+
+            entityClassStorageMap.put(entityClassStorage.getId(), entityClassStorage);
+
+            //  get ancestors
+            if (entityClassStorage.getAncestors().size() > 0) {
+                remoteAncestorsLoading(entityClassStorage, version, entityClassStorageMap);
+            }
+
+            return entityClassStorageMap;
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new MetaSyncClientException(e.getMessage(), false);
+        }
+    }
+
+    private EntityClassStorage getOneFromRemote(long entityClassId, int version) throws JsonProcessingException {
+        String[] keys = {
+                entityStorageKeys
+        };
+
+        //  get from redis
+        String redisValue = syncCommands.evalsha(
+                entityClassStorageScriptSha,
+                ScriptOutputType.VALUE,
+                keys, version + "" , Long.toString(entityClassId));
+
+        //  get self
+        Map<String, String> keyValues = objectMapper.readValue(redisValue, Map.class);
+
+        return valuesToStorage(objectMapper, keyValues);
+    }
+
+    private void remoteAncestorsLoading(EntityClassStorage entityClassStorage, int version, Map<Long, EntityClassStorage> entityClassStorageMap) throws JsonProcessingException {
+
+        int extraSize = entityClassStorage.getAncestors().size();
+        String[] extraEntityIds = new String[extraSize + 1];
+        extraEntityIds[0] = version + "";
+        int j = 1;
+
+        /**
+         * set ancestors
+         */
+        for (int i = 0; i < entityClassStorage.getAncestors().size(); i++) {
+            extraEntityIds[j] = Long.toString(entityClassStorage.getAncestors().get(i));
+            j++;
+        }
+
+        String[] keys = {
+                entityStorageKeys
+        };
+
+        String redisValue = syncCommands.evalsha(
+                entityClassStorageListScriptSha,
+                ScriptOutputType.VALUE,
+                keys, extraEntityIds);
+
+        Map<String, Map<String, String>> valuePairs = objectMapper.readValue(redisValue, Map.class);
+        /**
+         * check size
+         */
+        if (extraSize != valuePairs.size()) {
+            throw new MetaSyncClientException(
+                    String.format("missed some extend or children entityClassStorage, should be [%d], actual [%d] ", extraSize, valuePairs.size()), false);
+        }
+
+        for (Map.Entry<String, Map<String, String>> value : valuePairs.entrySet()) {
+            EntityClassStorage storage =
+                    valuesToStorage(objectMapper, value.getValue());
+
+            entityClassStorageMap.put(storage.getId(), storage);
+        }
+    }
+
+    private EntityClassStorage getFromLocal(long entityClassId, int version) {
+        return entityClassStorageCache.getIfPresent(generateEntityCacheKey(entityClassId, version));
+    }
+
+    private synchronized void addToLocal(String key, EntityClassStorage entityClassStorage) {
+        EntityClassStorage e = entityClassStorageCache.getIfPresent(key);
+        if (null == e) {
+            entityClassStorageCache.put(key, entityClassStorage);
+        }
+    }
+
+    private void delFromLocal(long entityId, int version) {
+        try {
+            entityClassStorageCache.invalidate(generateEntityCacheKey(entityId, version));
+        } catch (Exception e) {
+            logger.warn("delete local failed, entityId:[{}], version:[{}], message:[{}]", entityId, version, e.getMessage());
+        }
     }
 }

@@ -23,20 +23,24 @@ public class AppCheckTask implements Runnable {
 
     private RequestWatcher requestWatcher;
     private long monitorSleepDuration;
+    private long delayTaskDuration;
     private Function<String, Boolean> canAccessFunction;
 
-    public AppCheckTask(RequestWatcher requestWatcher, long monitorSleepDuration, Function<String, Boolean> canAccessFunction) {
+    public AppCheckTask(RequestWatcher requestWatcher, long monitorSleepDuration, long delayTaskDuration, Function<String, Boolean> canAccessFunction) {
         this.requestWatcher = requestWatcher;
         this.monitorSleepDuration = monitorSleepDuration;
+        this.delayTaskDuration = delayTaskDuration;
         this.canAccessFunction = canAccessFunction;
     }
 
     @Override
     public void run() {
         while (true) {
-            if (!requestWatcher.isOnServe()) {
+            if (requestWatcher.isOnServe()) {
                 requestWatcher.watches().values().stream().filter(s -> {
-                    return s.getStatus().ordinal() == WatchElement.AppStatus.Init.ordinal();
+                    return s.getStatus().ordinal() == WatchElement.AppStatus.Init.ordinal() ||
+                            (s.getStatus().ordinal() < WatchElement.AppStatus.Confirmed.ordinal() &&
+                                        System.currentTimeMillis() - s.getRegisterTime() > delayTaskDuration);
                 }).forEach(
                         k -> {
                             EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();

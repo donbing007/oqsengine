@@ -56,7 +56,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     }
 
     @Override
-    public void addWatch(WatchElement w) {
+    public synchronized void addWatch(WatchElement w) {
         watches.put(w.getAppId(), w);
     }
 

@@ -109,7 +109,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
          * 启动TimeoutCheck线程
          */
         executors.add(ThreadUtils.create(() -> new TimeoutCheckTask(requestWatcher,
-                        gRpcParamsConfig.defaultHeartbeatTimeout, gRpcParamsConfig.getMonitorSleepDuration())));
+                        gRpcParamsConfig.getDefaultHeartbeatTimeout(), gRpcParamsConfig.getMonitorSleepDuration())));
 
         /**
          * 启动keepAlive线程, 1秒check1次
@@ -121,7 +121,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
          * 启动AppCheck线程
          */
         executors.add(ThreadUtils.create(() -> new AppCheckTask(requestWatcher,
-                        gRpcParamsConfig.getMonitorSleepDuration(), canAccessFunction())));
+                        gRpcParamsConfig.getMonitorSleepDuration(), gRpcParamsConfig.getDefaultDelayTaskDuration(), canAccessFunction())));
     }
 
     @Override

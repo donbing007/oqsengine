@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -56,6 +57,11 @@ public class AnyEntityClass implements IEntityClass {
     @Override
     public Collection<Relation> relations() {
         return Collections.emptyList();
+    }
+
+    @Override
+    public Collection<OqsRelation> oqsRelations() {
+        return null;
     }
 
     @Override

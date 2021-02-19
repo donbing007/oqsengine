@@ -1,21 +1,22 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
-import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.executor.IEntityClassExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsEntityClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import java.util.List;
+import java.sql.SQLException;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.concurrent.*;
+import java.util.function.Supplier;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.BUSINESS_HANDLER_ERROR;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.EXPIRED_VERSION;
-import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.fromProtoBuffer;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.NOT_EXIST_VERSION;
 
 /**
  * desc :
@@ -25,102 +26,101 @@ import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorag
  * date : 2021/2/9
  * @since : 1.8
  */
-public class EntityClassManagerExecutor implements SyncExecutor, MetaManager {
+public class EntityClassManagerExecutor implements MetaManager {
+
+    final Logger logger = LoggerFactory.getLogger(EntityClassManagerExecutor.class);
 
     @Resource
     private ICacheExecutor cacheExecutor;
 
-    @Override
-    public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+    @Resource
+    private IEntityClassExecutor entityClassExecutor;
 
-        // step1 prepare
-        if (cacheExecutor.prepare(appId, version)) {
-            try {
-                int expiredVersion = version(appId);
+    @Resource(name = "waitVersionExecutor")
+    private ExecutorService asyncDispatcher;
 
-                // step2 convert to storage
-                List<EntityClassStorage> entityClassStorageList = convert(version, entityClassSyncRspProto);
-
-                // step3 update new Hash in redis
-                if (!cacheExecutor.save(appId, version, entityClassStorageList)) {
-                    throw new MetaSyncClientException(
-                            String.format("save batches failed, appId : [%s], version : [%d]", appId, version), false
-                    );
-                }
-
-                // todo add expiredVersion to expiredList
-                if (expiredVersion != EXPIRED_VERSION) {
-
-                }
-                return true;
-            } catch (Exception e) {
-                return false;
-            } finally {
-                cacheExecutor.endPrepare(appId);
-            }
-
-        }
-
-        return false;
-    }
-
-    @Override
-    public int version(String appId) {
-        return cacheExecutor.version(appId);
+    private <T> CompletableFuture<T> async(Supplier<T> supplier) {
+        return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
     }
 
     @Override
     public IEntityClass load(long id) {
-        Map<Long, EntityClassStorage> entityClassStorageMaps = cacheExecutor.read(id);
-        return toEntityClass(entityClassStorageMaps);
+        try {
+            Map<Long, EntityClassStorage> entityClassStorageMaps = cacheExecutor.read(id);
+            return toEntityClass(id, entityClassStorageMaps);
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
+            throw new RuntimeException(String.format("load entityClass [%d] error, message [%s]", id, e.getMessage()));
+        }
+    }
+
+    @Override
+    public IEntityClass loadHistory(long id, int version) {
+        return null;
     }
 
     @Override
     public int need(String appId) {
-        int version = version(appId);
-        if (version < 0) {
-            //  todo register
+        if (!entityClassExecutor.register(appId, NOT_EXIST_VERSION)) {
+            throw new RuntimeException("register failed, gRpc sync client not read.");
+        }
 
-            //  todo await unit get version
+        int version = cacheExecutor.version(appId);
+        if (version < 0) {
+            CompletableFuture<Integer> future = async(() -> {
+                int ver;
+                while (true) {
+                    ver = cacheExecutor.version(appId);
+                    if (ver < 0) {
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                    } else {
+                        return ver;
+                    }
+                }
+                return NOT_EXIST_VERSION;
+            });
+
+            try {
+                version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            }
+
+            if (version == NOT_EXIST_VERSION) {
+                throw new RuntimeException(String.format("get version of appId [%s] failed, reach max wait time", appId));
+            }
 
         }
         return version;
     }
 
-    /**
-     * 将protoBuf转为EntityClassStorage列表
-     * @param version
-     * @param entityClassSyncRspProto
-     * @return
-     */
-    private List<EntityClassStorage> convert(int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-        Map<Long, EntityClassStorage> temp = entityClassSyncRspProto.getEntityClassesList().stream().map(
-                ecs -> {
-                    EntityClassStorage e = fromProtoBuffer(ecs, EntityClassStorage.class);
-                    e.setVersion(version);
-                    return e;
-                }
-        ).collect(Collectors.toMap(EntityClassStorage::getId, s1 -> s1,  (s1, s2) -> s1));
+    private IEntityClass toEntityClass(long id, Map<Long, EntityClassStorage> entityClassStorageMaps) throws SQLException {
+        EntityClassStorage entityClassStorage = entityClassStorageMaps.get(id);
+        if (null == entityClassStorage) {
+            throw new SQLException(String.format("entity class [%d] not found.", id));
+        }
 
-        return temp.values().stream().peek(
-                v -> {
-                    Long fatherId = v.getFatherId();
-                    if (null != fatherId) {
-                        while (null != fatherId) {
-                            EntityClassStorage entityClassStorage = temp.get(v.getFatherId());
-                            if (null == entityClassStorage) {
-                                throw new MetaSyncClientException(
-                                        String.format("father entityClass : [%d] missed.", v.getFatherId()), BUSINESS_HANDLER_ERROR.ordinal());
-                            }
-                            v.addAncestors(v.getFatherId());
-                            fatherId = entityClassStorage.getFatherId();
-                        }
-                    }
-                }
-        ).collect(Collectors.toList());
-    }
+        OqsEntityClass.Builder builder =
+                OqsEntityClass.Builder.anEntityClass()
+                        .withId(entityClassStorage.getId())
+                        .withCode(entityClassStorage.getCode())
+                        .withName(entityClassStorage.getName())
+                        .withLevel(entityClassStorage.getLevel())
+                        .withVersion(entityClassStorage.getVersion())
+                        .withRelations(entityClassStorage.getRelations())
+                        .withFields(entityClassStorage.getFields());
+        /**
+         * 加载父类
+         */
+        if (null != entityClassStorage.getFatherId()) {
+            builder.withFather(toEntityClass(entityClassStorage.getFatherId(), entityClassStorageMaps));
+        }
 
-    private IEntityClass toEntityClass(Map<Long, EntityClassStorage> entityClassStorageMaps) {
-        return null;
+        return builder.build();
     }
 }

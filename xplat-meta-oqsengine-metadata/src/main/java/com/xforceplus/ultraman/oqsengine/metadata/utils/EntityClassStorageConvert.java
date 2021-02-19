@@ -5,18 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.GeneratedMessageV3;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.*;
 
@@ -63,6 +60,11 @@ public class EntityClassStorageConvert {
     }
 
     public static EntityClassStorage valuesToStorage(ObjectMapper objectMapper, Map<String, String> keyValues) throws JsonProcessingException {
+
+        if (0 == keyValues.size()) {
+            throw new MetaSyncClientException("entityClassStorage is null, may be delete.", false);
+        }
+
         EntityClassStorage entityClassStorage = new EntityClassStorage();
 
         //  id
@@ -115,21 +117,12 @@ public class EntityClassStorageConvert {
             entityClassStorage.setAncestors(new ArrayList<>());
         }
 
-        //  children
-        String children = keyValues.remove(ELEMENT_CHILDREN);
-        if (null != children && !children.isEmpty()) {
-            entityClassStorage.setChildIds(objectMapper.readValue(children,
-                    objectMapper.getTypeFactory().constructParametricType(List.class, Long.class)));
-        } else {
-            entityClassStorage.setChildIds(new ArrayList<>());
-        }
-
         //  relations
         String relations = keyValues.remove(ELEMENT_RELATIONS);
         if (null != relations && !relations.isEmpty()) {
-            List<RelationStorage> relationStorageList = objectMapper.readValue(relations,
-                    objectMapper.getTypeFactory().constructParametricType(List.class, RelationStorage.class));
-            entityClassStorage.setRelations(relationStorageList.stream().map(RelationStorage::toRelation).collect(Collectors.toList()));
+            List<OqsRelation> relationStorageList = objectMapper.readValue(relations,
+                    objectMapper.getTypeFactory().constructParametricType(List.class, OqsRelation.class));
+            entityClassStorage.setRelations(relationStorageList);
         } else {
             entityClassStorage.setRelations(new ArrayList<>());
         }
@@ -137,7 +130,7 @@ public class EntityClassStorageConvert {
         //  entityFields
        List<IEntityField> fields = new ArrayList<>();
        for(Map.Entry<String, String> entry : keyValues.entrySet()) {
-           if (entry.getKey().startsWith(ELEMENT_FIELDS + "..")) {
+           if (entry.getKey().startsWith(ELEMENT_FIELDS + ".")) {
                fields.add(objectMapper.readValue(entry.getValue(), EntityField.class));
            }
        }

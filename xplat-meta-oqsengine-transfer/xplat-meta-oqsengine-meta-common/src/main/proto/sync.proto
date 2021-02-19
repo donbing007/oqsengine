@@ -38,10 +38,10 @@ message EntityClassInfo {
 	int64 fatherClassId = 4;
 	int32 level = 5;
 	repeated EntityFieldInfo entityFields = 6;
-	repeated int64 childClassIds = 7;
-	repeated RelationInfo relations = 8;
-	bool isAny = 9;
-	bool isDynamic = 10;
+//	repeated int64 childClassIds = 7;
+	repeated RelationInfo relations = 7;
+	bool isAny = 8;
+	bool isDynamic = 9;
 }
 
 message EntityFieldInfo {

@@ -1,24 +1,29 @@
-package com.xforceplus.ultraman.oqsengine.meta.executor;
+package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.IWatcher;
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 
+import java.util.Optional;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 /**
  * desc :
- * name : RetryExecutor
+ * name : ExpireExecutor
  *
  * @author : xujia
- * date : 2021/2/5
+ * date : 2021/2/18
  * @since : 1.8
  */
-public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask> {
+public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCleanEntity>  {
 
-    private static DelayQueue<DelayTask> delayTasks = new DelayQueue<DelayTask>();
+    private static DelayQueue<DelayCleanEntity> delayTasks = new DelayQueue<DelayCleanEntity>();
 
-    public DelayTask take() {
+    public DelayCleanEntity take() {
         try {
             return delayTasks.take();
         } catch (InterruptedException e) {
@@ -27,23 +32,27 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
         return null;
     }
 
-    public void offer(DelayTask task) {
-        delayTasks.offer(task);
+    public void offer(DelayCleanEntity task) {
+        try {
+            delayTasks.offer(task);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
-    public static class DelayTask implements Delayed {
-        private Element e;
+    public static class DelayCleanEntity implements Delayed {
+        private Expired e;
         private long start;
         private long expireTime;
 
-        public DelayTask(long delayInMillis, Element e) {
+        public DelayCleanEntity(long delayInMillis, Expired e) {
             this.e = e;
             start = System.currentTimeMillis();
             expireTime = delayInMillis;
         }
 
-        public Element element() {
+        public Expired element() {
             return e;
         }
 
@@ -58,19 +67,13 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
         }
     }
 
-    public static class Element {
-        private String uid;
+    public static class Expired {
         private String appId;
         private int version;
 
-        public Element(String appId, int version, String uid) {
-            this.uid = uid;
+        public Expired(String appId, int version) {
             this.appId = appId;
             this.version = version;
-        }
-
-        public String getUid() {
-            return uid;
         }
 
         public String getAppId() {
@@ -81,5 +84,4 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
             return version;
         }
     }
-
 }

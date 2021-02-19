@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.meta.handler;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils;
@@ -11,7 +12,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.IWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.executor.IRetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerator;
 import org.slf4j.Logger;
@@ -44,7 +44,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     private IResponseWatchExecutor watchExecutor;
 
     @Resource
-    private IRetryExecutor retryExecutor;
+    private IDelayTaskExecutor<RetryExecutor.DelayTask> retryExecutor;
 
     @Resource
     private EntityClassGenerator entityClassGenerator;

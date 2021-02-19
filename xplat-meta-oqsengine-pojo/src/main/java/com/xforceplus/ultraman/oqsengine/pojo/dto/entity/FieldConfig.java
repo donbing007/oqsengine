@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -57,6 +59,7 @@ public class FieldConfig implements Serializable {
     /**
      * 是否可搜索.true 可搜索,false 不可搜索.
      */
+    @JsonProperty(value = "searchable")
     private boolean searchable = false;
 
     /**
@@ -64,6 +67,7 @@ public class FieldConfig implements Serializable {
      * 数字:       最大的数字.
      * 日期/时间:   离现在最近的时间日期.
      */
+    @JsonProperty(value = "max")
     private long max = Long.MAX_VALUE;
 
     /**
@@ -71,37 +75,46 @@ public class FieldConfig implements Serializable {
      * 数字:       最小的数字.
      * 日期/时间:   离现在最远的时间日期.
      */
+    @JsonProperty(value = "min")
     private long min = Long.MIN_VALUE;
 
     /**
      * 字段精度
      */
+    @JsonProperty(value = "precision")
     private int precision = 0;
 
     /**
      * 是否为数据标识.
      */
+    @JsonProperty(value = "identifie")
     private boolean identifie = false;
 
     /**
      * 是否必填字段.
      */
+    @JsonProperty(value = "required")
     private boolean required = false;
 
     /**
      * 字段意义.
      */
+    @JsonProperty(value = "fieldSense")
     private FieldSense fieldSense = FieldSense.UNKNOWN;
 
     /**
      * 校验正则.
      */
+    @JsonProperty(value = "validateRegexString")
     private String validateRegexString = "";
 
+    @JsonProperty(value = "splittable")
     private boolean splittable = false;
 
+    @JsonProperty(value = "delimiter")
     private String delimiter = "";
 
+    @JsonProperty(value = "displayType")
     private String displayType = "";
 
     /**

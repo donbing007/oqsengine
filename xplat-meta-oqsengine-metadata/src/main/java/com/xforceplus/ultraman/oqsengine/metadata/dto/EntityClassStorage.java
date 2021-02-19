@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.metadata.dto;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,17 +43,13 @@ public class EntityClassStorage {
     /**
      * 关系信息
      */
-    private List<Relation> relations;
+    private List<OqsRelation> relations;
 
     /**
      * 继承的对象类型.
      */
     private Long fatherId;
 
-    /**
-     * 子对象结构信息
-     */
-    private List<Long> childIds;
 
     /**
      * 家族祖先的对象Id.
@@ -105,11 +101,11 @@ public class EntityClassStorage {
         this.level = level;
     }
 
-    public List<Relation> getRelations() {
+    public List<OqsRelation> getRelations() {
         return relations;
     }
 
-    public void setRelations(List<Relation> relations) {
+    public void setRelations(List<OqsRelation> relations) {
         this.relations = relations;
     }
 
@@ -119,14 +115,6 @@ public class EntityClassStorage {
 
     public void setFatherId(Long fatherId) {
         this.fatherId = fatherId;
-    }
-
-    public List<Long> getChildIds() {
-        return childIds;
-    }
-
-    public void setChildIds(List<Long> childIds) {
-        this.childIds = childIds;
     }
 
     public List<Long> getAncestors() {

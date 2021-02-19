@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 
 /**
  * desc :
@@ -16,12 +17,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
  */
 public class EntityClassStorageBuilder {
 
-    public static Relation relationLong(long id, long fieldId) {
-        return new Relation("test" + id, id, "order", false, entityFieldLong(fieldId));
+    public static OqsRelation relationLong(long id, long fieldId) {
+        return new OqsRelation("test" + id, id, "order", false, fieldId);
     }
 
-    public static Relation relationString(long id, long fieldId) {
-        return new Relation("test" + id, id, "order", false, entityFieldString(fieldId));
+    public static OqsRelation relationString(long id, long fieldId) {
+        return new OqsRelation("test" + id, id, "order", false, fieldId);
     }
 
     public static IEntityField entityFieldLong(long id) {
