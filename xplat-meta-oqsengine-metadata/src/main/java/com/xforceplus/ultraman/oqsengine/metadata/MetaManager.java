@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.metadata;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 
+import java.util.Optional;
+
 /**
  * oqs 元数据管理
  *
@@ -17,7 +19,7 @@ public interface MetaManager {
      * @param id 元信息的标识.
      * @return 元信息的实例.
      */
-    IEntityClass load(long id);
+    Optional<IEntityClass> load(long id);
 
     /**
      * 表示需要关注此appid代表的应用的元信息.
