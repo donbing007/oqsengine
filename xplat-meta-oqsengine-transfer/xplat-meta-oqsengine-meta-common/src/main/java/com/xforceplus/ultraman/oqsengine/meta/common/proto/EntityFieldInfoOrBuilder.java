@@ -62,26 +62,15 @@ public interface EntityFieldInfoOrBuilder extends
       getDefaultValueBytes();
 
   /**
-   * <code>repeated .FieldConfig fieldConfig = 7;</code>
+   * <code>.FieldConfig fieldConfig = 7;</code>
    */
-  java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig> 
-      getFieldConfigList();
+  boolean hasFieldConfig();
   /**
-   * <code>repeated .FieldConfig fieldConfig = 7;</code>
+   * <code>.FieldConfig fieldConfig = 7;</code>
    */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig getFieldConfig(int index);
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig getFieldConfig();
   /**
-   * <code>repeated .FieldConfig fieldConfig = 7;</code>
+   * <code>.FieldConfig fieldConfig = 7;</code>
    */
-  int getFieldConfigCount();
-  /**
-   * <code>repeated .FieldConfig fieldConfig = 7;</code>
-   */
-  java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder> 
-      getFieldConfigOrBuilderList();
-  /**
-   * <code>repeated .FieldConfig fieldConfig = 7;</code>
-   */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder getFieldConfigOrBuilder(
-      int index);
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder getFieldConfigOrBuilder();
 }

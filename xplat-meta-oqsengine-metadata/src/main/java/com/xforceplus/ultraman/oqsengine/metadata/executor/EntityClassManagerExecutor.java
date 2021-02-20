@@ -15,8 +15,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.NOT_EXIST_VERSION;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
 
 /**
  * desc :
@@ -123,7 +122,7 @@ public class EntityClassManagerExecutor implements MetaManager {
         /**
          * 加载父类
          */
-        if (null != entityClassStorage.getFatherId()) {
+        if (null != entityClassStorage.getFatherId() && entityClassStorage.getFatherId() >= MIN_ID) {
             builder.withFather(toEntityClass(entityClassStorage.getFatherId(), entityClassStorageMaps));
         }
 

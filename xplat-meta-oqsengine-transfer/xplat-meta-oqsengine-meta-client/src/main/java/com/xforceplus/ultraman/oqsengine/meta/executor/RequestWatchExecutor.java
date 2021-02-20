@@ -14,11 +14,14 @@ import io.grpc.stub.StreamObserver;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.clientTaskSize;
 
 /**
@@ -33,7 +36,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
 
     private RequestWatcher requestWatcher;
 
-    private Set<WatchElement> forgotSets = new ConcurrentSkipListSet<>();
+    private Queue<WatchElement> forgetQueue = new ConcurrentLinkedDeque<>();
 
     private List<Thread> executors = new ArrayList<>(clientTaskSize);
 
@@ -111,7 +114,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
 
     @Override
     public void addForgot(String appId, int version) {
-        forgotSets.add(new WatchElement(appId, version, WatchElement.AppStatus.Init));
+        forgetQueue.add(new WatchElement(appId, version, WatchElement.AppStatus.Init));
     }
 
     @Override
@@ -132,7 +135,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
          * 启动AppCheck线程
          */
         executors.add(ThreadUtils.create(() -> new AppCheckTask(requestWatcher,
-                forgotSets, gRpcParamsConfig.getMonitorSleepDuration(), gRpcParamsConfig.getDefaultDelayTaskDuration(), canAccessFunction())));
+                forgetQueue, gRpcParamsConfig.getMonitorSleepDuration(), gRpcParamsConfig.getDefaultDelayTaskDuration(), canAccessFunction())));
     }
 
     @Override
@@ -143,7 +146,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
             requestWatcher.release();
 
             executors.forEach(s -> {
-                ThreadUtils.shutdown(s, gRpcParamsConfig.getMonitorSleepDuration());
+                ThreadUtils.shutdown(s, SHUT_DOWN_WAIT_TIME_OUT);
             });
         }
     }

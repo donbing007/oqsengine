@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
@@ -40,16 +39,12 @@ public class CacheExecutorTest {
     private RedisClient redisClient;
     private CacheExecutor cacheExecutor;
 
-    private StatefulRedisConnection<String, String> syncConnect;
-
     @Before
     public void before() throws Exception {
 
         String redisIp = System.getProperty("REDIS_HOST");
         int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
-
-        syncConnect = redisClient.connect();
 
         ObjectMapper objectMapper = new ObjectMapper();
         cacheExecutor = new CacheExecutor();
@@ -61,7 +56,6 @@ public class CacheExecutorTest {
 
     @After
     public void after() throws Exception {
-        syncConnect.close();
         cacheExecutor.destroy();
         cacheExecutor = null;
 
@@ -206,7 +200,7 @@ public class CacheExecutorTest {
         Assert.assertTrue(ret);
 
         for (ExpectedEntityStorage e : expectedEntityStorageList) {
-            invalid(e.self, "entityClassStorage is null, may be delete.");
+            invalid(e.getSelf(), "entityClassStorage is null, may be delete.");
         }
     }
 
@@ -228,7 +222,7 @@ public class CacheExecutorTest {
         }
 
         for (ExpectedEntityStorage e : expectedEntityStorageList) {
-            Assert.assertEquals(expectedVersion, cacheExecutor.version(e.self));
+            Assert.assertEquals(expectedVersion, cacheExecutor.version(e.getSelf()));
             Map<Long, EntityClassStorage> results = cacheExecutor.read(e.getSelf());
 
             Assert.assertNotNull(results.remove(e.getSelf()));
@@ -327,65 +321,5 @@ public class CacheExecutorTest {
         ExpectedEntityStorage brother = new ExpectedEntityStorage(6L, 10L, Arrays.asList(10L, 20L));
         entityClassStorageList.add(prepareEntity(brother));
         expectedEntityStorageList.add(brother);
-    }
-
-    private EntityClassStorage prepareEntity(ExpectedEntityStorage expectedEntityStorage) {
-        IEntityField[] entityFields = new IEntityField[2];
-        entityFields[0] = entityFieldLong(expectedEntityStorage.getSelf());
-        entityFields[1] = entityFieldString(expectedEntityStorage.getSelf() + 1);
-
-        OqsRelation[] relations = new OqsRelation[2];
-        relations[0] = relationLong(expectedEntityStorage.getSelf(), expectedEntityStorage.getSelf() - 1);
-        relations[1] = relationString(expectedEntityStorage.getSelf(), expectedEntityStorage.getSelf() - 2);
-
-        EntityClassStorage entityClassStorage = new EntityClassStorage();
-        entityClassStorage.setId(expectedEntityStorage.getSelf());
-        entityClassStorage.setName(expectedEntityStorage.getSelf() + "_name");
-        entityClassStorage.setCode(expectedEntityStorage.getSelf() + "_code");
-        entityClassStorage.setVersion(1);
-
-
-        if (null != expectedEntityStorage.getFather()) {
-            entityClassStorage.setFatherId(expectedEntityStorage.getFather());
-        } else {
-            entityClassStorage.setFatherId(0L);
-        }
-
-        if (null != expectedEntityStorage.getAncestors()) {
-            entityClassStorage.setAncestors(expectedEntityStorage.getAncestors());
-            entityClassStorage.setLevel(expectedEntityStorage.getAncestors().size());
-        } else {
-            entityClassStorage.setLevel(0);
-        }
-
-        entityClassStorage.setFields(Arrays.asList(entityFields));
-        entityClassStorage.setRelations(Arrays.asList(relations));
-
-        return entityClassStorage;
-    }
-
-
-    private static class ExpectedEntityStorage {
-        private List<Long> ancestors;
-        private Long self;
-        private Long father;
-
-        public ExpectedEntityStorage(Long self, Long father, List<Long> ancestors) {
-            this.self = self;
-            this.father = father;
-            this.ancestors = ancestors;
-        }
-
-        public List<Long> getAncestors() {
-            return ancestors;
-        }
-
-        public Long getSelf() {
-            return self;
-        }
-
-        public Long getFather() {
-            return father;
-        }
     }
 }

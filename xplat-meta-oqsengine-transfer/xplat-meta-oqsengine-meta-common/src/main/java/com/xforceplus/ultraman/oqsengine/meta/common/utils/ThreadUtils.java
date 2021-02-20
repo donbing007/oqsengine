@@ -26,15 +26,12 @@ public class ThreadUtils {
      */
     public static void shutdown(Thread thread, long timeout) {
         if (null != thread) {
-            int count = 0;
             thread.interrupt();
-            while (count < interruptLoops) {
-                count ++;
-                if (thread.isInterrupted()) {
-                    break;
-                }
-                TimeWaitUtils.wakeupAfter(timeout, TimeUnit.MILLISECONDS);
+            TimeWaitUtils.wakeupAfter(3, TimeUnit.SECONDS);
+            if (thread.isInterrupted()) {
+                return;
             }
+            TimeWaitUtils.wakeupAfter(timeout, TimeUnit.SECONDS);
         }
     }
 }

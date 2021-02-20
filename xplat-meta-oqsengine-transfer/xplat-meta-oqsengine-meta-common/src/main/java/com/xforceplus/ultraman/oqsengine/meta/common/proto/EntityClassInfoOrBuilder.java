@@ -33,9 +33,9 @@ public interface EntityClassInfoOrBuilder extends
       getNameBytes();
 
   /**
-   * <code>int64 fatherClassId = 4;</code>
+   * <code>int64 father = 4;</code>
    */
-  long getFatherClassId();
+  long getFather();
 
   /**
    * <code>int32 level = 5;</code>
@@ -43,41 +43,33 @@ public interface EntityClassInfoOrBuilder extends
   int getLevel();
 
   /**
-   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+   * <code>int32 version = 6;</code>
+   */
+  int getVersion();
+
+  /**
+   * <code>repeated .EntityFieldInfo entityFields = 7;</code>
    */
   java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo> 
       getEntityFieldsList();
   /**
-   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 7;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo getEntityFields(int index);
   /**
-   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 7;</code>
    */
   int getEntityFieldsCount();
   /**
-   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 7;</code>
    */
   java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder> 
       getEntityFieldsOrBuilderList();
   /**
-   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 7;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder getEntityFieldsOrBuilder(
       int index);
-
-  /**
-   * <code>repeated int64 childClassIds = 7;</code>
-   */
-  java.util.List<java.lang.Long> getChildClassIdsList();
-  /**
-   * <code>repeated int64 childClassIds = 7;</code>
-   */
-  int getChildClassIdsCount();
-  /**
-   * <code>repeated int64 childClassIds = 7;</code>
-   */
-  long getChildClassIds(int index);
 
   /**
    * <code>repeated .RelationInfo relations = 8;</code>

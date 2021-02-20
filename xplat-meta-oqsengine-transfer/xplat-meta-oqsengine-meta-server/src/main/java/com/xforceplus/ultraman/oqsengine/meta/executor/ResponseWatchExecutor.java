@@ -16,6 +16,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+
 /**
  * desc :
  * name : ResponseWatchExecutor
@@ -84,7 +86,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExec
                             v.release();
                         }
                 });
-        ThreadUtils.shutdown(thread, gRpcParamsConfig.getMonitorSleepDuration());
+        ThreadUtils.shutdown(thread, SHUT_DOWN_WAIT_TIME_OUT);
     }
 
 

@@ -66,42 +66,41 @@ public final class EntityClassSyncProto {
       "\t\0229\n\027entityClassSyncRspProto\030\006 \001(\0132\030.Ent" +
       "ityClassSyncRspProto\"B\n\027EntityClassSyncR" +
       "spProto\022\'\n\rentityClasses\030\001 \003(\0132\020.EntityC" +
-      "lassInfo\"\342\001\n\017EntityClassInfo\022\014\n\004code\030\001 \001" +
-      "(\t\022\n\n\002id\030\002 \001(\003\022\014\n\004name\030\003 \001(\t\022\025\n\rfatherCl" +
-      "assId\030\004 \001(\003\022\r\n\005level\030\005 \001(\005\022&\n\014entityFiel" +
-      "ds\030\006 \003(\0132\020.EntityFieldInfo\022\025\n\rchildClass" +
-      "Ids\030\007 \003(\003\022 \n\trelations\030\010 \003(\0132\r.RelationI" +
-      "nfo\022\r\n\005isAny\030\t \001(\010\022\021\n\tisDynamic\030\n \001(\010\"\241\002" +
-      "\n\017EntityFieldInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 " +
-      "\001(\t\022\r\n\005cname\030\003 \001(\t\022-\n\tfieldType\030\004 \001(\0162\032." +
-      "EntityFieldInfo.FieldType\022\016\n\006dictId\030\005 \001(" +
-      "\t\022\024\n\014defaultValue\030\006 \001(\t\022!\n\013fieldConfig\030\007" +
-      " \003(\0132\014.FieldConfig\"m\n\tFieldType\022\013\n\007UNKNO" +
-      "WN\020\000\022\013\n\007BOOLEAN\020\001\022\010\n\004ENUM\020\002\022\014\n\010DATETIME\020" +
-      "\003\022\010\n\004LONG\020\004\022\n\n\006STRING\020\005\022\013\n\007STRINGS\020\006\022\013\n\007" +
-      "DECIMAL\020\007\"\360\003\n\013FieldConfig\022\022\n\nsearchable\030" +
-      "\001 \001(\010\022\013\n\003max\030\002 \001(\003\022\013\n\003min\030\003 \001(\003\022\021\n\tpreci" +
-      "sion\030\004 \001(\005\022\022\n\nidentifier\030\005 \001(\010\022\022\n\nisRequ" +
-      "ired\030\006 \001(\010\022\033\n\023validateRegexString\030\007 \001(\t\022" +
-      "\024\n\014isSplittable\030\010 \001(\010\022\021\n\tdelimiter\030\t \001(\t" +
-      "\022\023\n\013displayType\030\n \001(\t\022\022\n\nuniqueName\030\013 \001(" +
-      "\t\022\020\n\010isSystem\030\014 \001(\010\0220\n\nsystemType\030\r \001(\0162" +
-      "\034.FieldConfig.SystemFieldType\"\304\001\n\017System" +
-      "FieldType\022\n\n\006NORMAL\020\000\022\r\n\tTENANT_ID\020\001\022\017\n\013" +
-      "TENANT_CODE\020\002\022\017\n\013CREATE_TIME\020\003\022\017\n\013UPDATE" +
-      "_TIME\020\004\022\022\n\016CREATE_USER_ID\020\005\022\022\n\016UPDATE_US" +
-      "ER_ID\020\006\022\024\n\020CREATE_USER_NAME\020\007\022\024\n\020UPDATE_" +
-      "USER_NAME\020\010\022\017\n\013DELETE_FLAG\020\t\"\313\001\n\014Relatio" +
-      "nInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 \001(\t\022\025\n\rentit" +
-      "yClassId\030\003 \001(\003\022\027\n\017entityClassName\030\004 \001(\t\022" +
-      "\027\n\017relOwnerClassId\030\005 \001(\003\022\031\n\021relOwnerClas" +
-      "sName\030\006 \001(\t\022\024\n\014relationType\030\007 \001(\t\022\020\n\010ide" +
-      "ntity\030\010 \001(\010\022\025\n\rentityFieldId\030\t \001(\0032V\n\017En" +
-      "tityClassSync\022C\n\010register\022\027.EntityClassS" +
-      "yncRequest\032\030.EntityClassSyncResponse\"\000(\001" +
-      "0\001BM\n3com.xforceplus.ultraman.oqsengine." +
-      "meta.common.protoB\024EntityClassSyncProtoP" +
-      "\001b\006proto3"
+      "lassInfo\"\325\001\n\017EntityClassInfo\022\014\n\004code\030\001 \001" +
+      "(\t\022\n\n\002id\030\002 \001(\003\022\014\n\004name\030\003 \001(\t\022\016\n\006father\030\004" +
+      " \001(\003\022\r\n\005level\030\005 \001(\005\022\017\n\007version\030\006 \001(\005\022&\n\014" +
+      "entityFields\030\007 \003(\0132\020.EntityFieldInfo\022 \n\t" +
+      "relations\030\010 \003(\0132\r.RelationInfo\022\r\n\005isAny\030" +
+      "\t \001(\010\022\021\n\tisDynamic\030\n \001(\010\"\241\002\n\017EntityField" +
+      "Info\022\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 \001(\t\022\r\n\005cname\030" +
+      "\003 \001(\t\022-\n\tfieldType\030\004 \001(\0162\032.EntityFieldIn" +
+      "fo.FieldType\022\016\n\006dictId\030\005 \001(\t\022\024\n\014defaultV" +
+      "alue\030\006 \001(\t\022!\n\013fieldConfig\030\007 \001(\0132\014.FieldC" +
+      "onfig\"m\n\tFieldType\022\013\n\007UNKNOWN\020\000\022\013\n\007BOOLE" +
+      "AN\020\001\022\010\n\004ENUM\020\002\022\014\n\010DATETIME\020\003\022\010\n\004LONG\020\004\022\n" +
+      "\n\006STRING\020\005\022\013\n\007STRINGS\020\006\022\013\n\007DECIMAL\020\007\"\331\003\n" +
+      "\013FieldConfig\022\022\n\nsearchable\030\001 \001(\010\022\013\n\003max\030" +
+      "\002 \001(\003\022\013\n\003min\030\003 \001(\003\022\021\n\tprecision\030\004 \001(\005\022\022\n" +
+      "\nidentifier\030\005 \001(\010\022\022\n\nisRequired\030\006 \001(\010\022\033\n" +
+      "\023validateRegexString\030\007 \001(\t\022\024\n\014isSplittab" +
+      "le\030\010 \001(\010\022\021\n\tdelimiter\030\t \001(\t\022\023\n\013displayTy" +
+      "pe\030\n \001(\t\0223\n\016metaFieldSense\030\013 \001(\0162\033.Field" +
+      "Config.MetaFieldSense\"\320\001\n\016MetaFieldSense" +
+      "\022\013\n\007UNKNOWN\020\000\022\n\n\006NORMAL\020\001\022\r\n\tTENANT_ID\020\002" +
+      "\022\017\n\013TENANT_CODE\020\003\022\017\n\013CREATE_TIME\020\004\022\017\n\013UP" +
+      "DATE_TIME\020\005\022\022\n\016CREATE_USER_ID\020\006\022\022\n\016UPDAT" +
+      "E_USER_ID\020\007\022\024\n\020CREATE_USER_NAME\020\010\022\024\n\020UPD" +
+      "ATE_USER_NAME\020\t\022\017\n\013DELETE_FLAG\020\n\"\313\001\n\014Rel" +
+      "ationInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 \001(\t\022\025\n\re" +
+      "ntityClassId\030\003 \001(\003\022\027\n\017entityClassName\030\004 " +
+      "\001(\t\022\027\n\017relOwnerClassId\030\005 \001(\003\022\031\n\021relOwner" +
+      "ClassName\030\006 \001(\t\022\024\n\014relationType\030\007 \001(\t\022\020\n" +
+      "\010identity\030\010 \001(\010\022\025\n\rentityFieldId\030\t \001(\0032V" +
+      "\n\017EntityClassSync\022C\n\010register\022\027.EntityCl" +
+      "assSyncRequest\032\030.EntityClassSyncResponse" +
+      "\"\000(\0010\001BM\n3com.xforceplus.ultraman.oqseng" +
+      "ine.meta.common.protoB\024EntityClassSyncPr" +
+      "otoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -138,7 +137,7 @@ public final class EntityClassSyncProto {
     internal_static_EntityClassInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityClassInfo_descriptor,
-        new java.lang.String[] { "Code", "Id", "Name", "FatherClassId", "Level", "EntityFields", "ChildClassIds", "Relations", "IsAny", "IsDynamic", });
+        new java.lang.String[] { "Code", "Id", "Name", "Father", "Level", "Version", "EntityFields", "Relations", "IsAny", "IsDynamic", });
     internal_static_EntityFieldInfo_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_EntityFieldInfo_fieldAccessorTable = new
@@ -150,7 +149,7 @@ public final class EntityClassSyncProto {
     internal_static_FieldConfig_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldConfig_descriptor,
-        new java.lang.String[] { "Searchable", "Max", "Min", "Precision", "Identifier", "IsRequired", "ValidateRegexString", "IsSplittable", "Delimiter", "DisplayType", "UniqueName", "IsSystem", "SystemType", });
+        new java.lang.String[] { "Searchable", "Max", "Min", "Precision", "Identifier", "IsRequired", "ValidateRegexString", "IsSplittable", "Delimiter", "DisplayType", "MetaFieldSense", });
     internal_static_RelationInfo_descriptor =
       getDescriptor().getMessageTypes().get(6);
     internal_static_RelationInfo_fieldAccessorTable = new

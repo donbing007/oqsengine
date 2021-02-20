@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.CONFIRM_HEARTBEAT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.CONFIRM_REGISTER;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Notice;
@@ -75,7 +76,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      */
     @Override
     public void stop() {
-        ThreadUtils.shutdown(thread, gRpcParamsConfig.getMonitorSleepDuration());
+        ThreadUtils.shutdown(thread, SHUT_DOWN_WAIT_TIME_OUT);
     }
 
     /**

@@ -28,7 +28,7 @@ import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.*;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.*;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.CacheUtils.generateEntityCacheKey;
-import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.valuesToStorage;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.redisValuesToLocalStorage;
 
 /**
  * desc :
@@ -629,7 +629,7 @@ public class CacheExecutor implements ICacheExecutor {
         //  get self
         Map<String, String> keyValues = objectMapper.readValue(redisValue, Map.class);
 
-        return valuesToStorage(objectMapper, keyValues);
+        return redisValuesToLocalStorage(objectMapper, keyValues);
     }
 
     private void remoteAncestorsLoading(EntityClassStorage entityClassStorage, int version, Map<Long, EntityClassStorage> entityClassStorageMap) throws JsonProcessingException {
@@ -667,7 +667,7 @@ public class CacheExecutor implements ICacheExecutor {
 
         for (Map.Entry<String, Map<String, String>> value : valuePairs.entrySet()) {
             EntityClassStorage storage =
-                    valuesToStorage(objectMapper, value.getValue());
+                    redisValuesToLocalStorage(objectMapper, value.getValue());
 
             entityClassStorageMap.put(storage.getId(), storage);
         }

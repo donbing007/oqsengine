@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -26,12 +27,13 @@ public class AppCheckTask implements Runnable {
     private RequestWatcher requestWatcher;
     private long monitorSleepDuration;
     private long delayTaskDuration;
-    private Set<WatchElement> forgotSets;
+    private Queue<WatchElement> forgetQueue;
     private Function<String, Boolean> canAccessFunction;
 
-    public AppCheckTask(RequestWatcher requestWatcher, Set<WatchElement> forgotSets, long monitorSleepDuration, long delayTaskDuration, Function<String, Boolean> canAccessFunction) {
+    public AppCheckTask(RequestWatcher requestWatcher, Queue<WatchElement> forgetQueue, long monitorSleepDuration, long delayTaskDuration,
+                                    Function<String, Boolean> canAccessFunction) {
         this.requestWatcher = requestWatcher;
-        this.forgotSets = forgotSets;
+        this.forgetQueue = forgetQueue;
         this.monitorSleepDuration = monitorSleepDuration;
         this.delayTaskDuration = delayTaskDuration;
         this.canAccessFunction = canAccessFunction;
@@ -42,13 +44,19 @@ public class AppCheckTask implements Runnable {
         while (true) {
             if (requestWatcher.isOnServe()) {
                 /**
-                 * a
+                 * 将forgetQueue中的数据添加到watch中
                  */
-                for (WatchElement s : forgotSets) {
-                    if (!requestWatcher.watches().containsKey(s.getAppId())) {
-                        requestWatcher.watches().put(s.getAppId(), s);
+                int checkSize = forgetQueue.size();
+                while (checkSize > 0) {
+                    try {
+                        WatchElement w = forgetQueue.remove();
+                        if (!requestWatcher.watches().containsKey(w.getAppId())) {
+                            requestWatcher.watches().put(w.getAppId(), w);
+                        }
+                    } catch (Exception e) {
+                        //  ignore
                     }
-                    forgotSets.remove(s);
+                    checkSize--;
                 }
 
                 requestWatcher.watches().values().stream().filter(s -> {

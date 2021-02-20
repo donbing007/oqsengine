@@ -1,12 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.dto.IWatcher;
-import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
@@ -21,13 +18,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCleanEntity>  {
 
+    final Logger logger = LoggerFactory.getLogger(ExpireExecutor.class);
+
     private static DelayQueue<DelayCleanEntity> delayTasks = new DelayQueue<DelayCleanEntity>();
 
     public DelayCleanEntity take() {
         try {
             return delayTasks.take();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.warn("expireExecutor is interrupted, may stop server...");
+            //  ignore
         }
         return null;
     }
@@ -36,10 +36,10 @@ public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCl
         try {
             delayTasks.offer(task);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn("offer failed, message : {}", e.getMessage());
+            //  ignore
         }
     }
-
 
     public static class DelayCleanEntity implements Delayed {
         private Expired e;

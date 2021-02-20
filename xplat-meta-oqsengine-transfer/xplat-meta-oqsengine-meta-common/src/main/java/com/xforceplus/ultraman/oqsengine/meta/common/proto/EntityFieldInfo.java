@@ -22,7 +22,6 @@ private static final long serialVersionUID = 0L;
     fieldType_ = 0;
     dictId_ = "";
     defaultValue_ = "";
-    fieldConfig_ = java.util.Collections.emptyList();
   }
 
   @java.lang.Override
@@ -92,12 +91,16 @@ private static final long serialVersionUID = 0L;
             break;
           }
           case 58: {
-            if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
-              fieldConfig_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig>();
-              mutable_bitField0_ |= 0x00000040;
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder subBuilder = null;
+            if (fieldConfig_ != null) {
+              subBuilder = fieldConfig_.toBuilder();
             }
-            fieldConfig_.add(
-                input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.parser(), extensionRegistry));
+            fieldConfig_ = input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.parser(), extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom(fieldConfig_);
+              fieldConfig_ = subBuilder.buildPartial();
+            }
+
             break;
           }
         }
@@ -108,9 +111,6 @@ private static final long serialVersionUID = 0L;
       throw new com.google.protobuf.InvalidProtocolBufferException(
           e).setUnfinishedMessage(this);
     } finally {
-      if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
-        fieldConfig_ = java.util.Collections.unmodifiableList(fieldConfig_);
-      }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
     }
@@ -279,7 +279,6 @@ private static final long serialVersionUID = 0L;
     // @@protoc_insertion_point(enum_scope:EntityFieldInfo.FieldType)
   }
 
-  private int bitField0_;
   public static final int ID_FIELD_NUMBER = 1;
   private long id_;
   /**
@@ -442,38 +441,24 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int FIELDCONFIG_FIELD_NUMBER = 7;
-  private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig> fieldConfig_;
+  private com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig fieldConfig_;
   /**
-   * <code>repeated .FieldConfig fieldConfig = 7;</code>
+   * <code>.FieldConfig fieldConfig = 7;</code>
    */
-  public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig> getFieldConfigList() {
-    return fieldConfig_;
+  public boolean hasFieldConfig() {
+    return fieldConfig_ != null;
   }
   /**
-   * <code>repeated .FieldConfig fieldConfig = 7;</code>
+   * <code>.FieldConfig fieldConfig = 7;</code>
    */
-  public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder> 
-      getFieldConfigOrBuilderList() {
-    return fieldConfig_;
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig getFieldConfig() {
+    return fieldConfig_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.getDefaultInstance() : fieldConfig_;
   }
   /**
-   * <code>repeated .FieldConfig fieldConfig = 7;</code>
+   * <code>.FieldConfig fieldConfig = 7;</code>
    */
-  public int getFieldConfigCount() {
-    return fieldConfig_.size();
-  }
-  /**
-   * <code>repeated .FieldConfig fieldConfig = 7;</code>
-   */
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig getFieldConfig(int index) {
-    return fieldConfig_.get(index);
-  }
-  /**
-   * <code>repeated .FieldConfig fieldConfig = 7;</code>
-   */
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder getFieldConfigOrBuilder(
-      int index) {
-    return fieldConfig_.get(index);
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder getFieldConfigOrBuilder() {
+    return getFieldConfig();
   }
 
   private byte memoizedIsInitialized = -1;
@@ -506,8 +491,8 @@ private static final long serialVersionUID = 0L;
     if (!getDefaultValueBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 6, defaultValue_);
     }
-    for (int i = 0; i < fieldConfig_.size(); i++) {
-      output.writeMessage(7, fieldConfig_.get(i));
+    if (fieldConfig_ != null) {
+      output.writeMessage(7, getFieldConfig());
     }
     unknownFields.writeTo(output);
   }
@@ -537,9 +522,9 @@ private static final long serialVersionUID = 0L;
     if (!getDefaultValueBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, defaultValue_);
     }
-    for (int i = 0; i < fieldConfig_.size(); i++) {
+    if (fieldConfig_ != null) {
       size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(7, fieldConfig_.get(i));
+        .computeMessageSize(7, getFieldConfig());
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -568,8 +553,11 @@ private static final long serialVersionUID = 0L;
         .equals(other.getDictId());
     result = result && getDefaultValue()
         .equals(other.getDefaultValue());
-    result = result && getFieldConfigList()
-        .equals(other.getFieldConfigList());
+    result = result && (hasFieldConfig() == other.hasFieldConfig());
+    if (hasFieldConfig()) {
+      result = result && getFieldConfig()
+          .equals(other.getFieldConfig());
+    }
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -594,9 +582,9 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getDictId().hashCode();
     hash = (37 * hash) + DEFAULTVALUE_FIELD_NUMBER;
     hash = (53 * hash) + getDefaultValue().hashCode();
-    if (getFieldConfigCount() > 0) {
+    if (hasFieldConfig()) {
       hash = (37 * hash) + FIELDCONFIG_FIELD_NUMBER;
-      hash = (53 * hash) + getFieldConfigList().hashCode();
+      hash = (53 * hash) + getFieldConfig().hashCode();
     }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
@@ -723,7 +711,6 @@ private static final long serialVersionUID = 0L;
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
-        getFieldConfigFieldBuilder();
       }
     }
     public Builder clear() {
@@ -741,10 +728,10 @@ private static final long serialVersionUID = 0L;
       defaultValue_ = "";
 
       if (fieldConfigBuilder_ == null) {
-        fieldConfig_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000040);
+        fieldConfig_ = null;
       } else {
-        fieldConfigBuilder_.clear();
+        fieldConfig_ = null;
+        fieldConfigBuilder_ = null;
       }
       return this;
     }
@@ -768,8 +755,6 @@ private static final long serialVersionUID = 0L;
 
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo buildPartial() {
       com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo(this);
-      int from_bitField0_ = bitField0_;
-      int to_bitField0_ = 0;
       result.id_ = id_;
       result.name_ = name_;
       result.cname_ = cname_;
@@ -777,15 +762,10 @@ private static final long serialVersionUID = 0L;
       result.dictId_ = dictId_;
       result.defaultValue_ = defaultValue_;
       if (fieldConfigBuilder_ == null) {
-        if (((bitField0_ & 0x00000040) == 0x00000040)) {
-          fieldConfig_ = java.util.Collections.unmodifiableList(fieldConfig_);
-          bitField0_ = (bitField0_ & ~0x00000040);
-        }
         result.fieldConfig_ = fieldConfig_;
       } else {
         result.fieldConfig_ = fieldConfigBuilder_.build();
       }
-      result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
     }
@@ -849,31 +829,8 @@ private static final long serialVersionUID = 0L;
         defaultValue_ = other.defaultValue_;
         onChanged();
       }
-      if (fieldConfigBuilder_ == null) {
-        if (!other.fieldConfig_.isEmpty()) {
-          if (fieldConfig_.isEmpty()) {
-            fieldConfig_ = other.fieldConfig_;
-            bitField0_ = (bitField0_ & ~0x00000040);
-          } else {
-            ensureFieldConfigIsMutable();
-            fieldConfig_.addAll(other.fieldConfig_);
-          }
-          onChanged();
-        }
-      } else {
-        if (!other.fieldConfig_.isEmpty()) {
-          if (fieldConfigBuilder_.isEmpty()) {
-            fieldConfigBuilder_.dispose();
-            fieldConfigBuilder_ = null;
-            fieldConfig_ = other.fieldConfig_;
-            bitField0_ = (bitField0_ & ~0x00000040);
-            fieldConfigBuilder_ = 
-              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
-                 getFieldConfigFieldBuilder() : null;
-          } else {
-            fieldConfigBuilder_.addAllMessages(other.fieldConfig_);
-          }
-        }
+      if (other.hasFieldConfig()) {
+        mergeFieldConfig(other.getFieldConfig());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -901,7 +858,6 @@ private static final long serialVersionUID = 0L;
       }
       return this;
     }
-    private int bitField0_;
 
     private long id_ ;
     /**
@@ -1249,239 +1205,116 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig> fieldConfig_ =
-      java.util.Collections.emptyList();
-    private void ensureFieldConfigIsMutable() {
-      if (!((bitField0_ & 0x00000040) == 0x00000040)) {
-        fieldConfig_ = new java.util.ArrayList<com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig>(fieldConfig_);
-        bitField0_ |= 0x00000040;
-       }
-    }
-
-    private com.google.protobuf.RepeatedFieldBuilderV3<
+    private com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig fieldConfig_ = null;
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder> fieldConfigBuilder_;
+    /**
+     * <code>.FieldConfig fieldConfig = 7;</code>
+     */
+    public boolean hasFieldConfig() {
+      return fieldConfigBuilder_ != null || fieldConfig_ != null;
+    }
+    /**
+     * <code>.FieldConfig fieldConfig = 7;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig getFieldConfig() {
+      if (fieldConfigBuilder_ == null) {
+        return fieldConfig_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.getDefaultInstance() : fieldConfig_;
+      } else {
+        return fieldConfigBuilder_.getMessage();
+      }
+    }
+    /**
+     * <code>.FieldConfig fieldConfig = 7;</code>
+     */
+    public Builder setFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig value) {
+      if (fieldConfigBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        fieldConfig_ = value;
+        onChanged();
+      } else {
+        fieldConfigBuilder_.setMessage(value);
+      }
 
-    /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
-     */
-    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig> getFieldConfigList() {
-      if (fieldConfigBuilder_ == null) {
-        return java.util.Collections.unmodifiableList(fieldConfig_);
-      } else {
-        return fieldConfigBuilder_.getMessageList();
-      }
+      return this;
     }
     /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
-     */
-    public int getFieldConfigCount() {
-      if (fieldConfigBuilder_ == null) {
-        return fieldConfig_.size();
-      } else {
-        return fieldConfigBuilder_.getCount();
-      }
-    }
-    /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
-     */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig getFieldConfig(int index) {
-      if (fieldConfigBuilder_ == null) {
-        return fieldConfig_.get(index);
-      } else {
-        return fieldConfigBuilder_.getMessage(index);
-      }
-    }
-    /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
+     * <code>.FieldConfig fieldConfig = 7;</code>
      */
     public Builder setFieldConfig(
-        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig value) {
-      if (fieldConfigBuilder_ == null) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        ensureFieldConfigIsMutable();
-        fieldConfig_.set(index, value);
-        onChanged();
-      } else {
-        fieldConfigBuilder_.setMessage(index, value);
-      }
-      return this;
-    }
-    /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
-     */
-    public Builder setFieldConfig(
-        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder builderForValue) {
-      if (fieldConfigBuilder_ == null) {
-        ensureFieldConfigIsMutable();
-        fieldConfig_.set(index, builderForValue.build());
-        onChanged();
-      } else {
-        fieldConfigBuilder_.setMessage(index, builderForValue.build());
-      }
-      return this;
-    }
-    /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
-     */
-    public Builder addFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig value) {
-      if (fieldConfigBuilder_ == null) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        ensureFieldConfigIsMutable();
-        fieldConfig_.add(value);
-        onChanged();
-      } else {
-        fieldConfigBuilder_.addMessage(value);
-      }
-      return this;
-    }
-    /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
-     */
-    public Builder addFieldConfig(
-        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig value) {
-      if (fieldConfigBuilder_ == null) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        ensureFieldConfigIsMutable();
-        fieldConfig_.add(index, value);
-        onChanged();
-      } else {
-        fieldConfigBuilder_.addMessage(index, value);
-      }
-      return this;
-    }
-    /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
-     */
-    public Builder addFieldConfig(
         com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder builderForValue) {
       if (fieldConfigBuilder_ == null) {
-        ensureFieldConfigIsMutable();
-        fieldConfig_.add(builderForValue.build());
+        fieldConfig_ = builderForValue.build();
         onChanged();
       } else {
-        fieldConfigBuilder_.addMessage(builderForValue.build());
+        fieldConfigBuilder_.setMessage(builderForValue.build());
       }
+
       return this;
     }
     /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
+     * <code>.FieldConfig fieldConfig = 7;</code>
      */
-    public Builder addFieldConfig(
-        int index, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder builderForValue) {
+    public Builder mergeFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig value) {
       if (fieldConfigBuilder_ == null) {
-        ensureFieldConfigIsMutable();
-        fieldConfig_.add(index, builderForValue.build());
+        if (fieldConfig_ != null) {
+          fieldConfig_ =
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.newBuilder(fieldConfig_).mergeFrom(value).buildPartial();
+        } else {
+          fieldConfig_ = value;
+        }
         onChanged();
       } else {
-        fieldConfigBuilder_.addMessage(index, builderForValue.build());
+        fieldConfigBuilder_.mergeFrom(value);
       }
+
       return this;
     }
     /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
-     */
-    public Builder addAllFieldConfig(
-        java.lang.Iterable<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig> values) {
-      if (fieldConfigBuilder_ == null) {
-        ensureFieldConfigIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, fieldConfig_);
-        onChanged();
-      } else {
-        fieldConfigBuilder_.addAllMessages(values);
-      }
-      return this;
-    }
-    /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
+     * <code>.FieldConfig fieldConfig = 7;</code>
      */
     public Builder clearFieldConfig() {
       if (fieldConfigBuilder_ == null) {
-        fieldConfig_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000040);
+        fieldConfig_ = null;
         onChanged();
       } else {
-        fieldConfigBuilder_.clear();
+        fieldConfig_ = null;
+        fieldConfigBuilder_ = null;
       }
+
       return this;
     }
     /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
+     * <code>.FieldConfig fieldConfig = 7;</code>
      */
-    public Builder removeFieldConfig(int index) {
-      if (fieldConfigBuilder_ == null) {
-        ensureFieldConfigIsMutable();
-        fieldConfig_.remove(index);
-        onChanged();
-      } else {
-        fieldConfigBuilder_.remove(index);
-      }
-      return this;
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder getFieldConfigBuilder() {
+      
+      onChanged();
+      return getFieldConfigFieldBuilder().getBuilder();
     }
     /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
+     * <code>.FieldConfig fieldConfig = 7;</code>
      */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder getFieldConfigBuilder(
-        int index) {
-      return getFieldConfigFieldBuilder().getBuilder(index);
-    }
-    /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
-     */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder getFieldConfigOrBuilder(
-        int index) {
-      if (fieldConfigBuilder_ == null) {
-        return fieldConfig_.get(index);  } else {
-        return fieldConfigBuilder_.getMessageOrBuilder(index);
-      }
-    }
-    /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
-     */
-    public java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder> 
-         getFieldConfigOrBuilderList() {
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder getFieldConfigOrBuilder() {
       if (fieldConfigBuilder_ != null) {
-        return fieldConfigBuilder_.getMessageOrBuilderList();
+        return fieldConfigBuilder_.getMessageOrBuilder();
       } else {
-        return java.util.Collections.unmodifiableList(fieldConfig_);
+        return fieldConfig_ == null ?
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.getDefaultInstance() : fieldConfig_;
       }
     }
     /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
+     * <code>.FieldConfig fieldConfig = 7;</code>
      */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder addFieldConfigBuilder() {
-      return getFieldConfigFieldBuilder().addBuilder(
-          com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.getDefaultInstance());
-    }
-    /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
-     */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder addFieldConfigBuilder(
-        int index) {
-      return getFieldConfigFieldBuilder().addBuilder(
-          index, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.getDefaultInstance());
-    }
-    /**
-     * <code>repeated .FieldConfig fieldConfig = 7;</code>
-     */
-    public java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder> 
-         getFieldConfigBuilderList() {
-      return getFieldConfigFieldBuilder().getBuilderList();
-    }
-    private com.google.protobuf.RepeatedFieldBuilderV3<
+    private com.google.protobuf.SingleFieldBuilderV3<
         com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder> 
         getFieldConfigFieldBuilder() {
       if (fieldConfigBuilder_ == null) {
-        fieldConfigBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+        fieldConfigBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder>(
-                fieldConfig_,
-                ((bitField0_ & 0x00000040) == 0x00000040),
+                getFieldConfig(),
                 getParentForChildren(),
                 isClean());
         fieldConfig_ = null;
