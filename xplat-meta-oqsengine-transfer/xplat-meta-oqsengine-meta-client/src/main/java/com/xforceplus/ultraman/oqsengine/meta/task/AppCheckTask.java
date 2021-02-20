@@ -6,6 +6,8 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReques
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -23,20 +25,36 @@ public class AppCheckTask implements Runnable {
 
     private RequestWatcher requestWatcher;
     private long monitorSleepDuration;
+    private long delayTaskDuration;
+    private Set<WatchElement> forgotSets;
     private Function<String, Boolean> canAccessFunction;
 
-    public AppCheckTask(RequestWatcher requestWatcher, long monitorSleepDuration, Function<String, Boolean> canAccessFunction) {
+    public AppCheckTask(RequestWatcher requestWatcher, Set<WatchElement> forgotSets, long monitorSleepDuration, long delayTaskDuration, Function<String, Boolean> canAccessFunction) {
         this.requestWatcher = requestWatcher;
+        this.forgotSets = forgotSets;
         this.monitorSleepDuration = monitorSleepDuration;
+        this.delayTaskDuration = delayTaskDuration;
         this.canAccessFunction = canAccessFunction;
     }
 
     @Override
     public void run() {
         while (true) {
-            if (!requestWatcher.isReleased()) {
+            if (requestWatcher.isOnServe()) {
+                /**
+                 * a
+                 */
+                for (WatchElement s : forgotSets) {
+                    if (!requestWatcher.watches().containsKey(s.getAppId())) {
+                        requestWatcher.watches().put(s.getAppId(), s);
+                    }
+                    forgotSets.remove(s);
+                }
+
                 requestWatcher.watches().values().stream().filter(s -> {
-                    return s.getStatus().ordinal() == WatchElement.AppStatus.Init.ordinal();
+                    return s.getStatus().ordinal() == WatchElement.AppStatus.Init.ordinal() ||
+                            (s.getStatus().ordinal() < WatchElement.AppStatus.Confirmed.ordinal() &&
+                                        System.currentTimeMillis() - s.getRegisterTime() > delayTaskDuration);
                 }).forEach(
                         k -> {
                             EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();

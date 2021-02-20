@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -26,36 +27,43 @@ public class EntityField implements IEntityField, Serializable {
     /**
      * 字段的标识.
      */
+    @JsonProperty(value = "id")
     private long id;
 
     /**
      * 字段名称
      */
+    @JsonProperty(value = "name")
     private String name;
 
     /**
      * 字典中文名
      */
+    @JsonProperty(value = "cnName")
     private String cnName;
 
     /**
      * 字段类型
      */
+    @JsonProperty(value = "type")
     private FieldType fieldType;
 
     /**
      * 默认字典项
      */
+    @JsonProperty(value = "dictId")
     private String dictId;
 
     /**
      * 默认值 - 如果是字典，默认值位字典项的id信息
      */
+    @JsonProperty(value = "defaultValue")
     private String defaultValue;
 
     /**
      * 字段配置.
      */
+    @JsonProperty(value = "config")
     private FieldConfig config;
 
     public EntityField() {

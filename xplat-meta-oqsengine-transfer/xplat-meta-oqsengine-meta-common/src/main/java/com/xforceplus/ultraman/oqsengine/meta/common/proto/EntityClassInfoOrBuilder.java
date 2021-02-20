@@ -33,46 +33,83 @@ public interface EntityClassInfoOrBuilder extends
       getNameBytes();
 
   /**
-   * <code>int64 extendClassId = 4;</code>
+   * <code>int64 fatherClassId = 4;</code>
    */
-  long getExtendClassId();
+  long getFatherClassId();
 
   /**
-   * <code>repeated int64 entityFieldIds = 5;</code>
+   * <code>int32 level = 5;</code>
    */
-  java.util.List<java.lang.Long> getEntityFieldIdsList();
-  /**
-   * <code>repeated int64 entityFieldIds = 5;</code>
-   */
-  int getEntityFieldIdsCount();
-  /**
-   * <code>repeated int64 entityFieldIds = 5;</code>
-   */
-  long getEntityFieldIds(int index);
+  int getLevel();
 
   /**
-   * <code>repeated int64 relationIds = 6;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
    */
-  java.util.List<java.lang.Long> getRelationIdsList();
+  java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo> 
+      getEntityFieldsList();
   /**
-   * <code>repeated int64 relationIds = 6;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
    */
-  int getRelationIdsCount();
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo getEntityFields(int index);
   /**
-   * <code>repeated int64 relationIds = 6;</code>
+   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
    */
-  long getRelationIds(int index);
+  int getEntityFieldsCount();
+  /**
+   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+   */
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder> 
+      getEntityFieldsOrBuilderList();
+  /**
+   * <code>repeated .EntityFieldInfo entityFields = 6;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder getEntityFieldsOrBuilder(
+      int index);
 
   /**
-   * <code>repeated int64 configIds = 7;</code>
+   * <code>repeated int64 childClassIds = 7;</code>
    */
-  java.util.List<java.lang.Long> getConfigIdsList();
+  java.util.List<java.lang.Long> getChildClassIdsList();
   /**
-   * <code>repeated int64 configIds = 7;</code>
+   * <code>repeated int64 childClassIds = 7;</code>
    */
-  int getConfigIdsCount();
+  int getChildClassIdsCount();
   /**
-   * <code>repeated int64 configIds = 7;</code>
+   * <code>repeated int64 childClassIds = 7;</code>
    */
-  long getConfigIds(int index);
+  long getChildClassIds(int index);
+
+  /**
+   * <code>repeated .RelationInfo relations = 8;</code>
+   */
+  java.util.List<com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo> 
+      getRelationsList();
+  /**
+   * <code>repeated .RelationInfo relations = 8;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo getRelations(int index);
+  /**
+   * <code>repeated .RelationInfo relations = 8;</code>
+   */
+  int getRelationsCount();
+  /**
+   * <code>repeated .RelationInfo relations = 8;</code>
+   */
+  java.util.List<? extends com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfoOrBuilder> 
+      getRelationsOrBuilderList();
+  /**
+   * <code>repeated .RelationInfo relations = 8;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfoOrBuilder getRelationsOrBuilder(
+      int index);
+
+  /**
+   * <code>bool isAny = 9;</code>
+   */
+  boolean getIsAny();
+
+  /**
+   * <code>bool isDynamic = 10;</code>
+   */
+  boolean getIsDynamic();
 }

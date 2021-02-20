@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspPro
  * @since : 1.8
  */
 public interface SyncExecutor {
-    boolean sync(EntityClassSyncRspProto entityClassSyncRspProto);
+    boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto);
 
     int version(String appId);
 }

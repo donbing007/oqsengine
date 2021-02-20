@@ -14,6 +14,9 @@ import io.grpc.stub.StreamObserver;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
 import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.clientTaskSize;
@@ -29,6 +32,8 @@ import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.cli
 public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecutor {
 
     private RequestWatcher requestWatcher;
+
+    private Set<WatchElement> forgotSets = new ConcurrentSkipListSet<>();
 
     private List<Thread> executors = new ArrayList<>(clientTaskSize);
 
@@ -48,6 +53,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
         } else {
             requestWatcher.reset(uid, observer);
         }
+
     }
 
     @Override
@@ -74,8 +80,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
 
     @Override
     public void release() {
-        if (null != requestWatcher && !requestWatcher.isReleased()) {
-            requestWatcher.canNotServer();
+        if (null != requestWatcher && requestWatcher.isOnServe()) {
             requestWatcher.release();
         }
     }
@@ -88,9 +93,9 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
     @Override
     public boolean canAccess(String uid) {
         /**
-         * 确保
+         * 判断是否可用
          */
-        boolean status = (null != requestWatcher && !requestWatcher.isReleased());
+        boolean status = (null != requestWatcher && requestWatcher.isOnServe());
         if (null != uid && status) {
             try {
                 return uid.equals(requestWatcher.uid());
@@ -104,12 +109,18 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
         return status;
     }
 
+    @Override
+    public void addForgot(String appId, int version) {
+        forgotSets.add(new WatchElement(appId, version, WatchElement.AppStatus.Init));
+    }
+
+    @Override
     public void start() {
         /**
          * 启动TimeoutCheck线程
          */
         executors.add(ThreadUtils.create(() -> new TimeoutCheckTask(requestWatcher,
-                        gRpcParamsConfig.defaultHeartbeatTimeout, gRpcParamsConfig.getMonitorSleepDuration())));
+                        gRpcParamsConfig.getDefaultHeartbeatTimeout(), gRpcParamsConfig.getMonitorSleepDuration())));
 
         /**
          * 启动keepAlive线程, 1秒check1次
@@ -121,15 +132,13 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
          * 启动AppCheck线程
          */
         executors.add(ThreadUtils.create(() -> new AppCheckTask(requestWatcher,
-                        gRpcParamsConfig.getMonitorSleepDuration(), canAccessFunction())));
+                forgotSets, gRpcParamsConfig.getMonitorSleepDuration(), gRpcParamsConfig.getDefaultDelayTaskDuration(), canAccessFunction())));
     }
 
     @Override
     public void stop() {
         if (null != requestWatcher) {
-            if (!requestWatcher.isReleased()) {
-                requestWatcher.canNotServer();
-            }
+            requestWatcher.notServer();
 
             requestWatcher.release();
 
@@ -140,9 +149,6 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
     }
 
     public Function<String, Boolean> canAccessFunction() {
-        return s -> {
-            return canAccess(s);
-        };
+        return this::canAccess;
     }
-
 }

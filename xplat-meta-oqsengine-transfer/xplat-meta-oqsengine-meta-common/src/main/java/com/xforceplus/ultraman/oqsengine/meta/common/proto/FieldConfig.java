@@ -4,18 +4,18 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.proto;
 
 /**
- * Protobuf type {@code FieldConfigInfo}
+ * Protobuf type {@code FieldConfig}
  */
-public  final class FieldConfigInfo extends
+public  final class FieldConfig extends
     com.google.protobuf.GeneratedMessageV3 implements
-    // @@protoc_insertion_point(message_implements:FieldConfigInfo)
-    FieldConfigInfoOrBuilder {
+    // @@protoc_insertion_point(message_implements:FieldConfig)
+    FieldConfigOrBuilder {
 private static final long serialVersionUID = 0L;
-  // Use FieldConfigInfo.newBuilder() to construct.
-  private FieldConfigInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  // Use FieldConfig.newBuilder() to construct.
+  private FieldConfig(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-  private FieldConfigInfo() {
+  private FieldConfig() {
     searchable_ = false;
     max_ = 0L;
     min_ = 0L;
@@ -36,7 +36,7 @@ private static final long serialVersionUID = 0L;
   getUnknownFields() {
     return this.unknownFields;
   }
-  private FieldConfigInfo(
+  private FieldConfig(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -146,18 +146,18 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncProto.internal_static_FieldConfigInfo_descriptor;
+    return com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncProto.internal_static_FieldConfig_descriptor;
   }
 
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncProto.internal_static_FieldConfigInfo_fieldAccessorTable
+    return com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncProto.internal_static_FieldConfig_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.Builder.class);
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder.class);
   }
 
   /**
-   * Protobuf enum {@code FieldConfigInfo.SystemFieldType}
+   * Protobuf enum {@code FieldConfig.SystemFieldType}
    */
   public enum SystemFieldType
       implements com.google.protobuf.ProtocolMessageEnum {
@@ -300,7 +300,7 @@ private static final long serialVersionUID = 0L;
     }
     public static final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptor() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.getDescriptor().getEnumTypes().get(0);
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.getDescriptor().getEnumTypes().get(0);
     }
 
     private static final SystemFieldType[] VALUES = values();
@@ -323,7 +323,7 @@ private static final long serialVersionUID = 0L;
       this.value = value;
     }
 
-    // @@protoc_insertion_point(enum_scope:FieldConfigInfo.SystemFieldType)
+    // @@protoc_insertion_point(enum_scope:FieldConfig.SystemFieldType)
   }
 
   public static final int SEARCHABLE_FIELD_NUMBER = 1;
@@ -537,17 +537,17 @@ private static final long serialVersionUID = 0L;
   public static final int SYSTEMTYPE_FIELD_NUMBER = 13;
   private int systemType_;
   /**
-   * <code>.FieldConfigInfo.SystemFieldType systemType = 13;</code>
+   * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
    */
   public int getSystemTypeValue() {
     return systemType_;
   }
   /**
-   * <code>.FieldConfigInfo.SystemFieldType systemType = 13;</code>
+   * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
    */
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.SystemFieldType getSystemType() {
-    com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.SystemFieldType result = com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.SystemFieldType.valueOf(systemType_);
-    return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.SystemFieldType.UNRECOGNIZED : result;
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType getSystemType() {
+    com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType result = com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType.valueOf(systemType_);
+    return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType.UNRECOGNIZED : result;
   }
 
   private byte memoizedIsInitialized = -1;
@@ -598,7 +598,7 @@ private static final long serialVersionUID = 0L;
     if (isSystem_ != false) {
       output.writeBool(12, isSystem_);
     }
-    if (systemType_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.SystemFieldType.NORMAL.getNumber()) {
+    if (systemType_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType.NORMAL.getNumber()) {
       output.writeEnum(13, systemType_);
     }
     unknownFields.writeTo(output);
@@ -653,7 +653,7 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(12, isSystem_);
     }
-    if (systemType_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.SystemFieldType.NORMAL.getNumber()) {
+    if (systemType_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType.NORMAL.getNumber()) {
       size += com.google.protobuf.CodedOutputStream
         .computeEnumSize(13, systemType_);
     }
@@ -667,10 +667,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo)) {
+    if (!(obj instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig)) {
       return super.equals(obj);
     }
-    com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo other = (com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo) obj;
+    com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig other = (com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig) obj;
 
     boolean result = true;
     result = result && (getSearchable()
@@ -747,69 +747,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parseFrom(byte[] data)
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parseFrom(java.io.InputStream input)
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parseDelimitedFrom(java.io.InputStream input)
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parseDelimitedFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parseFrom(
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -821,7 +821,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo prototype) {
+  public static Builder newBuilder(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   public Builder toBuilder() {
@@ -836,25 +836,25 @@ private static final long serialVersionUID = 0L;
     return builder;
   }
   /**
-   * Protobuf type {@code FieldConfigInfo}
+   * Protobuf type {@code FieldConfig}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:FieldConfigInfo)
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfoOrBuilder {
+      // @@protoc_insertion_point(builder_implements:FieldConfig)
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncProto.internal_static_FieldConfigInfo_descriptor;
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncProto.internal_static_FieldConfig_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncProto.internal_static_FieldConfigInfo_fieldAccessorTable
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncProto.internal_static_FieldConfig_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.Builder.class);
+              com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.class, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.Builder.class);
     }
 
-    // Construct using com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.newBuilder()
+    // Construct using com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
@@ -902,23 +902,23 @@ private static final long serialVersionUID = 0L;
 
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncProto.internal_static_FieldConfigInfo_descriptor;
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncProto.internal_static_FieldConfig_descriptor;
     }
 
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo getDefaultInstanceForType() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.getDefaultInstance();
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig getDefaultInstanceForType() {
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.getDefaultInstance();
     }
 
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo build() {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo result = buildPartial();
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig build() {
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
       return result;
     }
 
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo buildPartial() {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo(this);
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig buildPartial() {
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig(this);
       result.searchable_ = searchable_;
       result.max_ = max_;
       result.min_ = min_;
@@ -963,16 +963,16 @@ private static final long serialVersionUID = 0L;
       return (Builder) super.addRepeatedField(field, value);
     }
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo) {
-        return mergeFrom((com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo)other);
+      if (other instanceof com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig) {
+        return mergeFrom((com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo other) {
-      if (other == com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.getDefaultInstance()) return this;
+    public Builder mergeFrom(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig other) {
+      if (other == com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.getDefaultInstance()) return this;
       if (other.getSearchable() != false) {
         setSearchable(other.getSearchable());
       }
@@ -1029,11 +1029,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo parsedMessage = null;
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo) e.getUnfinishedMessage();
+        parsedMessage = (com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -1529,13 +1529,13 @@ private static final long serialVersionUID = 0L;
 
     private int systemType_ = 0;
     /**
-     * <code>.FieldConfigInfo.SystemFieldType systemType = 13;</code>
+     * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
      */
     public int getSystemTypeValue() {
       return systemType_;
     }
     /**
-     * <code>.FieldConfigInfo.SystemFieldType systemType = 13;</code>
+     * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
      */
     public Builder setSystemTypeValue(int value) {
       systemType_ = value;
@@ -1543,16 +1543,16 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.FieldConfigInfo.SystemFieldType systemType = 13;</code>
+     * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
      */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.SystemFieldType getSystemType() {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.SystemFieldType result = com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.SystemFieldType.valueOf(systemType_);
-      return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.SystemFieldType.UNRECOGNIZED : result;
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType getSystemType() {
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType result = com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType.valueOf(systemType_);
+      return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType.UNRECOGNIZED : result;
     }
     /**
-     * <code>.FieldConfigInfo.SystemFieldType systemType = 13;</code>
+     * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
      */
-    public Builder setSystemType(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo.SystemFieldType value) {
+    public Builder setSystemType(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType value) {
       if (value == null) {
         throw new NullPointerException();
       }
@@ -1562,7 +1562,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.FieldConfigInfo.SystemFieldType systemType = 13;</code>
+     * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
      */
     public Builder clearSystemType() {
       
@@ -1581,39 +1581,39 @@ private static final long serialVersionUID = 0L;
     }
 
 
-    // @@protoc_insertion_point(builder_scope:FieldConfigInfo)
+    // @@protoc_insertion_point(builder_scope:FieldConfig)
   }
 
-  // @@protoc_insertion_point(class_scope:FieldConfigInfo)
-  private static final com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo DEFAULT_INSTANCE;
+  // @@protoc_insertion_point(class_scope:FieldConfig)
+  private static final com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo();
+    DEFAULT_INSTANCE = new com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig();
   }
 
-  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo getDefaultInstance() {
+  public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<FieldConfigInfo>
-      PARSER = new com.google.protobuf.AbstractParser<FieldConfigInfo>() {
-    public FieldConfigInfo parsePartialFrom(
+  private static final com.google.protobuf.Parser<FieldConfig>
+      PARSER = new com.google.protobuf.AbstractParser<FieldConfig>() {
+    public FieldConfig parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new FieldConfigInfo(input, extensionRegistry);
+      return new FieldConfig(input, extensionRegistry);
     }
   };
 
-  public static com.google.protobuf.Parser<FieldConfigInfo> parser() {
+  public static com.google.protobuf.Parser<FieldConfig> parser() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.google.protobuf.Parser<FieldConfigInfo> getParserForType() {
+  public com.google.protobuf.Parser<FieldConfig> getParserForType() {
     return PARSER;
   }
 
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfigInfo getDefaultInstanceForType() {
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

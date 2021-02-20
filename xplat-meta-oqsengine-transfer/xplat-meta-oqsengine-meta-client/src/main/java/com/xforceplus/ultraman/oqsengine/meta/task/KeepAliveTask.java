@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import java.util.concurrent.TimeUnit;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.HEARTBEAT;
+import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest;
 
 /**
  * desc :
@@ -29,11 +30,16 @@ public class KeepAliveTask implements Runnable {
     @Override
     public void run() {
         while (true) {
-            if (!requestWatcher.isReleased()) {
+            if (requestWatcher.isOnServe()) {
                 EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
                         .setUid(requestWatcher.uid()).setStatus(HEARTBEAT.ordinal()).build();
 
-                requestWatcher.observer().onNext(request);
+                try {
+                    sendRequest(requestWatcher, request);
+                } catch (Exception e) {
+                    //  ignore
+
+                }
             }
             TimeWaitUtils.wakeupAfter(keepAliveSendDuration, TimeUnit.MILLISECONDS);
         }

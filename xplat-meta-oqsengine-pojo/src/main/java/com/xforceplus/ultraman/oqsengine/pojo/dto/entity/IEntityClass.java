@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -54,6 +55,13 @@ public interface IEntityClass {
      * @return 根对象默认为Null，OneToOne为OTO，OneToMany为OTM
      */
     Collection<Relation> relations();
+
+    /**
+     * 关系信息的集合(oqs内部使用)
+     *
+     * @return 根对象默认为Null，OneToOne为OTO，OneToMany为OTM
+     */
+    Collection<OqsRelation> oqsRelations();
 
     /**
      * 获得本对象的关联对象

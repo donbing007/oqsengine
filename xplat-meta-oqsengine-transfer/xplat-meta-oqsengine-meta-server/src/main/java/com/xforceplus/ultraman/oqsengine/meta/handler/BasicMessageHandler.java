@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.meta.common.handler;
+package com.xforceplus.ultraman.oqsengine.meta.handler;
 
 
 /**

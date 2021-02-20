@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.meta.handler;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.handler.BasicMessageHandler;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils;
@@ -12,7 +12,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.IWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.executor.IRetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerator;
 import org.slf4j.Logger;
@@ -37,15 +36,15 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.App
  * date : 2021/2/4
  * @since : 1.8
  */
-public class EntityClassSyncResponseHandler implements ResponseHandler<EntityClassSyncResponse>, BasicMessageHandler {
+public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResponse>, BasicMessageHandler {
 
-    private Logger logger = LoggerFactory.getLogger(EntityClassSyncResponseHandler.class);
+    private Logger logger = LoggerFactory.getLogger(SyncResponseHandler.class);
 
     @Resource
     private IResponseWatchExecutor watchExecutor;
 
     @Resource
-    private IRetryExecutor retryExecutor;
+    private IDelayTaskExecutor<RetryExecutor.DelayTask> retryExecutor;
 
     @Resource
     private EntityClassGenerator entityClassGenerator;
@@ -254,7 +253,8 @@ public class EntityClassSyncResponseHandler implements ResponseHandler<EntityCla
                 Optional<IWatcher<EntityClassSyncResponse>> watcherOp = watchExecutor.watcher(task.element().getUid());
                 if (watcherOp.isPresent()) {
                     IWatcher<EntityClassSyncResponse> watcher = watcherOp.get();
-                    if (!watcher.isReleased() && watcher.onWatch(new WatchElement(task.element().getAppId(), task.element().getVersion(), Notice))) {
+                    if (watcher.isOnServe() &&
+                            watcher.onWatch(new WatchElement(task.element().getAppId(), task.element().getVersion(), Notice))) {
                         /**
                          * 直接拉取
                          */

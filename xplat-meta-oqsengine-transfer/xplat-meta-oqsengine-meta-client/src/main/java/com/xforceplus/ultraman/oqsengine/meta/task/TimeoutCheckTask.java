@@ -30,7 +30,7 @@ public class TimeoutCheckTask implements Runnable {
     @Override
     public void run() {
         while (true) {
-            if (!requestWatcher.isReleased()) {
+            if (requestWatcher.isOnServe()) {
                 if (System.currentTimeMillis() - requestWatcher.heartBeat() > heartbeatTimeout) {
                     try {
                         requestWatcher.observer().onCompleted();

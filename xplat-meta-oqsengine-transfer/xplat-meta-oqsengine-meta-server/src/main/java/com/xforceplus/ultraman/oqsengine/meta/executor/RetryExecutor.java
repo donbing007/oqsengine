@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
+
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
@@ -12,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  * date : 2021/2/5
  * @since : 1.8
  */
-public class RetryExecutor implements IRetryExecutor {
+public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask> {
 
     private static DelayQueue<DelayTask> delayTasks = new DelayQueue<DelayTask>();
 
@@ -71,24 +73,12 @@ public class RetryExecutor implements IRetryExecutor {
             return uid;
         }
 
-        public void setUid(String uid) {
-            this.uid = uid;
-        }
-
         public String getAppId() {
             return appId;
         }
 
-        public void setAppId(String appId) {
-            this.appId = appId;
-        }
-
         public int getVersion() {
             return version;
-        }
-
-        public void setVersion(int version) {
-            this.version = version;
         }
     }
 

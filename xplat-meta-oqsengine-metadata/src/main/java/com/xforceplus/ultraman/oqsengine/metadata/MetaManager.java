@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 
 import java.util.Optional;
 
+import java.sql.SQLException;
+
 /**
  * oqs 元数据管理
  *
@@ -22,12 +24,20 @@ public interface MetaManager {
     Optional<IEntityClass> load(long id);
 
     /**
+     * 加载指定的IEntityCalss + version实例.
+     *
+     * @param id 元信息的标识.
+     * @return 元信息的实例.
+     */
+    IEntityClass loadHistory(long id, int version);
+
+    /**
      * 表示需要关注此appid代表的应用的元信息.
      *
      * @param appId 应用标识.
      * @return 当前的元信息版本号.小于0表示没有持有任何版本的元信息.
      */
-    int need(long appId);
+    int need(String appId);
 
 
 }
