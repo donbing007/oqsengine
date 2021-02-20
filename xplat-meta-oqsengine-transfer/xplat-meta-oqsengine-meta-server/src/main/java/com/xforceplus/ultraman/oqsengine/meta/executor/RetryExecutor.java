@@ -22,21 +22,32 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
 
     private static DelayQueue<DelayTask> delayTasks = new DelayQueue<DelayTask>();
 
+    private static volatile boolean isOnServer = true;
+
     public DelayTask take() {
-        try {
-            return delayTasks.take();
-        } catch (InterruptedException e) {
-            logger.warn("retryExecutor is interrupted, may stop server...");
+        if (isOnServer) {
+            try {
+                return delayTasks.take();
+            } catch (InterruptedException e) {
+                logger.warn("retryExecutor is interrupted, may stop server...");
+            }
         }
         return null;
     }
 
     public void offer(DelayTask task) {
-        try {
-            delayTasks.offer(task);
-        } catch (Exception e) {
-            logger.warn("offer failed, message : {}", e.getMessage());
+        if (isOnServer) {
+            try {
+                delayTasks.offer(task);
+            } catch (Exception e) {
+                logger.warn("offer failed, message : {}", e.getMessage());
+            }
         }
+    }
+
+    @Override
+    public void off() {
+        isOnServer = false;
     }
 
 

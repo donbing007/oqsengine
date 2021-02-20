@@ -20,25 +20,35 @@ public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCl
 
     final Logger logger = LoggerFactory.getLogger(ExpireExecutor.class);
 
+    private static volatile boolean isOnServer = true;
+
     private static DelayQueue<DelayCleanEntity> delayTasks = new DelayQueue<DelayCleanEntity>();
 
     public DelayCleanEntity take() {
-        try {
-            return delayTasks.take();
-        } catch (InterruptedException e) {
-            logger.warn("expireExecutor is interrupted, may stop server...");
-            //  ignore
+        if (isOnServer) {
+            try {
+                return delayTasks.take();
+            } catch (InterruptedException e) {
+                logger.warn("expireExecutor is interrupted, may stop server...");
+            }
         }
         return null;
     }
 
     public void offer(DelayCleanEntity task) {
-        try {
-            delayTasks.offer(task);
-        } catch (Exception e) {
-            logger.warn("offer failed, message : {}", e.getMessage());
-            //  ignore
+        if (isOnServer) {
+            try {
+                delayTasks.offer(task);
+            } catch (Exception e) {
+                logger.warn("offer failed, message : {}", e.getMessage());
+                //  ignore
+            }
         }
+    }
+
+    @Override
+    public void off() {
+        isOnServer = false;
     }
 
     public static class DelayCleanEntity implements Delayed {

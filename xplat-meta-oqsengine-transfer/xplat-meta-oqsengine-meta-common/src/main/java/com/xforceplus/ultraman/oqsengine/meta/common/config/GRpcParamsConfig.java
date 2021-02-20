@@ -10,7 +10,7 @@ package com.xforceplus.ultraman.oqsengine.meta.common.config;
  */
 public class GRpcParamsConfig {
 
-    public static final long SHUT_DOWN_WAIT_TIME_OUT = 10;
+    public static final long SHUT_DOWN_WAIT_TIME_OUT = 3;
 
     public long defaultHeartbeatTimeout;
     public long defaultDelayTaskDuration;

@@ -76,6 +76,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      */
     @Override
     public void stop() {
+        retryExecutor.off();
         ThreadUtils.shutdown(thread, SHUT_DOWN_WAIT_TIME_OUT);
     }
 

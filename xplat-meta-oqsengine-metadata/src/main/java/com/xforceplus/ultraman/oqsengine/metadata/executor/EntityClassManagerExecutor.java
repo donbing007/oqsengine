@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
@@ -43,13 +44,13 @@ public class EntityClassManagerExecutor implements MetaManager {
     }
 
     @Override
-    public IEntityClass load(long id) {
+    public Optional<IEntityClass> load(long id) {
         try {
             Map<Long, EntityClassStorage> entityClassStorageMaps = cacheExecutor.read(id);
-            return toEntityClass(id, entityClassStorageMaps);
+            return Optional.of(toEntityClass(id, entityClassStorageMaps));
         } catch (Exception e) {
-            logger.warn(e.getMessage());
-            throw new RuntimeException(String.format("load entityClass [%d] error, message [%s]", id, e.getMessage()));
+            logger.warn(String.format("load entityClass [%d] error, message [%s]", id, e.getMessage()));
+            return Optional.empty();
         }
     }
 

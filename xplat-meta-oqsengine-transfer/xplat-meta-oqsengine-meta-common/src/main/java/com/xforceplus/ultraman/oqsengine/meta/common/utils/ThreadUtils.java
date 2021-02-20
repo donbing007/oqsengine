@@ -26,12 +26,9 @@ public class ThreadUtils {
      */
     public static void shutdown(Thread thread, long timeout) {
         if (null != thread) {
-            thread.interrupt();
-            TimeWaitUtils.wakeupAfter(3, TimeUnit.SECONDS);
-            if (thread.isInterrupted()) {
-                return;
-            }
+            //  等待timeout秒后结束线程
             TimeWaitUtils.wakeupAfter(timeout, TimeUnit.SECONDS);
+            thread.interrupt();
         }
     }
 }

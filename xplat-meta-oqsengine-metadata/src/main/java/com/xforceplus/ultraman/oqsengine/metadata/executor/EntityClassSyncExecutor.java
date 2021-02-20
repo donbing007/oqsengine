@@ -58,6 +58,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
      */
     @PreDestroy
     public void stop() {
+        expireExecutor.off();
         ThreadUtils.shutdown(thread, SHUT_DOWN_WAIT_TIME_OUT);
     }
 

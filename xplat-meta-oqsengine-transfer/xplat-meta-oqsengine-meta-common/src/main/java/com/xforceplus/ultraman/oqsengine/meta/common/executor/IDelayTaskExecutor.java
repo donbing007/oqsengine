@@ -13,4 +13,6 @@ public interface IDelayTaskExecutor<T> {
     T take();
 
     void offer(T task);
+
+    void off();
 }
