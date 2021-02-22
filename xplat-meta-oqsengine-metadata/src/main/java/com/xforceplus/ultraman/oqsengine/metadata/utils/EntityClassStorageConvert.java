@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
@@ -16,7 +17,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.BUSINESS_HANDLER_ERROR;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.*;
 
@@ -30,7 +33,128 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassEle
  */
 public class EntityClassStorageConvert {
 
-    public static EntityClassStorage protoValuesToLocalStorage(EntityClassInfo entityClassInfo) {
+    /**
+     * 将redis存储结构转为EntityClassStorage
+     * @param objectMapper
+     * @param keyValues
+     * @return
+     * @throws JsonProcessingException
+     */
+    public static EntityClassStorage redisValuesToLocalStorage(ObjectMapper objectMapper, Map<String, String> keyValues) throws JsonProcessingException {
+
+        if (0 == keyValues.size()) {
+            throw new RuntimeException("entityClassStorage is null, may be delete.");
+        }
+
+        EntityClassStorage entityClassStorage = new EntityClassStorage();
+
+        //  id
+        String id = keyValues.remove(ELEMENT_ID);
+        if (null == id || id.isEmpty()) {
+            throw new RuntimeException("id is null from cache.");
+        }
+        entityClassStorage.setId(Long.parseLong(id));
+
+        //  code
+        String code = keyValues.remove(ELEMENT_CODE);
+        if (null == code || code.isEmpty()) {
+            throw new RuntimeException("code is null from cache.");
+        }
+        entityClassStorage.setCode(code);
+
+        //  name
+        String name = keyValues.remove(ELEMENT_NAME);
+        if (null != name && !name.isEmpty()) {
+            entityClassStorage.setName(name);
+        }
+
+        //  level
+        String level = keyValues.remove(ELEMENT_LEVEL);
+        if (null == level || level.isEmpty()) {
+            throw new RuntimeException("level is null from cache.");
+        }
+        entityClassStorage.setLevel(Integer.parseInt(level));
+
+        //  version
+        String version = keyValues.remove(ELEMENT_VERSION);
+        if (null == version || version.isEmpty()) {
+            throw new RuntimeException("version is null from cache.");
+        }
+        entityClassStorage.setVersion(Integer.parseInt(version));
+
+        //  father
+        String father = keyValues.remove(ELEMENT_FATHER);
+        if (null == father || father.isEmpty()) {
+            father = "0";
+        }
+        entityClassStorage.setFatherId(Long.parseLong(father));
+
+        //  ancestors
+        String ancestors = keyValues.remove(ELEMENT_ANCESTORS);
+        if (null != ancestors && !ancestors.isEmpty()) {
+            entityClassStorage.setAncestors(objectMapper.readValue(ancestors,
+                    objectMapper.getTypeFactory().constructParametricType(List.class, Long.class)));
+        } else {
+            entityClassStorage.setAncestors(new ArrayList<>());
+        }
+
+        //  relations
+        String relations = keyValues.remove(ELEMENT_RELATIONS);
+        if (null != relations && !relations.isEmpty()) {
+            List<OqsRelation> relationStorageList = objectMapper.readValue(relations,
+                    objectMapper.getTypeFactory().constructParametricType(List.class, OqsRelation.class));
+            entityClassStorage.setRelations(relationStorageList);
+        } else {
+            entityClassStorage.setRelations(new ArrayList<>());
+        }
+
+        //  entityFields
+        List<IEntityField> fields = new ArrayList<>();
+        for (Map.Entry<String, String> entry : keyValues.entrySet()) {
+            if (entry.getKey().startsWith(ELEMENT_FIELDS + ".")) {
+                fields.add(objectMapper.readValue(entry.getValue(), EntityField.class));
+            }
+        }
+        entityClassStorage.setFields(fields);
+
+        return entityClassStorage;
+    }
+
+    /**
+     * 将protoBuf转为EntityClassStorage列表
+     * @param entityClassSyncRspProto
+     * @return
+     */
+    public static List<EntityClassStorage> protoToStorageList(EntityClassSyncRspProto entityClassSyncRspProto) {
+        Map<Long, EntityClassStorage> temp = entityClassSyncRspProto.getEntityClassesList().stream().map(
+                ecs -> {
+                    EntityClassStorage e = protoValuesToLocalStorage(ecs);
+                    return e;
+                }
+        ).collect(Collectors.toMap(EntityClassStorage::getId, s1 -> s1,  (s1, s2) -> s1));
+
+        return temp.values().stream().peek(
+                v -> {
+                    Long fatherId = v.getFatherId();
+                    while (null != fatherId && fatherId >= MIN_ID) {
+                        EntityClassStorage entityClassStorage = temp.get(fatherId);
+                        if (null == entityClassStorage) {
+                            throw new MetaSyncClientException(
+                                    String.format("father entityClass : [%d] missed.", fatherId), BUSINESS_HANDLER_ERROR.ordinal());
+                        }
+                        v.addAncestors(fatherId);
+                        fatherId = entityClassStorage.getFatherId();
+                    }
+                }
+        ).collect(Collectors.toList());
+    }
+
+    /**
+     * 转换单个EntityClassStorage
+     * @param entityClassInfo
+     * @return
+     */
+    private static EntityClassStorage protoValuesToLocalStorage(EntityClassInfo entityClassInfo) {
         if (null == entityClassInfo) {
             throw new MetaSyncClientException("entityClassInfo should not be null.", false);
         }
@@ -107,6 +231,11 @@ public class EntityClassStorageConvert {
         return storage;
     }
 
+    /**
+     * 转换FieldConfig
+     * @param fieldConfig
+     * @return
+     */
     private static FieldConfig toFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig fieldConfig) {
         return FieldConfig.Builder.anFieldConfig()
                 .withSearchable(fieldConfig.getSearchable())
@@ -121,85 +250,5 @@ public class EntityClassStorageConvert {
                 .withDisplayType(fieldConfig.getDisplayType())
                 .withFieldSense(FieldConfig.FieldSense.getInstance(fieldConfig.getMetaFieldSenseValue()))
                 .build();
-    }
-
-    public static EntityClassStorage redisValuesToLocalStorage(ObjectMapper objectMapper, Map<String, String> keyValues) throws JsonProcessingException {
-
-        if (0 == keyValues.size()) {
-            throw new MetaSyncClientException("entityClassStorage is null, may be delete.", false);
-        }
-
-        EntityClassStorage entityClassStorage = new EntityClassStorage();
-
-        //  id
-        String id = keyValues.remove(ELEMENT_ID);
-        if (null == id || id.isEmpty()) {
-            throw new MetaSyncClientException("id is null from cache.", false);
-        }
-        entityClassStorage.setId(Long.parseLong(id));
-
-        //  code
-        String code = keyValues.remove(ELEMENT_CODE);
-        if (null == code || code.isEmpty()) {
-            throw new MetaSyncClientException("code is null from cache.", false);
-        }
-        entityClassStorage.setCode(code);
-
-        //  name
-        String name = keyValues.remove(ELEMENT_NAME);
-        if (null != name && !name.isEmpty()) {
-            entityClassStorage.setName(name);
-        }
-
-        //  level
-        String level = keyValues.remove(ELEMENT_LEVEL);
-        if (null == level || level.isEmpty()) {
-            throw new MetaSyncClientException("level is null from cache.", false);
-        }
-        entityClassStorage.setLevel(Integer.parseInt(level));
-
-        //  version
-        String version = keyValues.remove(ELEMENT_VERSION);
-        if (null == version || version.isEmpty()) {
-            throw new MetaSyncClientException("version is null from cache.", false);
-        }
-        entityClassStorage.setVersion(Integer.parseInt(version));
-
-        //  father
-        String father = keyValues.remove(ELEMENT_FATHER);
-        if (null == father || father.isEmpty()) {
-            father = "0";
-        }
-        entityClassStorage.setFatherId(Long.parseLong(father));
-
-        //  ancestors
-        String ancestors = keyValues.remove(ELEMENT_ANCESTORS);
-        if (null != ancestors && !ancestors.isEmpty()) {
-            entityClassStorage.setAncestors(objectMapper.readValue(ancestors,
-                    objectMapper.getTypeFactory().constructParametricType(List.class, Long.class)));
-        } else {
-            entityClassStorage.setAncestors(new ArrayList<>());
-        }
-
-        //  relations
-        String relations = keyValues.remove(ELEMENT_RELATIONS);
-        if (null != relations && !relations.isEmpty()) {
-            List<OqsRelation> relationStorageList = objectMapper.readValue(relations,
-                    objectMapper.getTypeFactory().constructParametricType(List.class, OqsRelation.class));
-            entityClassStorage.setRelations(relationStorageList);
-        } else {
-            entityClassStorage.setRelations(new ArrayList<>());
-        }
-
-        //  entityFields
-        List<IEntityField> fields = new ArrayList<>();
-        for (Map.Entry<String, String> entry : keyValues.entrySet()) {
-            if (entry.getKey().startsWith(ELEMENT_FIELDS + ".")) {
-                fields.add(objectMapper.readValue(entry.getValue(), EntityField.class));
-            }
-        }
-        entityClassStorage.setFields(fields);
-
-        return entityClassStorage;
     }
 }

@@ -90,11 +90,6 @@ public class CacheExecutor implements ICacheExecutor {
     private String entityClassStorageListScriptSha;
 
     /**
-     * 清理过期的EntityClassStorage
-     */
-    private String cleanExpiredEntityClassScriptSha;
-
-    /**
      * keys
      */
     /**
@@ -248,11 +243,6 @@ public class CacheExecutor implements ICacheExecutor {
          */
         entityClassStorageScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO);
         entityClassStorageListScriptSha = syncCommands.scriptLoad(ENTITY_CLASS_STORAGE_INFO_LIST);
-
-        /**
-         * clean expired entityClassStorage
-         */
-        cleanExpiredEntityClassScriptSha = syncCommands.scriptLoad(EXPIRED_VERSION_ENTITY_CLASS);
     }
 
     @PreDestroy
@@ -360,6 +350,7 @@ public class CacheExecutor implements ICacheExecutor {
                  */
                 if (null == e) {
                     e = getOneFromRemote(r, version);
+
                     addToLocal(generateEntityCacheKey(r, version), e);
                 }
 
@@ -575,23 +566,29 @@ public class CacheExecutor implements ICacheExecutor {
         delFromLocal(entityId, version);
 
         //  删除redis
-        delFromRemote(entityId, version);
-
+        boolean isDelete = delFromRemote(entityId, version);
+        if (!isDelete) {
+            logger.warn("delete remote failed, entityId:[{}], version:[{}]", entityId, version);
+        }
         return true;
     }
 
-    private void delFromRemote(Long entityId, int version) {
-        String[] keys = {
-                entityStorageKeys
-        };
+    private boolean delFromRemote(Long entityId, int version) {
+
+        /**
+         * 获取当前的Key
+         */
+        String keys = String.format("%s.%s.%s", entityStorageKeys, Integer.toString(version), Long.toString(entityId));
 
         try {
-            syncCommands.evalsha(
-                    cleanExpiredEntityClassScriptSha,
-                    ScriptOutputType.BOOLEAN,
-                    keys, Integer.toString(version), Long.toString(entityId));
+            List<String> hKeys = syncCommands.hkeys(keys);
+            if (null != hKeys && hKeys.size() > 0) {
+                return syncCommands.hdel(keys, hKeys.toArray(new String[hKeys.size()])) == hKeys.size();
+            }
+            return true;
         } catch (Exception e) {
             logger.warn("delete remote failed, entityId:[{}], version:[{}], message:[{}]", entityId, version, e.getMessage());
+            return false;
         }
     }
 
@@ -611,7 +608,7 @@ public class CacheExecutor implements ICacheExecutor {
             return entityClassStorageMap;
         } catch (JsonProcessingException e) {
             e.printStackTrace();
-            throw new MetaSyncClientException(e.getMessage(), false);
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -661,8 +658,8 @@ public class CacheExecutor implements ICacheExecutor {
          * check size
          */
         if (extraSize != valuePairs.size()) {
-            throw new MetaSyncClientException(
-                    String.format("missed some extend or children entityClassStorage, should be [%d], actual [%d] ", extraSize, valuePairs.size()), false);
+            throw new RuntimeException(
+                    String.format("missed some extend or children entityClassStorage, should be [%d], actual [%d] ", extraSize, valuePairs.size()));
         }
 
         for (Map.Entry<String, Map<String, String>> value : valuePairs.entrySet()) {

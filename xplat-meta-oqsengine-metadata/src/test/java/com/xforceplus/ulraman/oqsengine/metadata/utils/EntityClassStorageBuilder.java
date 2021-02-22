@@ -110,6 +110,16 @@ public class EntityClassStorageBuilder {
      */
     public static EntityClassSyncResponse entityClassSyncResponseGenerator(String appId, int version,
                                         List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorages) {
+
+
+        return EntityClassSyncResponse.newBuilder()
+                .setAppId(appId)
+                .setVersion(version + 1)
+                .setEntityClassSyncRspProto(entityClassSyncRspProtoGenerator(expectedEntityStorages))
+                .build();
+    }
+
+    public static EntityClassSyncRspProto entityClassSyncRspProtoGenerator(List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorages) {
         /**
          * 生成爷爷
          */
@@ -117,18 +127,13 @@ public class EntityClassStorageBuilder {
         expectedEntityStorages.forEach(
                 e -> {
                     entityClassInfos.add(entityClassInfo(e.getSelf(), e.getFather(),
-                                    null != e.getAncestors() ? e.getAncestors().size() : 0));
+                            null != e.getAncestors() ? e.getAncestors().size() : 0));
                 }
         );
 
-        return EntityClassSyncResponse.newBuilder()
-                .setAppId(appId)
-                .setVersion(version + 1)
-                .setEntityClassSyncRspProto(
-                        EntityClassSyncRspProto.newBuilder()
-                                .addAllEntityClasses(entityClassInfos)
-                                .build()
-                ).build();
+        return EntityClassSyncRspProto.newBuilder()
+                .addAllEntityClasses(entityClassInfos)
+                .build();
     }
 
     public static EntityClassInfo entityClassInfo(long id, long father, int level) {
@@ -190,13 +195,22 @@ public class EntityClassStorageBuilder {
     public static List<EntityClassStorageBuilder.ExpectedEntityStorage> mockSelfFatherAncestorsGenerate(long id) {
         List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorages = new ArrayList<>();
 
-        long father = id - 100;
-        long anc = father - 1000;
+        long father = getFather(id);
+        long anc = getAnc(id);
 
         expectedEntityStorages.add(new EntityClassStorageBuilder.ExpectedEntityStorage(id, father, Arrays.asList(father, anc)));
         expectedEntityStorages.add(new EntityClassStorageBuilder.ExpectedEntityStorage(father, anc, Collections.singletonList(anc)));
         expectedEntityStorages.add(new EntityClassStorageBuilder.ExpectedEntityStorage(anc, 0L, null));
 
         return expectedEntityStorages;
+    }
+
+
+    public static long getFather(long id) {
+        return id + 100;
+    }
+
+    public static long getAnc(long id) {
+        return id + 100 + 1000;
     }
 }

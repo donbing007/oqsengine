@@ -1,6 +1,5 @@
 package com.xforceplus.ulraman.oqsengine.metadata.executor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ulraman.oqsengine.metadata.mock.MockEntityClassExecutor;
 import com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
@@ -108,8 +107,6 @@ public class EntityClassManagerExecutorTest {
         ReflectionTestUtils.setField(entityClassManagerExecutor, "cacheExecutor", cacheExecutor);
         ReflectionTestUtils.setField(entityClassManagerExecutor, "entityClassExecutor", mockEntityClassExecutor);
         ReflectionTestUtils.setField(entityClassManagerExecutor, "asyncDispatcher", executorService);
-
-
     }
 
     @After
@@ -134,7 +131,7 @@ public class EntityClassManagerExecutorTest {
     }
 
     @Test
-    public void loadTest() {
+    public void loadTest() throws InterruptedException {
         String expectedAppId = "testLoad";
         int expectedVersion = 1;
         long expectedId = System.currentTimeMillis() + 3600_000;
@@ -150,15 +147,15 @@ public class EntityClassManagerExecutorTest {
                 entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
         mockEntityClassExecutor.accept(entityClassSyncResponse);
 
-        IEntityClass entityClass = entityClassManagerExecutor.load(expectedId);
-        Assert.assertNotNull(entityClass);
+        Optional<IEntityClass> entityClassOp = entityClassManagerExecutor.load(expectedId);
+        Assert.assertTrue(entityClassOp.isPresent());
 
         List<EntityClassInfo> entityClassInfo =
                 entityClassSyncResponse.getEntityClassSyncRspProto().getEntityClassesList();
 
         Assert.assertNotNull(entityClassInfo);
 
-        check(expectedVersion + 1, entityClass, entityClassInfo);
+        check(expectedVersion + 1, entityClassOp.get(), entityClassInfo);
     }
 
     /**
@@ -197,6 +194,7 @@ public class EntityClassManagerExecutorTest {
     }
 
     private IEntityClass getEntityClass(long expectedId, IEntityClass entityClass) {
+        Assert.assertNotNull(entityClass);
         if (entityClass.id() == expectedId) {
             return entityClass;
         }
@@ -207,7 +205,8 @@ public class EntityClassManagerExecutorTest {
         return null;
     }
 
-    private void checkEntity(EntityClassInfo expected, IEntityClass actual,  Map<Long, List<EntityFieldInfo>> fieldMaps) {
+    private void checkEntity(EntityClassInfo expected, IEntityClass actual, Map<Long, List<EntityFieldInfo>> fieldMaps) {
+        Assert.assertNotNull(actual);
         //  basic
         Assert.assertEquals(expected.getId(), actual.id());
         Assert.assertEquals(expected.getCode(), actual.code());
@@ -282,6 +281,4 @@ public class EntityClassManagerExecutorTest {
             Assert.assertEquals(0, entityFieldMap.size());
         }
     }
-
-
 }
