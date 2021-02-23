@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.meta.common.dto;
 
 import io.grpc.stub.StreamObserver;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -58,7 +57,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     @Override
     public synchronized void addWatch(WatchElement w) {
-        watches.put(w.getAppId(), w);
+        watches.putIfAbsent(w.getAppId(), w);
     }
 
     @Override

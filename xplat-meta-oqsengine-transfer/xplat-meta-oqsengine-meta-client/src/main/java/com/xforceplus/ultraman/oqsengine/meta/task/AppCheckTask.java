@@ -5,6 +5,8 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Queue;
@@ -12,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import static com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient.isShutdown;
 import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest;
 
 /**
@@ -24,16 +27,18 @@ import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest
  */
 public class AppCheckTask implements Runnable {
 
+    final Logger logger = LoggerFactory.getLogger(AppCheckTask.class);
+
     private RequestWatcher requestWatcher;
     private long monitorSleepDuration;
     private long delayTaskDuration;
-    private Queue<WatchElement> forgetQueue;
+    private Queue<WatchElement> forgotQueue;
     private Function<String, Boolean> canAccessFunction;
 
-    public AppCheckTask(RequestWatcher requestWatcher, Queue<WatchElement> forgetQueue, long monitorSleepDuration, long delayTaskDuration,
+    public AppCheckTask(RequestWatcher requestWatcher, Queue<WatchElement> forgotQueue, long monitorSleepDuration, long delayTaskDuration,
                                     Function<String, Boolean> canAccessFunction) {
         this.requestWatcher = requestWatcher;
-        this.forgetQueue = forgetQueue;
+        this.forgotQueue = forgotQueue;
         this.monitorSleepDuration = monitorSleepDuration;
         this.delayTaskDuration = delayTaskDuration;
         this.canAccessFunction = canAccessFunction;
@@ -41,15 +46,16 @@ public class AppCheckTask implements Runnable {
 
     @Override
     public void run() {
-        while (true) {
+        logger.info("start appCheck task ok...");
+        while (!isShutdown) {
             if (requestWatcher.isOnServe()) {
                 /**
                  * 将forgetQueue中的数据添加到watch中
                  */
-                int checkSize = forgetQueue.size();
+                int checkSize = forgotQueue.size();
                 while (checkSize > 0) {
                     try {
-                        WatchElement w = forgetQueue.remove();
+                        WatchElement w = forgotQueue.remove();
                         if (!requestWatcher.watches().containsKey(w.getAppId())) {
                             requestWatcher.watches().put(w.getAppId(), w);
                         }
@@ -74,6 +80,8 @@ public class AppCheckTask implements Runnable {
                             sendRequest(requestWatcher, entityClassSyncRequest, canAccessFunction, requestWatcher.uid());
                         }
                 );
+
+                logger.debug("app check ok...");
             }
             TimeWaitUtils.wakeupAfter(monitorSleepDuration, TimeUnit.MILLISECONDS);
         }

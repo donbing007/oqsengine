@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.meta.executor;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
@@ -15,14 +14,11 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
-import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.clientTaskSize;
+import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.CLIENT_TASK_COUNT;
 
 /**
  * desc :
@@ -32,13 +28,13 @@ import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.cli
  * date : 2021/2/7
  * @since : 1.8
  */
-public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecutor {
+public class RequestWatchExecutor implements IRequestWatchExecutor {
 
     private RequestWatcher requestWatcher;
 
-    private Queue<WatchElement> forgetQueue = new ConcurrentLinkedDeque<>();
+    private Queue<WatchElement> forgotQueue = new ConcurrentLinkedDeque<>();
 
-    private List<Thread> executors = new ArrayList<>(clientTaskSize);
+    private List<Thread> executors = new ArrayList<>(CLIENT_TASK_COUNT);
 
     @Resource
     private GRpcParamsConfig gRpcParamsConfig;
@@ -51,12 +47,10 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
     @Override
     public void create(String uid, StreamObserver<EntityClassSyncRequest> observer) {
         if (null == requestWatcher) {
-            requestWatcher = new RequestWatcher(uid, observer);
-            start();
+            init(uid, observer);
         } else {
             requestWatcher.reset(uid, observer);
         }
-
     }
 
     @Override
@@ -73,9 +67,10 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
             if (null != we) {
                 we.setStatus(watchElement.getStatus());
                 we.setVersion(watchElement.getVersion());
-
-                return true;
+            } else {
+                requestWatcher.addWatch(watchElement);
             }
+            return true;
         }
         return false;
     }
@@ -114,28 +109,35 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
 
     @Override
     public void addForgot(String appId, int version) {
-        forgetQueue.add(new WatchElement(appId, version, WatchElement.AppStatus.Init));
+        forgotQueue.add(new WatchElement(appId, version, WatchElement.AppStatus.Init));
     }
 
     @Override
     public void start() {
+        int pos = 0;
         /**
          * 启动TimeoutCheck线程
          */
-        executors.add(ThreadUtils.create(() -> new TimeoutCheckTask(requestWatcher,
-                        gRpcParamsConfig.getDefaultHeartbeatTimeout(), gRpcParamsConfig.getMonitorSleepDuration())));
+        TimeoutCheckTask timeoutCheckTask = new TimeoutCheckTask(requestWatcher,
+                gRpcParamsConfig.getDefaultHeartbeatTimeout(), gRpcParamsConfig.getMonitorSleepDuration());
+        executors.add(new Thread(timeoutCheckTask));
+        executors.get(pos++).start();
 
         /**
          * 启动keepAlive线程, 1秒check1次
          */
-        executors.add(ThreadUtils.create(() -> new KeepAliveTask(requestWatcher,
-                        gRpcParamsConfig.getKeepAliveSendDuration())));
+        KeepAliveTask keepAliveTask = new KeepAliveTask(requestWatcher,
+                gRpcParamsConfig.getKeepAliveSendDuration());
+        executors.add(new Thread(keepAliveTask));
+        executors.get(pos++).start();
 
         /**
          * 启动AppCheck线程
          */
-        executors.add(ThreadUtils.create(() -> new AppCheckTask(requestWatcher,
-                forgetQueue, gRpcParamsConfig.getMonitorSleepDuration(), gRpcParamsConfig.getDefaultDelayTaskDuration(), canAccessFunction())));
+        AppCheckTask appCheckTask = new AppCheckTask(requestWatcher,
+                forgotQueue, gRpcParamsConfig.getMonitorSleepDuration(), gRpcParamsConfig.getDefaultDelayTaskDuration(), accessFunction());
+        executors.add(new Thread(appCheckTask));
+        executors.get(pos).start();
     }
 
     @Override
@@ -151,7 +153,12 @@ public class RequestWatchExecutor implements IRequestWatchExecutor, IWatchExecut
         }
     }
 
-    public Function<String, Boolean> canAccessFunction() {
+    public Function<String, Boolean> accessFunction() {
         return this::canAccess;
+    }
+
+    private void init(String uid, StreamObserver<EntityClassSyncRequest> observer) {
+        requestWatcher = new RequestWatcher(uid, observer);
+        this.start();
     }
 }

@@ -1,9 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import io.grpc.stub.StreamObserver;
+
+import java.util.function.Function;
 
 /**
  * desc :
@@ -13,7 +16,7 @@ import io.grpc.stub.StreamObserver;
  * date : 2021/2/7
  * @since : 1.8
  */
-public interface IRequestWatchExecutor {
+public interface IRequestWatchExecutor extends IWatchExecutor {
 
     void resetHeartBeat();
 
@@ -30,4 +33,6 @@ public interface IRequestWatchExecutor {
     boolean canAccess(String uid);
 
     void addForgot(String appId, int version);
+
+    Function<String, Boolean> accessFunction();
 }

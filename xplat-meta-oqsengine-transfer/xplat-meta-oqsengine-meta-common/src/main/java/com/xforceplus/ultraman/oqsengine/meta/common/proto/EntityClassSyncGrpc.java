@@ -108,7 +108,7 @@ public final class EntityClassSyncGrpc {
 
   /**
    */
-  public static final class EntityClassSyncStub extends io.grpc.stub.AbstractStub<EntityClassSyncStub> {
+  public static class EntityClassSyncStub extends io.grpc.stub.AbstractStub<EntityClassSyncStub> {
     private EntityClassSyncStub(io.grpc.Channel channel) {
       super(channel);
     }

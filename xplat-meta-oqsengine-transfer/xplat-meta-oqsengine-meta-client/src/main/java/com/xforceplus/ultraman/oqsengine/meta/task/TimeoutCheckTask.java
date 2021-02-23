@@ -1,10 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.meta.task;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
+
+import static com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient.isShutdown;
 
 /**
  * desc :
@@ -15,6 +18,8 @@ import java.util.concurrent.TimeUnit;
  * @since : 1.8
  */
 public class TimeoutCheckTask implements Runnable {
+
+    final Logger logger = LoggerFactory.getLogger(TimeoutCheckTask.class);
 
     private RequestWatcher requestWatcher;
 
@@ -29,14 +34,18 @@ public class TimeoutCheckTask implements Runnable {
 
     @Override
     public void run() {
-        while (true) {
+        logger.info("start timeout task ok...");
+        while (!isShutdown) {
             if (requestWatcher.isOnServe()) {
                 if (System.currentTimeMillis() - requestWatcher.heartBeat() > heartbeatTimeout) {
                     try {
                         requestWatcher.observer().onCompleted();
+                        logger.warn("last heartbeat time [{}] reaches max timeout [{}]"
+                                , System.currentTimeMillis() - requestWatcher.heartBeat(), heartbeatTimeout);
                     } catch (Exception e) {
                         //ignore
                     }
+
                 }
             }
             TimeWaitUtils.wakeupAfter(monitorSleepDuration, TimeUnit.MILLISECONDS);

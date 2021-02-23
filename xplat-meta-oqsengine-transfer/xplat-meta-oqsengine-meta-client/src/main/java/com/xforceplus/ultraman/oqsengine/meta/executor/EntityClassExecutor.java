@@ -84,9 +84,11 @@ public class EntityClassExecutor implements IEntityClassExecutor {
                 })
                 .forEach(
                         v -> {
+                            /**
+                             * 当前requestWatch不可用或发生UID切换时,先加入forgot列表
+                             */
                             if (!requestWatchExecutor.canAccess(watcher.uid())) {
-                                watcher.addWatch(
-                                        new WatchElement(v.getKey(), v.getValue(), WatchElement.AppStatus.Init));
+                                requestWatchExecutor.addForgot(v.getKey(), v.getValue());
                             } else {
                                 EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
 
@@ -95,14 +97,16 @@ public class EntityClassExecutor implements IEntityClassExecutor {
                                                 .setStatus(RequestStatus.REGISTER.ordinal()).build();
 
                                 WatchElement.AppStatus status = WatchElement.AppStatus.Register;
+
                                 try {
                                     sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequest,
-                                            requestWatchExecutor.canAccessFunction(), entityClassSyncRequest.getUid());
+                                            requestWatchExecutor.accessFunction(), entityClassSyncRequest.getUid());
                                 } catch (Exception e) {
+
                                     status = WatchElement.AppStatus.Init;
                                 }
-                                watcher.addWatch(
-                                        new WatchElement(v.getKey(), v.getValue(), status));
+
+                                requestWatchExecutor.add(new WatchElement(v.getKey(), v.getValue(), status));
                             }
                         }
                 );
@@ -161,17 +165,11 @@ public class EntityClassExecutor implements IEntityClassExecutor {
          */
         try {
             sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequestBuilder.setUid(entityClassSyncResponse.getUid()).build(),
-                    requestWatchExecutor.canAccessFunction(), entityClassSyncResponse.getUid());
+                    requestWatchExecutor.accessFunction(), entityClassSyncResponse.getUid());
         } catch (Exception ex) {
             throw new MetaSyncClientException(
                     String.format("stream observer ack error, message-[%s].", ex.getMessage()), true);
         }
-    }
-
-
-
-    private int version(String appId) {
-        return syncExecutor.version(appId);
     }
 
     /**
@@ -235,5 +233,9 @@ public class EntityClassExecutor implements IEntityClassExecutor {
             return false;
         }
         return md5.equals(getMD5(entityClassSyncRspProto.toByteArray()));
+    }
+
+    private int version(String appId) {
+        return syncExecutor.version(appId);
     }
 }

@@ -1,37 +1,28 @@
-package com.xforceplus.ultraman.oqsengine.meta;
+package com.xforceplus.ultraman.oqsengine.meta.mock;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import javax.annotation.Resource;
-
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 
 /**
  * desc :
- * name : EntityClassSyncServer
+ * name : MockServer
  *
  * @author : xujia
- * date : 2021/2/4
+ * date : 2021/2/22
  * @since : 1.8
  */
-public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncImplBase {
+public class MockServer extends EntityClassSyncGrpc.EntityClassSyncImplBase {
 
-    private Logger logger = LoggerFactory.getLogger(EntityClassSyncServer.class);
-
-    @Resource
-    private IResponseWatchExecutor watchExecutor;
-
-    @Resource
-    private SyncResponseHandler responseHandler;
+    private Logger logger = LoggerFactory.getLogger(MockServer.class);
 
     @Override
     public StreamObserver<EntityClassSyncRequest> register(StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
@@ -39,45 +30,43 @@ public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncIm
         return new StreamObserver<EntityClassSyncRequest>() {
             @Override
             public void onNext(EntityClassSyncRequest entityClassSyncRequest) {
-
+                try {
+                    Thread.sleep(1_000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 if (entityClassSyncRequest.getStatus() == HEARTBEAT.ordinal()) {
                     /**
                      * 处理心跳
                      */
                     String uid = entityClassSyncRequest.getUid();
                     if (null != uid) {
-                        watchExecutor.heartBeat(uid);
+                        EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
+                                .setStatus(HEARTBEAT.ordinal());
 
-                        responseHandler.confirmHeartBeat(uid);
+                        responseStreamObserver.onNext(builder.build());
                     }
                 } else if (entityClassSyncRequest.getStatus() == REGISTER.ordinal()) {
                     /**
                      * 处理注册
                      */
-                    WatchElement w =
-                            new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(), WatchElement.AppStatus.Register);
-                    watchExecutor.add(entityClassSyncRequest.getUid(), responseStreamObserver, w);
+                    String uid = entityClassSyncRequest.getUid();
+                    EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
+                            .setStatus(CONFIRM_REGISTER.ordinal())
+                            .setAppId(entityClassSyncRequest.getAppId())
+                            .setVersion(entityClassSyncRequest.getVersion());
 
-                    /**
-                     * 确认注册信息
-                     */
-                    responseHandler.confirmRegister(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(),
-                            entityClassSyncRequest.getUid());
+
+                    responseStreamObserver.onNext(builder.build());
 
                 } else if (entityClassSyncRequest.getStatus() == SYNC_OK.ordinal()) {
                     /**
                      * 处理返回结果成功
                      */
-                    watchExecutor.update(entityClassSyncRequest.getUid(),
-                            new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(),
-                                    WatchElement.AppStatus.Confirmed));
-
                 } else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
                     /**
                      * 处理返回结果失败
                      */
-                    responseHandler.pull(entityClassSyncRequest.getAppId(),
-                            entityClassSyncRequest.getVersion(), entityClassSyncRequest.getUid());
                 }
             }
 

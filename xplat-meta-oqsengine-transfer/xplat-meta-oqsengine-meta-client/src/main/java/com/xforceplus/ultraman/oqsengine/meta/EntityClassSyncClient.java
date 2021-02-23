@@ -7,10 +7,11 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
-import com.xforceplus.ultraman.oqsengine.meta.executor.EntityClassExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.executor.IEntityClassExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,9 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.*;
+
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+import static java.lang.Math.abs;
 
 /**
  * desc :
@@ -36,15 +40,17 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
     private GRpcClient client;
 
     @Resource(name = "entityClassExecutor")
-    private EntityClassExecutor entityClassExecutor;
+    private IEntityClassExecutor entityClassExecutor;
 
     @Resource
-    private RequestWatchExecutor requestWatchExecutor;
+    private IRequestWatchExecutor requestWatchExecutor;
 
     @Resource
     private GRpcParamsConfig gRpcParamsConfig;
 
     private Thread monitorThread;
+
+    public static volatile boolean isShutdown = false;
 
     @PostConstruct
     @Override
@@ -54,12 +60,22 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
         if (!client.opened()) {
             throw new MetaSyncClientException("client stub create failed.", true);
         }
-        observerStream();
+
+        monitorThread = ThreadUtils.create(() -> {
+            startObserverStream();
+            return true;
+        });
+
+        monitorThread.start();
     }
 
     @Override
     public void destroy() {
+        isShutdown = true;
+
         requestWatchExecutor.stop();
+
+        ThreadUtils.shutdown(monitorThread, SHUT_DOWN_WAIT_TIME_OUT);
 
         if (client.opened()) {
             client.destroy();
@@ -67,57 +83,64 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
     }
 
     /**
-     * 初始化observerStream
+     * 初始化startObserverStream
      */
-    private void observerStream() {
+    private void startObserverStream() {
         /**
          * 启动一个新的线程进行stream的监听,当发生断流时，将会重新进行stream的创建.
          */
-        monitorThread = new Thread(() -> {
+        while (!isShutdown) {
+            CountDownLatch countDownLatch = new CountDownLatch(1);
 
-            while (true) {
-                CountDownLatch countDownLatch = new CountDownLatch(1);
-
-                StreamObserver<EntityClassSyncRequest> streamObserver = null;
-                String uid = UUID.randomUUID().toString();
-                try {
-                    /**
-                     * 初始化observer，如果失败，说明当前连接不可用，将等待5秒后重试
-                     */
-                    streamObserver = startObserver(uid, countDownLatch);
-                } catch (Exception e) {
-                    logger.warn("observer init error, message : {}, retry after ({})ms", gRpcParamsConfig.getReconnectDuration(), e.getMessage());
-                    TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
-                    continue;
-                }
-
+            StreamObserver<EntityClassSyncRequest> streamObserver = null;
+            String uid = UUID.randomUUID().toString();
+            try {
                 /**
-                 * 判断是服务重启还是断流
+                 * 初始化observer，如果失败，说明当前连接不可用，将等待5秒后重试
                  */
-                requestWatchExecutor.create(uid, streamObserver);
+                streamObserver = startObserver(countDownLatch);
+            } catch (Exception e) {
+                logger.warn("observer init error, message : {}, retry after ({})ms"
+                                        , gRpcParamsConfig.getReconnectDuration(), e.getMessage());
+                TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
+                continue;
+            }
 
+            /**
+             * 判断是服务重启还是断流
+             */
+            requestWatchExecutor.create(uid, streamObserver);
+
+            /**
+             * 重新注册所有watchList到服务段
+             * 当注册失败时，将直接标记该observer不可用
+             * 注册成功则直接进入wait状态，直到observer上发生错误为止
+             */
+            if (entityClassExecutor.reRegister()) {
                 /**
-                 * 重新注册所有watchList到服务段
-                 * 当注册失败时，将直接标记该observer不可用
-                 * 注册成功则直接进入wait状态，直到observer上发生错误为止
+                 * 设置服务可用
                  */
-                if (entityClassExecutor.reRegister()) {
-                    /**
-                     * 设置服务可用
-                     */
-                    requestWatchExecutor.watcher().onServe();
-                    /**
-                     * wait直到countDownLatch = 0;
-                     */
-                    Uninterruptibles.awaitUninterruptibly(countDownLatch);
-                }
-
+                requestWatchExecutor.watcher().onServe();
                 /**
-                 * 设置服务不可用
+                 * wait直到countDownLatch = 0;
                  */
-                requestWatchExecutor.watcher().notServer();
+                Uninterruptibles.awaitUninterruptibly(countDownLatch);
+            }
 
-                logger.warn("stream has broken, will re-create new one after ({})ms...", gRpcParamsConfig.getReconnectDuration());
+            /**
+             * 设置服务不可用
+             */
+            requestWatchExecutor.watcher().notServer();
+
+            /**
+             * 如果是服务关闭，则直接跳出while循环
+             */
+            if (isShutdown) {
+                logger.warn("stream has broken due to client has been shutdown...");
+            } else {
+                logger.warn("stream [{}] has broken, reCreate new stream after ({})ms..."
+                        , uid, gRpcParamsConfig.getReconnectDuration());
+
                 /**
                  * 这里线设置睡眠再进行资源清理
                  */
@@ -125,9 +148,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
 
                 requestWatchExecutor.release();
             }
-        });
-
-        monitorThread.start();
+        }
     }
 
 
@@ -136,7 +157,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
      *
      * @param countDownLatch
      */
-    private StreamObserver<EntityClassSyncRequest> startObserver(String uid, CountDownLatch countDownLatch) {
+    private StreamObserver<EntityClassSyncRequest> startObserver(CountDownLatch countDownLatch) {
         return client.channelStub().register(new StreamObserver<EntityClassSyncResponse>() {
             @Override
             public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
@@ -185,5 +206,4 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
             }
         });
     }
-
 }

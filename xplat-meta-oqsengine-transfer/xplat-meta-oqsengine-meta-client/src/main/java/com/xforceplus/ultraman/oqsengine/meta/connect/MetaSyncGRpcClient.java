@@ -30,7 +30,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
 
     private String host;
     private int port;
-    boolean isClientOpen;
+    private boolean isClientOpen;
 
     /**
      * 延时销毁最大值30秒
