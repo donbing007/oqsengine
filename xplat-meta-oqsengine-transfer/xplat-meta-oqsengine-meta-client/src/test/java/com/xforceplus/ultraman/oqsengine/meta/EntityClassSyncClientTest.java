@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.mock.MockServer;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import io.grpc.stub.StreamObserver;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -162,7 +163,7 @@ public class EntityClassSyncClientTest {
     }
 
     @Test
-    public void registerTimeoutTest() throws InterruptedException {
+    public void registerTimeoutTest() {
         String appId = "registerTimeoutTest";
         int version = 1;
         MockServer.isTestOk = false;
@@ -172,14 +173,47 @@ public class EntityClassSyncClientTest {
         boolean ret = requestHandler.register(appId, version);
         Assert.assertTrue(ret);
 
-        Assert.assertNotNull(requestWatchExecutor.watcher().watches());
+        Assert.assertTrue(null != requestWatchExecutor.watcher().watches() &&
+                !requestWatchExecutor.watcher().watches().isEmpty());
+        requestWatchExecutor.watcher().watches().entrySet().forEach(
+                w -> {
+                    Assert.assertNotEquals(WatchElement.AppStatus.Confirmed, w.getValue().getStatus());
+                }
+        );
 
-        String uid = requestWatchExecutor.watcher().uid();
+        new Thread(() -> {
+            String uid = requestWatchExecutor.watcher().uid();
+            StreamObserver observer = requestWatchExecutor.watcher().observer();
+            while (true) {
+                if (null == requestWatchExecutor.watcher().uid()) {
+                    break;
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            MockServer.isTestOk = true;
+            boolean result = requestHandler.register(appId, version);
+            Assert.assertTrue(result);
 
-        MockServer.isTestOk = true;
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            Assert.assertNotEquals(observer.toString(), requestWatchExecutor.watcher().observer().toString());
+            Assert.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
 
-        Thread.sleep(5000);
+            Assert.assertTrue(null != requestWatchExecutor.watcher().watches() &&
+                    !requestWatchExecutor.watcher().watches().isEmpty());
 
-        Assert.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
+            requestWatchExecutor.watcher().watches().entrySet().forEach(
+                    w -> {
+                        Assert.assertEquals(WatchElement.AppStatus.Confirmed, w.getValue().getStatus());
+                    }
+            );
+        }).start();
     }
 }

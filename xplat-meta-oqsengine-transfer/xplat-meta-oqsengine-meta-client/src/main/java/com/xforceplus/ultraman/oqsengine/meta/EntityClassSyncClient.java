@@ -76,6 +76,10 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
         }
     }
 
+    public static boolean isShutDown() {
+        return isShutdown;
+    }
+
     /**
      * 初始化startObserverStream
      */
@@ -83,7 +87,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
         /**
          * 启动一个新的线程进行stream的监听,当发生断流时，将会重新进行stream的创建.
          */
-        while (!isShutdown) {
+        while (!isShutDown()) {
             CountDownLatch countDownLatch = new CountDownLatch(1);
 
             StreamObserver<EntityClassSyncRequest> streamObserver = null;

@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
-import com.xforceplus.ultraman.oqsengine.meta.handler.IEntityClassExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
@@ -34,7 +34,7 @@ public class EntityClassManagerExecutor implements MetaManager {
     private ICacheExecutor cacheExecutor;
 
     @Resource
-    private IEntityClassExecutor entityClassExecutor;
+    private IRequestHandler requestHandler;
 
     @Resource(name = "waitVersionExecutor")
     private ExecutorService asyncDispatcher;
@@ -64,7 +64,7 @@ public class EntityClassManagerExecutor implements MetaManager {
 
         int version = cacheExecutor.version(appId);
 
-        boolean ret = entityClassExecutor.register(appId, NOT_EXIST_VERSION);
+        boolean ret = requestHandler.register(appId, NOT_EXIST_VERSION);
 
         if (version < 0) {
             if (!ret) {
