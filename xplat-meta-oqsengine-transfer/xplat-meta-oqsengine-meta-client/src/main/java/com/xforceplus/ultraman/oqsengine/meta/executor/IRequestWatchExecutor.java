@@ -28,8 +28,6 @@ public interface IRequestWatchExecutor extends IWatchExecutor {
 
     RequestWatcher watcher();
 
-    void release();
-
     boolean canAccess(String uid);
 
     void addForgot(String appId, int version);

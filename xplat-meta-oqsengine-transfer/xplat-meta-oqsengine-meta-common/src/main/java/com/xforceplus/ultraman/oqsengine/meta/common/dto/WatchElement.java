@@ -65,4 +65,14 @@ public class WatchElement {
         Notice,
         Confirmed
     }
+
+    @Override
+    public String toString() {
+        return "WatchElement{" +
+                "appId='" + appId + '\'' +
+                ", version=" + version +
+                ", status=" + status +
+                ", registerTime=" + registerTime +
+                '}';
+    }
 }
