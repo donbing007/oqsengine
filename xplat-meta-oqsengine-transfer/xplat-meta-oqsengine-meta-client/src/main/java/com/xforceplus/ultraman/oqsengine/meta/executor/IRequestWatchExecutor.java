@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReques
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import io.grpc.stub.StreamObserver;
 
+import java.util.Queue;
 import java.util.function.Function;
 
 /**
@@ -31,6 +32,8 @@ public interface IRequestWatchExecutor extends IWatchExecutor {
     boolean canAccess(String uid);
 
     void addForgot(String appId, int version);
+
+    Queue<WatchElement> forgot();
 
     Function<String, Boolean> accessFunction();
 }

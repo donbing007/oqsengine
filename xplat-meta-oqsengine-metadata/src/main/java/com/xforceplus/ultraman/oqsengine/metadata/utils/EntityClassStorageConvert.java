@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.BUSINESS_HANDLER_ERROR;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.*;

@@ -70,13 +70,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
     @Override
     public synchronized boolean update(WatchElement watchElement) {
         if (requestWatcher.onWatch(watchElement)) {
-            WatchElement we = requestWatcher.watches().get(watchElement.getAppId());
-            if (null != we) {
-                we.setStatus(watchElement.getStatus());
-                we.setVersion(watchElement.getVersion());
-            } else {
-                requestWatcher.addWatch(watchElement);
-            }
+            requestWatcher.watches().put(watchElement.getAppId(), watchElement);
             return true;
         }
         return false;
@@ -92,8 +86,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
         /**
          * 判断是否可用
          */
-        boolean status = (null != requestWatcher && requestWatcher.isOnServe());
-        if (null != uid && status) {
+        if (null != uid && null != requestWatcher && requestWatcher.isOnServe()) {
             try {
                 return uid.equals(requestWatcher.uid());
             } catch (Exception e) {
@@ -103,12 +96,17 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
                 return false;
             }
         }
-        return status;
+        return false;
     }
 
     @Override
     public void addForgot(String appId, int version) {
         forgotQueue.add(new WatchElement(appId, version, WatchElement.AppStatus.Init));
+    }
+
+    @Override
+    public Queue<WatchElement> forgot() {
+        return forgotQueue;
     }
 
     @Override
@@ -169,10 +167,9 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
 
                 try {
                     sendRequest(requestWatcher, request);
-                    logger.debug("send keepAlive ok...");
                 } catch (Exception e) {
                     //  ignore
-                    logger.warn("send keepAlive failed, but exception will ignore due to retry...");
+                    logger.warn("send keepAlive failed, message [{}], but exception will ignore due to retry...", e.getMessage());
                 }
 
             }
@@ -204,10 +201,10 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
 
                 }
             }
-            logger.debug("stream-connect-check ok, next check after duration ({})ms...", gRpcParamsConfig.getMonitorSleepDuration());
+            logger.debug("streamConnect check ok, next check after duration ({})ms...", gRpcParamsConfig.getMonitorSleepDuration());
             TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
         }
-        logger.info("stream-connect-check task has quited due to sync-client shutdown...");
+        logger.info("streamConnect check task has quited due to sync-client shutdown...");
         return true;
     }
 

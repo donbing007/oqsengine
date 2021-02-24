@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.meta;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.MockGRpcClient;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
@@ -48,9 +49,10 @@ public class EntityClassSyncClientTest {
 
     private RequestWatchExecutor requestWatchExecutor;
 
-    @Before
-    public void before() throws InterruptedException {
+    private ExecutorService executorService;
 
+    @Before
+    public void before() {
         mockGRpcClient = new MockGRpcClient();
         gRpcParamsConfig = gRpcParamsConfig();
         requestWatchExecutor = requestWatchExecutor();
@@ -58,7 +60,7 @@ public class EntityClassSyncClientTest {
         requestHandler = requestHandler();
         entityClassSyncClient = new EntityClassSyncClient();
 
-        ExecutorService executorService = new ThreadPoolExecutor(5, 5, 0,
+        executorService = new ThreadPoolExecutor(5, 5, 0,
                 TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
 
         ReflectionTestUtils.setField(entityClassSyncClient, "client", mockGRpcClient);
@@ -66,15 +68,20 @@ public class EntityClassSyncClientTest {
         ReflectionTestUtils.setField(entityClassSyncClient, "gRpcParamsConfig", gRpcParamsConfig);
         ReflectionTestUtils.setField(entityClassSyncClient, "executorService", executorService);
         ReflectionTestUtils.setField(entityClassSyncClient, "requestWatchExecutor", requestWatchExecutor);
-
-        entityClassSyncClient.start();
-
-        Thread.sleep(5_000);
+        ReflectionTestUtils.setField(entityClassSyncClient, "isShutdown", false);
     }
 
     @After
-    public void after() {
+    public void after() throws InterruptedException {
         entityClassSyncClient.destroy();
+
+        ExecutorHelper.shutdownAndAwaitTermination(executorService, 3600);
+    }
+
+    public void start() throws InterruptedException {
+        entityClassSyncClient.start();
+
+        Thread.sleep(5_000);
     }
 
     private IRequestHandler requestHandler() {
@@ -123,7 +130,8 @@ public class EntityClassSyncClientTest {
     }
 
     @Test
-    public void hearBeatTest() {
+    public void hearBeatTest() throws InterruptedException {
+        start();
         Assert.assertTrue(null != requestWatchExecutor.watcher() && requestWatchExecutor.watcher().isOnServe());
         int i = 0;
         int max = 10000;
@@ -138,7 +146,8 @@ public class EntityClassSyncClientTest {
     }
 
     @Test
-    public void registerTest() {
+    public void registerTest() throws InterruptedException {
+        start();
         String appId = "registerTest";
         int version = 1;
 
@@ -167,7 +176,82 @@ public class EntityClassSyncClientTest {
     }
 
     @Test
-    public void registerTimeoutTest() {
+    public void forgotToRegisterTest() throws InterruptedException {
+        String appId = "forgotToRegisterTest";
+        int version = 1;
+
+        boolean ret = requestHandler.register(appId, version);
+        Assert.assertFalse(ret);
+        Assert.assertEquals(1, requestWatchExecutor.forgot().size());
+        WatchElement element = requestWatchExecutor.forgot().peek();
+        Assert.assertNotNull(element);
+        Assert.assertEquals(appId, element.getAppId());
+        Assert.assertEquals(version, element.getVersion());
+        Assert.assertEquals(WatchElement.AppStatus.Init, element.getStatus());
+
+        start();
+
+        /**
+         * 设置服务端onNext不可用
+         */
+        MockServer.isTestOk = false;
+
+        /**
+         * 模拟超时重连
+         */
+        int loops = 0;
+        String uid = requestWatchExecutor.watcher().uid();
+        while (loops < 60) {
+            if (null == requestWatchExecutor.watcher().uid() ||
+                    !uid.equals(requestWatchExecutor.watcher().uid())) {
+                break;
+            }
+            try {
+                loops++;
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        /**
+         * 设置服务端onNext可用
+         */
+        MockServer.isTestOk = true;
+
+        loops = 0;
+        while (loops < 10) {
+            if (requestWatchExecutor.forgot().size() == 0) {
+                break;
+            }
+
+            try {
+                loops++;
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        Assert.assertEquals(1, requestWatchExecutor.watcher().watches().size());
+        element = requestWatchExecutor.watcher().watches().get(appId);
+        loops = 0;
+        while (loops < 10) {
+            if (element.getStatus().equals(WatchElement.AppStatus.Confirmed)) {
+                break;
+            }
+            try {
+                loops++;
+                Thread.sleep(1_000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Test
+    public void registerTimeoutTest() throws InterruptedException {
+        start();
         String appId = "registerTimeoutTest";
         int version = 1;
         /**
@@ -180,23 +264,23 @@ public class EntityClassSyncClientTest {
 
         Assert.assertTrue(null != requestWatchExecutor.watcher().watches() &&
                 !requestWatchExecutor.watcher().watches().isEmpty());
-        requestWatchExecutor.watcher().watches().entrySet().forEach(
-                w -> {
-                    Assert.assertNotEquals(WatchElement.AppStatus.Confirmed, w.getValue().getStatus());
-                }
+        requestWatchExecutor.watcher().watches().forEach(
+                (key, value) -> Assert.assertNotEquals(WatchElement.AppStatus.Confirmed, value.getStatus())
         );
 
         String uid = requestWatchExecutor.watcher().uid();
         StreamObserver observer = requestWatchExecutor.watcher().observer();
         /**
-         * 模拟超时退出
+         * 模拟超时重连
          */
-        while (true) {
+        int count = 0;
+        while (count < 60) {
             if (null == requestWatchExecutor.watcher().uid() ||
                     !uid.equals(requestWatchExecutor.watcher().uid())) {
                 break;
             }
             try {
+                count++;
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -207,14 +291,13 @@ public class EntityClassSyncClientTest {
          * 设置服务端onNext可用
          */
         MockServer.isTestOk = true;
-        boolean result = requestHandler.register(appId, version);
-        Assert.assertTrue(result);
 
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
         Assert.assertNotNull(requestWatchExecutor.watcher().observer());
         Assert.assertNotEquals(observer.toString(), requestWatchExecutor.watcher().observer().toString());
         Assert.assertNotNull(requestWatchExecutor.watcher().uid());
@@ -224,11 +307,13 @@ public class EntityClassSyncClientTest {
                 !requestWatchExecutor.watcher().watches().isEmpty());
 
         WatchElement element = requestWatchExecutor.watcher().watches().get(appId);
-        while (true) {
+        count = 0;
+        while (count < 10) {
             if (element.getStatus().equals(WatchElement.AppStatus.Confirmed)) {
                 break;
             }
             try {
+                count++;
                 Thread.sleep(1_000);
             } catch (InterruptedException e) {
                 e.printStackTrace();

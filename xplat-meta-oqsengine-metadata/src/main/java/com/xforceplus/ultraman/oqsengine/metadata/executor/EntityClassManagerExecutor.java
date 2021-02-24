@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
 
 /**
@@ -64,12 +65,9 @@ public class EntityClassManagerExecutor implements MetaManager {
 
         int version = cacheExecutor.version(appId);
 
-        boolean ret = requestHandler.register(appId, NOT_EXIST_VERSION);
+        requestHandler.register(appId, NOT_EXIST_VERSION);
 
         if (version < 0) {
-            if (!ret) {
-                throw new RuntimeException("register failed, gRpc sync client not read.");
-            }
             CompletableFuture<Integer> future = async(() -> {
                 int ver;
                 /**

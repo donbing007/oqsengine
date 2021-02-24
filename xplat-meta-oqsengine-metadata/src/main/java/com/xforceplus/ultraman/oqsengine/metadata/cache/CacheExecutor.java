@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.cache.RedisLuaScript.*;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.EntityClassElements.*;

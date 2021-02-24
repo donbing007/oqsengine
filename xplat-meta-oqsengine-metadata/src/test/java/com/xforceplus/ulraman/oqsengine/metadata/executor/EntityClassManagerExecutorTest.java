@@ -93,7 +93,7 @@ public class EntityClassManagerExecutorTest {
         entityClassSyncExecutor.start();
 
         /**
-         * init mockEntityClassExecutor
+         * init mockRequestHandler
          */
         mockRequestHandler = new MockRequestHandler();
         ReflectionTestUtils.setField(mockRequestHandler, "syncExecutor", entityClassSyncExecutor);

@@ -62,6 +62,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
         /**
          * 启动observerStream监控
          */
+        isShutdown = false;
         executorService.submit(this::startObserverStream);
     }
 

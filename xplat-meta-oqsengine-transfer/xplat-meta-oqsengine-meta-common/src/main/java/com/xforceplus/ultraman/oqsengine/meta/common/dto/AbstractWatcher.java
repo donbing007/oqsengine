@@ -56,7 +56,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     }
 
     @Override
-    public synchronized void addWatch(WatchElement w) {
+    public void addWatch(WatchElement w) {
         watches.putIfAbsent(w.getAppId(), w);
     }
 
@@ -116,6 +116,10 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     public void onServe() {
         onServe = true;
+        /**
+         * 打开服务时设置一次heartbeat
+         */
+        resetHeartBeat();
     }
 
     public void notServer() {

@@ -17,8 +17,10 @@ import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest;
@@ -41,7 +43,6 @@ public class SyncRequestHandler implements IRequestHandler {
     @Resource
     private RequestWatchExecutor requestWatchExecutor;
 
-
     @Override
     public boolean register(String appId, int version) {
         return register(Collections.singletonList(new AbstractMap.SimpleEntry<>(appId, version)));
@@ -53,6 +54,7 @@ public class SyncRequestHandler implements IRequestHandler {
         /**
          * 这里只判断是否watcher为空，如果服务watcher不为空
          */
+
         if (null == watcher) {
             logger.warn("current gRpc-client is not init, can't offer appIds:{}."
                     , appIdEntries.stream().map(AbstractMap.SimpleEntry::getKey).collect(Collectors.toList()));
@@ -65,6 +67,7 @@ public class SyncRequestHandler implements IRequestHandler {
             return false;
         }
 
+        AtomicBoolean ret = new AtomicBoolean(true);
         appIdEntries.stream()
                 .filter(s -> {
                     if (watcher.watches().containsKey(s.getKey())) {
@@ -82,6 +85,7 @@ public class SyncRequestHandler implements IRequestHandler {
                              */
                             if (!requestWatchExecutor.canAccess(watcher.uid())) {
                                 requestWatchExecutor.addForgot(v.getKey(), v.getValue());
+                                ret.set(false);
                             } else {
                                 EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
 
@@ -96,6 +100,7 @@ public class SyncRequestHandler implements IRequestHandler {
                                             requestWatchExecutor.accessFunction(), entityClassSyncRequest.getUid());
                                 } catch (Exception e) {
                                     status = WatchElement.AppStatus.Init;
+                                    ret.set(false);
                                 }
 
                                 requestWatchExecutor.add(new WatchElement(v.getKey(), v.getValue(), status));
@@ -105,7 +110,7 @@ public class SyncRequestHandler implements IRequestHandler {
 
         logger.info("current watchList status : {}", watcher.watches().toString());
 
-        return true;
+        return ret.get();
     }
 
     /**
@@ -124,14 +129,18 @@ public class SyncRequestHandler implements IRequestHandler {
 
                     EntityClassSyncRequest entityClassSyncRequest =
                             builder.setAppId(e.getKey())
-                                    .setVersion(version(e.getKey()))
+                                    .setVersion(e.getValue().getVersion())
                                     .setUid(requestWatcher.uid())
                                     .setStatus(RequestStatus.REGISTER.ordinal()).build();
 
                     sendRequest(requestWatcher, entityClassSyncRequest);
+                    /**
+                     * 刷新注册时间
+                     */
+                    e.getValue().setRegisterTime(System.currentTimeMillis());
                 } catch (Exception ex) {
                     isOperationOK = false;
-                    logger.warn("reRegister watcherElement-[{}] failed.", e.getValue().toString());
+                    logger.warn("reRegister watcherElement-[{}] failed, message : {}", e.getValue().toString(), ex.getMessage());
                     requestWatcher.observer().onError(ex);
                     break;
                 }
@@ -149,30 +158,26 @@ public class SyncRequestHandler implements IRequestHandler {
         /**
          * 回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
          */
-        try {
-            sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequestBuilder.setUid(entityClassSyncResponse.getUid()).build(),
-                    requestWatchExecutor.accessFunction(), entityClassSyncResponse.getUid());
-        } catch (Exception ex) {
-            throw new MetaSyncClientException(
-                    String.format("stream observer ack error, message-[%s].", ex.getMessage()), true);
-        }
+        sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequestBuilder.setUid(entityClassSyncResponse.getUid()).build(),
+                requestWatchExecutor.accessFunction(), entityClassSyncResponse.getUid());
     }
 
     /**
      * 执行方法
      *
      * @param entityClassSyncResponse
-     * @return EntityClassSyncRequest
+     * @return EntityClassSyncRequest.Builder
      */
     @SuppressWarnings("unchecked")
     private EntityClassSyncRequest.Builder execute(EntityClassSyncResponse entityClassSyncResponse) {
-
+        int status = SYNC_FAIL.ordinal();
+        EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
         try {
+            builder.setAppId(entityClassSyncResponse.getAppId())
+                    .setVersion(entityClassSyncResponse.getVersion());
             /**
              * 该方法返回的错误不会导致重新连接、但会通知服务端本次推送更新失败
              */
-            int status = SYNC_FAIL.ordinal();
-            EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
             try {
                 /**
                  * md5 check && 是否已存在版本判断
@@ -194,20 +199,16 @@ public class SyncRequestHandler implements IRequestHandler {
                                 oqsVersion, entityClassSyncResponse.getVersion());
                         status = RequestStatus.SYNC_OK.ordinal();
                     }
-                    return builder.setStatus(status)
-                            .setAppId(entityClassSyncResponse.getAppId())
-                            .setVersion(entityClassSyncResponse.getVersion());
                 }
 
             } catch (Exception e) {
                 logger.warn("handle entityClassSyncResponse failed, message : {}", e.getMessage());
             }
-
-            return builder.setStatus(SYNC_FAIL.ordinal());
         } catch (Exception e) {
             logger.warn("handle entityClassSyncResponse failed, message : {}", e.getMessage());
-            return EntityClassSyncRequest.newBuilder().setStatus(SYNC_FAIL.ordinal());
         }
+
+        return builder.setStatus(status);
     }
 
     private boolean md5Check(String md5, EntityClassSyncRspProto entityClassSyncRspProto) {
@@ -218,6 +219,11 @@ public class SyncRequestHandler implements IRequestHandler {
     }
 
     private int version(String appId) {
-        return syncExecutor.version(appId);
+        try {
+            return syncExecutor.version(appId);
+        } catch (Exception e) {
+            logger.warn("get client version failed, will use default version : {}", NOT_EXIST_VERSION);
+            return NOT_EXIST_VERSION;
+        }
     }
 }

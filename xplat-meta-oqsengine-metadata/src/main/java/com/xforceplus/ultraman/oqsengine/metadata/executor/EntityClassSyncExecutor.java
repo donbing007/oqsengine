@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
 import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.protoToStorageList;
 
@@ -82,7 +83,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                     );
                 }
                 //  step4 set into expired clean task
-                if (expiredVersion != EXPIRED_VERSION) {
+                if (expiredVersion != NOT_EXIST_VERSION) {
                     expireExecutor.offer(new ExpireExecutor.DelayCleanEntity(COMMON_WAIT_TIME_OUT,
                                                     new ExpireExecutor.Expired(appId, expiredVersion)));
                 }
@@ -103,20 +104,23 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         return cacheExecutor.version(appId);
     }
 
-
     private void delayCleanTask() {
         while (true) {
             ExpireExecutor.DelayCleanEntity task = expireExecutor.take();
-            if (null == task) {
+            if (null == task || null == task.element()) {
                 TimeWaitUtils.wakeupAfter(1, TimeUnit.MILLISECONDS);
                 continue;
             }
-
-            if (null != task.element()) {
-                boolean isClean  =
+            try {
+                boolean isClean =
                         cacheExecutor.clean(task.element().getAppId(), task.element().getVersion(), false);
 
-                logger.debug("clean app : {}, version : {}， success : {}", task.element().getAppId(), task.element().getVersion(), isClean);
+                logger.debug("clean app : {}, version : {}， success : {}"
+                        , task.element().getAppId(), task.element().getVersion(), isClean);
+            } catch (Exception e) {
+                //  ignore
+                logger.warn("clean app : {}, version : {} catch exception, message : {} , but will ignore..."
+                        , task.element().getAppId(), task.element().getVersion(), e.getMessage());
             }
         }
     }
