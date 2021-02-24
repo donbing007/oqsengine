@@ -108,16 +108,4 @@ public class RedisLuaScript {
                 "result[ARGV[i]] = ret;" +
             "end;" +
             "return cjson.encode(result);";
-
-
-    /**
-     * 删除过期信息
-     */
-    public static String EXPIRED_VERSION_ENTITY_CLASS =
-            "local currentEntity = string.format('%s.%s.%s', KEYS[1],ARGV[1],ARGV[2]);" +
-            "local keys = redis.call('hkeys', currentEntity);" +
-            "for i, v in ipairs(keys) do " +
-                "redis.call('hdel', currentEntity, v);" +
-            "end;" +
-            "return 1";
 }

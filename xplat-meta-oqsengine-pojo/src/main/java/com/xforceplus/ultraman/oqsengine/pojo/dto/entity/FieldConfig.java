@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -52,8 +53,6 @@ public class FieldConfig implements Serializable {
 
             return null;
         }
-
-
     }
 
     /**
@@ -323,5 +322,99 @@ public class FieldConfig implements Serializable {
         sb.append(", displayType='").append(displayType).append('\'');
         sb.append('}');
         return sb.toString();
+    }
+
+    public static final class Builder {
+        private boolean searchable = false;
+        private long max = Long.MAX_VALUE;
+        private long min = Long.MIN_VALUE;
+        private int precision = 0;
+        private boolean identifie = false;
+        private boolean required = false;
+        private FieldSense fieldSense = FieldSense.UNKNOWN;
+        private String validateRegexString = "";
+        private boolean splittable = false;
+        private String delimiter = "";
+        private String displayType = "";
+
+        private Builder() {
+        }
+
+        public static FieldConfig.Builder anFieldConfig() {
+            return new FieldConfig.Builder();
+        }
+
+        public FieldConfig.Builder withSearchable(boolean searchable) {
+            this.searchable = searchable;
+            return this;
+        }
+
+        public FieldConfig.Builder withMax(long max) {
+            this.max = max;
+            return this;
+        }
+
+        public FieldConfig.Builder withMin(long min) {
+            this.min = min;
+            return this;
+        }
+
+        public FieldConfig.Builder withPrecision(int precision) {
+            this.precision = precision;
+            return this;
+        }
+
+        public FieldConfig.Builder withIdentifie(boolean identifie) {
+            this.identifie = identifie;
+            return this;
+        }
+
+        public FieldConfig.Builder withRequired(boolean required) {
+            this.required = required;
+            return this;
+        }
+
+        public FieldConfig.Builder withFieldSense(FieldSense fieldSense) {
+            this.fieldSense = fieldSense;
+            return this;
+        }
+
+        public FieldConfig.Builder withValidateRegexString(String validateRegexString) {
+            this.validateRegexString = validateRegexString;
+            return this;
+        }
+
+        public FieldConfig.Builder withSplittable(boolean splittable) {
+            this.splittable = splittable;
+            return this;
+        }
+
+        public FieldConfig.Builder withDelimiter(String delimiter) {
+            this.delimiter = delimiter;
+            return this;
+        }
+
+        public FieldConfig.Builder withDisplayType(String displayType) {
+            this.displayType = displayType;
+            return this;
+        }
+
+
+        public FieldConfig build() {
+            FieldConfig fieldConfig = new FieldConfig();
+            fieldConfig.searchable = searchable;
+            fieldConfig.max = max;
+            fieldConfig.min = min;
+            fieldConfig.precision = precision;
+            fieldConfig.identifie = identifie;
+            fieldConfig.required = required;
+            fieldConfig.fieldSense = fieldSense;
+            fieldConfig.validateRegexString = validateRegexString;
+            fieldConfig.splittable = splittable;
+            fieldConfig.delimiter = delimiter;
+            fieldConfig.displayType = displayType;
+
+            return fieldConfig;
+        }
     }
 }

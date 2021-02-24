@@ -1,12 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.dto.IWatcher;
-import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
@@ -21,25 +18,38 @@ import java.util.concurrent.TimeUnit;
  */
 public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCleanEntity>  {
 
+    final Logger logger = LoggerFactory.getLogger(ExpireExecutor.class);
+
+    private static volatile boolean isOnServer = true;
+
     private static DelayQueue<DelayCleanEntity> delayTasks = new DelayQueue<DelayCleanEntity>();
 
     public DelayCleanEntity take() {
-        try {
-            return delayTasks.take();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (isOnServer) {
+            try {
+                return delayTasks.take();
+            } catch (InterruptedException e) {
+                logger.warn("expireExecutor is interrupted, may stop server...");
+            }
         }
         return null;
     }
 
     public void offer(DelayCleanEntity task) {
-        try {
-            delayTasks.offer(task);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (isOnServer) {
+            try {
+                delayTasks.offer(task);
+            } catch (Exception e) {
+                logger.warn("offer failed, message : {}", e.getMessage());
+                //  ignore
+            }
         }
     }
 
+    @Override
+    public void off() {
+        isOnServer = false;
+    }
 
     public static class DelayCleanEntity implements Delayed {
         private Expired e;

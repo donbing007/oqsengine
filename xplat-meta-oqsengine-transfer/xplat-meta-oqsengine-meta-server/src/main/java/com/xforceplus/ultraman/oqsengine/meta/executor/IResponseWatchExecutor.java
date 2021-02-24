@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.meta.executor;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.IWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import io.grpc.stub.StreamObserver;
 
@@ -16,7 +17,7 @@ import java.util.Optional;
  * date : 2021/2/7
  * @since : 1.8
  */
-public interface IResponseWatchExecutor {
+public interface IResponseWatchExecutor extends IWatchExecutor {
 
     void heartBeat(String uid);
 

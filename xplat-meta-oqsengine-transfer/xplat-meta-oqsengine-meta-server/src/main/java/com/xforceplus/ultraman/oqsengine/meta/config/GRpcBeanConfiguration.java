@@ -66,7 +66,6 @@ public class GRpcBeanConfiguration {
         /**
          * 启动监控线程
          */
-        watchExecutor.start();
 
         return watchExecutor;
     }

@@ -8,19 +8,18 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.BUSINESS_HANDLER_ERROR;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.EXPIRED_VERSION;
-import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.fromProtoBuffer;
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
+import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorageConvert.protoToStorageList;
 
 /**
  * desc :
@@ -31,6 +30,8 @@ import static com.xforceplus.ultraman.oqsengine.metadata.utils.EntityClassStorag
  * @since : 1.8
  */
 public class EntityClassSyncExecutor implements SyncExecutor {
+
+    final Logger logger = LoggerFactory.getLogger(EntityClassSyncExecutor.class);
 
     @Resource
     private ICacheExecutor cacheExecutor;
@@ -58,7 +59,8 @@ public class EntityClassSyncExecutor implements SyncExecutor {
      */
     @PreDestroy
     public void stop() {
-        ThreadUtils.shutdown(thread, COMMON_WAIT_TIME_OUT);
+        expireExecutor.off();
+        ThreadUtils.shutdown(thread, SHUT_DOWN_WAIT_TIME_OUT);
     }
 
 
@@ -71,7 +73,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                 int expiredVersion = version(appId);
 
                 // step2 convert to storage
-                List<EntityClassStorage> entityClassStorageList = convert(version, entityClassSyncRspProto);
+                List<EntityClassStorage> entityClassStorageList = protoToStorageList(entityClassSyncRspProto);
 
                 // step3 update new Hash in redis
                 if (!cacheExecutor.save(appId, version, entityClassStorageList)) {
@@ -79,7 +81,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
                             String.format("save batches failed, appId : [%s], version : [%d]", appId, version), false
                     );
                 }
-                //  step4 set into expired to clean after expiredTime
+                //  step4 set into expired clean task
                 if (expiredVersion != EXPIRED_VERSION) {
                     expireExecutor.offer(new ExpireExecutor.DelayCleanEntity(COMMON_WAIT_TIME_OUT,
                                                     new ExpireExecutor.Expired(appId, expiredVersion)));
@@ -101,39 +103,6 @@ public class EntityClassSyncExecutor implements SyncExecutor {
         return cacheExecutor.version(appId);
     }
 
-    /**
-     * 将protoBuf转为EntityClassStorage列表
-     * @param version
-     * @param entityClassSyncRspProto
-     * @return
-     */
-    private List<EntityClassStorage> convert(int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-        Map<Long, EntityClassStorage> temp = entityClassSyncRspProto.getEntityClassesList().stream().map(
-                ecs -> {
-                    EntityClassStorage e = fromProtoBuffer(ecs, EntityClassStorage.class);
-                    e.setVersion(version);
-                    return e;
-                }
-        ).collect(Collectors.toMap(EntityClassStorage::getId, s1 -> s1,  (s1, s2) -> s1));
-
-        return temp.values().stream().peek(
-                v -> {
-                    Long fatherId = v.getFatherId();
-                    if (null != fatherId) {
-                        while (null != fatherId) {
-                            EntityClassStorage entityClassStorage = temp.get(v.getFatherId());
-                            if (null == entityClassStorage) {
-                                throw new MetaSyncClientException(
-                                        String.format("father entityClass : [%d] missed.", v.getFatherId()), BUSINESS_HANDLER_ERROR.ordinal());
-                            }
-                            v.addAncestors(v.getFatherId());
-                            fatherId = entityClassStorage.getFatherId();
-                        }
-                    }
-                }
-        ).collect(Collectors.toList());
-    }
-
 
     private void delayCleanTask() {
         while (true) {
@@ -144,7 +113,10 @@ public class EntityClassSyncExecutor implements SyncExecutor {
             }
 
             if (null != task.element()) {
-                cacheExecutor.clean(task.element().getAppId(), task.element().getVersion(), false);
+                boolean isClean  =
+                        cacheExecutor.clean(task.element().getAppId(), task.element().getVersion(), false);
+
+                logger.debug("clean app : {}, version : {}， success : {}", task.element().getAppId(), task.element().getVersion(), isClean);
             }
         }
     }

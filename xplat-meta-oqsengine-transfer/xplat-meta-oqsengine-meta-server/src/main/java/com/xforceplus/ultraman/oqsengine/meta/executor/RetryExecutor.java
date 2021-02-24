@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
@@ -16,19 +18,36 @@ import java.util.concurrent.TimeUnit;
  */
 public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask> {
 
+    final Logger logger = LoggerFactory.getLogger(RetryExecutor.class);
+
     private static DelayQueue<DelayTask> delayTasks = new DelayQueue<DelayTask>();
 
+    private static volatile boolean isOnServer = true;
+
     public DelayTask take() {
-        try {
-            return delayTasks.take();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (isOnServer) {
+            try {
+                return delayTasks.take();
+            } catch (InterruptedException e) {
+                logger.warn("retryExecutor is interrupted, may stop server...");
+            }
         }
         return null;
     }
 
     public void offer(DelayTask task) {
-        delayTasks.offer(task);
+        if (isOnServer) {
+            try {
+                delayTasks.offer(task);
+            } catch (Exception e) {
+                logger.warn("offer failed, message : {}", e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public void off() {
+        isOnServer = false;
     }
 
 

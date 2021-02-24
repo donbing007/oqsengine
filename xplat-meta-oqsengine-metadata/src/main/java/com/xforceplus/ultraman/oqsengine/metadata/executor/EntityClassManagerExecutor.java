@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
-import com.xforceplus.ultraman.oqsengine.meta.executor.IEntityClassExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IEntityClassExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
@@ -12,11 +12,11 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.NOT_EXIST_VERSION;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
 
 /**
  * desc :
@@ -44,13 +44,13 @@ public class EntityClassManagerExecutor implements MetaManager {
     }
 
     @Override
-    public IEntityClass load(long id) {
+    public Optional<IEntityClass> load(long id) {
         try {
             Map<Long, EntityClassStorage> entityClassStorageMaps = cacheExecutor.read(id);
-            return toEntityClass(id, entityClassStorageMaps);
+            return Optional.of(toEntityClass(id, entityClassStorageMaps));
         } catch (Exception e) {
-            logger.warn(e.getMessage());
-            throw new RuntimeException(String.format("load entityClass [%d] error, message [%s]", id, e.getMessage()));
+            logger.warn(String.format("load entityClass [%d] error, message [%s]", id, e.getMessage()));
+            return Optional.empty();
         }
     }
 
@@ -123,7 +123,7 @@ public class EntityClassManagerExecutor implements MetaManager {
         /**
          * 加载父类
          */
-        if (null != entityClassStorage.getFatherId()) {
+        if (null != entityClassStorage.getFatherId() && entityClassStorage.getFatherId() >= MIN_ID) {
             builder.withFather(toEntityClass(entityClassStorage.getFatherId(), entityClassStorageMaps));
         }
 

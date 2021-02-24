@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.meta.executor;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
@@ -16,6 +15,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+
 /**
  * desc :
  * name : ResponseWatchExecutor
@@ -24,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  * date : 2021/2/4
  * @since : 1.8
  */
-public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExecutor {
+public class ResponseWatchExecutor implements IResponseWatchExecutor {
 
     @Resource
     private GRpcParamsConfig gRpcParamsConfig;
@@ -84,7 +85,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExec
                             v.release();
                         }
                 });
-        ThreadUtils.shutdown(thread, gRpcParamsConfig.getMonitorSleepDuration());
+        ThreadUtils.shutdown(thread, SHUT_DOWN_WAIT_TIME_OUT);
     }
 
 
@@ -122,7 +123,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExec
      * @param watchElement
      */
     @Override
-    public boolean update(String uid, WatchElement watchElement) {
+    public synchronized boolean update(String uid, WatchElement watchElement) {
         IWatcher<EntityClassSyncResponse> watcher = watchers.get(uid);
         if (null != watcher) {
             WatchElement we = watcher.watches().get(watchElement.getAppId());

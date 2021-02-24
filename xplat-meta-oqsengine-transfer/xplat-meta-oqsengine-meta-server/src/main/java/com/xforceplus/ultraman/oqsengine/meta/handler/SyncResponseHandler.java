@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils;
@@ -14,6 +15,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.IWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerator;
+import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,10 +23,12 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.CONFIRM_HEARTBEAT;
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.CONFIRM_REGISTER;
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Notice;
 
 
@@ -36,7 +40,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.App
  * date : 2021/2/4
  * @since : 1.8
  */
-public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResponse>, BasicMessageHandler {
+public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResponse> {
 
     private Logger logger = LoggerFactory.getLogger(SyncResponseHandler.class);
 
@@ -50,7 +54,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     private EntityClassGenerator entityClassGenerator;
 
     @Resource(name = "gRpcTaskExecutor")
-    private Executor executor;
+    private ExecutorService executor;
 
     @Resource
     private GRpcParamsConfig gRpcParamsConfig;
@@ -75,7 +79,54 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      */
     @Override
     public void stop() {
-        ThreadUtils.shutdown(thread, gRpcParamsConfig.getMonitorSleepDuration());
+        retryExecutor.off();
+        ThreadUtils.shutdown(thread, SHUT_DOWN_WAIT_TIME_OUT);
+    }
+
+    @Override
+    public void onNext(EntityClassSyncRequest entityClassSyncRequest,
+                       StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
+        executor.submit(() -> {
+            if (entityClassSyncRequest.getStatus() == HEARTBEAT.ordinal()) {
+                /**
+                 * 处理心跳
+                 */
+                String uid = entityClassSyncRequest.getUid();
+                if (null != uid) {
+                    watchExecutor.heartBeat(uid);
+
+                    confirmHeartBeat(uid);
+                }
+            } else if (entityClassSyncRequest.getStatus() == REGISTER.ordinal()) {
+                /**
+                 * 处理注册
+                 */
+                WatchElement w =
+                        new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(), WatchElement.AppStatus.Register);
+                watchExecutor.add(entityClassSyncRequest.getUid(), responseStreamObserver, w);
+
+                /**
+                 * 确认注册信息
+                 */
+                confirmRegister(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(),
+                        entityClassSyncRequest.getUid());
+
+            } else if (entityClassSyncRequest.getStatus() == SYNC_OK.ordinal()) {
+                /**
+                 * 处理返回结果成功
+                 */
+                watchExecutor.update(entityClassSyncRequest.getUid(),
+                        new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(),
+                                WatchElement.AppStatus.Confirmed));
+
+            } else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
+                /**
+                 * 处理返回结果失败
+                 */
+                pull(entityClassSyncRequest.getAppId(),
+                        entityClassSyncRequest.getVersion(), entityClassSyncRequest.getUid());
+            }
+        });
     }
 
     /**
@@ -84,16 +135,14 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      * @param version
      * @param uid
      */
-    @Override
-    public void confirmRegister(String appId, int version, String uid) {
+    private void confirmRegister(String appId, int version, String uid) {
         response(appId, version, uid, CONFIRM_REGISTER);
     }
     /**
      * 实现SyncHandler中的heartBeatConfirm功能
      * @param uid
      */
-    @Override
-    public void confirmHeartBeat(String uid) {
+    private void confirmHeartBeat(String uid) {
         response(null, -1, uid, CONFIRM_HEARTBEAT);
     }
 
@@ -126,6 +175,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      * @param event
      * @return
      */
+    @Override
     public boolean push(AppUpdateEvent event) {
         return response(event.getAppId(), event.getVersion(), event.getEntityClassSyncRspProto(), null);
     }
@@ -245,7 +295,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         while (true) {
             RetryExecutor.DelayTask task = retryExecutor.take();
             if (null == task) {
-                TimeWaitUtils.wakeupAfter(1, TimeUnit.MILLISECONDS);
+                TimeWaitUtils.wakeupAfter(5, TimeUnit.MILLISECONDS);
                 continue;
             }
 

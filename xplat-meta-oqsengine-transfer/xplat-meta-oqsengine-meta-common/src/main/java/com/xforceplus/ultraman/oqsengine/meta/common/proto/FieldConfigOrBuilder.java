@@ -73,26 +73,11 @@ public interface FieldConfigOrBuilder extends
       getDisplayTypeBytes();
 
   /**
-   * <code>string uniqueName = 11;</code>
+   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
    */
-  java.lang.String getUniqueName();
+  int getMetaFieldSenseValue();
   /**
-   * <code>string uniqueName = 11;</code>
+   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
    */
-  com.google.protobuf.ByteString
-      getUniqueNameBytes();
-
-  /**
-   * <code>bool isSystem = 12;</code>
-   */
-  boolean getIsSystem();
-
-  /**
-   * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
-   */
-  int getSystemTypeValue();
-  /**
-   * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
-   */
-  com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType getSystemType();
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense getMetaFieldSense();
 }

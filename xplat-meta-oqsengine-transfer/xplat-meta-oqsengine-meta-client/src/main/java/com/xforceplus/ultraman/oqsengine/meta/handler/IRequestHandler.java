@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.meta.executor;
+package com.xforceplus.ultraman.oqsengine.meta.handler;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 
@@ -13,7 +13,7 @@ import java.util.List;
  * date : 2021/2/3
  * @since : 1.8
  */
-public interface IEntityClassExecutor {
+public interface IRequestHandler {
 
     /**
      * 注册一个appId，并开始监听

@@ -18,7 +18,7 @@ public class TimeWaitUtils {
         try {
             Thread.sleep(timeUnit.toMillis(duration));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            //  ignore
         }
     }
 }

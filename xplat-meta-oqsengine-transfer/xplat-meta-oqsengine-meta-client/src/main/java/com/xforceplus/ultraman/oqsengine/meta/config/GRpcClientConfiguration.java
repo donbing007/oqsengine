@@ -5,10 +5,10 @@ import com.xforceplus.ultraman.oqsengine.meta.IEntityClassSyncClient;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
 import com.xforceplus.ultraman.oqsengine.meta.connect.MetaSyncGRpcClient;
-import com.xforceplus.ultraman.oqsengine.meta.executor.EntityClassExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.executor.IEntityClassExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
+import com.xforceplus.ultraman.oqsengine.meta.handler.SyncRequestHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -77,8 +77,8 @@ public class GRpcClientConfiguration {
     }
 
     @Bean
-    public IEntityClassExecutor entityClassExecutor() {
-        return new EntityClassExecutor();
+    public IRequestHandler requestHandler() {
+        return new SyncRequestHandler();
     }
 
     @Bean

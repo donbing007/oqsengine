@@ -26,9 +26,7 @@ private static final long serialVersionUID = 0L;
     isSplittable_ = false;
     delimiter_ = "";
     displayType_ = "";
-    uniqueName_ = "";
-    isSystem_ = false;
-    systemType_ = 0;
+    metaFieldSense_ = 0;
   }
 
   @java.lang.Override
@@ -115,21 +113,10 @@ private static final long serialVersionUID = 0L;
             displayType_ = s;
             break;
           }
-          case 90: {
-            java.lang.String s = input.readStringRequireUtf8();
-
-            uniqueName_ = s;
-            break;
-          }
-          case 96: {
-
-            isSystem_ = input.readBool();
-            break;
-          }
-          case 104: {
+          case 88: {
             int rawValue = input.readEnum();
 
-            systemType_ = rawValue;
+            metaFieldSense_ = rawValue;
             break;
           }
         }
@@ -157,93 +144,101 @@ private static final long serialVersionUID = 0L;
   }
 
   /**
-   * Protobuf enum {@code FieldConfig.SystemFieldType}
+   * Protobuf enum {@code FieldConfig.MetaFieldSense}
    */
-  public enum SystemFieldType
+  public enum MetaFieldSense
       implements com.google.protobuf.ProtocolMessageEnum {
     /**
-     * <code>NORMAL = 0;</code>
+     * <code>UNKNOWN = 0;</code>
      */
-    NORMAL(0),
+    UNKNOWN(0),
     /**
-     * <code>TENANT_ID = 1;</code>
+     * <code>NORMAL = 1;</code>
      */
-    TENANT_ID(1),
+    NORMAL(1),
     /**
-     * <code>TENANT_CODE = 2;</code>
+     * <code>TENANT_ID = 2;</code>
      */
-    TENANT_CODE(2),
+    TENANT_ID(2),
     /**
-     * <code>CREATE_TIME = 3;</code>
+     * <code>TENANT_CODE = 3;</code>
      */
-    CREATE_TIME(3),
+    TENANT_CODE(3),
     /**
-     * <code>UPDATE_TIME = 4;</code>
+     * <code>CREATE_TIME = 4;</code>
      */
-    UPDATE_TIME(4),
+    CREATE_TIME(4),
     /**
-     * <code>CREATE_USER_ID = 5;</code>
+     * <code>UPDATE_TIME = 5;</code>
      */
-    CREATE_USER_ID(5),
+    UPDATE_TIME(5),
     /**
-     * <code>UPDATE_USER_ID = 6;</code>
+     * <code>CREATE_USER_ID = 6;</code>
      */
-    UPDATE_USER_ID(6),
+    CREATE_USER_ID(6),
     /**
-     * <code>CREATE_USER_NAME = 7;</code>
+     * <code>UPDATE_USER_ID = 7;</code>
      */
-    CREATE_USER_NAME(7),
+    UPDATE_USER_ID(7),
     /**
-     * <code>UPDATE_USER_NAME = 8;</code>
+     * <code>CREATE_USER_NAME = 8;</code>
      */
-    UPDATE_USER_NAME(8),
+    CREATE_USER_NAME(8),
     /**
-     * <code>DELETE_FLAG = 9;</code>
+     * <code>UPDATE_USER_NAME = 9;</code>
      */
-    DELETE_FLAG(9),
+    UPDATE_USER_NAME(9),
+    /**
+     * <code>DELETE_FLAG = 10;</code>
+     */
+    DELETE_FLAG(10),
     UNRECOGNIZED(-1),
     ;
 
     /**
-     * <code>NORMAL = 0;</code>
+     * <code>UNKNOWN = 0;</code>
      */
-    public static final int NORMAL_VALUE = 0;
+    public static final int UNKNOWN_VALUE = 0;
     /**
-     * <code>TENANT_ID = 1;</code>
+     * <code>NORMAL = 1;</code>
      */
-    public static final int TENANT_ID_VALUE = 1;
+    public static final int NORMAL_VALUE = 1;
     /**
-     * <code>TENANT_CODE = 2;</code>
+     * <code>TENANT_ID = 2;</code>
      */
-    public static final int TENANT_CODE_VALUE = 2;
+    public static final int TENANT_ID_VALUE = 2;
     /**
-     * <code>CREATE_TIME = 3;</code>
+     * <code>TENANT_CODE = 3;</code>
      */
-    public static final int CREATE_TIME_VALUE = 3;
+    public static final int TENANT_CODE_VALUE = 3;
     /**
-     * <code>UPDATE_TIME = 4;</code>
+     * <code>CREATE_TIME = 4;</code>
      */
-    public static final int UPDATE_TIME_VALUE = 4;
+    public static final int CREATE_TIME_VALUE = 4;
     /**
-     * <code>CREATE_USER_ID = 5;</code>
+     * <code>UPDATE_TIME = 5;</code>
      */
-    public static final int CREATE_USER_ID_VALUE = 5;
+    public static final int UPDATE_TIME_VALUE = 5;
     /**
-     * <code>UPDATE_USER_ID = 6;</code>
+     * <code>CREATE_USER_ID = 6;</code>
      */
-    public static final int UPDATE_USER_ID_VALUE = 6;
+    public static final int CREATE_USER_ID_VALUE = 6;
     /**
-     * <code>CREATE_USER_NAME = 7;</code>
+     * <code>UPDATE_USER_ID = 7;</code>
      */
-    public static final int CREATE_USER_NAME_VALUE = 7;
+    public static final int UPDATE_USER_ID_VALUE = 7;
     /**
-     * <code>UPDATE_USER_NAME = 8;</code>
+     * <code>CREATE_USER_NAME = 8;</code>
      */
-    public static final int UPDATE_USER_NAME_VALUE = 8;
+    public static final int CREATE_USER_NAME_VALUE = 8;
     /**
-     * <code>DELETE_FLAG = 9;</code>
+     * <code>UPDATE_USER_NAME = 9;</code>
      */
-    public static final int DELETE_FLAG_VALUE = 9;
+    public static final int UPDATE_USER_NAME_VALUE = 9;
+    /**
+     * <code>DELETE_FLAG = 10;</code>
+     */
+    public static final int DELETE_FLAG_VALUE = 10;
 
 
     public final int getNumber() {
@@ -258,35 +253,36 @@ private static final long serialVersionUID = 0L;
      * @deprecated Use {@link #forNumber(int)} instead.
      */
     @java.lang.Deprecated
-    public static SystemFieldType valueOf(int value) {
+    public static MetaFieldSense valueOf(int value) {
       return forNumber(value);
     }
 
-    public static SystemFieldType forNumber(int value) {
+    public static MetaFieldSense forNumber(int value) {
       switch (value) {
-        case 0: return NORMAL;
-        case 1: return TENANT_ID;
-        case 2: return TENANT_CODE;
-        case 3: return CREATE_TIME;
-        case 4: return UPDATE_TIME;
-        case 5: return CREATE_USER_ID;
-        case 6: return UPDATE_USER_ID;
-        case 7: return CREATE_USER_NAME;
-        case 8: return UPDATE_USER_NAME;
-        case 9: return DELETE_FLAG;
+        case 0: return UNKNOWN;
+        case 1: return NORMAL;
+        case 2: return TENANT_ID;
+        case 3: return TENANT_CODE;
+        case 4: return CREATE_TIME;
+        case 5: return UPDATE_TIME;
+        case 6: return CREATE_USER_ID;
+        case 7: return UPDATE_USER_ID;
+        case 8: return CREATE_USER_NAME;
+        case 9: return UPDATE_USER_NAME;
+        case 10: return DELETE_FLAG;
         default: return null;
       }
     }
 
-    public static com.google.protobuf.Internal.EnumLiteMap<SystemFieldType>
+    public static com.google.protobuf.Internal.EnumLiteMap<MetaFieldSense>
         internalGetValueMap() {
       return internalValueMap;
     }
     private static final com.google.protobuf.Internal.EnumLiteMap<
-        SystemFieldType> internalValueMap =
-          new com.google.protobuf.Internal.EnumLiteMap<SystemFieldType>() {
-            public SystemFieldType findValueByNumber(int number) {
-              return SystemFieldType.forNumber(number);
+        MetaFieldSense> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<MetaFieldSense>() {
+            public MetaFieldSense findValueByNumber(int number) {
+              return MetaFieldSense.forNumber(number);
             }
           };
 
@@ -303,9 +299,9 @@ private static final long serialVersionUID = 0L;
       return com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.getDescriptor().getEnumTypes().get(0);
     }
 
-    private static final SystemFieldType[] VALUES = values();
+    private static final MetaFieldSense[] VALUES = values();
 
-    public static SystemFieldType valueOf(
+    public static MetaFieldSense valueOf(
         com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
       if (desc.getType() != getDescriptor()) {
         throw new java.lang.IllegalArgumentException(
@@ -319,11 +315,11 @@ private static final long serialVersionUID = 0L;
 
     private final int value;
 
-    private SystemFieldType(int value) {
+    private MetaFieldSense(int value) {
       this.value = value;
     }
 
-    // @@protoc_insertion_point(enum_scope:FieldConfig.SystemFieldType)
+    // @@protoc_insertion_point(enum_scope:FieldConfig.MetaFieldSense)
   }
 
   public static final int SEARCHABLE_FIELD_NUMBER = 1;
@@ -491,63 +487,20 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int UNIQUENAME_FIELD_NUMBER = 11;
-  private volatile java.lang.Object uniqueName_;
+  public static final int METAFIELDSENSE_FIELD_NUMBER = 11;
+  private int metaFieldSense_;
   /**
-   * <code>string uniqueName = 11;</code>
+   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
    */
-  public java.lang.String getUniqueName() {
-    java.lang.Object ref = uniqueName_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      uniqueName_ = s;
-      return s;
-    }
+  public int getMetaFieldSenseValue() {
+    return metaFieldSense_;
   }
   /**
-   * <code>string uniqueName = 11;</code>
+   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
    */
-  public com.google.protobuf.ByteString
-      getUniqueNameBytes() {
-    java.lang.Object ref = uniqueName_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      uniqueName_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
-
-  public static final int ISSYSTEM_FIELD_NUMBER = 12;
-  private boolean isSystem_;
-  /**
-   * <code>bool isSystem = 12;</code>
-   */
-  public boolean getIsSystem() {
-    return isSystem_;
-  }
-
-  public static final int SYSTEMTYPE_FIELD_NUMBER = 13;
-  private int systemType_;
-  /**
-   * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
-   */
-  public int getSystemTypeValue() {
-    return systemType_;
-  }
-  /**
-   * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
-   */
-  public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType getSystemType() {
-    com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType result = com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType.valueOf(systemType_);
-    return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType.UNRECOGNIZED : result;
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense getMetaFieldSense() {
+    com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense result = com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.valueOf(metaFieldSense_);
+    return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.UNRECOGNIZED : result;
   }
 
   private byte memoizedIsInitialized = -1;
@@ -592,14 +545,8 @@ private static final long serialVersionUID = 0L;
     if (!getDisplayTypeBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 10, displayType_);
     }
-    if (!getUniqueNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 11, uniqueName_);
-    }
-    if (isSystem_ != false) {
-      output.writeBool(12, isSystem_);
-    }
-    if (systemType_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType.NORMAL.getNumber()) {
-      output.writeEnum(13, systemType_);
+    if (metaFieldSense_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.UNKNOWN.getNumber()) {
+      output.writeEnum(11, metaFieldSense_);
     }
     unknownFields.writeTo(output);
   }
@@ -646,16 +593,9 @@ private static final long serialVersionUID = 0L;
     if (!getDisplayTypeBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(10, displayType_);
     }
-    if (!getUniqueNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(11, uniqueName_);
-    }
-    if (isSystem_ != false) {
+    if (metaFieldSense_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.UNKNOWN.getNumber()) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(12, isSystem_);
-    }
-    if (systemType_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType.NORMAL.getNumber()) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeEnumSize(13, systemType_);
+        .computeEnumSize(11, metaFieldSense_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -693,11 +633,7 @@ private static final long serialVersionUID = 0L;
         .equals(other.getDelimiter());
     result = result && getDisplayType()
         .equals(other.getDisplayType());
-    result = result && getUniqueName()
-        .equals(other.getUniqueName());
-    result = result && (getIsSystem()
-        == other.getIsSystem());
-    result = result && systemType_ == other.systemType_;
+    result = result && metaFieldSense_ == other.metaFieldSense_;
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -735,13 +671,8 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getDelimiter().hashCode();
     hash = (37 * hash) + DISPLAYTYPE_FIELD_NUMBER;
     hash = (53 * hash) + getDisplayType().hashCode();
-    hash = (37 * hash) + UNIQUENAME_FIELD_NUMBER;
-    hash = (53 * hash) + getUniqueName().hashCode();
-    hash = (37 * hash) + ISSYSTEM_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-        getIsSystem());
-    hash = (37 * hash) + SYSTEMTYPE_FIELD_NUMBER;
-    hash = (53 * hash) + systemType_;
+    hash = (37 * hash) + METAFIELDSENSE_FIELD_NUMBER;
+    hash = (53 * hash) + metaFieldSense_;
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -891,11 +822,7 @@ private static final long serialVersionUID = 0L;
 
       displayType_ = "";
 
-      uniqueName_ = "";
-
-      isSystem_ = false;
-
-      systemType_ = 0;
+      metaFieldSense_ = 0;
 
       return this;
     }
@@ -929,9 +856,7 @@ private static final long serialVersionUID = 0L;
       result.isSplittable_ = isSplittable_;
       result.delimiter_ = delimiter_;
       result.displayType_ = displayType_;
-      result.uniqueName_ = uniqueName_;
-      result.isSystem_ = isSystem_;
-      result.systemType_ = systemType_;
+      result.metaFieldSense_ = metaFieldSense_;
       onBuilt();
       return result;
     }
@@ -1006,15 +931,8 @@ private static final long serialVersionUID = 0L;
         displayType_ = other.displayType_;
         onChanged();
       }
-      if (!other.getUniqueName().isEmpty()) {
-        uniqueName_ = other.uniqueName_;
-        onChanged();
-      }
-      if (other.getIsSystem() != false) {
-        setIsSystem(other.getIsSystem());
-      }
-      if (other.systemType_ != 0) {
-        setSystemTypeValue(other.getSystemTypeValue());
+      if (other.metaFieldSense_ != 0) {
+        setMetaFieldSenseValue(other.getMetaFieldSenseValue());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1432,141 +1350,46 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object uniqueName_ = "";
+    private int metaFieldSense_ = 0;
     /**
-     * <code>string uniqueName = 11;</code>
+     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
      */
-    public java.lang.String getUniqueName() {
-      java.lang.Object ref = uniqueName_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        uniqueName_ = s;
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
+    public int getMetaFieldSenseValue() {
+      return metaFieldSense_;
     }
     /**
-     * <code>string uniqueName = 11;</code>
+     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
      */
-    public com.google.protobuf.ByteString
-        getUniqueNameBytes() {
-      java.lang.Object ref = uniqueName_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        uniqueName_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>string uniqueName = 11;</code>
-     */
-    public Builder setUniqueName(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
-      uniqueName_ = value;
+    public Builder setMetaFieldSenseValue(int value) {
+      metaFieldSense_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>string uniqueName = 11;</code>
+     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
      */
-    public Builder clearUniqueName() {
-      
-      uniqueName_ = getDefaultInstance().getUniqueName();
-      onChanged();
-      return this;
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense getMetaFieldSense() {
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense result = com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.valueOf(metaFieldSense_);
+      return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.UNRECOGNIZED : result;
     }
     /**
-     * <code>string uniqueName = 11;</code>
+     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
      */
-    public Builder setUniqueNameBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
-      uniqueName_ = value;
-      onChanged();
-      return this;
-    }
-
-    private boolean isSystem_ ;
-    /**
-     * <code>bool isSystem = 12;</code>
-     */
-    public boolean getIsSystem() {
-      return isSystem_;
-    }
-    /**
-     * <code>bool isSystem = 12;</code>
-     */
-    public Builder setIsSystem(boolean value) {
-      
-      isSystem_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>bool isSystem = 12;</code>
-     */
-    public Builder clearIsSystem() {
-      
-      isSystem_ = false;
-      onChanged();
-      return this;
-    }
-
-    private int systemType_ = 0;
-    /**
-     * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
-     */
-    public int getSystemTypeValue() {
-      return systemType_;
-    }
-    /**
-     * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
-     */
-    public Builder setSystemTypeValue(int value) {
-      systemType_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
-     */
-    public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType getSystemType() {
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType result = com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType.valueOf(systemType_);
-      return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType.UNRECOGNIZED : result;
-    }
-    /**
-     * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
-     */
-    public Builder setSystemType(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.SystemFieldType value) {
+    public Builder setMetaFieldSense(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense value) {
       if (value == null) {
         throw new NullPointerException();
       }
       
-      systemType_ = value.getNumber();
+      metaFieldSense_ = value.getNumber();
       onChanged();
       return this;
     }
     /**
-     * <code>.FieldConfig.SystemFieldType systemType = 13;</code>
+     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
      */
-    public Builder clearSystemType() {
+    public Builder clearMetaFieldSense() {
       
-      systemType_ = 0;
+      metaFieldSense_ = 0;
       onChanged();
       return this;
     }

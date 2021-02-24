@@ -35,13 +35,13 @@ message EntityClassInfo {
 	string code = 1;
 	int64 id = 2;
 	string name = 3;
-	int64 fatherClassId = 4;
+	int64 father = 4;
 	int32 level = 5;
-	repeated EntityFieldInfo entityFields = 6;
-//	repeated int64 childClassIds = 7;
-	repeated RelationInfo relations = 7;
-	bool isAny = 8;
-	bool isDynamic = 9;
+	int32 version = 6;
+	repeated EntityFieldInfo entityFields = 7;
+	repeated RelationInfo relations = 8;
+	bool isAny = 9;
+	bool isDynamic = 10;
 }
 
 message EntityFieldInfo {
@@ -63,7 +63,7 @@ message EntityFieldInfo {
 	FieldType fieldType = 4;
 	string dictId = 5;
 	string defaultValue = 6;
-	repeated FieldConfig fieldConfig = 7;
+	FieldConfig fieldConfig = 7;
 }
 
 message FieldConfig {
@@ -77,21 +77,20 @@ message FieldConfig {
 	bool isSplittable = 8;
 	string delimiter = 9;
 	string displayType = 10;
-	string uniqueName = 11;
-	bool isSystem = 12;
-	SystemFieldType systemType = 13;
+	MetaFieldSense metaFieldSense = 11;
 
-	enum SystemFieldType {
-		NORMAL = 0;
-		TENANT_ID = 1;
-		TENANT_CODE = 2;
-		CREATE_TIME = 3;
-		UPDATE_TIME = 4;
-		CREATE_USER_ID = 5;
-		UPDATE_USER_ID = 6;
-		CREATE_USER_NAME = 7;
-		UPDATE_USER_NAME = 8;
-		DELETE_FLAG = 9;
+	enum MetaFieldSense {
+			UNKNOWN = 0;
+			NORMAL = 1;
+			TENANT_ID = 2;
+			TENANT_CODE = 3;
+			CREATE_TIME = 4;
+			UPDATE_TIME = 5;
+			CREATE_USER_ID = 6;
+			UPDATE_USER_ID = 7;
+			CREATE_USER_NAME = 8;
+			UPDATE_USER_NAME = 9;
+			DELETE_FLAG = 10;
 	}
 }
 

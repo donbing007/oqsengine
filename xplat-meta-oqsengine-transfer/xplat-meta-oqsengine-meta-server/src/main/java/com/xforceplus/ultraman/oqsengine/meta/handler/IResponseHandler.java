@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
+import io.grpc.stub.StreamObserver;
 
 /**
  * desc :
@@ -11,6 +14,9 @@ import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
  * @since : 1.8
  */
 public interface IResponseHandler<T> {
+
+    void onNext(EntityClassSyncRequest entityClassSyncRequest,
+                       StreamObserver<EntityClassSyncResponse> responseStreamObserver);
 
     boolean pull(String appId, int version, String uid);
 

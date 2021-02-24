@@ -9,5 +9,5 @@ package com.xforceplus.ultraman.oqsengine.meta.constant;
  * @since : 1.8
  */
 public class ClientConstant {
-    public static final int clientTaskSize = 3;
+    public static final int CLIENT_TASK_COUNT = 3;
 }
