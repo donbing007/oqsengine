@@ -1,7 +1,7 @@
 package com.xforceplus.ulraman.oqsengine.metadata.executor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xforceplus.ulraman.oqsengine.metadata.mock.MockEntityClassExecutor;
+import com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler;
 import com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
@@ -34,7 +34,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ulraman.oqsengine.metadata.mock.MockEntityClassExecutor.EXIST_MIN_VERSION;
+import static com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
 import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.entityClassSyncResponseGenerator;
 import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.MIN_ID;
@@ -57,7 +57,7 @@ public class EntityClassManagerExecutorTest {
 
     private EntityClassSyncExecutor entityClassSyncExecutor;
 
-    private MockEntityClassExecutor mockEntityClassExecutor;
+    private MockRequestHandler mockRequestHandler;
 
     private EntityClassManagerExecutor entityClassManagerExecutor;
 
@@ -95,8 +95,8 @@ public class EntityClassManagerExecutorTest {
         /**
          * init mockEntityClassExecutor
          */
-        mockEntityClassExecutor = new MockEntityClassExecutor();
-        ReflectionTestUtils.setField(mockEntityClassExecutor, "syncExecutor", entityClassSyncExecutor);
+        mockRequestHandler = new MockRequestHandler();
+        ReflectionTestUtils.setField(mockRequestHandler, "syncExecutor", entityClassSyncExecutor);
 
         /**
          * init entityClassManagerExecutor
@@ -105,7 +105,7 @@ public class EntityClassManagerExecutorTest {
                 TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
         entityClassManagerExecutor = new EntityClassManagerExecutor();
         ReflectionTestUtils.setField(entityClassManagerExecutor, "cacheExecutor", cacheExecutor);
-        ReflectionTestUtils.setField(entityClassManagerExecutor, "entityClassExecutor", mockEntityClassExecutor);
+        ReflectionTestUtils.setField(entityClassManagerExecutor, "requestHandler", mockRequestHandler);
         ReflectionTestUtils.setField(entityClassManagerExecutor, "asyncDispatcher", executorService);
     }
 
@@ -145,7 +145,7 @@ public class EntityClassManagerExecutorTest {
 
         EntityClassSyncResponse entityClassSyncResponse =
                 entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
-        mockEntityClassExecutor.accept(entityClassSyncResponse);
+        mockRequestHandler.accept(entityClassSyncResponse);
 
         Optional<IEntityClass> entityClassOp = entityClassManagerExecutor.load(expectedId);
         Assert.assertTrue(entityClassOp.isPresent());

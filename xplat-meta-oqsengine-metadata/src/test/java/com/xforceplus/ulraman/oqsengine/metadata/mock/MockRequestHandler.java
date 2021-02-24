@@ -1,7 +1,7 @@
 package com.xforceplus.ulraman.oqsengine.metadata.mock;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.*;
-import com.xforceplus.ultraman.oqsengine.meta.handler.IEntityClassExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 
 import javax.annotation.Resource;
@@ -12,13 +12,13 @@ import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.NOT_E
 
 /**
  * desc :
- * name : MockEntityClassExecutor
+ * name : MockRequestHandler
  *
  * @author : xujia
  * date : 2021/2/20
  * @since : 1.8
  */
-public class MockEntityClassExecutor implements IEntityClassExecutor {
+public class MockRequestHandler implements IRequestHandler {
 
     private static final long mockResponseTimeDuration = 5_000;
 

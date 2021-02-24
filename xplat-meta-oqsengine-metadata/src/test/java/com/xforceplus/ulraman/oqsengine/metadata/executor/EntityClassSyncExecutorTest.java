@@ -2,7 +2,7 @@ package com.xforceplus.ulraman.oqsengine.metadata.executor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xforceplus.ulraman.oqsengine.metadata.mock.MockEntityClassExecutor;
+import com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler;
 import com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
@@ -15,16 +15,15 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import org.apache.zookeeper.proto.RequestHeader;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -50,7 +49,7 @@ public class EntityClassSyncExecutorTest {
 
     private EntityClassSyncExecutor entityClassSyncExecutor;
 
-    private MockEntityClassExecutor mockEntityClassExecutor;
+    private MockRequestHandler mockRequestHandler;
 
     private EntityClassManagerExecutor entityClassManagerExecutor;
 
@@ -88,8 +87,8 @@ public class EntityClassSyncExecutorTest {
         /**
          * init mockEntityClassExecutor
          */
-        mockEntityClassExecutor = new MockEntityClassExecutor();
-        ReflectionTestUtils.setField(mockEntityClassExecutor, "syncExecutor", entityClassSyncExecutor);
+        mockRequestHandler = new MockRequestHandler();
+        ReflectionTestUtils.setField(mockRequestHandler, "syncExecutor", entityClassSyncExecutor);
 
         /**
          * init entityClassManagerExecutor
@@ -98,7 +97,7 @@ public class EntityClassSyncExecutorTest {
                 TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
         entityClassManagerExecutor = new EntityClassManagerExecutor();
         ReflectionTestUtils.setField(entityClassManagerExecutor, "cacheExecutor", cacheExecutor);
-        ReflectionTestUtils.setField(entityClassManagerExecutor, "entityClassExecutor", mockEntityClassExecutor);
+        ReflectionTestUtils.setField(entityClassManagerExecutor, "mockRequestHandler", mockRequestHandler);
         ReflectionTestUtils.setField(entityClassManagerExecutor, "asyncDispatcher", executorService);
     }
 
