@@ -1,7 +1,7 @@
 package com.xforceplus.ulraman.oqsengine.metadata.mock;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.*;
-import com.xforceplus.ultraman.oqsengine.meta.executor.IEntityClassExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IEntityClassExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 
 import javax.annotation.Resource;

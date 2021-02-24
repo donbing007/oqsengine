@@ -5,9 +5,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.MockGRpcClient;
-import com.xforceplus.ultraman.oqsengine.meta.executor.EntityClassExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.executor.IEntityClassExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
+import com.xforceplus.ultraman.oqsengine.meta.handler.SyncRequestHandler;
+import com.xforceplus.ultraman.oqsengine.meta.mock.MockServer;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import org.junit.After;
 import org.junit.Assert;
@@ -40,7 +41,7 @@ public class EntityClassSyncClientTest {
 
     private MockGRpcClient mockGRpcClient;
 
-    private IEntityClassExecutor entityClassExecutor;
+    private IRequestHandler requestHandler;
 
     private GRpcParamsConfig gRpcParamsConfig;
 
@@ -48,16 +49,21 @@ public class EntityClassSyncClientTest {
 
     @Before
     public void before() throws InterruptedException {
+
         mockGRpcClient = new MockGRpcClient();
         gRpcParamsConfig = gRpcParamsConfig();
         requestWatchExecutor = requestWatchExecutor();
 
-        entityClassExecutor = entityClassExecutor();
+        requestHandler = requestHandler();
         entityClassSyncClient = new EntityClassSyncClient();
 
+        ExecutorService executorService = new ThreadPoolExecutor(5, 5, 0,
+                TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
+
         ReflectionTestUtils.setField(entityClassSyncClient, "client", mockGRpcClient);
-        ReflectionTestUtils.setField(entityClassSyncClient, "entityClassExecutor", entityClassExecutor);
+        ReflectionTestUtils.setField(entityClassSyncClient, "requestHandler", requestHandler);
         ReflectionTestUtils.setField(entityClassSyncClient, "gRpcParamsConfig", gRpcParamsConfig);
+        ReflectionTestUtils.setField(entityClassSyncClient, "executorService", executorService);
         ReflectionTestUtils.setField(entityClassSyncClient, "requestWatchExecutor", requestWatchExecutor);
 
         entityClassSyncClient.start();
@@ -70,8 +76,8 @@ public class EntityClassSyncClientTest {
         entityClassSyncClient.destroy();
     }
 
-    private IEntityClassExecutor entityClassExecutor() {
-        IEntityClassExecutor entityClassExecutor = new EntityClassExecutor();
+    private IRequestHandler requestHandler() {
+        IRequestHandler requestHandler = new SyncRequestHandler();
 
         SyncExecutor syncExecutor = new SyncExecutor() {
             Map<String, Integer> stringIntegerMap = new HashMap<>();
@@ -87,14 +93,11 @@ public class EntityClassSyncClientTest {
                 return stringIntegerMap.get(appId);
             }
         };
-        ExecutorService executorService = new ThreadPoolExecutor(5, 5, 0,
-                TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
 
-        ReflectionTestUtils.setField(entityClassExecutor, "syncExecutor", syncExecutor);
-        ReflectionTestUtils.setField(entityClassExecutor, "asyncDispatcher", executorService);
-        ReflectionTestUtils.setField(entityClassExecutor, "requestWatchExecutor", requestWatchExecutor);
+        ReflectionTestUtils.setField(requestHandler, "syncExecutor", syncExecutor);
+        ReflectionTestUtils.setField(requestHandler, "requestWatchExecutor", requestWatchExecutor);
 
-        return entityClassExecutor;
+        return requestHandler;
     }
 
     private RequestWatchExecutor requestWatchExecutor() {
@@ -130,16 +133,16 @@ public class EntityClassSyncClientTest {
     }
 
     @Test
-    public void registerTest() throws InterruptedException {
+    public void registerTest() {
         String appId = "registerTest";
         int version = 1;
 
-        boolean ret = entityClassExecutor.register(appId, version);
+        boolean ret = requestHandler.register(appId, version);
         Assert.assertTrue(ret);
         /**
          * 重复注册
          */
-        ret = entityClassExecutor.register(appId, version);
+        ret = requestHandler.register(appId, version);
         Assert.assertTrue(ret);
 
         Assert.assertNotNull(requestWatchExecutor.watcher().watches());
@@ -153,6 +156,30 @@ public class EntityClassSyncClientTest {
         Assert.assertEquals(appId, w.getAppId());
         Assert.assertEquals(version, w.getVersion());
 
+        w = requestWatchExecutor.watcher().watches().get(appId);
+
         Assert.assertEquals(WatchElement.AppStatus.Confirmed, w.getStatus());
+    }
+
+    @Test
+    public void registerTimeoutTest() throws InterruptedException {
+        String appId = "registerTimeoutTest";
+        int version = 1;
+        MockServer.isTestOk = false;
+        /**
+         * 重复注册
+         */
+        boolean ret = requestHandler.register(appId, version);
+        Assert.assertTrue(ret);
+
+        Assert.assertNotNull(requestWatchExecutor.watcher().watches());
+
+        String uid = requestWatchExecutor.watcher().uid();
+
+        MockServer.isTestOk = true;
+
+        Thread.sleep(5000);
+
+        Assert.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
     }
 }

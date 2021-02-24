@@ -7,11 +7,10 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
-import com.xforceplus.ultraman.oqsengine.meta.executor.IEntityClassExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +20,6 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
-import static java.lang.Math.abs;
 
 /**
  * desc :
@@ -39,8 +36,8 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
     @Resource(name = "gRpcClient")
     private GRpcClient client;
 
-    @Resource(name = "entityClassExecutor")
-    private IEntityClassExecutor entityClassExecutor;
+    @Resource(name = "requestHandler")
+    private IRequestHandler requestHandler;
 
     @Resource
     private IRequestWatchExecutor requestWatchExecutor;
@@ -48,7 +45,8 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
     @Resource
     private GRpcParamsConfig gRpcParamsConfig;
 
-    private Thread monitorThread;
+    @Resource(name = "oqsSyncThreadPool")
+    private ExecutorService executorService;
 
     public static volatile boolean isShutdown = false;
 
@@ -61,12 +59,10 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
             throw new MetaSyncClientException("client stub create failed.", true);
         }
 
-        monitorThread = ThreadUtils.create(() -> {
-            startObserverStream();
-            return true;
-        });
-
-        monitorThread.start();
+        /**
+         * 启动observerStream监控
+         */
+        executorService.submit(this::startObserverStream);
     }
 
     @Override
@@ -74,8 +70,6 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
         isShutdown = true;
 
         requestWatchExecutor.stop();
-
-        ThreadUtils.shutdown(monitorThread, SHUT_DOWN_WAIT_TIME_OUT);
 
         if (client.opened()) {
             client.destroy();
@@ -85,7 +79,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
     /**
      * 初始化startObserverStream
      */
-    private void startObserverStream() {
+    private boolean startObserverStream() {
         /**
          * 启动一个新的线程进行stream的监听,当发生断流时，将会重新进行stream的创建.
          */
@@ -116,7 +110,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
              * 当注册失败时，将直接标记该observer不可用
              * 注册成功则直接进入wait状态，直到observer上发生错误为止
              */
-            if (entityClassExecutor.reRegister()) {
+            if (requestHandler.reRegister()) {
                 /**
                  * 设置服务可用
                  */
@@ -149,8 +143,9 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
                 requestWatchExecutor.release();
             }
         }
-    }
 
+        return true;
+    }
 
     /**
      * 初始化stream实现方法
@@ -178,18 +173,23 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
                  * 更新状态
                  */
                 if (entityClassSyncResponse.getStatus() == RequestStatus.CONFIRM_REGISTER.ordinal()) {
-                   requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(),
+                    requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(),
                             entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed));
                 } else {
                     /**
                      * 执行返回结果
                      */
-                    try {
-                        entityClassExecutor.accept(entityClassSyncResponse);
-                    } catch (Exception e) {
-                        logger.warn(e.getMessage());
-                        onError(e);
-                    }
+                    executorService.submit(() -> {
+                        try {
+                            requestHandler.accept(entityClassSyncResponse);
+                        } catch (Exception e) {
+                            logger.warn(e.getMessage());
+                            if (requestWatchExecutor.watcher().isOnServe()) {
+                                requestWatchExecutor.watcher().observer().onError(e);
+                            }
+                        }
+                    });
+
                 }
             }
 

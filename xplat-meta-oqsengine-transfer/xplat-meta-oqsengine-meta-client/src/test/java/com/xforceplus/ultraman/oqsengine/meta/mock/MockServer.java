@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.meta.mock;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
@@ -8,6 +7,9 @@ import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
@@ -24,50 +26,53 @@ public class MockServer extends EntityClassSyncGrpc.EntityClassSyncImplBase {
 
     private Logger logger = LoggerFactory.getLogger(MockServer.class);
 
+    public volatile static boolean isTestOk = true;
+
+    private ExecutorService executorService = new ThreadPoolExecutor(5, 5, 0,
+            TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
+
+    private <T> CompletableFuture<T> async(Supplier<T> supplier) {
+        return CompletableFuture.supplyAsync(supplier, executorService);
+    }
+
     @Override
     public StreamObserver<EntityClassSyncRequest> register(StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
 
         return new StreamObserver<EntityClassSyncRequest>() {
             @Override
             public void onNext(EntityClassSyncRequest entityClassSyncRequest) {
-                try {
-                    Thread.sleep(1_000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                String uid = entityClassSyncRequest.getUid();
+
                 if (entityClassSyncRequest.getStatus() == HEARTBEAT.ordinal()) {
-                    /**
-                     * 处理心跳
-                     */
-                    String uid = entityClassSyncRequest.getUid();
-                    if (null != uid) {
-                        EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
-                                .setStatus(HEARTBEAT.ordinal());
+                        /**
+                         * 处理心跳
+                         */
+                        if (null != uid && isTestOk) {
+                            EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
+                                    .setStatus(HEARTBEAT.ordinal());
+                            responseStreamObserver.onNext(builder.build());
+                        }
+                    } else if (entityClassSyncRequest.getStatus() == REGISTER.ordinal()) {
+                        /**
+                         * 处理注册
+                         */
+                        if (null != uid && isTestOk) {
+                            EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
+                                    .setStatus(CONFIRM_REGISTER.ordinal())
+                                    .setAppId(entityClassSyncRequest.getAppId())
+                                    .setVersion(entityClassSyncRequest.getVersion());
 
-                        responseStreamObserver.onNext(builder.build());
+                            responseStreamObserver.onNext(builder.build());
+                        }
+                    } else if (entityClassSyncRequest.getStatus() == SYNC_OK.ordinal()) {
+                        /**
+                         * 处理返回结果成功
+                         */
+                    } else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
+                        /**
+                         * 处理返回结果失败
+                         */
                     }
-                } else if (entityClassSyncRequest.getStatus() == REGISTER.ordinal()) {
-                    /**
-                     * 处理注册
-                     */
-                    String uid = entityClassSyncRequest.getUid();
-                    EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
-                            .setStatus(CONFIRM_REGISTER.ordinal())
-                            .setAppId(entityClassSyncRequest.getAppId())
-                            .setVersion(entityClassSyncRequest.getVersion());
-
-
-                    responseStreamObserver.onNext(builder.build());
-
-                } else if (entityClassSyncRequest.getStatus() == SYNC_OK.ordinal()) {
-                    /**
-                     * 处理返回结果成功
-                     */
-                } else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
-                    /**
-                     * 处理返回结果失败
-                     */
-                }
             }
 
             @Override

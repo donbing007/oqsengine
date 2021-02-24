@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
-import com.xforceplus.ultraman.oqsengine.meta.executor.IEntityClassExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IEntityClassExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;

@@ -24,8 +24,6 @@ public class MockGRpcClient implements GRpcClient {
 
     private boolean isClientOpen;
 
-    private Thread serverThread;
-
     @Rule
     public GrpcCleanupRule gRpcCleanup = new GrpcCleanupRule();
 
@@ -54,16 +52,13 @@ public class MockGRpcClient implements GRpcClient {
     }
 
     private void buildServer() {
-        serverThread = new Thread(() -> {
-            MockServer mockServer = new MockServer();
-            try {
-                gRpcCleanup.register(InProcessServerBuilder
-                        .forName(serverName).directExecutor().addService(mockServer).build().start());
-            } catch (Exception e) {
-                throw new RuntimeException();
-            }
-        });
-        serverThread.start();
+        MockServer mockServer = new MockServer();
+        try {
+            gRpcCleanup.register(InProcessServerBuilder
+                    .forName(serverName).directExecutor().addService(mockServer).build().start());
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
     }
 
     private void buildChannel() {

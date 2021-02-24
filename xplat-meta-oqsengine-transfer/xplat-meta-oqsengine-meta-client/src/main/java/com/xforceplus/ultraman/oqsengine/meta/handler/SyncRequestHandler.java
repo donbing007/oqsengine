@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.meta.executor;
+package com.xforceplus.ultraman.oqsengine.meta.handler;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReques
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
+import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +16,7 @@ import javax.annotation.Resource;
 import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
@@ -33,22 +31,17 @@ import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest
  * date : 2021/2/3
  * @since : 1.8
  */
-public class EntityClassExecutor implements IEntityClassExecutor {
+public class SyncRequestHandler implements IRequestHandler {
 
-    private Logger logger = LoggerFactory.getLogger(EntityClassExecutor.class);
+    private Logger logger = LoggerFactory.getLogger(SyncRequestHandler.class);
 
     @Resource
     private SyncExecutor syncExecutor;
 
-    @Resource(name = "oqsSyncThreadPool")
-    private ExecutorService asyncDispatcher;
-
     @Resource
     private RequestWatchExecutor requestWatchExecutor;
 
-    private <T> CompletableFuture<T> async(Supplier<T> supplier) {
-        return CompletableFuture.supplyAsync(supplier, asyncDispatcher);
-    }
+
     @Override
     public boolean register(String appId, int version) {
         return register(Collections.singletonList(new AbstractMap.SimpleEntry<>(appId, version)));
@@ -102,7 +95,6 @@ public class EntityClassExecutor implements IEntityClassExecutor {
                                     sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequest,
                                             requestWatchExecutor.accessFunction(), entityClassSyncRequest.getUid());
                                 } catch (Exception e) {
-
                                     status = WatchElement.AppStatus.Init;
                                 }
 
@@ -126,25 +118,22 @@ public class EntityClassExecutor implements IEntityClassExecutor {
         RequestWatcher requestWatcher = requestWatchExecutor.watcher();
         if (null != requestWatcher && requestWatcher.watches().size() > 0) {
             try {
-                requestWatcher.watches().forEach(
-                        (k, v) -> {
-                            EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
+                for (Map.Entry<String, WatchElement> e : requestWatcher.watches().entrySet()) {
+                    EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
 
-                            EntityClassSyncRequest entityClassSyncRequest =
-                                    builder.setAppId(k)
-                                            .setVersion(version(k))
-                                            .setUid(requestWatcher.uid())
-                                            .setStatus(RequestStatus.REGISTER.ordinal()).build();
+                    EntityClassSyncRequest entityClassSyncRequest =
+                            builder.setAppId(e.getKey())
+                                    .setVersion(version(e.getKey()))
+                                    .setUid(requestWatcher.uid())
+                                    .setStatus(RequestStatus.REGISTER.ordinal()).build();
 
-                            try {
-                                sendRequest(requestWatcher, entityClassSyncRequest);
-                            } catch (Exception e) {
-                                throw new MetaSyncClientException(
-                                        String.format("reRegister watchers-[%s] failed.", entityClassSyncRequest.toString()), true);
-                            }
-                        }
-                );
-
+                    try {
+                        sendRequest(requestWatcher, entityClassSyncRequest);
+                    } catch (Exception ex) {
+                        throw new MetaSyncClientException(
+                                String.format("reRegister watchers-[%s] failed.", entityClassSyncRequest.toString()), true);
+                    }
+                }
             } catch (Exception e) {
                 logger.warn(e.getMessage());
                 requestWatcher.observer().onError(e);
@@ -181,7 +170,7 @@ public class EntityClassExecutor implements IEntityClassExecutor {
     @SuppressWarnings("unchecked")
     private EntityClassSyncRequest.Builder execute(EntityClassSyncResponse entityClassSyncResponse) {
 
-        CompletableFuture<EntityClassSyncRequest.Builder> future = async(() -> {
+        try {
             /**
              * 该方法返回的错误不会导致重新连接、但会通知服务端本次推送更新失败
              */
@@ -218,11 +207,7 @@ public class EntityClassExecutor implements IEntityClassExecutor {
             }
 
             return builder.setStatus(SYNC_FAIL.ordinal());
-        });
-
-        try {
-            return future.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (Exception e) {
             logger.warn("handle entityClassSyncResponse failed, message : {}", e.getMessage());
             return EntityClassSyncRequest.newBuilder().setStatus(SYNC_FAIL.ordinal());
         }

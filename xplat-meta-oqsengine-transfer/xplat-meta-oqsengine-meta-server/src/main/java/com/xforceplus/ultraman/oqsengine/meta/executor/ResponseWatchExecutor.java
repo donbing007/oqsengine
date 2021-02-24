@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.meta.executor;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
@@ -26,7 +25,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsCon
  * date : 2021/2/4
  * @since : 1.8
  */
-public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExecutor {
+public class ResponseWatchExecutor implements IResponseWatchExecutor {
 
     @Resource
     private GRpcParamsConfig gRpcParamsConfig;
@@ -124,7 +123,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor, IWatchExec
      * @param watchElement
      */
     @Override
-    public boolean update(String uid, WatchElement watchElement) {
+    public synchronized boolean update(String uid, WatchElement watchElement) {
         IWatcher<EntityClassSyncResponse> watcher = watchers.get(uid);
         if (null != watcher) {
             WatchElement we = watcher.watches().get(watchElement.getAppId());

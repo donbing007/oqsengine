@@ -20,7 +20,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     /**
      * 注册的uid;
      */
-    protected String uid;
+    protected volatile String uid;
 
     /**
      * 上一次的心跳时间
@@ -30,7 +30,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     /**
      * 注册的streamObserver
      */
-    protected StreamObserver<T> streamObserver;
+    protected volatile StreamObserver<T> streamObserver;
 
     /**
      * 当前关注的appId
