@@ -20,9 +20,43 @@ public class FieldDefine {
     public static final String ID = "id";
 
     /**
-     * 数据类型标识.
+     * 实例在0层的类型.
      */
-    public static final String ENTITY = "entity";
+    public static final String ENTITYCLASS_LEVEL_0 = "entityclassl0";
+
+    /**
+     * 实例在1层的类型.
+     */
+    public static final String ENTITYCLASS_LEVEL_1 = "entityclassl1";
+
+    /**
+     * 实例在2层的类型.
+     */
+    public static final String ENTITYCLASS_LEVEL_2 = "entityclassl2";
+    /**
+     * 实例在3层的类型.
+     */
+    public static final String ENTITYCLASS_LEVEL_3 = "entityclassl3";
+    /**
+     * 实例在4层的类型.
+     */
+    public static final String ENTITYCLASS_LEVEL_4 = "entityclassl4";
+
+    /**
+     * 实例产生时的元数据版本.
+     */
+    public static final String ENTITYCLASS_VERSION = "entityclassver";
+
+    /**
+     * 无数据类型各层字段定义.
+     */
+    public static final String[] ENTITYCLASS_LEVEL_LIST = {
+        ENTITYCLASS_LEVEL_0,
+        ENTITYCLASS_LEVEL_1,
+        ENTITYCLASS_LEVEL_2,
+        ENTITYCLASS_LEVEL_3,
+        ENTITYCLASS_LEVEL_4,
+    };
 
     /**
      * 事务号.
@@ -33,6 +67,7 @@ public class FieldDefine {
      * 提交号.
      */
     public static final String COMMITID = "commitid";
+
     /**
      * 操作类型,OperationType 枚举值.
      */
@@ -44,19 +79,14 @@ public class FieldDefine {
     public static final String VERSION = "version";
 
     /**
-     * 数据修改时间.
+     * 创建时间.
      */
-    public static final String TIME = "time";
+    public static final String CREATE_TIME = "createtime";
 
     /**
-     * 数据继承的父类型数据标识.
+     * 修改时间
      */
-    public static final String PREF = "pref";
-
-    /**
-     * 数据被继承的子类型数据标识.
-     */
-    public static final String CREF = "cref";
+    public static final String UPDATE_TIME = "updatetime";
 
     /**
      * 数据是否被删除.
@@ -67,10 +97,6 @@ public class FieldDefine {
      * 数据属性集合.
      */
     public static final String ATTRIBUTE = "attribute";
-    /**
-     * 元信息.用以数据同步.
-     */
-    public static final String META = "meta";
     /**
      * 产生数据的大版本号.
      */

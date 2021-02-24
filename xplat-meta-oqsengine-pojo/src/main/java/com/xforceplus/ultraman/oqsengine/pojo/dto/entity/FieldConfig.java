@@ -17,7 +17,7 @@ public class FieldConfig implements Serializable {
     /**
      * 字段意义.
      */
-    public static enum FieldSense {
+    public enum FieldSense {
         UNKNOWN(0),
         /**
          * 普通属性.
@@ -100,7 +100,7 @@ public class FieldConfig implements Serializable {
      * 字段意义.
      */
     @JsonProperty(value = "fieldSense")
-    private FieldSense fieldSense = FieldSense.UNKNOWN;
+    private FieldSense fieldSense = FieldSense.NORMAL;
 
     /**
      * 校验正则.

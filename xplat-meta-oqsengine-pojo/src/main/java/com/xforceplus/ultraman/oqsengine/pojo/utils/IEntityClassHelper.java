@@ -105,4 +105,21 @@ public class IEntityClassHelper {
 
         return OptionalHelper.combine(fieldInMain, fieldInParent, fieldInRel, fieldInRelOther);
     }
+
+    /**
+     * 平铺当前类型的所有父类型.
+     *
+     * @param entityClass 目标类型.
+     * @return 平铺结果.
+     */
+    public static IEntityClass[] paveEntityClass(IEntityClass entityClass) {
+        IEntityClass[] entityClasses = new IEntityClass[entityClass.level()];
+        IEntityClass point = entityClass;
+        int index = entityClass.level();
+        while (point != null) {
+            entityClasses[index--] = point;
+            point = point.father();
+        }
+        return entityClasses;
+    }
 }

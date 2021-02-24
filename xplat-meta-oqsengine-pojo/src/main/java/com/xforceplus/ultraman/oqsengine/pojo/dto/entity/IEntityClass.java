@@ -75,7 +75,7 @@ public interface IEntityClass {
      *
      * @return 父对象元信息.
      */
-    IEntityClass father();
+    Optional<IEntityClass> father();
 
     /**
      * 本对象的属性信息

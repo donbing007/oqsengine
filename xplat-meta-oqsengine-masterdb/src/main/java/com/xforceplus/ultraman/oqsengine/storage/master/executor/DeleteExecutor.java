@@ -40,7 +40,7 @@ public class DeleteExecutor extends AbstractMasterExecutor<StorageEntity, Intege
             try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
                 st.setInt(1, storageEntity.getVersion());
                 st.setBoolean(2, true);
-                st.setLong(3, storageEntity.getTime());
+                st.setLong(3, storageEntity.getUpdateTime());
                 st.setLong(4, storageEntity.getTx());
                 st.setLong(5, storageEntity.getCommitid());
                 st.setInt(6, storageEntity.getOp());
@@ -53,7 +53,7 @@ public class DeleteExecutor extends AbstractMasterExecutor<StorageEntity, Intege
             String sql = buildSQl(storageEntity);
             try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
                 st.setBoolean(1, true);
-                st.setLong(2, storageEntity.getTime());
+                st.setLong(2, storageEntity.getUpdateTime());
                 st.setLong(3, storageEntity.getTx());
                 st.setLong(4, storageEntity.getCommitid());
                 st.setInt(5, storageEntity.getOp());
@@ -72,7 +72,7 @@ public class DeleteExecutor extends AbstractMasterExecutor<StorageEntity, Intege
             .append(" SET ")
             .append(FieldDefine.VERSION).append("=").append("?, ")
             .append(FieldDefine.DELETED).append("=").append("?, ")
-            .append(FieldDefine.TIME).append("=").append("?, ")
+            .append(FieldDefine.UPDATE_TIME).append("=").append("?, ")
             .append(FieldDefine.TX).append("=").append("?, ")
             .append(FieldDefine.COMMITID).append("=").append("?, ")
             .append(FieldDefine.OP).append("=").append("? ")
@@ -88,7 +88,7 @@ public class DeleteExecutor extends AbstractMasterExecutor<StorageEntity, Intege
         sql.append("UPDATE ").append(getTableName())
             .append(" SET ")
             .append(FieldDefine.DELETED).append("=").append("?, ")
-            .append(FieldDefine.TIME).append("=").append("?, ")
+            .append(FieldDefine.UPDATE_TIME).append("=").append("?, ")
             .append(FieldDefine.TX).append("=").append("?, ")
             .append(FieldDefine.COMMITID).append("=").append("?, ")
             .append(FieldDefine.OP).append("=").append("? ")

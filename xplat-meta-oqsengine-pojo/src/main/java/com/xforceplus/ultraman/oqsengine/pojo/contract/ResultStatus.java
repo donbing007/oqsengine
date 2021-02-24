@@ -10,7 +10,8 @@ public enum ResultStatus {
 
     UNKNOWN(0),
     SUCCESS(1),
-    CONFLICT(2);
+    CONFLICT(2),
+    NOT_FOUND(3);
 
     private int value;
 

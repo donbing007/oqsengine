@@ -4,8 +4,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 
 import java.util.Optional;
 
-import java.sql.SQLException;
-
 /**
  * oqs 元数据管理
  *

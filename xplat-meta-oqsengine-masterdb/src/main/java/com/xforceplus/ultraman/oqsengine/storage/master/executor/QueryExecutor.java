@@ -21,7 +21,6 @@ import java.util.Optional;
 public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<StorageEntity>> {
 
     private boolean noDetail;
-    private boolean noMeta;
 
     /**
      * 查询所有信息.
@@ -33,7 +32,7 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
      */
     public static Executor<Long, Optional<StorageEntity>> buildHaveAllDetail(
         String tableName, TransactionResource resource, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, false, false, timeoutMs);
+        return new QueryExecutor(tableName, resource, false, timeoutMs);
     }
 
     /**
@@ -45,7 +44,7 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
      */
     public static Executor<Long, Optional<StorageEntity>> buildHaveDetail(
         String tableName, TransactionResource resource, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, false, true, timeoutMs);
+        return new QueryExecutor(tableName, resource, false, timeoutMs);
     }
 
     /**
@@ -57,7 +56,7 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
      */
     public static Executor<Long, Optional<StorageEntity>> buildNoDetail(
         String tableName, TransactionResource resource, long timeoutMs) {
-        return new QueryExecutor(tableName, resource, true, true, timeoutMs);
+        return new QueryExecutor(tableName, resource, true, timeoutMs);
     }
 
     public QueryExecutor(String tableName, TransactionResource<Connection> resource, boolean noDetail) {
@@ -69,11 +68,9 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
         String tableName,
         TransactionResource<Connection> resource,
         boolean noDetail,
-        boolean noMeta,
         long timeoutMs) {
         super(tableName, resource, timeoutMs);
         this.noDetail = noDetail;
-        this.noMeta = noMeta;
     }
 
     @Override
@@ -92,21 +89,21 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
 
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
-                    entity = new StorageEntity();
-                    entity.setId(id);
-                    entity.setVersion(rs.getInt(FieldDefine.VERSION));
-                    entity.setTime(rs.getLong(FieldDefine.TIME));
-                    entity.setTx(rs.getLong(FieldDefine.TX));
-                    entity.setCommitid(rs.getLong(FieldDefine.COMMITID));
-                    entity.setOqsMajor(rs.getInt(FieldDefine.OQS_MAJOR));
-                    if (!noDetail) {
-                        entity.setEntity(rs.getLong(FieldDefine.ENTITY));
-                        entity.setPref(rs.getLong(FieldDefine.PREF));
-                        entity.setCref(rs.getLong(FieldDefine.CREF));
-                        entity.setAttribute(rs.getString(FieldDefine.ATTRIBUTE));
+                    StorageEntity.Builder storageEntityBuilder = StorageEntity.Builder.aStorageEntity()
+                        .withId(id)
+                        .withVersion(rs.getInt(FieldDefine.VERSION))
+                        .withCreateTime(rs.getLong(FieldDefine.CREATE_TIME))
+                        .withUpdateTime(rs.getLong(FieldDefine.UPDATE_TIME))
+                        .withOp(rs.getInt(FieldDefine.OP));
+
+                    long[] entityClassIds = new long[FieldDefine.ENTITYCLASS_LEVEL_LIST.length];
+                    for (int i = 0; i < entityClassIds.length; i++) {
+                        entityClassIds[i] = rs.getLong(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
                     }
-                    if (!noMeta) {
-                        entity.setMeta(rs.getString(FieldDefine.META));
+                    storageEntityBuilder.withEntityClasses(entityClassIds);
+
+                    if (!noDetail) {
+                        storageEntityBuilder.withAttribute(rs.getString(FieldDefine.ATTRIBUTE));
                     }
                 }
 
@@ -119,27 +116,24 @@ public class QueryExecutor extends AbstractMasterExecutor<Long, Optional<Storage
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
         sql.append(String.join(",",
+            FieldDefine.ENTITYCLASS_LEVEL_0,
+            FieldDefine.ENTITYCLASS_LEVEL_1,
+            FieldDefine.ENTITYCLASS_LEVEL_2,
+            FieldDefine.ENTITYCLASS_LEVEL_3,
+            FieldDefine.ENTITYCLASS_LEVEL_4,
             FieldDefine.VERSION,
-            FieldDefine.TIME,
-            FieldDefine.TX,
-            FieldDefine.COMMITID,
-            FieldDefine.OQS_MAJOR
+            FieldDefine.CREATE_TIME,
+            FieldDefine.UPDATE_TIME,
+            FieldDefine.OQS_MAJOR,
+            FieldDefine.OP
             )
         );
         if (!noDetail) {
             sql.append(",")
                 .append(String.join(",",
-                    FieldDefine.ENTITY,
-                    FieldDefine.PREF,
-                    FieldDefine.CREF,
                     FieldDefine.ATTRIBUTE
                     )
                 );
-        }
-
-        if (!noMeta) {
-            sql.append(",")
-                .append(FieldDefine.META);
         }
 
         sql.append(" FROM ")

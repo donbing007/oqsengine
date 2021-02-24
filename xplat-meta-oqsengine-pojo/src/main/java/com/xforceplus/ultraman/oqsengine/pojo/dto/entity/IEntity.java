@@ -14,10 +14,10 @@ public interface IEntity extends Cloneable {
     public long id();
 
     /**
-     * 获得该对象结构对象
-     * @return 本对象的结构对象
+     * 获取实例元信息指示器.
+     * @return 本对象的元信息指示器.
      */
-    public IEntityClass entityClass();
+    public EntityClassRef entityClassRef();
 
     /**
      * 获得该对象的数据对象集合
@@ -33,22 +33,10 @@ public interface IEntity extends Cloneable {
     public void resetEntityValue(IEntityValue iEntityValue);
 
     /**
-     * 继承家族关系.
-     * @return 家族信息.
-     */
-    public IEntityFamily family();
-
-    /**
      * 重置 id.
      * @param id 新的 id.
      */
     public void resetId(long id);
-
-    /**
-     * 重置继承家族信息.
-     * @param family 新家族.
-     */
-    public void resetFamily(IEntityFamily family);
 
     /**
      * 当前数据版本号.

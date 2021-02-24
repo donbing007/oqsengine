@@ -1,16 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
-import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityFamily;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 
 import java.io.Serializable;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 /**
@@ -20,8 +14,6 @@ import java.util.Objects;
  * @version 1.0 2020/3/26 15:10
  */
 public class Entity implements IEntity, Serializable {
-
-    private static final IEntityFamily EMPTY_FAMILY = new EntityFamily(0, 0);
 
     /**
      * 数据id
@@ -34,16 +26,11 @@ public class Entity implements IEntity, Serializable {
     /**
      * 数据结构
      */
-    private IEntityClass entityClass;
+    private EntityClassRef entityClassRef;
     /**
      * 数据集合
      */
     private IEntityValue entityValue;
-
-    /**
-     * 继承关系.
-     */
-    private IEntityFamily family = EMPTY_FAMILY;
 
     /**
      * 数据版本
@@ -66,8 +53,8 @@ public class Entity implements IEntity, Serializable {
     }
 
     @Override
-    public IEntityClass entityClass() {
-        return entityClass;
+    public EntityClassRef entityClassRef() {
+        return entityClassRef;
     }
 
     @Override
@@ -78,11 +65,6 @@ public class Entity implements IEntity, Serializable {
     @Override
     public void resetEntityValue(IEntityValue iEntityValue) {
         this.entityValue = iEntityValue;
-    }
-
-    @Override
-    public IEntityFamily family() {
-        return family;
     }
 
     @Override
@@ -124,42 +106,6 @@ public class Entity implements IEntity, Serializable {
     public Entity() {
     }
 
-    @Deprecated
-    public Entity(long id, IEntityClass entityClass, IEntityValue entityValue) {
-        this(id, entityClass, entityValue, null, 0, OqsVersion.MAJOR);
-    }
-
-    @Deprecated
-    public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, int major) {
-        this(id, entityClass, entityValue, null, 0, major);
-    }
-
-    @Deprecated
-    public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, int version, int major) {
-        this(id, entityClass, entityValue, null, version, major);
-    }
-
-    @Deprecated
-    public Entity(long id, IEntityClass entityClass, IEntityValue entityValue, IEntityFamily family, int version, int major) {
-        if (entityClass == null) {
-            throw new IllegalArgumentException("Invalid class meta information.");
-        }
-
-        if (entityValue == null) {
-            throw new IllegalArgumentException("Invalid attribute value.");
-        }
-
-        this.id = id;
-        this.entityClass = entityClass;
-        this.entityValue = entityValue;
-        if (family != null) {
-            this.family = family;
-        }
-
-        this.version = version;
-        this.major = major;
-    }
-
     /**
      * 重置 id 为新的 id.
      *
@@ -172,20 +118,14 @@ public class Entity implements IEntity, Serializable {
     }
 
     @Override
-    public void resetFamily(IEntityFamily family) {
-        this.family = family;
-    }
-
-    @Override
     public Object clone() throws CloneNotSupportedException {
         return Entity.Builder.anEntity()
-            .withId(id())
-            .withEntityClass(entityClass())
+            .withId(id)
+            .withEntityClassRef(entityClassRef)
             .withEntityValue((IEntityValue) entityValue().clone())
-            .withFamily(family())
-            .withVersion(version())
-            .withTime(time())
-            .withMajor(OqsVersion.MAJOR).build();
+            .withVersion(version)
+            .withTime(time)
+            .withMajor(major).build();
     }
 
     @Override
@@ -202,76 +142,26 @@ public class Entity implements IEntity, Serializable {
             return false;
         }
         Entity entity = (Entity) o;
-        if (id != entity.id) {
-            return false;
-        }
-        if (version != entity.version) {
-            return false;
-        }
-        if (time != entity.time) {
-            return false;
-        }
-        if (major != entity.major) {
-            return false;
-        }
-        if (!entityClass.equals(entity.entityClass)) {
-            return false;
-        }
-        if (!entityValue.equals(entity.entityValue)) {
-            return false;
-        }
-        if (!family.equals(entity.family)) {
-            return false;
-        }
-        return true;
+        return id == entity.id &&
+            time == entity.time &&
+            version == entity.version &&
+            maintainid == entity.maintainid &&
+            major == entity.major &&
+            entityClassRef.equals(entity.entityClassRef) &&
+            entityValue.equals(entity.entityValue);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, time, entityClass, entityValue, family, version, major);
-    }
-
-    @Override
-    public String toString() {
-        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        StringBuilder buff = new StringBuilder();
-        buff.append("id: ").append(id)
-            .append(", ")
-            .append("entity: ").append(entityClass.code())
-            .append(", ")
-            .append("version: ").append(version)
-            .append(", ")
-            .append("time: ").append(
-            df.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneId.systemDefault())))
-            .append(", ")
-            .append("major: ").append(major)
-            .append(", ")
-            .append("pref: ").append(family.parent())
-            .append(", ")
-            .append("cref: ").append(family.child())
-            .append("\n");
-        entityValue().values().stream().forEach(v -> {
-            buff.append("{")
-                .append("id: ").append(v.getField().id())
-                .append(", ")
-                .append("name: ").append(v.getField().name())
-                .append(", ")
-                .append("type: ").append(v.getField().type().getType())
-                .append(", ")
-                .append("value: ").append(v.getValue().toString())
-                .append("}\n");
-        });
-
-        return buff.toString();
+        return Objects.hash(id, time, entityClassRef, entityValue, version, maintainid, major);
     }
 
 
     public static final class Builder {
         private long id;
         private long time;
-        private IEntityClass entityClass;
+        private EntityClassRef entityClassRef;
         private IEntityValue entityValue;
-        private IEntityFamily family = EMPTY_FAMILY;
         private int version;
         private long maintainid;
         private int major;
@@ -293,18 +183,13 @@ public class Entity implements IEntity, Serializable {
             return this;
         }
 
-        public Builder withEntityClass(IEntityClass entityClass) {
-            this.entityClass = entityClass;
+        public Builder withEntityClassRef(EntityClassRef entityClassRef) {
+            this.entityClassRef = entityClassRef;
             return this;
         }
 
         public Builder withEntityValue(IEntityValue entityValue) {
             this.entityValue = entityValue;
-            return this;
-        }
-
-        public Builder withFamily(IEntityFamily family) {
-            this.family = family;
             return this;
         }
 
@@ -325,14 +210,13 @@ public class Entity implements IEntity, Serializable {
 
         public Entity build() {
             Entity entity = new Entity();
-            entity.entityClass = this.entityClass;
-            entity.version = this.version;
-            entity.time = this.time;
-            entity.family = this.family;
-            entity.id = this.id;
-            entity.entityValue = this.entityValue;
             entity.maintainid = this.maintainid;
+            entity.version = this.version;
             entity.major = this.major;
+            entity.time = this.time;
+            entity.entityValue = this.entityValue;
+            entity.entityClassRef = this.entityClassRef;
+            entity.id = this.id;
             return entity;
         }
     }

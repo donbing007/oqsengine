@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
-import java.util.Arrays;
 
 /**
  * @author dongbin
@@ -41,8 +40,10 @@ public class HealthCheck implements HealthIndicator {
     @Resource
     private CommitIdStatusService commitIdStatusService;
 
-    private IEntityField notExistField = new EntityField(1, "test", FieldType.STRING);
-    private IEntityClass notExistClass = new EntityClass(1, "test", Arrays.asList(notExistField));
+    private IEntityField notExistField =
+        EntityField.Builder.anEntityField().withId(1).withName("test").withFieldType(FieldType.STRING).build();
+    private IEntityClass notExistClass =
+        EntityClass.Builder.anEntityClass().withId(1).withCode("test").withField(notExistField).build();
     private IValue notExistValue = new StringValue(notExistField, "test");
 
     @Override

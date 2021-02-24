@@ -37,7 +37,7 @@ public class UpdateVersionAndTxExecutor extends AbstractMasterExecutor<StorageEn
         String sql = buildSQL(storageEntity);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setInt(1, storageEntity.getVersion());
-            st.setLong(2, storageEntity.getTime());
+            st.setLong(2, storageEntity.getUpdateTime());
             st.setLong(3, storageEntity.getTx());
             st.setLong(4, storageEntity.getCommitid());
             st.setLong(5, OperationType.UPDATE.getValue());
@@ -55,7 +55,7 @@ public class UpdateVersionAndTxExecutor extends AbstractMasterExecutor<StorageEn
         sql.append("UPDATE ").append(getTableName())
             .append(" SET ")
             .append(FieldDefine.VERSION).append("=").append("?, ")
-            .append(FieldDefine.TIME).append("=").append("?, ")
+            .append(FieldDefine.UPDATE_TIME).append("=").append("?, ")
             .append(FieldDefine.TX).append("=").append("?, ")
             .append(FieldDefine.COMMITID).append("=").append("?, ")
             .append(FieldDefine.OP).append("=").append("?")

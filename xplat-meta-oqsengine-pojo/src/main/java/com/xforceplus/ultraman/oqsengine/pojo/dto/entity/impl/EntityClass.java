@@ -186,8 +186,8 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
-    public IEntityClass father() {
-        return father;
+    public Optional<IEntityClass> father() {
+        return Optional.ofNullable(father);
     }
 
     @Override

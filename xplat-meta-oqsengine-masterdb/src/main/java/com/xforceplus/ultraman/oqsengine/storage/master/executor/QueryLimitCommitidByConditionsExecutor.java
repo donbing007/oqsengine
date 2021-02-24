@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
+import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -86,13 +87,12 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
     @Override
     public Collection<EntityRef> execute(Conditions conditions) throws SQLException {
         String where = conditionsBuilderFactory.getBuilder().build(entityClass, conditions);
-        String sql = buildSQL(where);
+        String sql = buildSQL(where, entityClass.level());
 
         try (PreparedStatement st = getResource().value().prepareStatement(
             sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
 
             st.setLong(1, commitid);
-            st.setLong(2, entityClass.id());
 
             checkTimeout(st);
 
@@ -110,8 +110,6 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
     private EntityRef buildEntityRef(ResultSet rs, Sort sort) throws SQLException {
         EntityRef ref = new EntityRef();
         ref.setId(rs.getLong(FieldDefine.ID));
-        ref.setPref(rs.getLong(FieldDefine.PREF));
-        ref.setCref(rs.getLong(FieldDefine.CREF));
         ref.setOp(rs.getInt(FieldDefine.OP));
         ref.setMajor(rs.getInt(FieldDefine.OQS_MAJOR));
         if (sort != null && !sort.isOutOfOrder()) {
@@ -124,15 +122,24 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
         return ref;
     }
 
-    private String buildSQL(String where) {
+    private String buildSQL(String where, int level) {
         StringBuilder sql = new StringBuilder();
 
-        // select id,pref,cref,op,oqsmajor, JSON_UNQUOTE(JSON_EXTRACT(attribute, '$.sort')) as sort from oqsbigentity where (entity = ? and commitid = ?) and (where)
+        /**
+         * select id,op,oqsmajor,JSON_UNQUOTE(JSON_EXTRACT(attribute, '$.sort')) as sort from oqsbigentity
+         * where ((entityclassl0 = ? and entityclassl1 = ? ...) and commitid = ?) and (where)
+         */
         sql.append("SELECT ")
             .append(
                 String.join(
                     ",",
-                    FieldDefine.ID, FieldDefine.PREF, FieldDefine.CREF, FieldDefine.OP, FieldDefine.OQS_MAJOR));
+                    FieldDefine.ID,
+                    FieldDefine.ENTITYCLASS_LEVEL_0,
+                    FieldDefine.ENTITYCLASS_LEVEL_1,
+                    FieldDefine.ENTITYCLASS_LEVEL_2,
+                    FieldDefine.ENTITYCLASS_LEVEL_3,
+                    FieldDefine.ENTITYCLASS_LEVEL_4,
+                    FieldDefine.OP, FieldDefine.OQS_MAJOR));
         if (sort != null && !sort.isOutOfOrder() && !sort.getField().config().isIdentifie()) {
 
             /**
@@ -151,9 +158,9 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
         }
         sql.append(" FROM ").append(getTableName())
             .append(" WHERE (")
-            .append(FieldDefine.COMMITID).append(" >= ").append("?")
+            .append(FieldDefine.COMMITID).append(" >= ?")
             .append(" AND ")
-            .append(FieldDefine.ENTITY).append(" = ").append("?")
+            .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
             .append(")");
         if (where.length() > 0 && !where.isEmpty()) {
             sql.append(" AND (").append(where).append(")");

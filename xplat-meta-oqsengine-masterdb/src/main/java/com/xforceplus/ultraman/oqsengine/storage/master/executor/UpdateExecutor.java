@@ -17,18 +17,18 @@ import java.sql.SQLException;
  * @version 0.1 2020/11/2 15:44
  * @since 1.8
  */
-public class ReplaceExecutor extends AbstractMasterExecutor<StorageEntity, Integer> {
+public class UpdateExecutor extends AbstractMasterExecutor<StorageEntity, Integer> {
 
     public static Executor<StorageEntity, Integer> build(
         String tableName, TransactionResource resource, long timeoutMs) {
-        return new ReplaceExecutor(tableName, resource, timeoutMs);
+        return new UpdateExecutor(tableName, resource, timeoutMs);
     }
 
-    public ReplaceExecutor(String tableName, TransactionResource<Connection> resource) {
+    public UpdateExecutor(String tableName, TransactionResource<Connection> resource) {
         super(tableName, resource);
     }
 
-    public ReplaceExecutor(String tableName, TransactionResource<Connection> resource, long timeoutMs) {
+    public UpdateExecutor(String tableName, TransactionResource<Connection> resource, long timeoutMs) {
         super(tableName, resource, timeoutMs);
     }
 
@@ -36,15 +36,14 @@ public class ReplaceExecutor extends AbstractMasterExecutor<StorageEntity, Integ
     public Integer execute(StorageEntity storageEntity) throws SQLException {
         String sql = buildSQL(storageEntity);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
-            st.setLong(1, storageEntity.getTime());
+            st.setLong(1, storageEntity.getUpdateTime());
             st.setLong(2, storageEntity.getTx());
             st.setLong(3, storageEntity.getCommitid());
             st.setInt(4, storageEntity.getOp());
             st.setInt(5, OqsVersion.MAJOR);
             st.setString(6, storageEntity.getAttribute());
-            st.setString(7, storageEntity.getMeta());
-            st.setLong(8, storageEntity.getId());
-            st.setInt(9, storageEntity.getVersion());
+            st.setLong(7, storageEntity.getId());
+            st.setInt(8, storageEntity.getVersion());
 
             checkTimeout(st);
 
@@ -53,18 +52,17 @@ public class ReplaceExecutor extends AbstractMasterExecutor<StorageEntity, Integ
     }
 
     private String buildSQL(StorageEntity storageEntity) {
-        //"update %s set version = version + 1, time = ?, tx = ?, commitid = ?, op = ?, attribute = ?,meta = ? where id = ? and version = ?";
+        //"update %s set version = version + 1, updatetime = ?, tx = ?, commitid = ?, op = ?, attribute = ?,meta = ? where id = ? and version = ?";
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ").append(getTableName())
             .append(" SET ")
             .append(FieldDefine.VERSION).append("=").append(FieldDefine.VERSION).append(" + 1, ")
-            .append(FieldDefine.TIME).append("=").append("?, ")
+            .append(FieldDefine.UPDATE_TIME).append("=").append("?, ")
             .append(FieldDefine.TX).append("=").append("?, ")
             .append(FieldDefine.COMMITID).append("=").append("?, ")
             .append(FieldDefine.OP).append("=").append("?, ")
             .append(FieldDefine.OQS_MAJOR).append("=").append("?, ")
             .append(FieldDefine.ATTRIBUTE).append("=").append("?, ")
-            .append(FieldDefine.META).append("=").append("? ")
             .append(" WHERE ")
             .append(FieldDefine.ID).append("=").append("? AND ")
             .append(FieldDefine.VERSION).append("=").append("?");
