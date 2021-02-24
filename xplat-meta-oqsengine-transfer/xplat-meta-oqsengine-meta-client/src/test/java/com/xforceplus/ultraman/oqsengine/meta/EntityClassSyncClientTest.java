@@ -91,7 +91,11 @@ public class EntityClassSyncClientTest {
 
             @Override
             public int version(String appId) {
-                return stringIntegerMap.get(appId);
+                Integer version = stringIntegerMap.get(appId);
+                if (null == version) {
+                    return -1;
+                }
+                return version;
             }
         };
 
@@ -128,7 +132,7 @@ public class EntityClassSyncClientTest {
                     < gRpcParamsConfig.getDefaultHeartbeatTimeout());
 
             logger.debug("current - heartBeat : {}", System.currentTimeMillis() - requestWatchExecutor.watcher().heartBeat());
-            i ++;
+            i++;
             TimeWaitUtils.wakeupAfter(1, TimeUnit.MILLISECONDS);
         }
     }
@@ -166,10 +170,11 @@ public class EntityClassSyncClientTest {
     public void registerTimeoutTest() {
         String appId = "registerTimeoutTest";
         int version = 1;
-        MockServer.isTestOk = false;
         /**
-         * 重复注册
+         * 设置服务端onNext不可用
          */
+        MockServer.isTestOk = false;
+
         boolean ret = requestHandler.register(appId, version);
         Assert.assertTrue(ret);
 
@@ -181,39 +186,53 @@ public class EntityClassSyncClientTest {
                 }
         );
 
-        new Thread(() -> {
-            String uid = requestWatchExecutor.watcher().uid();
-            StreamObserver observer = requestWatchExecutor.watcher().observer();
-            while (true) {
-                if (null == requestWatchExecutor.watcher().uid()) {
-                    break;
-                }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        String uid = requestWatchExecutor.watcher().uid();
+        StreamObserver observer = requestWatchExecutor.watcher().observer();
+        /**
+         * 模拟超时退出
+         */
+        while (true) {
+            if (null == requestWatchExecutor.watcher().uid() ||
+                    !uid.equals(requestWatchExecutor.watcher().uid())) {
+                break;
             }
-            MockServer.isTestOk = true;
-            boolean result = requestHandler.register(appId, version);
-            Assert.assertTrue(result);
-
             try {
-                Thread.sleep(5000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            Assert.assertNotEquals(observer.toString(), requestWatchExecutor.watcher().observer().toString());
-            Assert.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
+        }
 
-            Assert.assertTrue(null != requestWatchExecutor.watcher().watches() &&
-                    !requestWatchExecutor.watcher().watches().isEmpty());
+        /**
+         * 设置服务端onNext可用
+         */
+        MockServer.isTestOk = true;
+        boolean result = requestHandler.register(appId, version);
+        Assert.assertTrue(result);
 
-            requestWatchExecutor.watcher().watches().entrySet().forEach(
-                    w -> {
-                        Assert.assertEquals(WatchElement.AppStatus.Confirmed, w.getValue().getStatus());
-                    }
-            );
-        }).start();
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Assert.assertNotNull(requestWatchExecutor.watcher().observer());
+        Assert.assertNotEquals(observer.toString(), requestWatchExecutor.watcher().observer().toString());
+        Assert.assertNotNull(requestWatchExecutor.watcher().uid());
+        Assert.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
+
+        Assert.assertTrue(null != requestWatchExecutor.watcher().watches() &&
+                !requestWatchExecutor.watcher().watches().isEmpty());
+
+        WatchElement element = requestWatchExecutor.watcher().watches().get(appId);
+        while (true) {
+            if (element.getStatus().equals(WatchElement.AppStatus.Confirmed)) {
+                break;
+            }
+            try {
+                Thread.sleep(1_000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

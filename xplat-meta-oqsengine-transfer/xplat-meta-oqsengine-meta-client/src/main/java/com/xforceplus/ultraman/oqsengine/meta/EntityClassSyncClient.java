@@ -144,7 +144,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
                  */
                 TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
 
-                requestWatchExecutor.release();
+                requestWatchExecutor.watcher().release();
             }
         }
 

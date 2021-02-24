@@ -31,7 +31,7 @@ public interface IRequestHandler {
     boolean register(List<AbstractMap.SimpleEntry<String, Integer>> appIdEntries);
 
     /**
-     * 断流重新注册
+     * 断流自动重新注册
      * @return boolean
      */
     boolean reRegister();

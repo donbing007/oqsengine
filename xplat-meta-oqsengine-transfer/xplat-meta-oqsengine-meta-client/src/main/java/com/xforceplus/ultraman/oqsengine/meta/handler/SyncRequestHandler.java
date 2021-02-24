@@ -116,9 +116,10 @@ public class SyncRequestHandler implements IRequestHandler {
          * 当开启reRegister操作时，所有的register操作将被中断
          */
         RequestWatcher requestWatcher = requestWatchExecutor.watcher();
+        boolean isOperationOK = true;
         if (null != requestWatcher && requestWatcher.watches().size() > 0) {
-            try {
-                for (Map.Entry<String, WatchElement> e : requestWatcher.watches().entrySet()) {
+            for (Map.Entry<String, WatchElement> e : requestWatcher.watches().entrySet()) {
+                try {
                     EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
 
                     EntityClassSyncRequest entityClassSyncRequest =
@@ -127,20 +128,16 @@ public class SyncRequestHandler implements IRequestHandler {
                                     .setUid(requestWatcher.uid())
                                     .setStatus(RequestStatus.REGISTER.ordinal()).build();
 
-                    try {
-                        sendRequest(requestWatcher, entityClassSyncRequest);
-                    } catch (Exception ex) {
-                        throw new MetaSyncClientException(
-                                String.format("reRegister watchers-[%s] failed.", entityClassSyncRequest.toString()), true);
-                    }
+                    sendRequest(requestWatcher, entityClassSyncRequest);
+                } catch (Exception ex) {
+                    isOperationOK = false;
+                    logger.warn("reRegister watcherElement-[{}] failed.", e.getValue().toString());
+                    requestWatcher.observer().onError(ex);
+                    break;
                 }
-            } catch (Exception e) {
-                logger.warn(e.getMessage());
-                requestWatcher.observer().onError(e);
-                return false;
             }
         }
-        return true;
+        return isOperationOK;
     }
 
     @Override
