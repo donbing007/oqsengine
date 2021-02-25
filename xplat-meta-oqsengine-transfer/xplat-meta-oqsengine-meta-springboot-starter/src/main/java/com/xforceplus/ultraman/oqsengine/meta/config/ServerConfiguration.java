@@ -56,16 +56,8 @@ public class ServerConfiguration {
     }
 
     @Bean
-    public ResponseWatchExecutor watchExecutor(
-            @Value("${grpc.watch.remove.threshold.seconds:30}") long removeThreshold) {
-
-        removeThreshold = TimeUnit.SECONDS.toMillis(removeThreshold);
-        ResponseWatchExecutor watchExecutor = new ResponseWatchExecutor(removeThreshold);
-
-        /**
-         * 启动监控线程
-         */
-        return watchExecutor;
+    public ResponseWatchExecutor watchExecutor() {
+        return new ResponseWatchExecutor();
     }
 
     @Bean

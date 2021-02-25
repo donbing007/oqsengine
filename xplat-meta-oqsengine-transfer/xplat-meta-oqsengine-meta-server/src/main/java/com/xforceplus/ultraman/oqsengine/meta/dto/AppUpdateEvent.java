@@ -14,7 +14,16 @@ import org.springframework.context.ApplicationEvent;
 public class AppUpdateEvent extends ApplicationEvent {
     private String appId;
     private int version;
+    /**
+     * standard
+     */
     private EntityClassSyncRspProto entityClassSyncRspProto;
+
+    /**
+     * extend
+     */
+    //  todo not implements now
+
 
     public AppUpdateEvent(Object source, String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
         super(source);
