@@ -46,7 +46,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
     private GRpcParamsConfig gRpcParamsConfig;
 
     @Override
-    public void resetHeartBeat() {
+    public void heartBeat(String uid) {
         requestWatcher.resetHeartBeat();
     }
 

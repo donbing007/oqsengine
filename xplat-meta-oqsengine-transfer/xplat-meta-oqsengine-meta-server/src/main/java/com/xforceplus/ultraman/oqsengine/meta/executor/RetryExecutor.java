@@ -50,6 +50,11 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
         isOnServer = false;
     }
 
+    @Override
+    public void on() {
+        isOnServer = true;
+    }
+
 
     public static class DelayTask implements Delayed {
         private Element e;

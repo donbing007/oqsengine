@@ -62,7 +62,7 @@ public class RequestWatchExecutorTest {
     public void resetHeartBeatTest() {
         Assert.assertNotNull(requestWatchExecutor.watcher());
         long heartbeat = requestWatchExecutor.watcher().heartBeat();
-        requestWatchExecutor.resetHeartBeat();
+        requestWatchExecutor.heartBeat("uid");
         Assert.assertNotEquals(heartbeat, requestWatchExecutor.watcher().heartBeat());
     }
 

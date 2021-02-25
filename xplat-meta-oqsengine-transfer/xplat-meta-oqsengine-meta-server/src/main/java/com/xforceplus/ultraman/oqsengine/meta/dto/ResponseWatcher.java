@@ -19,7 +19,6 @@ public class ResponseWatcher extends AbstractWatcher<EntityClassSyncResponse> {
 
     public ResponseWatcher(String uid, StreamObserver<EntityClassSyncResponse> streamObserver) {
         super(uid, streamObserver);
-
     }
 
     @Override

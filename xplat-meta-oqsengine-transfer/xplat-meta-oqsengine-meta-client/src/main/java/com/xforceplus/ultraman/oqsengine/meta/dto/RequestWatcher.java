@@ -35,7 +35,7 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
     public boolean onWatch(WatchElement watchElement) {
         WatchElement v = watches.get(watchElement.getAppId());
         if (null == v) {
-            return true;
+            return false;
         }
 
         /**

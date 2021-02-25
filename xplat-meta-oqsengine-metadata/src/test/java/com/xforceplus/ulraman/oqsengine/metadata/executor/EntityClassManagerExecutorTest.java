@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import static com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
 import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.entityClassSyncResponseGenerator;
 import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.MIN_ID;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 
 /**
  * desc :

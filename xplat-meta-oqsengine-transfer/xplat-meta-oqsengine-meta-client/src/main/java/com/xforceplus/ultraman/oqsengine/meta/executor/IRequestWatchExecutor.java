@@ -19,15 +19,11 @@ import java.util.function.Function;
  */
 public interface IRequestWatchExecutor extends IWatchExecutor {
 
-    void resetHeartBeat();
-
     void create(String uid, StreamObserver<EntityClassSyncRequest> observer);
 
     void add(WatchElement watchElement);
 
     boolean update(WatchElement watchElement);
-
-    RequestWatcher watcher();
 
     boolean canAccess(String uid);
 
@@ -36,4 +32,6 @@ public interface IRequestWatchExecutor extends IWatchExecutor {
     Queue<WatchElement> forgot();
 
     Function<String, Boolean> accessFunction();
+
+    RequestWatcher watcher();
 }

@@ -1,7 +1,7 @@
 package com.xforceplus.ulraman.oqsengine.metadata.utils;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.*;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;

@@ -2,8 +2,8 @@ package com.xforceplus.ulraman.oqsengine.metadata.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;

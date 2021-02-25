@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.ScriptOutputType;

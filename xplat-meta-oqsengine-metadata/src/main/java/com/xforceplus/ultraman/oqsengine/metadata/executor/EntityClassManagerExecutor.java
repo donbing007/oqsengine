@@ -1,9 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsEntityClass;
 import org.slf4j.Logger;
@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
 

@@ -14,4 +14,6 @@ public interface IWatchExecutor {
     void start();
 
     void stop();
+
+    void heartBeat(String uid);
 }
