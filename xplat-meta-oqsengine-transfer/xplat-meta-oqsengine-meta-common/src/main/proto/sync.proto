@@ -16,6 +16,7 @@ message EntityClassSyncRequest {
 	string appId = 2;
 	int32 version = 3;
 	int32 status = 4;
+	string env = 5;
 }
 
 message EntityClassSyncResponse {
@@ -23,8 +24,9 @@ message EntityClassSyncResponse {
 	int32 version = 2;
 	string uid = 3;
 	int32 status = 4;
-	string md5 = 5;
-	EntityClassSyncRspProto entityClassSyncRspProto = 6;
+	string env = 5;
+	string md5 = 6;
+	EntityClassSyncRspProto entityClassSyncRspProto = 7;
 }
 
 message EntityClassSyncRspProto {
