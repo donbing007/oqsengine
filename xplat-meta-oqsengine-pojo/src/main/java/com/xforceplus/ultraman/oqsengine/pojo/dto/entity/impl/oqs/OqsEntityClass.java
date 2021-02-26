@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -99,8 +99,20 @@ public class OqsEntityClass implements IEntityClass {
     }
 
     @Override
-    public IEntityClass father() {
-        return father;
+    public Optional<IEntityClass> father() {
+        return Optional.ofNullable(father);
+    }
+
+    @Override
+    public Collection<IEntityClass> family() {
+        List<IEntityClass> familyList = new ArrayList<>();
+        Optional<IEntityClass> current = Optional.of(this);
+        while (current.isPresent()) {
+            familyList.add(0, current.get());
+            current = current.get().father();
+        }
+
+        return familyList;
     }
 
     @Override
@@ -119,7 +131,7 @@ public class OqsEntityClass implements IEntityClass {
     @Override
     public Optional<IEntityField> field(String name) {
         Optional<IEntityField> entityFieldOp =
-                fields.stream().filter(f -> name.equals(f.name())).findFirst();
+            fields.stream().filter(f -> name.equals(f.name())).findFirst();
 
         //  找到或者没有父类
         if (entityFieldOp.isPresent() || null == father) {
@@ -132,7 +144,7 @@ public class OqsEntityClass implements IEntityClass {
     @Override
     public Optional<IEntityField> field(long id) {
         Optional<IEntityField> entityFieldOp =
-                fields.stream().filter(f -> id == f.id()).findFirst();
+            fields.stream().filter(f -> id == f.id()).findFirst();
 
         //  找到或者没有父类
         if (entityFieldOp.isPresent() || null == father) {
@@ -202,9 +214,10 @@ public class OqsEntityClass implements IEntityClass {
         public OqsEntityClass.Builder withField(IEntityField field) {
             if (Collections.emptyList().getClass().equals(this.fields.getClass())) {
                 this.fields = new ArrayList<>(fields);
-            } else {
-                this.fields.add(field);
             }
+
+            this.fields.add(field);
+
             return this;
         }
 

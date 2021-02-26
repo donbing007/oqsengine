@@ -1,7 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs;
-
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
+package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs;
 
 import java.util.Objects;
 
@@ -145,14 +142,18 @@ public class OqsRelation {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof OqsRelation)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof OqsRelation)) {
+            return false;
+        }
         OqsRelation relation = (OqsRelation) o;
         return getEntityClassId() == relation.getEntityClassId() &&
-                isIdentity() == relation.isIdentity() &&
-                Objects.equals(getName(), relation.getName()) &&
-                Objects.equals(getRelationType(), relation.getRelationType()) &&
-                getEntityFieldId() == relation.getEntityFieldId();
+            isIdentity() == relation.isIdentity() &&
+            Objects.equals(getName(), relation.getName()) &&
+            Objects.equals(getRelationType(), relation.getRelationType()) &&
+            getEntityFieldId() == relation.getEntityFieldId();
     }
 
     @Override
@@ -163,11 +164,11 @@ public class OqsRelation {
     @Override
     public String toString() {
         return "Relation{" +
-                "name='" + name + '\'' +
-                ", entityClassId=" + entityClassId +
-                ", relationType='" + relationType + '\'' +
-                ", identity=" + identity +
-                ", entityField=" + entityFieldId +
-                '}';
+            "name='" + name + '\'' +
+            ", entityClassId=" + entityClassId +
+            ", relationType='" + relationType + '\'' +
+            ", identity=" + identity +
+            ", entityField=" + entityFieldId +
+            '}';
     }
 }

@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import java.util.Objects;
+
 /**
  * 实例类型信息,只是作为一个标识用以标记出实例的实际 IEntityClass 信息.
  *
@@ -35,6 +37,22 @@ public class EntityClassRef {
         return entityClassCode;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof EntityClassRef)) {
+            return false;
+        }
+        EntityClassRef that = (EntityClassRef) o;
+        return entityClassId == that.entityClassId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(entityClassId);
+    }
 
     public static final class Builder {
         private long entityClassId;

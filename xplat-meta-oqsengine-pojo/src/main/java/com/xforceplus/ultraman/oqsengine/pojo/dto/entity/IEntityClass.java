@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -76,6 +76,13 @@ public interface IEntityClass {
      * @return 父对象元信息.
      */
     Optional<IEntityClass> father();
+
+    /**
+     * 获取家族信息.
+     *
+     * @return 家族列表.顺序从祖先到子孙顺序.
+     */
+    Collection<IEntityClass> family();
 
     /**
      * 本对象的属性信息
