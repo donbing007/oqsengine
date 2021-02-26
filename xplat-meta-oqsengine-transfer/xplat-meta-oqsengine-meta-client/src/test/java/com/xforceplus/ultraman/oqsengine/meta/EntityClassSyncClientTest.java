@@ -73,7 +73,7 @@ public class EntityClassSyncClientTest {
 
     @After
     public void after() throws InterruptedException {
-        entityClassSyncClient.destroy();
+        entityClassSyncClient.stop();
 
         ExecutorHelper.shutdownAndAwaitTermination(executorService, 3600);
     }
@@ -149,14 +149,15 @@ public class EntityClassSyncClientTest {
     public void registerTest() throws InterruptedException {
         start();
         String appId = "registerTest";
+        String env = "test";
         int version = 1;
 
-        boolean ret = requestHandler.register(appId, version);
+        boolean ret = requestHandler.register(new WatchElement(appId, env, version, WatchElement.AppStatus.Register));
         Assert.assertTrue(ret);
         /**
          * 重复注册
          */
-        ret = requestHandler.register(appId, version);
+        ret = requestHandler.register(new WatchElement(appId, env, version, WatchElement.AppStatus.Register));
         Assert.assertTrue(ret);
 
         Assert.assertNotNull(requestWatchExecutor.watcher().watches());
@@ -178,9 +179,10 @@ public class EntityClassSyncClientTest {
     @Test
     public void forgotToRegisterTest() throws InterruptedException {
         String appId = "forgotToRegisterTest";
+        String env = "test";
         int version = 1;
 
-        boolean ret = requestHandler.register(appId, version);
+        boolean ret = requestHandler.register(new WatchElement(appId, env, version, WatchElement.AppStatus.Init));
         Assert.assertFalse(ret);
         Assert.assertEquals(1, requestWatchExecutor.forgot().size());
         WatchElement element = requestWatchExecutor.forgot().peek();
@@ -253,13 +255,14 @@ public class EntityClassSyncClientTest {
     public void registerTimeoutTest() throws InterruptedException {
         start();
         String appId = "registerTimeoutTest";
+        String env = "test";
         int version = 1;
         /**
          * 设置服务端onNext不可用
          */
         MockServer.isTestOk = false;
 
-        boolean ret = requestHandler.register(appId, version);
+        boolean ret = requestHandler.register(new WatchElement(appId, env, version, WatchElement.AppStatus.Register));
         Assert.assertTrue(ret);
 
         Assert.assertTrue(null != requestWatchExecutor.watcher().watches() &&

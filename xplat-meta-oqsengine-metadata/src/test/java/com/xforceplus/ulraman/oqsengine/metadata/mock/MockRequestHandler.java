@@ -1,5 +1,6 @@
 package com.xforceplus.ulraman.oqsengine.metadata.mock;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.*;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
@@ -29,23 +30,25 @@ public class MockRequestHandler implements IRequestHandler {
 
 
     @Override
-    public boolean register(String appId, int version) {
+    public boolean register(WatchElement watchElement) {
 
         try {
             Thread.sleep(mockResponseTimeDuration);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        if (version == NOT_EXIST_VERSION) {
-            version = EXIST_MIN_VERSION;
+        if (watchElement.getVersion() == NOT_EXIST_VERSION) {
+            watchElement.setVersion(EXIST_MIN_VERSION);
         }
 
-        accept(entityClassSyncResponseGenerator(appId, version, mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
+        accept(entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
+                                                        mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
         return true;
     }
 
+
     @Override
-    public boolean register(List<AbstractMap.SimpleEntry<String, Integer>> appIdEntries) {
+    public boolean register(List<WatchElement> appIdEntries) {
 
         try {
             Thread.sleep(mockResponseTimeDuration);
@@ -55,7 +58,7 @@ public class MockRequestHandler implements IRequestHandler {
 
         appIdEntries.forEach(
                 a -> {
-                    accept(entityClassSyncResponseGenerator(a.getKey(), a.getValue(),
+                    accept(entityClassSyncResponseGenerator(a.getAppId(), a.getVersion(),
                             mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
                     try {
                         Thread.sleep(100);

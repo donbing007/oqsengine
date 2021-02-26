@@ -38,25 +38,35 @@ public interface EntityClassSyncResponseOrBuilder extends
   int getStatus();
 
   /**
-   * <code>string md5 = 5;</code>
+   * <code>string env = 5;</code>
+   */
+  java.lang.String getEnv();
+  /**
+   * <code>string env = 5;</code>
+   */
+  com.google.protobuf.ByteString
+      getEnvBytes();
+
+  /**
+   * <code>string md5 = 6;</code>
    */
   java.lang.String getMd5();
   /**
-   * <code>string md5 = 5;</code>
+   * <code>string md5 = 6;</code>
    */
   com.google.protobuf.ByteString
       getMd5Bytes();
 
   /**
-   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
    */
   boolean hasEntityClassSyncRspProto();
   /**
-   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto getEntityClassSyncRspProto();
   /**
-   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProtoOrBuilder getEntityClassSyncRspProtoOrBuilder();
 }

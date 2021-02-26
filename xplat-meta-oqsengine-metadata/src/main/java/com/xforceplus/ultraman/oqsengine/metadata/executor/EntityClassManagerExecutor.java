@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -62,46 +63,59 @@ public class EntityClassManagerExecutor implements MetaManager {
     }
 
     @Override
-    public int need(String appId) {
+    public int need(String appId, String env) {
+        boolean ret = false;
+        try {
+            ret = cacheExecutor.appEnvSet(appId, env);
 
-        int version = cacheExecutor.version(appId);
+            if (!cacheExecutor.appEnvGet(appId).equals(env)) {
+                throw new RuntimeException("appId has been init with another Id, need failed...");
+            }
 
-        requestHandler.register(appId, NOT_EXIST_VERSION);
+            int version = cacheExecutor.version(appId);
 
-        if (version < 0) {
-            CompletableFuture<Integer> future = async(() -> {
-                int ver;
-                /**
-                 * 这里每10毫秒获取一次当前版本、直到获取到版本或者超时
-                 */
-                while (true) {
-                    ver = cacheExecutor.version(appId);
-                    if (ver < 0) {
-                        try {
-                            Thread.sleep(10);
-                        } catch (InterruptedException e) {
-                            break;
+            requestHandler.register(new WatchElement(appId, env, version, WatchElement.AppStatus.Register));
+
+            if (version < 0) {
+                CompletableFuture<Integer> future = async(() -> {
+                    int ver;
+                    /**
+                     * 这里每10毫秒获取一次当前版本、直到获取到版本或者超时
+                     */
+                    while (true) {
+                        ver = cacheExecutor.version(appId);
+                        if (ver < 0) {
+                            try {
+                                Thread.sleep(10);
+                            } catch (InterruptedException e) {
+                                break;
+                            }
+                        } else {
+                            return ver;
                         }
-                    } else {
-                        return ver;
                     }
+                    return NOT_EXIST_VERSION;
+                });
+
+                try {
+                    version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    e.printStackTrace();
+                    throw new RuntimeException(e.getMessage());
                 }
-                return NOT_EXIST_VERSION;
-            });
 
-            try {
-                version = future.get(COMMON_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e.getMessage());
+                if (version == NOT_EXIST_VERSION) {
+                    throw new RuntimeException(String.format("get version of appId [%s] failed, reach max wait time", appId));
+                }
             }
-
-            if (version == NOT_EXIST_VERSION) {
-                throw new RuntimeException(String.format("get version of appId [%s] failed, reach max wait time", appId));
-            }
-
+            return version;
+        } catch (Exception e) {
+//            if (ret) {
+//                cacheExecutor.appEnvRemove(appId);
+//            }
+            throw e;
         }
-        return version;
+
     }
 
     private IEntityClass toEntityClass(long id, Map<Long, EntityClassStorage> entityClassStorageMaps) throws SQLException {

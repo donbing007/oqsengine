@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.meta.config;
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncServer;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.ITransferExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
@@ -75,7 +76,7 @@ public class ServerConfiguration {
     }
 
     @Bean
-    public EntityClassSyncServer entityClassSyncServer() {
+    public ITransferExecutor entityClassSyncServer() {
         return new EntityClassSyncServer();
     }
 

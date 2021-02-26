@@ -46,7 +46,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
     private GRpcParamsConfig gRpcParamsConfig;
 
     @Override
-    public void heartBeat(String uid) {
+    public void resetHeartBeat(String uid) {
         requestWatcher.resetHeartBeat();
     }
 
@@ -100,8 +100,8 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
     }
 
     @Override
-    public void addForgot(String appId, int version) {
-        forgotQueue.add(new WatchElement(appId, version, WatchElement.AppStatus.Init));
+    public void addForgot(WatchElement watchElement) {
+        forgotQueue.add(watchElement);
     }
 
     @Override

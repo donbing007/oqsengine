@@ -265,7 +265,9 @@ public class Entity implements IEntity, Serializable {
         return buff.toString();
     }
 
-
+    /**
+     * Builder
+     */
     public static final class Builder {
         private long id;
         private long time;

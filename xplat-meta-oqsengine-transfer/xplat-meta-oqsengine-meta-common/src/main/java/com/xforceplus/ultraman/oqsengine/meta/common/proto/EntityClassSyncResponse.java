@@ -20,6 +20,7 @@ private static final long serialVersionUID = 0L;
     version_ = 0;
     uid_ = "";
     status_ = 0;
+    env_ = "";
     md5_ = "";
   }
 
@@ -79,10 +80,16 @@ private static final long serialVersionUID = 0L;
           case 42: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            md5_ = s;
+            env_ = s;
             break;
           }
           case 50: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            md5_ = s;
+            break;
+          }
+          case 58: {
             com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto.Builder subBuilder = null;
             if (entityClassSyncRspProto_ != null) {
               subBuilder = entityClassSyncRspProto_.toBuilder();
@@ -205,10 +212,44 @@ private static final long serialVersionUID = 0L;
     return status_;
   }
 
-  public static final int MD5_FIELD_NUMBER = 5;
+  public static final int ENV_FIELD_NUMBER = 5;
+  private volatile java.lang.Object env_;
+  /**
+   * <code>string env = 5;</code>
+   */
+  public java.lang.String getEnv() {
+    java.lang.Object ref = env_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      env_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string env = 5;</code>
+   */
+  public com.google.protobuf.ByteString
+      getEnvBytes() {
+    java.lang.Object ref = env_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      env_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int MD5_FIELD_NUMBER = 6;
   private volatile java.lang.Object md5_;
   /**
-   * <code>string md5 = 5;</code>
+   * <code>string md5 = 6;</code>
    */
   public java.lang.String getMd5() {
     java.lang.Object ref = md5_;
@@ -223,7 +264,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string md5 = 5;</code>
+   * <code>string md5 = 6;</code>
    */
   public com.google.protobuf.ByteString
       getMd5Bytes() {
@@ -239,22 +280,22 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int ENTITYCLASSSYNCRSPPROTO_FIELD_NUMBER = 6;
+  public static final int ENTITYCLASSSYNCRSPPROTO_FIELD_NUMBER = 7;
   private com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto entityClassSyncRspProto_;
   /**
-   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
    */
   public boolean hasEntityClassSyncRspProto() {
     return entityClassSyncRspProto_ != null;
   }
   /**
-   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
    */
   public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto getEntityClassSyncRspProto() {
     return entityClassSyncRspProto_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto.getDefaultInstance() : entityClassSyncRspProto_;
   }
   /**
-   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
    */
   public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProtoOrBuilder getEntityClassSyncRspProtoOrBuilder() {
     return getEntityClassSyncRspProto();
@@ -284,11 +325,14 @@ private static final long serialVersionUID = 0L;
     if (status_ != 0) {
       output.writeInt32(4, status_);
     }
+    if (!getEnvBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, env_);
+    }
     if (!getMd5Bytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, md5_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 6, md5_);
     }
     if (entityClassSyncRspProto_ != null) {
-      output.writeMessage(6, getEntityClassSyncRspProto());
+      output.writeMessage(7, getEntityClassSyncRspProto());
     }
     unknownFields.writeTo(output);
   }
@@ -312,12 +356,15 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(4, status_);
     }
+    if (!getEnvBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, env_);
+    }
     if (!getMd5Bytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, md5_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, md5_);
     }
     if (entityClassSyncRspProto_ != null) {
       size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(6, getEntityClassSyncRspProto());
+        .computeMessageSize(7, getEntityClassSyncRspProto());
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -343,6 +390,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getUid());
     result = result && (getStatus()
         == other.getStatus());
+    result = result && getEnv()
+        .equals(other.getEnv());
     result = result && getMd5()
         .equals(other.getMd5());
     result = result && (hasEntityClassSyncRspProto() == other.hasEntityClassSyncRspProto());
@@ -369,6 +418,8 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getUid().hashCode();
     hash = (37 * hash) + STATUS_FIELD_NUMBER;
     hash = (53 * hash) + getStatus();
+    hash = (37 * hash) + ENV_FIELD_NUMBER;
+    hash = (53 * hash) + getEnv().hashCode();
     hash = (37 * hash) + MD5_FIELD_NUMBER;
     hash = (53 * hash) + getMd5().hashCode();
     if (hasEntityClassSyncRspProto()) {
@@ -512,6 +563,8 @@ private static final long serialVersionUID = 0L;
 
       status_ = 0;
 
+      env_ = "";
+
       md5_ = "";
 
       if (entityClassSyncRspProtoBuilder_ == null) {
@@ -546,6 +599,7 @@ private static final long serialVersionUID = 0L;
       result.version_ = version_;
       result.uid_ = uid_;
       result.status_ = status_;
+      result.env_ = env_;
       result.md5_ = md5_;
       if (entityClassSyncRspProtoBuilder_ == null) {
         result.entityClassSyncRspProto_ = entityClassSyncRspProto_;
@@ -606,6 +660,10 @@ private static final long serialVersionUID = 0L;
       }
       if (other.getStatus() != 0) {
         setStatus(other.getStatus());
+      }
+      if (!other.getEnv().isEmpty()) {
+        env_ = other.env_;
+        onChanged();
       }
       if (!other.getMd5().isEmpty()) {
         md5_ = other.md5_;
@@ -831,9 +889,78 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
+    private java.lang.Object env_ = "";
+    /**
+     * <code>string env = 5;</code>
+     */
+    public java.lang.String getEnv() {
+      java.lang.Object ref = env_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        env_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string env = 5;</code>
+     */
+    public com.google.protobuf.ByteString
+        getEnvBytes() {
+      java.lang.Object ref = env_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        env_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string env = 5;</code>
+     */
+    public Builder setEnv(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      env_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string env = 5;</code>
+     */
+    public Builder clearEnv() {
+      
+      env_ = getDefaultInstance().getEnv();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string env = 5;</code>
+     */
+    public Builder setEnvBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      env_ = value;
+      onChanged();
+      return this;
+    }
+
     private java.lang.Object md5_ = "";
     /**
-     * <code>string md5 = 5;</code>
+     * <code>string md5 = 6;</code>
      */
     public java.lang.String getMd5() {
       java.lang.Object ref = md5_;
@@ -848,7 +975,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string md5 = 5;</code>
+     * <code>string md5 = 6;</code>
      */
     public com.google.protobuf.ByteString
         getMd5Bytes() {
@@ -864,7 +991,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string md5 = 5;</code>
+     * <code>string md5 = 6;</code>
      */
     public Builder setMd5(
         java.lang.String value) {
@@ -877,7 +1004,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string md5 = 5;</code>
+     * <code>string md5 = 6;</code>
      */
     public Builder clearMd5() {
       
@@ -886,7 +1013,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string md5 = 5;</code>
+     * <code>string md5 = 6;</code>
      */
     public Builder setMd5Bytes(
         com.google.protobuf.ByteString value) {
@@ -904,13 +1031,13 @@ private static final long serialVersionUID = 0L;
     private com.google.protobuf.SingleFieldBuilderV3<
         com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProtoOrBuilder> entityClassSyncRspProtoBuilder_;
     /**
-     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
      */
     public boolean hasEntityClassSyncRspProto() {
       return entityClassSyncRspProtoBuilder_ != null || entityClassSyncRspProto_ != null;
     }
     /**
-     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
      */
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto getEntityClassSyncRspProto() {
       if (entityClassSyncRspProtoBuilder_ == null) {
@@ -920,7 +1047,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
      */
     public Builder setEntityClassSyncRspProto(com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto value) {
       if (entityClassSyncRspProtoBuilder_ == null) {
@@ -936,7 +1063,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
      */
     public Builder setEntityClassSyncRspProto(
         com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto.Builder builderForValue) {
@@ -950,7 +1077,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
      */
     public Builder mergeEntityClassSyncRspProto(com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto value) {
       if (entityClassSyncRspProtoBuilder_ == null) {
@@ -968,7 +1095,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
      */
     public Builder clearEntityClassSyncRspProto() {
       if (entityClassSyncRspProtoBuilder_ == null) {
@@ -982,7 +1109,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
      */
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto.Builder getEntityClassSyncRspProtoBuilder() {
       
@@ -990,7 +1117,7 @@ private static final long serialVersionUID = 0L;
       return getEntityClassSyncRspProtoFieldBuilder().getBuilder();
     }
     /**
-     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
      */
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProtoOrBuilder getEntityClassSyncRspProtoOrBuilder() {
       if (entityClassSyncRspProtoBuilder_ != null) {
@@ -1001,7 +1128,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 6;</code>
+     * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
         com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProtoOrBuilder> 

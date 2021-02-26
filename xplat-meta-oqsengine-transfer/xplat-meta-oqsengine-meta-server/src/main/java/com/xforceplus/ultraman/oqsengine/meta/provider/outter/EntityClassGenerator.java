@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.provider.outter;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
 
 /**
  * desc :
@@ -12,5 +12,5 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspPro
  */
 public interface EntityClassGenerator {
 
-    EntityClassSyncRspProto pull(String appId, int version);
+    AppUpdateEvent pull(String appId, String env);
 }

@@ -246,7 +246,9 @@ public class EntityClass implements IEntityClass {
         return sb.toString();
     }
 
-
+    /**
+     * Builder
+     */
     public static final class Builder {
         private long id;
         private String name;

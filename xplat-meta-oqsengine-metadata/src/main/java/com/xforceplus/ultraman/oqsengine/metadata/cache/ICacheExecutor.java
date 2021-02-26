@@ -31,4 +31,10 @@ public interface ICacheExecutor {
     boolean prepare(String appId, int version);
 
     boolean endPrepare(String appId);
+
+    String appEnvGet(String appId);
+
+    boolean appEnvSet(String appId, String env);
+
+    boolean appEnvRemove(String appId);
 }

@@ -8,6 +8,8 @@ import org.springframework.context.event.EventListener;
 
 import javax.annotation.Resource;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
+
 /**
  * desc :
  * name : EntityClassListener
@@ -26,7 +28,14 @@ public class EntityClassListener {
     @EventListener
     public boolean appSyncListener(AppUpdateEvent event) {
         if (null == event) {
-            logger.warn("event is null");
+            logger.warn("event should not be null, event will ignore...");
+            return false;
+        }
+        if (null == event.getAppId() ||
+                null == event.getEnv() ||
+                NOT_EXIST_VERSION >= event.getVersion() ||
+                null == event.getEntityClassSyncRspProto()) {
+            logger.warn("appId/env/version/data should not be null, event will ignore...");
             return false;
         }
 

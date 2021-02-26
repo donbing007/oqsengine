@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,26 +84,21 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
     }
 
     public static class Element {
+        private WatchElement w;
         private String uid;
-        private String appId;
-        private int version;
 
-        public Element(String appId, int version, String uid) {
+
+        public Element(WatchElement w, String uid) {
             this.uid = uid;
-            this.appId = appId;
-            this.version = version;
+            this.w = w;
         }
 
         public String getUid() {
             return uid;
         }
 
-        public String getAppId() {
-            return appId;
-        }
-
-        public int getVersion() {
-            return version;
+        public WatchElement getW() {
+            return w;
         }
     }
 

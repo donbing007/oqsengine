@@ -10,13 +10,15 @@ package com.xforceplus.ultraman.oqsengine.meta.common.dto;
  */
 public class WatchElement {
     private String appId;
+    private String env;
     private int version;
     private AppStatus status;
     private long registerTime;
 
-    public WatchElement(String appId, int version, WatchElement.AppStatus status) {
+    public WatchElement(String appId, String env, int version, WatchElement.AppStatus status) {
         this.appId = appId;
         this.version = version;
+        this.env = env;
         this.status = status;
         if (status == AppStatus.Register) {
             registerTime = System.currentTimeMillis();
@@ -43,6 +45,13 @@ public class WatchElement {
         return version;
     }
 
+    public String getEnv() {
+        return env;
+    }
+
+    public void setEnv(String env) {
+        this.env = env;
+    }
 
     public AppStatus getStatus() {
         return status;
@@ -60,10 +69,10 @@ public class WatchElement {
     }
 
     public static enum AppStatus {
-        Init,
-        Register,
-        Notice,
-        Confirmed
+        Init,       //  表示当前由于错误处于初始化
+        Register,   //  表示客户端发送注册
+        Notice,     //  表示服务端关注
+        Confirmed   //  表示客户端告知服务端确认
     }
 
     @Override

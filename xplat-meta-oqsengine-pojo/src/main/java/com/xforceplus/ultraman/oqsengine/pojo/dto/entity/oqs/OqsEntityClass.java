@@ -142,6 +142,9 @@ public class OqsEntityClass implements IEntityClass {
         return father.field(id);
     }
 
+    /**
+     * Builder
+     */
     public static final class Builder {
         private long id;
         private String name;

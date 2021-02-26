@@ -94,6 +94,14 @@ public class CacheExecutor implements ICacheExecutor {
      * keys
      */
     /**
+     * version key (AppID-Env信息)
+     * [redis hash key]
+     * key-appEnvKeys
+     * field-appId
+     * value-env
+     */
+    private String appEnvKeys;
+    /**
      * version key (版本信息)
      * [redis hash key]
      * key-appVersionKeys
@@ -139,7 +147,9 @@ public class CacheExecutor implements ICacheExecutor {
     private String entityStorageKeys;
 
     public CacheExecutor() {
-        this(NOT_INIT_INTEGER_PARAMETER, NOT_INIT_INTEGER_PARAMETER, NOT_INIT_INTEGER_PARAMETER, DEFAULT_METADATA_APP_VERSIONS,
+        this(NOT_INIT_INTEGER_PARAMETER, NOT_INIT_INTEGER_PARAMETER, NOT_INIT_INTEGER_PARAMETER,
+                DEFAULT_METADATA_APP_ENV,
+                DEFAULT_METADATA_APP_VERSIONS,
                 DEFAULT_METADATA_APP_PREPARE,
                 DEFAULT_METADATA_APP_ENTITY,
                 DEFAULT_METADATA_ENTITY_APP_REL,
@@ -148,6 +158,7 @@ public class CacheExecutor implements ICacheExecutor {
 
     public CacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds) {
         this(maxCacheSize, prepareExpireSeconds, cacheExpireSeconds,
+                DEFAULT_METADATA_APP_ENV,
                 DEFAULT_METADATA_APP_VERSIONS,
                 DEFAULT_METADATA_APP_PREPARE,
                 DEFAULT_METADATA_APP_ENTITY,
@@ -156,7 +167,7 @@ public class CacheExecutor implements ICacheExecutor {
     }
 
     public CacheExecutor(int maxCacheSize, int prepareExpireSeconds, int cacheExpireSeconds,
-                         String appVersionKeys, String appPrepareKeyPrefix, String entityStorageKeys,
+                         String appEnvKeys, String appVersionKeys, String appPrepareKeyPrefix, String entityStorageKeys,
                                                     String appEntityMappingKey, String appEntityCollectionsKey) {
 
         if (maxCacheSize > NOT_INIT_INTEGER_PARAMETER) {
@@ -169,6 +180,11 @@ public class CacheExecutor implements ICacheExecutor {
 
         if (cacheExpireSeconds > NOT_INIT_INTEGER_PARAMETER) {
             this.cacheExpire = cacheExpireSeconds;
+        }
+
+        this.appEnvKeys = appEnvKeys;
+        if (this.appEnvKeys == null || this.appEnvKeys.isEmpty()) {
+            throw new IllegalArgumentException("The metadataAppEnv keys is invalid.");
         }
 
         this.appVersionKeys = appVersionKeys;
@@ -374,7 +390,7 @@ public class CacheExecutor implements ICacheExecutor {
         if (null != versionStr) {
             return Integer.parseInt(versionStr);
         }
-        return -1;
+        return NOT_EXIST_VERSION;
     }
 
 
@@ -504,6 +520,21 @@ public class CacheExecutor implements ICacheExecutor {
         }
 
         return syncCommands.del(String.format("%s.%s", appPrepareKeyPrefix, appId)) > 0;
+    }
+
+    @Override
+    public String appEnvGet(String appId) {
+        return syncCommands.hget(appEnvKeys, appId);
+    }
+
+    @Override
+    public boolean appEnvSet(String appId, String env) {
+        return syncCommands.hsetnx(appEnvKeys, appId, env);
+    }
+
+    @Override
+    public boolean appEnvRemove(String appId) {
+        return syncCommands.hdel(appEnvKeys, appId) == 1;
     }
 
     /**

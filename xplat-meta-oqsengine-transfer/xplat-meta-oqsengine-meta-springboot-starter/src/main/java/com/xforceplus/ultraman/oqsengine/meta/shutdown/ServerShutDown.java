@@ -1,8 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.shutdown;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.ITransferExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +20,7 @@ public class ServerShutDown implements IShutDown {
     private Logger logger = LoggerFactory.getLogger(ServerShutDown.class);
 
     @Resource
-    ResponseWatchExecutor watchExecutor;
+    ITransferExecutor transferExecutor;
 
     @Resource(name = "grpcServerExecutor")
     private ExecutorService gRpcServerExecutor;
@@ -29,14 +28,10 @@ public class ServerShutDown implements IShutDown {
     @Resource(name = "grpcWorkThreadPool")
     private ExecutorService gRpcWorkThreadPool;
 
-    @Resource
-    private SyncResponseHandler responseHandler;
 
     @Override
     public void shutdown() {
-        watchExecutor.stop();
-
-        responseHandler.stop();
+        transferExecutor.stop();
 
         // wait shutdown
         logger.info("Start closing the gRpc server thread...");

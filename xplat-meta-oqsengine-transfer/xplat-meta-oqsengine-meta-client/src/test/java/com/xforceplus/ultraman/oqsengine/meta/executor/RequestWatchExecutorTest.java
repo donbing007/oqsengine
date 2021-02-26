@@ -62,7 +62,7 @@ public class RequestWatchExecutorTest {
     public void resetHeartBeatTest() {
         Assert.assertNotNull(requestWatchExecutor.watcher());
         long heartbeat = requestWatchExecutor.watcher().heartBeat();
-        requestWatchExecutor.heartBeat("uid");
+        requestWatchExecutor.resetHeartBeat("uid");
         Assert.assertNotEquals(heartbeat, requestWatchExecutor.watcher().heartBeat());
     }
 
@@ -82,8 +82,9 @@ public class RequestWatchExecutorTest {
     @Test
     public void addTest() {
         String appId = "testAdd";
+        String env = "test";
         int version = 12345;
-        WatchElement w = new WatchElement(appId, version, WatchElement.AppStatus.Init);
+        WatchElement w = new WatchElement(appId, env, version, WatchElement.AppStatus.Init);
 
         requestWatchExecutor.add(w);
 
@@ -99,36 +100,37 @@ public class RequestWatchExecutorTest {
     @Test
     public void updateTest() {
         String appId = "testAdd";
+        String env = "test";
         int version = 10;
-        WatchElement w = new WatchElement(appId, version, WatchElement.AppStatus.Init);
+        WatchElement w = new WatchElement(appId, env, version, WatchElement.AppStatus.Init);
 
         requestWatchExecutor.add(w);
 
         /**
          * 设置一个小于当前的版本,将被拒绝
          */
-        w = new WatchElement(appId, 9, WatchElement.AppStatus.Confirmed);
+        w = new WatchElement(appId, env, 9, WatchElement.AppStatus.Confirmed);
         boolean ret = requestWatchExecutor.update(w);
         Assert.assertFalse(ret);
 
         /**
          * 设置当前版本 10 -> 10, init -> register,将被接收
          */
-        w = new WatchElement(appId, 10, WatchElement.AppStatus.Register);
+        w = new WatchElement(appId, env, 10, WatchElement.AppStatus.Register);
         ret = requestWatchExecutor.update(w);
         Assert.assertTrue(ret);
 
         /**
          * 设置当前版本 10 -> 10, register -> init,将被拒绝
          */
-        w = new WatchElement(appId, 10, WatchElement.AppStatus.Init);
+        w = new WatchElement(appId, env,10, WatchElement.AppStatus.Init);
         ret = requestWatchExecutor.update(w);
         Assert.assertFalse(ret);
 
         /**
          * 设置当前版本 10 -> 10, register -> confirm,将被接收
          */
-        w = new WatchElement(appId, 10, WatchElement.AppStatus.Confirmed);
+        w = new WatchElement(appId, env,10, WatchElement.AppStatus.Confirmed);
         ret = requestWatchExecutor.update(w);
         Assert.assertTrue(ret);
     }

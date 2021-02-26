@@ -26,8 +26,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Confirmed;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Notice;
 import static com.xforceplus.ultraman.oqsengine.meta.constant.ServerConstant.SERVER_TASK_COUNT;
 
@@ -98,7 +100,6 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     }
 
 
-
     /**
      * 销毁delayTask的线程
      */
@@ -122,162 +123,149 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         executors.forEach(t -> ThreadUtils.shutdown(t, SHUT_DOWN_WAIT_TIME_OUT));
     }
 
-    public static boolean isShutdown() {
-        return isShutdown;
-    }
-
     @Override
     public void onNext(EntityClassSyncRequest entityClassSyncRequest,
                        StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
-        executor.submit(() -> {
-            if (entityClassSyncRequest.getStatus() == HEARTBEAT.ordinal()) {
-                /**
-                 * 处理心跳
-                 */
-                String uid = entityClassSyncRequest.getUid();
-                if (null != uid) {
-                    responseWatchExecutor.heartBeat(uid);
-
-                    confirmHeartBeat(uid);
-                }
-            } else if (entityClassSyncRequest.getStatus() == REGISTER.ordinal()) {
-                /**
-                 * 处理注册
-                 */
-                WatchElement w =
-                        new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(), WatchElement.AppStatus.Register);
-                responseWatchExecutor.add(entityClassSyncRequest.getUid(), responseStreamObserver, w);
-
-                /**
-                 * 确认注册信息
-                 */
-                confirmRegister(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(),
-                        entityClassSyncRequest.getUid());
-
-            } else if (entityClassSyncRequest.getStatus() == SYNC_OK.ordinal()) {
-                /**
-                 * 处理返回结果成功
-                 */
-                responseWatchExecutor.update(entityClassSyncRequest.getUid(),
-                        new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(),
-                                WatchElement.AppStatus.Confirmed));
-
-            } else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
-                /**
-                 * 处理返回结果失败
-                 */
-                pull(entityClassSyncRequest.getAppId(),
-                        entityClassSyncRequest.getVersion(), entityClassSyncRequest.getUid());
+        if (entityClassSyncRequest.getStatus() == HEARTBEAT.ordinal()) {
+            /**
+             * 处理心跳
+             */
+            String uid = entityClassSyncRequest.getUid();
+            if (null != uid) {
+                confirmHeartBeat(uid);
             }
-        });
+        } else if (entityClassSyncRequest.getStatus() == REGISTER.ordinal()) {
+            /**
+             * 处理注册
+             */
+            WatchElement w =
+                    new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
+                            entityClassSyncRequest.getVersion(), WatchElement.AppStatus.Register);
+
+            responseWatchExecutor.add(entityClassSyncRequest.getUid(), responseStreamObserver, w);
+
+            /**
+             * 确认注册信息
+             */
+            if (confirmRegister(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
+                    entityClassSyncRequest.getVersion(), entityClassSyncRequest.getUid())) {
+
+                /**
+                 * 当前的版本小于appId + env 对应的版本时，将从元数据获取一次数据、异步推出
+                 */
+                Integer currentVersion = responseWatchExecutor.version(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv());
+                if (null == currentVersion || currentVersion < entityClassSyncRequest.getVersion()) {
+                    pull(entityClassSyncRequest.getUid(), w);
+                }
+            }
+        } else if (entityClassSyncRequest.getStatus() == SYNC_OK.ordinal()) {
+            /**
+             * 处理返回结果成功
+             */
+            WatchElement w =
+                    new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
+                            entityClassSyncRequest.getVersion(), Confirmed);
+
+            responseWatchExecutor.update(entityClassSyncRequest.getUid(), w);
+
+        } else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
+            /**
+             * 处理返回结果失败
+             */
+            WatchElement w =
+                    new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
+                            entityClassSyncRequest.getVersion(), Notice);
+            /**
+             * 当客户端告知更新失败时，直接进行重试
+             */
+            pull(entityClassSyncRequest.getUid(), w);
+        }
     }
 
     /**
      * 实现SyncHandler中的registerConfirm功能
+     *
      * @param appId
      * @param version
      * @param uid
      */
-    private void confirmRegister(String appId, int version, String uid) {
-        response(appId, version, uid, CONFIRM_REGISTER);
+    private boolean confirmRegister(String appId, String env, int version, String uid) {
+        return confirmResponse(appId, env, version, uid, CONFIRM_REGISTER);
     }
+
     /**
      * 实现SyncHandler中的heartBeatConfirm功能
+     *
      * @param uid
      */
     private void confirmHeartBeat(String uid) {
-        response(null, -1, uid, CONFIRM_HEARTBEAT);
+        responseWatchExecutor.resetHeartBeat(uid);
+
+        confirmResponse(null, null, NOT_EXIST_VERSION, uid, CONFIRM_HEARTBEAT);
     }
 
     /**
      * 主动拉取EntityClass(用于推送失败或超时)
+     * <p>
+     * String uid
+     * WatchElement watchElement
      *
-     * @param appId
-     * @param version
      * @return
      */
     @Override
-    public boolean pull(String appId, int version, String uid) {
-        try {
-            ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
+    public void pull(String uid, WatchElement watchElement) {
+        /**
+         * 这里异步执行
+         */
+        executor.submit(() -> {
+            try {
+                ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
 
-            if (null != watcher) {
-                return response(appId, version, entityClassGenerator.pull(appId, version), watcher);
-            } else {
-                logger.warn("watch not exist to handle data sync response, appId: {}, version : {}, uid :{}...", appId, version, uid);
+                if (null != watcher) {
+                    AppUpdateEvent appUpdateEvent = entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
+                    if (null != appUpdateEvent) {
+
+                        /**
+                        * 强制推送到外部(不更新当前版本)
+                        */
+                        EntityClassSyncResponse response =
+                                generateResponse(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(), appUpdateEvent.getVersion(),
+                                                                                            appUpdateEvent.getEntityClassSyncRspProto());
+
+                        return responseByWatch(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
+                                                appUpdateEvent.getVersion(), response, watcher, false);
+                    }
+                } else {
+                    logger.warn("not exist watcher to handle data sync response, appId: {}, version : {}, uid :{}..."
+                            , watchElement.getAppId(), watchElement.getVersion(), uid);
+                }
+            } catch (Exception e) {
+                logger.warn(e.getMessage());
             }
-
-        } catch (Exception e) {
-            logger.warn(e.getMessage());
-        }
-        return false;
+            return false;
+        });
     }
 
     /**
      * 接收外部推送
+     *
      * @param event
      * @return
      */
     @Override
     public boolean push(AppUpdateEvent event) {
-        return response(event.getAppId(), event.getVersion(), event.getEntityClassSyncRspProto(), null);
-    }
 
-    /**
-     * 发送Response(服务器注册确认、心跳的回包)
-     * @param appId
-     * @param version
-     * @param uid
-     * @param requestStatus
-     */
-    private void response(String appId, int version, String uid, RequestStatus requestStatus) {
-        ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
-
-        if (null != watcher) {
-            EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
-                    .setStatus(requestStatus.ordinal());
-
-            if (requestStatus.equals(CONFIRM_REGISTER)) {
-                builder.setAppId(appId).setVersion(version);
-            }
-
-            responseByWatch(appId, version, builder.build(), watcher, true);
-        } else {
-            logger.warn("watch not exist to handle confirm : {} response, appId: {}, version : {}, uid :{}..."
-                    , requestStatus.name(), appId, version, uid);
-        }
-    }
-
-    /**
-     * 发送Response(EntityClass推送)
-     * @param appId
-     * @param version
-     * @param result
-     * @param watcher
-     * @return
-     */
-    private boolean response(String appId, int version, EntityClassSyncRspProto result,
-                                                ResponseWatcher watcher) {
-        if (null == appId || appId.isEmpty()) {
-            logger.warn("appId is null");
-            return false;
-        }
-
-        if (null == result) {
-            logger.warn("entityClassSyncRspProto is null");
-            return false;
-        }
-
-        if (null != watcher) {
-            responseByWatch(appId, version, generateResponse(appId, version, result), watcher, false);
-        } else {
-            List<ResponseWatcher> needList = responseWatchExecutor.need(new WatchElement(appId, version, Notice));
+        /**
+         * 更新版本成功、则推送给外部
+         */
+        if (responseWatchExecutor.addVersion(event.getAppId(), event.getEnv(), event.getVersion())) {
+            List<ResponseWatcher> needList = responseWatchExecutor.need(new WatchElement(event.getAppId(), event.getEnv(), event.getVersion(), Notice));
             if (!needList.isEmpty()) {
-                EntityClassSyncResponse response = generateResponse(appId, version, result);
+                EntityClassSyncResponse response = generateResponse(event.getAppId(), event.getEnv(), event.getVersion(), event.getEntityClassSyncRspProto());
 
                 needList.forEach(
                         nl -> {
-                            responseByWatch(appId, version, response, nl, false);
+                            responseByWatch(event.getAppId(), event.getEnv(), event.getVersion(), response, nl, false);
                         }
                 );
             }
@@ -285,10 +273,59 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         return true;
     }
 
-    private void responseByWatch(String appId, int version, EntityClassSyncResponse response,
-                                                ResponseWatcher watcher, boolean confirm) {
+    /**
+     * confirmResponse(发送服务器注册确认、心跳的回包)
+     *
+     * @param appId
+     * @param env
+     * @param version
+     * @param uid
+     * @param requestStatus
+     */
+    private boolean confirmResponse(String appId, String env, int version, String uid, RequestStatus requestStatus) {
+        ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
+
         if (null != watcher) {
-            if (watcher.runWithCheck(observer -> {
+            EntityClassSyncResponse.Builder builder =
+                    EntityClassSyncResponse.newBuilder()
+                            .setUid(uid)
+                            .setStatus(requestStatus.ordinal());
+
+            if (requestStatus.equals(CONFIRM_REGISTER)) {
+                builder.setAppId(appId).setVersion(version);
+            }
+
+            return responseByWatch(appId, env, version, builder.build(), watcher, true);
+        } else {
+            logger.warn("watch not exist to handle confirm : {} response, appId: {}, version : {}, uid :{}..."
+                    , requestStatus.name(), appId, version, uid);
+        }
+        return false;
+    }
+
+    private boolean responseByWatch(String appId, String env, int version, EntityClassSyncResponse response,
+                                    ResponseWatcher watcher, boolean confirmRegister) {
+        /**
+         * 成功且不是注册确认，则加入到DelayTaskQueue中进行监听
+         */
+        boolean ret = runObserverOnNext(response, watcher);
+        if (ret && !confirmRegister) {
+            retryExecutor.offer(
+                    new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
+                            new RetryExecutor.Element(new WatchElement(appId, env, version, Notice), watcher.uid())));
+        }
+        return ret;
+    }
+
+    /**
+     * 发送Response
+     * @param response
+     * @param watcher
+     * @return
+     */
+    private boolean runObserverOnNext(EntityClassSyncResponse response, ResponseWatcher watcher) {
+        if (null != watcher) {
+            return watcher.runWithCheck(observer -> {
                 try {
                     observer.onNext(response);
                     return true;
@@ -302,25 +339,25 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                     responseWatchExecutor.release(watcher.uid());
                 }
                 return false;
-            })) {
-                /**
-                 * 成功且不是注册确认，则加入到DelayTaskQueue中进行监听
-                 */
-                if (!confirm) {
-                    retryExecutor.offer(
-                            new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
-                                    new RetryExecutor.Element(appId, version, watcher.uid())));
-                }
-            }
-        } else {
-            logger.warn("current watch is not exists or has been removed...");
+            });
         }
+        logger.warn("current watch is not exists or has been removed...");
+        return false;
     }
 
-    private EntityClassSyncResponse generateResponse(String appId, int version, EntityClassSyncRspProto result) {
+    /**
+     * 生成Response
+     * @param appId
+     * @param env
+     * @param version
+     * @param result
+     * @return
+     */
+    private EntityClassSyncResponse generateResponse(String appId, String env, int version, EntityClassSyncRspProto result) {
         return EntityClassSyncResponse.newBuilder()
                 .setMd5(MD5Utils.getMD5(result.toByteArray()))
                 .setAppId(appId)
+                .setEnv(env)
                 .setVersion(version)
                 .setEntityClassSyncRspProto(result)
                 .build();
@@ -340,12 +377,12 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
             executor.execute(() -> {
                 ResponseWatcher watcher = responseWatchExecutor.watcher(task.element().getUid());
                 if (null != watcher) {
-                    if (watcher.isOnServe() &&
-                            watcher.onWatch(new WatchElement(task.element().getAppId(), task.element().getVersion(), Notice))) {
+                    WatchElement w = task.element().getW();
+                    if (watcher.isOnServe() && watcher.onWatch(w)) {
                         /**
                          * 直接拉取
                          */
-                        pull(task.element().getAppId(), task.element().getVersion(), task.element().getUid());
+                        pull(task.element().getUid(), w);
                     }
                 }
             });
