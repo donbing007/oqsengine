@@ -26,6 +26,14 @@ public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncIm
     @Resource
     private SyncResponseHandler responseHandler;
 
+    public void start() {
+        responseHandler.start();
+    }
+
+    public void stop() {
+        responseHandler.stop();
+    }
+
     @Override
     public StreamObserver<EntityClassSyncRequest> register(StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
 

@@ -35,14 +35,14 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
     public boolean onWatch(WatchElement watchElement) {
         WatchElement v = watches.get(watchElement.getAppId());
         if (null == v) {
-            return true;
+            return false;
         }
 
         /**
-         * 当前版本小于输入版本或当前版本相等时未确认
+         * 当前版本小于输入版本或当前版本
          */
         return v.getVersion() < watchElement.getVersion() ||
-                (v.getVersion() == watchElement.getVersion() && v.getStatus() != WatchElement.AppStatus.Confirmed);
+                (v.getVersion() == watchElement.getVersion() && v.getStatus().ordinal() < watchElement.getStatus().ordinal());
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncReques
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
+import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import io.grpc.stub.StreamObserver;
@@ -59,10 +60,12 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
             throw new MetaSyncClientException("client stub create failed.", true);
         }
 
+        isShutdown = false;
+
         /**
-         * 启动observerStream监控
+         * 启动observerStream监控, 启动一个新的线程进行stream的监听
          */
-        executorService.submit(this::startObserverStream);
+        executorService.submit(this::observerStreamMonitor);
     }
 
     @Override
@@ -81,11 +84,11 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
     }
 
     /**
-     * 初始化startObserverStream
+     * observerStream监控
      */
-    private boolean startObserverStream() {
+    private boolean observerStreamMonitor() {
         /**
-         * 启动一个新的线程进行stream的监听,当发生断流时，将会重新进行stream的创建.
+         * 当发生断流时，将会重新进行stream的创建.
          */
         while (!isShutDown()) {
             CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -96,7 +99,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
                 /**
                  * 初始化observer，如果失败，说明当前连接不可用，将等待5秒后重试
                  */
-                streamObserver = startObserver(countDownLatch);
+                streamObserver = responseEvent(countDownLatch);
             } catch (Exception e) {
                 logger.warn("observer init error, message : {}, retry after ({})ms"
                                         , gRpcParamsConfig.getReconnectDuration(), e.getMessage());
@@ -156,7 +159,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
      *
      * @param countDownLatch
      */
-    private StreamObserver<EntityClassSyncRequest> startObserver(CountDownLatch countDownLatch) {
+    private StreamObserver<EntityClassSyncRequest> responseEvent(CountDownLatch countDownLatch) {
         return client.channelStub().register(new StreamObserver<EntityClassSyncResponse>() {
             @Override
             public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
@@ -171,7 +174,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
                 /**
                  * reset heartbeat
                  */
-                requestWatchExecutor.resetHeartBeat();
+                requestWatchExecutor.heartBeat(entityClassSyncResponse.getUid());
 
                 /**
                  * 更新状态
@@ -193,7 +196,6 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
                             }
                         }
                     });
-
                 }
             }
 
@@ -206,6 +208,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
 
             @Override
             public void onCompleted() {
+                logger.info("stream observer completed.");
                 countDownLatch.countDown();
             }
         });

@@ -28,7 +28,9 @@ public class ThreadUtils {
         if (null != thread) {
             //  等待timeout秒后结束线程
             TimeWaitUtils.wakeupAfter(timeout, TimeUnit.SECONDS);
-            thread.interrupt();
+            if (thread.isAlive()) {
+                thread.interrupt();
+            }
         }
     }
 }

@@ -2,7 +2,9 @@ package com.xforceplus.ultraman.oqsengine.meta.connect;
 
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncServer;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import io.grpc.ServerBuilder;
+import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
 import org.lognet.springboot.grpc.GRpcServerBuilderConfigurer;
 
@@ -28,16 +30,16 @@ public class GRpcServer extends GRpcServerBuilderConfigurer {
     private EntityClassSyncServer entityClassSyncServer;
 
     @Resource
-    private GRpcServerConfiguration configuration;
+    private GRpcParamsConfig configuration;
 
     @Override
     public void configure(ServerBuilder<?> serverBuilder) {
         serverBuilder.executor(executor);
         ((NettyServerBuilder) serverBuilder)
-                .maxInboundMetadataSize(configuration.getMaxInboundMetadataBytes())
-                .maxInboundMessageSize(configuration.getMaxInboundMessageBytes())
-                .keepAliveTime(configuration.getHeartbeatIntervalSeconds(), TimeUnit.SECONDS)
-                .keepAliveTimeout(configuration.getHeartbeatTimeoutSeconds(), TimeUnit.SECONDS)
+                .maxInboundMetadataSize(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE)
+                .maxInboundMessageSize(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE)
+                .keepAliveTime(configuration.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
+                .keepAliveTimeout(configuration.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
                 .permitKeepAliveWithoutCalls(true)
                 .permitKeepAliveTime(1, TimeUnit.SECONDS);
     }

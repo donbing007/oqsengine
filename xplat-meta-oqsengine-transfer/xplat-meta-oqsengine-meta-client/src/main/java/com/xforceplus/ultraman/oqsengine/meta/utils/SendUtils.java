@@ -50,8 +50,8 @@ public class SendUtils {
         try {
             requestWatcher.observer().onNext(entityClassSyncRequest);
         } catch (Exception e) {
-            logger.warn("sendRequest failed.");
-            throw new MetaSyncClientException("sendRequest failed.", true);
+            throw new MetaSyncClientException(
+                    String.format("send request error, message-[%s].", e.getMessage()), true);
         }
     }
 }

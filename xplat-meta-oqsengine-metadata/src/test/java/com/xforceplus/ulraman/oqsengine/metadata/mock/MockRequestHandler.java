@@ -8,7 +8,7 @@ import javax.annotation.Resource;
 import java.util.*;
 
 import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.*;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.NOT_EXIST_VERSION;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 
 /**
  * desc :

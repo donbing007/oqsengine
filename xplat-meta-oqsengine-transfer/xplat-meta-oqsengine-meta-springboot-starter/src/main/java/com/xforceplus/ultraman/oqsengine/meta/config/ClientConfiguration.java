@@ -9,6 +9,9 @@ import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncRequestHandler;
+import com.xforceplus.ultraman.oqsengine.meta.shutdown.ClientShutDown;
+import com.xforceplus.ultraman.oqsengine.meta.shutdown.IShutDown;
+import com.xforceplus.ultraman.oqsengine.meta.shutdown.ShutDownExecutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -21,15 +24,15 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper
 
 /**
  * desc :
- * name : GRpcClientConfiguration
+ * name : ClientConfiguration
  *
  * @author : xujia
- * date : 2021/2/7
+ * date : 2021/2/25
  * @since : 1.8
  */
 @Configuration
-@ConditionalOnProperty(prefix = "grpc.client", name = "enabled", havingValue = "true")
-public class GRpcClientConfiguration {
+@ConditionalOnProperty(prefix = "grpc.on", name = "side", havingValue = "client")
+public class ClientConfiguration {
 
     @Bean
     public GRpcParamsConfig gRpcParamsConfig(
@@ -48,10 +51,10 @@ public class GRpcClientConfiguration {
         return gRpcParamsConfig;
     }
 
-    @Bean("oqsSyncThreadPool")
-    public ExecutorService asyncDispatcher(
-            @Value("${threadPool.call.grpc.client.worker:0}") int worker,
-            @Value("${threadPool.call.grpc.client.queue:500}") int queue) {
+    @Bean("grpcWorkThreadPool")
+    public ExecutorService metaSyncThreadPool(
+            @Value("${threadPool.call.grpc.worker:0}") int worker,
+            @Value("${threadPool.call.grpc.queue:500}") int queue) {
         int useWorker = worker;
         int useQueue = queue;
         if (useWorker == 0) {
@@ -62,11 +65,11 @@ public class GRpcClientConfiguration {
             useQueue = 500;
         }
 
-        return buildThreadPool(useWorker, useQueue, "gRpc-server-call", false);
+        return buildThreadPool(useWorker, useQueue, "meta-sync-call", false);
     }
 
     @Bean
-    public GRpcClient metaSyncGRpcClient(
+    public GRpcClient metaSyncClient(
             @Value("${grpc.server.host}") String host,
             @Value("${grpc.server.port}") int port
     ) {
@@ -89,5 +92,15 @@ public class GRpcClientConfiguration {
     @Bean
     public IEntityClassSyncClient entityClassSyncClient() {
         return new EntityClassSyncClient();
+    }
+
+    @Bean
+    public ShutDownExecutor shutDownExecutor() {
+        return shutDownExecutor();
+    }
+
+    @Bean
+    public IShutDown shutDown() {
+        return new ClientShutDown();
     }
 }

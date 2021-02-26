@@ -9,12 +9,7 @@ package com.xforceplus.ultraman.oqsengine.metadata.constant;
  * @since : 1.8
  */
 public class Constant {
-    public static final int EXPIRED_VERSION = -1;
-    public static final int NOT_EXIST_VERSION = -1;
-
     public static final long COMMON_WAIT_TIME_OUT = 60_000;
 
     public static final int NOT_INIT_INTEGER_PARAMETER = 0;
-
-    public static final long MIN_ID = 1;
 }

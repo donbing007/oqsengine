@@ -11,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
-import com.xforceplus.ultraman.oqsengine.meta.common.dto.IWatcher;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerator;
@@ -20,9 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -30,6 +29,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsCon
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Notice;
+import static com.xforceplus.ultraman.oqsengine.meta.constant.ServerConstant.SERVER_TASK_COUNT;
 
 
 /**
@@ -45,7 +45,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     private Logger logger = LoggerFactory.getLogger(SyncResponseHandler.class);
 
     @Resource
-    private IResponseWatchExecutor watchExecutor;
+    private IResponseWatchExecutor responseWatchExecutor;
 
     @Resource
     private IDelayTaskExecutor<RetryExecutor.DelayTask> retryExecutor;
@@ -59,28 +59,71 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     @Resource
     private GRpcParamsConfig gRpcParamsConfig;
 
-    private Thread thread;
+    private List<Thread> executors = new ArrayList<>(SERVER_TASK_COUNT);
+
+    private static volatile boolean isShutdown = false;
 
     /**
      * 创建监听delayTask的线程
      */
     @Override
     public void start() {
-        thread = ThreadUtils.create(() -> {
-            delayTask();
-            return true;
-        });
 
-        thread.start();
+        /**
+         * 设置服务状态为启用
+         */
+        isShutdown = false;
+        /**
+         * 启动retryExecutor
+         */
+        retryExecutor.on();
+        /**
+         * 启动responseWatchExecutor
+         */
+        responseWatchExecutor.start();
+
+        /**
+         * 1.添加delayAppVersion check任务线程
+         */
+        executors.add(ThreadUtils.create(this::delayTask));
+        /**
+         * 2.添加keepAlive check任务线程
+         */
+        executors.add(ThreadUtils.create(this::keepAliveCheck));
+
+        /**
+         * 启动当前Task线程
+         */
+        executors.forEach(Thread::start);
     }
+
+
 
     /**
      * 销毁delayTask的线程
      */
     @Override
     public void stop() {
+        /**
+         * 设置服务状态为禁用
+         */
+        isShutdown = true;
+        /**
+         * 关闭retryExecutor
+         */
         retryExecutor.off();
-        ThreadUtils.shutdown(thread, SHUT_DOWN_WAIT_TIME_OUT);
+        /**
+         * 关闭responseWatchExecutor
+         */
+        responseWatchExecutor.stop();
+        /**
+         * 停止当前活动线程
+         */
+        executors.forEach(t -> ThreadUtils.shutdown(t, SHUT_DOWN_WAIT_TIME_OUT));
+    }
+
+    public static boolean isShutdown() {
+        return isShutdown;
     }
 
     @Override
@@ -93,7 +136,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                  */
                 String uid = entityClassSyncRequest.getUid();
                 if (null != uid) {
-                    watchExecutor.heartBeat(uid);
+                    responseWatchExecutor.heartBeat(uid);
 
                     confirmHeartBeat(uid);
                 }
@@ -103,7 +146,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                  */
                 WatchElement w =
                         new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(), WatchElement.AppStatus.Register);
-                watchExecutor.add(entityClassSyncRequest.getUid(), responseStreamObserver, w);
+                responseWatchExecutor.add(entityClassSyncRequest.getUid(), responseStreamObserver, w);
 
                 /**
                  * 确认注册信息
@@ -115,7 +158,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                 /**
                  * 处理返回结果成功
                  */
-                watchExecutor.update(entityClassSyncRequest.getUid(),
+                responseWatchExecutor.update(entityClassSyncRequest.getUid(),
                         new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getVersion(),
                                 WatchElement.AppStatus.Confirmed));
 
@@ -156,10 +199,10 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     @Override
     public boolean pull(String appId, int version, String uid) {
         try {
-            Optional<IWatcher<EntityClassSyncResponse>> watcherOp = watchExecutor.watcher(uid);
+            ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
 
-            if (watcherOp.isPresent()) {
-                return response(appId, version, entityClassGenerator.pull(appId, version), watcherOp.get());
+            if (null != watcher) {
+                return response(appId, version, entityClassGenerator.pull(appId, version), watcher);
             } else {
                 logger.warn("watch not exist to handle data sync response, appId: {}, version : {}, uid :{}...", appId, version, uid);
             }
@@ -188,9 +231,9 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      * @param requestStatus
      */
     private void response(String appId, int version, String uid, RequestStatus requestStatus) {
-        Optional<IWatcher<EntityClassSyncResponse>> watcherOp = watchExecutor.watcher(uid);
+        ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
 
-        if (watcherOp.isPresent()) {
+        if (null != watcher) {
             EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
                     .setStatus(requestStatus.ordinal());
 
@@ -198,7 +241,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                 builder.setAppId(appId).setVersion(version);
             }
 
-            responseByWatch(appId, version, builder.build(), watcherOp.get(), true);
+            responseByWatch(appId, version, builder.build(), watcher, true);
         } else {
             logger.warn("watch not exist to handle confirm : {} response, appId: {}, version : {}, uid :{}..."
                     , requestStatus.name(), appId, version, uid);
@@ -214,7 +257,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      * @return
      */
     private boolean response(String appId, int version, EntityClassSyncRspProto result,
-                                                IWatcher<EntityClassSyncResponse> watcher) {
+                                                ResponseWatcher watcher) {
         if (null == appId || appId.isEmpty()) {
             logger.warn("appId is null");
             return false;
@@ -228,7 +271,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         if (null != watcher) {
             responseByWatch(appId, version, generateResponse(appId, version, result), watcher, false);
         } else {
-            List<IWatcher<EntityClassSyncResponse>> needList = watchExecutor.need(new WatchElement(appId, version, Notice));
+            List<ResponseWatcher> needList = responseWatchExecutor.need(new WatchElement(appId, version, Notice));
             if (!needList.isEmpty()) {
                 EntityClassSyncResponse response = generateResponse(appId, version, result);
 
@@ -243,7 +286,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     }
 
     private void responseByWatch(String appId, int version, EntityClassSyncResponse response,
-                                                IWatcher<EntityClassSyncResponse> watcher, boolean confirm) {
+                                                ResponseWatcher watcher, boolean confirm) {
         if (null != watcher) {
             if (watcher.runWithCheck(observer -> {
                 try {
@@ -256,7 +299,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                      */
                     TimeWaitUtils.wakeupAfter(1, TimeUnit.MILLISECONDS);
 
-                    watchExecutor.release(watcher.uid());
+                    responseWatchExecutor.release(watcher.uid());
                 }
                 return false;
             })) {
@@ -264,7 +307,9 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                  * 成功且不是注册确认，则加入到DelayTaskQueue中进行监听
                  */
                 if (!confirm) {
-                    offerDelayTask(appId, version, watcher.uid());
+                    retryExecutor.offer(
+                            new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
+                                    new RetryExecutor.Element(appId, version, watcher.uid())));
                 }
             }
         } else {
@@ -281,28 +326,20 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                 .build();
     }
 
-    private void offerDelayTask(String appId, int version, String uid) {
-        try {
-            retryExecutor.offer(
-                    new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(), new RetryExecutor.Element(appId, version, uid)));
-        } catch (Exception e) {
-            logger.error("offer delayTask failed...., appId : {}, version : {}, uid : {}", appId, version, uid);
-            e.printStackTrace();
-        }
-    }
-
-    private void delayTask() {
-        while (true) {
+    /***
+     * 检查下发版本是否更新成功
+     */
+    private boolean delayTask() {
+        while (!isShutdown) {
             RetryExecutor.DelayTask task = retryExecutor.take();
             if (null == task) {
-                TimeWaitUtils.wakeupAfter(5, TimeUnit.MILLISECONDS);
+                TimeWaitUtils.wakeupAfter(3, TimeUnit.MILLISECONDS);
                 continue;
             }
 
             executor.execute(() -> {
-                Optional<IWatcher<EntityClassSyncResponse>> watcherOp = watchExecutor.watcher(task.element().getUid());
-                if (watcherOp.isPresent()) {
-                    IWatcher<EntityClassSyncResponse> watcher = watcherOp.get();
+                ResponseWatcher watcher = responseWatchExecutor.watcher(task.element().getUid());
+                if (null != watcher) {
                     if (watcher.isOnServe() &&
                             watcher.onWatch(new WatchElement(task.element().getAppId(), task.element().getVersion(), Notice))) {
                         /**
@@ -313,5 +350,25 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                 }
             });
         }
+
+        logger.info("delayTask has quited due to server shutdown...");
+        return true;
+    }
+
+    /***
+     * 检查当前的存活状况
+     * @return
+     */
+    private boolean keepAliveCheck() {
+        while (!isShutdown) {
+            responseWatchExecutor.keepAliceCheck(gRpcParamsConfig.getDefaultHeartbeatTimeout());
+            /**
+             * 等待一秒进入下一次循环
+             */
+            TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
+        }
+
+        logger.info("keepAlive check has quited due to server shutdown...");
+        return true;
     }
 }

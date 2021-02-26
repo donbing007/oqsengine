@@ -1,7 +1,8 @@
-package com.xforceplus.ultraman.oqsengine.meta.config;
+package com.xforceplus.ultraman.oqsengine.meta.shutdown;
 
 import com.xforceplus.ultraman.oqsengine.meta.IEntityClassSyncClient;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.meta.config.ShutDown;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,29 +20,24 @@ import java.util.concurrent.ExecutorService;
  * date : 2021/2/5
  * @since : 1.8
  */
-@Component
-public class ShutDown {
+public class ClientShutDown implements IShutDown {
 
     private Logger logger = LoggerFactory.getLogger(ShutDown.class);
 
-    @Resource
-    RequestWatchExecutor watchExecutor;
-
-    @Resource(name = "oqsSyncThreadPool")
-    private ExecutorService asyncDispatcher;
+    @Resource(name = "grpcWorkThreadPool")
+    private ExecutorService metaSyncThreadPool;
 
     @Resource
     private IEntityClassSyncClient entityClassSyncClient;
 
-    @PreDestroy
-    public void showdown() {
-        watchExecutor.stop();
+    @Override
+    public void shutdown() {
 
         entityClassSyncClient.destroy();
 
         // wait shutdown
-        logger.info("Start closing the IO read worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(asyncDispatcher, 3600);
-        logger.info("Succeed closing the IO read worker thread...ok!");
+        logger.info("Start closing the gRpc worker thread...");
+        ExecutorHelper.shutdownAndAwaitTermination(metaSyncThreadPool, 3600);
+        logger.info("Succeed closing the gRpc worker thread...ok!");
     }
 }

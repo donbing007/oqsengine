@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.metadata.dto;
+package com.xforceplus.ultraman.oqsengine.meta.common.pojo;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;

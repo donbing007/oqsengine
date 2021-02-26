@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler;
 import com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
-import com.xforceplus.ultraman.oqsengine.metadata.dto.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassManagerExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
@@ -15,7 +15,6 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
-import org.apache.zookeeper.proto.RequestHeader;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,7 +84,7 @@ public class EntityClassSyncExecutorTest {
         entityClassSyncExecutor.start();
 
         /**
-         * init mockEntityClassExecutor
+         * init mockRequestHandler
          */
         mockRequestHandler = new MockRequestHandler();
         ReflectionTestUtils.setField(mockRequestHandler, "syncExecutor", entityClassSyncExecutor);

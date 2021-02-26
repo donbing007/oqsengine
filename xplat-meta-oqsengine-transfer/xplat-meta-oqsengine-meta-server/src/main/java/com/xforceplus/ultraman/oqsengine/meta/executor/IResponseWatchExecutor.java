@@ -1,13 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.dto.IWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import io.grpc.stub.StreamObserver;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * desc :
@@ -19,15 +18,15 @@ import java.util.Optional;
  */
 public interface IResponseWatchExecutor extends IWatchExecutor {
 
-    void heartBeat(String uid);
-
     void release(String uid);
 
     void add(String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement);
 
     boolean update(String uid, WatchElement watchElement);
 
-    List<IWatcher<EntityClassSyncResponse>> need(WatchElement watchElement);
+    List<ResponseWatcher> need(WatchElement watchElement);
 
-    Optional<IWatcher<EntityClassSyncResponse>> watcher(String uid);
+    ResponseWatcher watcher(String uid);
+
+    void keepAliceCheck(long heartbeatTimeout);
 }
