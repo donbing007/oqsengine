@@ -200,7 +200,7 @@ public class EntityClassManagerExecutorTest {
         }
 
         if (null != entityClass.father()) {
-            return getEntityClass(expectedId, entityClass.father());
+            return getEntityClass(expectedId, entityClass.father().get());
         }
         return null;
     }
@@ -214,7 +214,7 @@ public class EntityClassManagerExecutorTest {
         Assert.assertEquals(expected.getName(), actual.name());
         if (expected.getFather() >= MIN_ID) {
             Assert.assertNotNull(actual.father());
-            Assert.assertEquals(expected.getFather(), actual.father().id());
+            Assert.assertEquals(expected.getFather(), actual.father().get().id());
         }
         Assert.assertEquals(expected.getLevel(), actual.level());
 
