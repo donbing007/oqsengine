@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import io.grpc.stub.StreamObserver;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * desc :
@@ -29,4 +30,10 @@ public interface IResponseWatchExecutor extends IWatchExecutor {
     ResponseWatcher watcher(String uid);
 
     void keepAliceCheck(long heartbeatTimeout);
+
+    Set<String> appWatchers(String appId, String env);
+
+    Integer version(String appId, String env);
+
+    boolean addVersion(String appId, String env, int version);
 }

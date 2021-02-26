@@ -36,4 +36,14 @@ public interface EntityClassSyncRequestOrBuilder extends
    * <code>int32 status = 4;</code>
    */
   int getStatus();
+
+  /**
+   * <code>string env = 5;</code>
+   */
+  java.lang.String getEnv();
+  /**
+   * <code>string env = 5;</code>
+   */
+  com.google.protobuf.ByteString
+      getEnvBytes();
 }

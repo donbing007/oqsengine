@@ -51,6 +51,11 @@ public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCl
         isOnServer = false;
     }
 
+    @Override
+    public void on() {
+        isOnServer = true;
+    }
+
     public static class DelayCleanEntity implements Delayed {
         private Expired e;
         private long start;

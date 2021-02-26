@@ -155,7 +155,9 @@ public class Entity implements IEntity, Serializable {
         return Objects.hash(id, time, entityClassRef, entityValue, version, maintainid, major);
     }
 
-
+    /**
+     * Builder
+     */
     public static final class Builder {
         private long id;
         private long time;

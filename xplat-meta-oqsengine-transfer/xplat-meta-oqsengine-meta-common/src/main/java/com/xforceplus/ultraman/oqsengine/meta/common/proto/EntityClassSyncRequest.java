@@ -20,6 +20,7 @@ private static final long serialVersionUID = 0L;
     appId_ = "";
     version_ = 0;
     status_ = 0;
+    env_ = "";
   }
 
   @java.lang.Override
@@ -73,6 +74,12 @@ private static final long serialVersionUID = 0L;
           case 32: {
 
             status_ = input.readInt32();
+            break;
+          }
+          case 42: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            env_ = s;
             break;
           }
         }
@@ -185,6 +192,40 @@ private static final long serialVersionUID = 0L;
     return status_;
   }
 
+  public static final int ENV_FIELD_NUMBER = 5;
+  private volatile java.lang.Object env_;
+  /**
+   * <code>string env = 5;</code>
+   */
+  public java.lang.String getEnv() {
+    java.lang.Object ref = env_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      env_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string env = 5;</code>
+   */
+  public com.google.protobuf.ByteString
+      getEnvBytes() {
+    java.lang.Object ref = env_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      env_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -209,6 +250,9 @@ private static final long serialVersionUID = 0L;
     if (status_ != 0) {
       output.writeInt32(4, status_);
     }
+    if (!getEnvBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, env_);
+    }
     unknownFields.writeTo(output);
   }
 
@@ -230,6 +274,9 @@ private static final long serialVersionUID = 0L;
     if (status_ != 0) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(4, status_);
+    }
+    if (!getEnvBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, env_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -255,6 +302,8 @@ private static final long serialVersionUID = 0L;
         == other.getVersion());
     result = result && (getStatus()
         == other.getStatus());
+    result = result && getEnv()
+        .equals(other.getEnv());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -274,6 +323,8 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getVersion();
     hash = (37 * hash) + STATUS_FIELD_NUMBER;
     hash = (53 * hash) + getStatus();
+    hash = (37 * hash) + ENV_FIELD_NUMBER;
+    hash = (53 * hash) + getEnv().hashCode();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -411,6 +462,8 @@ private static final long serialVersionUID = 0L;
 
       status_ = 0;
 
+      env_ = "";
+
       return this;
     }
 
@@ -437,6 +490,7 @@ private static final long serialVersionUID = 0L;
       result.appId_ = appId_;
       result.version_ = version_;
       result.status_ = status_;
+      result.env_ = env_;
       onBuilt();
       return result;
     }
@@ -491,6 +545,10 @@ private static final long serialVersionUID = 0L;
       }
       if (other.getStatus() != 0) {
         setStatus(other.getStatus());
+      }
+      if (!other.getEnv().isEmpty()) {
+        env_ = other.env_;
+        onChanged();
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -705,6 +763,75 @@ private static final long serialVersionUID = 0L;
     public Builder clearStatus() {
       
       status_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object env_ = "";
+    /**
+     * <code>string env = 5;</code>
+     */
+    public java.lang.String getEnv() {
+      java.lang.Object ref = env_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        env_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string env = 5;</code>
+     */
+    public com.google.protobuf.ByteString
+        getEnvBytes() {
+      java.lang.Object ref = env_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        env_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string env = 5;</code>
+     */
+    public Builder setEnv(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      env_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string env = 5;</code>
+     */
+    public Builder clearEnv() {
+      
+      env_ = getDefaultInstance().getEnv();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string env = 5;</code>
+     */
+    public Builder setEnvBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      env_ = value;
       onChanged();
       return this;
     }

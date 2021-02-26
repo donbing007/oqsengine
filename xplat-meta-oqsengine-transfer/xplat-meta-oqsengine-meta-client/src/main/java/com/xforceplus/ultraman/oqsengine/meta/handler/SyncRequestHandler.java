@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.meta.handler;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
@@ -44,12 +43,12 @@ public class SyncRequestHandler implements IRequestHandler {
     private RequestWatchExecutor requestWatchExecutor;
 
     @Override
-    public boolean register(String appId, int version) {
-        return register(Collections.singletonList(new AbstractMap.SimpleEntry<>(appId, version)));
+    public boolean register(WatchElement watchElement) {
+        return register(Collections.singletonList(watchElement));
     }
 
     @Override
-    public synchronized boolean register(List<AbstractMap.SimpleEntry<String, Integer>> appIdEntries) {
+    public synchronized boolean register(List<WatchElement> appIdEntries) {
         RequestWatcher watcher = requestWatchExecutor.watcher();
         /**
          * 这里只判断是否watcher为空，如果服务watcher不为空
@@ -57,10 +56,10 @@ public class SyncRequestHandler implements IRequestHandler {
 
         if (null == watcher) {
             logger.warn("current gRpc-client is not init, can't offer appIds:{}."
-                    , appIdEntries.stream().map(AbstractMap.SimpleEntry::getKey).collect(Collectors.toList()));
+                    , appIdEntries.stream().map(WatchElement::getAppId).collect(Collectors.toList()));
             appIdEntries.forEach(
                     a -> {
-                        requestWatchExecutor.addForgot(a.getKey(), a.getValue());
+                        requestWatchExecutor.addForgot(a);
                     }
             );
 
@@ -70,11 +69,11 @@ public class SyncRequestHandler implements IRequestHandler {
         AtomicBoolean ret = new AtomicBoolean(true);
         appIdEntries.stream()
                 .filter(s -> {
-                    if (watcher.watches().containsKey(s.getKey())) {
-                        logger.info("appId : {} is already in watchList, will ignore...", s.getKey());
+                    if (watcher.watches().containsKey(s.getAppId())) {
+                        logger.info("appId : {} is already in watchList, will ignore...", s.getAppId());
                         return false;
                     } else {
-                        logger.info("add appId : {} in watchList", s.getKey());
+                        logger.info("add appId : {} in watchList", s.getAppId());
                         return true;
                     }
                 })
@@ -84,25 +83,25 @@ public class SyncRequestHandler implements IRequestHandler {
                              * 当前requestWatch不可用或发生UID切换时,先加入forgot列表
                              */
                             if (!requestWatchExecutor.canAccess(watcher.uid())) {
-                                requestWatchExecutor.addForgot(v.getKey(), v.getValue());
+                                requestWatchExecutor.addForgot(v);
                                 ret.set(false);
                             } else {
                                 EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
 
                                 EntityClassSyncRequest entityClassSyncRequest =
-                                        builder.setUid(watcher.uid()).setAppId(v.getKey()).setVersion(v.getValue())
+                                        builder.setUid(watcher.uid())
+                                                .setAppId(v.getAppId())
+                                                .setEnv(v.getEnv())
+                                                .setVersion(v.getVersion())
                                                 .setStatus(RequestStatus.REGISTER.ordinal()).build();
 
-                                WatchElement.AppStatus status = WatchElement.AppStatus.Register;
-
-                                WatchElement w = new WatchElement(v.getKey(), v.getValue(), status);
-                                requestWatchExecutor.add(w);
+                                requestWatchExecutor.add(v);
 
                                 try {
                                     sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequest,
                                             requestWatchExecutor.accessFunction(), entityClassSyncRequest.getUid());
                                 } catch (Exception e) {
-                                    w.setStatus(WatchElement.AppStatus.Init);
+                                    v.setStatus(WatchElement.AppStatus.Init);
                                     ret.set(false);
                                 }
                             }
@@ -185,7 +184,7 @@ public class SyncRequestHandler implements IRequestHandler {
                  */
                 EntityClassSyncRspProto result = entityClassSyncResponse.getEntityClassSyncRspProto();
                 if (md5Check(entityClassSyncResponse.getMd5(), result)) {
-                    WatchElement w = new WatchElement(entityClassSyncResponse.getAppId(),
+                    WatchElement w = new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
                             entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed);
                     /**
                      * 当前关注此版本

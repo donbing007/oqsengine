@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.ITransferExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
@@ -30,7 +31,7 @@ import java.util.concurrent.*;
  * date : 2021/2/2
  * @since : 1.8
  */
-public class EntityClassSyncClient implements IEntityClassSyncClient {
+public class EntityClassSyncClient implements ITransferExecutor {
 
     private Logger logger = LoggerFactory.getLogger(EntityClassSyncClient.class);
 
@@ -69,7 +70,7 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
     }
 
     @Override
-    public void destroy() {
+    public void stop() {
         isShutdown = true;
 
         requestWatchExecutor.stop();
@@ -174,13 +175,13 @@ public class EntityClassSyncClient implements IEntityClassSyncClient {
                 /**
                  * reset heartbeat
                  */
-                requestWatchExecutor.heartBeat(entityClassSyncResponse.getUid());
+                requestWatchExecutor.resetHeartBeat(entityClassSyncResponse.getUid());
 
                 /**
                  * 更新状态
                  */
                 if (entityClassSyncResponse.getStatus() == RequestStatus.CONFIRM_REGISTER.ordinal()) {
-                    requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(),
+                    requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
                             entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed));
                 } else {
                     /**

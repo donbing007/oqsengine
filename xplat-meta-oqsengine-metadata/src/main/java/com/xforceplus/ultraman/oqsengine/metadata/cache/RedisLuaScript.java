@@ -11,12 +11,21 @@ package com.xforceplus.ultraman.oqsengine.metadata.cache;
  */
 public class RedisLuaScript {
 
+    public static final String DEFAULT_METADATA_APP_ENV = "com.xforceplus.ultraman.oqsengine.metadata.app.env";
     public static final String DEFAULT_METADATA_APP_VERSIONS = "com.xforceplus.ultraman.oqsengine.metadata.versions";
     public static final String DEFAULT_METADATA_APP_PREPARE = "com.xforceplus.ultraman.oqsengine.metadata.prepare";
 
     public static final String DEFAULT_METADATA_APP_ENTITY = "com.xforceplus.ultraman.oqsengine.metadata.entity";
     public static final String DEFAULT_METADATA_ENTITY_APP_REL = "com.xforceplus.ultraman.oqsengine.metadata.entity.app.rel";
     public static final String DEFAULT_METADATA_APP_VERSIONS_ENTITY_IDS = "com.xforceplus.ultraman.oqsengine.metadata.app.version.entityIds";
+
+    /***
+     * 传入 Key, AppId, ENV
+     * 当AppId不存在时将设置成功，反正则不会变化，返回当前ENV
+     */
+    public static String APP_ENV_CHECK_SCRIPT =
+            "redis.call('hsetnx', KEY[1], ARGV[1], ARGV[2]);" +
+            "return redis.call('hget, KEY[1], ARGV[1]');";
 
     /***
      * 传入 AppId, Version

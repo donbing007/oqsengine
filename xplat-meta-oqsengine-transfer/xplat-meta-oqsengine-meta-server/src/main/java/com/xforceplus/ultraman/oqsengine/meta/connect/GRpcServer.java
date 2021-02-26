@@ -10,7 +10,7 @@ import org.lognet.springboot.grpc.GRpcServerBuilderConfigurer;
 
 import javax.annotation.Resource;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class GRpcServer extends GRpcServerBuilderConfigurer {
 
     @Resource(name = "gRpcServerExecutor")
-    private Executor executor;
+    private ExecutorService executor;
 
     @Resource
     private EntityClassSyncServer entityClassSyncServer;

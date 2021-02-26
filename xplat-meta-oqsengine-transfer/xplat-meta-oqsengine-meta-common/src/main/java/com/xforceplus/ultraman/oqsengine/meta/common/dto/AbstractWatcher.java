@@ -34,6 +34,9 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     /**
      * 当前关注的appId
+     * 注意：这个Map对应一个(OQS应用、SDK端)的所有关注列表，
+     * 不能出现同一个AppID对应多套环境同时运行在一个(OQS应用、SDK端)
+     * 所以这里的Key只是AppId
      */
     protected Map<String, WatchElement> watches;
 
@@ -98,6 +101,9 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
         return onServe;
     }
 
+    /**
+     * @return
+     */
     @Override
     public Map<String, WatchElement> watches() {
         return watches;

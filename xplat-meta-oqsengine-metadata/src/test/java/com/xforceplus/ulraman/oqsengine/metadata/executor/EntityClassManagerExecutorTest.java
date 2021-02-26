@@ -125,8 +125,9 @@ public class EntityClassManagerExecutorTest {
     @Test
     public void needTest() {
         String appId = "testNeed";
+        String env = "test";
         int expectedVersion = EXIST_MIN_VERSION + 1;
-        int version = entityClassManagerExecutor.need(appId);
+        int version = entityClassManagerExecutor.need(appId, env);
         Assert.assertEquals(expectedVersion, version);
     }
 

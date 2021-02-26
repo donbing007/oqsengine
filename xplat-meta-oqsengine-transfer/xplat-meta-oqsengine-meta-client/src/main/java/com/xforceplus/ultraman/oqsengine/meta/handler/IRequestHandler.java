@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 
 import java.util.AbstractMap;
@@ -17,18 +18,16 @@ public interface IRequestHandler {
 
     /**
      * 注册一个appId，并开始监听
-     * @param appId
-     * @param version
      * @return boolean
      */
-    boolean register(String appId, int version);
+    boolean register(WatchElement watchElement);
 
     /**
      * 注册多个appId，并开始监听
      * @param appIdEntries
      * @return boolean
      */
-    boolean register(List<AbstractMap.SimpleEntry<String, Integer>> appIdEntries);
+    boolean register(List<WatchElement> appIdEntries);
 
     /**
      * 断流自动重新注册

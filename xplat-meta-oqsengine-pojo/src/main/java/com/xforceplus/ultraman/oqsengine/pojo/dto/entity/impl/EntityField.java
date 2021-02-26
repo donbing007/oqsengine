@@ -218,6 +218,9 @@ public class EntityField implements IEntityField, Serializable {
             '}';
     }
 
+    /**
+     * Builder
+     */
     public static final class Builder {
         private long id;
         private String name;

@@ -27,7 +27,7 @@ public interface IRequestWatchExecutor extends IWatchExecutor {
 
     boolean canAccess(String uid);
 
-    void addForgot(String appId, int version);
+    void addForgot(WatchElement watchElement);
 
     Queue<WatchElement> forgot();
 

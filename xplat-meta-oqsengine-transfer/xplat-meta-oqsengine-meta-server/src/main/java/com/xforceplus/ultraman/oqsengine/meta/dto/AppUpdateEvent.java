@@ -13,6 +13,7 @@ import org.springframework.context.ApplicationEvent;
  */
 public class AppUpdateEvent extends ApplicationEvent {
     private String appId;
+    private String env;
     private int version;
     /**
      * standard
@@ -25,9 +26,10 @@ public class AppUpdateEvent extends ApplicationEvent {
     //  todo not implements now
 
 
-    public AppUpdateEvent(Object source, String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
+    public AppUpdateEvent(Object source, String appId, String env, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
         super(source);
         this.appId = appId;
+        this.env = env;
         this.version = version;
         this.entityClassSyncRspProto = entityClassSyncRspProto;
     }
@@ -38,6 +40,10 @@ public class AppUpdateEvent extends ApplicationEvent {
 
     public String getAppId() {
         return appId;
+    }
+
+    public String getEnv() {
+        return env;
     }
 
     public int getVersion() {

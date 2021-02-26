@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.meta.config;
 
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient;
-import com.xforceplus.ultraman.oqsengine.meta.IEntityClassSyncClient;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.ITransferExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
 import com.xforceplus.ultraman.oqsengine.meta.connect.MetaSyncGRpcClient;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
@@ -90,7 +90,7 @@ public class ClientConfiguration {
     }
 
     @Bean
-    public IEntityClassSyncClient entityClassSyncClient() {
+    public ITransferExecutor entityClassSyncClient() {
         return new EntityClassSyncClient();
     }
 

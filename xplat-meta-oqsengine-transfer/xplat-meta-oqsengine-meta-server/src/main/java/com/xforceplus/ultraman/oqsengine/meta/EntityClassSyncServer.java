@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.ITransferExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
@@ -19,17 +20,19 @@ import javax.annotation.Resource;
  * date : 2021/2/4
  * @since : 1.8
  */
-public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncImplBase {
+public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncImplBase implements ITransferExecutor {
 
     private Logger logger = LoggerFactory.getLogger(EntityClassSyncServer.class);
 
     @Resource
     private SyncResponseHandler responseHandler;
 
+    @Override
     public void start() {
         responseHandler.start();
     }
 
+    @Override
     public void stop() {
         responseHandler.stop();
     }

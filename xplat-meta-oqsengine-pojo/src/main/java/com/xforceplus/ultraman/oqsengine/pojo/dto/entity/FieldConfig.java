@@ -324,6 +324,9 @@ public class FieldConfig implements Serializable {
         return sb.toString();
     }
 
+    /**
+     * Builder
+     */
     public static final class Builder {
         private boolean searchable = false;
         private long max = Long.MAX_VALUE;
