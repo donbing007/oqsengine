@@ -28,47 +28,42 @@ public interface RelationInfoOrBuilder extends
   long getEntityClassId();
 
   /**
-   * <code>string entityClassName = 4;</code>
-   */
-  java.lang.String getEntityClassName();
-  /**
-   * <code>string entityClassName = 4;</code>
-   */
-  com.google.protobuf.ByteString
-      getEntityClassNameBytes();
-
-  /**
-   * <code>int64 relOwnerClassId = 5;</code>
+   * <code>int64 relOwnerClassId = 4;</code>
    */
   long getRelOwnerClassId();
 
   /**
-   * <code>string relOwnerClassName = 6;</code>
+   * <code>string relOwnerClassName = 5;</code>
    */
   java.lang.String getRelOwnerClassName();
   /**
-   * <code>string relOwnerClassName = 6;</code>
+   * <code>string relOwnerClassName = 5;</code>
    */
   com.google.protobuf.ByteString
       getRelOwnerClassNameBytes();
 
   /**
-   * <code>string relationType = 7;</code>
+   * <code>string relationType = 6;</code>
    */
   java.lang.String getRelationType();
   /**
-   * <code>string relationType = 7;</code>
+   * <code>string relationType = 6;</code>
    */
   com.google.protobuf.ByteString
       getRelationTypeBytes();
 
   /**
-   * <code>bool identity = 8;</code>
+   * <code>bool identity = 7;</code>
    */
   boolean getIdentity();
 
   /**
-   * <code>int64 entityFieldId = 9;</code>
+   * <code>string entityFieldCode = 8;</code>
    */
-  long getEntityFieldId();
+  java.lang.String getEntityFieldCode();
+  /**
+   * <code>string entityFieldCode = 8;</code>
+   */
+  com.google.protobuf.ByteString
+      getEntityFieldCodeBytes();
 }

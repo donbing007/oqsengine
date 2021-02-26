@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.meta.common.utils;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassInfo;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo;
@@ -10,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +42,7 @@ public class EntityClassStorageBuilderUtils {
                     EntityClassStorage e = protoValuesToLocalStorage(ecs);
                     return e;
                 }
-        ).collect(Collectors.toMap(EntityClassStorage::getId, s1 -> s1,  (s1, s2) -> s1));
+        ).collect(Collectors.toMap(EntityClassStorage::getId, s1 -> s1, (s1, s2) -> s1));
 
         return temp.values().stream().peek(
                 v -> {
@@ -97,21 +97,27 @@ public class EntityClassStorageBuilderUtils {
         storage.setFatherId(entityClassInfo.getFather());
 
         //  relations
-        List<OqsRelation> relations = new ArrayList<>();
+        List<RelationStorage> relations = new ArrayList<>();
         if (entityClassInfo.getRelationsList() != null) {
             for (RelationInfo r : entityClassInfo.getRelationsList()) {
-                OqsRelation oqsRelation = new OqsRelation();
-                oqsRelation.setId(r.getId());
-                oqsRelation.setName(r.getName());
-                oqsRelation.setEntityClassId(r.getEntityClassId());
-                oqsRelation.setEntityClassName(r.getEntityClassName());
-                oqsRelation.setRelOwnerClassId(r.getRelOwnerClassId());
-                oqsRelation.setRelOwnerClassName(r.getRelOwnerClassName());
-                oqsRelation.setRelationType(r.getRelationType());
-                oqsRelation.setIdentity(r.getIdentity());
-                oqsRelation.setEntityFieldId(r.getEntityFieldId());
+                RelationStorage relation = new RelationStorage();
+                relation.setId(r.getId());
+                relation.setName(r.getName());
+                relation.setEntityClassId(r.getEntityClassId());
+                relation.setRelOwnerClassId(r.getRelOwnerClassId());
+                relation.setRelOwnerClassName(r.getRelOwnerClassName());
+                relation.setRelationType(r.getRelationType());
+                relation.setIdentity(r.getIdentity());
+                relation.setEntityField(
+                        EntityField.Builder.anEntityField()
+                                .withId(r.getId())
+                                .withFieldType(FieldType.LONG)
+                                .withName(r.getEntityFieldCode())
+                                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+                                .build()
+                );
 
-                relations.add(oqsRelation);
+                relations.add(relation);
             }
         }
         storage.setRelations(relations);

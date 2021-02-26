@@ -98,7 +98,7 @@ public class EntityClassSyncResponseBuilder {
                 .setEntityClassId(entityId)
                 .setRelOwnerClassId(ownerId)
                 .setRelationType(relationType)
-                .setEntityFieldId(fieldId)
+                .setEntityFieldCode(fieldId + "_name")
                 .build();
 
     }

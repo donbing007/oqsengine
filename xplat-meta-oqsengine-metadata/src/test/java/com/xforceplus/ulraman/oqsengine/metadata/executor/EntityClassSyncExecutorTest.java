@@ -96,7 +96,7 @@ public class EntityClassSyncExecutorTest {
                 TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
         entityClassManagerExecutor = new EntityClassManagerExecutor();
         ReflectionTestUtils.setField(entityClassManagerExecutor, "cacheExecutor", cacheExecutor);
-        ReflectionTestUtils.setField(entityClassManagerExecutor, "mockRequestHandler", mockRequestHandler);
+        ReflectionTestUtils.setField(entityClassManagerExecutor, "requestHandler", mockRequestHandler);
         ReflectionTestUtils.setField(entityClassManagerExecutor, "asyncDispatcher", executorService);
     }
 

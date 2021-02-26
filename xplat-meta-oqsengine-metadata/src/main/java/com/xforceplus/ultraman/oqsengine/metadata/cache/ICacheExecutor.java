@@ -20,6 +20,8 @@ public interface ICacheExecutor {
 
     Map<Long, EntityClassStorage> read(long entityClassId) throws JsonProcessingException;
 
+    Map<Long, EntityClassStorage> multiplyRead(List<Long> ids, int version) throws JsonProcessingException;
+
     boolean clean(String appId, int version, boolean force);
 
     int version(String appId);

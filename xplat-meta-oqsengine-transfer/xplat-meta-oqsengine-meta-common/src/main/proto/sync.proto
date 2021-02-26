@@ -100,10 +100,9 @@ message RelationInfo {
 	int64 id = 1;
 	string name = 2;
 	int64 entityClassId = 3;
-	string entityClassName = 4;
-	int64 relOwnerClassId = 5;
-	string relOwnerClassName = 6;
-	string relationType = 7;
-	bool identity = 8;
-	int64 entityFieldId = 9;
+	int64 relOwnerClassId = 4;
+	string relOwnerClassName = 5;
+	string relationType = 6;
+	bool identity = 7;
+	string entityFieldCode = 8;
 }

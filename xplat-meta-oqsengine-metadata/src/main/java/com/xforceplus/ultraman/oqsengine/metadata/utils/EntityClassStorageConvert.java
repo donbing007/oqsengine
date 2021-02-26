@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
@@ -92,8 +93,8 @@ public class EntityClassStorageConvert {
         //  relations
         String relations = keyValues.remove(ELEMENT_RELATIONS);
         if (null != relations && !relations.isEmpty()) {
-            List<OqsRelation> relationStorageList = objectMapper.readValue(relations,
-                    objectMapper.getTypeFactory().constructParametricType(List.class, OqsRelation.class));
+            List<RelationStorage> relationStorageList = objectMapper.readValue(relations,
+                    objectMapper.getTypeFactory().constructParametricType(List.class, RelationStorage.class));
             entityClassStorage.setRelations(relationStorageList);
         } else {
             entityClassStorage.setRelations(new ArrayList<>());

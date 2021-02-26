@@ -230,12 +230,11 @@ public class EntityClassManagerExecutorTest {
                 Assert.assertEquals(expectedRelation.getId(), (long) actualRelation.getId());
                 Assert.assertEquals(expectedRelation.getName(), actualRelation.getName());
                 Assert.assertEquals(expectedRelation.getEntityClassId(), actualRelation.getEntityClassId());
-                Assert.assertEquals(expectedRelation.getEntityClassName(), actualRelation.getEntityClassName());
                 Assert.assertEquals(expectedRelation.getRelOwnerClassId(), actualRelation.getRelOwnerClassId());
                 Assert.assertEquals(expectedRelation.getRelOwnerClassName(), actualRelation.getRelOwnerClassName());
                 Assert.assertEquals(expectedRelation.getRelationType(), actualRelation.getRelationType());
                 Assert.assertEquals(expectedRelation.getIdentity(), actualRelation.isIdentity());
-                Assert.assertEquals(expectedRelation.getEntityFieldId(), actualRelation.getEntityFieldId());
+                Assert.assertEquals(expectedRelation.getEntityFieldCode(), actualRelation.getEntityField().name());
             }
         }
 

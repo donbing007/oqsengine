@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.pojo;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +42,7 @@ public class EntityClassStorage {
     /**
      * 关系信息
      */
-    private List<OqsRelation> relations;
+    private List<RelationStorage> relations;
 
     /**
      * 继承的对象类型.
@@ -101,11 +100,11 @@ public class EntityClassStorage {
         this.level = level;
     }
 
-    public List<OqsRelation> getRelations() {
+    public List<RelationStorage> getRelations() {
         return relations;
     }
 
-    public void setRelations(List<OqsRelation> relations) {
+    public void setRelations(List<RelationStorage> relations) {
         this.relations = relations;
     }
 

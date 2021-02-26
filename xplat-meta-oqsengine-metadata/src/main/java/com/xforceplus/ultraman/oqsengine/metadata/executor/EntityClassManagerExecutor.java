@@ -2,16 +2,20 @@ package com.xforceplus.ultraman.oqsengine.metadata.executor;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -131,7 +135,7 @@ public class EntityClassManagerExecutor implements MetaManager {
                         .withName(entityClassStorage.getName())
                         .withLevel(entityClassStorage.getLevel())
                         .withVersion(entityClassStorage.getVersion())
-                        .withRelations(entityClassStorage.getRelations())
+                        .withRelations(toQqsRelation(entityClassStorage.getRelations()))
                         .withFields(entityClassStorage.getFields());
         /**
          * 加载父类
@@ -141,5 +145,31 @@ public class EntityClassManagerExecutor implements MetaManager {
         }
 
         return builder.build();
+    }
+
+    /**
+     * 加载relation
+     * @param relationStorageList
+     * @return
+     */
+    private List<OqsRelation> toQqsRelation(List<RelationStorage> relationStorageList) {
+        List<OqsRelation> oqsRelations = new ArrayList<>();
+        relationStorageList.forEach(
+                r -> {
+                    OqsRelation.Builder builder = OqsRelation.Builder.anOqsRelation()
+                                                    .withId(r.getId())
+                                                    .withName(r.getName())
+                                                    .withRelOwnerClassId(r.getRelOwnerClassId())
+                                                    .withRelOwnerClassName(r.getRelOwnerClassName())
+                                                    .withRelationType(r.getRelationType())
+                                                    .withIdentity(r.isIdentity())
+                                                    .withEntityClassId(r.getEntityClassId())
+                                                    .withFunction(this::load)
+                                                    .withEntityField(r.getEntityField());
+
+                    oqsRelations.add(builder.build());
+                }
+        );
+        return oqsRelations;
     }
 }

@@ -1,6 +1,7 @@
 package com.xforceplus.ulraman.oqsengine.metadata.utils;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -23,19 +24,36 @@ import java.util.List;
  */
 public class EntityClassStorageBuilder {
 
-    public static OqsRelation relationLong(long id, long fieldId) {
-        return new OqsRelation("test" + id, id, "order", false, fieldId);
+    public static RelationStorage relationLong(long id, long fieldId) {
+
+        RelationStorage r = new RelationStorage();
+        r.setId(id);
+        r.setName(id + "_test");
+        r.setRelationType("order");
+        r.setIdentity(false);
+        r.setEntityClassId(id + 1000);
+        r.setEntityField(entityFieldLong(fieldId));
+
+        return r;
     }
 
-    public static OqsRelation relationString(long id, long fieldId) {
-        return new OqsRelation("test" + id, id, "order", false, fieldId);
+    public static RelationStorage relationString(long id, long fieldId) {
+        RelationStorage r = new RelationStorage();
+        r.setId(id);
+        r.setName(id + "_test");
+        r.setRelationType("order");
+        r.setIdentity(false);
+        r.setEntityClassId(id + 1000);
+        r.setEntityField(entityFieldString(fieldId));
+
+        return r;
     }
 
-    public static IEntityField entityFieldLong(long id) {
+    public static EntityField entityFieldLong(long id) {
         return new EntityField(id, "id" + id, FieldType.LONG, FieldConfig.build().searchable(true).identifie(false));
     }
 
-    public static IEntityField entityFieldString(long id) {
+    public static EntityField entityFieldString(long id) {
         return new EntityField(id, "id" + id, FieldType.STRING, FieldConfig.build().searchable(true).identifie(false));
     }
 
@@ -44,7 +62,7 @@ public class EntityClassStorageBuilder {
         entityFields[0] = entityFieldLong(expectedEntityStorage.getSelf());
         entityFields[1] = entityFieldString(expectedEntityStorage.getSelf() + 1);
 
-        OqsRelation[] relations = new OqsRelation[2];
+        RelationStorage[] relations = new RelationStorage[2];
         relations[0] = relationLong(expectedEntityStorage.getSelf(), expectedEntityStorage.getSelf() - 1);
         relations[1] = relationString(expectedEntityStorage.getSelf(), expectedEntityStorage.getSelf() - 2);
 
@@ -177,7 +195,7 @@ public class EntityClassStorageBuilder {
                 .setEntityClassId(entityId)
                 .setRelOwnerClassId(ownerId)
                 .setRelationType(relationType)
-                .setEntityFieldId(fieldId)
+                .setEntityFieldCode(fieldId + "_name")
                 .build();
 
     }
