@@ -289,35 +289,35 @@ public class CacheExecutorTest {
         /**
          * set self
          */
-        ExpectedEntityStorage self = new ExpectedEntityStorage(5L, 10L, Arrays.asList(10L, 20L));
+        ExpectedEntityStorage self = new ExpectedEntityStorage(5L, 10L, Arrays.asList(10L, 20L), Arrays.asList(10L));
         entityClassStorageList.add(prepareEntity(self));
         expectedEntityStorageList.add(self);
 
         /**
          * set father
          */
-        ExpectedEntityStorage father = new ExpectedEntityStorage(10L, 20L, Collections.singletonList(20L));
+        ExpectedEntityStorage father = new ExpectedEntityStorage(10L, 20L, Collections.singletonList(20L), Arrays.asList(20L));
         entityClassStorageList.add(prepareEntity(father));
         expectedEntityStorageList.add(father);
 
         /**
          * set ancestor
          */
-        ExpectedEntityStorage ancestor = new ExpectedEntityStorage(20L, null, null);
+        ExpectedEntityStorage ancestor = new ExpectedEntityStorage(20L, null, null, null);
         entityClassStorageList.add(prepareEntity(ancestor));
         expectedEntityStorageList.add(ancestor);
 
         /**
          * set son
          */
-        ExpectedEntityStorage son = new ExpectedEntityStorage(4L, 5L, Arrays.asList(5L, 10L, 20L));
+        ExpectedEntityStorage son = new ExpectedEntityStorage(4L, 5L, Arrays.asList(5L, 10L, 20L), Arrays.asList(5L, 20L));
         entityClassStorageList.add(prepareEntity(son));
         expectedEntityStorageList.add(son);
 
         /**
          * set brother
          */
-        ExpectedEntityStorage brother = new ExpectedEntityStorage(6L, 10L, Arrays.asList(10L, 20L));
+        ExpectedEntityStorage brother = new ExpectedEntityStorage(6L, 10L, Arrays.asList(10L, 20L), Arrays.asList(4L, 20L));
         entityClassStorageList.add(prepareEntity(brother));
         expectedEntityStorageList.add(brother);
     }

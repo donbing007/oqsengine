@@ -97,11 +97,13 @@ public class EntityClassStorageBuilder {
         private List<Long> ancestors;
         private Long self;
         private Long father;
+        private List<Long> relationIds;
 
-        public ExpectedEntityStorage(Long self, Long father, List<Long> ancestors) {
+        public ExpectedEntityStorage(Long self, Long father, List<Long> ancestors, List<Long> relationIds) {
             this.self = self;
             this.father = father;
             this.ancestors = ancestors;
+            this.relationIds = relationIds;
         }
 
         public List<Long> getAncestors() {
@@ -114,6 +116,10 @@ public class EntityClassStorageBuilder {
 
         public Long getFather() {
             return father;
+        }
+
+        public List<Long> getRelationIds() {
+            return relationIds;
         }
     }
 
@@ -144,7 +150,7 @@ public class EntityClassStorageBuilder {
         List<EntityClassInfo> entityClassInfos = new ArrayList<>();
         expectedEntityStorages.forEach(
                 e -> {
-                    entityClassInfos.add(entityClassInfo(e.getSelf(), e.getFather(),
+                    entityClassInfos.add(entityClassInfo(e.getSelf(), e.getFather(), e.getRelationIds(),
                             null != e.getAncestors() ? e.getAncestors().size() : 0));
                 }
         );
@@ -154,14 +160,18 @@ public class EntityClassStorageBuilder {
                 .build();
     }
 
-    public static EntityClassInfo entityClassInfo(long id, long father, int level) {
+    public static EntityClassInfo entityClassInfo(long id, long father, List<Long> relationEntityId, int level) {
         List<EntityFieldInfo> entityFieldInfos = new ArrayList<>();
+
         entityFieldInfos.add(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG));
         entityFieldInfos.add(entityFieldInfo(id + 1, EntityFieldInfo.FieldType.STRING));
 
         List<RelationInfo> relationInfos = new ArrayList<>();
-        relationInfos.add(relationInfo(id, id + 2, id, "toOne", id));
-        relationInfos.add(relationInfo(id + 1, id + 2, id + 1, "toOne", id + 1));
+        if (null != relationEntityId) {
+            for (int i = 0; i < relationEntityId.size(); i++) {
+                relationInfos.add(relationInfo(id + i, relationEntityId.get(i), id, "toOne", id + i));
+            }
+        }
 
         return EntityClassInfo.newBuilder()
                 .setId(id)
@@ -216,9 +226,9 @@ public class EntityClassStorageBuilder {
         long father = getFather(id);
         long anc = getAnc(id);
 
-        expectedEntityStorages.add(new EntityClassStorageBuilder.ExpectedEntityStorage(id, father, Arrays.asList(father, anc)));
-        expectedEntityStorages.add(new EntityClassStorageBuilder.ExpectedEntityStorage(father, anc, Collections.singletonList(anc)));
-        expectedEntityStorages.add(new EntityClassStorageBuilder.ExpectedEntityStorage(anc, 0L, null));
+        expectedEntityStorages.add(new EntityClassStorageBuilder.ExpectedEntityStorage(id, father, Arrays.asList(father, anc), Collections.singletonList(father)));
+        expectedEntityStorages.add(new EntityClassStorageBuilder.ExpectedEntityStorage(father, anc, Collections.singletonList(anc), Collections.singletonList(id)));
+        expectedEntityStorages.add(new EntityClassStorageBuilder.ExpectedEntityStorage(anc, 0L, null, Collections.singletonList(anc)));
 
         return expectedEntityStorages;
     }
