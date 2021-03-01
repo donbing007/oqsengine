@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRespon
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import io.grpc.stub.StreamObserver;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_OK;
@@ -92,12 +94,29 @@ public class SyncRequestHandlerTest {
         ReflectionTestUtils.setField(requestHandler, "syncExecutor", syncExecutor);
         ReflectionTestUtils.setField(requestHandler, "requestWatchExecutor", requestWatchExecutor);
 
+
         return requestHandler;
     }
 
 
     @Test
     public void executorTest() throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        requestWatchExecutor.create(UUID.randomUUID().toString(), new StreamObserver<EntityClassSyncRequest>() {
+            @Override
+            public void onNext(EntityClassSyncRequest entityClassSyncRequest) {
+
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+
+            }
+        });
         String appId = "testExecutor";
         int version = 1;
         check(appId, version, SYNC_FAIL.ordinal(),
