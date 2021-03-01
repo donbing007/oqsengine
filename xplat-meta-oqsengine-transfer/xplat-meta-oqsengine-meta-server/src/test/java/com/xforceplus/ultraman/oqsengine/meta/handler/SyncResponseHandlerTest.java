@@ -10,7 +10,6 @@ import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.mock.MockEntityClassGenerator;
-import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerator;
 import io.grpc.stub.StreamObserver;
 import org.junit.After;
 import org.junit.Assert;

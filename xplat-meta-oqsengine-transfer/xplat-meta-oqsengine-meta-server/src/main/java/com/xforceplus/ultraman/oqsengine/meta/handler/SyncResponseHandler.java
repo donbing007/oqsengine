@@ -235,7 +235,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                                             RequestStatus.SYNC, appUpdateEvent.getEntityClassSyncRspProto());
                             return
                                     responseByWatch(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
-                                    appUpdateEvent.getVersion(), response, watcher, false);
+                                            appUpdateEvent.getVersion(), response, watcher, false);
                         }
                     }
                 } else {
@@ -261,20 +261,27 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         /**
          * 更新版本成功、则推送给外部
          */
-        if (responseWatchExecutor.addVersion(event.getAppId(), event.getEnv(), event.getVersion())) {
+        try {
             List<ResponseWatcher> needList = responseWatchExecutor.need(new WatchElement(event.getAppId(), event.getEnv(), event.getVersion(), Notice));
             if (!needList.isEmpty()) {
-
-                needList.forEach(
-                        nl -> {
-                            EntityClassSyncResponse response = generateResponse(nl.uid(), event.getAppId(), event.getEnv(), event.getVersion(),
-                                    RequestStatus.SYNC, event.getEntityClassSyncRspProto());
-                            responseByWatch(event.getAppId(), event.getEnv(), event.getVersion(), response, nl, false);
-                        }
-                );
+                if (responseWatchExecutor.addVersion(event.getAppId(), event.getEnv(), event.getVersion())) {
+                    needList.forEach(
+                            nl -> {
+                                EntityClassSyncResponse response = generateResponse(nl.uid(), event.getAppId(), event.getEnv(), event.getVersion(),
+                                        RequestStatus.SYNC, event.getEntityClassSyncRspProto());
+                                responseByWatch(event.getAppId(), event.getEnv(), event.getVersion(), response, nl, false);
+                            }
+                    );
+                }
             }
+
+            return true;
+        } catch (Exception e) {
+            logger.warn("push event failed...event [{}], message [{}]"
+                    , null == event ? "null" : event.toString(), e.getMessage());
+            return false;
         }
-        return true;
+
     }
 
     /**
@@ -327,6 +334,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
 
     /**
      * 发送Response
+     *
      * @param response
      * @param watcher
      * @return
@@ -355,6 +363,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
 
     /**
      * 生成Response
+     *
      * @param appId
      * @param env
      * @param version
