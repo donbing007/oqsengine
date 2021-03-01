@@ -66,9 +66,9 @@ public class CacheExecutor implements ICacheExecutor {
     private int prepareExpire = 60;
 
     /**
-     * 默认一天过期
+     * 默认一年过期
      */
-    private int cacheExpire = 24 * 60 * 60;
+    private int cacheExpire = 12 * 30 * 24 * 60 * 60;
 
     /**
      * script
@@ -378,7 +378,32 @@ public class CacheExecutor implements ICacheExecutor {
         return entityClassStorageMap;
     }
 
-
+    /**
+     * 根据Ids读取EntityStorage列表
+     * @param ids
+     * @param version
+     * @return
+     * @throws JsonProcessingException
+     */
+    @Override
+    public Map<Long, EntityClassStorage> multiplyRead(List<Long> ids, int version) throws JsonProcessingException {
+        Map<Long, EntityClassStorage> entityClassStorageMap = new HashMap<>();
+        if (null != ids && ids.size() > 0) {
+            List<Long> remoteFilters = new ArrayList<>();
+            ids.forEach(
+                    id -> {
+                        EntityClassStorage entityClassStorage = getFromLocal(id, version);
+                        if (null == entityClassStorage) {
+                            remoteFilters.add(id);
+                        } else {
+                            entityClassStorageMap.put(id, entityClassStorage);
+                        }
+                    }
+            );
+            remoteMultiplyLoading(remoteFilters, version, entityClassStorageMap);
+        }
+        return entityClassStorageMap;
+    }
     /**
      * 获取当前appId对应的版本信息
      * @param appId
@@ -634,7 +659,7 @@ public class CacheExecutor implements ICacheExecutor {
 
             //  get ancestors
             if (entityClassStorage.getAncestors().size() > 0) {
-                remoteAncestorsLoading(entityClassStorage, version, entityClassStorageMap);
+                remoteMultiplyLoading(entityClassStorage.getAncestors(), version, entityClassStorageMap);
             }
 
             return entityClassStorageMap;
@@ -661,9 +686,9 @@ public class CacheExecutor implements ICacheExecutor {
         return redisValuesToLocalStorage(objectMapper, keyValues);
     }
 
-    private void remoteAncestorsLoading(EntityClassStorage entityClassStorage, int version, Map<Long, EntityClassStorage> entityClassStorageMap) throws JsonProcessingException {
+    private void remoteMultiplyLoading(List<Long> ids, int version, Map<Long, EntityClassStorage> entityClassStorageMap) throws JsonProcessingException {
 
-        int extraSize = entityClassStorage.getAncestors().size();
+        int extraSize = ids.size();
         String[] extraEntityIds = new String[extraSize + 1];
         extraEntityIds[0] = version + "";
         int j = 1;
@@ -671,8 +696,8 @@ public class CacheExecutor implements ICacheExecutor {
         /**
          * set ancestors
          */
-        for (int i = 0; i < entityClassStorage.getAncestors().size(); i++) {
-            extraEntityIds[j] = Long.toString(entityClassStorage.getAncestors().get(i));
+        for (int i = 0; i < ids.size(); i++) {
+            extraEntityIds[j] = Long.toString(ids.get(i));
             j++;
         }
 

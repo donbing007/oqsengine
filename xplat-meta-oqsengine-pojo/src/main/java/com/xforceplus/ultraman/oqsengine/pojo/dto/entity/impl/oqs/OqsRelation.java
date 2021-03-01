@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs;
 
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * desc :
@@ -19,13 +21,6 @@ public class OqsRelation {
      */
     private String name;
 
-    /**
-     * 关联对象Id
-     */
-    private long entityClassId;
-
-    private String entityClassName;
-
     private long relOwnerClassId;
 
     private String relOwnerClassName;
@@ -42,11 +37,13 @@ public class OqsRelation {
     private boolean identity;
 
     /**
-     * 关系表示使用
-     * Key字段的id使用关系的id值
-     * 关系类型默认都是long
+     * 关联对象Id
      */
-    private long entityFieldId;
+    private long entityClassId;
+
+    private IEntityField entityField;
+
+    private Function<Long, Optional<IEntityClass>> entityClassLoader;
 
     public OqsRelation() {
     }
@@ -84,20 +81,9 @@ public class OqsRelation {
         this.name = name;
     }
 
-    public long getEntityClassId() {
-        return entityClassId;
-    }
-
-    public void setEntityClassId(long entityClassId) {
-        this.entityClassId = entityClassId;
-    }
-
     public String getEntityClassName() {
-        return entityClassName;
-    }
-
-    public void setEntityClassName(String entityClassName) {
-        this.entityClassName = entityClassName;
+        IEntityClass entityClass = getEntityClass();
+        return null != entityClass ? entityClass.name() : "";
     }
 
     public long getRelOwnerClassId() {
@@ -132,12 +118,25 @@ public class OqsRelation {
         this.identity = identity;
     }
 
-    public long getEntityFieldId() {
-        return entityFieldId;
+    public IEntityClass getEntityClass() {
+        Optional<IEntityClass> entityClassOp = entityClassLoader.apply(entityClassId);
+        return entityClassOp.orElse(null);
     }
 
-    public void setEntityFieldId(long entityFieldId) {
-        this.entityFieldId = entityFieldId;
+    public long getEntityClassId() {
+        return entityClassId;
+    }
+
+    public void setEntityClassId(long entityClassId) {
+        this.entityClassId = entityClassId;
+    }
+
+    public IEntityField getEntityField() {
+        return entityField;
+    }
+
+    public void setEntityField(IEntityField entityField) {
+        this.entityField = entityField;
     }
 
     @Override
@@ -150,25 +149,106 @@ public class OqsRelation {
         }
         OqsRelation relation = (OqsRelation) o;
         return getEntityClassId() == relation.getEntityClassId() &&
-            isIdentity() == relation.isIdentity() &&
-            Objects.equals(getName(), relation.getName()) &&
-            Objects.equals(getRelationType(), relation.getRelationType()) &&
-            getEntityFieldId() == relation.getEntityFieldId();
+                isIdentity() == relation.isIdentity() &&
+                Objects.equals(getName(), relation.getName()) &&
+                Objects.equals(getRelationType(), relation.getRelationType()) &&
+                getEntityFieldId() == relation.getEntityFieldId();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getEntityClassId(), getRelationType(), isIdentity(), getEntityFieldId());
+        return Objects.hash(getName(), getEntityClass().id(), getRelationType(), isIdentity(), getEntityField().id());
     }
 
     @Override
     public String toString() {
         return "Relation{" +
-            "name='" + name + '\'' +
-            ", entityClassId=" + entityClassId +
-            ", relationType='" + relationType + '\'' +
-            ", identity=" + identity +
-            ", entityField=" + entityFieldId +
-            '}';
+                "name='" + name + '\'' +
+                ", entityClassId=" + getEntityClass().id() +
+                ", relationType='" + relationType + '\'' +
+                ", identity=" + identity +
+                ", entityFieldId =" + getEntityField().id() +
+                '}';
+    }
+
+    /**
+     * Builder
+     */
+    public static final class Builder {
+        private Long id;
+        private String name;
+        private long relOwnerClassId;
+        private String relOwnerClassName;
+        private String relationType;
+        private boolean identity;
+        private long entityClassId;
+        private Function<Long, Optional<IEntityClass>> entityClassLoader;
+        private IEntityField entityField;
+
+        private Builder() {
+        }
+
+        public static OqsRelation.Builder anOqsRelation() {
+            return new OqsRelation.Builder();
+        }
+
+        public OqsRelation.Builder withId(long id) {
+            this.id = id;
+            return this;
+        }
+
+        public OqsRelation.Builder withName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public OqsRelation.Builder withRelOwnerClassId(long relOwnerClassId) {
+            this.relOwnerClassId = relOwnerClassId;
+            return this;
+        }
+
+        public OqsRelation.Builder withRelOwnerClassName(String relOwnerClassName) {
+            this.relOwnerClassName = relOwnerClassName;
+            return this;
+        }
+
+        public OqsRelation.Builder withRelationType(String relationType) {
+            this.relationType = relationType;
+            return this;
+        }
+
+        public OqsRelation.Builder withIdentity(boolean identity) {
+            this.identity = identity;
+            return this;
+        }
+
+        public OqsRelation.Builder withFunction(Function<Long, Optional<IEntityClass>> entityClassLoader) {
+            this.entityClassLoader = entityClassLoader;
+            return this;
+        }
+
+        public OqsRelation.Builder withEntityClassId(long entityClassId) {
+            this.entityClassId = entityClassId;
+            return this;
+        }
+
+        public OqsRelation.Builder withEntityField(IEntityField entityField) {
+            this.entityField = entityField;
+            return this;
+        }
+
+        public OqsRelation build() {
+            OqsRelation oqsRelation = new OqsRelation();
+            oqsRelation.id = this.id;
+            oqsRelation.name = this.name;
+            oqsRelation.relOwnerClassId = this.relOwnerClassId;
+            oqsRelation.relOwnerClassName = this.relOwnerClassName;
+            oqsRelation.relationType = this.relationType;
+            oqsRelation.identity = this.identity;
+            oqsRelation.entityClassId = this.entityClassId;
+            oqsRelation.entityClassLoader = entityClassLoader;
+            oqsRelation.entityField = this.entityField;
+            return oqsRelation;
+        }
     }
 }

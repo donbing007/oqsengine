@@ -137,7 +137,7 @@ public class EntityClassManagerExecutorTest {
         int expectedVersion = 1;
         long expectedId = System.currentTimeMillis() + 3600_000;
         List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorageList = mockSelfFatherAncestorsGenerate(expectedId);
-
+        long expectedAnc = expectedEntityStorageList.get(expectedEntityStorageList.size() - 1).getSelf();
         try {
             entityClassManagerExecutor.load(expectedId);
         } catch (Exception e) {
@@ -157,6 +157,41 @@ public class EntityClassManagerExecutorTest {
         Assert.assertNotNull(entityClassInfo);
 
         check(expectedVersion + 1, entityClassOp.get(), entityClassInfo);
+
+        Collection<OqsRelation> re = entityClassOp.get().oqsRelations();
+        if (null != re) {
+            re.forEach(
+                    s -> {
+                        IEntityClass e = s.getEntityClass();
+                        Assert.assertNotNull(e);
+                        Assert.assertEquals(s.getEntityClassId(), e.id());
+                    }
+
+            );
+        }
+
+        /*
+            check 自循环
+         */
+        entityClassOp = entityClassManagerExecutor.load(expectedAnc);
+        Assert.assertTrue(entityClassOp.isPresent());
+
+        entityClassInfo =
+                entityClassSyncResponse.getEntityClassSyncRspProto().getEntityClassesList();
+
+        Assert.assertNotNull(entityClassInfo);
+
+        re = entityClassOp.get().oqsRelations();
+        if (null != re) {
+            re.forEach(
+                    s -> {
+                        IEntityClass e = s.getEntityClass();
+                        Assert.assertNotNull(e);
+                        Assert.assertEquals(s.getEntityClassId(), e.id());
+                    }
+
+            );
+        }
     }
 
     /**
@@ -230,12 +265,11 @@ public class EntityClassManagerExecutorTest {
                 Assert.assertEquals(expectedRelation.getId(), (long) actualRelation.getId());
                 Assert.assertEquals(expectedRelation.getName(), actualRelation.getName());
                 Assert.assertEquals(expectedRelation.getEntityClassId(), actualRelation.getEntityClassId());
-                Assert.assertEquals(expectedRelation.getEntityClassName(), actualRelation.getEntityClassName());
                 Assert.assertEquals(expectedRelation.getRelOwnerClassId(), actualRelation.getRelOwnerClassId());
                 Assert.assertEquals(expectedRelation.getRelOwnerClassName(), actualRelation.getRelOwnerClassName());
                 Assert.assertEquals(expectedRelation.getRelationType(), actualRelation.getRelationType());
                 Assert.assertEquals(expectedRelation.getIdentity(), actualRelation.isIdentity());
-                Assert.assertEquals(expectedRelation.getEntityFieldId(), actualRelation.getEntityFieldId());
+                Assert.assertEquals(expectedRelation.getEntityFieldCode(), actualRelation.getEntityField().name());
             }
         }
 
