@@ -48,7 +48,7 @@ public class MockServer extends EntityClassSyncGrpc.EntityClassSyncImplBase {
                      */
                     if (null != uid && isTestOk) {
                         EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
-                                .setStatus(CONFIRM_REGISTER.ordinal())
+                                .setStatus(REGISTER_OK.ordinal())
                                 .setAppId(entityClassSyncRequest.getAppId())
                                 .setVersion(entityClassSyncRequest.getVersion());
 

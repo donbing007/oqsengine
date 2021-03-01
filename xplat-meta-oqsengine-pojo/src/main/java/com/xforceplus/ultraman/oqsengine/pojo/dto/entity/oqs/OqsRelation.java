@@ -34,13 +34,12 @@ public class OqsRelation {
     private String relationType;
 
     /**
-     * 是否使用主键作为关系字段 - true代表是。- 目前只支持主键模式
-     * false表示使用对象的其他唯一属性来定义
+     * 是PrimaryKey还是UniqueKey
      */
     private boolean identity;
 
     /**
-     * 关联对象Id
+     * 数据owner信息
      */
     private long entityClassId;
 

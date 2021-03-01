@@ -9,8 +9,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * desc :
@@ -61,29 +60,29 @@ public class ResponseWatchExecutorTest {
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
         Assert.assertNotNull(watcher);
 
+        List<Cases<Boolean>> cases = new ArrayList<>();
         /**
          * 修改为一个低版本
          */
-        result = responseWatchExecutor.update(uid, new WatchElement(appId, env, version - 1, WatchElement.AppStatus.Init));
-        Assert.assertFalse(result);
-
+        cases.add(new Cases<Boolean>(new WatchElement(appId, env, version - 1, WatchElement.AppStatus.Init), false));
         /**
          * 修改为一个相同的版本、状态
          */
-        result = responseWatchExecutor.update(uid, new WatchElement(appId, env, version, WatchElement.AppStatus.Init));
-        Assert.assertFalse(result);
-
+        cases.add(new Cases<Boolean>(new WatchElement(appId, env, version, WatchElement.AppStatus.Init), false));
         /**
          * 修改为一个高状态
          */
-        result = responseWatchExecutor.update(uid, new WatchElement(appId, env, version, WatchElement.AppStatus.Confirmed));
-        Assert.assertTrue(result);
-
+        cases.add(new Cases<Boolean>(new WatchElement(appId, env, version, WatchElement.AppStatus.Confirmed), true));
         /**
          * 修改为一个高版本
          */
-        result = responseWatchExecutor.update(uid, new WatchElement(appId, env, version + 1, WatchElement.AppStatus.Init));
-        Assert.assertTrue(result);
+        cases.add(new Cases<Boolean>(new WatchElement(appId, env, version + 1, WatchElement.AppStatus.Init), true));
+
+        cases.forEach(
+                cas -> {
+                    Assert.assertEquals(cas.getExpected(), responseWatchExecutor.update(uid, cas.getWatchElement()));
+                }
+        );
 
         responseWatchExecutor.release(uid);
 
@@ -166,6 +165,82 @@ public class ResponseWatchExecutorTest {
         }
     }
 
+    @Test
+    public void needTest() {
+        List<AbstractMap.SimpleEntry<String, Cases<Integer>>> cases = new ArrayList<>();
+
+        String expectedUid1 = UUID.randomUUID().toString();
+        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid1, new Cases<Integer>(new WatchElement("test1", "test", 1, WatchElement.AppStatus.Register), 0)));
+        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid1, new Cases<Integer>(new WatchElement("test2", "prod", 1, WatchElement.AppStatus.Register), 1)));
+
+        String expectedUid2 = UUID.randomUUID().toString();
+        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid2, new Cases<Integer>(new WatchElement("test2", "prod", 2, WatchElement.AppStatus.Register), 2)));
+        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid2, new Cases<Integer>(new WatchElement("test3", "test", 5, WatchElement.AppStatus.Register), 3)));
+
+        String expectedUid3 = UUID.randomUUID().toString();
+        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid3, new Cases<Integer>(new WatchElement("test2", "prod", 4, WatchElement.AppStatus.Register), 4)));
+        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid3, new Cases<Integer>(new WatchElement("test3", "prod", 5, WatchElement.AppStatus.Register), 5)));
+
+        for (AbstractMap.SimpleEntry<String, Cases<Integer>> cas : cases) {
+            responseWatchExecutor.add(cas.getKey(), streamObserver(), cas.getValue().getWatchElement());
+        }
+
+        int actualCount = responseWatchExecutor.watcher(expectedUid1).watches().size() +
+                            responseWatchExecutor.watcher(expectedUid2).watches().size() +
+                                responseWatchExecutor.watcher(expectedUid3).watches().size();
+
+        Assert.assertEquals(cases.size(), actualCount);
+
+        /**
+         * pos 0
+         */
+        WatchElement w = new WatchElement("test1", "test", 2, null);
+        check(w, Collections.singletonList(cases.get(0)));
+
+        /**
+         * pos 1
+         */
+        w = new WatchElement("test1", "prod", 2, null);
+        check(w, new ArrayList<>());
+
+        /**
+         * pos 1, 2
+         */
+        w = new WatchElement("test2", "prod", 3, null);
+        check(w, Arrays.asList(cases.get(1), cases.get(2)));
+
+        /**
+         * pos 1, 2
+         */
+        w = new WatchElement("test2", "prod", 4, null);
+        check(w, Arrays.asList(cases.get(1), cases.get(2)));
+
+        /**
+         * pos 1, 2, 4
+         */
+        w = new WatchElement("test2", "prod", 5, null);
+        check(w, Arrays.asList(cases.get(1), cases.get(2), cases.get(4)));
+
+        /**
+         * pos 5
+         */
+        w = new WatchElement("test3", "prod", 6, null);
+        check(w, Collections.singletonList(cases.get(5)));
+    }
+
+    private void check(WatchElement w, List<AbstractMap.SimpleEntry<String, Cases<Integer>>> expectedList) {
+        List<ResponseWatcher> needs = responseWatchExecutor.need(w);
+        Assert.assertEquals(expectedList.size(), needs.size());
+
+        for(ResponseWatcher r : needs) {
+            /**
+             * 验证
+             */
+            Assert.assertTrue(r.onWatch(w));
+        }
+    }
+
+
     private StreamObserver<EntityClassSyncResponse> streamObserver() {
         return new StreamObserver<EntityClassSyncResponse>() {
             @Override
@@ -183,6 +258,51 @@ public class ResponseWatchExecutorTest {
                 // do nothing
             }
         };
+    }
+
+    private static class Cases<T> {
+        private String appId;
+        private int version;
+        private String env;
+        private WatchElement watchElement;
+        private T expected;
+
+        public Cases(WatchElement watchElement, T expected) {
+            this.watchElement = watchElement;
+            this.expected = expected;
+            this.appId = watchElement.getAppId();
+            this.version = watchElement.getVersion();
+            this.env = watchElement.getEnv();
+        }
+
+        public Cases(String appId, int version, String env, WatchElement watchElement, T expected) {
+            this.appId = appId;
+            this.version = version;
+            this.env = env;
+            this.watchElement = watchElement;
+            this.expected = expected;
+        }
+
+        public String getAppId() {
+            return appId;
+        }
+
+        public int getVersion() {
+            return version;
+        }
+
+        public String getEnv() {
+            return env;
+        }
+
+        public T getExpected() {
+            return expected;
+        }
+
+        public WatchElement getWatchElement() {
+            return watchElement;
+        }
+
     }
 }
 

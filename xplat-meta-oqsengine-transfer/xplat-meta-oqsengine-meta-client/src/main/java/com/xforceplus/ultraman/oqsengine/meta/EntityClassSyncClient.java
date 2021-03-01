@@ -180,10 +180,10 @@ public class EntityClassSyncClient implements ITransferExecutor {
                 /**
                  * 更新状态
                  */
-                if (entityClassSyncResponse.getStatus() == RequestStatus.CONFIRM_REGISTER.ordinal()) {
+                if (entityClassSyncResponse.getStatus() == RequestStatus.REGISTER_OK.ordinal()) {
                     requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
                             entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed));
-                } else {
+                } else if (entityClassSyncResponse.getStatus() == RequestStatus.SYNC.ordinal()) {
                     /**
                      * 执行返回结果
                      */

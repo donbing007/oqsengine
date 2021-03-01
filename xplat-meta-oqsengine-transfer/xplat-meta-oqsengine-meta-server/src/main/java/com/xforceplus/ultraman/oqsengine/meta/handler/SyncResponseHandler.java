@@ -190,7 +190,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      * @param uid
      */
     private boolean confirmRegister(String appId, String env, int version, String uid) {
-        return confirmResponse(appId, env, version, uid, CONFIRM_REGISTER);
+        return confirmResponse(appId, env, version, uid, REGISTER_OK);
     }
 
     /**
@@ -201,7 +201,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     private void confirmHeartBeat(String uid) {
         responseWatchExecutor.resetHeartBeat(uid);
 
-        confirmResponse(null, null, NOT_EXIST_VERSION, uid, CONFIRM_HEARTBEAT);
+        confirmResponse(null, null, NOT_EXIST_VERSION, uid, HEARTBEAT);
     }
 
     /**
@@ -225,15 +225,18 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                     AppUpdateEvent appUpdateEvent = entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
                     if (null != appUpdateEvent) {
 
-                        /**
-                        * 强制推送到外部(不更新当前版本)
-                        */
-                        EntityClassSyncResponse response =
-                                generateResponse(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(), appUpdateEvent.getVersion(),
-                                                                                            appUpdateEvent.getEntityClassSyncRspProto());
+                        if (watchElement.getVersion() <= appUpdateEvent.getVersion()) {
 
-                        return responseByWatch(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
-                                                appUpdateEvent.getVersion(), response, watcher, false);
+                            /**
+                             * 强制推送到外部(不更新当前版本)
+                             */
+                            EntityClassSyncResponse response =
+                                    generateResponse(uid, appUpdateEvent.getAppId(), appUpdateEvent.getEnv(), appUpdateEvent.getVersion(),
+                                            RequestStatus.SYNC, appUpdateEvent.getEntityClassSyncRspProto());
+                            return
+                                    responseByWatch(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
+                                    appUpdateEvent.getVersion(), response, watcher, false);
+                        }
                     }
                 } else {
                     logger.warn("not exist watcher to handle data sync response, appId: {}, version : {}, uid :{}..."
@@ -261,10 +264,11 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         if (responseWatchExecutor.addVersion(event.getAppId(), event.getEnv(), event.getVersion())) {
             List<ResponseWatcher> needList = responseWatchExecutor.need(new WatchElement(event.getAppId(), event.getEnv(), event.getVersion(), Notice));
             if (!needList.isEmpty()) {
-                EntityClassSyncResponse response = generateResponse(event.getAppId(), event.getEnv(), event.getVersion(), event.getEntityClassSyncRspProto());
 
                 needList.forEach(
                         nl -> {
+                            EntityClassSyncResponse response = generateResponse(nl.uid(), event.getAppId(), event.getEnv(), event.getVersion(),
+                                    RequestStatus.SYNC, event.getEntityClassSyncRspProto());
                             responseByWatch(event.getAppId(), event.getEnv(), event.getVersion(), response, nl, false);
                         }
                 );
@@ -291,7 +295,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                             .setUid(uid)
                             .setStatus(requestStatus.ordinal());
 
-            if (requestStatus.equals(CONFIRM_REGISTER)) {
+            if (requestStatus.equals(REGISTER_OK)) {
                 builder.setAppId(appId).setVersion(version);
             }
 
@@ -304,12 +308,16 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     }
 
     private boolean responseByWatch(String appId, String env, int version, EntityClassSyncResponse response,
-                                    ResponseWatcher watcher, boolean confirmRegister) {
+                                    ResponseWatcher watcher, boolean registerOrHeartBeat) {
+
+        /**
+         * 发送
+         */
+        boolean ret = observerOnNext(response, watcher);
         /**
          * 成功且不是注册确认，则加入到DelayTaskQueue中进行监听
          */
-        boolean ret = runObserverOnNext(response, watcher);
-        if (ret && !confirmRegister) {
+        if (ret && !registerOrHeartBeat) {
             retryExecutor.offer(
                     new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
                             new RetryExecutor.Element(new WatchElement(appId, env, version, Notice), watcher.uid())));
@@ -323,7 +331,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      * @param watcher
      * @return
      */
-    private boolean runObserverOnNext(EntityClassSyncResponse response, ResponseWatcher watcher) {
+    private boolean observerOnNext(EntityClassSyncResponse response, ResponseWatcher watcher) {
         if (null != watcher) {
             return watcher.runWithCheck(observer -> {
                 try {
@@ -353,12 +361,14 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      * @param result
      * @return
      */
-    private EntityClassSyncResponse generateResponse(String appId, String env, int version, EntityClassSyncRspProto result) {
+    private EntityClassSyncResponse generateResponse(String uid, String appId, String env, int version, RequestStatus requestStatus, EntityClassSyncRspProto result) {
         return EntityClassSyncResponse.newBuilder()
                 .setMd5(MD5Utils.getMD5(result.toByteArray()))
+                .setUid(uid)
                 .setAppId(appId)
                 .setEnv(env)
                 .setVersion(version)
+                .setStatus(requestStatus.ordinal())
                 .setEntityClassSyncRspProto(result)
                 .build();
     }
