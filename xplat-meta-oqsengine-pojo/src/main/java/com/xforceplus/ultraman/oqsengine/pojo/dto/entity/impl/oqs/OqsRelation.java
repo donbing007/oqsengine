@@ -1,5 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -46,23 +49,6 @@ public class OqsRelation {
     private Function<Long, Optional<IEntityClass>> entityClassLoader;
 
     public OqsRelation() {
-    }
-
-    public OqsRelation(String name, long entityClassId, String relationType, boolean identity, long entityFieldId) {
-        this.name = name;
-        this.entityClassId = entityClassId;
-        this.relationType = relationType;
-        this.identity = identity;
-        this.entityFieldId = entityFieldId;
-    }
-
-    public OqsRelation(Long id, String name, long entityClassId, String entityClassName, String ownerClassName, String relationType) {
-        this.name = name;
-        this.entityClassName = entityClassName;
-        this.relOwnerClassName = ownerClassName;
-        this.relationType = relationType;
-        this.id = id;
-        this.entityClassId = entityClassId;
     }
 
     public Long getId() {
@@ -148,11 +134,11 @@ public class OqsRelation {
             return false;
         }
         OqsRelation relation = (OqsRelation) o;
-        return getEntityClassId() == relation.getEntityClassId() &&
-                isIdentity() == relation.isIdentity() &&
-                Objects.equals(getName(), relation.getName()) &&
-                Objects.equals(getRelationType(), relation.getRelationType()) &&
-                getEntityFieldId() == relation.getEntityFieldId();
+        return getEntityClass().id() == relation.getEntityClass().id() &&
+            isIdentity() == relation.isIdentity() &&
+            Objects.equals(getName(), relation.getName()) &&
+            Objects.equals(getRelationType(), relation.getRelationType()) &&
+            getEntityField().id() == relation.getEntityField().id();
     }
 
     @Override
@@ -163,12 +149,12 @@ public class OqsRelation {
     @Override
     public String toString() {
         return "Relation{" +
-                "name='" + name + '\'' +
-                ", entityClassId=" + getEntityClass().id() +
-                ", relationType='" + relationType + '\'' +
-                ", identity=" + identity +
-                ", entityFieldId =" + getEntityField().id() +
-                '}';
+            "name='" + name + '\'' +
+            ", entityClassId=" + getEntityClass().id() +
+            ", relationType='" + relationType + '\'' +
+            ", identity=" + identity +
+            ", entityFieldId =" + getEntityField().id() +
+            '}';
     }
 
     /**
