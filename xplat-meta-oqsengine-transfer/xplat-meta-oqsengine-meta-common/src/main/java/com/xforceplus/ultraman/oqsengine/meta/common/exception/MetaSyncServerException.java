@@ -27,6 +27,11 @@ public class MetaSyncServerException extends RuntimeException {
         this.code = code;
     }
 
+    public MetaSyncServerException(String message) {
+        super(message);
+        this.code = -1;
+    }
+
     public MetaSyncServerException(String message, boolean isConnectionError) {
         super(message);
         this.code = isConnectionError ? CONNECTION_ERROR.ordinal() : BUSINESS_HANDLER_ERROR.ordinal();

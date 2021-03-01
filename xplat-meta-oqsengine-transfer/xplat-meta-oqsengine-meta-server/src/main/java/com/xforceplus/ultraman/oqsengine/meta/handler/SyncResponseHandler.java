@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.meta.handler;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncServerException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
@@ -31,6 +32,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStat
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Confirmed;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Notice;
+import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.APP_UPDATE_PULL_ERROR;
 import static com.xforceplus.ultraman.oqsengine.meta.constant.ServerConstant.SERVER_TASK_COUNT;
 
 
@@ -218,32 +220,46 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
          * 这里异步执行
          */
         executor.submit(() -> {
-            try {
-                ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
+            ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
 
-                if (null != watcher) {
-                    AppUpdateEvent appUpdateEvent = entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
-                    if (null != appUpdateEvent) {
+            if (null != watcher) {
+                try {
+                    AppUpdateEvent appUpdateEvent =
+                            entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
 
-                        if (watchElement.getVersion() <= appUpdateEvent.getVersion()) {
+                    if (watchElement.getVersion() <= appUpdateEvent.getVersion()) {
 
-                            /**
-                             * 强制推送到外部(不更新当前版本)
-                             */
-                            EntityClassSyncResponse response =
-                                    generateResponse(uid, appUpdateEvent.getAppId(), appUpdateEvent.getEnv(), appUpdateEvent.getVersion(),
-                                            RequestStatus.SYNC, appUpdateEvent.getEntityClassSyncRspProto());
-                            return
-                                    responseByWatch(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
-                                            appUpdateEvent.getVersion(), response, watcher, false);
-                        }
+                        /**
+                         * 主动拉取不会更新当前的appVersion
+                         */
+                        EntityClassSyncResponse response =
+                                generateResponse(uid, appUpdateEvent.getAppId(), appUpdateEvent.getEnv(), appUpdateEvent.getVersion(),
+                                        RequestStatus.SYNC, appUpdateEvent.getEntityClassSyncRspProto());
+                        return responseByWatch(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
+                                appUpdateEvent.getVersion(), response, watcher, false);
                     }
-                } else {
-                    logger.warn("not exist watcher to handle data sync response, appId: {}, version : {}, uid :{}..."
-                            , watchElement.getAppId(), watchElement.getVersion(), uid);
+                    logger.info("current notice version [{}] is large than updateVersion [{}], event will be ignore..."
+                            , watchElement.getVersion(), appUpdateEvent.getVersion());
+                    return true;
+                } catch (Exception e) {
+                    /**
+                     * 当元数据告知失败将在一分钟后进行重试
+                     */
+                    if (e instanceof MetaSyncServerException &&
+                            e.getMessage().equalsIgnoreCase(APP_UPDATE_PULL_ERROR.name())) {
+                        retryExecutor.offer(
+                                new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
+                                        new RetryExecutor.Element(
+                                                new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
+                                                        watchElement.getVersion(), watchElement.getStatus()),
+                                                watcher.uid())));
+                    }
+                    logger.warn(e.getMessage());
+                    return false;
                 }
-            } catch (Exception e) {
-                logger.warn(e.getMessage());
+            } else {
+                logger.warn("not exist watcher to handle data sync response, appId: {}, version : {}, uid :{}..."
+                        , watchElement.getAppId(), watchElement.getVersion(), uid);
             }
             return false;
         });
@@ -274,14 +290,12 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                     );
                 }
             }
-
-            return true;
         } catch (Exception e) {
             logger.warn("push event failed...event [{}], message [{}]"
                     , null == event ? "null" : event.toString(), e.getMessage());
             return false;
         }
-
+        return true;
     }
 
     /**
@@ -370,7 +384,8 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      * @param result
      * @return
      */
-    private EntityClassSyncResponse generateResponse(String uid, String appId, String env, int version, RequestStatus requestStatus, EntityClassSyncRspProto result) {
+    private EntityClassSyncResponse generateResponse(String uid, String appId, String env, int version,
+                                                     RequestStatus requestStatus, EntityClassSyncRspProto result) {
         return EntityClassSyncResponse.newBuilder()
                 .setMd5(MD5Utils.getMD5(result.toByteArray()))
                 .setUid(uid)
