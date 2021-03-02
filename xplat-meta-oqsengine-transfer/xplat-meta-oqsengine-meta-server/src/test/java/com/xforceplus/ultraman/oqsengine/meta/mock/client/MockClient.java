@@ -2,7 +2,9 @@ package com.xforceplus.ultraman.oqsengine.meta.mock.client;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
 import io.grpc.ManagedChannel;
-import io.grpc.inprocess.InProcessChannelBuilder;
+import io.grpc.ManagedChannelBuilder;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * desc :
@@ -39,10 +41,10 @@ public class MockClient {
 
     private void buildChannel(String host, int port) {
         channel =
-                InProcessChannelBuilder
-                        .forAddress(host, port)
-                        .directExecutor()
-                        .maxInboundMessageSize(1024)
+                ManagedChannelBuilder.forAddress(host, port)
+                        .usePlaintext()
+                        .keepAliveTime(30_000, TimeUnit.MILLISECONDS)
+                        .keepAliveTimeout(30_000, TimeUnit.MILLISECONDS)
                         .build();
     }
 

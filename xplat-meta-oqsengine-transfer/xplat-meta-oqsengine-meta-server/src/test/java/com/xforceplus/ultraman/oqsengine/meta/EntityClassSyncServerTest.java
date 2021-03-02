@@ -76,6 +76,8 @@ public class EntityClassSyncServerTest {
 
         //  start client
         MockClient mockClient = new MockClient();
+
+        mockerSyncClient = new MockerSyncClient();
         ReflectionTestUtils.setField(mockerSyncClient, "mockClient", mockClient);
         mockerSyncClient.start(host, port);
     }
