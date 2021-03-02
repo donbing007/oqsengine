@@ -100,7 +100,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
          */
         executors.forEach(Thread::start);
 
-        logger.info("syncResponseHandler start.");
+        logger.debug("syncResponseHandler start.");
     }
 
 
@@ -126,7 +126,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
          */
         executors.forEach(t -> ThreadUtils.shutdown(t, SHUT_DOWN_WAIT_TIME_OUT));
 
-        logger.info("syncResponseHandler stop.");
+        logger.debug("syncResponseHandler stop.");
     }
 
     @Override
@@ -157,11 +157,15 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                     entityClassSyncRequest.getVersion(), entityClassSyncRequest.getUid())) {
 
                 /**
-                 * 当前的版本小于appId + env 对应的版本时，将从元数据获取一次数据、异步推出
+                 * 客户端版本为-1或者
+                 * 当前的服务端记录版本不存在或者
+                 * 当前的服务端记录版本小于 appId + env 对应的版本时，将从元数据获取一次数据、异步推出
                  */
                 Integer currentVersion = responseWatchExecutor.version(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv());
-                if (null == currentVersion || currentVersion < entityClassSyncRequest.getVersion()) {
-                    pull(entityClassSyncRequest.getUid(), w);
+                if (null == currentVersion ||
+                        NOT_EXIST_VERSION == entityClassSyncRequest.getVersion() ||
+                        currentVersion < entityClassSyncRequest.getVersion()) {
+                    pull(entityClassSyncRequest.getUid(), w, SYNC_OK);
                 }
             }
         } else if (entityClassSyncRequest.getStatus() == SYNC_OK.ordinal()) {
@@ -184,7 +188,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
             /**
              * 当客户端告知更新失败时，直接进行重试
              */
-            pull(entityClassSyncRequest.getUid(), w);
+            pull(entityClassSyncRequest.getUid(), w, SYNC_FAIL);
         }
     }
 
@@ -219,19 +223,22 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      * @return
      */
     @Override
-    public void pull(String uid, WatchElement watchElement) {
+    public void pull(String uid, WatchElement watchElement, RequestStatus requestStatus) {
         /**
          * 这里异步执行
          */
         taskExecutor.submit(() -> {
             ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
 
-            if (null != watcher) {
+            /**
+             * 判断watcher的可用性
+             */
+            if (null != watcher && watcher.isOnServe()) {
                 try {
                     AppUpdateEvent appUpdateEvent =
                             entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
 
-                    if (watchElement.getVersion() <= appUpdateEvent.getVersion()) {
+                    if (isNeedEvent(watchElement.getVersion(),appUpdateEvent.getVersion(), requestStatus)) {
 
                         /**
                          * 主动拉取不会更新当前的appVersion
@@ -303,6 +310,26 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     }
 
     /**
+     * 比较期望版本和元数据返回版本
+     * 如果是requestStatus是sync_ok，表示只关注大于当前expected的版本
+     * 如果是requestStatus是sync_Failed，表示只关注大于或等于当前expected的版本
+     * @param expected
+     * @param actual
+     * @param requestStatus
+     * @return
+     */
+    private boolean isNeedEvent(int expected, int actual, RequestStatus requestStatus) {
+        switch (requestStatus) {
+            case SYNC_OK:
+                return expected < actual;
+            case SYNC_FAIL:
+                return expected <= actual;
+        }
+
+        return false;
+    }
+
+    /**
      * confirmResponse(发送服务器注册确认、心跳的回包)
      *
      * @param appId
@@ -332,6 +359,13 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         return false;
     }
 
+    /**
+     * 发送Response、如果当前不是注册或心跳，且发送成功，则加入重试观察队列
+     *
+     * @param response
+     * @param watcher
+     * @return
+     */
     private boolean responseByWatch(String appId, String env, int version, EntityClassSyncResponse response,
                                     ResponseWatcher watcher, boolean registerOrHeartBeat) {
 
@@ -351,7 +385,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     }
 
     /**
-     * 发送Response
+     * 发送Response,如果发送失败，会直接release当前的watcher，并返回false
      *
      * @param response
      * @param watcher
@@ -420,7 +454,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                         /**
                          * 直接拉取
                          */
-                        pull(task.element().getUid(), w);
+                        pull(task.element().getUid(), w, SYNC_FAIL);
                     }
                 }
             });

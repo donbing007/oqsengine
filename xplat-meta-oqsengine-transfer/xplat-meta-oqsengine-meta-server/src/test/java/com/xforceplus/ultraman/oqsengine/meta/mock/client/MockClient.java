@@ -4,7 +4,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
-import java.util.concurrent.TimeUnit;
 
 /**
  * desc :
@@ -22,11 +21,7 @@ public class MockClient {
     private boolean isClientOpen;
 
     public void start(String host, int port) {
-
         buildChannel(host, port);
-
-        stub = EntityClassSyncGrpc.newStub(channel);
-
         isClientOpen = true;
     }
 
@@ -43,9 +38,9 @@ public class MockClient {
         channel =
                 ManagedChannelBuilder.forAddress(host, port)
                         .usePlaintext()
-                        .keepAliveTime(30_000, TimeUnit.MILLISECONDS)
-                        .keepAliveTimeout(30_000, TimeUnit.MILLISECONDS)
                         .build();
+
+        stub = EntityClassSyncGrpc.newStub(channel);
     }
 
     public EntityClassSyncGrpc.EntityClassSyncStub channelStub() {

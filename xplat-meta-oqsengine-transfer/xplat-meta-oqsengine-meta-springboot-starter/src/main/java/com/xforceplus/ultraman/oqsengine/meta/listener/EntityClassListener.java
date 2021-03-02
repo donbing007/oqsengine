@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
@@ -15,9 +16,10 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NO
  * name : EntityClassListener
  *
  * @author : xujia
- * date : 2021/2/6
+ * date : 2021/3/2
  * @since : 1.8
  */
+@Component
 public class EntityClassListener {
 
     private Logger logger = LoggerFactory.getLogger(EntityClassListener.class);
@@ -26,16 +28,18 @@ public class EntityClassListener {
     private SyncResponseHandler responseHandler;
 
     @EventListener
-    public boolean appSyncListener(AppUpdateEvent event) {
+    public boolean publish(AppUpdateEvent event) {
+
         if (null == event) {
-            logger.warn("event should not be null, event will ignore...");
+            logger.warn("event shouldNot be null, event will ignore...");
             return false;
         }
+
         if (null == event.getAppId() ||
                 null == event.getEnv() ||
                 NOT_EXIST_VERSION >= event.getVersion() ||
                 null == event.getEntityClassSyncRspProto()) {
-            logger.warn("appId/env/version/data should not be null, event will ignore...");
+            logger.warn("appId/env/version/data shouldNot be null, event {} will ignore...", event.toString());
             return false;
         }
 

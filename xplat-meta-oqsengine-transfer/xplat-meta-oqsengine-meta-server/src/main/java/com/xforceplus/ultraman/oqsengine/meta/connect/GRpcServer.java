@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
+import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -52,8 +53,18 @@ public class GRpcServer implements IBasicSyncExecutor {
     @Override
     public void start() {
         entityClassSyncServer.start();
-        gRpcServer = serverBuilder().build();
-        startDaemonAwaitThread();
+
+        try {
+            gRpcServer = serverBuilder().build()
+                            .start();
+        } catch (IOException e) {
+            logger.info("gRpcServer start failed, message : {}", e.getMessage());
+            System.exit(-1);
+        }
+
+        awaitForTerminationThread();
+
+        logger.info("gRpcServer start.");
     }
 
     @Override
@@ -63,21 +74,22 @@ public class GRpcServer implements IBasicSyncExecutor {
     }
 
     private void destroy() {
-        Optional.ofNullable(gRpcServer).ifPresent(Server::shutdown);
+        Optional.ofNullable(gRpcServer.isShutdown() ? null : gRpcServer).ifPresent(Server::shutdown);
         logger.info("gRPC server stopped.");
     }
 
-    private void startDaemonAwaitThread() {
-        Thread awaitThread = ThreadUtils.create(()->{
+    private void awaitForTerminationThread() {
+        Thread serverThread = ThreadUtils.create(()->{
             try {
                 gRpcServer.awaitTermination();
             } catch (InterruptedException e) {
-                logger.warn("gRPC server stopped." + e.getMessage());
+                logger.warn("gRPC server stopped failed, {}", e.getMessage());
             }
             return true;
         });
-        awaitThread.setDaemon(false);
-        awaitThread.start();
+        serverThread.setDaemon(false);
+
+        serverThread.start();
     }
 
     private ServerBuilder serverBuilder() {

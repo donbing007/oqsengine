@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
@@ -19,7 +20,7 @@ public interface IResponseHandler<T> {
     void onNext(EntityClassSyncRequest entityClassSyncRequest,
                        StreamObserver<EntityClassSyncResponse> responseStreamObserver);
 
-    void pull(String uid, WatchElement watchElement);
+    void pull(String uid, WatchElement watchElement, RequestStatus requestStatus);
 
     boolean push(AppUpdateEvent event);
 

@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.meta.executor;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
-import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +45,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
 
     @Override
     public void start() {
-        logger.info("responseWatchExecutor start.");
+        logger.debug("responseWatchExecutor start.");
     }
 
     @Override
@@ -57,7 +56,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                         v.release();
                     }
                 });
-        logger.info("responseWatchExecutor stop.");
+        logger.debug("responseWatchExecutor stop.");
     }
 
     public void keepAliceCheck(long heartbeatTimeout) {
@@ -219,6 +218,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     }
 
     private synchronized void operationWithLock(String key, String value, Operation operation) {
+        logger.debug("operationWithLock -> key [{}], value [{}], operation [{}]", key, value, operation);
         switch (operation) {
             case NEW:
                 watchersByApp.computeIfAbsent(key, k -> new HashSet<>()).add(value);

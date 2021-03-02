@@ -155,6 +155,8 @@ public class SyncRequestHandler implements IRequestHandler {
          * 执行OQS更新EntityClass
          */
         EntityClassSyncRequest.Builder entityClassSyncRequestBuilder = execute(entityClassSyncResponse);
+
+
         /**
          * 回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
          */

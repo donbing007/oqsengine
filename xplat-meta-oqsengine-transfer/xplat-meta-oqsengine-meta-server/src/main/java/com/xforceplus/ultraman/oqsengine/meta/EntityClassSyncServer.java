@@ -30,13 +30,13 @@ public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncIm
     @Override
     public void start() {
         responseHandler.start();
-        logger.info("entityClassSyncServer start.");
+        logger.debug("entityClassSyncServer start.");
     }
 
     @Override
     public void stop() {
         responseHandler.stop();
-        logger.info("entityClassSyncServer stop.");
+        logger.debug("entityClassSyncServer stop.");
     }
 
     @Override

@@ -5,10 +5,13 @@ import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import io.grpc.stub.StreamObserver;
+import org.junit.Assert;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 
 /**
  * desc :
@@ -25,6 +28,8 @@ public class MockerSyncClient {
 
     private Map<String, WatchElement> watchElementMap = new HashMap<>();
 
+    private WatchElement success;
+
     public void start(String host, int port) {
         mockClient.start(host, port);
     }
@@ -40,16 +45,19 @@ public class MockerSyncClient {
         return mockClient.channelStub().register(new StreamObserver<EntityClassSyncResponse>() {
             @Override
             public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
+                System.out.println("entityClassSyncResponse : " + entityClassSyncResponse.toString());
 
-                /**
-                 * 更新状态
-                 */
                 if (entityClassSyncResponse.getStatus() == RequestStatus.REGISTER_OK.ordinal()) {
                     WatchElement w = new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
                             entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed);
                     watchElementMap.put(w.getAppId(), w);
                 } else if (entityClassSyncResponse.getStatus() == RequestStatus.SYNC.ordinal()) {
-
+                    Assert.assertEquals(entityClassSyncResponse.getMd5(),
+                            getMD5(entityClassSyncResponse.getEntityClassSyncRspProto().toByteArray()));
+                    success = new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
+                            entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed);
+                } else {
+                    Assert.assertEquals(entityClassSyncResponse.getStatus(), RequestStatus.HEARTBEAT.ordinal());
                 }
             }
 
@@ -61,5 +69,13 @@ public class MockerSyncClient {
             public void onCompleted() {
             }
         });
+    }
+
+    public WatchElement getSuccess() {
+        return success;
+    }
+
+    public void releaseSuccess() {
+        success = null;
     }
 }

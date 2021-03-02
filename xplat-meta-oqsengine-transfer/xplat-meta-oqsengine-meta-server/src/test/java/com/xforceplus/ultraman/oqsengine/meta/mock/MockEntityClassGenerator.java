@@ -27,4 +27,5 @@ public class MockEntityClassGenerator implements EntityClassGenerator {
     public AppUpdateEvent pull(String appId, String env) {
         return new AppUpdateEvent("mock", appId, env, version, entityClassSyncRspProtoGenerator(entityId));
     }
+
 }
