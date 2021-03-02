@@ -3,7 +3,10 @@ package com.xforceplus.ultraman.oqsengine.meta.executor;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
+import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import io.grpc.stub.StreamObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 import java.util.*;
@@ -21,6 +24,8 @@ import static com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecu
  * @since : 1.8
  */
 public class ResponseWatchExecutor implements IResponseWatchExecutor {
+
+    private Logger logger = LoggerFactory.getLogger(ResponseWatchExecutor.class);
 
     /**
      * 记录app + env的version
@@ -41,7 +46,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
 
     @Override
     public void start() {
-
+        logger.info("responseWatchExecutor start.");
     }
 
     @Override
@@ -52,6 +57,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                         v.release();
                     }
                 });
+        logger.info("responseWatchExecutor stop.");
     }
 
     public void keepAliceCheck(long heartbeatTimeout) {

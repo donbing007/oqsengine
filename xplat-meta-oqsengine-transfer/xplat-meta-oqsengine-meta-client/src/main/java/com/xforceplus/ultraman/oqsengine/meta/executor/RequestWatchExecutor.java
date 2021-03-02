@@ -130,6 +130,8 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
          * 启动所有任务线程
          */
         executors.forEach(Thread::start);
+
+        logger.info("requestWatchExecutor start.");
     }
 
     @Override
@@ -147,6 +149,8 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
             executors.forEach(s -> {
                 ThreadUtils.shutdown(s, SHUT_DOWN_WAIT_TIME_OUT);
             });
+
+            logger.info("requestWatchExecutor stop.");
         }
     }
 

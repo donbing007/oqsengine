@@ -160,5 +160,4 @@ public class SyncRequestHandlerTest {
         Assert.assertEquals(version + 1, entityClassSyncRequest.getVersion());
         Assert.assertEquals(status, entityClassSyncRequest.getStatus());
     }
-
 }

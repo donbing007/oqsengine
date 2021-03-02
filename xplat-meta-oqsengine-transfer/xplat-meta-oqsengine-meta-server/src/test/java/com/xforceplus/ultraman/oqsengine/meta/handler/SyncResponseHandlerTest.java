@@ -53,8 +53,6 @@ public class SyncResponseHandlerTest {
 
     private SyncResponseHandler syncResponseHandler;
 
-    private int testVersion = 0;
-
     @Before
     public void before() {
 
@@ -72,7 +70,7 @@ public class SyncResponseHandlerTest {
         ReflectionTestUtils.setField(syncResponseHandler, "responseWatchExecutor", responseWatchExecutor);
         ReflectionTestUtils.setField(syncResponseHandler, "retryExecutor", retryExecutor);
         ReflectionTestUtils.setField(syncResponseHandler, "entityClassGenerator", entityClassGenerator);
-        ReflectionTestUtils.setField(syncResponseHandler, "executor", executor);
+        ReflectionTestUtils.setField(syncResponseHandler, "taskExecutor", executor);
         ReflectionTestUtils.setField(syncResponseHandler, "gRpcParamsConfig", gRpcParamsConfig);
 
         syncResponseHandler.start();
@@ -80,7 +78,6 @@ public class SyncResponseHandlerTest {
 
     @After
     public void after() {
-        testVersion = 0;
         syncResponseHandler.stop();
         ExecutorHelper.shutdownAndAwaitTermination(executor);
     }

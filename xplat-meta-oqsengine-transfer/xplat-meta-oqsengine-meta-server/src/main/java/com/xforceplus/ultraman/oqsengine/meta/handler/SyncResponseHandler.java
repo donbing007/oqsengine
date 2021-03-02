@@ -57,8 +57,8 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     @Resource
     private EntityClassGenerator entityClassGenerator;
 
-    @Resource(name = "gRpcTaskExecutor")
-    private ExecutorService executor;
+    @Resource(name = "grpcTaskExecutor")
+    private ExecutorService taskExecutor;
 
     @Resource
     private GRpcParamsConfig gRpcParamsConfig;
@@ -99,6 +99,8 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
          * 启动当前Task线程
          */
         executors.forEach(Thread::start);
+
+        logger.info("syncResponseHandler start.");
     }
 
 
@@ -123,6 +125,8 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
          * 停止当前活动线程
          */
         executors.forEach(t -> ThreadUtils.shutdown(t, SHUT_DOWN_WAIT_TIME_OUT));
+
+        logger.info("syncResponseHandler stop.");
     }
 
     @Override
@@ -219,7 +223,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         /**
          * 这里异步执行
          */
-        executor.submit(() -> {
+        taskExecutor.submit(() -> {
             ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
 
             if (null != watcher) {
@@ -408,7 +412,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                 continue;
             }
 
-            executor.execute(() -> {
+            taskExecutor.execute(() -> {
                 ResponseWatcher watcher = responseWatchExecutor.watcher(task.element().getUid());
                 if (null != watcher) {
                     WatchElement w = task.element().getW();

@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.meta.config;
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncServer;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.executor.ITransferExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
@@ -52,8 +51,10 @@ public class ServerConfiguration {
     }
 
     @Bean
-    public GRpcServer gRpcServer() {
-        return new GRpcServer();
+    public GRpcServer gRpcServer(
+            @Value("${grpc.server.port}") int port
+    ) {
+        return new GRpcServer(port);
     }
 
     @Bean
@@ -68,20 +69,16 @@ public class ServerConfiguration {
 
     @Bean
     public SyncResponseHandler entityClassProvider() {
-        SyncResponseHandler responseHandler = new SyncResponseHandler();
-
-        responseHandler.start();
-
-        return responseHandler;
+        return new SyncResponseHandler();
     }
 
     @Bean
-    public ITransferExecutor entityClassSyncServer() {
+    public EntityClassSyncServer entityClassSyncServer() {
         return new EntityClassSyncServer();
     }
 
 
-    @Bean("grpcWorkThreadPool")
+    @Bean("grpcTaskExecutor")
     public ExecutorService metaSyncThreadPool(
             @Value("${threadPool.call.grpc.worker:0}") int worker,
             @Value("${threadPool.call.grpc.queue:500}") int queue) {

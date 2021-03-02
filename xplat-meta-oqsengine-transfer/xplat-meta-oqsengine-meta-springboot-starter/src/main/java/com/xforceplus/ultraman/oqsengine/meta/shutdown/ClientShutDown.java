@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.shutdown;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.executor.ITransferExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class ClientShutDown implements IShutDown {
     private ExecutorService metaSyncThreadPool;
 
     @Resource
-    private ITransferExecutor entityClassSyncClient;
+    private EntityClassSyncClient entityClassSyncClient;
 
     @Override
     public void shutdown() {

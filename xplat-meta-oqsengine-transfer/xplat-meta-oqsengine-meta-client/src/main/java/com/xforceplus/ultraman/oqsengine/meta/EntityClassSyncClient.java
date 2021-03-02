@@ -5,12 +5,11 @@ import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.meta.common.executor.ITransferExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
-import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import io.grpc.stub.StreamObserver;
@@ -31,7 +30,7 @@ import java.util.concurrent.*;
  * date : 2021/2/2
  * @since : 1.8
  */
-public class EntityClassSyncClient implements ITransferExecutor {
+public class EntityClassSyncClient implements IBasicSyncExecutor {
 
     private Logger logger = LoggerFactory.getLogger(EntityClassSyncClient.class);
 
@@ -55,7 +54,7 @@ public class EntityClassSyncClient implements ITransferExecutor {
     @PostConstruct
     @Override
     public void start() {
-        client.create();
+        client.start();
 
         if (!client.opened()) {
             throw new MetaSyncClientException("client stub create failed.", true);
@@ -67,6 +66,8 @@ public class EntityClassSyncClient implements ITransferExecutor {
          * 启动observerStream监控, 启动一个新的线程进行stream的监听
          */
         executorService.submit(this::observerStreamMonitor);
+
+        logger.info("entityClassSyncClient start.");
     }
 
     @Override
@@ -76,8 +77,9 @@ public class EntityClassSyncClient implements ITransferExecutor {
         requestWatchExecutor.stop();
 
         if (client.opened()) {
-            client.destroy();
+            client.stop();
         }
+        logger.info("entityClassSyncClient stop.");
     }
 
     public static boolean isShutDown() {

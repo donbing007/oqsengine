@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.connect;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
 
 /**
@@ -10,11 +11,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
  * date : 2021/2/3
  * @since : 1.8
  */
-public interface GRpcClient {
-    void create();
-
-    void destroy();
-
+public interface GRpcClient extends IBasicSyncExecutor {
     boolean opened();
 
     EntityClassSyncGrpc.EntityClassSyncStub channelStub();

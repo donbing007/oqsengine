@@ -44,7 +44,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
     }
 
     @Override
-    public void create() {
+    public void start() {
 
         channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
@@ -60,7 +60,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
     }
 
     @Override
-    public void destroy() {
+    public void stop() {
         try {
             channel.shutdown().awaitTermination(destroySeconds, TimeUnit.MILLISECONDS);
 
