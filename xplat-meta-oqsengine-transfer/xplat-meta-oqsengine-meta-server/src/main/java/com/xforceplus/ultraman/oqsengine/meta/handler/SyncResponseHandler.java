@@ -289,9 +289,9 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
          * 更新版本成功、则推送给外部
          */
         try {
-            List<ResponseWatcher> needList = responseWatchExecutor.need(new WatchElement(event.getAppId(), event.getEnv(), event.getVersion(), Notice));
-            if (!needList.isEmpty()) {
-                if (responseWatchExecutor.addVersion(event.getAppId(), event.getEnv(), event.getVersion())) {
+            if (responseWatchExecutor.addVersion(event.getAppId(), event.getEnv(), event.getVersion())) {
+                List<ResponseWatcher> needList = responseWatchExecutor.need(new WatchElement(event.getAppId(), event.getEnv(), event.getVersion(), Notice));
+                if (!needList.isEmpty()) {
                     needList.forEach(
                             nl -> {
                                 EntityClassSyncResponse response = generateResponse(nl.uid(), event.getAppId(), event.getEnv(), event.getVersion(),
