@@ -14,22 +14,15 @@ logging:
 server:
   port: 8086
 
-grpc:
-  using:
+meta:
+  grpc:
     type: client
-  server:
     host: localhost
     port: 8082
-  timeout:
     seconds:
-      heartbeat: 30
-      delay:
-        task: 30
-  sleep:
-    seconds:
-      monitor: 1
-      reconnect: 5
-  keep:
-    alive:
-      seconds:
-        duration: 5
+      heartbeatTimeout: 30
+      delaytaskTimeout: 30
+      keepAliveDuration: 5
+      monitorDuration: 1
+      reconnectDuration: 5
+

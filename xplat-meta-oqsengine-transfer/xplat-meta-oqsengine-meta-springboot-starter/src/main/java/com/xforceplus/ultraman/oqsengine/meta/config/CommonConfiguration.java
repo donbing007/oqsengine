@@ -27,11 +27,11 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper
 public class CommonConfiguration {
     @Bean
     public GRpcParamsConfig gRpcParamsConfig(
-            @Value("${grpc.timeout.seconds.heartbeat:30}") long heartbeatTimeoutSec,
-            @Value("${grpc.timeout.seconds.delay.task:30}") long delayTaskDurationSec,
-            @Value("${grpc.sleep.seconds.monitor:1}") long sleepMonitorSec,
-            @Value("${grpc.sleep.seconds.reconnect:5}") long sleepReconnectSec,
-            @Value("${grpc.keep.alive.seconds.duration:5}") long keepAliveSendDuration) {
+            @Value("${meta.grpc.seconds.heartbeatTimeout:30}") long heartbeatTimeoutSec,
+            @Value("${meta.grpc.seconds.delaytaskTimeout:30}") long delayTaskDurationSec,
+            @Value("${meta.grpc.seconds.monitorDuration:1}") long sleepMonitorSec,
+            @Value("${meta.grpc.seconds.reconnectDuration:5}") long sleepReconnectSec,
+            @Value("${meta.grpc.seconds.keepAliveDuration:5}") long keepAliveSendDuration) {
         GRpcParamsConfig gRpcParamsConfig = new GRpcParamsConfig();
         gRpcParamsConfig.setDefaultHeartbeatTimeout(TimeUnit.SECONDS.toMillis(heartbeatTimeoutSec));
         gRpcParamsConfig.setDefaultDelayTaskDuration(TimeUnit.SECONDS.toMillis(delayTaskDurationSec));

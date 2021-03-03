@@ -27,12 +27,12 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper
  * @since : 1.8
  */
 @Configuration
-@ConditionalOnProperty(name = "grpc.using.type", havingValue = "server")
+@ConditionalOnProperty(name = "meta.grpc.type", havingValue = "server")
 public class ServerConfiguration {
 
     @Bean
     public GRpcServer gRpcServer(
-            @Value("${grpc.server.port}") Integer port
+            @Value("${meta.grpc.port}") Integer port
     ) {
         return new GRpcServer(port);
     }

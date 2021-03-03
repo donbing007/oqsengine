@@ -24,13 +24,13 @@ import org.springframework.context.annotation.Configuration;
  * @since : 1.8
  */
 @Configuration
-@ConditionalOnProperty(name = "grpc.using.type", havingValue = "client")
+@ConditionalOnProperty(name = "meta.grpc.type", havingValue = "client")
 public class ClientConfiguration {
 
     @Bean
     public GRpcClient gRpcClient(
-            @Value("${grpc.server.host}") String host,
-            @Value("${grpc.server.port}") int port
+            @Value("${meta.grpc.host}") String host,
+            @Value("${meta.grpc.port}") int port
     ) {
         return new MetaSyncGRpcClient(host, port);
     }
