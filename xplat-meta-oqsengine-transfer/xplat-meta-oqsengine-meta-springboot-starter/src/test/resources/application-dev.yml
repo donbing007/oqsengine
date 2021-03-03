@@ -15,8 +15,8 @@ server:
   port: 8086
 
 grpc:
-  on:
-    side: server
+  using:
+    type: server
   server:
     port: 8082
   timeout:
@@ -32,4 +32,6 @@ grpc:
     alive:
       seconds:
         duration: 5
-
+spring:
+  profiles:
+    active: test

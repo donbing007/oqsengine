@@ -29,43 +29,9 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper
  * date : 2021/2/25
  * @since : 1.8
  */
-@Configuration
-@ConditionalOnProperty(prefix = "grpc.on", name = "side", havingValue = "client")
+//@Configuration
+//@ConditionalOnProperty(name = "grpc.on.type", havingValue = "client")
 public class ClientConfiguration {
-
-    @Bean
-    public GRpcParamsConfig gRpcParamsConfig(
-            @Value("${grpc.timeout.seconds.heartbeat:30}") long heartbeatTimeoutSec,
-            @Value("${grpc.timeout.seconds.delay.task:30}") long delayTaskDurationSec,
-            @Value("${grpc.sleep.seconds.monitor:1}") long sleepMonitorSec,
-            @Value("${grpc.sleep.seconds.reconnect:5}") long sleepReconnectSec,
-            @Value("${grpc.keep.alive.seconds.duration:5}") long keepAliveSendDuration) {
-        GRpcParamsConfig gRpcParamsConfig = new GRpcParamsConfig();
-        gRpcParamsConfig.setDefaultHeartbeatTimeout(TimeUnit.SECONDS.toMillis(heartbeatTimeoutSec));
-        gRpcParamsConfig.setDefaultDelayTaskDuration(TimeUnit.SECONDS.toMillis(delayTaskDurationSec));
-        gRpcParamsConfig.setMonitorSleepDuration(TimeUnit.SECONDS.toMillis(sleepMonitorSec));
-        gRpcParamsConfig.setReconnectDuration(TimeUnit.SECONDS.toMillis(sleepReconnectSec));
-        gRpcParamsConfig.setKeepAliveSendDuration(TimeUnit.SECONDS.toMillis(keepAliveSendDuration));
-
-        return gRpcParamsConfig;
-    }
-
-    @Bean("grpcWorkThreadPool")
-    public ExecutorService metaSyncThreadPool(
-            @Value("${threadPool.call.grpc.worker:0}") int worker,
-            @Value("${threadPool.call.grpc.queue:500}") int queue) {
-        int useWorker = worker;
-        int useQueue = queue;
-        if (useWorker == 0) {
-            useWorker = Runtime.getRuntime().availableProcessors() + 1;
-        }
-
-        if (useQueue < 500) {
-            useQueue = 500;
-        }
-
-        return buildThreadPool(useWorker, useQueue, "meta-sync-call", false);
-    }
 
     @Bean
     public GRpcClient metaSyncClient(
@@ -91,15 +57,5 @@ public class ClientConfiguration {
     @Bean
     public EntityClassSyncClient entityClassSyncClient() {
         return new EntityClassSyncClient();
-    }
-
-    @Bean
-    public ShutDownExecutor shutDownExecutor() {
-        return shutDownExecutor();
-    }
-
-    @Bean
-    public IShutDown shutDown() {
-        return new ClientShutDown();
     }
 }

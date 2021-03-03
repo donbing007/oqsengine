@@ -46,7 +46,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
     @Resource
     private GRpcParamsConfig gRpcParamsConfig;
 
-    @Resource(name = "oqsSyncThreadPool")
+    @Resource(name = "grpcTaskExecutor")
     private ExecutorService executorService;
 
     public static volatile boolean isShutdown = false;

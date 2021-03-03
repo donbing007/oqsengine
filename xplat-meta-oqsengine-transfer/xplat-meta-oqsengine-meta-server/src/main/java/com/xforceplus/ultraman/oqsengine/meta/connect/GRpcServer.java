@@ -67,7 +67,7 @@ public class GRpcServer implements IBasicSyncExecutor {
         awaitForTerminationThread();
 
         isStart = true;
-        logger.info("gRpcServer start.");
+        logger.info("gRpcServer start ok on port {}.", port);
     }
 
     @Override

@@ -16,9 +16,8 @@ import org.springframework.context.annotation.ComponentScan;
  * @since : 1.8
  */
 @EnableMetaSyncServer
-@SpringBootApplication
+@SpringBootApplication(exclude={DataSourceAutoConfiguration.class})
 @ComponentScan({ "com.xforceplus.ultraman.oqsengine.meta"})
-@EnableAutoConfiguration(exclude={DataSourceAutoConfiguration.class})
 public class SpringBootApp {
     /**
      * @param args
