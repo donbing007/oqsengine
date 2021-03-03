@@ -31,6 +31,6 @@ public class TestServerStart {
     public void testStart() throws InterruptedException {
         Assert.assertTrue(gRpcServer.isStart);
 
-        Thread.sleep(10_000);
+        Thread.sleep(3_000);
     }
 }
