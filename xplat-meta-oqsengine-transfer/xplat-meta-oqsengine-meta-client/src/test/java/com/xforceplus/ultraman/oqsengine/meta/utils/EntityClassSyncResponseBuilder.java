@@ -75,8 +75,6 @@ public class EntityClassSyncResponseBuilder {
                 .setLevel(level)
                 .addAllEntityFields(entityFieldInfos)
                 .addAllRelations(relationInfos)
-                .setIsAny(false)
-                .setIsDynamic(false)
                 .build();
     }
 

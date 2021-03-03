@@ -74,10 +74,8 @@ message FieldConfig {
 	bool identifier = 5;
 	bool isRequired = 6;
 	string validateRegexString = 7;
-	bool isSplittable = 8;
-	string delimiter = 9;
-	string displayType = 10;
-	MetaFieldSense metaFieldSense = 11;
+	string displayType = 8;
+	MetaFieldSense metaFieldSense = 9;
 
 	enum MetaFieldSense {
 			UNKNOWN = 0;

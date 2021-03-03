@@ -53,8 +53,6 @@ public class MockEntityClassSyncRspProtoBuilder {
                 .setLevel(level)
                 .addAllEntityFields(entityFieldInfos)
                 .addAllRelations(relationInfos)
-                .setIsAny(false)
-                .setIsDynamic(false)
                 .build();
     }
 

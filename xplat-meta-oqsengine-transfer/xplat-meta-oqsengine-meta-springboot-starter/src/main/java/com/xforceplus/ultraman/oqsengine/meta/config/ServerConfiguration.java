@@ -30,7 +30,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper
  * @since : 1.8
  */
 @Configuration
-@ConditionalOnProperty(prefix = "grpc.on", name = "side", havingValue = "server")
+//@ConditionalOnProperty(prefix = "grpc.on", name = "side", havingValue = "server")
 public class ServerConfiguration {
 
     @Bean
@@ -119,7 +119,7 @@ public class ServerConfiguration {
 
     @Bean
     public ShutDownExecutor shutDownExecutor() {
-        return shutDownExecutor();
+        return new ShutDownExecutor();
     }
 
     @Bean

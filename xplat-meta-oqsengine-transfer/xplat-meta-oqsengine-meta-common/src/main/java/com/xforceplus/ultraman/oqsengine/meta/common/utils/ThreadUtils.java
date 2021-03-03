@@ -14,8 +14,6 @@ import java.util.function.Supplier;
  * @since : 1.8
  */
 public class ThreadUtils {
-    public static final long interruptLoops = 5;
-
     public static <T> Thread create(Supplier<T> supplier) {
         return new Thread(supplier::get);
     }

@@ -162,8 +162,8 @@ public class EntityClassStorageBuilderUtils {
                 .withIdentifie(fieldConfig.getIdentifier())
                 .withRequired(fieldConfig.getIsRequired())
                 .withValidateRegexString(fieldConfig.getValidateRegexString())
-                .withSplittable(fieldConfig.getIsSplittable())
-                .withDelimiter(fieldConfig.getDelimiter())
+                .withSplittable(false)
+                .withDelimiter("")
                 .withDisplayType(fieldConfig.getDisplayType())
                 .withFieldSense(FieldConfig.FieldSense.getInstance(fieldConfig.getMetaFieldSenseValue()))
                 .build();

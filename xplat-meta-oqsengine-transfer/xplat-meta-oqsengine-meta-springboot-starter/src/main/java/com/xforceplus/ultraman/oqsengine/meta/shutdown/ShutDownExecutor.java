@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.shutdown;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 
@@ -13,7 +15,7 @@ import javax.annotation.Resource;
  */
 public class ShutDownExecutor {
 
-    @Resource
+    @Autowired
     private IShutDown shutDown;
 
     @PreDestroy

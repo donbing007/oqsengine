@@ -49,13 +49,13 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
     @Override
     public void off() {
         isOnServer = false;
-        logger.info("retryExecutor off.");
+        logger.debug("retryExecutor off.");
     }
 
     @Override
     public void on() {
         isOnServer = true;
-        logger.info("retryExecutor on.");
+        logger.debug("retryExecutor on.");
     }
 
 
