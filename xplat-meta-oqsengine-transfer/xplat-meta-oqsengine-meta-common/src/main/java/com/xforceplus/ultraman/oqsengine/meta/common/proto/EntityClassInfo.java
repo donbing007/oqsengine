@@ -24,8 +24,6 @@ private static final long serialVersionUID = 0L;
     version_ = 0;
     entityFields_ = java.util.Collections.emptyList();
     relations_ = java.util.Collections.emptyList();
-    isAny_ = false;
-    isDynamic_ = false;
   }
 
   @java.lang.Override
@@ -107,16 +105,6 @@ private static final long serialVersionUID = 0L;
             }
             relations_.add(
                 input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo.parser(), extensionRegistry));
-            break;
-          }
-          case 72: {
-
-            isAny_ = input.readBool();
-            break;
-          }
-          case 80: {
-
-            isDynamic_ = input.readBool();
             break;
           }
         }
@@ -324,24 +312,6 @@ private static final long serialVersionUID = 0L;
     return relations_.get(index);
   }
 
-  public static final int ISANY_FIELD_NUMBER = 9;
-  private boolean isAny_;
-  /**
-   * <code>bool isAny = 9;</code>
-   */
-  public boolean getIsAny() {
-    return isAny_;
-  }
-
-  public static final int ISDYNAMIC_FIELD_NUMBER = 10;
-  private boolean isDynamic_;
-  /**
-   * <code>bool isDynamic = 10;</code>
-   */
-  public boolean getIsDynamic() {
-    return isDynamic_;
-  }
-
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -377,12 +347,6 @@ private static final long serialVersionUID = 0L;
     }
     for (int i = 0; i < relations_.size(); i++) {
       output.writeMessage(8, relations_.get(i));
-    }
-    if (isAny_ != false) {
-      output.writeBool(9, isAny_);
-    }
-    if (isDynamic_ != false) {
-      output.writeBool(10, isDynamic_);
     }
     unknownFields.writeTo(output);
   }
@@ -422,14 +386,6 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(8, relations_.get(i));
     }
-    if (isAny_ != false) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(9, isAny_);
-    }
-    if (isDynamic_ != false) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(10, isDynamic_);
-    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -462,10 +418,6 @@ private static final long serialVersionUID = 0L;
         .equals(other.getEntityFieldsList());
     result = result && getRelationsList()
         .equals(other.getRelationsList());
-    result = result && (getIsAny()
-        == other.getIsAny());
-    result = result && (getIsDynamic()
-        == other.getIsDynamic());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -499,12 +451,6 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + RELATIONS_FIELD_NUMBER;
       hash = (53 * hash) + getRelationsList().hashCode();
     }
-    hash = (37 * hash) + ISANY_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-        getIsAny());
-    hash = (37 * hash) + ISDYNAMIC_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-        getIsDynamic());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -660,10 +606,6 @@ private static final long serialVersionUID = 0L;
       } else {
         relationsBuilder_.clear();
       }
-      isAny_ = false;
-
-      isDynamic_ = false;
-
       return this;
     }
 
@@ -712,8 +654,6 @@ private static final long serialVersionUID = 0L;
       } else {
         result.relations_ = relationsBuilder_.build();
       }
-      result.isAny_ = isAny_;
-      result.isDynamic_ = isDynamic_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -827,12 +767,6 @@ private static final long serialVersionUID = 0L;
             relationsBuilder_.addAllMessages(other.relations_);
           }
         }
-      }
-      if (other.getIsAny() != false) {
-        setIsAny(other.getIsAny());
-      }
-      if (other.getIsDynamic() != false) {
-        setIsDynamic(other.getIsDynamic());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1582,58 +1516,6 @@ private static final long serialVersionUID = 0L;
         relations_ = null;
       }
       return relationsBuilder_;
-    }
-
-    private boolean isAny_ ;
-    /**
-     * <code>bool isAny = 9;</code>
-     */
-    public boolean getIsAny() {
-      return isAny_;
-    }
-    /**
-     * <code>bool isAny = 9;</code>
-     */
-    public Builder setIsAny(boolean value) {
-      
-      isAny_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>bool isAny = 9;</code>
-     */
-    public Builder clearIsAny() {
-      
-      isAny_ = false;
-      onChanged();
-      return this;
-    }
-
-    private boolean isDynamic_ ;
-    /**
-     * <code>bool isDynamic = 10;</code>
-     */
-    public boolean getIsDynamic() {
-      return isDynamic_;
-    }
-    /**
-     * <code>bool isDynamic = 10;</code>
-     */
-    public Builder setIsDynamic(boolean value) {
-      
-      isDynamic_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>bool isDynamic = 10;</code>
-     */
-    public Builder clearIsDynamic() {
-      
-      isDynamic_ = false;
-      onChanged();
-      return this;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

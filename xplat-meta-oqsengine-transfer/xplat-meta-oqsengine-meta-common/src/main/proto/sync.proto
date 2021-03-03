@@ -42,8 +42,6 @@ message EntityClassInfo {
 	int32 version = 6;
 	repeated EntityFieldInfo entityFields = 7;
 	repeated RelationInfo relations = 8;
-	bool isAny = 9;
-	bool isDynamic = 10;
 }
 
 message EntityFieldInfo {
