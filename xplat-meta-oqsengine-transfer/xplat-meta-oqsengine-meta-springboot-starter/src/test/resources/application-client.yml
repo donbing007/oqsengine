@@ -16,8 +16,9 @@ server:
 
 grpc:
   using:
-    type: server
+    type: client
   server:
+    host: localhost
     port: 8082
   timeout:
     seconds:
@@ -32,6 +33,3 @@ grpc:
     alive:
       seconds:
         duration: 5
-spring:
-  profiles:
-    active: test

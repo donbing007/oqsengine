@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.config;
 
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncServer;
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
@@ -10,15 +9,12 @@ import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import com.xforceplus.ultraman.oqsengine.meta.listener.EntityClassListener;
 import com.xforceplus.ultraman.oqsengine.meta.shutdown.IShutDown;
 import com.xforceplus.ultraman.oqsengine.meta.shutdown.ServerShutDown;
-import com.xforceplus.ultraman.oqsengine.meta.shutdown.ShutDownExecutor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper.buildThreadPool;
 
@@ -30,7 +26,8 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper
  * date : 2021/2/25
  * @since : 1.8
  */
-//@Configuration
+@Configuration
+@ConditionalOnProperty(name = "grpc.using.type", havingValue = "server")
 public class ServerConfiguration {
 
     @Bean
@@ -80,6 +77,11 @@ public class ServerConfiguration {
     @Bean
     public EntityClassListener entityClassListener() {
         return new EntityClassListener();
+    }
+
+    @Bean(name = "shutdown")
+    public IShutDown serverShutDown() {
+        return new ServerShutDown();
     }
 
 }

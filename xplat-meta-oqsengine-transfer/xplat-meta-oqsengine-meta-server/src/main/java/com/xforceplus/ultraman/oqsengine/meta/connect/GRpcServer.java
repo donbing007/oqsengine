@@ -45,7 +45,6 @@ public class GRpcServer implements IBasicSyncExecutor {
 
     private Server gRpcServer;
 
-    public volatile boolean isStart = false;
 
     public GRpcServer(int port) {
         this.port = port;
@@ -66,14 +65,12 @@ public class GRpcServer implements IBasicSyncExecutor {
 
         awaitForTerminationThread();
 
-        isStart = true;
         logger.info("gRpcServer start ok on port {}.", port);
     }
 
     @Override
     public void stop() {
         entityClassSyncServer.stop();
-        isStart = false;
         destroy();
     }
 

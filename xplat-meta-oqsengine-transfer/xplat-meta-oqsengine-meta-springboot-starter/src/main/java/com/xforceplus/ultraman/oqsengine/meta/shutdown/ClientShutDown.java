@@ -19,8 +19,8 @@ public class ClientShutDown implements IShutDown {
 
     private Logger logger = LoggerFactory.getLogger(ClientShutDown.class);
 
-    @Resource(name = "grpcWorkThreadPool")
-    private ExecutorService metaSyncThreadPool;
+    @Resource(name = "grpcTaskExecutor")
+    private ExecutorService grpcTaskExecutor;
 
     @Resource
     private EntityClassSyncClient entityClassSyncClient;
@@ -32,7 +32,7 @@ public class ClientShutDown implements IShutDown {
 
         // wait shutdown
         logger.info("Start closing the gRpc worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(metaSyncThreadPool, 3600);
+        ExecutorHelper.shutdownAndAwaitTermination(grpcTaskExecutor, 3600);
         logger.info("Succeed closing the gRpc worker thread...ok!");
     }
 }

@@ -64,16 +64,4 @@ public class CommonConfiguration {
     public ShutDownExecutor shutDownExecutor() {
         return new ShutDownExecutor();
     }
-
-    @Bean(name = "shutdown")
-    @ConditionalOnExpression("'${grpc.using.type}'.equals('client')")
-    public IShutDown clientShutDown() {
-        return new ClientShutDown();
-    }
-
-    @Bean(name = "shutdown")
-    @ConditionalOnExpression("'${grpc.using.type}'.equals('server')")
-    public IShutDown serverShutDown() {
-        return new ServerShutDown();
-    }
 }

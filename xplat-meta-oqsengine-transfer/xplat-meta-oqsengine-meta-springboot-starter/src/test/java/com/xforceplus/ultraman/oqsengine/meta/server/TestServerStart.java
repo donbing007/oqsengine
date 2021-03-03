@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.server;
 
+import com.xforceplus.ultraman.oqsengine.meta.SpringBootApp;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,7 @@ import javax.annotation.Resource;
  * date : 2021/3/3
  * @since : 1.8
  */
-@ActiveProfiles("dev")
+@ActiveProfiles("server")
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestServerStart {
@@ -33,8 +33,6 @@ public class TestServerStart {
 
     @Test
     public void testStart() throws InterruptedException {
-        Assert.assertTrue(gRpcServer.isStart);
-
-        Thread.sleep(3_000);
+        Thread.sleep(30_000);
     }
 }

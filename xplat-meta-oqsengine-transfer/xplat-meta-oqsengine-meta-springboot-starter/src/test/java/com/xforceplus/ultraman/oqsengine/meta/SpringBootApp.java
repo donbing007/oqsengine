@@ -1,8 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.meta.server;
+package com.xforceplus.ultraman.oqsengine.meta;
 
-import com.xforceplus.ultraman.oqsengine.meta.annotation.EnableMetaSyncServer;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
@@ -15,9 +13,8 @@ import org.springframework.context.annotation.ComponentScan;
  * date : 2021/3/3
  * @since : 1.8
  */
-@EnableMetaSyncServer
 @SpringBootApplication(exclude={DataSourceAutoConfiguration.class})
-@ComponentScan({ "com.xforceplus.ultraman.oqsengine.meta"})
+//@ComponentScan({ "com.xforceplus.ultraman.oqsengine.meta"})
 public class SpringBootApp {
     /**
      * @param args
