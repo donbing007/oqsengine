@@ -30,7 +30,6 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper
  * @since : 1.8
  */
 //@Configuration
-//@ConditionalOnProperty(name = "grpc.on.type", havingValue = "client")
 public class ClientConfiguration {
 
     @Bean
