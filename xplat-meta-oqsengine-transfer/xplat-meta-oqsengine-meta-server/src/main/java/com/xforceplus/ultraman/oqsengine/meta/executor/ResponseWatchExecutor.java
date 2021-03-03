@@ -85,7 +85,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
         synchronized (ResponseWatchExecutor.class) {
             Integer v = appVersionMap.get(key);
             if (null == v || v < version) {
-                appVersionMap.put(key, v);
+                appVersionMap.put(key, version);
                 return true;
             }
         }
@@ -102,7 +102,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
      */
     @Override
     public void add(String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement) {
-        addWatch(uid, observer, watchElement);
+        watchers.computeIfAbsent(uid, v -> new ResponseWatcher(uid, observer)).addWatch(watchElement);
         operationWithLock(keyAppWithEnv(watchElement.getAppId(), watchElement.getEnv()), uid, NEW);
     }
 
@@ -206,16 +206,6 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                                         current.getStatus().ordinal() < watchElement.getStatus().ordinal());
     }
 
-    private synchronized void addWatch(String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement) {
-        ResponseWatcher watcher = watchers.get(uid);
-        if (null == watcher) {
-            watcher = new ResponseWatcher(uid, observer);
-        }
-
-        watcher.addWatch(watchElement);
-
-        watchers.put(uid, watcher);
-    }
 
     private synchronized void operationWithLock(String key, String value, Operation operation) {
         logger.debug("operationWithLock -> key [{}], value [{}], operation [{}]", key, value, operation);

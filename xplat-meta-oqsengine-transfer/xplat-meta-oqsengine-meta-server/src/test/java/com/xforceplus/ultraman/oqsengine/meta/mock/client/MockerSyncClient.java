@@ -9,6 +9,7 @@ import org.junit.Assert;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
@@ -26,7 +27,7 @@ public class MockerSyncClient {
     @Resource
     private MockClient mockClient;
 
-    private Map<String, WatchElement> watchElementMap = new HashMap<>();
+    private Map<String, WatchElement> watchElementMap = new LinkedHashMap<>();
 
     private WatchElement success;
 
@@ -69,6 +70,10 @@ public class MockerSyncClient {
             public void onCompleted() {
             }
         });
+    }
+
+    public Map<String, WatchElement> getWatchElementMap() {
+        return watchElementMap;
     }
 
     public WatchElement getSuccess() {

@@ -2,7 +2,10 @@ package com.xforceplus.ultraman.oqsengine.meta;
 
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
+import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
+import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
@@ -109,5 +112,16 @@ public class BaseInit {
         mockerSyncClient.start(host, port);
 
         return mockerSyncClient;
+    }
+
+
+    protected EntityClassSyncRequest buildRequest(WatchElement w, String uid, RequestStatus requestStatus) {
+        return EntityClassSyncRequest.newBuilder()
+                .setUid(uid)
+                .setAppId(w.getAppId())
+                .setVersion(w.getVersion())
+                .setStatus(requestStatus.ordinal())
+                .setEnv(w.getEnv())
+                .build();
     }
 }

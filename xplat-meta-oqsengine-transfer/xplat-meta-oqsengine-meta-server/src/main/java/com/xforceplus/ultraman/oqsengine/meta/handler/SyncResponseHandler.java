@@ -238,7 +238,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                     AppUpdateEvent appUpdateEvent =
                             entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
 
-                    if (isNeedEvent(watchElement.getVersion(),appUpdateEvent.getVersion(), requestStatus)) {
+                    if (isNeedEvent(watchElement.getVersion(), appUpdateEvent.getVersion(), requestStatus)) {
 
                         /**
                          * 主动拉取不会更新当前的appVersion
@@ -288,8 +288,8 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         /**
          * 更新版本成功、则推送给外部
          */
-        try {
-            if (responseWatchExecutor.addVersion(event.getAppId(), event.getEnv(), event.getVersion())) {
+        if (responseWatchExecutor.addVersion(event.getAppId(), event.getEnv(), event.getVersion())) {
+            try {
                 List<ResponseWatcher> needList = responseWatchExecutor.need(new WatchElement(event.getAppId(), event.getEnv(), event.getVersion(), Notice));
                 if (!needList.isEmpty()) {
                     needList.forEach(
@@ -300,11 +300,13 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                             }
                     );
                 }
+            } catch (Exception e) {
+                logger.warn("push event failed...event [{}], message [{}]", event.toString(), e.getMessage());
+                return false;
             }
-        } catch (Exception e) {
-            logger.warn("push event failed...event [{}], message [{}]"
-                    , null == event ? "null" : event.toString(), e.getMessage());
-            return false;
+        } else {
+            logger.warn("appId [{}], env [{}], push version [{}] is less than watcher version [{}], ignore..."
+                    , event.getAppId(), event.getEnv(), event.getVersion(), responseWatchExecutor.version(event.getAppId(), event.getEnv()));
         }
         return true;
     }
@@ -313,6 +315,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      * 比较期望版本和元数据返回版本
      * 如果是requestStatus是sync_ok，表示只关注大于当前expected的版本
      * 如果是requestStatus是sync_Failed，表示只关注大于或等于当前expected的版本
+     *
      * @param expected
      * @param actual
      * @param requestStatus

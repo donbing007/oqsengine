@@ -57,12 +57,12 @@ public class EntityClassSyncServerTest extends BaseInit {
         /**
          * 注册
          */
-        observer.onNext(buildRequest(uid, appId, version, RequestStatus.REGISTER.ordinal(), env));
+        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), uid, RequestStatus.REGISTER));
 
         /**
          * 发送心跳
          */
-        observer.onNext(buildRequest(uid, appId, version, RequestStatus.HEARTBEAT.ordinal(), env));
+        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), uid, RequestStatus.HEARTBEAT));
 
 
         Thread.sleep(1_000);
@@ -96,7 +96,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         long entityId = Long.MAX_VALUE - 100;
         entityClassGenerator.reset(expectedVersion, entityId);
 
-        observer.onNext(buildRequest(uid, appId, version, RequestStatus.REGISTER.ordinal(), env));
+        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), uid, RequestStatus.REGISTER));
 
         /**
          * 检查结果，最大3秒
@@ -109,7 +109,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         expectedVersion = version + 3;
         entityId = Long.MAX_VALUE - 1000;
         entityClassGenerator.reset(expectedVersion, entityId);
-        observer.onNext(buildRequest(uid, appId, version + 2, RequestStatus.REGISTER.ordinal(), env));
+        observer.onNext(buildRequest(new WatchElement(appId, env, version + 2, null), uid, RequestStatus.REGISTER));
 
         waitForResult(3, expectedVersion);
 
@@ -120,7 +120,7 @@ public class EntityClassSyncServerTest extends BaseInit {
          * check 整体appId + env 对应的版本没有更新(这个版本更新只能由push产生)
          */
         int resetVersion = version + 4;
-        observer.onNext(buildRequest(uid, appId, resetVersion, RequestStatus.SYNC_OK.ordinal(), env));
+        observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), uid, RequestStatus.SYNC_OK));
         Thread.sleep(1_000);
         WatchElement element = responseWatchExecutor.watcher(uid).watches().get(appId);
         Assert.assertEquals(element.getEnv(), env);
@@ -137,10 +137,8 @@ public class EntityClassSyncServerTest extends BaseInit {
          */
         resetVersion = version + 5;
         entityClassGenerator.reset(resetVersion, entityId);
-        observer.onNext(buildRequest(uid, appId, resetVersion, RequestStatus.SYNC_FAIL.ordinal(), env));
+        observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), uid, RequestStatus.SYNC_FAIL));
         waitForResult(3, resetVersion);
-
-
     }
 
     private void waitForResult(int maxWaitLoops, int version) throws InterruptedException {
@@ -157,16 +155,6 @@ public class EntityClassSyncServerTest extends BaseInit {
         Assert.assertEquals(version, w.getVersion());
 
         mockerSyncClient.releaseSuccess();
-    }
-
-    private EntityClassSyncRequest buildRequest(String uid, String appId, int version, int status, String env) {
-        return EntityClassSyncRequest.newBuilder()
-                .setUid(uid)
-                .setAppId(appId)
-                .setVersion(version)
-                .setStatus(status)
-                .setEnv(env)
-                .build();
     }
 
 }
