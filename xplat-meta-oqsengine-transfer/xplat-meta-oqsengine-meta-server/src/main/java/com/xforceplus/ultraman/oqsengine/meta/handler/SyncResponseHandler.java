@@ -63,7 +63,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
     @Resource
     private GRpcParamsConfig gRpcParamsConfig;
 
-    private List<Thread> executors = new ArrayList<>(SERVER_TASK_COUNT);
+    private List<Thread> longRunTasks = new ArrayList<>(SERVER_TASK_COUNT);
 
     private static volatile boolean isShutdown = false;
 
@@ -89,16 +89,16 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         /**
          * 1.添加delayAppVersion check任务线程
          */
-        executors.add(ThreadUtils.create(this::delayTask));
+        longRunTasks.add(ThreadUtils.create(this::delayTask));
         /**
          * 2.添加keepAlive check任务线程
          */
-        executors.add(ThreadUtils.create(this::keepAliveCheck));
+        longRunTasks.add(ThreadUtils.create(this::keepAliveCheck));
 
         /**
          * 启动当前Task线程
          */
-        executors.forEach(Thread::start);
+        longRunTasks.forEach(Thread::start);
 
         logger.debug("syncResponseHandler start.");
     }
@@ -124,7 +124,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         /**
          * 停止当前活动线程
          */
-        executors.forEach(t -> ThreadUtils.shutdown(t, SHUT_DOWN_WAIT_TIME_OUT));
+        longRunTasks.forEach(t -> ThreadUtils.shutdown(t, SHUT_DOWN_WAIT_TIME_OUT));
 
         logger.debug("syncResponseHandler stop.");
     }

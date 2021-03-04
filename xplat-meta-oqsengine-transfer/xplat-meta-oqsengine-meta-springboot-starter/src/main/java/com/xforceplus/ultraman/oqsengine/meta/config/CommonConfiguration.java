@@ -1,12 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.meta.config;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
-import com.xforceplus.ultraman.oqsengine.meta.shutdown.ClientShutDown;
-import com.xforceplus.ultraman.oqsengine.meta.shutdown.IShutDown;
-import com.xforceplus.ultraman.oqsengine.meta.shutdown.ServerShutDown;
 import com.xforceplus.ultraman.oqsengine.meta.shutdown.ShutDownExecutor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

@@ -31,6 +31,7 @@ public class TestClientStart {
 
     @Before
     public void before() throws InterruptedException {
+        Thread.sleep(1_000);
         buildServer();
         Thread.sleep(1_000);
     }
@@ -39,7 +40,7 @@ public class TestClientStart {
         MockServer mockServer = new MockServer();
         try {
             gRpcCleanup.register(NettyServerBuilder
-                    .forPort(8082).directExecutor().addService(mockServer).build().start());
+                    .forPort(8083).directExecutor().addService(mockServer).build().start());
         } catch (Exception e) {
             throw new RuntimeException();
         }

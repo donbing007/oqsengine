@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientExc
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
@@ -20,6 +21,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.*;
+
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
 
 
 /**
@@ -41,15 +44,11 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
     private IRequestHandler requestHandler;
 
     @Resource
-    private IRequestWatchExecutor requestWatchExecutor;
-
-    @Resource
     private GRpcParamsConfig gRpcParamsConfig;
 
-    @Resource(name = "grpcTaskExecutor")
-    private ExecutorService executorService;
+    private Thread observerStreamMonitorThread;
 
-    public static volatile boolean isShutdown = false;
+    private static volatile boolean isShutdown = false;
 
     @PostConstruct
     @Override
@@ -65,7 +64,11 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
         /**
          * 启动observerStream监控, 启动一个新的线程进行stream的监听
          */
-        executorService.submit(this::observerStreamMonitor);
+        observerStreamMonitorThread = ThreadUtils.create(this::observerStreamMonitor);
+
+        observerStreamMonitorThread.start();
+
+        requestHandler.start();
 
         logger.info("entityClassSyncClient start.");
     }
@@ -74,7 +77,9 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
     public void stop() {
         isShutdown = true;
 
-        requestWatchExecutor.stop();
+        requestHandler.stop();
+
+        ThreadUtils.shutdown(observerStreamMonitorThread, SHUT_DOWN_WAIT_TIME_OUT);
 
         if (client.opened()) {
             client.stop();
@@ -113,7 +118,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
             /**
              * 判断是服务重启还是断流
              */
-            requestWatchExecutor.create(uid, streamObserver);
+            requestHandler.watchExecutor().create(uid, streamObserver);
 
             /**
              * 重新注册所有watchList到服务段
@@ -124,7 +129,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
                 /**
                  * 设置服务可用
                  */
-                requestWatchExecutor.watcher().onServe();
+                requestHandler.watchExecutor().watcher().onServe();
                 /**
                  * wait直到countDownLatch = 0;
                  */
@@ -134,7 +139,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
             /**
              * 设置服务不可用
              */
-            requestWatchExecutor.watcher().notServer();
+            requestHandler.watchExecutor().watcher().notServer();
 
             /**
              * 如果是服务关闭，则直接跳出while循环
@@ -150,7 +155,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
                  */
                 TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
 
-                requestWatchExecutor.watcher().release();
+                requestHandler.watchExecutor().watcher().release();
             }
         }
 
@@ -166,40 +171,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
         return client.channelStub().register(new StreamObserver<EntityClassSyncResponse>() {
             @Override
             public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
-                /**
-                 * 重启中所有的Response将被忽略
-                 * 不是同批次请求将被忽略
-                 */
-                if (!requestWatchExecutor.canAccess(entityClassSyncResponse.getUid())) {
-                    return;
-                }
-
-                /**
-                 * reset heartbeat
-                 */
-                requestWatchExecutor.resetHeartBeat(entityClassSyncResponse.getUid());
-
-                /**
-                 * 更新状态
-                 */
-                if (entityClassSyncResponse.getStatus() == RequestStatus.REGISTER_OK.ordinal()) {
-                    requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
-                            entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed));
-                } else if (entityClassSyncResponse.getStatus() == RequestStatus.SYNC.ordinal()) {
-                    /**
-                     * 执行返回结果
-                     */
-                    executorService.submit(() -> {
-                        try {
-                            requestHandler.accept(entityClassSyncResponse);
-                        } catch (Exception e) {
-                            logger.warn(e.getMessage());
-                            if (requestWatchExecutor.watcher().isOnServe()) {
-                                requestWatchExecutor.watcher().observer().onError(e);
-                            }
-                        }
-                    });
-                }
+                requestHandler.onNext(entityClassSyncResponse);
             }
 
             @Override

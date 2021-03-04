@@ -1,25 +1,34 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
+import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient.isShutDown;
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.HEARTBEAT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
+import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.CLIENT_TASK_COUNT;
 import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest;
 
 /**
@@ -40,6 +49,51 @@ public class SyncRequestHandler implements IRequestHandler {
     @Resource
     private RequestWatchExecutor requestWatchExecutor;
 
+    @Resource
+    private GRpcParamsConfig gRpcParamsConfig;
+
+    @Resource(name = "grpcTaskExecutor")
+    private ExecutorService executorService;
+
+    private Queue<WatchElement> forgotQueue = new ConcurrentLinkedDeque<>();
+    private List<Thread> longRunTasks = new ArrayList<>(CLIENT_TASK_COUNT);
+
+
+
+    @Override
+    public void start() {
+        /**
+         * 1.添加keepAlive任务线程
+         */
+        longRunTasks.add(ThreadUtils.create(this::keepAliveTask));
+
+        /**
+         * 1.添加stream-connect-check任务线程
+         */
+        longRunTasks.add(ThreadUtils.create(this::streamConnectCheckTask));
+
+        /**
+         * 3.添加AppCheck任务线程
+         */
+        longRunTasks.add(ThreadUtils.create(this::appCheckTask));
+
+        /**
+         * 启动所有任务线程
+         */
+        longRunTasks.forEach(Thread::start);
+
+        logger.info("requestWatchExecutor start.");
+    }
+
+    @Override
+    public void stop() {
+        requestWatchExecutor.stop();
+
+        longRunTasks.forEach(s -> {
+            ThreadUtils.shutdown(s, SHUT_DOWN_WAIT_TIME_OUT);
+        });
+    }
+
     @Override
     public boolean register(WatchElement watchElement) {
         return register(Collections.singletonList(watchElement));
@@ -55,11 +109,7 @@ public class SyncRequestHandler implements IRequestHandler {
         if (null == watcher) {
             logger.warn("current gRpc-client is not init, can't offer appIds:{}."
                     , appIdEntries.stream().map(WatchElement::getAppId).collect(Collectors.toList()));
-            appIdEntries.forEach(
-                    a -> {
-                        requestWatchExecutor.addForgot(a);
-                    }
-            );
+            forgotQueue.addAll(appIdEntries);
 
             return false;
         }
@@ -81,7 +131,7 @@ public class SyncRequestHandler implements IRequestHandler {
                              * 当前requestWatch不可用或发生UID切换时,先加入forgot列表
                              */
                             if (!requestWatchExecutor.canAccess(watcher.uid())) {
-                                requestWatchExecutor.addForgot(v);
+                                forgotQueue.add(v);
                                 ret.set(false);
                             } else {
                                 EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
@@ -148,12 +198,53 @@ public class SyncRequestHandler implements IRequestHandler {
     }
 
     @Override
-    public void accept(EntityClassSyncResponse entityClassSyncResponse) {
+    public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
+        /**
+         * 重启中所有的Response将被忽略
+         * 不是同批次请求将被忽略
+         */
+        if (!requestWatchExecutor.canAccess(entityClassSyncResponse.getUid())) {
+            return;
+        }
+
+        /**
+         * reset heartbeat
+         */
+        requestWatchExecutor.resetHeartBeat(entityClassSyncResponse.getUid());
+
+        /**
+         * 更新状态
+         */
+        if (entityClassSyncResponse.getStatus() == RequestStatus.REGISTER_OK.ordinal()) {
+            requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
+                    entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed));
+        } else if (entityClassSyncResponse.getStatus() == RequestStatus.SYNC.ordinal()) {
+            /**
+             * 执行返回结果
+             */
+            executorService.submit(() -> {
+                try {
+                    accept(entityClassSyncResponse);
+                } catch (Exception e) {
+                    logger.warn(e.getMessage());
+                    if (requestWatchExecutor.watcher().isOnServe()) {
+                        requestWatchExecutor.watcher().observer().onError(e);
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
+    public IRequestWatchExecutor watchExecutor() {
+        return requestWatchExecutor;
+    }
+
+    private void accept(EntityClassSyncResponse entityClassSyncResponse) {
         /**
          * 执行OQS更新EntityClass
          */
         EntityClassSyncRequest.Builder entityClassSyncRequestBuilder = execute(entityClassSyncResponse);
-
 
         /**
          * 回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
@@ -221,5 +312,129 @@ public class SyncRequestHandler implements IRequestHandler {
             return false;
         }
         return md5.equals(getMD5(entityClassSyncRspProto.toByteArray()));
+    }
+
+    /**
+     * 保持和服务端的KeepAlive
+     * @return
+     */
+    private boolean keepAliveTask() {
+        logger.debug("start keepAlive task ok...");
+        while (!isShutDown()) {
+            RequestWatcher requestWatcher = requestWatchExecutor.watcher();
+            if (null != requestWatcher && requestWatcher.isOnServe()) {
+                EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
+                        .setUid(requestWatcher.uid()).setStatus(HEARTBEAT.ordinal()).build();
+
+                try {
+                    sendRequest(requestWatcher, request);
+                } catch (Exception e) {
+                    //  ignore
+                    logger.warn("send keepAlive failed, message [{}], but exception will ignore due to retry...", e.getMessage());
+                }
+
+            }
+            logger.debug("keepAlive ok, next check after duration ({})ms...", gRpcParamsConfig.getKeepAliveSendDuration());
+            TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getKeepAliveSendDuration(), TimeUnit.MILLISECONDS);
+        }
+        logger.debug("keepAlive task has quited due to sync-client shutdown...");
+        return true;
+    }
+
+    /**
+     * 检查当前的KeepAlive是否已超时
+     * @return
+     */
+    private boolean streamConnectCheckTask() {
+        logger.debug("start stream-connect-check task ok...");
+        while (!isShutDown()) {
+            RequestWatcher requestWatcher = requestWatchExecutor.watcher();
+            if (null != requestWatcher && requestWatcher.isOnServe()) {
+                if (System.currentTimeMillis() - requestWatcher.heartBeat() >
+                        gRpcParamsConfig.getDefaultHeartbeatTimeout()) {
+                    try {
+                        requestWatcher.observer().onCompleted();
+                        logger.warn("last heartbeat time [{}] reaches max timeout [{}]"
+                                , System.currentTimeMillis() - requestWatcher.heartBeat(),
+                                gRpcParamsConfig.getDefaultHeartbeatTimeout());
+                    } catch (Exception e) {
+                        //ignore
+                    }
+
+                }
+            }
+            logger.debug("streamConnect check ok, next check after duration ({})ms...", gRpcParamsConfig.getMonitorSleepDuration());
+            TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
+        }
+        logger.debug("streamConnect check task has quited due to sync-client shutdown...");
+        return true;
+    }
+
+    /**
+     * 检查当前APP的注册状态，处于INIT、REGISTER的APP将被重新注册到服务端
+     * @return
+     */
+    private boolean appCheckTask() {
+        logger.debug("start appCheck task ok...");
+        while (!isShutDown()) {
+
+            RequestWatcher requestWatcher = requestWatchExecutor.watcher();
+            if (null != requestWatcher && requestWatcher.isOnServe()) {
+                /**
+                 * 将forgetQueue中的数据添加到watch中
+                 */
+                int checkSize = forgotQueue.size();
+                while (checkSize > 0) {
+                    try {
+                        WatchElement w = forgotQueue.remove();
+                        if (!requestWatcher.watches().containsKey(w.getAppId())) {
+                            requestWatcher.watches().put(w.getAppId(), w);
+                        }
+                    } catch (Exception e) {
+                        //  ignore & break
+                        break;
+                    }
+                    checkSize--;
+                }
+
+                requestWatcher.watches().values().stream().filter(s -> {
+                    /**
+                     * 过滤出INIT、已经长时间处于REGISTER的watchElement
+                     * 时间超长的判定标准为当前时间-最后注册时间 > delay时间
+                     */
+                    return s.getStatus().ordinal() == WatchElement.AppStatus.Init.ordinal() ||
+                            (s.getStatus().ordinal() < WatchElement.AppStatus.Confirmed.ordinal() &&
+                                    System.currentTimeMillis() - s.getRegisterTime() > gRpcParamsConfig.getDefaultDelayTaskDuration());
+                }).forEach(
+                        k -> {
+                            EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
+
+                            EntityClassSyncRequest entityClassSyncRequest =
+                                    builder.setUid(requestWatcher.uid()).setAppId(k.getAppId()).setVersion(k.getVersion())
+                                            .setStatus(RequestStatus.REGISTER.ordinal()).build();
+                            try {
+                                sendRequest(requestWatcher, entityClassSyncRequest, requestWatchExecutor.accessFunction(), requestWatcher.uid());
+                                k.setRegisterTime(System.currentTimeMillis());
+                            } catch (Exception e) {
+                                k.setStatus(WatchElement.AppStatus.Init);
+                            }
+                        }
+                );
+
+                logger.debug("app check ok, next check after duration ({})ms...", gRpcParamsConfig.getMonitorSleepDuration());
+            }
+            TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
+        }
+        logger.debug("appCheck task has quited due to sync-client shutdown...");
+
+        return true;
+    }
+
+    /**
+     * only test use， not interface
+     * @return
+     */
+    public Queue<WatchElement> getForgotQueue() {
+        return forgotQueue;
     }
 }

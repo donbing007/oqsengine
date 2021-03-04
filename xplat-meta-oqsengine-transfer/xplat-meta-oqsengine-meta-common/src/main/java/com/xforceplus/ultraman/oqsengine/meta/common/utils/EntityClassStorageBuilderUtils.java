@@ -108,15 +108,19 @@ public class EntityClassStorageBuilderUtils {
                 relation.setRelOwnerClassName(r.getRelOwnerClassName());
                 relation.setRelationType(r.getRelationType());
                 relation.setIdentity(r.getIdentity());
-                relation.setEntityField(
-                        EntityField.Builder.anEntityField()
-                                .withId(r.getId())
-                                .withFieldType(FieldType.LONG)
-                                .withName(r.getEntityFieldCode())
-                                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
-                                .build()
-                );
-
+                if (null != r.getEntityField()) {
+                    relation.setEntityField(
+                            EntityField.Builder.anEntityField()
+                                    .withId(r.getEntityField().getId())
+                                    .withName(r.getEntityField().getName())
+                                    .withCnName(r.getEntityField().getCname())
+                                    .withFieldType(FieldType.fromRawType(r.getEntityField().getFieldType().name()))
+                                    .withDictId(r.getEntityField().getDictId())
+                                    .withDefaultValue(r.getEntityField().getDefaultValue())
+                                    .withConfig(toFieldConfig(r.getEntityField().getFieldConfig()))
+                                    .build()
+                    );
+                }
                 relations.add(relation);
             }
         }

@@ -27,10 +27,6 @@ public interface IRequestWatchExecutor extends IWatchExecutor {
 
     boolean canAccess(String uid);
 
-    void addForgot(WatchElement watchElement);
-
-    Queue<WatchElement> forgot();
-
     Function<String, Boolean> accessFunction();
 
     RequestWatcher watcher();

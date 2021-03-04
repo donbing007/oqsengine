@@ -18,7 +18,7 @@ meta:
   grpc:
     type: client
     host: localhost
-    port: 8082
+    port: 8083
     seconds:
       heartbeatTimeout: 30
       delaytaskTimeout: 30

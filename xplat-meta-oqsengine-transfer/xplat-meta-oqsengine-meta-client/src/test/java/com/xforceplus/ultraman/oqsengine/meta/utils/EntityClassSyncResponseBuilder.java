@@ -96,9 +96,13 @@ public class EntityClassSyncResponseBuilder {
                 .setEntityClassId(entityId)
                 .setRelOwnerClassId(ownerId)
                 .setRelationType(relationType)
-                .setEntityFieldCode(fieldId + "_name")
+                .setEntityField(EntityFieldInfo.newBuilder()
+                        .setId(fieldId)
+                        .setFieldType(EntityFieldInfo.FieldType.LONG)
+                        .setName(fieldId + "_name")
+                        .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
+                        .build())
                 .build();
-
     }
 
     public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig

@@ -89,16 +89,16 @@ public final class EntityClassSyncProto {
       "T_CODE\020\003\022\017\n\013CREATE_TIME\020\004\022\017\n\013UPDATE_TIME" +
       "\020\005\022\022\n\016CREATE_USER_ID\020\006\022\022\n\016UPDATE_USER_ID" +
       "\020\007\022\024\n\020CREATE_USER_NAME\020\010\022\024\n\020UPDATE_USER_" +
-      "NAME\020\t\022\017\n\013DELETE_FLAG\020\n\"\264\001\n\014RelationInfo" +
+      "NAME\020\t\022\017\n\013DELETE_FLAG\020\n\"\302\001\n\014RelationInfo" +
       "\022\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 \001(\t\022\025\n\rentityClas" +
       "sId\030\003 \001(\003\022\027\n\017relOwnerClassId\030\004 \001(\003\022\031\n\021re" +
       "lOwnerClassName\030\005 \001(\t\022\024\n\014relationType\030\006 " +
-      "\001(\t\022\020\n\010identity\030\007 \001(\010\022\027\n\017entityFieldCode" +
-      "\030\010 \001(\t2V\n\017EntityClassSync\022C\n\010register\022\027." +
-      "EntityClassSyncRequest\032\030.EntityClassSync" +
-      "Response\"\000(\0010\001BM\n3com.xforceplus.ultrama" +
-      "n.oqsengine.meta.common.protoB\024EntityCla" +
-      "ssSyncProtoP\001b\006proto3"
+      "\001(\t\022\020\n\010identity\030\007 \001(\010\022%\n\013entityField\030\010 \001" +
+      "(\0132\020.EntityFieldInfo2V\n\017EntityClassSync\022" +
+      "C\n\010register\022\027.EntityClassSyncRequest\032\030.E" +
+      "ntityClassSyncResponse\"\000(\0010\001BM\n3com.xfor" +
+      "ceplus.ultraman.oqsengine.meta.common.pr" +
+      "otoB\024EntityClassSyncProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -153,7 +153,7 @@ public final class EntityClassSyncProto {
     internal_static_RelationInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_RelationInfo_descriptor,
-        new java.lang.String[] { "Id", "Name", "EntityClassId", "RelOwnerClassId", "RelOwnerClassName", "RelationType", "Identity", "EntityFieldCode", });
+        new java.lang.String[] { "Id", "Name", "EntityClassId", "RelOwnerClassId", "RelOwnerClassName", "RelationType", "Identity", "EntityField", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

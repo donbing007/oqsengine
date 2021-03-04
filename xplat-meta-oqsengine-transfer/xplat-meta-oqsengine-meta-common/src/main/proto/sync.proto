@@ -100,5 +100,5 @@ message RelationInfo {
 	string relOwnerClassName = 5;
 	string relationType = 6;
 	bool identity = 7;
-	string entityFieldCode = 8;
+	EntityFieldInfo entityField = 8;
 }
