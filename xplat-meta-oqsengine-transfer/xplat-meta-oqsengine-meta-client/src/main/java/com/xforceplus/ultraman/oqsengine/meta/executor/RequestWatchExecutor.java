@@ -83,7 +83,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
 
     @Override
     public void start() {
-        logger.info("requestWatchExecutor start.");
+        logger.debug("requestWatchExecutor start.");
     }
 
     @Override

@@ -183,7 +183,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
 
             @Override
             public void onCompleted() {
-                logger.info("stream observer completed.");
+                logger.info("request stream observer completed.");
                 countDownLatch.countDown();
             }
         });
