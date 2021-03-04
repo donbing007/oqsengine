@@ -23,6 +23,7 @@ private static final long serialVersionUID = 0L;
     relOwnerClassName_ = "";
     relationType_ = "";
     identity_ = false;
+    belongToOwner_ = false;
   }
 
   @java.lang.Override
@@ -105,6 +106,11 @@ private static final long serialVersionUID = 0L;
               entityField_ = subBuilder.buildPartial();
             }
 
+            break;
+          }
+          case 72: {
+
+            belongToOwner_ = input.readBool();
             break;
           }
         }
@@ -290,6 +296,15 @@ private static final long serialVersionUID = 0L;
     return getEntityField();
   }
 
+  public static final int BELONGTOOWNER_FIELD_NUMBER = 9;
+  private boolean belongToOwner_;
+  /**
+   * <code>bool belongToOwner = 9;</code>
+   */
+  public boolean getBelongToOwner() {
+    return belongToOwner_;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -325,6 +340,9 @@ private static final long serialVersionUID = 0L;
     }
     if (entityField_ != null) {
       output.writeMessage(8, getEntityField());
+    }
+    if (belongToOwner_ != false) {
+      output.writeBool(9, belongToOwner_);
     }
     unknownFields.writeTo(output);
   }
@@ -363,6 +381,10 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(8, getEntityField());
     }
+    if (belongToOwner_ != false) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(9, belongToOwner_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -398,6 +420,8 @@ private static final long serialVersionUID = 0L;
       result = result && getEntityField()
           .equals(other.getEntityField());
     }
+    result = result && (getBelongToOwner()
+        == other.getBelongToOwner());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -431,6 +455,9 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + ENTITYFIELD_FIELD_NUMBER;
       hash = (53 * hash) + getEntityField().hashCode();
     }
+    hash = (37 * hash) + BELONGTOOWNER_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getBelongToOwner());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -580,6 +607,8 @@ private static final long serialVersionUID = 0L;
         entityField_ = null;
         entityFieldBuilder_ = null;
       }
+      belongToOwner_ = false;
+
       return this;
     }
 
@@ -614,6 +643,7 @@ private static final long serialVersionUID = 0L;
       } else {
         result.entityField_ = entityFieldBuilder_.build();
       }
+      result.belongToOwner_ = belongToOwner_;
       onBuilt();
       return result;
     }
@@ -681,6 +711,9 @@ private static final long serialVersionUID = 0L;
       }
       if (other.hasEntityField()) {
         mergeEntityField(other.getEntityField());
+      }
+      if (other.getBelongToOwner() != false) {
+        setBelongToOwner(other.getBelongToOwner());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1135,6 +1168,32 @@ private static final long serialVersionUID = 0L;
         entityField_ = null;
       }
       return entityFieldBuilder_;
+    }
+
+    private boolean belongToOwner_ ;
+    /**
+     * <code>bool belongToOwner = 9;</code>
+     */
+    public boolean getBelongToOwner() {
+      return belongToOwner_;
+    }
+    /**
+     * <code>bool belongToOwner = 9;</code>
+     */
+    public Builder setBelongToOwner(boolean value) {
+      
+      belongToOwner_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>bool belongToOwner = 9;</code>
+     */
+    public Builder clearBelongToOwner() {
+      
+      belongToOwner_ = false;
+      onChanged();
+      return this;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

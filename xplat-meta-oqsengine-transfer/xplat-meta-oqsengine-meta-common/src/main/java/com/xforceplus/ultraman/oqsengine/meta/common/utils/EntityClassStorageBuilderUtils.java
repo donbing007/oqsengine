@@ -121,6 +121,8 @@ public class EntityClassStorageBuilderUtils {
                                     .build()
                     );
                 }
+                relation.setBelongToOwner(r.getBelongToOwner());
+
                 relations.add(relation);
             }
         }

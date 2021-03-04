@@ -146,7 +146,7 @@ public class EntityClassManagerExecutorTest {
 
         EntityClassSyncResponse entityClassSyncResponse =
                 entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
-        mockRequestHandler.accept(entityClassSyncResponse);
+        mockRequestHandler.onNext(entityClassSyncResponse);
 
         Optional<IEntityClass> entityClassOp = entityClassManagerExecutor.load(expectedId);
         Assert.assertTrue(entityClassOp.isPresent());
@@ -269,7 +269,9 @@ public class EntityClassManagerExecutorTest {
                 Assert.assertEquals(expectedRelation.getRelOwnerClassName(), actualRelation.getRelOwnerClassName());
                 Assert.assertEquals(expectedRelation.getRelationType(), actualRelation.getRelationType());
                 Assert.assertEquals(expectedRelation.getIdentity(), actualRelation.isIdentity());
-                Assert.assertEquals(expectedRelation.getEntityFieldCode(), actualRelation.getEntityField().name());
+                Assert.assertEquals(expectedRelation.getBelongToOwner(), actualRelation.isBelongToOwner());
+
+                assertEntityField(expectedRelation.getEntityField(), actualRelation.getEntityField());
             }
         }
 
@@ -287,33 +289,35 @@ public class EntityClassManagerExecutorTest {
                 IEntityField act = entityFieldMap.remove(exp.getId());
                 Assert.assertNotNull(act);
 
-                Assert.assertEquals(exp.getName(), act.name());
-                Assert.assertEquals(exp.getCname(), act.cnName());
-                Assert.assertEquals(exp.getFieldType().name(), act.type().name());
-                Assert.assertEquals(exp.getDictId(), act.dictId());
-                Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
-
-                //  check field Config
-                com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig efc = exp.getFieldConfig();
-                if (null != efc) {
-                    FieldConfig afc = act.config();
-                    Assert.assertNotNull(afc);
-
-                    Assert.assertEquals(efc.getSearchable(), afc.isSearchable());
-                    Assert.assertEquals(efc.getMax(), afc.getMax());
-                    Assert.assertEquals(efc.getMin(), afc.getMin());
-                    Assert.assertEquals(efc.getPrecision(), afc.getPrecision());
-                    Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
-                    Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
-                    Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
-                    Assert.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
-                    Assert.assertEquals(efc.getIsSplittable(), afc.isSplittable());
-                    Assert.assertEquals(efc.getDelimiter(), afc.getDelimiter());
-                    Assert.assertEquals(efc.getDisplayType(), afc.getDisplayType());
-                }
+                assertEntityField(exp, act);
             }
 
             Assert.assertEquals(0, entityFieldMap.size());
+        }
+    }
+
+    private void assertEntityField(EntityFieldInfo exp, IEntityField act) {
+        Assert.assertEquals(exp.getName(), act.name());
+        Assert.assertEquals(exp.getCname(), act.cnName());
+        Assert.assertEquals(exp.getFieldType().name(), act.type().name());
+        Assert.assertEquals(exp.getDictId(), act.dictId());
+        Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
+
+        //  check field Config
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig efc = exp.getFieldConfig();
+        if (null != efc) {
+            FieldConfig afc = act.config();
+            Assert.assertNotNull(afc);
+
+            Assert.assertEquals(efc.getSearchable(), afc.isSearchable());
+            Assert.assertEquals(efc.getMax(), afc.getMax());
+            Assert.assertEquals(efc.getMin(), afc.getMin());
+            Assert.assertEquals(efc.getPrecision(), afc.getPrecision());
+            Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
+            Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
+            Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
+            Assert.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
+            Assert.assertEquals(efc.getDisplayType(), afc.getDisplayType());
         }
     }
 }

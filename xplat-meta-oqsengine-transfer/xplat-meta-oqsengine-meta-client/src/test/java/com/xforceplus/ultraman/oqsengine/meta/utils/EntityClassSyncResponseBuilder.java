@@ -96,6 +96,7 @@ public class EntityClassSyncResponseBuilder {
                 .setEntityClassId(entityId)
                 .setRelOwnerClassId(ownerId)
                 .setRelationType(relationType)
+                .setBelongToOwner(id % 2 == 0)
                 .setEntityField(EntityFieldInfo.newBuilder()
                         .setId(fieldId)
                         .setFieldType(EntityFieldInfo.FieldType.LONG)

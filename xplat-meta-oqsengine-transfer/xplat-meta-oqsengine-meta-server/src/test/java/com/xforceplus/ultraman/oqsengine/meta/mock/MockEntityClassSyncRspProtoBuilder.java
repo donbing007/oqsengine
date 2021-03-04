@@ -80,6 +80,7 @@ public class MockEntityClassSyncRspProtoBuilder {
                         .setName(fieldId + "_name")
                         .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
                         .build())
+                .setBelongToOwner(id % 2 == 0)
                 .build();
 
     }

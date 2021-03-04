@@ -42,7 +42,7 @@ public class MockRequestHandler implements IRequestHandler {
             watchElement.setVersion(EXIST_MIN_VERSION);
         }
 
-        accept(entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
+        onNext(entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
                                                         mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
         return true;
     }
@@ -59,7 +59,7 @@ public class MockRequestHandler implements IRequestHandler {
 
         appIdEntries.forEach(
                 a -> {
-                    accept(entityClassSyncResponseGenerator(a.getAppId(), a.getVersion(),
+                    onNext(entityClassSyncResponseGenerator(a.getAppId(), a.getVersion(),
                             mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
                     try {
                         Thread.sleep(100);
@@ -79,7 +79,8 @@ public class MockRequestHandler implements IRequestHandler {
 
     @Override
     public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
-
+        syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
+                entityClassSyncResponse.getEntityClassSyncRspProto());
     }
 
     @Override
@@ -87,10 +88,6 @@ public class MockRequestHandler implements IRequestHandler {
         return null;
     }
 
-    private void accept(EntityClassSyncResponse entityClassSyncResponse) {
-        syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
-                entityClassSyncResponse.getEntityClassSyncRspProto());
-    }
 
     @Override
     public void start() {

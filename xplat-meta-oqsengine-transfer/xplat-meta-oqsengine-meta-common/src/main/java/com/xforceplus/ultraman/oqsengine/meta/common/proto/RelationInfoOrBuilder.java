@@ -69,4 +69,9 @@ public interface RelationInfoOrBuilder extends
    * <code>.EntityFieldInfo entityField = 8;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder getEntityFieldOrBuilder();
+
+  /**
+   * <code>bool belongToOwner = 9;</code>
+   */
+  boolean getBelongToOwner();
 }

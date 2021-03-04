@@ -101,4 +101,5 @@ message RelationInfo {
 	string relationType = 6;
 	bool identity = 7;
 	EntityFieldInfo entityField = 8;
+	bool belongToOwner = 9;
 }
