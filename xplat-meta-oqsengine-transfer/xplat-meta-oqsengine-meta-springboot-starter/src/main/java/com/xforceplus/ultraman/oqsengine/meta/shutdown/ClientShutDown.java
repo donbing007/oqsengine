@@ -27,7 +27,7 @@ public class ClientShutDown implements IShutDown {
 
     @Override
     public void shutdown() {
-
+        logger.info("meta sync client tear down...");
         entityClassSyncClient.stop();
 
         // wait shutdown

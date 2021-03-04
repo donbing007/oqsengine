@@ -31,6 +31,7 @@ public class ServerShutDown implements IShutDown {
 
     @Override
     public void shutdown() {
+        logger.info("meta sync server tear down...");
         gRpcServer.stop();
 
         // wait shutdown

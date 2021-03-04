@@ -2,6 +2,7 @@ package com.xforceplus.ulraman.oqsengine.metadata.mock;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.*;
+import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 
@@ -77,8 +78,27 @@ public class MockRequestHandler implements IRequestHandler {
     }
 
     @Override
-    public void accept(EntityClassSyncResponse entityClassSyncResponse) {
+    public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
+
+    }
+
+    @Override
+    public IRequestWatchExecutor watchExecutor() {
+        return null;
+    }
+
+    private void accept(EntityClassSyncResponse entityClassSyncResponse) {
         syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
                 entityClassSyncResponse.getEntityClassSyncRspProto());
+    }
+
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void stop() {
+
     }
 }
