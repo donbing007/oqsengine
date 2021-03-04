@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.meta.client;
 
 import com.xforceplus.ultraman.oqsengine.meta.SpringBootApp;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
-import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.testing.GrpcCleanupRule;
 import org.junit.After;

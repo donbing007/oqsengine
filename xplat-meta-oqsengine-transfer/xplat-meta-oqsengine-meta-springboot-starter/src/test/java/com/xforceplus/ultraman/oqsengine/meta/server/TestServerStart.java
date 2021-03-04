@@ -33,6 +33,6 @@ public class TestServerStart {
 
     @Test
     public void testStart() throws InterruptedException {
-        Thread.sleep(10_000);
+        Thread.sleep(10000_000);
     }
 }

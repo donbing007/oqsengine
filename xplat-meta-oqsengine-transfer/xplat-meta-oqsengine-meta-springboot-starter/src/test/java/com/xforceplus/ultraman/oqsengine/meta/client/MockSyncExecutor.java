@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.meta.client;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import org.junit.Assert;
 import org.springframework.stereotype.Component;
 
 /**
@@ -16,7 +17,9 @@ import org.springframework.stereotype.Component;
 public class MockSyncExecutor implements SyncExecutor {
     @Override
     public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-        return false;
+
+        Assert.assertNotNull(entityClassSyncRspProto);
+        return true;
     }
 
     @Override

@@ -15,8 +15,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class EntityClassGeneratorTestImpl implements EntityClassGenerator {
+    int version = 1;
     @Override
     public AppUpdateEvent pull(String appId, String env) {
-        return new AppUpdateEvent("mock", appId, env, 1, EntityClassSyncRspProto.newBuilder().build());
+        return new AppUpdateEvent("mock", appId, env, version++, EntityClassSyncRspProto.newBuilder().build());
     }
 }
