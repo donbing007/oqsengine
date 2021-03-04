@@ -44,9 +44,23 @@ public class OqsRelation {
      */
     private long entityClassId;
 
+    private long fieldOwner;
+
     private IEntityField entityField;
 
     private Function<Long, Optional<IEntityClass>> entityClassLoader;
+
+    /**
+     * 是否强关系
+     */
+    private boolean isStrong;
+
+    /**
+     * 是否是伴生关系
+     */
+    private boolean isCompanion;
+
+    private long companionRelation;
 
     public OqsRelation() {
     }
@@ -70,6 +84,14 @@ public class OqsRelation {
     public String getEntityClassName() {
         IEntityClass entityClass = getEntityClass();
         return null != entityClass ? entityClass.name() : "";
+    }
+
+    public long getFieldOwner() {
+        return fieldOwner;
+    }
+
+    public void setFieldOwner(long fieldOwner) {
+        this.fieldOwner = fieldOwner;
     }
 
     public long getRelOwnerClassId() {
@@ -125,32 +147,54 @@ public class OqsRelation {
         this.entityField = entityField;
     }
 
+    public Function<Long, Optional<IEntityClass>> getEntityClassLoader() {
+        return entityClassLoader;
+    }
+
+    public void setEntityClassLoader(Function<Long, Optional<IEntityClass>> entityClassLoader) {
+        this.entityClassLoader = entityClassLoader;
+    }
+
+    public boolean isStrong() {
+        return isStrong;
+    }
+
+    public void setStrong(boolean strong) {
+        isStrong = strong;
+    }
+
+    public boolean isCompanion() {
+        return isCompanion;
+    }
+
+    public void setCompanion(boolean companion) {
+        isCompanion = companion;
+    }
+
+    public long getCompanionRelation() {
+        return companionRelation;
+    }
+
+    public void setCompanionRelation(long companionRelation) {
+        this.companionRelation = companionRelation;
+    }
+
+    /**
+     * a relation is differ from id
+     * @param o
+     * @return
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof OqsRelation)) return false;
-        OqsRelation relation = (OqsRelation) o;
-        return getEntityClass().id() == relation.getEntityClass().id() &&
-                isIdentity() == relation.isIdentity() &&
-                Objects.equals(getName(), relation.getName()) &&
-                Objects.equals(getRelationType(), relation.getRelationType()) &&
-                getEntityField().id() == relation.getEntityField().id();
+        if (o == null || getClass() != o.getClass()) return false;
+        OqsRelation that = (OqsRelation) o;
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getEntityClass().id(), getRelationType(), isIdentity(), getEntityField().id());
-    }
-
-    @Override
-    public String toString() {
-        return "Relation{" +
-                "name='" + name + '\'' +
-                ", entityClassId=" + getEntityClass().id() +
-                ", relationType='" + relationType + '\'' +
-                ", identity=" + identity +
-                ", entityFieldId =" + getEntityField().id() +
-                '}';
+        return Objects.hash(id);
     }
 
     /**
@@ -166,6 +210,10 @@ public class OqsRelation {
         private long entityClassId;
         private Function<Long, Optional<IEntityClass>> entityClassLoader;
         private IEntityField entityField;
+        private boolean isStrong;
+        private boolean isCompanion;
+        private long companionRelation;
+        private long fieldOwner;
 
         private Builder() {
         }
@@ -219,6 +267,26 @@ public class OqsRelation {
             return this;
         }
 
+        public OqsRelation.Builder withStrong(boolean isStrong){
+            this.isStrong = isStrong;
+            return this;
+        }
+
+        public OqsRelation.Builder withCompanion(boolean isCompanion){
+            this.isCompanion = isCompanion;
+            return this;
+        }
+
+        public OqsRelation.Builder withCompanionRelation(long relationId){
+            this.companionRelation = relationId;
+            return this;
+        }
+
+        public OqsRelation.Builder withFieldOwner(long fieldOwner){
+            this.fieldOwner = fieldOwner;
+            return this;
+        }
+
         public OqsRelation build() {
             OqsRelation oqsRelation = new OqsRelation();
             oqsRelation.id = this.id;
@@ -230,6 +298,10 @@ public class OqsRelation {
             oqsRelation.entityClassId = this.entityClassId;
             oqsRelation.entityClassLoader = entityClassLoader;
             oqsRelation.entityField = this.entityField;
+            oqsRelation.isStrong = this.isStrong;
+            oqsRelation.isCompanion = this.isCompanion;
+            oqsRelation.companionRelation = this.companionRelation;
+            oqsRelation.fieldOwner = this.fieldOwner;
             return oqsRelation;
         }
     }

@@ -439,94 +439,94 @@ public class SearchTest {
         Assert.assertEquals(new BigDecimal("11.30"), bigDecimals.get(0));
     }
 
-    @Test
-    public void basicSearch() throws Exception {
+//    @Test
+//    public void basicSearch() throws Exception {
+//
+//        initData();
+//
+//        Thread.sleep(10000);
+//
+//        Page page = new Page(0, 100);
+//        Sort sort = Sort.buildAscSort(fatherEntityClass.fields().get(2));
+//
+//        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
+//            Conditions.buildEmtpyConditions(), fatherEntityClass, sort, page);
+//
+//        List<BigDecimal> bigDecimals = iEntities.stream().map(x -> {
+//            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DecimalValue).findFirst().get();
+//            return ((DecimalValue) iValue).getValue();
+//        }).collect(Collectors.toList());
+//
+//        Comparator<BigDecimal> bigDecimalComparator = (o1, o2) -> o1.compareTo(o2);
+//
+//        assertTrue(Comparators.isInOrder(bigDecimals, bigDecimalComparator));
+//    }
+//
+//    @Test
+//    public void stringOrderSearch() throws SQLException, InterruptedException {
+//        initData(100);
+//
+//        Thread.sleep(10000);
+//
+//        Page page = new Page(0, 100);
+//        Sort sort = Sort.buildAscSort(fatherEntityClass.fields().get(0));
+//
+//        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
+//            Conditions.buildEmtpyConditions(), fatherEntityClass, sort, page);
+//
+//        List<String> stringList = iEntities.stream().map(x -> {
+//            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof StringValue).findFirst().get();
+//            return ((StringValue) iValue).getValue();
+//        }).collect(Collectors.toList());
+//
+//
+//        Comparator<String> stringComparator = (o1, o2) -> o1.compareTo(o2);
+//
+//        assertTrue(Comparators.isInOrder(stringList, stringComparator));
+//    }
 
-        initData();
-
-        Thread.sleep(10000);
-
-        Page page = new Page(0, 100);
-        Sort sort = Sort.buildAscSort(fatherEntityClass.fields().get(2));
-
-        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions(), fatherEntityClass, sort, page);
-
-        List<BigDecimal> bigDecimals = iEntities.stream().map(x -> {
-            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DecimalValue).findFirst().get();
-            return ((DecimalValue) iValue).getValue();
-        }).collect(Collectors.toList());
-
-        Comparator<BigDecimal> bigDecimalComparator = (o1, o2) -> o1.compareTo(o2);
-
-        assertTrue(Comparators.isInOrder(bigDecimals, bigDecimalComparator));
-    }
-
-    @Test
-    public void stringOrderSearch() throws SQLException, InterruptedException {
-        initData(100);
-
-        Thread.sleep(10000);
-
-        Page page = new Page(0, 100);
-        Sort sort = Sort.buildAscSort(fatherEntityClass.fields().get(0));
-
-        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions(), fatherEntityClass, sort, page);
-
-        List<String> stringList = iEntities.stream().map(x -> {
-            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof StringValue).findFirst().get();
-            return ((StringValue) iValue).getValue();
-        }).collect(Collectors.toList());
-
-
-        Comparator<String> stringComparator = (o1, o2) -> o1.compareTo(o2);
-
-        assertTrue(Comparators.isInOrder(stringList, stringComparator));
-    }
-
-    @Test
-    public void dateTimeOrderSearch() throws SQLException, InterruptedException {
-
-        initData(100);
-
-        Thread.sleep(10000);
-
-        Page page = new Page(0, 100);
-        Sort sort = Sort.buildAscSort(fatherEntityClass.fields().get(3));
-
-        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions(), fatherEntityClass, sort, page);
-
-        List<LocalDateTime> dateList = iEntities.stream().map(x -> {
-            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DateTimeValue).findFirst().get();
-            return ((DateTimeValue) iValue).getValue();
-        }).collect(Collectors.toList());
-
-
-        Comparator<LocalDateTime> stringComparator = (o1, o2) -> o1.compareTo(o2);
-
-        assertTrue(Comparators.isInOrder(dateList, stringComparator));
-    }
-
-    @Test
-    public void longOrderSearch() throws SQLException {
-        initData(100);
-
-        Page page = new Page(0, 100);
-        Sort sort = Sort.buildAscSort(fatherEntityClass.fields().get(1));
-
-        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
-            Conditions.buildEmtpyConditions(), fatherEntityClass, sort, page);
-
-        List<Long> dateList = iEntities.stream().map(x -> {
-            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof LongValue).findFirst().get();
-            return ((LongValue) iValue).getValue();
-        }).collect(Collectors.toList());
-
-        Comparator<Long> longComparator = (o1, o2) -> o1.compareTo(o2);
-        assertTrue(Comparators.isInOrder(dateList, longComparator));
-    }
+//    @Test
+//    public void dateTimeOrderSearch() throws SQLException, InterruptedException {
+//
+//        initData(100);
+//
+//        Thread.sleep(10000);
+//
+//        Page page = new Page(0, 100);
+//        Sort sort = Sort.buildAscSort(fatherEntityClass.fields().get(3));
+//
+//        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
+//            Conditions.buildEmtpyConditions(), fatherEntityClass, sort, page);
+//
+//        List<LocalDateTime> dateList = iEntities.stream().map(x -> {
+//            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof DateTimeValue).findFirst().get();
+//            return ((DateTimeValue) iValue).getValue();
+//        }).collect(Collectors.toList());
+//
+//
+//        Comparator<LocalDateTime> stringComparator = (o1, o2) -> o1.compareTo(o2);
+//
+//        assertTrue(Comparators.isInOrder(dateList, stringComparator));
+//    }
+//
+//    @Test
+//    public void longOrderSearch() throws SQLException {
+//        initData(100);
+//
+//        Page page = new Page(0, 100);
+//        Sort sort = Sort.buildAscSort(fatherEntityClass.fields().get(1));
+//
+//        Collection<IEntity> iEntities = entitySearchService.selectByConditions(
+//            Conditions.buildEmtpyConditions(), fatherEntityClass, sort, page);
+//
+//        List<Long> dateList = iEntities.stream().map(x -> {
+//            IValue iValue = x.entityValue().values().stream().filter(y -> y instanceof LongValue).findFirst().get();
+//            return ((LongValue) iValue).getValue();
+//        }).collect(Collectors.toList());
+//
+//        Comparator<Long> longComparator = (o1, o2) -> o1.compareTo(o2);
+//        assertTrue(Comparators.isInOrder(dateList, longComparator));
+//    }
 
     @Test
     public void noSortSearch() throws SQLException, InterruptedException {
