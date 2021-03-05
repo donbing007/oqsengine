@@ -5,6 +5,7 @@ import java.util.Iterator;
 /**
  * 数据迭代器.
  *
+ * @param <E>
  * @author dongbin
  * @version 0.1 2021/2/23 10:59
  * @since 1.8

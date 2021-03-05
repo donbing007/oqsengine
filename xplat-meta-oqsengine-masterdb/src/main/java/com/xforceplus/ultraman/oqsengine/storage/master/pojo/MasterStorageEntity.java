@@ -110,7 +110,9 @@ public class MasterStorageEntity implements Serializable {
         return result;
     }
 
-
+    /**
+     * builder
+     */
     public static final class Builder {
         private long id;
         private long[] entityClasses;

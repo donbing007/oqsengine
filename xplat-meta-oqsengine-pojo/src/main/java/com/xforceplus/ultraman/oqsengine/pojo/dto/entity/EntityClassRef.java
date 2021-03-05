@@ -54,6 +54,9 @@ public class EntityClassRef {
         return Objects.hash(entityClassId);
     }
 
+    /**
+     * builder
+     */
     public static final class Builder {
         private long entityClassId;
         private String entityClassCode;

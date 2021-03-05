@@ -144,7 +144,9 @@ public class ManticoreStorageEntity implements Serializable {
         return sb.toString();
     }
 
-
+    /**
+     * builder
+     */
     public static final class Builder {
         private long id;
         private String entityClassF;

@@ -108,14 +108,10 @@ public class EntityClassStorageBuilderUtils {
                 relation.setRelOwnerClassName(r.getRelOwnerClassName());
                 relation.setRelationType(r.getRelationType());
                 relation.setIdentity(r.getIdentity());
-                relation.setEntityField(
-                        EntityField.Builder.anEntityField()
-                                .withId(r.getId())
-                                .withFieldType(FieldType.LONG)
-                                .withName(r.getEntityFieldCode())
-                                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
-                                .build()
-                );
+                if (null != r.getEntityField()) {
+                    relation.setEntityField(toEntityField(r.getEntityField()));
+                }
+                relation.setBelongToOwner(r.getBelongToOwner());
 
                 relations.add(relation);
             }
@@ -126,26 +122,32 @@ public class EntityClassStorageBuilderUtils {
         List<IEntityField> fields = new ArrayList<>();
         if (entityClassInfo.getEntityFieldsList() != null) {
             for (EntityFieldInfo e : entityClassInfo.getEntityFieldsList()) {
-                long eid = e.getId();
-                if (eid < MIN_ID) {
-                    throw new MetaSyncClientException("entityFieldId is invalid.", false);
-                }
+                EntityField entityField = toEntityField(e);
 
-                EntityField.Builder builder = EntityField.Builder.anEntityField()
-                        .withId(eid)
-                        .withName(e.getName())
-                        .withCnName(e.getCname())
-                        .withFieldType(FieldType.fromRawType(e.getFieldType().name()))
-                        .withDictId(e.getDictId())
-                        .withDefaultValue(e.getDefaultValue())
-                        .withConfig(toFieldConfig(e.getFieldConfig()));
-
-                fields.add(builder.build());
+                fields.add(entityField);
             }
         }
         storage.setFields(fields);
 
         return storage;
+    }
+
+    private static EntityField toEntityField(EntityFieldInfo e) {
+        long eid = e.getId();
+        if (eid < MIN_ID) {
+            throw new MetaSyncClientException("entityFieldId is invalid.", false);
+        }
+
+        EntityField.Builder builder = EntityField.Builder.anEntityField()
+                .withId(eid)
+                .withName(e.getName())
+                .withCnName(e.getCname())
+                .withFieldType(FieldType.fromRawType(e.getFieldType().name()))
+                .withDictId(e.getDictId())
+                .withDefaultValue(e.getDefaultValue())
+                .withConfig(toFieldConfig(e.getFieldConfig()));
+
+        return builder.build();
     }
 
     /**

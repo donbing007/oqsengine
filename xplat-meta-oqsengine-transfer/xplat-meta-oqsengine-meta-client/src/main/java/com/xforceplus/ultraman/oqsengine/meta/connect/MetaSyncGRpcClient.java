@@ -11,6 +11,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+
 /**
  * desc :
  * name : GRpcClient
@@ -32,12 +34,6 @@ public class MetaSyncGRpcClient implements GRpcClient {
     private String host;
     private int port;
     private boolean isClientOpen;
-
-    /**
-     * 延时销毁最大值30秒
-     */
-    private static final long destroySeconds = 30_000;
-
 
     public MetaSyncGRpcClient(String host, int port) {
         this.host = host;
@@ -64,7 +60,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
     @Override
     public void stop() {
         try {
-            channel.shutdown().awaitTermination(destroySeconds, TimeUnit.MILLISECONDS);
+            channel.shutdown().awaitTermination(SHUT_DOWN_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
 
             logger.info("gRpc-client destroy!");
         } catch (InterruptedException e) {

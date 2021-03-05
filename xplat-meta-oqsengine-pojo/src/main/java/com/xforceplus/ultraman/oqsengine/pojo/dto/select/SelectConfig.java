@@ -77,7 +77,9 @@ public class SelectConfig implements Serializable {
         return Objects.hash(getCommitId(), getSort(), getPage(), getExcludedIds());
     }
 
-
+    /**
+     * builder
+     */
     public static final class Builder {
         private long commitId;
         private Sort sort;
