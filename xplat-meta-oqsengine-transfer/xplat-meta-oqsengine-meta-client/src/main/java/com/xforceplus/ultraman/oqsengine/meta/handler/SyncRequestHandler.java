@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.meta.handler;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
@@ -25,8 +26,8 @@ import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient.isShutDown;
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.HEARTBEAT;
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.CLIENT_TASK_COUNT;
 import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest;
@@ -250,7 +251,7 @@ public class SyncRequestHandler implements IRequestHandler {
          * 回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
          */
         sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequestBuilder.setUid(entityClassSyncResponse.getUid()).build(),
-                requestWatchExecutor.accessFunction(), entityClassSyncResponse.getUid());
+                    requestWatchExecutor.accessFunction(), entityClassSyncResponse.getUid());
     }
 
     /**
@@ -264,6 +265,10 @@ public class SyncRequestHandler implements IRequestHandler {
         int status = SYNC_FAIL.ordinal();
         EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
         try {
+            if (null == entityClassSyncResponse.getAppId() || entityClassSyncResponse.getAppId().isEmpty() ||
+                    NOT_EXIST_VERSION == entityClassSyncResponse.getVersion()) {
+                throw new MetaSyncClientException("sync appId or version could not be null...", false);
+            }
             builder.setAppId(entityClassSyncResponse.getAppId())
                     .setVersion(entityClassSyncResponse.getVersion());
             /**
@@ -284,8 +289,13 @@ public class SyncRequestHandler implements IRequestHandler {
                         /**
                          * 执行外部传入的执行器
                          */
-                        status = syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(), result) ?
-                                RequestStatus.SYNC_OK.ordinal() : SYNC_FAIL.ordinal();
+                        try {
+                            status = syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(), result) ?
+                                    RequestStatus.SYNC_OK.ordinal() : SYNC_FAIL.ordinal();
+                        } catch (Exception e) {
+                            status = DATA_ERROR.ordinal();
+                            logger.warn(e.getMessage());
+                        }
 
                         if (status == RequestStatus.SYNC_OK.ordinal()) {
                             requestWatchExecutor.update(w);

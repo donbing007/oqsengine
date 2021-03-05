@@ -108,7 +108,7 @@ public class EntityClassStorageBuilderUtils {
                 relation.setRelOwnerClassName(r.getRelOwnerClassName());
                 relation.setRelationType(r.getRelationType());
                 relation.setIdentity(r.getIdentity());
-                if (null != r.getEntityField()) {
+                if (r.hasEntityField()) {
                     relation.setEntityField(toEntityField(r.getEntityField()));
                 }
                 relation.setBelongToOwner(r.getBelongToOwner());

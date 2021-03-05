@@ -1,9 +1,14 @@
 package com.xforceplus.ultraman.oqsengine.meta.client;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import org.junit.Assert;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+import static com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassStorageBuilderUtils.protoToStorageList;
 
 /**
  * desc :
@@ -19,6 +24,8 @@ public class MockSyncExecutor implements SyncExecutor {
     public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
 
         Assert.assertNotNull(entityClassSyncRspProto);
+
+        List<EntityClassStorage> entityClassStorageList = protoToStorageList(entityClassSyncRspProto);
         return true;
     }
 

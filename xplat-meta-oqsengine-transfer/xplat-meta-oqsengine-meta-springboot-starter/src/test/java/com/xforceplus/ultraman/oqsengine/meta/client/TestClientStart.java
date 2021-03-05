@@ -1,11 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.meta.client;
 
+import com.xforceplus.ultraman.oqsengine.meta.Commons;
 import com.xforceplus.ultraman.oqsengine.meta.SpringBootApp;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
-import io.grpc.netty.NettyServerBuilder;
-import io.grpc.testing.GrpcCleanupRule;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +12,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
+import static com.xforceplus.ultraman.oqsengine.meta.Commons.caseHeartBeat;
 
 /**
  * desc :
@@ -31,53 +35,64 @@ public class TestClientStart {
     @Autowired
     private IRequestHandler requestHandler;
 
-    Thread serverThread;
-
-    boolean isLocalTest = true;
+    private static final Map<String, BiFunction<String, WatchElement, Boolean>> functions = new HashMap<>();
 
     @Before
     public void before() throws InterruptedException {
-        if (isLocalTest) {
-            buildServer();
-        }
+
         Thread.sleep(1_000);
+
+        functions.put(caseHeartBeat, this::heartBeatTest);
     }
+
     @After
     public void after() throws InterruptedException {
-        if (isLocalTest) {
-            ThreadUtils.shutdown(serverThread, 1);
-
-            Thread.sleep(5_000);
-        }
+        Thread.sleep(1_000);
     }
+
 
     @Test
-    public void test() throws InterruptedException {
-        if (!isLocalTest) {
-            boolean ret =
-                    requestHandler.register(new WatchElement("7", "0", -1, WatchElement.AppStatus.Register));
-
-            Assert.assertTrue(ret);
+    public void test() {
+        for (Map.Entry<String, WatchElement> e : Commons.cases.entrySet()) {
+            BiFunction<String, WatchElement, Boolean> f = functions.get(e.getKey());
+            if (null != f) {
+                System.out.println(String.format("start test [%s]...", e.getKey()));
+                Assert.assertTrue(f.apply(e.getKey(), e.getValue()));
+                System.out.println(String.format("successful test [%s]...", e.getKey()));
+            }
+            try {
+                Thread.sleep(1_000);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
         }
-
-        Thread.sleep(5_000);
     }
 
-    private void buildServer() {
-        MockServer mockServer = new MockServer();
+
+    public boolean heartBeatTest(String caseName, WatchElement w) {
+        boolean ret = requestHandler.register(w);
+
+        Assert.assertTrue(ret);
+
         try {
-            serverThread = ThreadUtils.create(() -> {
-                try {
-                    NettyServerBuilder
-                            .forPort(8082).directExecutor().addService(mockServer).build().start();
-                } catch (IOException e) {
-                    System.exit(-1);
-                }
-                return true;
-            });
-            serverThread.start();
-        } catch (Exception e) {
-            throw new RuntimeException();
+            Thread.sleep(1_000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+        /**
+         * 测试
+         */
+        return assertElement(caseHeartBeat, WatchElement.AppStatus.Confirmed,
+                                requestHandler.watchExecutor().watcher().watches().get(caseName));
     }
+
+    public boolean assertElement(String caseName, WatchElement.AppStatus appStatus, WatchElement w) {
+        Assert.assertEquals(w.getAppId(), Commons.cases.get(caseName).getAppId());
+        Assert.assertEquals(w.getStatus(), Commons.cases.get(caseName).getStatus());
+        Assert.assertEquals(w.getVersion(), Commons.cases.get(caseName).getVersion());
+        Assert.assertEquals(w.getStatus(), appStatus);
+        return true;
+    }
+
+
 }

@@ -90,6 +90,7 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
                 return true;
             } catch (Exception e) {
+                logger.warn(e.getMessage());
                 return false;
             } finally {
                 cacheExecutor.endPrepare(appId);
