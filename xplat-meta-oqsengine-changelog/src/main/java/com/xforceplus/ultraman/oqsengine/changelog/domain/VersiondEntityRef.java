@@ -5,7 +5,7 @@ package com.xforceplus.ultraman.oqsengine.changelog.domain;
  */
 public class VersiondEntityRef {
 
-    private long version;
+    private long version = -1;
 
     private long entityClassId;
 

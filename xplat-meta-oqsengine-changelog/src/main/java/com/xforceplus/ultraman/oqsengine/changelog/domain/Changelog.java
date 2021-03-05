@@ -86,4 +86,18 @@ public class Changelog {
     public void setDeleteFlag(int deleteFlag) {
         this.deleteFlag = deleteFlag;
     }
+
+    @Override
+    public String toString() {
+        return "Changelog{" +
+                "version=" + version +
+                ", cId=" + cId +
+                ", id=" + id +
+                ", comment='" + comment + '\'' +
+                ", createTime=" + createTime +
+                ", changeValues=" + changeValues +
+                ", entityClass=" + entityClass +
+                ", deleteFlag=" + deleteFlag +
+                '}';
+    }
 }

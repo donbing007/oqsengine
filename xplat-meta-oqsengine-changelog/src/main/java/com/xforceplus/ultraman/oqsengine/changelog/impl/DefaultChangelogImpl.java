@@ -161,13 +161,15 @@ public class DefaultChangelogImpl implements ChangelogService {
 
         while(!stack.isEmpty()){
             VersiondEntityRef nextNode = stack.pop();
-            findChangeVersion(changeVersionList, nextNode.getId(), nextNode.getVersion(), nextNode.getEntityClassId(), stack);
+            findChangeVersion(changeVersionList, nextNode.getId(), nextNode.getVersion()
+                    , nextNode.getEntityClassId(), stack);
         }
 
         return changeVersionList;
     }
 
-    private void findChangeVersion(List<ChangeVersion> changeVersionList, long objId, long version, long entityClassId, Stack<VersiondEntityRef> stack){
+    private void findChangeVersion(List<ChangeVersion> changeVersionList, long objId, long version
+            , long entityClassId, Stack<VersiondEntityRef> stack){
         List<Changelog> relatedChangelog = replayService.getRelatedChangelog(objId, version);
         if(!relatedChangelog.isEmpty()){
 
@@ -188,13 +190,17 @@ public class DefaultChangelogImpl implements ChangelogService {
                     long childEntity = key.getEntityClassId();
                     value.forEach(valueLife -> {
                         String idValue = valueLife.getValue();
-                        try {
-                            long idLong = Long.parseLong(idValue);
-                            long endVersion = valueLife.getEnd();
-                            stack.push(new VersiondEntityRef(childEntity, idLong, endVersion));
-                        }catch(Exception ex){
-                            //TODO
-                            logger.error("{}", ex);
+                        if(idValue != null) {
+                            try {
+                                long idLong = Long.parseLong(idValue);
+                                long endVersion = valueLife.getEnd();
+                                stack.push(new VersiondEntityRef(childEntity, idLong, endVersion));
+                            } catch (Exception ex) {
+                                //TODO
+                                logger.error("{}", ex);
+                            }
+                        } else {
+                            logger.warn("REL on {} removed", key.getRelOwnerClassId());
                         }
                     });
                 });

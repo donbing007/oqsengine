@@ -70,4 +70,15 @@ public class ChangeValue {
     public void setRawValue(String rawValue) {
         this.rawValue = rawValue;
     }
+
+    @Override
+    public String toString() {
+        return "ChangeValue{" +
+                "fieldId=" + fieldId +
+                ", fieldCode='" + fieldCode + '\'' +
+                ", op=" + op +
+                ", rawValue='" + rawValue + '\'' +
+                ", isReferenceSet=" + isReferenceSet +
+                '}';
+    }
 }

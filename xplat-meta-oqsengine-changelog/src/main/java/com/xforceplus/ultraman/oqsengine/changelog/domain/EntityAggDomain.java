@@ -34,4 +34,12 @@ public class EntityAggDomain {
         List<EntityAggDomain> entityAggDomains = graph.computeIfAbsent(oqsRelation, k -> new LinkedList<>());
         entityAggDomains.add(entityAggDomain);
     }
+
+    @Override
+    public String toString() {
+        return "EntityAggDomain{" +
+                "rootIEntity=" + rootIEntity +
+                ", graph=" + graph +
+                '}';
+    }
 }

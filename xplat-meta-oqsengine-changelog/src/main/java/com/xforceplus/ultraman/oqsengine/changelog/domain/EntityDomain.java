@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.changelog.domain;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +17,10 @@ public class EntityDomain {
      */
     private IEntity entity;
 
-    private Map<OqsRelation, List<Long>> referenceMap;
+    /**
+     * TODO
+     */
+    private Map<OqsRelation, List<Long>> referenceMap = new HashMap<>();
 
     public IEntity getEntity() {
         return entity;

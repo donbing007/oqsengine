@@ -5,8 +5,10 @@ import com.xforceplus.ultraman.oqsengine.changelog.domain.*;
 import com.xforceplus.ultraman.oqsengine.changelog.storage.ChangelogStorage;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -66,8 +68,8 @@ public class ReplayServiceImpl implements ReplayService {
      */
     private void linkAllHistory(List<HistoryValue> historyValues) {
         historyValues.stream().reduce((a, b) -> {
-            a.setNext(b);
-            b.setPreview(a);
+            b.setNext(a);
+            a.setPreview(b);
             return b;
         });
     }
@@ -93,10 +95,11 @@ public class ReplayServiceImpl implements ReplayService {
 
         Map<Long, Map<String, ValueLife>> valueMap = new HashMap<>();
 
+
         /**
          * deal every relations to find out history and current value and record in relationValues
          */
-        entityClass.oqsRelations().stream()
+        Optional.ofNullable(entityClass.oqsRelations()).orElse(Collections.emptyList()).stream()
                 .filter(x -> x.isStrong() && !x.isCompanion())
                 .forEach(x -> {
                     //get value from changelogList;
@@ -111,10 +114,15 @@ public class ReplayServiceImpl implements ReplayService {
                             Map<String, ValueLife> valueLifeMap = valueMap.get(x.getEntityField().id());
                             if (valueLifeMap == null) {
                                 valueLifeMap = new HashMap<>();
-                                valueMap.put(id, valueLifeMap);
+                                valueMap.put(x.getEntityField().id(), valueLifeMap);
                             }
 
                             ValueLife valueLife = valueLifeMap.get(value.getRawValue());
+                            if(valueLife == null) {
+                                valueLife = new ValueLife();
+                                valueLife.setValue(value.getRawValue());
+                                valueLifeMap.put(value.getRawValue(), valueLife);
+                            }
 
                             /**
                              * SET |  (ADD | DEL) will not mix with each other
@@ -122,12 +130,14 @@ public class ReplayServiceImpl implements ReplayService {
                             switch (value.getOp()) {
                                 case ADD:
                                     valueLife.setStart(historyValue.getCommitId());
+                                    valueLife.setEnd(-1);
                                     break;
                                 case DEL:
                                     valueLife.setEnd(historyValue.getCommitId());
                                     break;
                                 case SET:
                                     valueLife.setStart(historyValue.getCommitId());
+                                    valueLife.setEnd(-1);
                                     if (historyValue.getPreview() != null) {
                                         ChangeValue previewChange = historyValue.getPreview().getValue();
                                         String rawValue = previewChange.getRawValue();
@@ -170,8 +180,8 @@ public class ReplayServiceImpl implements ReplayService {
             if(entityClassOptional.isPresent()) {
                 List<Changelog> relatedChangelog = this.getRelatedChangelog(task._2, task._3);
                 EntityDomain entityDomain = replaySingleDomain(entityClassOptional.get()
-                        , id, relatedChangelog);
-                footprint.put(id, entityDomain);
+                        , task._2, relatedChangelog);
+                footprint.put(task._2, entityDomain);
                 entityDomain.getReferenceMap().forEach((key, value) -> {
                     //put in
                     value.forEach(eachId -> {
@@ -239,9 +249,15 @@ public class ReplayServiceImpl implements ReplayService {
     private EntityDomain replaySingleDomain(IEntityClass entityClass, long id, List<Changelog> changelogs){
         EntityDomain entityDomain = new EntityDomain();
 
-
         EntityValue entityValue = new EntityValue(id);
+        IEntity entity = Entity.Builder.anEntity()
+                .withId(id)
+                .withEntityClass(entityClass)
+                .withEntityValue(entityValue).build();
+        entityDomain.setEntity(entity);
+
         Map<OqsRelation, List<Long>> referenceMap = new HashMap<>();
+        entityDomain.setReferenceMap(referenceMap);
 
         Map<Long, List<ChangeValue>> mappedValue = ChangelogHelper.getMappedValue(changelogs);
 
@@ -260,7 +276,7 @@ public class ReplayServiceImpl implements ReplayService {
         /**
          * deal relation value
          */
-        entityClass.oqsRelations().forEach(rel -> {
+        Optional.ofNullable(entityClass.oqsRelations()).orElse(Collections.emptyList()).forEach(rel -> {
             if(rel.getRelOwnerClassId() == entityClass.id()){
                 List<ChangeValue> changeValues = mappedValue.get(rel.getEntityField().id());
                 if(isReferenceSet(rel)){
