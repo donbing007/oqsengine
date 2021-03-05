@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.query.AbstractConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -70,7 +71,7 @@ public abstract class AbstractJsonDecimalConditionBuilder extends AbstractCondit
         StringBuilder buff = new StringBuilder();
         buff.append("CAST(SUBSTRING_INDEX(")
             .append(FieldDefine.ATTRIBUTE).append("->>'$.")
-            .append(FieldDefine.ATTRIBUTE_PREFIX)
+            .append(AnyStorageValue.ATTRIBUTE_PREFIX)
             .append(field).append("','.',")
             .append(integer ? "1" : "-1")
             .append(") AS SIGNED) ")

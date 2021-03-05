@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.query.AbstractConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -76,7 +77,7 @@ public abstract class AbstractJsonStringsConditionBuilder extends AbstractCondit
     private void buildQuery(StorageValue storageValue, StringBuilder buff) {
         String queryValue = storageValue.value().toString();
         buff.append(FieldDefine.ATTRIBUTE).append("->>'$.")
-            .append(FieldDefine.ATTRIBUTE_PREFIX).append(storageValue.storageName())
+            .append(AnyStorageValue.ATTRIBUTE_PREFIX).append(storageValue.storageName())
             .append("' ");
         buff.append(actualOperator()).append(" '%").append(queryValue).append("%'");
     }

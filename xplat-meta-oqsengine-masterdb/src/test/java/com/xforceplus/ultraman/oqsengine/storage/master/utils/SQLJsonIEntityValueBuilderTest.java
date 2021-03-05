@@ -82,7 +82,6 @@ public class SQLJsonIEntityValueBuilderTest {
                 throw new RuntimeException(e.getMessage(), e);
             }
 
-            Assert.assertEquals(c.id, value.id());
             Assert.assertEquals(c.expectedValue, value.getValue(c.id).get());
         });
     }
@@ -132,4 +131,4 @@ public class SQLJsonIEntityValueBuilderTest {
             this.expectedValue = expectedValue;
         }
     }
-} 
+}

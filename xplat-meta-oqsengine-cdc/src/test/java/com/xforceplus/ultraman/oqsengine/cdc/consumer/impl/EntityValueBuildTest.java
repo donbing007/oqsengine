@@ -11,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import org.junit.*;
 
@@ -38,7 +38,7 @@ public class EntityValueBuildTest extends CDCAbstractContainer {
 
     private IEntity[] expectedEntities;
 
-    private List<StorageEntity> storageEntities;
+    private List<MasterStorageEntity> storageEntities;
 
     private static final long partitionId = 100000;
 
@@ -72,7 +72,7 @@ public class EntityValueBuildTest extends CDCAbstractContainer {
         m.setAccessible(true);
 
         for (int i = 0; i < storageEntities.size(); i++) {
-            StorageEntity se = storageEntities.get(i);
+            MasterStorageEntity se = storageEntities.get(i);
             IEntityValue entityValue = (IEntityValue) m.invoke(sphinxSyncExecutor, new Object[]{se.getId(), se.getMeta(), se.getAttribute()});
             Assert.assertNotNull(entityValue);
 
@@ -136,15 +136,15 @@ public class EntityValueBuildTest extends CDCAbstractContainer {
 
         storageEntities = new ArrayList<>();
         for (IEntity e : expectedEntities) {
-            StorageEntity storageEntity = new StorageEntity();
-            storageEntity.setId(e.id());
-            storageEntity.setAttribute(
+            MasterStorageEntity masterStorageEntity = new MasterStorageEntity();
+            masterStorageEntity.setId(e.id());
+            masterStorageEntity.setAttribute(
                 ((JSONObject) m1.invoke(masterStorage, new Object[]{e.entityValue()})).toJSONString());
 
-            storageEntity.setMeta(
+            masterStorageEntity.setMeta(
                 ((JSONArray) m2.invoke(masterStorage, new Object[]{e.entityClass()})).toJSONString());
 
-            storageEntities.add(storageEntity);
+            storageEntities.add(masterStorageEntity);
         }
     }
 }

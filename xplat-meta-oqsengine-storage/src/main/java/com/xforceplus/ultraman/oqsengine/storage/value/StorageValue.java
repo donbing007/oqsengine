@@ -63,6 +63,13 @@ public interface StorageValue<V> {
     String storageName();
 
     /**
+     * 物理储存字段短名称.
+     *
+     * @return 短名称.
+     */
+    String shortStorageName();
+
+    /**
      * 组名称,此名称表示单个逻辑名称对应的所有物理名称的前辍.
      * 比如逻辑名称为 c1, 物理为 c1L0 c1L1 那么组名称即是 c1L
      *

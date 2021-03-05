@@ -60,7 +60,7 @@ public interface IDevOpsTaskInfo {
 
     IEntityClass getEntityClass();
 
-    int getBatchSize();
+    long getBatchSize();
 
     int getFinishSize();
 
@@ -76,7 +76,7 @@ public interface IDevOpsTaskInfo {
 
     void setOffsetSnapShot(OffsetSnapShot offsetSnapShot);
 
-    void setBatchSize(int size);
+    void setBatchSize(long size);
 
     int failedRecovers();
 

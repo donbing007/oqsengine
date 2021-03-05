@@ -4,7 +4,7 @@ import com.xforceplus.ultraman.oqsengine.devops.DevOpsAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.ManticoreStorageEntity;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
@@ -198,18 +198,18 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
         }
     }
 
-    private StorageEntity buildStorageEntity(IEntity v, long txId, long commitId) {
-        StorageEntity storageEntity = new StorageEntity();
-        storageEntity.setId(v.id());
-        storageEntity.setEntity(v.entityClass().id());
-        storageEntity.setPref(v.family().parent());
-        storageEntity.setCref(v.family().child());
-        storageEntity.setTime(v.time());
-        storageEntity.setMaintainId(v.maintainId());
-        storageEntity.setCommitId(commitId);
-        storageEntity.setTx(txId);
+    private ManticoreStorageEntity buildStorageEntity(IEntity v, long txId, long commitId) {
+        ManticoreStorageEntity manticoreStorageEntity = new ManticoreStorageEntity();
+        manticoreStorageEntity.setId(v.id());
+        manticoreStorageEntity.setEntity(v.entityClass().id());
+        manticoreStorageEntity.setPref(v.family().parent());
+        manticoreStorageEntity.setCref(v.family().child());
+        manticoreStorageEntity.setTime(v.time());
+        manticoreStorageEntity.setMaintainId(v.maintainId());
+        manticoreStorageEntity.setCommitId(commitId);
+        manticoreStorageEntity.setTx(txId);
 
-        return storageEntity;
+        return manticoreStorageEntity;
     }
 
     // 初始化数据

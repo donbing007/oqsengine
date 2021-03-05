@@ -45,7 +45,7 @@ public class NotMatchConditionBuilder extends SphinxQLConditionBuilder {
 
             } else {
 
-                buff.append(FieldDefine.JSON_FIELDS)
+                buff.append(FieldDefine.ATTRIBUTE)
                     .append(".")
                     .append(storageValue.storageName());
 

@@ -64,7 +64,7 @@ public class NoOrNoRanageConditionsBuilderTest {
     }
 
     private List<Case> buildCase() {
-        String expectPrefix = "MATCH('(@" + FieldDefine.FULL_FIELDS + " ";
+        String expectPrefix = "MATCH('(@" + FieldDefine.ATTRIBUTEF + " ";
         String expectAfter = "')";
         return Arrays.asList(
             new Case(

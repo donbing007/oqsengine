@@ -55,11 +55,11 @@ public class MatchConditionBuilderTest {
         return Arrays.asList(
             new Case(
                 new Condition(
-                    new EntityField(11111, "test", FieldType.STRING),
+                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
                     ConditionOperator.EQUALS,
-                    new StringValue(new EntityField(11111, "test", FieldType.STRING), "test")
+                    new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test")
                 ),
-                "\"testF11111S\""
+                "aZl8N0 << test << y58M7S"
             ),
             new Case(
                 new Condition(

@@ -42,17 +42,17 @@ public abstract class NotMatchDecimalConditionBuilder extends SphinxQLConditionB
         StringBuilder buff = new StringBuilder();
         buff.append("(");
         buff.append("(");
-        buff.append(FieldDefine.JSON_FIELDS).append(".").append(iStorageValue.storageName()).append(" ")
+        buff.append(FieldDefine.ATTRIBUTE).append(".").append(iStorageValue.storageName()).append(" ")
                 .append(orOperator().getSymbol()).append(" ").append(iStorageValue.value());
         buff.append(") ");
         buff.append(SqlKeywordDefine.OR).append(" ");
         // end andy.zhou 20200721
 
         buff.append("(");
-        buff.append(FieldDefine.JSON_FIELDS).append(".").append(iStorageValue.storageName()).append(" ")
+        buff.append(FieldDefine.ATTRIBUTE).append(".").append(iStorageValue.storageName()).append(" ")
                 .append(intOperator().getSymbol()).append(" ").append(iStorageValue.value());
         buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
-        buff.append(FieldDefine.JSON_FIELDS).append(".").append(dStoragetValue.storageName()).append(" ")
+        buff.append(FieldDefine.ATTRIBUTE).append(".").append(dStoragetValue.storageName()).append(" ")
                 .append(decOperator().getSymbol()).append(" ").append(dStoragetValue.value());
         buff.append(")");
         buff.append(")");

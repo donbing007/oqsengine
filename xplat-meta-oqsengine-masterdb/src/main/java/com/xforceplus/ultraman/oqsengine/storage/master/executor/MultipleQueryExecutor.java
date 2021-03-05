@@ -1,8 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 
 import java.sql.Connection;
@@ -21,23 +22,26 @@ import java.util.List;
  * @version 0.1 2020/11/3 14:37
  * @since 1.8
  */
-public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collection<StorageEntity>> {
+public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collection<MasterStorageEntity>> {
 
-    public static Executor<long[], Collection<StorageEntity>> build(
-        String tableName, TransactionResource<Connection> resource, long timeout) {
-        return new MultipleQueryExecutor(tableName, resource, timeout);
+    private IEntityClass entityClass;
+
+    public static Executor<long[], Collection<MasterStorageEntity>> build(
+        String tableName, TransactionResource<Connection> resource, IEntityClass entityClass, long timeout) {
+        return new MultipleQueryExecutor(tableName, resource, entityClass, timeout);
     }
 
-    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource) {
+    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass) {
         super(tableName, resource);
     }
 
-    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, long timeout) {
+    public MultipleQueryExecutor(String tableName, TransactionResource<Connection> resource, IEntityClass entityClass, long timeout) {
         super(tableName, resource, timeout);
+        this.entityClass = entityClass;
     }
 
     @Override
-    public Collection<StorageEntity> execute(long[] ids) throws SQLException {
+    public Collection<MasterStorageEntity> execute(long[] ids) throws SQLException {
         String sql = buildSQL(ids.length);
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             int index = 1;
@@ -45,13 +49,14 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collec
                 st.setLong(index++, id);
             }
             st.setBoolean(ids.length + 1, false);
+            st.setLong(ids.length + 2, entityClass.id());
 
             checkTimeout(st);
 
-            List<StorageEntity> entities = new ArrayList<>(ids.length);
+            List<MasterStorageEntity> entities = new ArrayList<>(ids.length);
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
-                    StorageEntity.Builder builder = StorageEntity.Builder.aStorageEntity()
+                    MasterStorageEntity.Builder builder = MasterStorageEntity.Builder.aStorageEntity()
                         .withId(rs.getLong(FieldDefine.ID))
                         .withVersion(rs.getInt(FieldDefine.VERSION))
                         .withOp(rs.getInt(FieldDefine.OP))
@@ -97,7 +102,10 @@ public class MultipleQueryExecutor extends AbstractMasterExecutor<long[], Collec
             .append(" WHERE ")
             .append(FieldDefine.ID).append(" IN (").append(String.join(",", Collections.nCopies(size, "?")))
             .append(") AND ")
-            .append(FieldDefine.DELETED).append("=").append("?");
+            .append(FieldDefine.DELETED).append("=").append("?")
+            .append(" AND ");
+        int level = entityClass.level();
+        sql.append(FieldDefine.ENTITYCLASS_LEVEL_LIST[level]).append("=?");
         return sql.toString();
     }
 }

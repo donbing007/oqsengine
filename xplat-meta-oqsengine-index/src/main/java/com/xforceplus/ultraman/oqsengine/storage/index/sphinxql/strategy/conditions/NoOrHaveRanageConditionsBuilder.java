@@ -54,7 +54,7 @@ public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuild
         } else {
             buff.append(" ").append(SqlKeywordDefine.AND).append(" ")
                 .append("MATCH('@")
-                .append(FieldDefine.ENTITY_F)
+                .append(FieldDefine.ENTITYCLASSF)
                 .append(" =\"")
                 .append(entityClass.id())
                 .append("\"')");

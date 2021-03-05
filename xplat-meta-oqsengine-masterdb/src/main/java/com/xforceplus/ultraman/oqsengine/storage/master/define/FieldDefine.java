@@ -12,8 +12,6 @@ public class FieldDefine {
     private FieldDefine() {
     }
 
-    public static final String ATTRIBUTE_PREFIX = "F";
-
     /**
      * 数据标识.
      */

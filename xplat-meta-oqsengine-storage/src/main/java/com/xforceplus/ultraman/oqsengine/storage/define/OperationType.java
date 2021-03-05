@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.master.define;
+package com.xforceplus.ultraman.oqsengine.storage.define;
 
 /**
  * 数据操作类型.

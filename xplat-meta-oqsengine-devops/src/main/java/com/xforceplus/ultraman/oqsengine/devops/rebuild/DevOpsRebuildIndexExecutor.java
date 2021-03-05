@@ -16,7 +16,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.OffsetSnapShot;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.ManticoreStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.iterator.QueryIterator;
 import io.vavr.control.Either;
@@ -416,20 +416,20 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     private void consumer(DevOpsTaskInfo taskInfo, List<IEntity> entityList) throws SQLException {
         logger.info("start consumer entity, entity size {}", entityList.size());
         if (EMPTY_COLLECTION_SIZE < entityList.size()) {
-            List<StorageEntity> storageEntityList = new ArrayList<>();
+            List<ManticoreStorageEntity> manticoreStorageEntityList = new ArrayList<>();
             for (IEntity entity : entityList) {
-                StorageEntity storageEntity = new StorageEntity(
+                ManticoreStorageEntity manticoreStorageEntity = new ManticoreStorageEntity(
                         entity.id(), entity.entityClass().id(), entity.family().parent(), entity.family().child(),
                         maintainTxId, maintainCommitId, null, null, entity.time());
 
                 //  加入maintainId
-                storageEntity.setMaintainId(taskInfo.getMaintainid());
+                manticoreStorageEntity.setMaintainId(taskInfo.getMaintainid());
                 //  转换JsonFields/FullFields
-                indexStorage.entityValueToStorage(storageEntity, entity.entityValue());
-                storageEntityList.add(storageEntity);
+                indexStorage.entityValueToStorage(manticoreStorageEntity, entity.entityValue());
+                manticoreStorageEntityList.add(manticoreStorageEntity);
             }
             //  批量更新
-            int finished = indexStorage.batchSave(storageEntityList, true, true);
+            int finished = indexStorage.batchSave(manticoreStorageEntityList, true, true);
             taskInfo.addFinishSize(finished);
 
             /*

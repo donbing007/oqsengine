@@ -161,7 +161,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
             StringBuilder buff = new StringBuilder();
             for (String storageName : storageNames) {
                 buff.delete(0, buff.length());
-                buff.append(FieldDefine.JSON_FIELDS).append(".").append(storageName);
+                buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageName);
                 fieldName = buff.toString();
 
                 buff.delete(0, buff.length());
@@ -309,9 +309,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
                 while (rs.next()) {
                     EntityRef entityRef = new EntityRef();
                     entityRef.setId(rs.getLong(FieldDefine.ID));
-                    entityRef.setCref(rs.getLong(FieldDefine.CREF));
-                    entityRef.setPref(rs.getLong(FieldDefine.PREF));
-                    entityRef.setMajor(rs.getInt(FieldDefine.OQS_MAJOR));
+                    entityRef.setMajor(rs.getInt(FieldDefine.OQSMAJOR));
 
                     if (!useSort.isOutOfOrder()) {
                         if (useSort.getField().config().isIdentifie()) {

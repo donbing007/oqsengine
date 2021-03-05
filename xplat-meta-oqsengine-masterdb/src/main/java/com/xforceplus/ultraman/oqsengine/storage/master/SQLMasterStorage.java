@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
@@ -7,20 +8,20 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.utils.IEntityClassHelper;
+import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.*;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
-import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import io.micrometer.core.annotation.Timed;
@@ -52,9 +53,6 @@ public class SQLMasterStorage implements MasterStorage {
     @Resource(name = "masterStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
 
-    @Resource(name = "entityValueBuilder")
-    private IEntityValueBuilder<String> entityValueBuilder;
-
     @Resource(name = "masterConditionsBuilderFactory")
     private SQLJsonConditionsBuilderFactory conditionsBuilderFactory;
 
@@ -85,7 +83,7 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public Collection<EntityRef> select(long commitid, Conditions conditions, IEntityClass entityClass, Sort sort)
+    public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException {
         long startMs = System.currentTimeMillis();
         try {
@@ -94,8 +92,8 @@ public class SQLMasterStorage implements MasterStorage {
                     tableName,
                     resource,
                     entityClass,
-                    sort,
-                    commitid,
+                    config.getSort(),
+                    config.getCommitId(),
                     queryTimeout,
                     conditionsBuilderFactory,
                     storageStrategyFactory).execute(conditions);
@@ -117,7 +115,8 @@ public class SQLMasterStorage implements MasterStorage {
         long startMs = System.currentTimeMillis();
         try {
             return (Optional<IEntity>) transactionExecutor.execute((resource, hint) -> {
-                Optional<StorageEntity> seOP = QueryExecutor.buildHaveDetail(tableName, resource, queryTimeout).execute(id);
+                Optional<MasterStorageEntity> seOP =
+                    QueryExecutor.buildHaveDetail(tableName, resource, entityClass, queryTimeout).execute(id);
                 if (seOP.isPresent()) {
                     return buildEntityFromStorageEntity(seOP.get(), entityClass);
                 } else {
@@ -135,10 +134,10 @@ public class SQLMasterStorage implements MasterStorage {
         long startMs = System.currentTimeMillis();
 
         try {
-            Collection<StorageEntity> storageEntities = (Collection<StorageEntity>) transactionExecutor.execute(
+            Collection<MasterStorageEntity> storageEntities = (Collection<MasterStorageEntity>) transactionExecutor.execute(
                 (resource, hint) -> {
 
-                    return MultipleQueryExecutor.build(tableName, resource, queryTimeout).execute(ids);
+                    return MultipleQueryExecutor.build(tableName, resource, entityClass, queryTimeout).execute(ids);
                 }
             );
 
@@ -169,11 +168,13 @@ public class SQLMasterStorage implements MasterStorage {
 
             return (int) transactionExecutor.execute(
                 (resource, hint) -> {
-                    StorageEntity.Builder storageEntityBuilder = StorageEntity.Builder.aStorageEntity()
+                    MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
                         .withId(entity.id())
                         .withCreateTime(entity.time())
                         .withUpdateTime(entity.time())
                         .withDeleted(false)
+                        .withEntityClassVersion(entityClass.version())
+                        .withVersion(0)
                         .withAttribute(toJson(entity.entityValue()).toJSONString())
                         .withOp(OperationType.CREATE.getValue());
                     fullEntityClassInformation(storageEntityBuilder, entityClass);
@@ -200,10 +201,11 @@ public class SQLMasterStorage implements MasterStorage {
 
             return (int) transactionExecutor.execute(
                 (resource, hint) -> {
-                    StorageEntity.Builder storageEntityBuilder = StorageEntity.Builder.aStorageEntity()
+                    MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
                         .withId(entity.id())
                         .withUpdateTime(entity.time())
                         .withVersion(entity.version())
+                        .withEntityClassVersion(entityClass.version())
                         .withAttribute(toJson(entity.entityValue()).toJSONString())
                         .withOp(OperationType.UPDATE.getValue());
 
@@ -236,10 +238,12 @@ public class SQLMasterStorage implements MasterStorage {
                     /**
                      * 删除数据时不再关心字段信息.
                      */
-                    StorageEntity.Builder storageEntityBuilder = StorageEntity.Builder.aStorageEntity()
+                    MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
                         .withId(entity.id())
                         .withOp(OperationType.DELETE.getValue())
                         .withUpdateTime(entity.time())
+                        .withEntityClassVersion(entityClass.version())
+                        .withDeleted(true)
                         .withVersion(entity.version());
 
                     fullEntityClassInformation(storageEntityBuilder, entityClass);
@@ -264,23 +268,70 @@ public class SQLMasterStorage implements MasterStorage {
         }
     }
 
-    private IEntityValue toEntityValue(StorageEntity storageEntity, IEntityClass entityClass) throws SQLException {
+    // 储存字段转换为逻辑字段.
+    private IEntityValue toEntityValue(MasterStorageEntity masterStorageEntity, IEntityClass entityClass) throws SQLException {
+        JSONObject object = JSON.parseObject(masterStorageEntity.getAttribute());
 
-        IEntityClass current = entityClass;
-        Map<String, IEntityField> fieldTable = new HashMap();
-        while (current != null) {
-            current.fields().stream().forEach(f -> {
-                fieldTable.put(Long.toString(f.id()), f);
-            });
-            if (current.father().isPresent()) {
-                current = current.father().get();
-            } else {
-                // break
-                current = null;
+        long fieldId;
+        IEntityField field = null;
+        Optional<IEntityField> fieldOp = null;
+        StorageStrategy storageStrategy;
+        StorageValue newStorageValue;
+        StorageValue oldStorageValue;
+        // key 为物理储存名称,值为构造出的储存值.
+        Map<String, EntityValuePack> storageValueCache = new HashMap<>(object.size());
+
+        for (String storageName : object.keySet()) {
+            try {
+                // 为了找出物理名称中的逻辑字段名称.
+                fieldId = Long.parseLong(AnyStorageValue.getInstance(storageName).logicName());
+                fieldOp = entityClass.field(fieldId);
+
+                if (!fieldOp.isPresent()) {
+                    continue;
+                } else {
+                    field = fieldOp.get();
+                }
+
+                storageStrategy = this.storageStrategyFactory.getStrategy(field.type());
+                newStorageValue = StorageValueFactory.buildStorageValue(
+                    storageStrategy.storageType(),
+                    AnyStorageValue.getInstance(storageName).storageName(),
+                    object.get(storageName));
+
+                // 如果是多值.使用 stick 追加.
+                if (storageStrategy.isMultipleStorageValue()) {
+                    Optional<StorageValue> oldStorageValueOp = Optional.ofNullable(
+                        storageValueCache.get(String.valueOf(field.id()))
+                    ).map(x -> x.storageValue);
+
+                    if (oldStorageValueOp.isPresent()) {
+                        oldStorageValue = oldStorageValueOp.get();
+                        storageValueCache.put(
+                            String.valueOf(field.id()),
+                            new EntityValuePack(field, oldStorageValue.stick(newStorageValue), storageStrategy));
+                    } else {
+                        storageValueCache.put(
+                            String.valueOf(field.id()),
+                            new EntityValuePack(field, newStorageValue, storageStrategy));
+                    }
+                } else {
+                    // 单值
+                    storageValueCache.put(String.valueOf(field.id()),
+                        new EntityValuePack(field, newStorageValue, storageStrategy));
+                }
+
+            } catch (Exception ex) {
+                throw new SQLException(ex.getMessage(), ex);
             }
         }
 
-        return entityValueBuilder.build(storageEntity.getId(), fieldTable, storageEntity.getAttribute());
+        IEntityValue values = EntityValue.build();
+        storageValueCache.values().stream().forEach(e -> {
+            values.addValue(e.strategy.toLogicValue(e.logicField, e.storageValue));
+        });
+
+        return values;
 
     }
 
@@ -294,7 +345,7 @@ public class SQLMasterStorage implements MasterStorage {
             storageStrategy = storageStrategyFactory.getStrategy(logicValue.getField().type());
             storageValue = storageStrategy.toStorageValue(logicValue);
             while (storageValue != null) {
-                object.put(FieldDefine.ATTRIBUTE_PREFIX + storageValue.storageName(), storageValue.value());
+                object.put(AnyStorageValue.ATTRIBUTE_PREFIX + storageValue.storageName(), storageValue.value());
                 storageValue = storageValue.next();
             }
         }
@@ -302,7 +353,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     }
 
-    private Optional<IEntity> buildEntityFromStorageEntity(StorageEntity se, IEntityClass entityClass) throws SQLException {
+    private Optional<IEntity> buildEntityFromStorageEntity(MasterStorageEntity se, IEntityClass entityClass) throws SQLException {
         if (se == null) {
             return Optional.empty();
         }
@@ -334,7 +385,7 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     // 填充事务信息.
-    private void fullTransactionInformation(StorageEntity.Builder entityBuilder, TransactionResource resource) {
+    private void fullTransactionInformation(MasterStorageEntity.Builder entityBuilder, TransactionResource resource) {
         Optional<Transaction> tOp = resource.getTransaction();
         if (tOp.isPresent()) {
             entityBuilder.withTx(tOp.get().id())
@@ -348,9 +399,9 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     // 填充类型信息
-    private void fullEntityClassInformation(StorageEntity.Builder storageEntityBuilder, IEntityClass entityClass) {
-        IEntityClass[] tileEntityClasses = IEntityClassHelper.paveEntityClass(entityClass);
-        long[] tileEntityClassesIds = Arrays.stream(tileEntityClasses).mapToLong(ecs -> ecs.id()).toArray();
+    private void fullEntityClassInformation(MasterStorageEntity.Builder storageEntityBuilder, IEntityClass entityClass) {
+        Collection<IEntityClass> family = entityClass.family();
+        long[] tileEntityClassesIds = family.stream().mapToLong(ecs -> ecs.id()).toArray();
         storageEntityBuilder.withEntityClasses(tileEntityClassesIds);
     }
 
@@ -365,7 +416,7 @@ public class SQLMasterStorage implements MasterStorage {
         private long startTime;
         private long endTime;
         private int pageSize;
-        private List<StorageEntity> buffer;
+        private List<MasterStorageEntity> buffer;
 
         public IEntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime) {
             this(entityClass, startId, startTime, endTime, DEFAULT_PAGE_SIZE);
@@ -409,7 +460,7 @@ public class SQLMasterStorage implements MasterStorage {
         private void load() throws SQLException {
 
             transactionExecutor.execute((resource, hint) -> {
-                Collection<StorageEntity> storageEntities =
+                Collection<MasterStorageEntity> storageEntities =
                     BatchQueryExecutor.build(tableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
                         .execute(startId);
 
@@ -432,178 +483,16 @@ public class SQLMasterStorage implements MasterStorage {
         }
     }
 
-//    @Override
-//    public QueryIterator newIterator(
-//        IEntityClass entityClass,
-//        long startTimeMs,
-//        long endTimeMs,
-//        ExecutorService threadPool,
-//        int batchTimeout,
-//        int pageSize,
-//        boolean filterSearchable) throws SQLException {
-//
-//        List<DataSource> dataSources = new ArrayList<>();
-//        dataSources.add(masterDataSource);
-//
-//        List<DataSourceSummary> dataSourceSummaries = new LinkedList<>();
-//        BatchCondition batchCondition = new BatchCondition(startTimeMs, endTimeMs, entityClass);
-//        for (int i = 0; i < dataSources.size(); i++) {
-//            List<String> tables = new ArrayList<>();
-//
-//            tables.add(tableName);
-//
-//            CountDownLatch latch = new CountDownLatch(tables.size());
-//            List<Future<TableSummary>> futures = new ArrayList<Future<TableSummary>>(tables.size());
-//            for (String tableName : tables) {
-//                futures.add(threadPool.submit(
-//                    new CountByTableSummaryCallable(latch, batchCondition, tableName, batchTimeout)));
-//            }
-//
-//            try {
-//                if (!latch.await(batchTimeout, TimeUnit.MILLISECONDS)) {
-//                    for (Future<TableSummary> f : futures) {
-//                        f.cancel(true);
-//                    }
-//
-//                    throw new SQLException("Query failed, timeout.");
-//                }
-//            } catch (InterruptedException e) {
-//                throw new SQLException(e.getMessage(), e);
-//            }
-//            if (futures.size() > 0) {
-//                List<TableSummary> tableSummaries = new ArrayList<>();
-//                for (Future<TableSummary> f : futures) {
-//                    try {
-//                        TableSummary tableSummary = f.get();
-//                        if (null != tableSummary && tableSummary.getCount() > 0) {
-//                            tableSummaries.add(tableSummary);
-//                        }
-//                    } catch (Exception e) {
-//                        throw new SQLException(e.getMessage(), e);
-//                    }
-//                }
-//                if (tableSummaries.size() > 0) {
-//                    DataSourceSummary dataSourceSummary = new DataSourceSummary(dataSources.get(i),
-//                        String.format("%s-%d", dataSourceName, i), tableSummaries);
-//                    dataSourceSummaries.add(dataSourceSummary);
-//                }
-//            }
-//        }
-//
-//        return 0 < dataSourceSummaries.size() ?
-//            new DataQueryIterator(batchCondition, dataSourceSummaries, this, threadPool,
-//                batchTimeout, pageSize, filterSearchable) : null;
-//    }
+    // 临时解析结果.
+    static class EntityValuePack {
+        private IEntityField logicField;
+        private StorageValue storageValue;
+        private StorageStrategy strategy;
 
-
-//    /**
-//     * 统一EntityClass在每一个库->表中的数量
-//     */
-//    private class CountByTableSummaryCallable implements Callable<TableSummary> {
-//
-//        private CountDownLatch latch;
-//
-//        private BatchCondition batchCondition;
-//
-//        private String tableName;
-//
-//        private int timeout;
-//
-//        public CountByTableSummaryCallable(CountDownLatch latch, BatchCondition batchCondition, String tableName, int timeout) {
-//            this.latch = latch;
-//            this.batchCondition = batchCondition;
-//            this.timeout = timeout;
-//            this.tableName = tableName;
-//        }
-//
-//        @Override
-//        @SuppressWarnings("unchecked")
-//        public TableSummary call() throws Exception {
-//            try {
-//                return (TableSummary) transactionExecutor.execute(
-//                    (resource, hint) -> {
-//
-//                        TableSummary tableSummary = new TableSummary(tableName);
-//
-//                        Optional<Integer> integer =
-//                            BatchQueryCountExecutor.build(
-//                                tableName,
-//                                resource,
-//                                timeout,
-//                                batchCondition.getEntityClass().id(),
-//                                batchCondition.getStartTime(),
-//                                batchCondition.getEndTime()).execute(1L);
-//
-//                        if (integer.isPresent()) {
-//                            tableSummary.setCount(integer.get());
-//                            return tableSummary;
-//                        }
-//                        throw new SQLException("query count failed, empty result.");
-//                    });
-//            } finally {
-//                latch.countDown();
-//            }
-//        }
-//    }
-//
-//
-//    /**
-//     *
-//     */
-//    public class BathQueryByTableSummaryCallable implements Callable<List<IEntity>> {
-//
-//        private CountDownLatch latch;
-//
-//        private BatchCondition batchCondition;
-//
-//        private String tableName;
-//
-//        private long startId;
-//
-//        private int pageSize;
-//
-//        private DataSource dataSource;
-//
-//        private int timeout;
-//
-//        public BathQueryByTableSummaryCallable(BatchCondition batchCondition, long startId, int pageSize, DataSource dataSource, String tableName, int timeout) {
-//            this.batchCondition = batchCondition;
-//            this.startId = startId;
-//            this.pageSize = pageSize;
-//            this.dataSource = dataSource;
-//            this.tableName = tableName;
-//            this.timeout = timeout;
-//        }
-//
-//        public void setLatch(CountDownLatch latch) {
-//            this.latch = latch;
-//        }
-//
-//        @Override
-//        @SuppressWarnings("unchecked")
-//        public List<IEntity> call() throws Exception {
-//            try {
-//                return (List<IEntity>) transactionExecutor.execute(
-//                    (resource, hint) -> {
-//
-//                        Collection<StorageEntity> seCollection = BatchQueryExecutor.build(tableName, resource, timeout,
-//                            batchCondition.getEntityClass().id(), batchCondition.getStartTime(), batchCondition.getEndTime(),
-//                            startId, pageSize).execute(1L);
-//
-//                        List<IEntity> entities = new ArrayList<>(seCollection.size());
-//                        for (StorageEntity se : seCollection) {
-//                            Optional<IEntity> entityOp = buildEntityFromStorageEntity(se, batchCondition.getEntityClass());
-//                            if (entityOp.isPresent()) {
-//                                entities.add(entityOp.get());
-//                            } else {
-//                                throw new SQLException("batch query failed, empty result.");
-//                            }
-//                        }
-//                        return entities;
-//                    });
-//            } finally {
-//                latch.countDown();
-//            }
-//        }
-//    }
+        public EntityValuePack(IEntityField logicField, StorageValue storageValue, StorageStrategy strategy) {
+            this.logicField = logicField;
+            this.storageValue = storageValue;
+            this.strategy = strategy;
+        }
+    }
 }

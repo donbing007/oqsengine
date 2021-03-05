@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,25 +38,25 @@ public class EntityClassStorageBuilderUtils {
      */
     public static List<EntityClassStorage> protoToStorageList(EntityClassSyncRspProto entityClassSyncRspProto) {
         Map<Long, EntityClassStorage> temp = entityClassSyncRspProto.getEntityClassesList().stream().map(
-                ecs -> {
-                    EntityClassStorage e = protoValuesToLocalStorage(ecs);
-                    return e;
-                }
+            ecs -> {
+                EntityClassStorage e = protoValuesToLocalStorage(ecs);
+                return e;
+            }
         ).collect(Collectors.toMap(EntityClassStorage::getId, s1 -> s1, (s1, s2) -> s1));
 
         return temp.values().stream().peek(
-                v -> {
-                    Long fatherId = v.getFatherId();
-                    while (null != fatherId && fatherId >= MIN_ID) {
-                        EntityClassStorage entityClassStorage = temp.get(fatherId);
-                        if (null == entityClassStorage) {
-                            throw new MetaSyncClientException(
-                                    String.format("father entityClass : [%d] missed.", fatherId), BUSINESS_HANDLER_ERROR.ordinal());
-                        }
-                        v.addAncestors(fatherId);
-                        fatherId = entityClassStorage.getFatherId();
+            v -> {
+                Long fatherId = v.getFatherId();
+                while (null != fatherId && fatherId >= MIN_ID) {
+                    EntityClassStorage entityClassStorage = temp.get(fatherId);
+                    if (null == entityClassStorage) {
+                        throw new MetaSyncClientException(
+                            String.format("father entityClass : [%d] missed.", fatherId), BUSINESS_HANDLER_ERROR.ordinal());
                     }
+                    v.addAncestors(fatherId);
+                    fatherId = entityClassStorage.getFatherId();
                 }
+            }
         ).collect(Collectors.toList());
     }
 
@@ -110,15 +109,15 @@ public class EntityClassStorageBuilderUtils {
                 relation.setRelationType(r.getRelationType());
                 relation.setIdentity(r.getIdentity());
                 relation.setEntityField(
-                        EntityField.Builder.anEntityField()
-                                .withId(r.getId())
-                                .withFieldType(FieldType.LONG)
-                                .withName(r.getEntityFieldCode())
-                                .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
-                                .build()
+                    EntityField.Builder.anEntityField()
+                        .withId(r.getId())
+                        .withFieldType(FieldType.LONG)
+                        .withName(r.getEntityFieldCode())
+                        .withConfig(FieldConfig.Builder.anFieldConfig().withSearchable(true).build())
+                        .build()
                 );
 
-                relations.add(oqsRelation);
+                relations.add(relation);
             }
         }
         storage.setRelations(relations);
@@ -133,13 +132,13 @@ public class EntityClassStorageBuilderUtils {
                 }
 
                 EntityField.Builder builder = EntityField.Builder.anEntityField()
-                        .withId(eid)
-                        .withName(e.getName())
-                        .withCnName(e.getCname())
-                        .withFieldType(FieldType.fromRawType(e.getFieldType().name()))
-                        .withDictId(e.getDictId())
-                        .withDefaultValue(e.getDefaultValue())
-                        .withConfig(toFieldConfig(e.getFieldConfig()));
+                    .withId(eid)
+                    .withName(e.getName())
+                    .withCnName(e.getCname())
+                    .withFieldType(FieldType.fromRawType(e.getFieldType().name()))
+                    .withDictId(e.getDictId())
+                    .withDefaultValue(e.getDefaultValue())
+                    .withConfig(toFieldConfig(e.getFieldConfig()));
 
                 fields.add(builder.build());
             }
@@ -156,17 +155,18 @@ public class EntityClassStorageBuilderUtils {
      */
     private static FieldConfig toFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig fieldConfig) {
         return FieldConfig.Builder.anFieldConfig()
-                .withSearchable(fieldConfig.getSearchable())
-                .withMax(fieldConfig.getMax())
-                .withMin(fieldConfig.getMin())
-                .withPrecision(fieldConfig.getPrecision())
-                .withIdentifie(fieldConfig.getIdentifier())
-                .withRequired(fieldConfig.getIsRequired())
-                .withValidateRegexString(fieldConfig.getValidateRegexString())
-                .withSplittable(fieldConfig.getIsSplittable())
-                .withDelimiter(fieldConfig.getDelimiter())
-                .withDisplayType(fieldConfig.getDisplayType())
-                .withFieldSense(FieldConfig.FieldSense.getInstance(fieldConfig.getMetaFieldSenseValue()))
-                .build();
+            .withSearchable(fieldConfig.getSearchable())
+            .withMax(fieldConfig.getMax())
+            .withMin(fieldConfig.getMin())
+            .withPrecision(fieldConfig.getPrecision())
+            .withIdentifie(fieldConfig.getIdentifier())
+            .withRequired(fieldConfig.getIsRequired())
+            .withValidateRegexString(fieldConfig.getValidateRegexString())
+            .withSplittable(fieldConfig.getIsSplittable())
+            .withDelimiter(fieldConfig.getDelimiter())
+            .withDisplayType(fieldConfig.getDisplayType())
+            .withFieldSense(FieldConfig.FieldSense.getInstance(fieldConfig.getMetaFieldSenseValue()))
+            .build();
     }
 }
+

@@ -9,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
+import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 
@@ -87,7 +88,7 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
     @Override
     public Collection<EntityRef> execute(Conditions conditions) throws SQLException {
         String where = conditionsBuilderFactory.getBuilder().build(entityClass, conditions);
-        String sql = buildSQL(where, entityClass.level());
+        String sql = buildSQL(where);
 
         try (PreparedStatement st = getResource().value().prepareStatement(
             sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
@@ -122,7 +123,7 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
         return ref;
     }
 
-    private String buildSQL(String where, int level) {
+    private String buildSQL(String where) {
         StringBuilder sql = new StringBuilder();
 
         /**
@@ -134,11 +135,6 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
                 String.join(
                     ",",
                     FieldDefine.ID,
-                    FieldDefine.ENTITYCLASS_LEVEL_0,
-                    FieldDefine.ENTITYCLASS_LEVEL_1,
-                    FieldDefine.ENTITYCLASS_LEVEL_2,
-                    FieldDefine.ENTITYCLASS_LEVEL_3,
-                    FieldDefine.ENTITYCLASS_LEVEL_4,
                     FieldDefine.OP, FieldDefine.OQS_MAJOR));
         if (sort != null && !sort.isOutOfOrder() && !sort.getField().config().isIdentifie()) {
 
@@ -151,16 +147,16 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
             sql.append(", JSON_UNQUOTE(JSON_EXTRACT(")
                 .append(FieldDefine.ATTRIBUTE)
                 .append(", '$.")
-                .append(FieldDefine.ATTRIBUTE_PREFIX)
+                .append(AnyStorageValue.ATTRIBUTE_PREFIX)
                 .append(storageStrategy.toStorageNames(sort.getField()).stream().findFirst().get())
                 .append("')) AS ").append(SELECT_SORT_COLUMN);
 
         }
         sql.append(" FROM ").append(getTableName())
             .append(" WHERE (")
-            .append(FieldDefine.COMMITID).append(" >= ?")
-            .append(" AND ")
             .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
+            .append(" AND ")
+            .append(FieldDefine.COMMITID).append(" >= ?")
             .append(")");
         if (where.length() > 0 && !where.isEmpty()) {
             sql.append(" AND (").append(where).append(")");

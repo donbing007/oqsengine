@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -151,42 +152,57 @@ public class SphinxQLHelper {
      */
     public static String buildFullPreciseQuery(StorageValue value, boolean useGroupName) {
         StringBuilder buff = new StringBuilder();
+        Map.Entry<String, String> shortNameWrapper = parseShortStorageName(value.shortStorageName());
 
-        buff.append('\"');
         if (StorageType.STRING == value.type()) {
-            buff.append(encodeSpecialCharset(value.value().toString()));
+            buff.append(shortNameWrapper.getKey())
+                .append(" << ")
+                .append(encodeSpecialCharset(value.value().toString()))
+                .append(" << ")
+                .append(shortNameWrapper.getValue());
         } else {
-            buff.append(value.value().toString());
+            buff.append(shortNameWrapper.getKey()).append(value.value().toString()).append(shortNameWrapper.getValue());
         }
-        buff.append(ATTRIBUTE_FULL_FIELD_PREFIX);
-        if (useGroupName) {
-            buff.append(value.groupStorageName()).append("*");
-        } else {
-            buff.append(value.storageName());
-        }
-        buff.append("\"");
+
         return buff.toString();
     }
 
     /**
      * 构造 sphinxQL 全文索引中的模糊查询语句.
-     * (ZONESPAN:{字段组名}F{字段组名} *value*)
-     *
-     * @param value
-     * @return
+     * 物理名称的62进制,拆分为前6后6.
+     * aZl8N0{空格}test{空格}y58M7S
+     * 只能处理StorageValue.STRING类型.
+     * @see StorageType
      */
     public static String buildFullFuzzyQuery(StorageValue value, boolean useGroupName) {
         StringBuilder buff = new StringBuilder();
-        buff.append("(ZONESPAN:").append(ATTRIBUTE_FULL_FIELD_PREFIX).append(value.groupStorageName()).append(" ");
+        Map.Entry<String, String> shortNameWrapper = parseShortStorageName(value.shortStorageName());
 
-        buff.append("\"*");
-        if (StorageType.STRING == value.type()) {
-            buff.append(encodeSpecialCharset(value.value().toString()));
-        } else {
-            buff.append(value.value().toString());
-        }
-        buff.append('*');
-        buff.append("\")");
+        buff.append(shortNameWrapper.getKey())
+            .append(" << *")
+            .append(encodeSpecialCharset(value.value().toString()))
+            .append("* << ")
+            .append(shortNameWrapper.getValue());
+
         return buff.toString();
+    }
+
+    /**
+     * 分析出物理储存名称中的短名称前辍和后辍.
+     *
+     * @param shortStorageName 目标物理储存短名称.
+     * @return 分析结果.
+     */
+    public static Map.Entry<String, String> parseShortStorageName(String shortStorageName) {
+        final int mustSize = 12;
+        if (shortStorageName.length() < mustSize) {
+            throw new IllegalArgumentException(
+                String.format("Invalid short store name, must be more than 12 characters long.[%s]", shortStorageName));
+        }
+
+        int middle = shortStorageName.length() / 2 - 1;
+        return new AbstractMap.SimpleEntry<>(
+            shortStorageName.substring(0, middle + 1),
+            shortStorageName.substring(middle + 1));
     }
 }

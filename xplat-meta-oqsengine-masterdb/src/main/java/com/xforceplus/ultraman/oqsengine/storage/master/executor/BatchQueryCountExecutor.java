@@ -61,9 +61,6 @@ public class BatchQueryCountExecutor extends AbstractMasterExecutor<Long, Intege
             .append(" FROM ")
             .append(getTableName())
             .append(" WHERE ")
-            // 增加commitid的条件是为了可以应用到多列索引.
-            .append(FieldDefine.COMMITID).append(" >= 0")
-            .append(" AND ")
             .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
             .append(" AND ")
             .append(FieldDefine.DELETED).append(" = ").append("?")

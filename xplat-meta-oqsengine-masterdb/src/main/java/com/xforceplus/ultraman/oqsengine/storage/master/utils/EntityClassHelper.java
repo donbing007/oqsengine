@@ -23,18 +23,15 @@ public class EntityClassHelper {
     // (entity0 = ? and entity1 = ? ....)
     public static String buildEntityClassQuerySql(IEntityClass entityClass) {
         StringBuilder buff = new StringBuilder();
-        StringBuilder segment = new StringBuilder();
         buff.append("(");
         int emptyLen = buff.length();
-        IEntityClass currentEntityClass = entityClass;
-        for (int i = entityClass.level(); i >= 0; i--) {
+        entityClass.family().stream().forEach(es -> {
             if (buff.length() > emptyLen) {
                 buff.append(" AND ");
             }
-            segment.append(ENTITY_COLUMNS[i]).append(" = ").append(currentEntityClass.id());
-            buff.insert(0, segment.toString());
-            segment.delete(0, segment.length());
-        }
+            buff.append(ENTITY_COLUMNS[es.level()]).append(" = ").append(es.id());
+        });
+
         buff.append(")");
         return buff.toString();
     }

@@ -7,7 +7,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
  * @version 0.1 2020/2/22 16:29
  * @since 1.8
  */
-public interface IEntityField {
+public interface IEntityField extends Comparable<IEntityField> {
 
     /**
      * 字段标识.
@@ -66,5 +66,22 @@ public interface IEntityField {
      */
     default boolean acceptName(String name) {
         return name().equals(name);
+    }
+
+    /**
+     * 比较.
+     *
+     * @param target 比较目标.
+     * @return 小于0 当前小于target, 大于0 当前大于target,等于0两者相等.
+     */
+    @Override
+    default int compareTo(IEntityField target) {
+        if (this.id() < target.id()) {
+            return -1;
+        } else if (this.id() > target.id()) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 }

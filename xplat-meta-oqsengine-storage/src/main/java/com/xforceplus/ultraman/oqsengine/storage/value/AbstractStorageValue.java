@@ -108,8 +108,25 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
 
     @Override
     public String storageName() {
+        return doStorageName(logicName);
+    }
+
+    @Override
+    public String shortStorageName() {
+        // 必须等于的长度.
+        final int size = 11;
+        String nameRadix62 = radix10To62(Long.parseLong(logicName));
+        if (nameRadix62.length() != size) {
+            throw new IllegalArgumentException(
+                String.format("Unable to process field name, short name conversion failed.[%s]", location));
+        }
+
+        return doStorageName(nameRadix62);
+    }
+
+    private String doStorageName(String base) {
         StringBuilder buff = new StringBuilder();
-        buff.append(logicName)
+        buff.append(base)
             .append(this.type().getType());
         if (location != EMPTY_LOCATION) {
             buff.append(location);
@@ -195,5 +212,35 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
         }
 
         return index;
+    }
+
+    private static String radix10To62(long num) {
+        if (num == 0) {
+            return "0";
+        }
+        if (num < 0) {
+            throw new IllegalArgumentException("must be non-negative: " + num);
+        }
+        final int radix = 62;
+        char[] outs = new char[64];
+        int outsIndex = outs.length;
+        long quotient;
+        long remainder;
+        long mask = 10 + 26 - 1;
+        char c;
+        do {
+            quotient = num / radix;
+            remainder = num % radix;
+            if (remainder >= 0 && remainder <= 9) {
+                c = (char) ('0' + remainder);
+            } else if (remainder >= 10 && remainder <= mask) {
+                c = (char) ('a' + (remainder - 10));
+            } else {
+                c = (char) ('A' + (remainder - 36));
+            }
+            outs[--outsIndex] = c;
+            num = quotient;
+        } while (num > 0);
+        return new String(outs, outsIndex, outs.length - outsIndex);
     }
 }

@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.StorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 
@@ -23,7 +23,7 @@ import java.util.List;
  * date : 2020/11/18
  * @since : 1.8
  */
-public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<StorageEntity>> {
+public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<MasterStorageEntity>> {
 
     private IEntityClass entityClass;
     private long startTime;
@@ -39,14 +39,14 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
         this.pageSize = pageSize;
     }
 
-    public static Executor<Long, Collection<StorageEntity>> build(
+    public static Executor<Long, Collection<MasterStorageEntity>> build(
         String tableName, TransactionResource resource, long timeout,
         IEntityClass entityClass, long startTime, long endTime, int pageSize) {
         return new BatchQueryExecutor(tableName, resource, timeout, entityClass, startTime, endTime, pageSize);
     }
 
     @Override
-    public Collection<StorageEntity> execute(Long startId) throws SQLException {
+    public Collection<MasterStorageEntity> execute(Long startId) throws SQLException {
         String sql = buildSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
             st.setBoolean(1, false);
@@ -58,8 +58,8 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
 
             checkTimeout(st);
 
-            List<StorageEntity> entities = new ArrayList<>();
-            StorageEntity entity;
+            List<MasterStorageEntity> entities = new ArrayList<>();
+            MasterStorageEntity entity;
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
 
@@ -68,7 +68,7 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
                         entityClassIds[i] = rs.getLong(FieldDefine.ENTITYCLASS_LEVEL_LIST[i]);
                     }
 
-                    entity = StorageEntity.Builder.aStorageEntity()
+                    entity = MasterStorageEntity.Builder.aStorageEntity()
                         .withId(rs.getLong(FieldDefine.ID))
                         .withVersion(rs.getInt(FieldDefine.VERSION))
                         .withCreateTime(rs.getLong(FieldDefine.CREATE_TIME))
@@ -110,9 +110,6 @@ public class BatchQueryExecutor extends AbstractMasterExecutor<Long, Collection<
         sql.append(" FROM ")
             .append(getTableName())
             .append(" WHERE ")
-            // 增加commitid的条件是为了可以应用到多列索引.
-            .append(FieldDefine.COMMITID).append(" >= 0")
-            .append(" AND ")
             .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
             .append(" AND ")
             .append(FieldDefine.DELETED).append(" = ").append("?")

@@ -85,7 +85,7 @@ public class MeqNotMatchConditionBuilderTest {
                         new EntityField(1, "test", FieldType.LONG),
                         3L)
                 ),
-                FieldDefine.JSON_FIELDS + ".1L IN (1,2,3)"
+                FieldDefine.ATTRIBUTE + ".1L IN (1,2,3)"
             ),
             new Case(
                 new Condition(
@@ -95,7 +95,7 @@ public class MeqNotMatchConditionBuilderTest {
                         new EntityField(1, "test", FieldType.STRING),
                         "!@#$%^&*()300")
                 ),
-                FieldDefine.JSON_FIELDS + ".1S IN ('！＠#＄%＾&＊（）300')"
+                FieldDefine.ATTRIBUTE + ".1S IN ('！＠#＄%＾&＊（）300')"
             )
         );
     }

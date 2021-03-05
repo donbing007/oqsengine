@@ -63,7 +63,7 @@ public class NotMatchConditionBuilderTest {
                     ConditionOperator.EQUALS,
                     new StringValue(new EntityField(Long.MAX_VALUE, "test", FieldType.STRING), "test")
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "S = 'test'"
+                FieldDefine.ATTRIBUTE + "." + Long.MAX_VALUE + "S = 'test'"
             ),
             new Case(
                 new Condition(
@@ -71,7 +71,7 @@ public class NotMatchConditionBuilderTest {
                     ConditionOperator.EQUALS,
                     new LongValue(new EntityField(Long.MAX_VALUE, "test", FieldType.LONG), 200L)
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "L = 200"
+                FieldDefine.ATTRIBUTE + "." + Long.MAX_VALUE + "L = 200"
             ),
             new Case(
                 new Condition(
@@ -79,8 +79,8 @@ public class NotMatchConditionBuilderTest {
                     ConditionOperator.EQUALS,
                     new DecimalValue(new EntityField(Long.MAX_VALUE, "test", FieldType.DECIMAL), new BigDecimal("123.246"))
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "L0 = 123 AND " +
-                    FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "L1 = 246000000000000000"
+                FieldDefine.ATTRIBUTE + "." + Long.MAX_VALUE + "L0 = 123 AND " +
+                    FieldDefine.ATTRIBUTE + "." + Long.MAX_VALUE + "L1 = 246000000000000000"
             ),
             new Case(
                 new Condition(
@@ -88,7 +88,7 @@ public class NotMatchConditionBuilderTest {
                     ConditionOperator.NOT_EQUALS,
                     new StringValue(new EntityField(Long.MAX_VALUE, "test", FieldType.STRING), "test")
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "S != 'test'"
+                FieldDefine.ATTRIBUTE + "." + Long.MAX_VALUE + "S != 'test'"
             ),
             new Case(
                 new Condition(
@@ -96,7 +96,7 @@ public class NotMatchConditionBuilderTest {
                     ConditionOperator.GREATER_THAN,
                     new LongValue(new EntityField(Long.MAX_VALUE, "test", FieldType.LONG), 200L)
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "L > 200"
+                FieldDefine.ATTRIBUTE + "." + Long.MAX_VALUE + "L > 200"
             ),
             new Case(
                 new Condition(
@@ -116,7 +116,7 @@ public class NotMatchConditionBuilderTest {
                         new EntityField(Long.MAX_VALUE, "test", FieldType.STRING),
                         "!@#$%^&*()300")
                 ),
-                FieldDefine.JSON_FIELDS + "." + Long.MAX_VALUE + "S = '！＠#＄%＾&＊（）300'"
+                FieldDefine.ATTRIBUTE + "." + Long.MAX_VALUE + "S = '！＠#＄%＾&＊（）300'"
             )
         );
     }

@@ -34,7 +34,7 @@ public class MeqNotMatchConditionBuilder extends SphinxQLConditionBuilder {
         if (condition.getField().config().isIdentifie()) {
             buff.append(FieldDefine.ID);
         } else {
-            buff.append(FieldDefine.JSON_FIELDS).append(".").append(sValue.storageName());
+            buff.append(FieldDefine.ATTRIBUTE).append(".").append(sValue.storageName());
         }
         buff.append(" IN (");
         buff.append(buildConditionValue(sValue, storageStrategy));

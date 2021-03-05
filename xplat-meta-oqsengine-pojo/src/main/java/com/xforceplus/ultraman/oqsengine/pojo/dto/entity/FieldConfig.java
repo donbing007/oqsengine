@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -401,7 +400,6 @@ public class FieldConfig implements Serializable {
             this.displayType = displayType;
             return this;
         }
-
 
         public FieldConfig build() {
             FieldConfig fieldConfig = new FieldConfig();

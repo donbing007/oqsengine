@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
 
 import java.sql.SQLException;
@@ -56,17 +56,18 @@ public interface MasterStorage extends Storage {
      * 注意,是否对最终结果排序由实现决定.
      * sort只是指定在返回结果中需要返回排序的依据值.
      *
-     * @param commitid   所有查询必须大于等于此提交号.
      * @param conditions 搜索条件.
+     * @param entityClass 目标类型.
+     * @param config 查询配置.
      * @return 搜索结果列表.
      */
-    Collection<EntityRef> select(long commitid, Conditions conditions, IEntityClass entityClass, Sort sort)
+    Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config)
         throws SQLException;
 
     /**
      * 判断指定的实例是否存在.
      * @param id 目标标识.
-     * @return
+     * @return true 存在,false不存在.
      * @throws SQLException
      */
     boolean exist(long id) throws SQLException;

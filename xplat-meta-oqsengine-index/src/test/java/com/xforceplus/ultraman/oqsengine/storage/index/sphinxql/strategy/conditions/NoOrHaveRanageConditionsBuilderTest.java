@@ -74,7 +74,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                FieldDefine.JSON_FIELDS + ".1L > 100 AND MATCH('@entityf =\"9223372036854775807\"')"
+                FieldDefine.ATTRIBUTE + ".1L > 100 AND MATCH('@entityf =\"9223372036854775807\"')"
             )
             ,
             new Case(
@@ -91,8 +91,8 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new LongValue(new EntityField(1, "c1", FieldType.LONG), 100L)
                     )
                 ),
-                FieldDefine.JSON_FIELDS + ".1L > 100 AND entity = 9223372036854775807 "
-                    + SqlKeywordDefine.AND + " MATCH('(@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\"))')"
+                FieldDefine.ATTRIBUTE + ".1L > 100 AND entity = 9223372036854775807 "
+                    + SqlKeywordDefine.AND + " MATCH('(@" + FieldDefine.ATTRIBUTEF + " (ZONESPAN:F2S \"*test*\"))')"
             ),
 
             new Case(
@@ -103,7 +103,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new DecimalValue(new EntityField(3, "c3", FieldType.DECIMAL), new BigDecimal("123.56789"))
                     )
                 ),
-                "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 567890000000000000)) AND MATCH('@entityf =\"9223372036854775807\"')"
+                "((" + FieldDefine.ATTRIBUTE + ".3L0 > 123) OR (" + FieldDefine.ATTRIBUTE + ".3L0 = 123 AND " + FieldDefine.ATTRIBUTE + ".3L1 > 567890000000000000)) AND MATCH('@entityf =\"9223372036854775807\"')"
             )
             ,
             new Case(
@@ -120,8 +120,8 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "test")
                     )
                 ),
-                "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".3L1 > 567890000000000000))" +
-                    " AND entity = 9223372036854775807 AND MATCH('(@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\"))')"
+                "((" + FieldDefine.ATTRIBUTE + ".3L0 > 123) OR (" + FieldDefine.ATTRIBUTE + ".3L0 = 123 AND " + FieldDefine.ATTRIBUTE + ".3L1 > 567890000000000000))" +
+                    " AND entity = 9223372036854775807 AND MATCH('(@" + FieldDefine.ATTRIBUTEF + " (ZONESPAN:F2S \"*test*\"))')"
             )
             ,
             new Case(
@@ -140,7 +140,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new StringValue(new EntityField(2, "c2", FieldType.STRING), "v3")
                     )
                 ),
-                "entity = 9223372036854775807 AND jsonfields.2S = 'v3' AND MATCH('(@" + FieldDefine.FULL_FIELDS + " (\"v1F1S\" | \"v2F1S\") \"v3F2S\")')"
+                "entity = 9223372036854775807 AND jsonfields.2S = 'v3' AND MATCH('(@" + FieldDefine.ATTRIBUTEF + " (\"v1F1S\" | \"v2F1S\") \"v3F2S\")')"
             )
             ,
             new Case(
@@ -165,9 +165,9 @@ public class NoOrHaveRanageConditionsBuilderTest {
                         new LongValue(new EntityField(1, "c1", FieldType.LONG, FieldConfig.build().identifie(true)), 3L)
                     )
                 ),
-                "((" + FieldDefine.JSON_FIELDS + ".3L0 > 123) OR (" + FieldDefine.JSON_FIELDS + ".3L0 = 123 AND "
-                    + FieldDefine.JSON_FIELDS + ".3L1 > 567890000000000000)) " + SqlKeywordDefine.AND + " entity = 9223372036854775807 AND id IN (1,2,3)" +
-                    " AND MATCH('(@" + FieldDefine.FULL_FIELDS + " (ZONESPAN:F2S \"*test*\"))')"
+                "((" + FieldDefine.ATTRIBUTE + ".3L0 > 123) OR (" + FieldDefine.ATTRIBUTE + ".3L0 = 123 AND "
+                    + FieldDefine.ATTRIBUTE + ".3L1 > 567890000000000000)) " + SqlKeywordDefine.AND + " entity = 9223372036854775807 AND id IN (1,2,3)" +
+                    " AND MATCH('(@" + FieldDefine.ATTRIBUTEF + " (ZONESPAN:F2S \"*test*\"))')"
             )
             ,
             new Case(

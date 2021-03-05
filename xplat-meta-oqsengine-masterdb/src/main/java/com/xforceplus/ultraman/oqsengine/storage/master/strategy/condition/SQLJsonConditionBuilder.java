@@ -8,11 +8,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-
-import java.util.Arrays;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator.MULTIPLE_EQUALS;
 
@@ -79,7 +78,7 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
 
         sql.append(FieldDefine.ATTRIBUTE)
             .append("->>'$.")
-            .append(FieldDefine.ATTRIBUTE_PREFIX).append(
+            .append(AnyStorageValue.ATTRIBUTE_PREFIX).append(
             storageStrategy.toStorageNames(field).stream().findFirst().get())
             .append("\' ")
             .append(condition.getOperator().getSymbol())
@@ -129,7 +128,6 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
         '\"',
         '\\',
         '%',
-        '_',
     };
 
     /**
@@ -146,7 +144,7 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
             for (char escapeC : ESCAPE_CHARACTER) {
                 if (c == escapeC) {
                     needEncode = true;
-                    buff.append('\\').append(c);
+                    buff.append("\\").append(c);
                     break;
                 }
             }

@@ -18,7 +18,7 @@ public class EmptyConditionsBuilder implements ConditionsBuilder<String> {
     public String build(IEntityClass entityClass, Conditions conditions) {
         StringBuilder buff = new StringBuilder();
         buff.append("MATCH('@")
-            .append(FieldDefine.ENTITY_F)
+            .append(FieldDefine.ENTITYCLASSF)
             .append(" =\"")
             .append(entityClass.id())
             .append("\"')");

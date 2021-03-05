@@ -50,8 +50,8 @@ public class LtEqNotMatchDecimalConditionBuilderTest {
                 )
             )
         );
-        Assert.assertEquals("((" + FieldDefine.JSON_FIELDS + ".1L0 < 123) OR (" + FieldDefine.JSON_FIELDS
-            + ".1L0 = 123 AND " + FieldDefine.JSON_FIELDS + ".1L1 <= 456000000000000000))", conditionSql);
+        Assert.assertEquals("((" + FieldDefine.ATTRIBUTE + ".1L0 < 123) OR (" + FieldDefine.ATTRIBUTE
+            + ".1L0 = 123 AND " + FieldDefine.ATTRIBUTE + ".1L1 <= 456000000000000000))", conditionSql);
     }
 
 } 

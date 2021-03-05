@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.storage.master.define;
+package com.xforceplus.ultraman.oqsengine.storage.master.pojo;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -7,7 +7,7 @@ import java.util.Objects;
 /**
  * 储存定义.
  */
-public class StorageEntity implements Serializable {
+public class MasterStorageEntity implements Serializable {
     private long id;
     private long[] entityClasses;
     private int entityClassVersion;
@@ -74,10 +74,10 @@ public class StorageEntity implements Serializable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof StorageEntity)) {
+        if (!(o instanceof MasterStorageEntity)) {
             return false;
         }
-        StorageEntity that = (StorageEntity) o;
+        MasterStorageEntity that = (MasterStorageEntity) o;
         return getId() == that.getId() &&
             getEntityClassVersion() == that.getEntityClassVersion() &&
             getTx() == that.getTx() &&
@@ -192,21 +192,21 @@ public class StorageEntity implements Serializable {
             return this;
         }
 
-        public StorageEntity build() {
-            StorageEntity storageEntity = new StorageEntity();
-            storageEntity.updateTime = this.updateTime;
-            storageEntity.deleted = this.deleted;
-            storageEntity.op = this.op;
-            storageEntity.version = this.version;
-            storageEntity.entityClassVersion = this.entityClassVersion;
-            storageEntity.id = this.id;
-            storageEntity.tx = this.tx;
-            storageEntity.commitid = this.commitid;
-            storageEntity.createTime = this.createTime;
-            storageEntity.oqsMajor = this.oqsMajor;
-            storageEntity.attribute = this.attribute;
-            storageEntity.entityClasses = this.entityClasses;
-            return storageEntity;
+        public MasterStorageEntity build() {
+            MasterStorageEntity masterStorageEntity = new MasterStorageEntity();
+            masterStorageEntity.updateTime = this.updateTime;
+            masterStorageEntity.deleted = this.deleted;
+            masterStorageEntity.op = this.op;
+            masterStorageEntity.version = this.version;
+            masterStorageEntity.entityClassVersion = this.entityClassVersion;
+            masterStorageEntity.id = this.id;
+            masterStorageEntity.tx = this.tx;
+            masterStorageEntity.commitid = this.commitid;
+            masterStorageEntity.createTime = this.createTime;
+            masterStorageEntity.oqsMajor = this.oqsMajor;
+            masterStorageEntity.attribute = this.attribute;
+            masterStorageEntity.entityClasses = this.entityClasses;
+            return masterStorageEntity;
         }
     }
 }

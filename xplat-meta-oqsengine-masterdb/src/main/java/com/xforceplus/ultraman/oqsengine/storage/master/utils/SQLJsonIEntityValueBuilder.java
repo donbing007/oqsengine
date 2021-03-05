@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
@@ -91,7 +90,7 @@ public class SQLJsonIEntityValueBuilder implements IEntityValueBuilder<String> {
             }
         }
 
-        IEntityValue values = new EntityValue(id);
+        IEntityValue values = EntityValue.build();
         storageValueCache.values().stream().forEach(e -> {
             values.addValue(e.strategy.toLogicValue(e.logicField, e.storageValue));
         });
@@ -115,7 +114,7 @@ public class SQLJsonIEntityValueBuilder implements IEntityValueBuilder<String> {
 
     // 兼容老版本数据.
     private String compatibleStorageName(String name) {
-        if (name.startsWith(FieldDefine.ATTRIBUTE_PREFIX)) {
+        if (name.startsWith(AnyStorageValue.ATTRIBUTE_PREFIX)) {
             //去除开头的F.
             return name.substring(1);
         } else {

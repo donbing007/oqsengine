@@ -2,8 +2,6 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
-import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPreciseShardingAlgorithm;
-import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
@@ -13,9 +11,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
@@ -25,7 +24,6 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJ
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -33,12 +31,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.zaxxer.hikari.HikariDataSource;
 import io.lettuce.core.RedisClient;
-import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
-import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
-import org.apache.shardingsphere.api.config.sharding.strategy.StandardShardingStrategyConfiguration;
-import org.apache.shardingsphere.shardingjdbc.api.ShardingDataSourceFactory;
-import org.apache.shardingsphere.shardingjdbc.jdbc.core.datasource.ShardingDataSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -52,14 +46,14 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.time.Month;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Properties;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * @author dongbin
@@ -77,81 +71,100 @@ public class SQLMasterStorageQueryTest {
     private SQLMasterStorage storage;
     private RedisClient redisClient;
 
-    private static IEntityField idField = new EntityField(Long.MAX_VALUE - 100, "id", FieldType.LONG, FieldConfig.build().identifie(true));
-    private static IEntityField longField = new EntityField(Long.MAX_VALUE, "long", FieldType.LONG);
-    private static IEntityField stringField = new EntityField(Long.MAX_VALUE - 1, "string", FieldType.STRING);
-    private static IEntityField boolField = new EntityField(Long.MAX_VALUE - 2, "bool", FieldType.BOOLEAN);
-    private static IEntityField dateTimeField = new EntityField(Long.MAX_VALUE - 3, "datetime", FieldType.DATETIME);
-    private static IEntityField decimalField = new EntityField(Long.MAX_VALUE - 4, "decimal", FieldType.DECIMAL);
-    private static IEntityField enumField = new EntityField(Long.MAX_VALUE - 5, "enum", FieldType.ENUM);
-    private static IEntityField stringsField = new EntityField(Long.MAX_VALUE - 6, "strings", FieldType.STRINGS);
+    //-------------level 0--------------------
+    private IEntityField l0LongField = EntityField.Builder.anEntityField()
+        .withId(1000)
+        .withFieldType(FieldType.LONG)
+        .withName("l0-long")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l0StringField = EntityField.Builder.anEntityField()
+        .withId(1001)
+        .withFieldType(FieldType.STRING)
+        .withName("l0-string")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l0StringsField = EntityField.Builder.anEntityField()
+        .withId(1002)
+        .withFieldType(FieldType.STRINGS)
+        .withName("l0-strings")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l0EnumField = EntityField.Builder.anEntityField()
+        .withId(1003)
+        .withFieldType(FieldType.ENUM)
+        .withName("l0-enum")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l0DecimalField = EntityField.Builder.anEntityField()
+        .withId(1004)
+        .withFieldType(FieldType.DECIMAL)
+        .withName("l0-decimal")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l0DatetimeField = EntityField.Builder.anEntityField()
+        .withId(1005)
+        .withFieldType(FieldType.DATETIME)
+        .withName("l0-datetime")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
+        .withId(1)
+        .withLevel(0)
+        .withCode("l0")
+        .withField(l0LongField)
+        .withField(l0StringField)
+        .withField(l0StringsField)
+        .withField(l0EnumField)
+        .withField(l0DecimalField)
+        .withField(l0DatetimeField)
+        .build();
+    private EntityClassRef l0EntityClassRef =
+        EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(l0EntityClass.id()).withEntityClassCode(l0EntityClass.code()).build();
 
-    private static IEntityClass entityClass = new EntityClass(Long.MAX_VALUE, "test",
-        Arrays.asList(longField, stringField, boolField, dateTimeField, decimalField, enumField, stringsField));
+    //-------------level 1--------------------
+    private IEntityField l1LongField = EntityField.Builder.anEntityField()
+        .withId(2000)
+        .withFieldType(FieldType.LONG)
+        .withName("l1-long")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l1StringField = EntityField.Builder.anEntityField()
+        .withId(2001)
+        .withFieldType(FieldType.STRING)
+        .withName("l1-string")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
+        .withId(2)
+        .withLevel(1)
+        .withCode("l1")
+        .withField(l1LongField)
+        .withField(l1StringField)
+        .withFather(l0EntityClass)
+        .build();
+    private EntityClassRef l1EntityClassRef =
+        EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(l1EntityClass.id()).withEntityClassCode(l1EntityClass.code()).build();
 
-    private static IEntity[] entityes;
+    //-------------level 2--------------------
+    private IEntityField l2LongField = EntityField.Builder.anEntityField()
+        .withId(3000)
+        .withFieldType(FieldType.LONG)
+        .withName("l2-long")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l2StringField = EntityField.Builder.anEntityField()
+        .withId(3001)
+        .withFieldType(FieldType.STRING)
+        .withName("l2-string")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityClass l2EntityClass = OqsEntityClass.Builder.anEntityClass()
+        .withId(3)
+        .withLevel(2)
+        .withCode("l2")
+        .withField(l2LongField)
+        .withField(l2StringField)
+        .withFather(l1EntityClass)
+        .build();
+    private EntityClassRef l2EntityClassRef =
+        EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(l2EntityClass.id()).withEntityClassCode(l2EntityClass.code()).build();
 
-    static {
-        entityes = new IEntity[5];
+    private List<IEntity> entityes;
 
-        long id = Long.MAX_VALUE;
-        IEntityValue values = new EntityValue(id);
-        values.addValues(Arrays.asList(
-            new LongValue(longField, 1L),
-            new StringValue(stringField, "v1"),
-            new BooleanValue(boolField, true),
-            new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1)),
-            new DecimalValue(decimalField, BigDecimal.ZERO), new EnumValue(enumField, "1"),
-            new StringsValue(stringsField, "value1", "value2"),
-            new EnumValue(enumField, "1")
-            )
-        );
-        entityes[0] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
-
-        id = Long.MAX_VALUE - 1;
-        values = new EntityValue(id);
-        values.addValues(Arrays.asList(new LongValue(longField, 2L), new StringValue(stringField, "v2"),
-            new BooleanValue(boolField, true),
-            new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 9, 0, 1)),
-            new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3"),
-            new EnumValue(enumField, "2")
-        ));
-        entityes[1] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
-
-        id = Long.MAX_VALUE - 2;
-        values = new EntityValue(id);
-        values.addValues(Arrays.asList(new LongValue(longField, 2L), new StringValue(stringField, "hello world"),
-            new BooleanValue(boolField, false),
-            new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 11, 18, 1)),
-            new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3"),
-            new EnumValue(enumField, "3")
-        ));
-        entityes[2] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
-
-        id = Long.MAX_VALUE - 3;
-        values = new EntityValue(id);
-        values.addValues(Arrays.asList(new LongValue(longField, 76L), new StringValue(stringField, "中文测试chinese test"),
-            new BooleanValue(boolField, false),
-            new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1)),
-            new DecimalValue(decimalField, BigDecimal.ONE), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3"),
-            new EnumValue(enumField, "4")
-        ));
-        entityes[3] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
-
-        id = Long.MAX_VALUE - 4;
-        values = new EntityValue(id);
-        values.addValues(Arrays.asList(new LongValue(longField, 86L), new StringValue(stringField, "\"@带有符号的中文@\"\'"),
-            new BooleanValue(boolField, false),
-            new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
-            new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN"),
-            new EnumValue(enumField, "5")
-        ));
-        entityes[4] = new Entity(id, entityClass, values, OqsVersion.MAJOR);
-    }
 
     @Before
     public void before() throws Exception {
@@ -183,18 +196,13 @@ public class SQLMasterStorageQueryTest {
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
         storageStrategyFactory.register(FieldType.STRINGS, new MasterStringsStorageStrategy());
 
-        SQLJsonIEntityValueBuilder entityValueBuilder = new SQLJsonIEntityValueBuilder();
-        ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
-
         SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
         sqlJsonConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
         sqlJsonConditionsBuilderFactory.init();
 
         storage = new SQLMasterStorage();
-        ReflectionTestUtils.setField(storage, "masterDataSource", ds);
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
-        ReflectionTestUtils.setField(storage, "entityValueBuilder", entityValueBuilder);
         ReflectionTestUtils.setField(storage, "conditionsBuilderFactory", sqlJsonConditionsBuilderFactory);
         storage.setTableName("oqsbigentity");
         storage.setQueryTimeout(100000000);
@@ -235,7 +243,7 @@ public class SQLMasterStorageQueryTest {
         stat.close();
         conn.close();
 
-        ((ShardingDataSource) dataSource).close();
+        ((HikariDataSource) dataSource).close();
 
         commitIdStatusService.destroy();
         redisClient.connect().sync().flushall();
@@ -249,30 +257,49 @@ public class SQLMasterStorageQueryTest {
      */
     @Test
     public void testUncommittedTransactionSelect() throws Exception {
-        IEntityValue uncommitEntityValue = new EntityValue(100L);
-        uncommitEntityValue.addValues(Arrays.asList(
-            new LongValue(longField, 2L),
-            new StringValue(stringField, "\"@带有符号的中文@\"\'"),
-            new BooleanValue(boolField, false),
-            new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
-            new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
-            new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN")));
-        IEntity uncommitEntity = new Entity(100L, entityClass, uncommitEntityValue, OqsVersion.MAJOR);
+        IEntity uncommitEntity = Entity.Builder.anEntity()
+            .withId(1000000)
+            .withEntityClassRef(l2EntityClassRef)
+            .withTime(
+                LocalDateTime.of(
+                    2021, Month.FEBRUARY, 27, 12, 32, 20)
+                    .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
+            .withVersion(0)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityValue(EntityValue.build().addValues(
+                Arrays.asList(
+                    new LongValue(l2EntityClass.field("l0-long").get(), 138293),
+                    new StringValue(l2EntityClass.field("l0-string").get(), "hAG7O1uv1FS3"),
+                    new StringsValue(l2EntityClass.field("l0-strings").get(), "KRW"),
+                    new EnumValue(l2EntityClass.field("l0-enum").get(), "Emerald"),
+                    new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("566017837.77")),
+                    new DateTimeValue(l2EntityClass.field("l0-datetime").get(),
+                        LocalDateTime.of(2010, 6, 29, 9, 36, 36)),
+                    new LongValue(l2EntityClass.field("l1-long").get(), 072571712),
+                    new StringValue(l2EntityClass.field("l1-string").get(), "Logan_Uttridge6552@grannar.com"),
+                    new LongValue(l2EntityClass.field("l2-long").get(), 1448200874),
+                    new StringValue(l2EntityClass.field("l2-string").get(), "Benin")
+                )
+            )).build();
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
-        storage.build(uncommitEntity);
+        Assert.assertEquals(1, storage.build(uncommitEntity, l2EntityClass));
 
         Collection<EntityRef> refs = storage.select(
-            0L, // 每一个测试准备的数据中提交号都为0.
             Conditions.buildEmtpyConditions().addAnd(
-                new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 2L))
+                new Condition(
+                    l2EntityClass.field("l0-long").get(),
+                    ConditionOperator.EQUALS,
+                    new LongValue(l2EntityClass.field("l0-long").get(), 138293))
             ),
-            entityClass,
-            Sort.buildOutOfSort());
+            l0EntityClass,
+            SelectConfig.Builder.aSelectConfig().withSort(Sort.buildOutOfSort()).withCommitId(0).build());
         transactionManager.getCurrent().get().rollback();
         transactionManager.finish();
 
-        Assert.assertEquals(3, refs.size());
+        Assert.assertEquals(2, refs.size());
+        long size = refs.stream().mapToLong(e -> e.getId()).filter(id -> (id == 1004) || (id == 1000000)).count();
+        Assert.assertEquals(2, size);
     }
 
     /**
@@ -290,7 +317,8 @@ public class SQLMasterStorageQueryTest {
 
             Collection<EntityRef> refs = null;
             try {
-                refs = storage.select(0, c.conditions, c.entityClass, c.sort);
+                refs = storage.select(c.conditions, c.entityClass,
+                    SelectConfig.Builder.aSelectConfig().withCommitId(0).withSort(c.sort).build());
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
@@ -306,40 +334,33 @@ public class SQLMasterStorageQueryTest {
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(new Condition(
-                        enumField, ConditionOperator.NOT_EQUALS, new EnumValue(enumField, "1")
+                        l2EntityClass.field("l0-enum").get(),
+                        ConditionOperator.NOT_EQUALS,
+                        new EnumValue(
+                            l2EntityClass.field("l0-enum").get(), "Blue")
                     )),
-                entityClass,
+                l2EntityClass,
                 r -> {
-                    Assert.assertEquals(4, r.size());
-                    r.stream().forEach(e -> {
-                        Assert.assertEquals(Long.toString(e.getId()), e.getOrderValue());
-                    });
+                    long[] expectedIds = {
+                        1001, 1002, 1003, 1004
+                    };
+                    assertSelect(expectedIds, r, true);
                 },
-                Sort.buildAscSort(new EntityField(0, "id", FieldType.LONG, FieldConfig.build().identifie(true)))
-            )
-            ,
-            // enum no eq
-            new Case(
-                Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(
-                        enumField, ConditionOperator.NOT_EQUALS, new EnumValue(enumField, "1")
-                    )),
-                entityClass,
-                r -> {
-                    Assert.assertEquals(4, r.size());
-                }
+                Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)
             )
             ,
             // id eq
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(new Condition(
-                        idField, ConditionOperator.EQUALS, new LongValue(idField, Long.MAX_VALUE)
+                        EntityField.ID_ENTITY_FIELD, ConditionOperator.EQUALS, new LongValue(EntityField.ID_ENTITY_FIELD, 1004)
                     )),
-                entityClass,
+                l2EntityClass,
                 result -> {
-                    Assert.assertEquals(1, result.size());
-                    Assert.assertEquals(Long.MAX_VALUE, result.stream().findFirst().get().getId());
+                    long[] expectedIds = {
+                        1004
+                    };
+                    assertSelect(expectedIds, result, false);
                 }
             )
             ,
@@ -347,316 +368,320 @@ public class SQLMasterStorageQueryTest {
             new Case(
                 Conditions.buildEmtpyConditions()
                     .addAnd(new Condition(
-                        idField, ConditionOperator.MULTIPLE_EQUALS
-                        , new LongValue(idField, Long.MAX_VALUE), new LongValue(idField, Long.MAX_VALUE - 1)
+                        EntityField.ID_ENTITY_FIELD, ConditionOperator.MULTIPLE_EQUALS,
+                        new LongValue(EntityField.ID_ENTITY_FIELD, 1000),
+                        new LongValue(EntityField.ID_ENTITY_FIELD, 1002)
                     )),
-                entityClass,
+                l2EntityClass,
                 result -> {
-                    Assert.assertEquals(2, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .count());
+                    long[] expectedIds = {
+                        1000, 1002
+                    };
+                    assertSelect(expectedIds, result, false);
                 }
             )
             ,
             // long eq
             new Case(
                 Conditions.buildEmtpyConditions().addAnd(
-                    new Condition(longField, ConditionOperator.EQUALS, new LongValue(longField, 2L))),
-                entityClass,
+                    new Condition(
+                        l2EntityClass.field("l2-long").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(l2EntityClass.field("l2-long").get(), 2032249908))),
+                l2EntityClass,
                 result -> {
-                    Assert.assertEquals(2, result.size());
-                    Assert.assertEquals(0, result.stream().filter(r ->
-                        !(r.getId() == Long.MAX_VALUE - 1)).filter(r -> !(r.getId() == Long.MAX_VALUE - 2)).count());
+                    long[] expectedIds = {
+                        1003
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // long not eq
             new Case(
                 Conditions.buildEmtpyConditions().addAnd(
-                    new Condition(longField, ConditionOperator.NOT_EQUALS, new LongValue(longField, 2L))),
-                entityClass,
+                    new Condition(
+                        l2EntityClass.field("l2-long").get(),
+                        ConditionOperator.NOT_EQUALS,
+                        new LongValue(l2EntityClass.field("l2-long").get(), 2032249908))),
+                l2EntityClass,
                 result -> {
-                    Assert.assertEquals(3, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
+                    long[] expectedIds = {
+                        1000, 1001, 1002, 1004
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // long >
             new Case(
                 Conditions.buildEmtpyConditions().addAnd(
-                    new Condition(longField, ConditionOperator.GREATER_THAN, new LongValue(longField, 2L))),
-                entityClass,
+                    new Condition(l2EntityClass.field("l1-long").get(),
+                        ConditionOperator.GREATER_THAN,
+                        new LongValue(l2EntityClass.field("l1-long").get(), 87011006L))),
+                l2EntityClass,
                 result -> {
-
-                    Assert.assertEquals(2, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
+                    long[] expectedIds = {
+                        1001, 1002, 1003, 1004
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // long >=
             new Case(
                 Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(longField, ConditionOperator.GREATER_THAN_EQUALS,
-                        new LongValue(longField, 2L))),
-                entityClass,
+                    .addAnd(new Condition(l2EntityClass.field("l1-long").get(),
+                        ConditionOperator.GREATER_THAN_EQUALS,
+                        new LongValue(l2EntityClass.field("l1-long").get(), 87011006L))),
+                l2EntityClass,
                 result -> {
 
-                    Assert.assertEquals(4, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
+                    long[] expectedIds = {
+                        1000, 1001, 1002, 1003, 1004
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // long <
             new Case(
-                Conditions.buildEmtpyConditions().addAnd(
-                    new Condition(longField, ConditionOperator.LESS_THAN, new LongValue(longField, 2L))),
-                entityClass,
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(l2EntityClass.field("l0-long").get(),
+                        ConditionOperator.LESS_THAN,
+                        new LongValue(l2EntityClass.field("l0-long").get(), 138293))),
+                l2EntityClass,
                 result -> {
 
-                    Assert.assertEquals(1, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .count());
+                    long[] expectedIds = {
+                        1002
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // long <=
             new Case(
                 Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(longField, ConditionOperator.LESS_THAN_EQUALS,
-                        new LongValue(longField, 2L))),
-                entityClass,
+                    .addAnd(new Condition(l2EntityClass.field("l0-long").get(),
+                        ConditionOperator.LESS_THAN_EQUALS,
+                        new LongValue(l2EntityClass.field("l0-long").get(), 138293))),
+                l2EntityClass,
                 result -> {
 
-                    Assert.assertEquals(3, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .count());
+                    long[] expectedIds = {
+                        1002, 1004
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // long in
             new Case(
                 Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(longField, ConditionOperator.MULTIPLE_EQUALS,
-                        new LongValue(longField, 2L), new LongValue(longField, 76L))),
-                entityClass,
+                    .addAnd(new Condition(l2EntityClass.field("l0-long").get(),
+                        ConditionOperator.MULTIPLE_EQUALS,
+                        new LongValue(l2EntityClass.field("l0-long").get(), 138293),
+                        new LongValue(l2EntityClass.field("l0-long").get(), 634274),
+                        new LongValue(l2EntityClass.field("l0-long").get(), 381134)
+                    )),
+                l2EntityClass,
                 result -> {
 
-                    Assert.assertEquals(3, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .count());
-
+                    long[] expectedIds = {
+                        1000, 1001, 1004
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // string eq
             new Case(
                 Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(stringField, ConditionOperator.EQUALS,
-                        new StringValue(stringField, "\"@带有符号的中文@\"\'"))),
-                entityClass,
+                    .addAnd(new Condition(l2EntityClass.field("l1-string").get(),
+                        ConditionOperator.EQUALS,
+                        new StringValue(l2EntityClass.field("l1-string").get(), "Alexia_Dillon5194@bauros.biz"))),
+                l2EntityClass,
                 result -> {
 
-                    Assert.assertEquals(1, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-
+                    long[] expectedIds = {
+                        1004
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // string no eq
             new Case(
                 Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(stringField, ConditionOperator.NOT_EQUALS,
-                        new StringValue(stringField, "\"@带有符号的中文@\"\'"))),
-                entityClass,
+                    .addAnd(new Condition(l2EntityClass.field("l1-string").get(),
+                        ConditionOperator.NOT_EQUALS,
+                        new StringValue(l2EntityClass.field("l1-string").get(), "Alexia_Dillon5194@bauros.biz"))),
+                l2EntityClass,
                 result -> {
-
-                    Assert.assertEquals(4, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .count());
-
+                    long[] expectedIds = {
+                        1000, 1001, 1002, 1003
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // string like
             new Case(
                 Conditions.buildEmtpyConditions().addAnd(
-                    new Condition(stringField, ConditionOperator.LIKE, new StringValue(stringField, "中文"))),
-                entityClass,
+                    new Condition(l2EntityClass.field("l1-string").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(l2EntityClass.field("l1-string").get(), "org"))),
+                l2EntityClass,
                 result -> {
 
-                    Assert.assertEquals(2, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .count());
-
+                    long[] expectedIds = {
+                        1000, 1002
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // decimal eq
             new Case(
                 Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(decimalField, ConditionOperator.EQUALS,
-                        new DecimalValue(decimalField, BigDecimal.ONE))),
-                entityClass,
+                    .addAnd(new Condition(l2EntityClass.field("l0-decimal").get(),
+                        ConditionOperator.EQUALS,
+                        new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("-304599899.25")))),
+                l2EntityClass,
                 result -> {
 
-                    Assert.assertEquals(3, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .count());
-
+                    long[] expectedIds = {
+                        1004
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // decimal no eq
             new Case(
                 Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(decimalField, ConditionOperator.NOT_EQUALS,
-                        new DecimalValue(decimalField, BigDecimal.ONE))),
-                entityClass,
+                    .addAnd(new Condition(l2EntityClass.field("l0-decimal").get(),
+                        ConditionOperator.NOT_EQUALS,
+                        new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("-304599899.25")))),
+                l2EntityClass,
                 result -> {
 
-                    Assert.assertEquals(2, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-
+                    long[] expectedIds = {
+                        1000, 1001, 1002, 1003
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // decimal >
             new Case(
                 Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(decimalField, ConditionOperator.GREATER_THAN,
-                        new DecimalValue(decimalField, BigDecimal.ONE))),
-                entityClass,
+                    .addAnd(new Condition(l2EntityClass.field("l0-decimal").get(),
+                        ConditionOperator.GREATER_THAN,
+                        new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("-792458736.36")))),
+                l2EntityClass,
                 result -> {
 
-                    Assert.assertEquals(1, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
+                    long[] expectedIds = {
+                        1001, 1002, 1003, 1004
+                    };
+
+                    assertSelect(expectedIds, result, false);
 
                 })
             ,
             // decimal >=
             new Case(
                 Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(decimalField, ConditionOperator.GREATER_THAN_EQUALS,
-                        new DecimalValue(decimalField, BigDecimal.ONE))),
-                entityClass,
+                    .addAnd(new Condition(l2EntityClass.field("l0-decimal").get(),
+                        ConditionOperator.GREATER_THAN_EQUALS,
+                        new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("-792458736.36")))),
+                l2EntityClass,
                 result -> {
 
-                    Assert.assertEquals(4, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
+                    long[] expectedIds = {
+                        1000, 1001, 1002, 1003, 1004
+                    };
+
+                    assertSelect(expectedIds, result, false);
 
                 })
             ,
             // dateTimeField between
             new Case(
                 Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(dateTimeField, ConditionOperator.GREATER_THAN,
-                        new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1))))
-                    .addAnd(new Condition(dateTimeField, ConditionOperator.LESS_THAN,
-                        new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1)))),
-                entityClass,
+                    .addAnd(new Condition(l2EntityClass.field("l0-datetime").get(),
+                        ConditionOperator.GREATER_THAN,
+                        new DateTimeValue(l2EntityClass.field("l0-datetime").get(),
+                            LocalDateTime.of(2001, 4, 29, 8, 13, 4))))
+
+                    .addAnd(new Condition(l2EntityClass.field("l0-datetime").get(),
+                        ConditionOperator.LESS_THAN,
+                        new DateTimeValue(l2EntityClass.field("l0-datetime").get(),
+                            LocalDateTime.of(2008, 6, 21, 19, 43, 51)))),
+                l2EntityClass,
                 result -> {
 
-                    Assert.assertEquals(2, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .count());
+                    long[] expectedIds = {
+                        1000
+                    };
+
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // stringsField =
             new Case(
                 Conditions.buildEmtpyConditions()
-                    .addAnd(new Condition(stringsField, ConditionOperator.EQUALS,
-                        new StringsValue(stringsField, "UNKNOWN"))),
-                entityClass,
+                    .addAnd(new Condition(l2EntityClass.field("l0-strings").get(),
+                        ConditionOperator.EQUALS,
+                        new StringsValue(l2EntityClass.field("l0-strings").get(), "JPY"))),
+                l2EntityClass,
                 result -> {
-                    Assert.assertEquals(1, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
+                    long[] expectedIds = {
+                        1000, 1001, 1003
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // stringsField in
             new Case(Conditions.buildEmtpyConditions()
                 .addAnd(
                     new Condition(
-                        stringsField,
+                        l2EntityClass.field("l0-strings").get(),
                         ConditionOperator.MULTIPLE_EQUALS,
-                        new StringsValue(stringsField, "UNKNOWN"),
-                        new StringsValue(stringsField, "value3"))),
-                entityClass,
+                        new StringsValue(l2EntityClass.field("l0-strings").get(), "RMB"),
+                        new StringsValue(l2EntityClass.field("l0-strings").get(), "JPY"))),
+                l2EntityClass,
                 result -> {
-                    Assert.assertEquals(4, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 1))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 2))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
+                    long[] expectedIds = {
+                        1000, 1001, 1002, 1003
+                    };
+                    assertSelect(expectedIds, result, false);
                 })
             ,
             // emtpy condition
-            new Case(Conditions.buildEmtpyConditions(), entityClass, result -> {
-                Assert.assertEquals(5, result.size());
-            })
+            new Case(Conditions.buildEmtpyConditions(),
+                l2EntityClass,
+                result -> {
+                    long[] expectedIds = {
+                        1000, 1001, 1002, 1003, 1004
+                    };
+                    assertSelect(expectedIds, result, false);
+                }
+            )
             ,
             // strings in no row.
             new Case(Conditions.buildEmtpyConditions()
-                .addAnd(new Condition(stringsField, ConditionOperator.MULTIPLE_EQUALS,
-                    new StringsValue(stringsField, "iqoweiqweq"), new StringsValue(stringsField, "nbbbb"))),
-                entityClass,
+                .addAnd(new Condition(
+                    l2EntityClass.field("l0-strings").get(),
+                    ConditionOperator.MULTIPLE_EQUALS,
+                    new StringsValue(l2EntityClass.field("l0-strings").get(), "iqoweiqweq"),
+                    new StringsValue(l2EntityClass.field("l0-strings").get(), "nbbbb"))),
+                l2EntityClass,
                 result -> {
-                    Assert.assertEquals(0, result.size());
+                    long[] expectedIds = {};
+                    assertSelect(expectedIds, result, false);
                 })
-            ,
-            // sort
-            new Case(
-                Conditions.buildEmtpyConditions().addAnd(
-                    new Condition(longField, ConditionOperator.NOT_EQUALS, new LongValue(longField, 2L))),
-                entityClass,
-                result -> {
-                    Assert.assertEquals(3, result.size());
-                    Assert.assertEquals(0, result.stream()
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 3))
-                        .filter(r -> !(r.getId() == Long.MAX_VALUE - 4))
-                        .count());
-
-                    Assert.assertEquals(3, result.stream().filter(e -> e.getOrderValue() != null).count());
-                },
-                Sort.buildDescSort(dateTimeField)
-            )
         );
+    }
+
+    private void assertSelect(long[] expectedIds, Collection<EntityRef> result, boolean sort) {
+        Assert.assertEquals(expectedIds.length, result.size());
+        result.stream().forEach(e -> {
+            Assert.assertTrue(String.format("Not found %d", e.getId()), Arrays.binarySearch(expectedIds, e.getId()) >= 0);
+            if (sort) {
+                Assert.assertNotNull(e.getOrderValue());
+            }
+        });
     }
 
     private static class Case {
@@ -684,10 +709,12 @@ public class SQLMasterStorageQueryTest {
 
     // 初始化数据
     private void initData(SQLMasterStorage storage) throws Exception {
+        buildData();
+        ;
         try {
-            Arrays.stream(entityes).forEach(e -> {
+            entityes.stream().forEach(e -> {
                 try {
-                    storage.build(e);
+                    storage.build(e, l2EntityClass);
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex.getMessage(), ex);
                 }
@@ -702,26 +729,137 @@ public class SQLMasterStorageQueryTest {
     private DataSource buildDataSource(String file) throws SQLException {
         System.setProperty(DataSourceFactory.CONFIG_FILE, file);
         DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
-
-        AtomicInteger index = new AtomicInteger(0);
-        Map<String, DataSource> dsMap = dataSourcePackage.getMaster().stream().collect(Collectors.toMap(
-            d -> "ds", d -> d));
-
-        TableRuleConfiguration tableRuleConfiguration = new TableRuleConfiguration(
-            "oqsbigentity", "ds.oqsbigentity${0..2}");
-        tableRuleConfiguration.setDatabaseShardingStrategyConfig(
-            new StandardShardingStrategyConfiguration("id", new HashPreciseShardingAlgorithm()));
-        tableRuleConfiguration.setTableShardingStrategyConfig(
-            new StandardShardingStrategyConfiguration("id", new SuffixNumberHashPreciseShardingAlgorithm()));
-
-
-        ShardingRuleConfiguration shardingRuleConfig = new ShardingRuleConfiguration();
-        shardingRuleConfig.getTableRuleConfigs().add(tableRuleConfiguration);
-
-        Properties prop = new Properties();
-//        prop.put("sql.show", "true");
-//        prop.put("sql.simple", "false");
-        dataSource = ShardingDataSourceFactory.createDataSource(dsMap, shardingRuleConfig, prop);
+        this.dataSource = dataSourcePackage.getMaster().get(0);
         return dataSource;
+    }
+
+    private void buildData() {
+        entityes = new ArrayList<>();
+
+        long baseId = 1000;
+        entityes.add(Entity.Builder.anEntity() // 1000
+            .withId(baseId++)
+            .withEntityClassRef(l2EntityClassRef)
+            .withTime(
+                LocalDateTime.of(
+                    2021, Month.FEBRUARY, 26, 12, 15, 20)
+                    .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
+            .withVersion(0)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityValue(EntityValue.build().addValues(
+                Arrays.asList(
+                    new LongValue(l2EntityClass.field("l0-long").get(), 634274),
+                    new StringValue(l2EntityClass.field("l0-string").get(), "TjguZT2nz9KT"),
+                    new StringsValue(l2EntityClass.field("l0-strings").get(), "RMB", "JPY", "USD"),
+                    new EnumValue(l2EntityClass.field("l0-enum").get(), "Blue"),
+                    new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("-792458736.36")),
+                    new DateTimeValue(l2EntityClass.field("l0-datetime").get(),
+                        LocalDateTime.of(2003, 10, 29, 18, 55, 14)),
+                    new LongValue(l2EntityClass.field("l1-long").get(), 87011006),
+                    new StringValue(l2EntityClass.field("l1-string").get(), "Emely_Dickson1490@jiman.org"),
+                    new LongValue(l2EntityClass.field("l2-long").get(), -2037817147),
+                    new StringValue(l2EntityClass.field("l2-string").get(), "Belize")
+                )
+            )).build());
+
+        entityes.add(Entity.Builder.anEntity() // 1001
+            .withId(baseId++)
+            .withEntityClassRef(l2EntityClassRef)
+            .withTime(
+                LocalDateTime.of(
+                    2021, Month.FEBRUARY, 27, 12, 15, 20)
+                    .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
+            .withVersion(0)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityValue(EntityValue.build().addValues(
+                Arrays.asList(
+                    new LongValue(l2EntityClass.field("l0-long").get(), 381134),
+                    new StringValue(l2EntityClass.field("l0-string").get(), "qqSDo69gZcGW"),
+                    new StringsValue(l2EntityClass.field("l0-strings").get(), "RMB", "JPY", "CHF"),
+                    new EnumValue(l2EntityClass.field("l0-enum").get(), "Red"),
+                    new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("741808930.09")),
+                    new DateTimeValue(l2EntityClass.field("l0-datetime").get(),
+                        LocalDateTime.of(2018, 11, 30, 11, 36, 41)),
+                    new LongValue(l2EntityClass.field("l1-long").get(), 443531115),
+                    new StringValue(l2EntityClass.field("l1-string").get(), "Manuel_Vincent2662@naiker.biz"),
+                    new LongValue(l2EntityClass.field("l2-long").get(), -251454086),
+                    new StringValue(l2EntityClass.field("l2-string").get(), "Montenegro")
+                )
+            )).build());
+
+        entityes.add(Entity.Builder.anEntity() // 1002
+            .withId(baseId++)
+            .withEntityClassRef(l2EntityClassRef)
+            .withTime(
+                LocalDateTime.of(
+                    2021, Month.FEBRUARY, 27, 12, 32, 20)
+                    .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
+            .withVersion(0)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityValue(EntityValue.build().addValues(
+                Arrays.asList(
+                    new LongValue(l2EntityClass.field("l0-long").get(), 129848),
+                    new StringValue(l2EntityClass.field("l0-string").get(), "oLS90hto8tSn"),
+                    new StringsValue(l2EntityClass.field("l0-strings").get(), "RMB", "FRF", "AUD", "BEF"),
+                    new EnumValue(l2EntityClass.field("l0-enum").get(), "Aqua"),
+                    new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("-445124094.25")),
+                    new DateTimeValue(l2EntityClass.field("l0-datetime").get(),
+                        LocalDateTime.of(2008, 6, 21, 19, 43, 51)),
+                    new LongValue(l2EntityClass.field("l1-long").get(), 208747364),
+                    new StringValue(l2EntityClass.field("l1-string").get(), "Maxwell_Richardson4862@twace.org"),
+                    new LongValue(l2EntityClass.field("l2-long").get(), 1457704562),
+                    new StringValue(l2EntityClass.field("l2-string").get(), "Lithuania")
+                )
+            )).build());
+
+        entityes.add(Entity.Builder.anEntity() // 1003
+            .withId(baseId++)
+            .withEntityClassRef(l2EntityClassRef)
+            .withTime(
+                LocalDateTime.of(
+                    2021, Month.FEBRUARY, 27, 12, 32, 20)
+                    .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
+            .withVersion(0)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityValue(EntityValue.build().addValues(
+                Arrays.asList(
+                    new LongValue(l2EntityClass.field("l0-long").get(), 333326),
+                    new StringValue(l2EntityClass.field("l0-string").get(), "Trm7n8Wd2ejj"),
+                    new StringsValue(l2EntityClass.field("l0-strings").get(), "JPY", "FIM"),
+                    new EnumValue(l2EntityClass.field("l0-enum").get(), "Azure"),
+                    new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("659709035.95")),
+                    new DateTimeValue(l2EntityClass.field("l0-datetime").get(),
+                        LocalDateTime.of(2001, 4, 29, 8, 13, 4)),
+                    new LongValue(l2EntityClass.field("l1-long").get(), 647147145),
+                    new StringValue(l2EntityClass.field("l1-string").get(), "Sebastian_Smith3123@sveldo.biz"),
+                    new LongValue(l2EntityClass.field("l2-long").get(), 2032249908),
+                    new StringValue(l2EntityClass.field("l2-string").get(), "Trinidad")
+                )
+            )).build());
+
+        entityes.add(Entity.Builder.anEntity() // 1004
+            .withId(baseId++)
+            .withEntityClassRef(l2EntityClassRef)
+            .withTime(
+                LocalDateTime.of(
+                    2021, Month.FEBRUARY, 27, 12, 32, 20)
+                    .atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli())
+            .withVersion(0)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityValue(EntityValue.build().addValues(
+                Arrays.asList(
+                    new LongValue(l2EntityClass.field("l0-long").get(), 138293),
+                    new StringValue(l2EntityClass.field("l0-string").get(), "H5qEkXkTvGWW"),
+                    new StringsValue(l2EntityClass.field("l0-strings").get(), "KRW"),
+                    new EnumValue(l2EntityClass.field("l0-enum").get(), "Lavender"),
+                    new DecimalValue(l2EntityClass.field("l0-decimal").get(), new BigDecimal("-304599899.25")),
+                    new DateTimeValue(l2EntityClass.field("l0-datetime").get(),
+                        LocalDateTime.of(2000, 4, 15, 20, 31, 58)),
+                    new LongValue(l2EntityClass.field("l1-long").get(), 441034626),
+                    new StringValue(l2EntityClass.field("l1-string").get(), "Alexia_Dillon5194@bauros.biz"),
+                    new LongValue(l2EntityClass.field("l2-long").get(), 622028442),
+                    new StringValue(l2EntityClass.field("l2-string").get(), "Mozambique")
+                )
+            )).build());
     }
 }
