@@ -109,23 +109,26 @@ public class ChangelogExample {
         idMapping.put(1L, A);
         idMapping.put(2L, B);
 
-        //add changelog
-        changelogs.addAll(Arrays.asList(
-                genBChangelog(),
-                genAChangelog(),
-                addRelABChangelog(),
-                genAChangelog(),
-                genBChangelog(),
-                removeRelABChangelog(),
-                genAChangelog(),
-                genAChangelog(),
-                genBChangelog(),
-                addRelABChangelog(),
-                genBChangelog()
-        ));
-
-
+        build(100000, changelogs);
     }
+
+
+    public void build(int changelogSize, List<Changelog> changelogs){
+        Random random = new Random();
+        for(int i = 0 ; i < changelogSize ; i ++ ){
+            int result = random.nextInt(4);
+            if(result == 0){
+                changelogs.add(genBChangelog());
+            } else if(result == 1){
+                changelogs.add(genAChangelog());
+            } else if(result == 2){
+                changelogs.add(addRelABChangelog());
+            } else if(result == 3){
+                changelogs.add(addRelABChangelog());
+            }
+        }
+    }
+
 
     public IEntityClass getEntityClassById(Long id) {
         return idMapping.get(id);
@@ -155,6 +158,7 @@ public class ChangelogExample {
         changeValue1.setFieldId(A_B_OTO);
         changeValues.add(changeValue1);
         changelog.setChangeValues(changeValues);
+        changelog.setComment("建立AB关联");
 
         return changelog;
     }
@@ -174,6 +178,8 @@ public class ChangelogExample {
         changelog.setChangeValues(changeValues);
 
         changeValues.add(changeValue1);
+
+        changelog.setComment("删除AB关联");
 
         return changelog;
     }
@@ -200,6 +206,7 @@ public class ChangelogExample {
         changeValues.add(changeValue1);
         changeValues.add(changeValue2);
         changelog.setChangeValues(changeValues);
+        changelog.setComment("随机修改A");
 
         System.out.println("Gen Changelog A:" + changelog);
 
@@ -222,6 +229,7 @@ public class ChangelogExample {
 
         changeValues.add(changeValue1);
         changelog.setChangeValues(changeValues);
+        changelog.setComment("随机修改B");
 
         System.out.println("Gen Changelog B:" + changelog);
 

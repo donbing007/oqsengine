@@ -164,4 +164,31 @@ public class ChangelogHelper {
 
         return retValue;
     }
+
+    public static <T> List<T> mergeSortedList(List<T> listA, List<T> listB, Comparator<T> comparator){
+
+        List<T> mergedList = new LinkedList<>();
+        int i = 0 ,j = 0;
+        for( ; i < listA.size() && j < listB.size() ; ){
+            T ta = listA.get(i);
+            T tb = listB.get(j);
+            if(comparator.compare(ta, tb) >= 0){
+                mergedList.add(ta);
+                i ++;
+            }else{
+                mergedList.add(tb);
+                j ++;
+            };
+        }
+
+        if(i < listA.size()){
+            mergedList.addAll(listA.subList(i, listA.size() - 1));
+        }
+
+        if(j < listB.size()){
+            mergedList.addAll(listB.subList(j, listB.size() - 1));
+        }
+
+        return mergedList;
+    }
 }

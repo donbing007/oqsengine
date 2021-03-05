@@ -20,6 +20,7 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper.mergeSortedList;
 import static com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper.serialize;
 
 /**
@@ -153,7 +154,7 @@ public class DefaultChangelogImpl implements ChangelogService {
     @Override
     public List<ChangeVersion> getChangeLog(long objId, long entityClassId) {
 
-        List<ChangeVersion> changeVersionList = new ArrayList<>();
+        List<ChangeVersion> changeVersionList = Collections.emptyList();
 
         Stack<VersiondEntityRef> stack = new Stack<>();
 
@@ -161,25 +162,26 @@ public class DefaultChangelogImpl implements ChangelogService {
 
         while(!stack.isEmpty()){
             VersiondEntityRef nextNode = stack.pop();
-            findChangeVersion(changeVersionList, nextNode.getId(), nextNode.getVersion()
+            changeVersionList = findChangeVersion(changeVersionList, nextNode.getId(), nextNode.getVersion()
                     , nextNode.getEntityClassId(), stack);
         }
 
         return changeVersionList;
     }
 
-    private void findChangeVersion(List<ChangeVersion> changeVersionList, long objId, long version
+    private List<ChangeVersion> findChangeVersion(List<ChangeVersion> changeVersionList, long objId, long version
             , long entityClassId, Stack<VersiondEntityRef> stack){
         List<Changelog> relatedChangelog = replayService.getRelatedChangelog(objId, version);
         if(!relatedChangelog.isEmpty()){
 
-            //add current version
-            changeVersionList.addAll(relatedChangelog.stream().map(x -> {
+            List<ChangeVersion> currentList = relatedChangelog.stream().map(x -> {
                 ChangeVersion changeVersion = new ChangeVersion();
                 changeVersion.setComment(x.getComment());
-                changeVersion.setVersion(Long.toString(x.getVersion()));
+                changeVersion.setVersion(x.getVersion());
                 return changeVersion;
-            }).collect(Collectors.toList()));
+            }).collect(Collectors.toList());
+
+            changeVersionList = mergeSortedList(changeVersionList, currentList, Comparator.comparingLong(ChangeVersion::getVersion));
 
             Optional<IEntityClass> entityClassOp = metaManager.load(entityClassId);
             if(entityClassOp.isPresent()) {
@@ -206,6 +208,8 @@ public class DefaultChangelogImpl implements ChangelogService {
                 });
             }
         }
+
+        return changeVersionList;
     }
 
     /**

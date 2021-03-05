@@ -5,15 +5,15 @@ package com.xforceplus.ultraman.oqsengine.changelog.domain;
  */
 public class ChangeVersion {
 
-    private String version;
+    private Long version;
 
     private String comment;
 
-    public String getVersion() {
+    public Long getVersion() {
         return version;
     }
 
-    public void setVersion(String version) {
+    public void setVersion(Long version) {
         this.version = version;
     }
 

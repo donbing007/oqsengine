@@ -267,7 +267,10 @@ public class ReplayServiceImpl implements ReplayService {
         entityClass.fields().forEach(field -> {
             //TODO check order
             List<ChangeValue> changeValues = mappedValue.get(field.id());
-            IValue value = getValue(changeValues, field);
+            IValue value = null;
+            if(changeValues != null) {
+                 value = getValue(changeValues, field);
+            }
             if(value != null){
                 entityValue.addValue(value);
             }
