@@ -9,10 +9,10 @@ package com.xforceplus.ultraman.oqsengine.meta.common.constant;
  * @since : 1.8
  */
 public enum  RequestStatus {
-    HEARTBEAT,
-    REGISTER,
-    CONFIRM_REGISTER,
-    CONFIRM_HEARTBEAT,
-    SYNC_OK,
-    SYNC_FAIL;
+    HEARTBEAT,      //  心跳 双边发送
+    REGISTER,       //  客户端发起REGISTER 客户端发送、服务端关注状态
+    REGISTER_OK,    //  服务端确认注册 服务端发送、客户端关注状态
+    SYNC,           //  服务端推送的更新 服务端发送、客户端关注状态
+    SYNC_OK,        //  同步成功 客户端发送、服务端关注状态
+    SYNC_FAIL;      //  同步失败 客户端发送、服务端关注状态
 }

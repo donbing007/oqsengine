@@ -23,8 +23,6 @@ private static final long serialVersionUID = 0L;
     identifier_ = false;
     isRequired_ = false;
     validateRegexString_ = "";
-    isSplittable_ = false;
-    delimiter_ = "";
     displayType_ = "";
     metaFieldSense_ = 0;
   }
@@ -96,24 +94,13 @@ private static final long serialVersionUID = 0L;
             validateRegexString_ = s;
             break;
           }
-          case 64: {
-
-            isSplittable_ = input.readBool();
-            break;
-          }
-          case 74: {
-            java.lang.String s = input.readStringRequireUtf8();
-
-            delimiter_ = s;
-            break;
-          }
-          case 82: {
+          case 66: {
             java.lang.String s = input.readStringRequireUtf8();
 
             displayType_ = s;
             break;
           }
-          case 88: {
+          case 72: {
             int rawValue = input.readEnum();
 
             metaFieldSense_ = rawValue;
@@ -410,53 +397,10 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int ISSPLITTABLE_FIELD_NUMBER = 8;
-  private boolean isSplittable_;
-  /**
-   * <code>bool isSplittable = 8;</code>
-   */
-  public boolean getIsSplittable() {
-    return isSplittable_;
-  }
-
-  public static final int DELIMITER_FIELD_NUMBER = 9;
-  private volatile java.lang.Object delimiter_;
-  /**
-   * <code>string delimiter = 9;</code>
-   */
-  public java.lang.String getDelimiter() {
-    java.lang.Object ref = delimiter_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      delimiter_ = s;
-      return s;
-    }
-  }
-  /**
-   * <code>string delimiter = 9;</code>
-   */
-  public com.google.protobuf.ByteString
-      getDelimiterBytes() {
-    java.lang.Object ref = delimiter_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      delimiter_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
-
-  public static final int DISPLAYTYPE_FIELD_NUMBER = 10;
+  public static final int DISPLAYTYPE_FIELD_NUMBER = 8;
   private volatile java.lang.Object displayType_;
   /**
-   * <code>string displayType = 10;</code>
+   * <code>string displayType = 8;</code>
    */
   public java.lang.String getDisplayType() {
     java.lang.Object ref = displayType_;
@@ -471,7 +415,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>string displayType = 10;</code>
+   * <code>string displayType = 8;</code>
    */
   public com.google.protobuf.ByteString
       getDisplayTypeBytes() {
@@ -487,16 +431,16 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int METAFIELDSENSE_FIELD_NUMBER = 11;
+  public static final int METAFIELDSENSE_FIELD_NUMBER = 9;
   private int metaFieldSense_;
   /**
-   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
+   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
    */
   public int getMetaFieldSenseValue() {
     return metaFieldSense_;
   }
   /**
-   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
+   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
    */
   public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense getMetaFieldSense() {
     com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense result = com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.valueOf(metaFieldSense_);
@@ -536,17 +480,11 @@ private static final long serialVersionUID = 0L;
     if (!getValidateRegexStringBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 7, validateRegexString_);
     }
-    if (isSplittable_ != false) {
-      output.writeBool(8, isSplittable_);
-    }
-    if (!getDelimiterBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 9, delimiter_);
-    }
     if (!getDisplayTypeBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 10, displayType_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 8, displayType_);
     }
     if (metaFieldSense_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.UNKNOWN.getNumber()) {
-      output.writeEnum(11, metaFieldSense_);
+      output.writeEnum(9, metaFieldSense_);
     }
     unknownFields.writeTo(output);
   }
@@ -583,19 +521,12 @@ private static final long serialVersionUID = 0L;
     if (!getValidateRegexStringBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, validateRegexString_);
     }
-    if (isSplittable_ != false) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(8, isSplittable_);
-    }
-    if (!getDelimiterBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(9, delimiter_);
-    }
     if (!getDisplayTypeBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(10, displayType_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, displayType_);
     }
     if (metaFieldSense_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.UNKNOWN.getNumber()) {
       size += com.google.protobuf.CodedOutputStream
-        .computeEnumSize(11, metaFieldSense_);
+        .computeEnumSize(9, metaFieldSense_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -627,10 +558,6 @@ private static final long serialVersionUID = 0L;
         == other.getIsRequired());
     result = result && getValidateRegexString()
         .equals(other.getValidateRegexString());
-    result = result && (getIsSplittable()
-        == other.getIsSplittable());
-    result = result && getDelimiter()
-        .equals(other.getDelimiter());
     result = result && getDisplayType()
         .equals(other.getDisplayType());
     result = result && metaFieldSense_ == other.metaFieldSense_;
@@ -664,11 +591,6 @@ private static final long serialVersionUID = 0L;
         getIsRequired());
     hash = (37 * hash) + VALIDATEREGEXSTRING_FIELD_NUMBER;
     hash = (53 * hash) + getValidateRegexString().hashCode();
-    hash = (37 * hash) + ISSPLITTABLE_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-        getIsSplittable());
-    hash = (37 * hash) + DELIMITER_FIELD_NUMBER;
-    hash = (53 * hash) + getDelimiter().hashCode();
     hash = (37 * hash) + DISPLAYTYPE_FIELD_NUMBER;
     hash = (53 * hash) + getDisplayType().hashCode();
     hash = (37 * hash) + METAFIELDSENSE_FIELD_NUMBER;
@@ -816,10 +738,6 @@ private static final long serialVersionUID = 0L;
 
       validateRegexString_ = "";
 
-      isSplittable_ = false;
-
-      delimiter_ = "";
-
       displayType_ = "";
 
       metaFieldSense_ = 0;
@@ -853,8 +771,6 @@ private static final long serialVersionUID = 0L;
       result.identifier_ = identifier_;
       result.isRequired_ = isRequired_;
       result.validateRegexString_ = validateRegexString_;
-      result.isSplittable_ = isSplittable_;
-      result.delimiter_ = delimiter_;
       result.displayType_ = displayType_;
       result.metaFieldSense_ = metaFieldSense_;
       onBuilt();
@@ -918,13 +834,6 @@ private static final long serialVersionUID = 0L;
       }
       if (!other.getValidateRegexString().isEmpty()) {
         validateRegexString_ = other.validateRegexString_;
-        onChanged();
-      }
-      if (other.getIsSplittable() != false) {
-        setIsSplittable(other.getIsSplittable());
-      }
-      if (!other.getDelimiter().isEmpty()) {
-        delimiter_ = other.delimiter_;
         onChanged();
       }
       if (!other.getDisplayType().isEmpty()) {
@@ -1186,104 +1095,9 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private boolean isSplittable_ ;
-    /**
-     * <code>bool isSplittable = 8;</code>
-     */
-    public boolean getIsSplittable() {
-      return isSplittable_;
-    }
-    /**
-     * <code>bool isSplittable = 8;</code>
-     */
-    public Builder setIsSplittable(boolean value) {
-      
-      isSplittable_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>bool isSplittable = 8;</code>
-     */
-    public Builder clearIsSplittable() {
-      
-      isSplittable_ = false;
-      onChanged();
-      return this;
-    }
-
-    private java.lang.Object delimiter_ = "";
-    /**
-     * <code>string delimiter = 9;</code>
-     */
-    public java.lang.String getDelimiter() {
-      java.lang.Object ref = delimiter_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        delimiter_ = s;
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
-    }
-    /**
-     * <code>string delimiter = 9;</code>
-     */
-    public com.google.protobuf.ByteString
-        getDelimiterBytes() {
-      java.lang.Object ref = delimiter_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        delimiter_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>string delimiter = 9;</code>
-     */
-    public Builder setDelimiter(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
-      delimiter_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>string delimiter = 9;</code>
-     */
-    public Builder clearDelimiter() {
-      
-      delimiter_ = getDefaultInstance().getDelimiter();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>string delimiter = 9;</code>
-     */
-    public Builder setDelimiterBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
-      delimiter_ = value;
-      onChanged();
-      return this;
-    }
-
     private java.lang.Object displayType_ = "";
     /**
-     * <code>string displayType = 10;</code>
+     * <code>string displayType = 8;</code>
      */
     public java.lang.String getDisplayType() {
       java.lang.Object ref = displayType_;
@@ -1298,7 +1112,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string displayType = 10;</code>
+     * <code>string displayType = 8;</code>
      */
     public com.google.protobuf.ByteString
         getDisplayTypeBytes() {
@@ -1314,7 +1128,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>string displayType = 10;</code>
+     * <code>string displayType = 8;</code>
      */
     public Builder setDisplayType(
         java.lang.String value) {
@@ -1327,7 +1141,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string displayType = 10;</code>
+     * <code>string displayType = 8;</code>
      */
     public Builder clearDisplayType() {
       
@@ -1336,7 +1150,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>string displayType = 10;</code>
+     * <code>string displayType = 8;</code>
      */
     public Builder setDisplayTypeBytes(
         com.google.protobuf.ByteString value) {
@@ -1352,13 +1166,13 @@ private static final long serialVersionUID = 0L;
 
     private int metaFieldSense_ = 0;
     /**
-     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
+     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
      */
     public int getMetaFieldSenseValue() {
       return metaFieldSense_;
     }
     /**
-     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
+     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
      */
     public Builder setMetaFieldSenseValue(int value) {
       metaFieldSense_ = value;
@@ -1366,14 +1180,14 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
+     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
      */
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense getMetaFieldSense() {
       com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense result = com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.valueOf(metaFieldSense_);
       return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.UNRECOGNIZED : result;
     }
     /**
-     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
+     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
      */
     public Builder setMetaFieldSense(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense value) {
       if (value == null) {
@@ -1385,7 +1199,7 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
-     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
+     * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
      */
     public Builder clearMetaFieldSense() {
       

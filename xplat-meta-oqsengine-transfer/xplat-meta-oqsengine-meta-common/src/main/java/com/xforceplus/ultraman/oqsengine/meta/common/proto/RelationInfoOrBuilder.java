@@ -58,12 +58,20 @@ public interface RelationInfoOrBuilder extends
   boolean getIdentity();
 
   /**
-   * <code>string entityFieldCode = 8;</code>
+   * <code>.EntityFieldInfo entityField = 8;</code>
    */
-  java.lang.String getEntityFieldCode();
+  boolean hasEntityField();
   /**
-   * <code>string entityFieldCode = 8;</code>
+   * <code>.EntityFieldInfo entityField = 8;</code>
    */
-  com.google.protobuf.ByteString
-      getEntityFieldCodeBytes();
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo getEntityField();
+  /**
+   * <code>.EntityFieldInfo entityField = 8;</code>
+   */
+  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder getEntityFieldOrBuilder();
+
+  /**
+   * <code>bool belongToOwner = 9;</code>
+   */
+  boolean getBelongToOwner();
 }

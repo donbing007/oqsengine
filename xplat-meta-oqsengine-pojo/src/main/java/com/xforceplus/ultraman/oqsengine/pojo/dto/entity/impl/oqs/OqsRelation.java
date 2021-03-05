@@ -34,17 +34,18 @@ public class OqsRelation {
     private String relationType;
 
     /**
-     * 是否使用主键作为关系字段 - true代表是。- 目前只支持主键模式
-     * false表示使用对象的其他唯一属性来定义
+     * 是PrimaryKey还是UniqueKey
      */
     private boolean identity;
 
     /**
-     * 关联对象Id
+     * 数据owner信息
      */
     private long entityClassId;
 
     private IEntityField entityField;
+
+    private boolean belongToOwner;
 
     private Function<Long, Optional<IEntityClass>> entityClassLoader;
 
@@ -125,6 +126,14 @@ public class OqsRelation {
         this.entityField = entityField;
     }
 
+    public boolean isBelongToOwner() {
+        return belongToOwner;
+    }
+
+    public void setBelongToOwner(boolean belongToOwner) {
+        this.belongToOwner = belongToOwner;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -143,7 +152,7 @@ public class OqsRelation {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getEntityClass().id(), getRelationType(), isIdentity(), getEntityField().id());
+        return Objects.hash(getName(), getEntityClass().id(), getRelationType(), isIdentity(), getEntityField().id(), isBelongToOwner());
     }
 
     @Override
@@ -170,6 +179,7 @@ public class OqsRelation {
         private long entityClassId;
         private Function<Long, Optional<IEntityClass>> entityClassLoader;
         private IEntityField entityField;
+        private boolean belongToOwner;
 
         private Builder() {
         }
@@ -223,6 +233,11 @@ public class OqsRelation {
             return this;
         }
 
+        public OqsRelation.Builder withBelongToOwner(boolean belongToOwner) {
+            this.belongToOwner = belongToOwner;
+            return this;
+        }
+
         public OqsRelation build() {
             OqsRelation oqsRelation = new OqsRelation();
             oqsRelation.id = this.id;
@@ -234,6 +249,7 @@ public class OqsRelation {
             oqsRelation.entityClassId = this.entityClassId;
             oqsRelation.entityClassLoader = entityClassLoader;
             oqsRelation.entityField = this.entityField;
+            oqsRelation.belongToOwner = this.belongToOwner;
             return oqsRelation;
         }
     }

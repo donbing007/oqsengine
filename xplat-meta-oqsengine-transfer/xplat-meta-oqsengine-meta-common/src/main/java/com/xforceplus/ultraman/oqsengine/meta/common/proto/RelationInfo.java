@@ -23,7 +23,7 @@ private static final long serialVersionUID = 0L;
     relOwnerClassName_ = "";
     relationType_ = "";
     identity_ = false;
-    entityFieldCode_ = "";
+    belongToOwner_ = false;
   }
 
   @java.lang.Override
@@ -96,9 +96,21 @@ private static final long serialVersionUID = 0L;
             break;
           }
           case 66: {
-            java.lang.String s = input.readStringRequireUtf8();
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder subBuilder = null;
+            if (entityField_ != null) {
+              subBuilder = entityField_.toBuilder();
+            }
+            entityField_ = input.readMessage(com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.parser(), extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom(entityField_);
+              entityField_ = subBuilder.buildPartial();
+            }
 
-            entityFieldCode_ = s;
+            break;
+          }
+          case 72: {
+
+            belongToOwner_ = input.readBool();
             break;
           }
         }
@@ -263,38 +275,34 @@ private static final long serialVersionUID = 0L;
     return identity_;
   }
 
-  public static final int ENTITYFIELDCODE_FIELD_NUMBER = 8;
-  private volatile java.lang.Object entityFieldCode_;
+  public static final int ENTITYFIELD_FIELD_NUMBER = 8;
+  private com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo entityField_;
   /**
-   * <code>string entityFieldCode = 8;</code>
+   * <code>.EntityFieldInfo entityField = 8;</code>
    */
-  public java.lang.String getEntityFieldCode() {
-    java.lang.Object ref = entityFieldCode_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      entityFieldCode_ = s;
-      return s;
-    }
+  public boolean hasEntityField() {
+    return entityField_ != null;
   }
   /**
-   * <code>string entityFieldCode = 8;</code>
+   * <code>.EntityFieldInfo entityField = 8;</code>
    */
-  public com.google.protobuf.ByteString
-      getEntityFieldCodeBytes() {
-    java.lang.Object ref = entityFieldCode_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      entityFieldCode_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo getEntityField() {
+    return entityField_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.getDefaultInstance() : entityField_;
+  }
+  /**
+   * <code>.EntityFieldInfo entityField = 8;</code>
+   */
+  public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder getEntityFieldOrBuilder() {
+    return getEntityField();
+  }
+
+  public static final int BELONGTOOWNER_FIELD_NUMBER = 9;
+  private boolean belongToOwner_;
+  /**
+   * <code>bool belongToOwner = 9;</code>
+   */
+  public boolean getBelongToOwner() {
+    return belongToOwner_;
   }
 
   private byte memoizedIsInitialized = -1;
@@ -330,8 +338,11 @@ private static final long serialVersionUID = 0L;
     if (identity_ != false) {
       output.writeBool(7, identity_);
     }
-    if (!getEntityFieldCodeBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 8, entityFieldCode_);
+    if (entityField_ != null) {
+      output.writeMessage(8, getEntityField());
+    }
+    if (belongToOwner_ != false) {
+      output.writeBool(9, belongToOwner_);
     }
     unknownFields.writeTo(output);
   }
@@ -366,8 +377,13 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(7, identity_);
     }
-    if (!getEntityFieldCodeBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, entityFieldCode_);
+    if (entityField_ != null) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(8, getEntityField());
+    }
+    if (belongToOwner_ != false) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(9, belongToOwner_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -399,8 +415,13 @@ private static final long serialVersionUID = 0L;
         .equals(other.getRelationType());
     result = result && (getIdentity()
         == other.getIdentity());
-    result = result && getEntityFieldCode()
-        .equals(other.getEntityFieldCode());
+    result = result && (hasEntityField() == other.hasEntityField());
+    if (hasEntityField()) {
+      result = result && getEntityField()
+          .equals(other.getEntityField());
+    }
+    result = result && (getBelongToOwner()
+        == other.getBelongToOwner());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -430,8 +451,13 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + IDENTITY_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getIdentity());
-    hash = (37 * hash) + ENTITYFIELDCODE_FIELD_NUMBER;
-    hash = (53 * hash) + getEntityFieldCode().hashCode();
+    if (hasEntityField()) {
+      hash = (37 * hash) + ENTITYFIELD_FIELD_NUMBER;
+      hash = (53 * hash) + getEntityField().hashCode();
+    }
+    hash = (37 * hash) + BELONGTOOWNER_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getBelongToOwner());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -575,7 +601,13 @@ private static final long serialVersionUID = 0L;
 
       identity_ = false;
 
-      entityFieldCode_ = "";
+      if (entityFieldBuilder_ == null) {
+        entityField_ = null;
+      } else {
+        entityField_ = null;
+        entityFieldBuilder_ = null;
+      }
+      belongToOwner_ = false;
 
       return this;
     }
@@ -606,7 +638,12 @@ private static final long serialVersionUID = 0L;
       result.relOwnerClassName_ = relOwnerClassName_;
       result.relationType_ = relationType_;
       result.identity_ = identity_;
-      result.entityFieldCode_ = entityFieldCode_;
+      if (entityFieldBuilder_ == null) {
+        result.entityField_ = entityField_;
+      } else {
+        result.entityField_ = entityFieldBuilder_.build();
+      }
+      result.belongToOwner_ = belongToOwner_;
       onBuilt();
       return result;
     }
@@ -672,9 +709,11 @@ private static final long serialVersionUID = 0L;
       if (other.getIdentity() != false) {
         setIdentity(other.getIdentity());
       }
-      if (!other.getEntityFieldCode().isEmpty()) {
-        entityFieldCode_ = other.entityFieldCode_;
-        onChanged();
+      if (other.hasEntityField()) {
+        mergeEntityField(other.getEntityField());
+      }
+      if (other.getBelongToOwner() != false) {
+        setBelongToOwner(other.getBelongToOwner());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1014,71 +1053,145 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object entityFieldCode_ = "";
+    private com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo entityField_ = null;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder> entityFieldBuilder_;
     /**
-     * <code>string entityFieldCode = 8;</code>
+     * <code>.EntityFieldInfo entityField = 8;</code>
      */
-    public java.lang.String getEntityFieldCode() {
-      java.lang.Object ref = entityFieldCode_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        entityFieldCode_ = s;
-        return s;
+    public boolean hasEntityField() {
+      return entityFieldBuilder_ != null || entityField_ != null;
+    }
+    /**
+     * <code>.EntityFieldInfo entityField = 8;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo getEntityField() {
+      if (entityFieldBuilder_ == null) {
+        return entityField_ == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.getDefaultInstance() : entityField_;
       } else {
-        return (java.lang.String) ref;
+        return entityFieldBuilder_.getMessage();
       }
     }
     /**
-     * <code>string entityFieldCode = 8;</code>
+     * <code>.EntityFieldInfo entityField = 8;</code>
      */
-    public com.google.protobuf.ByteString
-        getEntityFieldCodeBytes() {
-      java.lang.Object ref = entityFieldCode_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        entityFieldCode_ = b;
-        return b;
+    public Builder setEntityField(com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo value) {
+      if (entityFieldBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        entityField_ = value;
+        onChanged();
       } else {
-        return (com.google.protobuf.ByteString) ref;
+        entityFieldBuilder_.setMessage(value);
+      }
+
+      return this;
+    }
+    /**
+     * <code>.EntityFieldInfo entityField = 8;</code>
+     */
+    public Builder setEntityField(
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder builderForValue) {
+      if (entityFieldBuilder_ == null) {
+        entityField_ = builderForValue.build();
+        onChanged();
+      } else {
+        entityFieldBuilder_.setMessage(builderForValue.build());
+      }
+
+      return this;
+    }
+    /**
+     * <code>.EntityFieldInfo entityField = 8;</code>
+     */
+    public Builder mergeEntityField(com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo value) {
+      if (entityFieldBuilder_ == null) {
+        if (entityField_ != null) {
+          entityField_ =
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.newBuilder(entityField_).mergeFrom(value).buildPartial();
+        } else {
+          entityField_ = value;
+        }
+        onChanged();
+      } else {
+        entityFieldBuilder_.mergeFrom(value);
+      }
+
+      return this;
+    }
+    /**
+     * <code>.EntityFieldInfo entityField = 8;</code>
+     */
+    public Builder clearEntityField() {
+      if (entityFieldBuilder_ == null) {
+        entityField_ = null;
+        onChanged();
+      } else {
+        entityField_ = null;
+        entityFieldBuilder_ = null;
+      }
+
+      return this;
+    }
+    /**
+     * <code>.EntityFieldInfo entityField = 8;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder getEntityFieldBuilder() {
+      
+      onChanged();
+      return getEntityFieldFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>.EntityFieldInfo entityField = 8;</code>
+     */
+    public com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder getEntityFieldOrBuilder() {
+      if (entityFieldBuilder_ != null) {
+        return entityFieldBuilder_.getMessageOrBuilder();
+      } else {
+        return entityField_ == null ?
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.getDefaultInstance() : entityField_;
       }
     }
     /**
-     * <code>string entityFieldCode = 8;</code>
+     * <code>.EntityFieldInfo entityField = 8;</code>
      */
-    public Builder setEntityFieldCode(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
-      entityFieldCode_ = value;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder> 
+        getEntityFieldFieldBuilder() {
+      if (entityFieldBuilder_ == null) {
+        entityFieldBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo.Builder, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfoOrBuilder>(
+                getEntityField(),
+                getParentForChildren(),
+                isClean());
+        entityField_ = null;
+      }
+      return entityFieldBuilder_;
+    }
+
+    private boolean belongToOwner_ ;
+    /**
+     * <code>bool belongToOwner = 9;</code>
+     */
+    public boolean getBelongToOwner() {
+      return belongToOwner_;
+    }
+    /**
+     * <code>bool belongToOwner = 9;</code>
+     */
+    public Builder setBelongToOwner(boolean value) {
+      
+      belongToOwner_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>string entityFieldCode = 8;</code>
+     * <code>bool belongToOwner = 9;</code>
      */
-    public Builder clearEntityFieldCode() {
+    public Builder clearBelongToOwner() {
       
-      entityFieldCode_ = getDefaultInstance().getEntityFieldCode();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>string entityFieldCode = 8;</code>
-     */
-    public Builder setEntityFieldCodeBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
-      entityFieldCode_ = value;
+      belongToOwner_ = false;
       onChanged();
       return this;
     }

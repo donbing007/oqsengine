@@ -48,36 +48,21 @@ public interface FieldConfigOrBuilder extends
       getValidateRegexStringBytes();
 
   /**
-   * <code>bool isSplittable = 8;</code>
-   */
-  boolean getIsSplittable();
-
-  /**
-   * <code>string delimiter = 9;</code>
-   */
-  java.lang.String getDelimiter();
-  /**
-   * <code>string delimiter = 9;</code>
-   */
-  com.google.protobuf.ByteString
-      getDelimiterBytes();
-
-  /**
-   * <code>string displayType = 10;</code>
+   * <code>string displayType = 8;</code>
    */
   java.lang.String getDisplayType();
   /**
-   * <code>string displayType = 10;</code>
+   * <code>string displayType = 8;</code>
    */
   com.google.protobuf.ByteString
       getDisplayTypeBytes();
 
   /**
-   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
+   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
    */
   int getMetaFieldSenseValue();
   /**
-   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 11;</code>
+   * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense getMetaFieldSense();
 }

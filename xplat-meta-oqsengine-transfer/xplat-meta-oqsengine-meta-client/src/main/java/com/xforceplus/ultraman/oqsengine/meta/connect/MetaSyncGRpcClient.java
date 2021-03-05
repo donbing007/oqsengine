@@ -7,6 +7,7 @@ import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +45,8 @@ public class MetaSyncGRpcClient implements GRpcClient {
     }
 
     @Override
-    public void create() {
+    @PostConstruct
+    public void start() {
 
         channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
@@ -60,7 +62,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
     }
 
     @Override
-    public void destroy() {
+    public void stop() {
         try {
             channel.shutdown().awaitTermination(destroySeconds, TimeUnit.MILLISECONDS);
 

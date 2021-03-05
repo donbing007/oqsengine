@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
+import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
@@ -14,17 +16,13 @@ import io.grpc.stub.StreamObserver;
  * date : 2021/2/4
  * @since : 1.8
  */
-public interface IResponseHandler<T> {
+public interface IResponseHandler<T> extends IBasicSyncExecutor {
 
     void onNext(EntityClassSyncRequest entityClassSyncRequest,
                        StreamObserver<EntityClassSyncResponse> responseStreamObserver);
 
-    void pull(String uid, WatchElement watchElement);
+    void pull(String uid, WatchElement watchElement, RequestStatus requestStatus);
 
     boolean push(AppUpdateEvent event);
-
-    void start();
-
-    void stop();
 }
 

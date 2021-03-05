@@ -94,14 +94,4 @@ public interface EntityClassInfoOrBuilder extends
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfoOrBuilder getRelationsOrBuilder(
       int index);
-
-  /**
-   * <code>bool isAny = 9;</code>
-   */
-  boolean getIsAny();
-
-  /**
-   * <code>bool isDynamic = 10;</code>
-   */
-  boolean getIsDynamic();
 }

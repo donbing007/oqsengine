@@ -5,12 +5,12 @@ import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.meta.common.executor.ITransferExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
-import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import io.grpc.stub.StreamObserver;
@@ -22,6 +22,8 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+
 
 /**
  * desc :
@@ -31,7 +33,7 @@ import java.util.concurrent.*;
  * date : 2021/2/2
  * @since : 1.8
  */
-public class EntityClassSyncClient implements ITransferExecutor {
+public class EntityClassSyncClient implements IBasicSyncExecutor {
 
     private Logger logger = LoggerFactory.getLogger(EntityClassSyncClient.class);
 
@@ -42,20 +44,16 @@ public class EntityClassSyncClient implements ITransferExecutor {
     private IRequestHandler requestHandler;
 
     @Resource
-    private IRequestWatchExecutor requestWatchExecutor;
-
-    @Resource
     private GRpcParamsConfig gRpcParamsConfig;
 
-    @Resource(name = "oqsSyncThreadPool")
-    private ExecutorService executorService;
+    private Thread observerStreamMonitorThread;
 
-    public static volatile boolean isShutdown = false;
+    private static volatile boolean isShutdown = false;
 
     @PostConstruct
     @Override
     public void start() {
-        client.create();
+        client.start();
 
         if (!client.opened()) {
             throw new MetaSyncClientException("client stub create failed.", true);
@@ -66,18 +64,27 @@ public class EntityClassSyncClient implements ITransferExecutor {
         /**
          * 启动observerStream监控, 启动一个新的线程进行stream的监听
          */
-        executorService.submit(this::observerStreamMonitor);
+        observerStreamMonitorThread = ThreadUtils.create(this::observerStreamMonitor);
+
+        observerStreamMonitorThread.start();
+
+        requestHandler.start();
+
+        logger.info("entityClassSyncClient start.");
     }
 
     @Override
     public void stop() {
         isShutdown = true;
 
-        requestWatchExecutor.stop();
+        requestHandler.stop();
+
+        ThreadUtils.shutdown(observerStreamMonitorThread, SHUT_DOWN_WAIT_TIME_OUT);
 
         if (client.opened()) {
-            client.destroy();
+            client.stop();
         }
+        logger.info("entityClassSyncClient stop.");
     }
 
     public static boolean isShutDown() {
@@ -111,7 +118,7 @@ public class EntityClassSyncClient implements ITransferExecutor {
             /**
              * 判断是服务重启还是断流
              */
-            requestWatchExecutor.create(uid, streamObserver);
+            requestHandler.watchExecutor().create(uid, streamObserver);
 
             /**
              * 重新注册所有watchList到服务段
@@ -122,7 +129,7 @@ public class EntityClassSyncClient implements ITransferExecutor {
                 /**
                  * 设置服务可用
                  */
-                requestWatchExecutor.watcher().onServe();
+                requestHandler.watchExecutor().watcher().onServe();
                 /**
                  * wait直到countDownLatch = 0;
                  */
@@ -132,7 +139,7 @@ public class EntityClassSyncClient implements ITransferExecutor {
             /**
              * 设置服务不可用
              */
-            requestWatchExecutor.watcher().notServer();
+            requestHandler.watchExecutor().watcher().notServer();
 
             /**
              * 如果是服务关闭，则直接跳出while循环
@@ -148,7 +155,7 @@ public class EntityClassSyncClient implements ITransferExecutor {
                  */
                 TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
 
-                requestWatchExecutor.watcher().release();
+                requestHandler.watchExecutor().watcher().release();
             }
         }
 
@@ -164,40 +171,7 @@ public class EntityClassSyncClient implements ITransferExecutor {
         return client.channelStub().register(new StreamObserver<EntityClassSyncResponse>() {
             @Override
             public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
-                /**
-                 * 重启中所有的Response将被忽略
-                 * 不是同批次请求将被忽略
-                 */
-                if (!requestWatchExecutor.canAccess(entityClassSyncResponse.getUid())) {
-                    return;
-                }
-
-                /**
-                 * reset heartbeat
-                 */
-                requestWatchExecutor.resetHeartBeat(entityClassSyncResponse.getUid());
-
-                /**
-                 * 更新状态
-                 */
-                if (entityClassSyncResponse.getStatus() == RequestStatus.CONFIRM_REGISTER.ordinal()) {
-                    requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
-                            entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed));
-                } else {
-                    /**
-                     * 执行返回结果
-                     */
-                    executorService.submit(() -> {
-                        try {
-                            requestHandler.accept(entityClassSyncResponse);
-                        } catch (Exception e) {
-                            logger.warn(e.getMessage());
-                            if (requestWatchExecutor.watcher().isOnServe()) {
-                                requestWatchExecutor.watcher().observer().onError(e);
-                            }
-                        }
-                    });
-                }
+                requestHandler.onNext(entityClassSyncResponse);
             }
 
             @Override
@@ -209,7 +183,7 @@ public class EntityClassSyncClient implements ITransferExecutor {
 
             @Override
             public void onCompleted() {
-                logger.info("stream observer completed.");
+                logger.info("request stream observer completed.");
                 countDownLatch.countDown();
             }
         });

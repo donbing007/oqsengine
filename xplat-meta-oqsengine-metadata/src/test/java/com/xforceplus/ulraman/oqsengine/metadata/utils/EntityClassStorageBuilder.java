@@ -182,8 +182,6 @@ public class EntityClassStorageBuilder {
                 .setLevel(level)
                 .addAllEntityFields(entityFieldInfos)
                 .addAllRelations(relationInfos)
-                .setIsAny(false)
-                .setIsDynamic(false)
                 .build();
     }
 
@@ -205,7 +203,13 @@ public class EntityClassStorageBuilder {
                 .setEntityClassId(entityId)
                 .setRelOwnerClassId(ownerId)
                 .setRelationType(relationType)
-                .setEntityFieldCode(fieldId + "_name")
+                .setEntityField(EntityFieldInfo.newBuilder()
+                        .setId(fieldId)
+                        .setFieldType(EntityFieldInfo.FieldType.LONG)
+                        .setName(fieldId + "_name")
+                        .setFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.newBuilder().setSearchable(true).build())
+                        .build())
+                .setBelongToOwner(id % 2 == 0)
                 .build();
 
     }

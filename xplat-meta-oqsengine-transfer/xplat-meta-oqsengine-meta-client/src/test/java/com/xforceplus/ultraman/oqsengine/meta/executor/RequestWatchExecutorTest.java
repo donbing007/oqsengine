@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
+import com.xforceplus.ultraman.oqsengine.meta.BaseTest;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
@@ -22,16 +23,15 @@ import java.util.UUID;
  * date : 2021/2/24
  * @since : 1.8
  */
-public class RequestWatchExecutorTest {
-
-    private RequestWatchExecutor requestWatchExecutor;
-
-    private GRpcParamsConfig gRpcParamsConfig;
+public class RequestWatchExecutorTest extends BaseTest {
 
     @Before
     public void before() {
-        gRpcParamsConfig = gRpcParamsConfig();
         requestWatchExecutor = requestWatchExecutor();
+        RequestWatcher requestWatcher = new RequestWatcher(UUID.randomUUID().toString(), mockObserver());
+        ReflectionTestUtils.setField(requestWatchExecutor, "requestWatcher", requestWatcher);
+
+        requestWatchExecutor.start();
     }
 
     @After
@@ -39,40 +39,23 @@ public class RequestWatchExecutorTest {
         requestWatchExecutor.stop();
     }
 
-    private GRpcParamsConfig gRpcParamsConfig() {
-        GRpcParamsConfig gRpcParamsConfig = new GRpcParamsConfig();
-        gRpcParamsConfig.setDefaultDelayTaskDuration(30_000);
-        gRpcParamsConfig.setKeepAliveSendDuration(5_000);
-        gRpcParamsConfig.setReconnectDuration(5_000);
-        gRpcParamsConfig.setDefaultHeartbeatTimeout(30_000);
-        gRpcParamsConfig.setMonitorSleepDuration(1_000);
-
-        return gRpcParamsConfig;
-    }
-
-    private RequestWatchExecutor requestWatchExecutor() {
-        RequestWatchExecutor requestWatchExecutor = new RequestWatchExecutor();
-        RequestWatcher requestWatcher = new RequestWatcher(UUID.randomUUID().toString(), mockObserver());
-        ReflectionTestUtils.setField(requestWatchExecutor, "gRpcParamsConfig", gRpcParamsConfig);
-        ReflectionTestUtils.setField(requestWatchExecutor, "requestWatcher", requestWatcher);
-        return requestWatchExecutor;
-    }
-
     @Test
-    public void resetHeartBeatTest() {
+    public void resetHeartBeatTest() throws InterruptedException {
         Assert.assertNotNull(requestWatchExecutor.watcher());
         long heartbeat = requestWatchExecutor.watcher().heartBeat();
+        Thread.sleep(1);
         requestWatchExecutor.resetHeartBeat("uid");
         Assert.assertNotEquals(heartbeat, requestWatchExecutor.watcher().heartBeat());
     }
 
     @Test
-    public void createTest() {
+    public void createTest() throws InterruptedException {
         Assert.assertNotNull(requestWatchExecutor.watcher());
         String uid = requestWatchExecutor.watcher().uid();
         long heartbeat = requestWatchExecutor.watcher().heartBeat();
-        StreamObserver<EntityClassSyncRequest> observer = requestWatchExecutor.watcher().observer();
 
+        Thread.sleep(1);
+        StreamObserver<EntityClassSyncRequest> observer = requestWatchExecutor.watcher().observer();
         requestWatchExecutor.create(UUID.randomUUID().toString(), mockObserver());
         Assert.assertNotEquals(uid, requestWatchExecutor.watcher().uid());
         Assert.assertNotEquals(heartbeat, requestWatchExecutor.watcher().heartBeat());

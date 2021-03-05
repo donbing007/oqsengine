@@ -2,6 +2,7 @@ package com.xforceplus.ulraman.oqsengine.metadata.mock;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.*;
+import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 
@@ -41,7 +42,7 @@ public class MockRequestHandler implements IRequestHandler {
             watchElement.setVersion(EXIST_MIN_VERSION);
         }
 
-        accept(entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
+        onNext(entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
                                                         mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
         return true;
     }
@@ -58,7 +59,7 @@ public class MockRequestHandler implements IRequestHandler {
 
         appIdEntries.forEach(
                 a -> {
-                    accept(entityClassSyncResponseGenerator(a.getAppId(), a.getVersion(),
+                    onNext(entityClassSyncResponseGenerator(a.getAppId(), a.getVersion(),
                             mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
                     try {
                         Thread.sleep(100);
@@ -77,8 +78,24 @@ public class MockRequestHandler implements IRequestHandler {
     }
 
     @Override
-    public void accept(EntityClassSyncResponse entityClassSyncResponse) {
+    public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
         syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
                 entityClassSyncResponse.getEntityClassSyncRspProto());
+    }
+
+    @Override
+    public IRequestWatchExecutor watchExecutor() {
+        return null;
+    }
+
+
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void stop() {
+
     }
 }

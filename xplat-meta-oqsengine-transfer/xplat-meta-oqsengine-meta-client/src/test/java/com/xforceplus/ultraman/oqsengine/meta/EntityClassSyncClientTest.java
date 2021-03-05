@@ -27,6 +27,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
+
 /**
  * desc :
  * name : EntityClassSyncClientTest
@@ -35,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * date : 2021/2/22
  * @since : 1.8
  */
-public class EntityClassSyncClientTest {
+public class EntityClassSyncClientTest extends BaseTest {
 
     private Logger logger = LoggerFactory.getLogger(EntityClassSyncClientTest.class);
 
@@ -43,31 +45,17 @@ public class EntityClassSyncClientTest {
 
     private MockGRpcClient mockGRpcClient;
 
-    private IRequestHandler requestHandler;
-
-    private GRpcParamsConfig gRpcParamsConfig;
-
-    private RequestWatchExecutor requestWatchExecutor;
-
-    private ExecutorService executorService;
-
     @Before
     public void before() {
         mockGRpcClient = new MockGRpcClient();
-        gRpcParamsConfig = gRpcParamsConfig();
-        requestWatchExecutor = requestWatchExecutor();
 
-        requestHandler = requestHandler();
+        baseInit();
+
         entityClassSyncClient = new EntityClassSyncClient();
-
-        executorService = new ThreadPoolExecutor(5, 5, 0,
-                TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
 
         ReflectionTestUtils.setField(entityClassSyncClient, "client", mockGRpcClient);
         ReflectionTestUtils.setField(entityClassSyncClient, "requestHandler", requestHandler);
         ReflectionTestUtils.setField(entityClassSyncClient, "gRpcParamsConfig", gRpcParamsConfig);
-        ReflectionTestUtils.setField(entityClassSyncClient, "executorService", executorService);
-        ReflectionTestUtils.setField(entityClassSyncClient, "requestWatchExecutor", requestWatchExecutor);
         ReflectionTestUtils.setField(entityClassSyncClient, "isShutdown", false);
     }
 
@@ -82,51 +70,6 @@ public class EntityClassSyncClientTest {
         entityClassSyncClient.start();
 
         Thread.sleep(5_000);
-    }
-
-    private IRequestHandler requestHandler() {
-        IRequestHandler requestHandler = new SyncRequestHandler();
-
-        SyncExecutor syncExecutor = new SyncExecutor() {
-            Map<String, Integer> stringIntegerMap = new HashMap<>();
-
-            @Override
-            public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-                stringIntegerMap.put(appId, version);
-                return true;
-            }
-
-            @Override
-            public int version(String appId) {
-                Integer version = stringIntegerMap.get(appId);
-                if (null == version) {
-                    return -1;
-                }
-                return version;
-            }
-        };
-
-        ReflectionTestUtils.setField(requestHandler, "syncExecutor", syncExecutor);
-        ReflectionTestUtils.setField(requestHandler, "requestWatchExecutor", requestWatchExecutor);
-
-        return requestHandler;
-    }
-
-    private RequestWatchExecutor requestWatchExecutor() {
-        RequestWatchExecutor requestWatchExecutor = new RequestWatchExecutor();
-        ReflectionTestUtils.setField(requestWatchExecutor, "gRpcParamsConfig", gRpcParamsConfig);
-        return requestWatchExecutor;
-    }
-
-    private GRpcParamsConfig gRpcParamsConfig() {
-        GRpcParamsConfig gRpcParamsConfig = new GRpcParamsConfig();
-        gRpcParamsConfig.setDefaultDelayTaskDuration(30_000);
-        gRpcParamsConfig.setKeepAliveSendDuration(5_000);
-        gRpcParamsConfig.setReconnectDuration(5_000);
-        gRpcParamsConfig.setDefaultHeartbeatTimeout(30_000);
-        gRpcParamsConfig.setMonitorSleepDuration(1_000);
-
-        return gRpcParamsConfig;
     }
 
     @Test
@@ -184,8 +127,8 @@ public class EntityClassSyncClientTest {
 
         boolean ret = requestHandler.register(new WatchElement(appId, env, version, WatchElement.AppStatus.Init));
         Assert.assertFalse(ret);
-        Assert.assertEquals(1, requestWatchExecutor.forgot().size());
-        WatchElement element = requestWatchExecutor.forgot().peek();
+        Assert.assertEquals(1, ((SyncRequestHandler) requestHandler).getForgotQueue().size());
+        WatchElement element = ((SyncRequestHandler) requestHandler).getForgotQueue().peek();
         Assert.assertNotNull(element);
         Assert.assertEquals(appId, element.getAppId());
         Assert.assertEquals(version, element.getVersion());
@@ -223,7 +166,7 @@ public class EntityClassSyncClientTest {
 
         loops = 0;
         while (loops < 10) {
-            if (requestWatchExecutor.forgot().size() == 0) {
+            if (((SyncRequestHandler) requestHandler).getForgotQueue().size() == 0) {
                 break;
             }
 

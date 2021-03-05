@@ -28,7 +28,7 @@ public class MockGRpcClient implements GRpcClient {
     public GrpcCleanupRule gRpcCleanup = new GrpcCleanupRule();
 
     @Override
-    public void create() {
+    public void start() {
 
         serverName = InProcessServerBuilder.generateName();
 
@@ -42,7 +42,7 @@ public class MockGRpcClient implements GRpcClient {
     }
 
     @Override
-    public void destroy() {
+    public void stop() {
         isClientOpen = false;
     }
 

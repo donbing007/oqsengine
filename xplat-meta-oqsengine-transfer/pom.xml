@@ -18,6 +18,7 @@
         <module>xplat-meta-oqsengine-meta-client</module>
         <module>xplat-meta-oqsengine-meta-server</module>
         <module>xplat-meta-oqsengine-meta-common</module>
+        <module>xplat-meta-oqsengine-meta-springboot-starter</module>
     </modules>
 
     <properties>

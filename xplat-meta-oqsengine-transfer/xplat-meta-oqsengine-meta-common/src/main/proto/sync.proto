@@ -42,8 +42,6 @@ message EntityClassInfo {
 	int32 version = 6;
 	repeated EntityFieldInfo entityFields = 7;
 	repeated RelationInfo relations = 8;
-	bool isAny = 9;
-	bool isDynamic = 10;
 }
 
 message EntityFieldInfo {
@@ -76,10 +74,8 @@ message FieldConfig {
 	bool identifier = 5;
 	bool isRequired = 6;
 	string validateRegexString = 7;
-	bool isSplittable = 8;
-	string delimiter = 9;
-	string displayType = 10;
-	MetaFieldSense metaFieldSense = 11;
+	string displayType = 8;
+	MetaFieldSense metaFieldSense = 9;
 
 	enum MetaFieldSense {
 			UNKNOWN = 0;
@@ -104,5 +100,6 @@ message RelationInfo {
 	string relOwnerClassName = 5;
 	string relationType = 6;
 	bool identity = 7;
-	string entityFieldCode = 8;
+	EntityFieldInfo entityField = 8;
+	bool belongToOwner = 9;
 }

@@ -165,7 +165,8 @@ public class EntityClassManagerExecutor implements MetaManager {
                                                     .withIdentity(r.isIdentity())
                                                     .withEntityClassId(r.getEntityClassId())
                                                     .withFunction(this::load)
-                                                    .withEntityField(r.getEntityField());
+                                                    .withEntityField(r.getEntityField())
+                                                    .withBelongToOwner(r.isBelongToOwner());
 
                     oqsRelations.add(builder.build());
                 }
