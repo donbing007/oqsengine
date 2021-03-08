@@ -209,9 +209,12 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      * @param uid
      */
     private void confirmHeartBeat(String uid) {
-        responseWatchExecutor.resetHeartBeat(uid);
+        ResponseWatcher responseWatcher = responseWatchExecutor.watcher(uid);
+        if (null != responseWatcher && responseWatcher.isOnServe()) {
+            responseWatchExecutor.resetHeartBeat(uid);
 
-        confirmResponse(null, null, NOT_EXIST_VERSION, uid, HEARTBEAT);
+            confirmResponse(null, null, NOT_EXIST_VERSION, uid, HEARTBEAT);
+        }
     }
 
     /**
@@ -351,7 +354,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                             .setStatus(requestStatus.ordinal());
 
             if (requestStatus.equals(REGISTER_OK)) {
-                builder.setAppId(appId).setVersion(version);
+                builder.setAppId(appId).setVersion(version).setEnv(env);
             }
 
             return responseByWatch(appId, env, version, builder.build(), watcher, true);

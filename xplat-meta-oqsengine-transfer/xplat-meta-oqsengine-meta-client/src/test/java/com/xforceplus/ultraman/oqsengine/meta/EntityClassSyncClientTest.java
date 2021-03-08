@@ -1,16 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.MockGRpcClient;
-import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.mock.MockServer;
-import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import io.grpc.stub.StreamObserver;
 import org.junit.After;
 import org.junit.Assert;
@@ -19,15 +14,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 
 /**
  * desc :

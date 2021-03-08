@@ -269,8 +269,11 @@ public class SyncRequestHandler implements IRequestHandler {
                     NOT_EXIST_VERSION == entityClassSyncResponse.getVersion()) {
                 throw new MetaSyncClientException("sync appId or version could not be null...", false);
             }
+
             builder.setAppId(entityClassSyncResponse.getAppId())
-                    .setVersion(entityClassSyncResponse.getVersion());
+                    .setVersion(entityClassSyncResponse.getVersion())
+                    .setEnv(entityClassSyncResponse.getEnv());
+
             /**
              * 该方法返回的错误不会导致重新连接、但会通知服务端本次推送更新失败
              */

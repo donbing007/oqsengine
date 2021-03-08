@@ -20,9 +20,7 @@ public class WatchElement {
         this.version = version;
         this.env = env;
         this.status = status;
-        if (status == AppStatus.Register) {
-            registerTime = System.currentTimeMillis();
-        }
+        this.registerTime = System.currentTimeMillis();
     }
 
     public long getRegisterTime() {
