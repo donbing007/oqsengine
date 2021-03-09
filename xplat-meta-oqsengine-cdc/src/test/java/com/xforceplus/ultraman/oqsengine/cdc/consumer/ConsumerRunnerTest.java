@@ -20,6 +20,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.SQLException;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
+
 
 /**
  * desc :
@@ -250,12 +252,12 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
     private void initData(IEntity[] datas, boolean replacement, boolean delete) throws SQLException {
         for (IEntity entity : datas) {
             if (delete) {
-                masterStorage.delete(entity);
+                masterStorage.delete(entity, getEntityClass(entity.id()));
             } else if (replacement) {
                 entity.resetVersion(0);
-                masterStorage.replace(entity);
+                masterStorage.replace(entity, getEntityClass(entity.id()));
             } else {
-                masterStorage.build(entity);
+                masterStorage.build(entity, getEntityClass(entity.id()));
             }
         }
     }

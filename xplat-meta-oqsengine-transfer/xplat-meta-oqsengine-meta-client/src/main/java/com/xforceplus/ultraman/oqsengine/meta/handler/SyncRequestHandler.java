@@ -149,6 +149,9 @@ public class SyncRequestHandler implements IRequestHandler {
                                 try {
                                     sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequest,
                                             requestWatchExecutor.accessFunction(), entityClassSyncRequest.getUid());
+
+                                    logger.info("register success uid [{}], appId [{}], env [{}], version [{}]."
+                                            , watcher.uid(), v.getAppId(), v.getEnv(), v.getVersion());
                                 } catch (Exception e) {
                                     v.setStatus(WatchElement.AppStatus.Init);
                                     ret.set(false);
@@ -178,6 +181,7 @@ public class SyncRequestHandler implements IRequestHandler {
 
                     EntityClassSyncRequest entityClassSyncRequest =
                             builder.setAppId(e.getKey())
+                                    .setEnv(e.getValue().getEnv())
                                     .setVersion(e.getValue().getVersion())
                                     .setUid(requestWatcher.uid())
                                     .setStatus(RequestStatus.REGISTER.ordinal()).build();
@@ -187,6 +191,8 @@ public class SyncRequestHandler implements IRequestHandler {
                      * 刷新注册时间
                      */
                     e.getValue().setRegisterTime(System.currentTimeMillis());
+                    logger.info("reRegister success uid [{}], appId [{}], env [{}], version [{}]."
+                                        , requestWatcher.uid(), e.getKey(), e.getValue().getEnv(), e.getValue().getVersion());
                 } catch (Exception ex) {
                     isOperationOK = false;
                     logger.warn("reRegister watcherElement-[{}] failed, message : {}", e.getValue().toString(), ex.getMessage());
@@ -217,8 +223,15 @@ public class SyncRequestHandler implements IRequestHandler {
          * 更新状态
          */
         if (entityClassSyncResponse.getStatus() == RequestStatus.REGISTER_OK.ordinal()) {
-            requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
+            boolean ret = requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
                     entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed));
+
+            if (ret) {
+                logger.debug("register success, uid [{}], appId [{}], env [{}], version [{}] success.",
+                        entityClassSyncResponse.getUid(), entityClassSyncResponse.getAppId(),
+                        entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion());
+            }
+
         } else if (entityClassSyncResponse.getStatus() == RequestStatus.SYNC.ordinal()) {
             /**
              * 执行返回结果
@@ -252,6 +265,11 @@ public class SyncRequestHandler implements IRequestHandler {
          */
         sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequestBuilder.setUid(entityClassSyncResponse.getUid()).build(),
                     requestWatchExecutor.accessFunction(), entityClassSyncResponse.getUid());
+
+
+        logger.debug("sync data fin, uid [{}], appId [{}], env [{}], version [{}], status[{}].",
+                entityClassSyncResponse.getUid(), entityClassSyncResponse.getAppId(),
+                entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(), entityClassSyncRequestBuilder.getStatus());
     }
 
     /**

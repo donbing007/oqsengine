@@ -19,6 +19,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
 /**
@@ -139,7 +140,7 @@ public class BigBatchSyncTest extends CDCAbstractContainer {
             for (; i < maxTestSize; ) {
                 IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
                 for (IEntity entity : entities) {
-                    masterStorage.build(entity);
+                    masterStorage.build(entity, getEntityClass(entity.id()));
                 }
                 expectedSize += entities.length;
                 i += entities.length;

@@ -166,8 +166,14 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                         NOT_EXIST_VERSION == entityClassSyncRequest.getVersion() ||
                         currentVersion < entityClassSyncRequest.getVersion()) {
                     pull(entityClassSyncRequest.getUid(), w, SYNC_OK);
+                    logger.debug("pull data success on SYNC_OK, uid [{}], appId [{}], env [{}], version [{}]",
+                            entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
+                            entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
                 }
             }
+            logger.debug("register uid [{}], appId [{}], env [{}], version [{}] success.",
+                    entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
+                                entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
         } else if (entityClassSyncRequest.getStatus() == SYNC_OK.ordinal()) {
             /**
              * 处理返回结果成功
@@ -176,8 +182,12 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                     new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
                             entityClassSyncRequest.getVersion(), Confirmed);
 
-            responseWatchExecutor.update(entityClassSyncRequest.getUid(), w);
-
+            boolean ret = responseWatchExecutor.update(entityClassSyncRequest.getUid(), w);
+            if (ret) {
+                logger.debug("sync data success, uid [{}], appId [{}], env [{}], version [{}] success.",
+                                            entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
+                                                entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
+            }
         } else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
             /**
              * 处理返回结果失败
@@ -189,6 +199,10 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
              * 当客户端告知更新失败时，直接进行重试
              */
             pull(entityClassSyncRequest.getUid(), w, SYNC_FAIL);
+
+            logger.debug("pull data success on SYNC_FAIL, uid [{}], appId [{}], env [{}], version [{}] success.",
+                        entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
+                            entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
         }
     }
 
@@ -461,6 +475,8 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
                          * 直接拉取
                          */
                         pull(task.element().getUid(), w, SYNC_FAIL);
+                        logger.debug("delay task re-pull success, uid [{}], appId [{}], env [{}], version [{}] success.",
+                                watcher.uid(), w.getAppId(), w.getEnv(), w.getVersion());
                     }
                 }
             });

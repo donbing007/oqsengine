@@ -23,6 +23,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -87,16 +88,11 @@ public class TestServerStart {
     @Test
     public void testStart() throws InterruptedException {
         if (ifTest) {
-            Boolean[] allTearDown = new Boolean[3];
-            allTearDown[0] = false;
-            allTearDown[1] = false;
-            allTearDown[2] = false;
             int max = 3;
             while (true) {
                 int down = 0;
                 for (int i = 0; i < max; i++) {
                     if (!executors[i].isAlive()) {
-                        allTearDown[i] = true;
                         down++;
                     }
                 }
