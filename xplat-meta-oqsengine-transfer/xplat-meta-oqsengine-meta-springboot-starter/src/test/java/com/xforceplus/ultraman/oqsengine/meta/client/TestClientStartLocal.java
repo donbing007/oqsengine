@@ -35,27 +35,35 @@ public class TestClientStartLocal {
 
     Thread serverThread;
 
+    boolean ifTest = false;
+
     @Before
     public void before() throws InterruptedException {
-        buildServer();
-        Thread.sleep(1_000);
+        if (ifTest) {
+            buildServer();
+            Thread.sleep(1_000);
+        }
     }
 
     @After
     public void after() throws InterruptedException {
-        ThreadUtils.shutdown(serverThread, 1);
+        if (ifTest) {
+            ThreadUtils.shutdown(serverThread, 1);
 
-        Thread.sleep(3_000);
+            Thread.sleep(3_000);
+        }
     }
 
     @Test
     public void test() throws InterruptedException {
-        boolean ret =
-                requestHandler.register(new WatchElement("7", "0", -1, WatchElement.AppStatus.Register));
+        if (ifTest) {
+            boolean ret =
+                    requestHandler.register(new WatchElement("7", "0", -1, WatchElement.AppStatus.Register));
 
-        Assert.assertTrue(ret);
+            Assert.assertTrue(ret);
 
-        Thread.sleep(5_000);
+            Thread.sleep(5_000);
+        }
     }
 
     private void buildServer() {

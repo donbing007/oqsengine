@@ -23,7 +23,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,7 +56,7 @@ public class TestServerStart {
     @Resource
     private SyncResponseHandler syncResponseHandler;
 
-    boolean ifTest = true;
+    boolean ifTest = false;
 
     private Thread[] executors = new Thread[3];
 
