@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerService;
@@ -14,11 +15,13 @@ import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.MantiocreIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
@@ -36,10 +39,14 @@ import io.lettuce.core.RedisClient;
 import org.junit.Ignore;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -57,9 +64,13 @@ public abstract class CDCAbstractContainer {
 
     protected CommitIdStatusServiceImpl commitIdStatusService;
     protected SphinxSyncExecutor sphinxSyncExecutor;
+    protected IndexStorage indexStorage;
+
+    protected MetaManager metaManager;
+
+    protected ObjectMapper objectMapper;
 
     protected TransactionManager transactionManager;
-    protected SphinxQLIndexStorage indexStorage;
     protected DataSourcePackage dataSourcePackage;
     protected SQLCdcErrorStorage cdcErrorStorage;
     protected SQLMasterStorage masterStorage;
@@ -70,6 +81,7 @@ public abstract class CDCAbstractContainer {
     protected String cdcErrors = "cdcerrors";
 
     protected SingleCDCConnector singleCDCConnector;
+    protected ExecutorService executorService;
 
     protected ConsumerService initAll() throws Exception {
         singleCDCConnector = new SingleCDCConnector();
@@ -104,6 +116,7 @@ public abstract class CDCAbstractContainer {
         redisClient.connect().sync().flushall();
         redisClient.shutdown();
         dataSourcePackage.close();
+        executorService.shutdownNow();
     }
 
     protected DataSource buildDataSourceSelectorMaster() {
@@ -131,16 +144,19 @@ public abstract class CDCAbstractContainer {
 
         Selector<String> indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
 
-        indexStorage = new SphinxQLIndexStorage();
+        executorService = new ThreadPoolExecutor(5, 5, 0,
+                TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
+
+        indexStorage = new MantiocreIndexStorage();
         ReflectionTestUtils.setField(indexStorage, "writerDataSourceSelector", writeDataSourceSelector);
         ReflectionTestUtils.setField(indexStorage, "writeTransactionExecutor", writeExecutor);
         ReflectionTestUtils.setField(indexStorage, "searchTransactionExecutor", searchExecutor);
         ReflectionTestUtils.setField(indexStorage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(indexStorage, "storageStrategyFactory", storageStrategyFactory);
         ReflectionTestUtils.setField(indexStorage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
-        indexStorage.setSearchIndexName("oqsindex");
-        indexStorage.setMaxSearchTimeoutMs(1000);
-        indexStorage.setMaxBatchSize(50);
+        ReflectionTestUtils.setField(indexStorage, "threadPool", executorService);
+
+        ((MantiocreIndexStorage)indexStorage).setMaxSearchTimeoutMs(1000);
         indexStorage.init();
     }
 
@@ -168,9 +184,15 @@ public abstract class CDCAbstractContainer {
         IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
         ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
 
+
+        metaManager = new EntityClassBuilder();
         sphinxSyncExecutor = new SphinxSyncExecutor();
 
-        ReflectionTestUtils.setField(sphinxSyncExecutor, "sphinxQLIndexStorage", indexStorage);
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "metaManager", metaManager);
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "objectMapper", objectMapper);
+
+        ReflectionTestUtils.setField(sphinxSyncExecutor, "indexStorage", indexStorage);
+
         ReflectionTestUtils.setField(sphinxSyncExecutor, "masterStorage", masterStorage);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "entityValueBuilder", entityValueBuilder);
         ReflectionTestUtils.setField(sphinxSyncExecutor, "cdcErrorStorage", cdcErrorStorage);

@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.ByteString;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import org.junit.Assert;
 import org.junit.Test;
@@ -9,6 +10,9 @@ import org.junit.Test;
 import java.sql.SQLException;
 import java.util.*;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
+import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRowChange;
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.entityClass2;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
 
 
@@ -21,10 +25,6 @@ import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUt
  * @since : 1.8
  */
 public class SphinxConsumerToolsTest {
-
-    private static final int attrMaxSize = 3;
-
-    private static final long PCREF_ID = 0;
 
     @Test
     public void columnToolsTest() throws Exception {
@@ -50,7 +50,7 @@ public class SphinxConsumerToolsTest {
                     Long id = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ID);
                     Assert.assertTrue(expectedIds.contains(id));
 
-                    Long entity = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ENTITY);
+                    Long entity = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ENTITYCLASS2);
                     Assert.assertNotNull(entity);
 
                     Long tx = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.TX);
@@ -59,20 +59,15 @@ public class SphinxConsumerToolsTest {
                     Long commitid = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.COMMITID);
                     Assert.assertNotNull(commitid);
 
-                    Long pref = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.PREF);
-                    Assert.assertEquals(PCREF_ID, (long) pref);
-
-                    Long cref = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.CREF);
-                    Assert.assertEquals(PCREF_ID, (long) cref);
-
                     Boolean deleted = getBooleanFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.DELETED);
                     Assert.assertNotNull(deleted);
 
                     String attr = getStringFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ATTRIBUTE);
                     Assert.assertNotNull(attr);
 
-                    String meta = getStringFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.META);
-                    Assert.assertNotNull(meta);
+                    Integer op = getIntegerFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.OP);
+                    Assert.assertNotNull(op);
+
                 }
             }
         }
@@ -99,7 +94,7 @@ public class SphinxConsumerToolsTest {
 
             builder.setHeader(buildHeader());
 
-            builder.setStoreValue(buildRowChange(i, i % 2 == 0, tx, size).toByteString());
+            builder.setStoreValue(buildRowChange(i, 2, entityClass2.id(), i % 2 == 0, tx, 1, "0", 2, OqsVersion.MAJOR).toByteString());
 
             entries.add(builder.build());
 
@@ -114,128 +109,4 @@ public class SphinxConsumerToolsTest {
         builder.setExecuteTime(System.currentTimeMillis() - 1024);
         return builder.build();
     }
-
-    private CanalEntry.RowChange buildRowChange(long id, boolean replacement, long tx, int size) {
-        CanalEntry.RowChange.Builder builder = CanalEntry.RowChange.newBuilder();
-
-        CanalEntry.EventType eventType = replacement ? CanalEntry.EventType.UPDATE : CanalEntry.EventType.INSERT;
-        builder.setEventType(eventType);
-
-        builder.addRowDatas(buildRowData(id, tx, size));
-
-        return builder.build();
-    }
-
-    private CanalEntry.RowData buildRowData(long id, long tx, int size) {
-        int attrId = Math.abs(new Random(id).nextInt());
-        CanalEntry.RowData.Builder builder = CanalEntry.RowData.newBuilder();
-        for (OqsBigEntityColumns v : OqsBigEntityColumns.values()) {
-            CanalEntry.Column column = buildColumn(id, v, attrId, tx, size);
-            if (null != column) {
-                builder.addAfterColumns(column);
-            }
-        }
-
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildColumn(long id, OqsBigEntityColumns v, int attrId, long tx, int size) {
-
-        switch (v) {
-            case ID:
-                return buildId(id, v);
-            case ENTITY:
-                return buildEntity(v, size);
-            case PREF:
-            case CREF:
-                return buildPCREF(v);
-            case TX:
-                return buildTX(v, tx);
-            case COMMITID:
-                return buildCommitid(v, tx);
-            case DELETED:
-                return buildDeleted(v);
-            case ATTRIBUTE:
-                return buildAttribute(v, attrId);
-            case META:
-                return buildMeta(v, attrId);
-        }
-
-        return null;
-    }
-    private CanalEntry.Column.Builder getBuilder(OqsBigEntityColumns v) {
-        CanalEntry.Column.Builder builder = CanalEntry.Column.newBuilder();
-        builder.setIndex(v.ordinal());
-        builder.setName(v.name().toLowerCase());
-        return builder;
-    }
-
-    private CanalEntry.Column buildId(long id, OqsBigEntityColumns v) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue(Long.toString(id));
-
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildEntity(OqsBigEntityColumns v, int batchSize) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        Random r = new Random();
-        long id = Math.abs(r.nextLong()) % batchSize;
-        builder.setValue(Long.toString(id));
-
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildPCREF(OqsBigEntityColumns v) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue(Long.toString(PCREF_ID));
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildTX(OqsBigEntityColumns v, long tx) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue(Long.toString(tx));
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildCommitid(OqsBigEntityColumns v, long tx) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue(Long.toString(tx));
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildDeleted(OqsBigEntityColumns v) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue("false");
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildAttribute(OqsBigEntityColumns v, int attrId) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        int id = attrId % attrMaxSize;
-        builder.setValue(Prepared.attrs[id]);
-        return builder.build();
-    }
-
-    private CanalEntry.Column buildMeta(OqsBigEntityColumns v, int metaId) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        int id = metaId % attrMaxSize;
-        builder.setValue(Prepared.metas[id]);
-        return builder.build();
-    }
-
-
-    public static class Prepared {
-        public static String[] attrs = {
-                "{\"8194L\":73550,\"100000S0\":\"1\",\"100000S1\":\"2\",\"8192L\":38478,\"100000S2\":\"3\",\"100000S3\":\"500002\",\"100000S4\":\"测试\",\"8193S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\"}",
-                "{\"12289S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\",\"100000S0\":\"1\",\"100000S1\":\"2\",\"100000S2\":\"3\",\"12288S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\",\"100000S3\":\"500002\",\"100000S4\":\"测试\",\"12290S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\"}",
-                "{\"258048S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\",\"100000S0\":\"1\",\"100000S1\":\"2\",\"100000S2\":\"3\",\"258049S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\",\"100000S3\":\"500002\",\"100000S4\":\"测试\",\"258050S\":\"121110122981141101211039910211111912211011699113114103115101103122109109106109114111101\"}"
-        };
-        public static String[] metas = {
-                "[\"8194-Long\",\"100000-Strings\",\"8192-Long\",\"8193-String\"]",
-                "[\"12290-String\",\"12288-String\",\"100000-Strings\",\"12289-String\"]",
-                "[\"258048-String\",\"100000-Strings\",\"258049-String\",\"258050-String\"]"
-        };
-    }
-
 }

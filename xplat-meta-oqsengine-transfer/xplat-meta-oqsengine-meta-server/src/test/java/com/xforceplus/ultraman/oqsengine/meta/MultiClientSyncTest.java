@@ -10,8 +10,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -26,8 +24,6 @@ import static com.xforceplus.ultraman.oqsengine.meta.mock.MockEntityClassSyncRsp
  * @since : 1.8
  */
 public class MultiClientSyncTest extends BaseInit {
-
-    private Logger logger = LoggerFactory.getLogger(MultiClientSyncTest.class);
 
     private int testClientSize = 2;
     private StreamEvent[] streamEvents = new StreamEvent[testClientSize];

@@ -140,7 +140,9 @@ public class OriginalEntity implements Serializable {
         return result;
     }
 
-
+    /**
+     * builder
+     */
     public static final class Builder {
         private boolean deleted;
         private int op;

@@ -69,6 +69,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
                      */
                     if (current - v.heartBeat() >= heartbeatTimeout) {
                         release(k);
+                        logger.warn("heart-beat check error, watcher has been released,  uid [{}]", k);
                     }
                 }
         );

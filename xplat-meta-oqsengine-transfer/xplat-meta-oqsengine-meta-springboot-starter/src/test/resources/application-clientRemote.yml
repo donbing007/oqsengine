@@ -1,0 +1,28 @@
+instance:
+  # static | statefulset 前者读取配置文件,后者使用 k8s statefulset 生成的 hostname.
+  type: static
+  id: 0
+
+logging:
+  level:
+    root: debug
+    io:
+      lettuce: info
+  pattern:
+    console: "%d{yyyy-MM-dd} %d{hhh:mm:ss},%red(%d{SSS}) %green(%-5level) [%thread] %cyan(%logger{36}) : %msg%n"
+
+server:
+  port: 8086
+
+meta:
+  grpc:
+    type: client
+    host: 169.254.106.127
+    port: 8082
+    seconds:
+      heartbeatTimeout: 30
+      delaytaskTimeout: 30
+      keepAliveDuration: 5
+      monitorDuration: 1
+      reconnectDuration: 5
+

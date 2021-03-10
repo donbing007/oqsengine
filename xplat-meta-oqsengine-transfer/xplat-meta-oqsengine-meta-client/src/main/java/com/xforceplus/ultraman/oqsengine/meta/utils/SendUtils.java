@@ -49,6 +49,8 @@ public class SendUtils {
     public static void sendRequest(RequestWatcher requestWatcher, EntityClassSyncRequest entityClassSyncRequest) {
         try {
             requestWatcher.observer().onNext(entityClassSyncRequest);
+
+            logger.debug("send request success, request [{}].", entityClassSyncRequest.toString());
         } catch (Exception e) {
             throw new MetaSyncClientException(
                     String.format("send request error, message-[%s].", e.getMessage()), true);

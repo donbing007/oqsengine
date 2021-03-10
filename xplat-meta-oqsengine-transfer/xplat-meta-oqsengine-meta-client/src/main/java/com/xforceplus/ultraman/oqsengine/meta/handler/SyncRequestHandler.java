@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.meta.handler;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
+import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
@@ -25,8 +26,8 @@ import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient.isShutDown;
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.HEARTBEAT;
-import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
+import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.CLIENT_TASK_COUNT;
 import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest;
@@ -148,6 +149,9 @@ public class SyncRequestHandler implements IRequestHandler {
                                 try {
                                     sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequest,
                                             requestWatchExecutor.accessFunction(), entityClassSyncRequest.getUid());
+
+                                    logger.info("register success uid [{}], appId [{}], env [{}], version [{}]."
+                                            , watcher.uid(), v.getAppId(), v.getEnv(), v.getVersion());
                                 } catch (Exception e) {
                                     v.setStatus(WatchElement.AppStatus.Init);
                                     ret.set(false);
@@ -177,6 +181,7 @@ public class SyncRequestHandler implements IRequestHandler {
 
                     EntityClassSyncRequest entityClassSyncRequest =
                             builder.setAppId(e.getKey())
+                                    .setEnv(e.getValue().getEnv())
                                     .setVersion(e.getValue().getVersion())
                                     .setUid(requestWatcher.uid())
                                     .setStatus(RequestStatus.REGISTER.ordinal()).build();
@@ -186,6 +191,8 @@ public class SyncRequestHandler implements IRequestHandler {
                      * 刷新注册时间
                      */
                     e.getValue().setRegisterTime(System.currentTimeMillis());
+                    logger.info("reRegister success uid [{}], appId [{}], env [{}], version [{}]."
+                                        , requestWatcher.uid(), e.getKey(), e.getValue().getEnv(), e.getValue().getVersion());
                 } catch (Exception ex) {
                     isOperationOK = false;
                     logger.warn("reRegister watcherElement-[{}] failed, message : {}", e.getValue().toString(), ex.getMessage());
@@ -216,8 +223,15 @@ public class SyncRequestHandler implements IRequestHandler {
          * 更新状态
          */
         if (entityClassSyncResponse.getStatus() == RequestStatus.REGISTER_OK.ordinal()) {
-            requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
+            boolean ret = requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
                     entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed));
+
+            if (ret) {
+                logger.debug("register success, uid [{}], appId [{}], env [{}], version [{}] success.",
+                        entityClassSyncResponse.getUid(), entityClassSyncResponse.getAppId(),
+                        entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion());
+            }
+
         } else if (entityClassSyncResponse.getStatus() == RequestStatus.SYNC.ordinal()) {
             /**
              * 执行返回结果
@@ -250,7 +264,12 @@ public class SyncRequestHandler implements IRequestHandler {
          * 回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
          */
         sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequestBuilder.setUid(entityClassSyncResponse.getUid()).build(),
-                requestWatchExecutor.accessFunction(), entityClassSyncResponse.getUid());
+                    requestWatchExecutor.accessFunction(), entityClassSyncResponse.getUid());
+
+
+        logger.debug("sync data fin, uid [{}], appId [{}], env [{}], version [{}], status[{}].",
+                entityClassSyncResponse.getUid(), entityClassSyncResponse.getAppId(),
+                entityClassSyncResponse.getEnv(), entityClassSyncResponse.getVersion(), entityClassSyncRequestBuilder.getStatus());
     }
 
     /**
@@ -264,8 +283,15 @@ public class SyncRequestHandler implements IRequestHandler {
         int status = SYNC_FAIL.ordinal();
         EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
         try {
+            if (null == entityClassSyncResponse.getAppId() || entityClassSyncResponse.getAppId().isEmpty() ||
+                    NOT_EXIST_VERSION == entityClassSyncResponse.getVersion()) {
+                throw new MetaSyncClientException("sync appId or version could not be null...", false);
+            }
+
             builder.setAppId(entityClassSyncResponse.getAppId())
-                    .setVersion(entityClassSyncResponse.getVersion());
+                    .setVersion(entityClassSyncResponse.getVersion())
+                    .setEnv(entityClassSyncResponse.getEnv());
+
             /**
              * 该方法返回的错误不会导致重新连接、但会通知服务端本次推送更新失败
              */
@@ -284,8 +310,13 @@ public class SyncRequestHandler implements IRequestHandler {
                         /**
                          * 执行外部传入的执行器
                          */
-                        status = syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(), result) ?
-                                RequestStatus.SYNC_OK.ordinal() : SYNC_FAIL.ordinal();
+                        try {
+                            status = syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(), result) ?
+                                    RequestStatus.SYNC_OK.ordinal() : SYNC_FAIL.ordinal();
+                        } catch (Exception e) {
+                            status = DATA_ERROR.ordinal();
+                            logger.warn(e.getMessage());
+                        }
 
                         if (status == RequestStatus.SYNC_OK.ordinal()) {
                             requestWatchExecutor.update(w);
