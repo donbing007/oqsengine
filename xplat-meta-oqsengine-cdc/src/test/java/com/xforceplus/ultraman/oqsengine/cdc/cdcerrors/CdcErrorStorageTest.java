@@ -4,13 +4,11 @@ import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 
 import javax.sql.DataSource;
@@ -39,10 +37,22 @@ public class CdcErrorStorageTest extends CDCAbstractContainer {
     private static CdcErrorTask expectedCdcErrorTask =
                 CdcErrorTask.buildErrorTask(expectedSeqNo, expectedId, expectedCommitId, expectedMessage);
 
+    @BeforeClass
+    public static void beforeClass() {
+        ContainerStarter.startMysql();
+        ContainerStarter.startManticore();
+        ContainerStarter.startRedis();
+        ContainerStarter.startCannal();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        ContainerStarter.reset();
+    }
+
 
     @Before
     public void before() throws Exception {
-
         initAll();
     }
 

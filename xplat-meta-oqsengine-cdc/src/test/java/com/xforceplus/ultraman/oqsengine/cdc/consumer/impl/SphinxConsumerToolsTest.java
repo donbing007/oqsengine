@@ -10,7 +10,6 @@ import org.junit.Test;
 import java.sql.SQLException;
 import java.util.*;
 
-import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
 import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRowChange;
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.entityClass2;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
@@ -50,7 +49,7 @@ public class SphinxConsumerToolsTest {
                     Long id = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ID);
                     Assert.assertTrue(expectedIds.contains(id));
 
-                    Long entity = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ENTITYCLASS2);
+                    Long entity = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.ENTITYCLASSL2);
                     Assert.assertNotNull(entity);
 
                     Long tx = getLongFromColumn(rowData.getAfterColumnsList(), OqsBigEntityColumns.TX);
@@ -94,7 +93,7 @@ public class SphinxConsumerToolsTest {
 
             builder.setHeader(buildHeader());
 
-            builder.setStoreValue(buildRowChange(i, 2, entityClass2.id(), i % 2 == 0, tx, 1, "0", 2, OqsVersion.MAJOR).toByteString());
+            builder.setStoreValue(buildRowChange(i, 3, entityClass2.id(), i % 2 == 0, tx, 1, "0", 2, OqsVersion.MAJOR, 1).toByteString());
 
             entries.add(builder.build());
 

@@ -93,7 +93,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
     }
 
     private IEntityClass getEntityClass(List<CanalEntry.Column> columns) throws SQLException {
-        for (int o = ENTITYCLASS4.ordinal(); o >= ENTITYCLASS0.ordinal(); o--) {
+        for (int o = ENTITYCLASSL4.ordinal(); o >= ENTITYCLASSL0.ordinal(); o--) {
             Optional<OqsBigEntityColumns> op = getByOrdinal(o);
             if (op.isPresent()) {
                 long id = getLongFromColumn(columns, op.get());

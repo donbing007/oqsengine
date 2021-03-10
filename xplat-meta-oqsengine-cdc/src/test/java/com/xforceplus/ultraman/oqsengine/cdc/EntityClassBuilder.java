@@ -27,19 +27,19 @@ public class EntityClassBuilder implements MetaManager {
     public static final IEntityField boolField = new EntityField(3, "bool", FieldType.BOOLEAN, FieldConfig.build().searchable(true), null, null);
     public static final IEntityField dateTimeField = new EntityField(4, "datetime", FieldType.DATETIME, FieldConfig.build().searchable(true), null, null);
     public static final IEntityField decimalField = new EntityField(5, "decimal", FieldType.DECIMAL, FieldConfig.build().searchable(true), null, null);
-    public static final IEntityField enumField = new EntityField(6, "enum", FieldType.ENUM, FieldConfig.build().searchable(true), null, null);
-    public static final IEntityField stringsField = new EntityField(7, "strings", FieldType.STRINGS, FieldConfig.build().searchable(true), null, null);
+    public static final IEntityField stringsField = new EntityField(6, "strings", FieldType.STRINGS, FieldConfig.build().searchable(true), null, null);
 
-
+    // level 1
     public static IEntityClass entityClass0 =
             EntityClass.Builder.anEntityClass()
                     .withId(Long.MAX_VALUE)
                     .withVersion(1)
                     .withCode("c0")
                     .withFields(
-                            Arrays.asList(longField, stringField, boolField)
+                            Arrays.asList(longField, stringField)
                     ).build();
 
+    // level 2
     public static IEntityClass entityClass1 =
             EntityClass.Builder.anEntityClass()
                     .withId(Long.MAX_VALUE - 1)
@@ -47,9 +47,9 @@ public class EntityClassBuilder implements MetaManager {
                     .withCode("c1")
                     .withFather(entityClass0)
                     .withFields(
-                            Arrays.asList(dateTimeField, decimalField)
+                            Arrays.asList(boolField, dateTimeField)
                     ).build();
-
+    // level 3
     public static IEntityClass entityClass2 =
             EntityClass.Builder.anEntityClass()
                     .withId(Long.MAX_VALUE - 2)
@@ -57,7 +57,7 @@ public class EntityClassBuilder implements MetaManager {
                     .withCode("c2")
                     .withFather(entityClass1)
                     .withFields(
-                            Arrays.asList(enumField, stringsField)
+                            Arrays.asList(decimalField, stringsField)
                     ).build();
 
     static {

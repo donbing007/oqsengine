@@ -107,7 +107,8 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
     private static void build(List<CanalEntry.Entry> entries, int size, long startId) {
         for (int i = 0; i < size; i++) {
             long start = startId + i;
-            CanalEntry.Entry fRanDom_1 = buildRow(start, 1, Long.MAX_VALUE, true, 1, i % CanalEntryTools.Prepared.attrs.length, "false", 0, 1);
+            CanalEntry.Entry fRanDom_1 =
+                    buildRow(start, 1, Long.MAX_VALUE, true, 1, i % CanalEntryTools.Prepared.attrs.length, "false", 0, 1, 1);
 
             entries.add(fRanDom_1);
         }

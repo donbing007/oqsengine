@@ -17,9 +17,9 @@ import java.util.Random;
 public class CanalEntryTools {
 
     public static CanalEntry.Entry buildRow(long id, int levelOrdinal, long entityId, boolean replacement, long tx, long commit, String isDeleted,
-                                                        int attrIndex, int oqsmajor) {
+                                                        int attrIndex, int oqsmajor, int version) {
         CanalEntry.Entry.Builder builder = getEntryBuildByEntryType(CanalEntry.EntryType.ROWDATA);
-        builder.setStoreValue(buildRowChange(id, levelOrdinal, entityId, replacement, tx, commit, isDeleted, attrIndex, oqsmajor).toByteString());
+        builder.setStoreValue(buildRowChange(id, levelOrdinal, entityId, replacement, tx, commit, isDeleted, attrIndex, oqsmajor, version).toByteString());
         return builder.build();
     }
 
@@ -41,7 +41,7 @@ public class CanalEntryTools {
 
 
     public static CanalEntry.RowChange buildRowChange(long id, int levelOrdinal, long entityId, boolean replacement, long tx, long commit,
-                                                String isDeleted, int attrIndex, int oqsmajor) {
+                                                String isDeleted, int attrIndex, int oqsmajor, int version) {
         CanalEntry.RowChange.Builder builder = CanalEntry.RowChange.newBuilder();
 
         CanalEntry.EventType eventType = replacement ? CanalEntry.EventType.UPDATE : CanalEntry.EventType.INSERT;
@@ -55,17 +55,17 @@ public class CanalEntryTools {
                 op = OperationType.CREATE.ordinal();
             }
         }
-        builder.addRowDatas(buildRowData(id, levelOrdinal, entityId, tx, op, commit, isDeleted, attrIndex, oqsmajor));
+        builder.addRowDatas(buildRowData(id, levelOrdinal, entityId, tx, op, commit, isDeleted, attrIndex, oqsmajor, version));
 
         return builder.build();
     }
 
     private static CanalEntry.RowData buildRowData(long id, int levelOrdinal, long entityId, long tx, int op, long commit,
-                                            String isDeleted, int attrIndex, int oqsmajor) {
+                                            String isDeleted, int attrIndex, int oqsmajor, int version) {
 
         CanalEntry.RowData.Builder builder = CanalEntry.RowData.newBuilder();
         for (OqsBigEntityColumns v : OqsBigEntityColumns.values()) {
-            CanalEntry.Column column = buildColumn(id, v, levelOrdinal, entityId, tx, op, commit, isDeleted, attrIndex, oqsmajor);
+            CanalEntry.Column column = buildColumn(id, v, levelOrdinal, entityId, tx, op, commit, isDeleted, attrIndex, oqsmajor, version);
             if (null != column) {
                 builder.addAfterColumns(column);
             }
@@ -75,19 +75,19 @@ public class CanalEntryTools {
     }
 
     public static CanalEntry.Column buildColumn(long id, OqsBigEntityColumns v, int levelOrdinal, long entityId, long tx, int op,
-                                          long commit, String isDeleted, int attrIndex,  int oqsmajor) {
+                                          long commit, String isDeleted, int attrIndex, int oqsmajor, int version) {
         switch (v) {
             case ID:
                 return buildId(id, v);
-            case ENTITYCLASS0:
-            case ENTITYCLASS1:
-            case ENTITYCLASS2:
-            case ENTITYCLASS3:
-            case ENTITYCLASS4:
+            case ENTITYCLASSL0:
+            case ENTITYCLASSL1:
+            case ENTITYCLASSL2:
+            case ENTITYCLASSL3:
+            case ENTITYCLASSL4:
                 if (v.ordinal() == levelOrdinal) {
                     return buildEntityClass(v, entityId);
                 } else {
-                    return CanalEntry.Column.newBuilder().setIndex(v.ordinal()).setValue("0").build();
+                    return getBuilder(v).setValue(Long.toString(0)).build();
                 }
             case OP:
                 return buildOP(v, op);
@@ -104,6 +104,8 @@ public class CanalEntryTools {
                 return buildTime(v, System.currentTimeMillis());
             case OQSMAJOR:
                 return buildOqsmajor(v, oqsmajor);
+            case VERSION:
+                return buildVersion(v, version);
         }
 
         return null;
@@ -140,9 +142,15 @@ public class CanalEntryTools {
         return builder.build();
     }
 
-    private static CanalEntry.Column buildCommitid(OqsBigEntityColumns v, long tx) {
+    private static CanalEntry.Column buildVersion(OqsBigEntityColumns v, int version) {
         CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue(Long.toString(tx));
+        builder.setValue(Integer.toString(version));
+        return builder.build();
+    }
+
+    private static CanalEntry.Column buildCommitid(OqsBigEntityColumns v, long commitId) {
+        CanalEntry.Column.Builder builder = getBuilder(v);
+        builder.setValue(Long.toString(commitId));
         return builder.build();
     }
 
