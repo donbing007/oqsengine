@@ -128,26 +128,6 @@ public class CanalEntryTools {
         return builder.build();
     }
 
-    private static CanalEntry.Column buildEntity(OqsBigEntityColumns v, long entityId) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        Random r = new Random();
-        builder.setValue(Long.toString(entityId));
-
-        return builder.build();
-    }
-
-    private static CanalEntry.Column buildPREF(OqsBigEntityColumns v, long id) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue(Long.toString(id));
-        return builder.build();
-    }
-
-    private static CanalEntry.Column buildCREF(OqsBigEntityColumns v, long id) {
-        CanalEntry.Column.Builder builder = getBuilder(v);
-        builder.setValue(Long.toString(id));
-        return builder.build();
-    }
-
     private static CanalEntry.Column buildTX(OqsBigEntityColumns v, long tx) {
         CanalEntry.Column.Builder builder = getBuilder(v);
         builder.setValue(Long.toString(tx));
@@ -191,8 +171,8 @@ public class CanalEntryTools {
         return builder.build();
     }
 
-    private static class Prepared {
-        static String[] attrs = {
+    public static class Prepared {
+        public static String[] attrs = {
                 "{\"1L\":73550,\"2S\":\"1\",\"3L\":\"0\"}",
                 "{\"1L\":55304234,\"2S\":\"2222\",\"3L\":\"1\", \"4L\":12342354353412, \"5S0\":\"1\",\"5S1\":\"2\"}",
                 "{\"1L\":55304234,\"2S\":\"2222\",\"3L\":\"1\", \"4L\":12342354353412, \"5S0\":\"1\",\"5S1\":\"2\", \"6S\":\"ENUM\", \"7S0\":\"1\",\"7S1\":\"2\",\"7S2\":\"3\", \"7S3\":\"500002\",\"7S4\":\"测试\"}"

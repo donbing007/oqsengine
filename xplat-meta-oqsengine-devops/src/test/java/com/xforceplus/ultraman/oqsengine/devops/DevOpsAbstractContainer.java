@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -55,7 +55,7 @@ public abstract class DevOpsAbstractContainer {
     protected RedisClient redisClient;
     protected LongIdGenerator idGenerator;
     protected DataSource dataSource;
-    protected SQLCdcErrorStorage cdcErrorStorage;
+
     protected SQLMasterStorage masterStorage;
     protected SphinxQLIndexStorage indexStorage;
     protected StorageStrategyFactory masterStorageStrategyFactory;
@@ -64,7 +64,7 @@ public abstract class DevOpsAbstractContainer {
     protected TransactionExecutor masterTransactionExecutor;
     protected DevOpsRebuildIndexExecutor taskExecutor;
     protected static String tableName = "oqsbigentity";
-    protected static String cdcErrorsTableName = "cdcerrors";
+
     protected static String rebuildTableName = "devopstasks";
 
     protected void start() throws Exception {
@@ -158,18 +158,6 @@ public abstract class DevOpsAbstractContainer {
         indexStorage.setSearchIndexName("oqsindex");
         indexStorage.setMaxSearchTimeoutMs(1000);
         indexStorage.init();
-    }
-
-    private void initDevOps() throws Exception {
-
-        DataSource devOpsDataSource = buildDevOpsDataSource();
-
-        cdcErrorStorage = new SQLCdcErrorStorage();
-        ReflectionTestUtils.setField(cdcErrorStorage, "devOpsDataSource", devOpsDataSource);
-        cdcErrorStorage.setCdcErrorRecordTable(cdcErrorsTableName);
-        cdcErrorStorage.init();
-
-        initTaskStorage(devOpsDataSource);
     }
 
     private void initTaskStorage(DataSource devOpsDataSource) throws IllegalAccessException, InstantiationException {

@@ -62,13 +62,6 @@
             <artifactId>HikariCP</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>com.xforceplus.ultraman</groupId>
-            <artifactId>xplat-meta-oqsengine-devops</artifactId>
-            <version>1.2.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-testcontainer</artifactId>

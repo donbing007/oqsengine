@@ -31,7 +31,7 @@ public class TestClientRemote {
     private IRequestHandler requestHandler;
 
 
-    boolean ifTest = false;
+    boolean ifTest = true;
 
     @Before
     public void before() throws InterruptedException {
@@ -46,10 +46,12 @@ public class TestClientRemote {
     @Test
     public void test() throws InterruptedException {
         if (ifTest) {
-            boolean ret =
-                    requestHandler.register(new WatchElement("7", "0", -1, WatchElement.AppStatus.Register));
+//            boolean ret =
+//                    requestHandler.register(new WatchElement("7", "0", -1, WatchElement.AppStatus.Register));
+//
+//            Assert.assertTrue(ret);
 
-            Assert.assertTrue(ret);
+            boolean ret = requestHandler.register(new WatchElement("1", "0", -1, WatchElement.AppStatus.Register));
 
             Thread.sleep(10000_000);
         }

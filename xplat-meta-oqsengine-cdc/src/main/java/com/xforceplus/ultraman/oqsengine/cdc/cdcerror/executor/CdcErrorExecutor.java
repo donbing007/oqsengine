@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor;
+package com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor;
 
 import java.sql.SQLException;
 

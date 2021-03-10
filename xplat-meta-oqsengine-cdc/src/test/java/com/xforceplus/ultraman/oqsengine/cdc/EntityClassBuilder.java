@@ -34,6 +34,7 @@ public class EntityClassBuilder implements MetaManager {
     public static IEntityClass entityClass0 =
             EntityClass.Builder.anEntityClass()
                     .withId(Long.MAX_VALUE)
+                    .withVersion(1)
                     .withCode("c0")
                     .withFields(
                             Arrays.asList(longField, stringField, boolField)
@@ -42,6 +43,7 @@ public class EntityClassBuilder implements MetaManager {
     public static IEntityClass entityClass1 =
             EntityClass.Builder.anEntityClass()
                     .withId(Long.MAX_VALUE - 1)
+                    .withVersion(1)
                     .withCode("c1")
                     .withFather(entityClass0)
                     .withFields(
@@ -51,6 +53,7 @@ public class EntityClassBuilder implements MetaManager {
     public static IEntityClass entityClass2 =
             EntityClass.Builder.anEntityClass()
                     .withId(Long.MAX_VALUE - 2)
+                    .withVersion(1)
                     .withCode("c2")
                     .withFather(entityClass1)
                     .withFields(
