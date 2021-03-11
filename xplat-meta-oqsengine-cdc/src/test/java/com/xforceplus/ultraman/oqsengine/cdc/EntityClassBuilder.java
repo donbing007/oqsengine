@@ -20,7 +20,7 @@ import java.util.Optional;
  */
 public class EntityClassBuilder implements MetaManager {
 
-    private static Map<Long, IEntityClass> entityClassMap = new HashMap<>();
+    public static Map<Long, IEntityClass> entityClassMap = new HashMap<>();
 
     public static final IEntityField stringField = new EntityField(1, "string", FieldType.STRING, FieldConfig.build().searchable(true), null, null);
     public static final IEntityField longField = new EntityField(2, "long", FieldType.LONG, FieldConfig.build().searchable(true), null, null);

@@ -1,6 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerService;
