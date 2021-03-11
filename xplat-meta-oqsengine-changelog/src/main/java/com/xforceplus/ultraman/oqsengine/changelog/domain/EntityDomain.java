@@ -13,6 +13,11 @@ import java.util.Map;
 public class EntityDomain {
 
     /**
+     * changelog retrieved
+     */
+    private long count;
+
+    /**
      * main value
      */
     private IEntity entity;
@@ -36,5 +41,13 @@ public class EntityDomain {
 
     public void setReferenceMap(Map<OqsRelation, List<Long>> referenceMap) {
         this.referenceMap = referenceMap;
+    }
+
+    public long getCount() {
+        return count;
+    }
+
+    public void setCount(long count) {
+        this.count = count;
     }
 }

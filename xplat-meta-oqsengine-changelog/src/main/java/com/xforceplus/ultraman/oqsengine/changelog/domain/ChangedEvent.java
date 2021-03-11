@@ -1,43 +1,66 @@
 package com.xforceplus.ultraman.oqsengine.changelog.domain;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
+
+import java.util.Map;
 
 /**
  * changed Event
  */
 public class ChangedEvent {
 
+
+    /**
+     * current EntityClassId
+     */
     private long entityClassId;
 
+    /**
+     * current objId
+     */
     private long id;
 
-    private IEntity before;
+    /**
+     * TODO
+     * changed value
+     */
+    private Map<Long, IValue> valueMap;
 
-    private IEntity after;
 
+    /**
+     * current version
+     */
     private long commitId;
 
+    /**
+     * current comment
+     */
     private String comment;
 
+    /**
+     * current timestamp
+     */
     private long timestamp;
 
+    /**
+     * current operationType
+     */
     private OperationType operationType;
 
-    public IEntity getBefore() {
-        return before;
+    /**
+     * changelog operator
+     * @return
+     */
+    private String username;
+
+    public Map<Long, IValue> getValueMap() {
+        return valueMap;
     }
 
-    public void setBefore(IEntity before) {
-        this.before = before;
-    }
-
-    public IEntity getAfter() {
-        return after;
-    }
-
-    public void setAfter(IEntity after) {
-        this.after = after;
+    public void setValueMap(Map<Long, IValue> valueMap) {
+        this.valueMap = valueMap;
     }
 
     public long getCommitId() {
@@ -86,5 +109,13 @@ public class ChangedEvent {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

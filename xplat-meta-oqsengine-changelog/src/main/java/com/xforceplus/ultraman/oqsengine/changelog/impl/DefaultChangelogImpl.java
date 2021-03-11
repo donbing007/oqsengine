@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.changelog.impl;
 import com.xforceplus.ultraman.oqsengine.changelog.ChangelogService;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.*;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.relation.RelationAwareChangelog;
 import com.xforceplus.ultraman.oqsengine.changelog.storage.ChangelogStorage;
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
@@ -54,16 +55,15 @@ public class DefaultChangelogImpl implements ChangelogService {
      * @return
      */
     @Override
-    public List<Changelog> generateChangeLog(ChangedEvent changedEvent) {
+    public Changelog generateChangeLog(IEntityClass entityClass, ChangedEvent changedEvent) {
 
         List<Changelog> changeLogs = new LinkedList<>();
-
         long entityClassId = changedEvent.getEntityClassId();
 
         /**
          * get main entityClass
          */
-        IEntityClass entityClass = metaManager.load(entityClassId)
+        IEntityClass entityClassOp = metaManager.load(entityClassId)
                 .orElseThrow(() -> new RuntimeException(String.format(FATAL_ERR, entityClassId)));
 
         List<Changelog> sourceChangelog = handleEvent(changedEvent, entityClass, null);
@@ -77,7 +77,7 @@ public class DefaultChangelogImpl implements ChangelogService {
         }).collect(Collectors.toList());
 
         changeLogs.addAll(records);
-        return changeLogs;
+        return null;
     }
 
 
@@ -108,7 +108,7 @@ public class DefaultChangelogImpl implements ChangelogService {
      */
     private Changelog genSourceChangelog(ChangedEvent changedEvent) {
 
-        IEntity afterEntity = changedEvent.getAfter();
+        IEntity afterEntity = null;
         String comment = changedEvent.getComment();
         long timestamp = changedEvent.getTimestamp();
         long commitId = changedEvent.getCommitId();
@@ -221,7 +221,7 @@ public class DefaultChangelogImpl implements ChangelogService {
      */
     @Override
     public EntityAggDomain replayEntity(long entityClass, long objId, long version) {
-        return replayService.replayDomain(entityClass, objId, version);
+        return replayService.replayAggDomain(entityClass, objId, version);
     }
 
     //TODO to consider the entity change

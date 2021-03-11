@@ -60,6 +60,18 @@ public class ReplayServiceImpl implements ReplayService {
         return changelogStorage.findById(id, version);
     }
 
+    @Override
+    public EntityDomain replaySimpleDomain(long entityClass, long id, long version) {
+
+        List<Changelog> relatedChangelogs = this.getRelatedChangelog(id, version);
+        Optional<IEntityClass> entityClassOp = metaManager.load(entityClass);
+        if(entityClassOp.isPresent()) {
+            return replaySingleDomain(entityClassOp.get(), id, relatedChangelogs);
+        } else {
+            return null;
+        }
+    }
+
 
     /**
      * side effect
@@ -166,7 +178,7 @@ public class ReplayServiceImpl implements ReplayService {
      * @return
      */
     @Override
-    public EntityAggDomain replayDomain(long entityClass, long id, long version) {
+    public EntityAggDomain replayAggDomain(long entityClass, long id, long version) {
 
         Queue<Tuple3<Long, Long, Long>> taskQueue = new LinkedList<>();
 

@@ -17,7 +17,7 @@ public interface ChangelogService {
      * get change log from an iEntity
      * @return
      */
-    List<Changelog> generateChangeLog(ChangedEvent changedEvent);
+    Changelog generateChangeLog(IEntityClass entityClass, ChangedEvent changedEvent);
 
     void saveChangeLogs(List<Changelog> changeLogs);
 

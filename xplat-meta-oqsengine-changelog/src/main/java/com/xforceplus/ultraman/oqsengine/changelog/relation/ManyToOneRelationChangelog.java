@@ -87,8 +87,8 @@ public class ManyToOneRelationChangelog implements RelationAwareChangelog {
         }
 
         //real changes
-        IEntity beforeChange = changedEvent.getBefore();
-        IEntity afterChange = changedEvent.getAfter();
+        IEntity beforeChange = null;
+        IEntity afterChange = null;
         long commitId = changedEvent.getCommitId();
         long timestamp = changedEvent.getTimestamp();
         String comment = changedEvent.getComment();

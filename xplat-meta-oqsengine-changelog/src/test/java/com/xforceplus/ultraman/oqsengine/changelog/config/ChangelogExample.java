@@ -35,7 +35,7 @@ public class ChangelogExample {
 
     public Map<Long, IEntityClass> idMapping = new HashMap<>();
 
-    private List<Changelog> changelogs = new TreeList<>();
+    public List<Changelog> changelogs = new LinkedList<>();
 
     public final static Long A_Class = 1L;
     public final static Long A_ObjId = 1000001L;
@@ -109,7 +109,7 @@ public class ChangelogExample {
         idMapping.put(1L, A);
         idMapping.put(2L, B);
 
-        build(100000, changelogs);
+        build(1000_000, changelogs);
     }
 
 
@@ -208,7 +208,7 @@ public class ChangelogExample {
         changelog.setChangeValues(changeValues);
         changelog.setComment("随机修改A");
 
-        System.out.println("Gen Changelog A:" + changelog);
+        //System.out.println("Gen Changelog A:" + changelog);
 
         return changelog;
     }
@@ -231,7 +231,7 @@ public class ChangelogExample {
         changelog.setChangeValues(changeValues);
         changelog.setComment("随机修改B");
 
-        System.out.println("Gen Changelog B:" + changelog);
+        //System.out.println("Gen Changelog B:" + changelog);
 
         return changelog;
     }

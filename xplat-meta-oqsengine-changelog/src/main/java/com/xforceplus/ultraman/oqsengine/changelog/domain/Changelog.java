@@ -7,6 +7,9 @@ import java.util.List;
  */
 public class Changelog {
 
+    /**
+     * commmit id
+     */
     private long version;
 
     private long cId;
@@ -20,6 +23,8 @@ public class Changelog {
     private List<ChangeValue> changeValues;
 
     private long entityClass;
+
+    private String username;
 
     private int deleteFlag;
 
@@ -87,6 +92,14 @@ public class Changelog {
         this.deleteFlag = deleteFlag;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     @Override
     public String toString() {
         return "Changelog{" +
@@ -97,6 +110,7 @@ public class Changelog {
                 ", createTime=" + createTime +
                 ", changeValues=" + changeValues +
                 ", entityClass=" + entityClass +
+                ", username='" + username + '\'' +
                 ", deleteFlag=" + deleteFlag +
                 '}';
     }
