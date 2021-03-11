@@ -28,19 +28,6 @@ public class ResponseWatcher extends AbstractWatcher<EntityClassSyncResponse> {
     }
 
     @Override
-    public void release() {
-        try {
-            if (null != streamObserver) {
-                streamObserver.onCompleted();
-            }
-        } catch (Exception e) {
-            //  ignore
-        }
-
-        watches.clear();
-    }
-
-    @Override
     public void reset(String uid, StreamObserver<EntityClassSyncResponse> streamObserver) {
         throw new MetaSyncServerException("un-support function reset.", false);
     }

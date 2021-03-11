@@ -29,17 +29,17 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     /**
      * 记录app + env的version
      */
-    private static Map<String, Integer> appVersionMap = new ConcurrentHashMap<>();
+    private static Map<String, Integer> appVersions = new ConcurrentHashMap<>();
 
     /**
      * 记录app + env的UIDs
      */
-    private static Map<String, Set<String>> watchersByApp = new ConcurrentHashMap<>();
+    private static Map<String, Set<String>> appWatchers = new ConcurrentHashMap<>();
 
     /**
      * 记录UID与Watcher的映射关系
      */
-    private static Map<String, ResponseWatcher> watchers = new ConcurrentHashMap<>();
+    private static Map<String, ResponseWatcher> uidWatchers = new ConcurrentHashMap<>();
 
 
 
@@ -50,7 +50,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
 
     @Override
     public void stop() {
-        watchers.forEach(
+        uidWatchers.forEach(
                 (k, v) -> {
                     if (v.isOnServe()) {
                         v.release();
@@ -61,7 +61,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
 
     public void keepAliceCheck(long heartbeatTimeout) {
         long current = System.currentTimeMillis();
-        watchers.forEach(
+        uidWatchers.forEach(
                 (k, v) -> {
                     /**
                      * 当最后获得的心跳时间与当前时间差值大于可容忍值时，对该watcher进行释放清理
@@ -77,16 +77,16 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
 
     @Override
     public Integer version(String appId, String env) {
-        return appVersionMap.get(keyAppWithEnv(appId, env));
+        return appVersions.get(keyAppWithEnv(appId, env));
     }
 
     @Override
     public boolean addVersion(String appId, String env, int version) {
         String key = keyAppWithEnv(appId, env);
         synchronized (ResponseWatchExecutor.class) {
-            Integer v = appVersionMap.get(key);
+            Integer v = appVersions.get(key);
             if (null == v || v < version) {
-                appVersionMap.put(key, version);
+                appVersions.put(key, version);
                 return true;
             }
         }
@@ -103,13 +103,13 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
      */
     @Override
     public void add(String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement) {
-        watchers.computeIfAbsent(uid, v -> new ResponseWatcher(uid, observer)).addWatch(watchElement);
+        uidWatchers.computeIfAbsent(uid, v -> new ResponseWatcher(uid, observer)).addWatch(watchElement);
         operationWithLock(keyAppWithEnv(watchElement.getAppId(), watchElement.getEnv()), uid, NEW);
     }
 
     @Override
     public void resetHeartBeat(String uid) {
-        ResponseWatcher w = watchers.get(uid);
+        ResponseWatcher w = uidWatchers.get(uid);
         if (null != w) {
             w.resetHeartBeat();
         }
@@ -124,7 +124,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
      */
     @Override
     public synchronized boolean update(String uid, WatchElement watchElement) {
-        ResponseWatcher watcher = watchers.get(uid);
+        ResponseWatcher watcher = uidWatchers.get(uid);
         if (null != watcher) {
             if (canUpdate(watcher, watchElement)) {
                 watcher.watches().put(watchElement.getAppId(), watchElement);
@@ -141,13 +141,13 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
      */
     @Override
     public void release(String uid) {
-        ResponseWatcher watcher = watchers.remove(uid);
+        ResponseWatcher watcher = uidWatchers.remove(uid);
 
         if (null != watcher) {
             watcher.release(() -> {
                 watcher.watches().forEach(
                         (k, v) -> {
-                            Set<String> uidSet = watchersByApp.get(keyAppWithEnv(k, v.getEnv()));
+                            Set<String> uidSet = appWatchers.get(keyAppWithEnv(k, v.getEnv()));
                             if (null != uidSet && uidSet.size() > 0) {
                                 uidSet.remove(uid);
                                 if (uidSet.size() == 0) {
@@ -169,12 +169,12 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
      */
     @Override
     public List<ResponseWatcher> need(WatchElement watchElement) {
-        Set<String> res = watchersByApp.get(keyAppWithEnv(watchElement.getAppId(), watchElement.getEnv()));
+        Set<String> res = appWatchers.get(keyAppWithEnv(watchElement.getAppId(), watchElement.getEnv()));
         List<ResponseWatcher> needList = new ArrayList<>();
         if (null != res) {
             res.forEach(
                     r -> {
-                        ResponseWatcher watcher = watchers.get(r);
+                        ResponseWatcher watcher = uidWatchers.get(r);
                         if (null != watcher && watcher.onWatch(watchElement)) {
                             needList.add(watcher);
                         }
@@ -191,12 +191,12 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
      */
     @Override
     public ResponseWatcher watcher(String uid) {
-        return watchers.get(uid);
+        return uidWatchers.get(uid);
     }
 
     @Override
     public Set<String> appWatchers(String appId, String env) {
-        return watchersByApp.get(keyAppWithEnv(appId, env));
+        return appWatchers.get(keyAppWithEnv(appId, env));
     }
 
     private boolean canUpdate(ResponseWatcher watcher, WatchElement watchElement) {
@@ -212,12 +212,12 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
         logger.debug("operationWithLock -> key [{}], value [{}], operation [{}]", key, value, operation);
         switch (operation) {
             case NEW:
-                watchersByApp.computeIfAbsent(key, k -> new HashSet<>()).add(value);
+                appWatchers.computeIfAbsent(key, k -> new HashSet<>()).add(value);
                 break;
             case RELEASE:
-                Set<String> v = watchersByApp.get(key);
+                Set<String> v = appWatchers.get(key);
                 if (null != v && v.isEmpty()) {
-                    watchersByApp.remove(key);
+                    appWatchers.remove(key);
                 }
                 break;
         }

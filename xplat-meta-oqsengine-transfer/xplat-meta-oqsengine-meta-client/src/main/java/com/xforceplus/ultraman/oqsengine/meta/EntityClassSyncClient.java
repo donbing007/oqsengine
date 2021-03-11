@@ -2,8 +2,6 @@ package com.xforceplus.ultraman.oqsengine.meta;
 
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
-import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
-import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
@@ -11,7 +9,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRespon
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
-import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
@@ -129,7 +126,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
                 /**
                  * 设置服务可用
                  */
-                requestHandler.watchExecutor().watcher().onServe();
+                requestHandler.watchExecutor().onServe();
                 /**
                  * wait直到countDownLatch = 0;
                  */
@@ -139,7 +136,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
             /**
              * 设置服务不可用
              */
-            requestHandler.watchExecutor().watcher().notServer();
+            requestHandler.watchExecutor().offServe();
 
             /**
              * 如果是服务关闭，则直接跳出while循环
@@ -155,7 +152,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
                  */
                 TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
 
-                requestHandler.watchExecutor().watcher().release();
+                requestHandler.watchExecutor().release(uid);
             }
         }
 

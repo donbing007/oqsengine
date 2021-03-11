@@ -25,9 +25,11 @@ public interface IRequestWatchExecutor extends IWatchExecutor {
 
     boolean update(WatchElement watchElement);
 
-    boolean canAccess(String uid);
-
-    Function<String, Boolean> accessFunction();
+    boolean isAlive(String uid);
 
     RequestWatcher watcher();
+
+    void onServe();
+
+    void offServe();
 }

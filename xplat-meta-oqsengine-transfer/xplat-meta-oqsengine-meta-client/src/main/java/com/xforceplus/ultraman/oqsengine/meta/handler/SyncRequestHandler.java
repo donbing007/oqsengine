@@ -31,6 +31,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStat
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.CLIENT_TASK_COUNT;
 import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest;
+import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequestWithALiveCheck;
 
 /**
  * desc :
@@ -131,7 +132,7 @@ public class SyncRequestHandler implements IRequestHandler {
                             /**
                              * 当前requestWatch不可用或发生UID切换时,先加入forgot列表
                              */
-                            if (!requestWatchExecutor.canAccess(watcher.uid())) {
+                            if (!requestWatchExecutor.isAlive(watcher.uid())) {
                                 forgotQueue.add(v);
                                 ret.set(false);
                             } else {
@@ -147,8 +148,7 @@ public class SyncRequestHandler implements IRequestHandler {
                                 requestWatchExecutor.add(v);
 
                                 try {
-                                    sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequest,
-                                            requestWatchExecutor.accessFunction(), entityClassSyncRequest.getUid());
+                                    sendRequestWithALiveCheck(requestWatchExecutor.watcher(), entityClassSyncRequest);
 
                                     logger.info("register success uid [{}], appId [{}], env [{}], version [{}]."
                                             , watcher.uid(), v.getAppId(), v.getEnv(), v.getVersion());
@@ -210,7 +210,7 @@ public class SyncRequestHandler implements IRequestHandler {
          * 重启中所有的Response将被忽略
          * 不是同批次请求将被忽略
          */
-        if (!requestWatchExecutor.canAccess(entityClassSyncResponse.getUid())) {
+        if (!requestWatchExecutor.isAlive(entityClassSyncResponse.getUid())) {
             return;
         }
 
@@ -263,8 +263,8 @@ public class SyncRequestHandler implements IRequestHandler {
         /**
          * 回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
          */
-        sendRequest(requestWatchExecutor.watcher(), entityClassSyncRequestBuilder.setUid(entityClassSyncResponse.getUid()).build(),
-                    requestWatchExecutor.accessFunction(), entityClassSyncResponse.getUid());
+        sendRequestWithALiveCheck(requestWatchExecutor.watcher(),
+                            entityClassSyncRequestBuilder.setUid(entityClassSyncResponse.getUid()).build());
 
 
         logger.debug("sync data fin, uid [{}], appId [{}], env [{}], version [{}], status[{}].",
@@ -353,17 +353,14 @@ public class SyncRequestHandler implements IRequestHandler {
         logger.debug("start keepAlive task ok...");
         while (!isShutDown()) {
             RequestWatcher requestWatcher = requestWatchExecutor.watcher();
-            if (null != requestWatcher && requestWatcher.isOnServe()) {
-                EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
-                        .setUid(requestWatcher.uid()).setStatus(HEARTBEAT.ordinal()).build();
+            EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
+                    .setUid(requestWatcher.uid()).setStatus(HEARTBEAT.ordinal()).build();
 
-                try {
-                    sendRequest(requestWatcher, request);
-                } catch (Exception e) {
-                    //  ignore
-                    logger.warn("send keepAlive failed, message [{}], but exception will ignore due to retry...", e.getMessage());
-                }
-
+            try {
+                sendRequestWithALiveCheck(requestWatcher, request);
+            } catch (Exception e) {
+                //  ignore
+                logger.warn("send keepAlive failed, message [{}], but exception will ignore due to retry...", e.getMessage());
             }
             logger.debug("keepAlive ok, next check after duration ({})ms...", gRpcParamsConfig.getKeepAliveSendDuration());
             TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getKeepAliveSendDuration(), TimeUnit.MILLISECONDS);
@@ -444,7 +441,7 @@ public class SyncRequestHandler implements IRequestHandler {
                                     builder.setUid(requestWatcher.uid()).setAppId(k.getAppId()).setVersion(k.getVersion())
                                             .setStatus(RequestStatus.REGISTER.ordinal()).build();
                             try {
-                                sendRequest(requestWatcher, entityClassSyncRequest, requestWatchExecutor.accessFunction(), requestWatcher.uid());
+                                sendRequestWithALiveCheck(requestWatcher, entityClassSyncRequest);
                                 k.setRegisterTime(System.currentTimeMillis());
                             } catch (Exception e) {
                                 k.setStatus(WatchElement.AppStatus.Init);

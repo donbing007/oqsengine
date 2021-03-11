@@ -54,11 +54,6 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     }
 
     @Override
-    public StreamObserver<T> observer() {
-        return streamObserver;
-    }
-
-    @Override
     public void addWatch(WatchElement w) {
         watches.putIfAbsent(w.getAppId(), w);
     }
@@ -82,7 +77,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     @Override
     public <S> void release(Supplier<S> supplier) {
-        notServer();
+        offServe();
         try {
             supplier.get();
         } catch (Exception e) {
@@ -118,7 +113,24 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
         return false;
     }
 
-    public abstract void reset(String uid, StreamObserver<T> streamObserver);
+    @Override
+    public StreamObserver<T> observer() {
+        return streamObserver;
+    }
+
+    protected abstract void reset(String uid, StreamObserver<T> streamObserver);
+
+    @Override
+    public void release() {
+        try {
+            uid = null;
+            if (null != streamObserver) {
+                streamObserver.onCompleted();
+            }
+        } catch (Exception e) {
+            //  ignore
+        }
+    }
 
     public void onServe() {
         onServe = true;
@@ -128,7 +140,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
         resetHeartBeat();
     }
 
-    public void notServer() {
+    public void offServe() {
         onServe = false;
     }
 }

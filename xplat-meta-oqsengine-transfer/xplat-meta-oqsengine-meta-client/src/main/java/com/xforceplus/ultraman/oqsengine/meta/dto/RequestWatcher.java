@@ -27,11 +27,6 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
     }
 
     @Override
-    public StreamObserver<EntityClassSyncRequest> observer() {
-        return streamObserver;
-    }
-
-    @Override
     public boolean onWatch(WatchElement watchElement) {
         WatchElement v = watches.get(watchElement.getAppId());
         if (null == v) {
@@ -46,14 +41,20 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
     }
 
     @Override
-    public void release() {
-        try {
-            uid = null;
-            if (null != streamObserver) {
-                streamObserver.onCompleted();
+    public boolean isAlive() {
+        /**
+         * 判断是否可用
+         */
+        if (null != uid && isOnServe()) {
+            try {
+                return uid.equals(this.uid());
+            } catch (Exception e) {
+                /**
+                 * 兜底瞬间将uid置为null的逻辑.
+                 */
+                return false;
             }
-        } catch (Exception e) {
-            //  ignore
         }
+        return false;
     }
 }

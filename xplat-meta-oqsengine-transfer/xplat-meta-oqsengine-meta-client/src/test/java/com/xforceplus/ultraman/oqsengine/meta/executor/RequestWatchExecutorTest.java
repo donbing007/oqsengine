@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.executor;
 
 import com.xforceplus.ultraman.oqsengine.meta.BaseTest;
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
@@ -125,7 +124,7 @@ public class RequestWatchExecutorTest extends BaseTest {
          * on server, uid = expectedId
          * true
          */
-        boolean ret = requestWatchExecutor.canAccess(expectedId);
+        boolean ret = requestWatchExecutor.isAlive(expectedId);
         Assert.assertTrue(ret);
 
         /**
@@ -133,22 +132,22 @@ public class RequestWatchExecutorTest extends BaseTest {
          * false
          */
         String uid = UUID.randomUUID().toString();
-        ret = requestWatchExecutor.canAccess(uid);
+        ret = requestWatchExecutor.isAlive(uid);
         Assert.assertFalse(ret);
 
         /**
          * off server, uid = expectedId
          * false
          */
-        requestWatchExecutor.watcher().notServer();
-        ret = requestWatchExecutor.canAccess(expectedId);
+        requestWatchExecutor.offServe();
+        ret = requestWatchExecutor.isAlive(expectedId);
         Assert.assertFalse(ret);
 
         /**
          * off server, uid = new Id
          * false
          */
-        ret = requestWatchExecutor.canAccess(uid);
+        ret = requestWatchExecutor.isAlive(uid);
         Assert.assertFalse(ret);
     }
 
