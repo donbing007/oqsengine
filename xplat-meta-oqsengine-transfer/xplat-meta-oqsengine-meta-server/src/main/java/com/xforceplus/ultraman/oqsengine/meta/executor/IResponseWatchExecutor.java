@@ -19,8 +19,6 @@ import java.util.Set;
  */
 public interface IResponseWatchExecutor extends IWatchExecutor {
 
-    void release(String uid);
-
     void add(String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement);
 
     boolean update(String uid, WatchElement watchElement);

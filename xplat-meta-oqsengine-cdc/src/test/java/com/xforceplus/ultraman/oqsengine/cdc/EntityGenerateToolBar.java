@@ -27,8 +27,7 @@ public class EntityGenerateToolBar {
 
         long id = startId;
         IEntityValue values = EntityValue.build().addValues(
-                Arrays.asList(new LongValue(longField, 1L), new StringValue(stringField, "v1"),
-                        new BooleanValue(boolField, true))
+                Arrays.asList(new LongValue(longField, 1L), new StringValue(stringField, "v1"))
         );
         entityes[0] = Entity.Builder.anEntity()
                 .withId(id)
@@ -51,8 +50,7 @@ public class EntityGenerateToolBar {
         values = EntityValue.build().addValues(
                 Arrays.asList(new LongValue(longField, 2L), new StringValue(stringField, "v2"),
                         new BooleanValue(boolField, true),
-                        new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 9, 0, 1)),
-                        new DecimalValue(decimalField, new BigDecimal("1.0")))
+                        new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 9, 0, 1)))
         );
         entityes[1] = Entity.Builder.anEntity()
                 .withId(id)
@@ -73,8 +71,7 @@ public class EntityGenerateToolBar {
         values = EntityValue.build().addValues(
                 Arrays.asList(new LongValue(longField, 2L), new StringValue(stringField, "hello world"),
                         new BooleanValue(boolField, false),
-                        new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 11, 18, 1)),
-                        new DecimalValue(decimalField, new BigDecimal("1.0")))
+                        new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 2, 1, 11, 18, 1)))
         );
         entityes[2] = Entity.Builder.anEntity()
                 .withId(id)
@@ -94,10 +91,11 @@ public class EntityGenerateToolBar {
 
         id = startId + 3;
         values = EntityValue.build().addValues(
-                Arrays.asList(new LongValue(longField, 76L), new StringValue(stringField, "中文测试chinese test"),
+                Arrays.asList(new LongValue(longField, 76L),
+                        new StringValue(stringField, "中文测试chinese test"),
                         new BooleanValue(boolField, false),
                         new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 3, 1, 0, 0, 1)),
-                        new DecimalValue(decimalField, new BigDecimal("1.0")), new EnumValue(enumField, "CODE"),
+                        new DecimalValue(decimalField, new BigDecimal("1.0")),
                         new StringsValue(stringsField, "value1", "value2", "value3"))
         );
         entityes[3] = Entity.Builder.anEntity()
@@ -120,7 +118,7 @@ public class EntityGenerateToolBar {
                 Arrays.asList(new LongValue(longField, 86L), new StringValue(stringField, "\"@带有符号的中文@\"\'"),
                         new BooleanValue(boolField, false),
                         new DateTimeValue(dateTimeField, LocalDateTime.of(2019, 3, 1, 0, 0, 1)),
-                        new DecimalValue(decimalField, new BigDecimal("123.7582193213")), new EnumValue(enumField, "CODE"),
+                        new DecimalValue(decimalField, new BigDecimal("123.7582193213")),
                         new StringsValue(stringsField, "value1", "value2", "value3", "UNKNOWN"))
         );
         entityes[4] = Entity.Builder.anEntity()
@@ -183,7 +181,7 @@ public class EntityGenerateToolBar {
         values = EntityValue.build().addValues(Arrays.asList(new LongValue(longField, 996L), new StringValue(stringField, "中文测试chinese test1"),
                 new BooleanValue(boolField, false),
                 new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 4, 1, 0, 0, 1)),
-                new DecimalValue(decimalField, new BigDecimal("1.0")), new EnumValue(enumField, "CODE"),
+                new DecimalValue(decimalField, new BigDecimal("1.0")),
                 new StringsValue(stringsField, "value1", "value2", "value3", "value4")));
         entityes[7] = Entity.Builder.anEntity()
                 .withId(id)
@@ -204,7 +202,7 @@ public class EntityGenerateToolBar {
         values = EntityValue.build().addValues(Arrays.asList(new LongValue(longField, 1996L), new StringValue(stringField, "中文测试chinese test2"),
                 new BooleanValue(boolField, false),
                 new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 4, 1, 0, 0, 1)),
-                new DecimalValue(decimalField, new BigDecimal("1.0")), new EnumValue(enumField, "CODE"),
+                new DecimalValue(decimalField, new BigDecimal("1.0")),
                 new StringsValue(stringsField, "value5", "value6", "value7", "value4")));
         entityes[8] = Entity.Builder.anEntity()
                 .withId(id)
@@ -225,7 +223,7 @@ public class EntityGenerateToolBar {
         values = EntityValue.build().addValues(Arrays.asList(new LongValue(longField, 445L), new StringValue(stringField, "hello world"),
                 new BooleanValue(boolField, false),
                 new DateTimeValue(dateTimeField, LocalDateTime.of(1900, 2, 1, 11, 18, 1)),
-                new DecimalValue(decimalField, new BigDecimal("1.0")), new EnumValue(enumField, "CODE"),
+                new DecimalValue(decimalField, new BigDecimal("1.0")),
                 new StringsValue(stringsField, "value1", "value2", "value3")));
         entityes[9] = Entity.Builder.anEntity()
                 .withId(id)

@@ -41,6 +41,9 @@ public class MockSyncExecutor implements SyncExecutor {
                 requestStatusHashMap.put(appId, new RequestStatusVersion(status, version));
             }
             return status.equals(RequestStatus.SYNC_OK);
+        } catch (Exception e) {
+          e.printStackTrace();
+          throw e;
         } finally {
             status = RequestStatus.SYNC_OK;
         }

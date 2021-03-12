@@ -15,11 +15,11 @@ import java.util.Optional;
  */
 public enum OqsBigEntityColumns {
     ID,
-    ENTITYCLASS0,
-    ENTITYCLASS1,
-    ENTITYCLASS2,
-    ENTITYCLASS3,
-    ENTITYCLASS4,
+    ENTITYCLASSL0,
+    ENTITYCLASSL1,
+    ENTITYCLASSL2,
+    ENTITYCLASSL3,
+    ENTITYCLASSL4,
     ENTITYCLASSVER,
     TX,
     COMMITID,

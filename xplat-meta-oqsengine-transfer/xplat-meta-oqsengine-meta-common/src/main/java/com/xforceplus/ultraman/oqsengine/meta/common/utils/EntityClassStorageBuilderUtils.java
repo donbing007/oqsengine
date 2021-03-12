@@ -51,13 +51,33 @@ public class EntityClassStorageBuilderUtils {
                         EntityClassStorage entityClassStorage = temp.get(fatherId);
                         if (null == entityClassStorage) {
                             throw new MetaSyncClientException(
-                                    String.format("father entityClass : [%d] missed.", fatherId), BUSINESS_HANDLER_ERROR.ordinal());
+                                    String.format("entityClass id [%d], father entityClass : [%d] missed.", v.getId(), fatherId)
+                                                                            , BUSINESS_HANDLER_ERROR.ordinal());
                         }
                         v.addAncestors(fatherId);
                         fatherId = entityClassStorage.getFatherId();
                     }
+                    v.getRelations().forEach(
+                            relationStorage -> {
+                                relationCheck(v.getId(), temp, relationStorage);
+                            }
+                    );
                 }
         ).collect(Collectors.toList());
+    }
+
+    private static void relationCheck(long id, Map<Long, EntityClassStorage> entityClassStorageMap, RelationStorage relationStorage) {
+        if (!(relationStorage.getEntityClassId() > 0)) {
+            throw new MetaSyncClientException(
+                    String.format("entityClass id [%d], relation entityClassId [%d] should not less than 0."
+                                            , id, relationStorage.getEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
+        }
+
+        if (null == entityClassStorageMap.get(relationStorage.getEntityClassId())) {
+            throw new MetaSyncClientException(
+                    String.format("entityClass id [%d], relation entityClass [%d] missed."
+                            , id, relationStorage.getEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
+        }
     }
 
     /**

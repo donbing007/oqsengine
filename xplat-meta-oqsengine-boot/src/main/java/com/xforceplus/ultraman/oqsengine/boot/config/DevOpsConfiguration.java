@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.CdcErrorStorage;
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;

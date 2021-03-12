@@ -3,9 +3,9 @@ package com.xforceplus.ultraman.oqsengine.cdc.benchmark;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
-import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerToolsTest;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.CanalEntryTools.buildRow;
-import static com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerServiceTest.EXPECTED_ATTR_INDEX_0;
 
 /**
  * desc :
@@ -108,7 +107,8 @@ public class MassageUnpackBenchmarkTest extends CDCAbstractContainer {
     private static void build(List<CanalEntry.Entry> entries, int size, long startId) {
         for (int i = 0; i < size; i++) {
             long start = startId + i;
-            CanalEntry.Entry fRanDom_1 = buildRow(start, 1, Long.MAX_VALUE, true, 1, i % SphinxConsumerToolsTest.Prepared.metas.length, "false", 0, 1);
+            CanalEntry.Entry fRanDom_1 =
+                    buildRow(start, 1, Long.MAX_VALUE, true, 1, i % CanalEntryTools.Prepared.attrs.length, "false", 0, 1, 1);
 
             entries.add(fRanDom_1);
         }

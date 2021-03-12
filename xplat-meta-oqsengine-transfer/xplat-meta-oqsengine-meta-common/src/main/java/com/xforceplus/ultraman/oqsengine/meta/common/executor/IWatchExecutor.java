@@ -11,4 +11,6 @@ package com.xforceplus.ultraman.oqsengine.meta.common.executor;
  */
 public interface IWatchExecutor extends IBasicSyncExecutor {
     void resetHeartBeat(String uid);
+
+    void release(String uid);
 }

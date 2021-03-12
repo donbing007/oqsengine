@@ -1,6 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.devops.cdcerror;
+package com.xforceplus.ultraman.oqsengine.cdc.cdcerror;
 
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.condition.CdcErrorQueryCondition;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
 

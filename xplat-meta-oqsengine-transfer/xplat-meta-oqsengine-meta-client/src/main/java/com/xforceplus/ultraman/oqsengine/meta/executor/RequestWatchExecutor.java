@@ -34,6 +34,13 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
     }
 
     @Override
+    public void release(String uid) {
+        if (null != requestWatcher) {
+            requestWatcher.release();
+        }
+    }
+
+    @Override
     public void create(String uid, StreamObserver<EntityClassSyncRequest> observer) {
         if (null == requestWatcher) {
             requestWatcher = new RequestWatcher(uid, observer);
@@ -51,7 +58,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
 
     @Override
     public synchronized boolean update(WatchElement watchElement) {
-        if (requestWatcher.onWatch(watchElement)) {
+        if (null != requestWatcher && requestWatcher.onWatch(watchElement)) {
             requestWatcher.watches().put(watchElement.getAppId(), watchElement);
             return true;
         }
@@ -64,21 +71,26 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
     }
 
     @Override
-    public boolean canAccess(String uid) {
-        /**
-         * 判断是否可用
-         */
-        if (null != uid && null != requestWatcher && requestWatcher.isOnServe()) {
-            try {
-                return uid.equals(requestWatcher.uid());
-            } catch (Exception e) {
-                /**
-                 * 兜底瞬间将uid置为null的逻辑.
-                 */
-                return false;
-            }
+    public void onServe() {
+        if (null != requestWatcher) {
+            requestWatcher.onServe();
         }
-        return false;
+    }
+
+    @Override
+    public void offServe() {
+        if (null != requestWatcher) {
+            requestWatcher.offServe();
+        }
+    }
+
+    @Override
+    public boolean isAlive(String uid) {
+        if (null == requestWatcher) {
+            return false;
+        }
+
+        return requestWatcher.isAlive();
     }
 
     @Override
@@ -92,17 +104,12 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
             /**
              * 这里分开设置、等待3S如果有正在进行中的任务
              */
-            requestWatcher.notServer();
+            requestWatcher.offServe();
 
             TimeWaitUtils.wakeupAfter(SHUT_DOWN_WAIT_TIME_OUT, TimeUnit.SECONDS);
 
             requestWatcher.release();
         }
         logger.info("requestWatchExecutor stop.");
-    }
-
-    @Override
-    public Function<String, Boolean> accessFunction() {
-        return this::canAccess;
     }
 }

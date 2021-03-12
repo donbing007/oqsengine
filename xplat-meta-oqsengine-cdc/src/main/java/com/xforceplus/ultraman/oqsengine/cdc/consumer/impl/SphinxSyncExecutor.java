@@ -4,7 +4,7 @@ import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.CdcErrorStorage;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
@@ -14,7 +14,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
-import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.*;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
 
 /**
@@ -63,6 +64,7 @@ public class SphinxSyncExecutor implements SyncExecutor {
             try {
                 storageEntityList.add(prepareForUpdateDelete(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId()));
             } catch (Exception e) {
+                //  组装数据失败，记录错误日志
                 e.printStackTrace();
                 errorRecord(cdcMetrics.getBatchId(), rawEntry.getId(), rawEntry.getCommitId(), e.getMessage());
             }
@@ -91,15 +93,15 @@ public class SphinxSyncExecutor implements SyncExecutor {
     }
 
     private IEntityClass getEntityClass(List<CanalEntry.Column> columns) throws SQLException {
-        for (int o = ENTITYCLASS4.ordinal(); o >= ENTITYCLASS0.ordinal(); o--) {
+        for (int o = ENTITYCLASSL4.ordinal(); o >= ENTITYCLASSL0.ordinal(); o--) {
             Optional<OqsBigEntityColumns> op = getByOrdinal(o);
             if (op.isPresent()) {
                 long id = getLongFromColumn(columns, op.get());
                 /**
                  * 从大到小找到的第一个entityClass > 0的id即为selfEntityClassId
                  */
-                if (id > 0) {
-                    Optional<IEntityClass> entityClassOptional =  metaManager.load(id);
+                if (id > ZERO) {
+                    Optional<IEntityClass> entityClassOptional = metaManager.load(id);
                     if (entityClassOptional.isPresent()) {
                         return entityClassOptional.get();
                     }

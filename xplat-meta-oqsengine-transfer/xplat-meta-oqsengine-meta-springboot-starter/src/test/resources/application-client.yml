@@ -17,8 +17,8 @@ server:
 meta:
   grpc:
     type: client
-    host: localhost
-#    host: 169.254.106.127
+#    host: localhost
+    host: 169.254.106.127
     port: 8082
     seconds:
       heartbeatTimeout: 30

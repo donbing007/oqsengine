@@ -1,6 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.impl;
+package com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.impl;
 
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.executor.CdcErrorExecutor;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.executor.CdcErrorExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.ErrorFieldDefine;
 

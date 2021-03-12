@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.devops.cdcerror.condition;
+package com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition;
 
 import com.xforceplus.ultraman.oqsengine.pojo.devops.ErrorFieldDefine;
 

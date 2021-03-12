@@ -1,18 +1,17 @@
-package com.xforceplus.ultraman.oqsengine.devops.cdcerrors;
+package com.xforceplus.ultraman.oqsengine.cdc.cdcerrors;
 
-import com.xforceplus.ultraman.oqsengine.devops.DevOpsAbstractContainer;
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.condition.CdcErrorQueryCondition;
+import com.xforceplus.ultraman.oqsengine.cdc.CDCAbstractContainer;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.condition.CdcErrorQueryCondition;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.FixedStatus;
+import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 
+import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Collection;
 
@@ -26,7 +25,7 @@ import java.util.Collection;
  */
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE})
-public class CdcErrorStorageTest extends DevOpsAbstractContainer {
+public class CdcErrorStorageTest extends CDCAbstractContainer {
 
     private static long unExpectedSeqNo = Long.MAX_VALUE;
     private static long unExpectedId = Long.MAX_VALUE;
@@ -38,15 +37,32 @@ public class CdcErrorStorageTest extends DevOpsAbstractContainer {
     private static CdcErrorTask expectedCdcErrorTask =
                 CdcErrorTask.buildErrorTask(expectedSeqNo, expectedId, expectedCommitId, expectedMessage);
 
+    @BeforeClass
+    public static void beforeClass() {
+        ContainerStarter.startMysql();
+        ContainerStarter.startManticore();
+        ContainerStarter.startRedis();
+        ContainerStarter.startCannal();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        ContainerStarter.reset();
+    }
+
+
     @Before
     public void before() throws Exception {
-        start();
+        initAll();
     }
 
     @After
     public void after() throws SQLException {
-        clear();
-        close();
+        closeAll();
+    }
+
+    private DataSource buildDevOpsDataSource() {
+        return dataSourcePackage.getDevOps();
     }
 
     @Test
