@@ -528,11 +528,12 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         } else {
             IEntityField field = fieldOp.get();
             result = field.config().isSearchable();
-        }
-        if (logger.isDebugEnabled()) {
-            if (!result) {
-                logger.debug("Field {} is filtered out because it is not searchable or does not exist.",
-                    fieldOp.get().name());
+
+            if (logger.isDebugEnabled()) {
+                if (!result) {
+                    logger.debug("Field {} is filtered out because it is not searchable or does not exist.",
+                        fieldOp.get().name());
+                }
             }
         }
 

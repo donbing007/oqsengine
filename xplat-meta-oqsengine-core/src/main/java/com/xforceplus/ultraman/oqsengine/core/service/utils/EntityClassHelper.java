@@ -25,11 +25,11 @@ public class EntityClassHelper {
      * @throws SQLException
      */
     public static IEntityClass checkEntityClass(MetaManager metaManager, EntityClassRef entityClassRef) {
-        Optional<IEntityClass> entityClassOptional = metaManager.load(entityClassRef.entityClassId());
+        Optional<IEntityClass> entityClassOptional = metaManager.load(entityClassRef.getId());
         if (!entityClassOptional.isPresent()) {
             throw new IllegalArgumentException(
                 String.format("Invalid meta information %d-%s.",
-                    entityClassRef.entityClassId(), entityClassRef.entityClassCode()));
+                    entityClassRef.getId(), entityClassRef.getCode()));
         }
 
         return entityClassOptional.get();

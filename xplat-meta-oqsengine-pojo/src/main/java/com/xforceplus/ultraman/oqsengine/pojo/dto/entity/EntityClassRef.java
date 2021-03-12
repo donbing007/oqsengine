@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -9,14 +10,14 @@ import java.util.Objects;
  * @version 0.1 2021/2/20 14:20
  * @since 1.8
  */
-public class EntityClassRef {
+public class EntityClassRef implements Serializable {
 
-    private long entityClassId;
-    private String entityClassCode;
+    private long id;
+    private String code;
 
-    public EntityClassRef(long entityClassId, String entityClassCode) {
-        this.entityClassId = entityClassId;
-        this.entityClassCode = entityClassCode;
+    public EntityClassRef(long id, String code) {
+        this.id = id;
+        this.code = code;
     }
 
     /**
@@ -24,8 +25,8 @@ public class EntityClassRef {
      *
      * @return 标识.
      */
-    public long entityClassId() {
-        return entityClassId;
+    public long getId() {
+        return id;
     }
 
     /**
@@ -33,8 +34,8 @@ public class EntityClassRef {
      *
      * @return 代码.
      */
-    public String entityClassCode() {
-        return entityClassCode;
+    public String getCode() {
+        return code;
     }
 
     @Override
@@ -46,12 +47,12 @@ public class EntityClassRef {
             return false;
         }
         EntityClassRef that = (EntityClassRef) o;
-        return entityClassId == that.entityClassId;
+        return id == that.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(entityClassId);
+        return Objects.hash(id);
     }
 
     /**

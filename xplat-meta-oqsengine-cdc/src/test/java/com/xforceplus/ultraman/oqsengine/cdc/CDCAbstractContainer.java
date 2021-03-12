@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc;
 
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.cdc.connect.SingleCDCConnector;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerService;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.impl.SphinxConsumerService;
@@ -13,14 +14,13 @@ import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
-import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.MantiocreIndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLManticoreIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
@@ -29,10 +29,8 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJ
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import io.lettuce.core.RedisClient;
 import org.junit.Ignore;
@@ -143,9 +141,9 @@ public abstract class CDCAbstractContainer {
         Selector<String> indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
 
         executorService = new ThreadPoolExecutor(5, 5, 0,
-                TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
+            TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
 
-        indexStorage = new MantiocreIndexStorage();
+        indexStorage = new SphinxQLManticoreIndexStorage();
         ReflectionTestUtils.setField(indexStorage, "writerDataSourceSelector", writeDataSourceSelector);
         ReflectionTestUtils.setField(indexStorage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
         ReflectionTestUtils.setField(indexStorage, "searchTransactionExecutor", searchExecutor);
@@ -154,16 +152,13 @@ public abstract class CDCAbstractContainer {
         ReflectionTestUtils.setField(indexStorage, "storageStrategyFactory", storageStrategyFactory);
         ReflectionTestUtils.setField(indexStorage, "threadPool", executorService);
 
-        ((MantiocreIndexStorage)indexStorage).setMaxSearchTimeoutMs(1000);
+        ((SphinxQLManticoreIndexStorage) indexStorage).setMaxSearchTimeoutMs(1000);
         indexStorage.init();
     }
 
     private void initDevOps() throws Exception {
 
         DataSource devOpsDataSource = buildDevOpsDataSource();
-
-        IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
-        ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", masterStorageStrategyFactory);
 
         SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
         sqlJsonConditionsBuilderFactory.setStorageStrategy(masterStorageStrategyFactory);
@@ -179,8 +174,6 @@ public abstract class CDCAbstractContainer {
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
-        IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
-        ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
 
 
         metaManager = new EntityClassBuilder();
@@ -213,9 +206,6 @@ public abstract class CDCAbstractContainer {
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         masterStorageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
         masterStorageStrategyFactory.register(FieldType.STRINGS, new MasterStringsStorageStrategy());
-
-        IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
-        ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", masterStorageStrategyFactory);
 
         SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
         sqlJsonConditionsBuilderFactory.setStorageStrategy(masterStorageStrategyFactory);
