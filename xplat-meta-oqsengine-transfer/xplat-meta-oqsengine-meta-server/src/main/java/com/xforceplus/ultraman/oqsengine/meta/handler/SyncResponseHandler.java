@@ -24,7 +24,6 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.function.Supplier;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
@@ -67,9 +66,6 @@ public class SyncResponseHandler implements IResponseHandler {
 
     private volatile boolean isShutdown = false;
 
-    /**
-     * 创建监听delayTask的线程
-     */
     @Override
     public void start() {
 
@@ -87,13 +83,13 @@ public class SyncResponseHandler implements IResponseHandler {
         responseWatchExecutor.start();
 
         /**
-         * 1.添加delayAppVersion check任务线程
+         * 1.添加watchElementCheck任务线程
          */
-        longRunTasks.add(ThreadUtils.create(this::delayTask));
+        longRunTasks.add(ThreadUtils.create(this::watchElementCheck));
         /**
-         * 2.添加keepAlive check任务线程
+         * 2.添加keepAlive任务线程
          */
-        longRunTasks.add(ThreadUtils.create(this::keepAliveCheck));
+        longRunTasks.add(ThreadUtils.create(this::keepAlive));
 
         /**
          * 启动当前Task线程
@@ -190,17 +186,6 @@ public class SyncResponseHandler implements IResponseHandler {
             }
         }
         else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
-//            /**
-//             * 处理返回结果失败
-//             */
-//            WatchElement w =
-//                    new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
-//                            entityClassSyncRequest.getVersion(), Notice);
-//            /**
-//             * 当客户端告知更新失败时，直接进行重试
-//             */
-//            pull(entityClassSyncRequest.getUid(), w, SYNC_FAIL);
-
             logger.warn("sync data failed, uid [{}], appId [{}], env [{}], version [{}] success.",
                     entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
                     entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
@@ -480,7 +465,7 @@ public class SyncResponseHandler implements IResponseHandler {
     /***
      * 检查下发版本是否更新成功
      */
-    private boolean delayTask() {
+    private boolean watchElementCheck() {
         while (!isShutdown) {
             RetryExecutor.DelayTask task = retryExecutor.take();
             if (null == task) {
@@ -509,7 +494,7 @@ public class SyncResponseHandler implements IResponseHandler {
      * 检查当前的存活状况
      * @return
      */
-    private boolean keepAliveCheck() {
+    private boolean keepAlive() {
         while (!isShutdown) {
             responseWatchExecutor.keepAliveCheck(gRpcParamsConfig.getDefaultHeartbeatTimeout());
             /**

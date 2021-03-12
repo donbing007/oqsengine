@@ -140,6 +140,22 @@ public class EntityClassSyncServerTest extends BaseInit {
         Integer v = responseWatchExecutor.version(appId, env);
         Assert.assertNull(v);
 
+
+    }
+
+    @Test
+    public void syncFailTest() throws InterruptedException {
+        StreamObserver<EntityClassSyncRequest> observer = mockerSyncClient.responseEvent();
+        String uid = UUID.randomUUID().toString();
+        String appId = "syncFailTest";
+        String env = "test";
+        int version = 0;
+
+        int expectedVersion = version + 1;
+        long entityId = Long.MAX_VALUE - 1000;
+        entityClassGenerator.reset(expectedVersion, entityId);
+        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), uid, RequestStatus.REGISTER));
+
         /**
          * 当前版本更新失败
          * check服务端3秒内重新推一个新版本数据
@@ -166,33 +182,32 @@ public class EntityClassSyncServerTest extends BaseInit {
 
         t.start();
 
-        resetVersion = version + 5;
+        int resetVersion = expectedVersion + 1;
         entityClassGenerator.reset(resetVersion, entityId);
         syncResponseHandler.pull(uid, new WatchElement(appId, env, resetVersion - 1, null), RequestStatus.SYNC_OK);
 
-
-        Thread.sleep(5_000);
+        Thread.sleep(1_000);
 
         mockerSyncClient.success = null;
 
         observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), uid, RequestStatus.SYNC_FAIL));
 
-        waitForResult(65, resetVersion);
+        waitForResult(70, resetVersion);
         ThreadUtils.shutdown(t, 1);
     }
 
     private void waitForResult(int maxWaitLoops, int version) throws InterruptedException {
         int currentWait = 0;
         while (currentWait < maxWaitLoops) {
-            if (null == mockerSyncClient.getSuccess()) {
-                Thread.sleep(1_000);
+            WatchElement w = mockerSyncClient.getSuccess();
+            if (null != w && version == w.getVersion()) {
+                break;
             }
             currentWait++;
+            Thread.sleep(1_000);
         }
-        WatchElement w = mockerSyncClient.getSuccess();
 
-        Assert.assertNotNull(w);
-        Assert.assertEquals(version, w.getVersion());
+        Assert.assertNotEquals(currentWait, maxWaitLoops);
 
         mockerSyncClient.releaseSuccess();
     }

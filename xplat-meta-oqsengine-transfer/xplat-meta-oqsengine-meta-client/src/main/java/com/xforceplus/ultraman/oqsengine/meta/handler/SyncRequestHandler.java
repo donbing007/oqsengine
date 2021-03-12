@@ -65,19 +65,15 @@ public class SyncRequestHandler implements IRequestHandler {
         isShutdown = false;
 
         /**
-         * 1.添加keepAlive任务线程
+         * 1.添加watchElementCheck任务线程
          */
-        longRunTasks.add(ThreadUtils.create(this::keepAliveTask));
+        longRunTasks.add(ThreadUtils.create(this::keepAlive));
+
 
         /**
-         * 1.添加stream-connect-check任务线程
+         * 2.添加watchElementCheck任务线程
          */
-        longRunTasks.add(ThreadUtils.create(this::streamConnectCheckTask));
-
-        /**
-         * 3.添加AppCheck任务线程
-         */
-        longRunTasks.add(ThreadUtils.create(this::appCheckTask));
+        longRunTasks.add(ThreadUtils.create(this::watchElementCheck));
 
         /**
          * 启动所有任务线程
@@ -360,12 +356,22 @@ public class SyncRequestHandler implements IRequestHandler {
      * 保持和服务端的KeepAlive
      * @return
      */
-    private boolean keepAliveTask() {
+    private boolean keepAlive() {
         logger.debug("start keepAlive task ok...");
         while (!isShutDown()) {
             RequestWatcher requestWatcher = requestWatchExecutor.watcher();
             if (null != requestWatcher) {
                 try {
+                    if (requestWatcher.isOnServe()) {
+                        if (System.currentTimeMillis() - requestWatcher.heartBeat() >
+                                gRpcParamsConfig.getDefaultHeartbeatTimeout()) {
+                            requestWatcher.observer().onCompleted();
+                            logger.warn("last heartbeat time [{}] reaches max timeout [{}]"
+                                    , System.currentTimeMillis() - requestWatcher.heartBeat(),
+                                    gRpcParamsConfig.getDefaultHeartbeatTimeout());
+                        }
+                    }
+
                     EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
                             .setUid(requestWatcher.uid()).setStatus(HEARTBEAT.ordinal()).build();
 
@@ -382,40 +388,12 @@ public class SyncRequestHandler implements IRequestHandler {
         return true;
     }
 
-    /**
-     * 检查当前的KeepAlive是否已超时
-     * @return
-     */
-    private boolean streamConnectCheckTask() {
-        logger.debug("start stream-connect-check task ok...");
-        while (!isShutDown()) {
-            RequestWatcher requestWatcher = requestWatchExecutor.watcher();
-            if (null != requestWatcher && requestWatcher.isOnServe()) {
-                if (System.currentTimeMillis() - requestWatcher.heartBeat() >
-                        gRpcParamsConfig.getDefaultHeartbeatTimeout()) {
-                    try {
-                        requestWatcher.observer().onCompleted();
-                        logger.warn("last heartbeat time [{}] reaches max timeout [{}]"
-                                , System.currentTimeMillis() - requestWatcher.heartBeat(),
-                                gRpcParamsConfig.getDefaultHeartbeatTimeout());
-                    } catch (Exception e) {
-                        //ignore
-                    }
-
-                }
-            }
-            logger.debug("streamConnect check ok, next check after duration ({})ms...", gRpcParamsConfig.getMonitorSleepDuration());
-            TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
-        }
-        logger.debug("streamConnect check task has quited due to sync-client shutdown...");
-        return true;
-    }
 
     /**
      * 检查当前APP的注册状态，处于INIT、REGISTER的APP将被重新注册到服务端
      * @return
      */
-    private boolean appCheckTask() {
+    private boolean watchElementCheck() {
         logger.debug("start appCheck task ok...");
         while (!isShutDown()) {
 
