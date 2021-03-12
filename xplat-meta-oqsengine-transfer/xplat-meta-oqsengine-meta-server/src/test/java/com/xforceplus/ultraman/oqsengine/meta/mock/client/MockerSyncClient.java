@@ -29,7 +29,8 @@ public class MockerSyncClient {
 
     private Map<String, WatchElement> watchElementMap = new LinkedHashMap<>();
 
-    private WatchElement success;
+    public WatchElement success;
+
 
     public void start(String host, int port) {
         mockClient.start(host, port);
@@ -46,6 +47,7 @@ public class MockerSyncClient {
         return mockClient.channelStub().register(new StreamObserver<EntityClassSyncResponse>() {
             @Override
             public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
+
                 System.out.println("entityClassSyncResponse : " + entityClassSyncResponse.toString());
 
                 if (entityClassSyncResponse.getStatus() == RequestStatus.REGISTER_OK.ordinal()) {

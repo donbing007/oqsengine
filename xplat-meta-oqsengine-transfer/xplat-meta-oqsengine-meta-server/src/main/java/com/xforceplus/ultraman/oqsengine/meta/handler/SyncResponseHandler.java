@@ -67,10 +67,6 @@ public class SyncResponseHandler implements IResponseHandler {
 
     private volatile boolean isShutdown = false;
 
-//    private <T> CompletableFuture<T> async(Supplier<T> supplier) {
-//        return CompletableFuture.supplyAsync(supplier, taskExecutor);
-//    }
-
     /**
      * 创建监听delayTask的线程
      */
@@ -192,19 +188,20 @@ public class SyncResponseHandler implements IResponseHandler {
                         entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
                         entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
             }
-        } else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
-            /**
-             * 处理返回结果失败
-             */
-            WatchElement w =
-                    new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
-                            entityClassSyncRequest.getVersion(), Notice);
-            /**
-             * 当客户端告知更新失败时，直接进行重试
-             */
-            pull(entityClassSyncRequest.getUid(), w, SYNC_FAIL);
+        }
+        else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
+//            /**
+//             * 处理返回结果失败
+//             */
+//            WatchElement w =
+//                    new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
+//                            entityClassSyncRequest.getVersion(), Notice);
+//            /**
+//             * 当客户端告知更新失败时，直接进行重试
+//             */
+//            pull(entityClassSyncRequest.getUid(), w, SYNC_FAIL);
 
-            logger.debug("pull data success on SYNC_FAIL, uid [{}], appId [{}], env [{}], version [{}] success.",
+            logger.warn("sync data failed, uid [{}], appId [{}], env [{}], version [{}] success.",
                     entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
                     entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
         }
@@ -231,26 +228,6 @@ public class SyncResponseHandler implements IResponseHandler {
         taskExecutor.submit(() -> {
             internalPull(uid, watchElement, requestStatus);
         });
-
-//        CompletableFuture<Boolean> completableFuture =
-//                async(() -> {
-//                    return internalPull(uid, watchElement, requestStatus);
-//                });
-//
-//        try {
-//            /**
-//             * 等待元数据pull处理
-//             */
-//            completableFuture.get(gRpcParamsConfig.getDefaultDelayTaskDuration(), TimeUnit.MILLISECONDS);
-//        } catch (Exception e) {
-//            logger.warn("pull data timeout, uid [{}], watchElement [{}], message [{}]"
-//                                                    , uid, watchElement.toString(), e.getMessage());
-//            retryExecutor.offer(
-//                    new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
-//                            new RetryExecutor.Element(
-//                                    new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
-//                                            watchElement.getVersion(), watchElement.getStatus()), uid)));
-//        }
     }
 
 
@@ -340,7 +317,7 @@ public class SyncResponseHandler implements IResponseHandler {
                 return false;
             }
         } else {
-            logger.warn("not exist watcher to handle data sync response, appId: {}, version : {}, uid :{}..."
+            logger.warn("not exist watcher to handle data sync response, appId [{}], version [{}], uid [{}]..."
                     , watchElement.getAppId(), watchElement.getVersion(), uid);
         }
         return false;

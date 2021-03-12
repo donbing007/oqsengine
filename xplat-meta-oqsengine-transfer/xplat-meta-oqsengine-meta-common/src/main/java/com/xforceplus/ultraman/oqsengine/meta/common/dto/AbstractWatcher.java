@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.dto;
 
 import io.grpc.stub.StreamObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,6 +19,7 @@ import java.util.function.Supplier;
  */
 public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
+    private Logger logger = LoggerFactory.getLogger(AbstractWatcher.class);
     /**
      * 注册的uid;
      */
@@ -109,7 +112,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
         if (onServe) {
             return function.apply(streamObserver);
         }
-
+        logger.warn("uid [{}], offServe...", uid);
         return false;
     }
 

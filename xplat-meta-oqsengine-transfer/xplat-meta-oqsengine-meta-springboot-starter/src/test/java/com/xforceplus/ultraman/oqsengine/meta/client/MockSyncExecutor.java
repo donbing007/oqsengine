@@ -4,8 +4,11 @@ import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -24,6 +27,8 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassSto
  */
 @Component
 public class MockSyncExecutor implements SyncExecutor {
+    private Logger logger = LoggerFactory.getLogger(MockSyncExecutor.class);
+
     public volatile RequestStatus status = RequestStatus.SYNC_OK;
 
     public Map<String, RequestStatusVersion> requestStatusHashMap = new HashMap<>();
@@ -39,6 +44,8 @@ public class MockSyncExecutor implements SyncExecutor {
             } else if (status.equals(RequestStatus.SYNC_OK)) {
                 List<EntityClassStorage> entityClassStorageList = protoToStorageList(entityClassSyncRspProto);
                 requestStatusHashMap.put(appId, new RequestStatusVersion(status, version));
+
+                logger.info("sync_ok, appId [{}], version [{}], data [{}]", appId, version, entityClassSyncRspProto.toString());
             }
             return status.equals(RequestStatus.SYNC_OK);
         } catch (Exception e) {
