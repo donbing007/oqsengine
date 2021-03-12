@@ -23,8 +23,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
@@ -44,7 +44,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.constant.ServerConstant.SER
  * date : 2021/2/4
  * @since : 1.8
  */
-public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResponse> {
+public class SyncResponseHandler implements IResponseHandler {
 
     private Logger logger = LoggerFactory.getLogger(SyncResponseHandler.class);
 
@@ -173,7 +173,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
             }
             logger.debug("register uid [{}], appId [{}], env [{}], version [{}] success.",
                     entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
-                                entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
+                    entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
         } else if (entityClassSyncRequest.getStatus() == SYNC_OK.ordinal()) {
             /**
              * 处理返回结果成功
@@ -185,8 +185,8 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
             boolean ret = responseWatchExecutor.update(entityClassSyncRequest.getUid(), w);
             if (ret) {
                 logger.debug("sync data success, uid [{}], appId [{}], env [{}], version [{}] success.",
-                                            entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
-                                                entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
+                        entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
+                        entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
             }
         } else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
             /**
@@ -201,8 +201,8 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
             pull(entityClassSyncRequest.getUid(), w, SYNC_FAIL);
 
             logger.debug("pull data success on SYNC_FAIL, uid [{}], appId [{}], env [{}], version [{}] success.",
-                        entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
-                            entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
+                    entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
+                    entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
         }
     }
 
@@ -231,6 +231,10 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         }
     }
 
+    private <T> CompletableFuture<T> async(Supplier<T> supplier) {
+        return CompletableFuture.supplyAsync(supplier, taskExecutor);
+    }
+
     /**
      * 主动拉取EntityClass(用于推送失败或超时)
      * <p>
@@ -244,53 +248,73 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         /**
          * 这里异步执行
          */
-        taskExecutor.submit(() -> {
-            ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
+        CompletableFuture<Boolean> completableFuture =
+                async(() -> {
+                    return internalPull(uid, watchElement, requestStatus);
+                });
 
+        try {
             /**
-             * 判断watcher的可用性
+             * 等待元数据pull处理
              */
-            if (null != watcher && watcher.isOnServe()) {
-                try {
-                    AppUpdateEvent appUpdateEvent =
-                            entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
+            completableFuture.get(gRpcParamsConfig.getDefaultDelayTaskDuration(), TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            logger.warn("pull data timeout, uid [{}], watchElement [{}], message [{}]"
+                                                    , uid, watchElement.toString(), e.getMessage());
+            retryExecutor.offer(
+                    new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
+                            new RetryExecutor.Element(
+                                    new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
+                                            watchElement.getVersion(), watchElement.getStatus()), uid)));
+        }
+    }
 
-                    if (isNeedEvent(watchElement.getVersion(), appUpdateEvent.getVersion(), requestStatus)) {
+    private boolean internalPull(String uid, WatchElement watchElement, RequestStatus requestStatus) {
+        ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
 
-                        /**
-                         * 主动拉取不会更新当前的appVersion
-                         */
-                        EntityClassSyncResponse response =
-                                generateResponse(uid, appUpdateEvent.getAppId(), appUpdateEvent.getEnv(), appUpdateEvent.getVersion(),
-                                        RequestStatus.SYNC, appUpdateEvent.getEntityClassSyncRspProto());
-                        return responseByWatch(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
-                                appUpdateEvent.getVersion(), response, watcher, false);
-                    }
-                    logger.info("current notice version [{}] is large than updateVersion [{}], event will be ignore..."
-                            , watchElement.getVersion(), appUpdateEvent.getVersion());
-                    return true;
-                } catch (Exception e) {
+        /**
+         * 判断watcher的可用性
+         */
+        if (null != watcher && watcher.isOnServe()) {
+            try {
+                AppUpdateEvent appUpdateEvent =
+                        entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
+
+                if (isNeedEvent(watchElement.getVersion(), appUpdateEvent.getVersion(), requestStatus)) {
+
                     /**
-                     * 当元数据告知失败将在一分钟后进行重试
+                     * 主动拉取不会更新当前的appVersion
                      */
-                    if (e instanceof MetaSyncServerException &&
-                            e.getMessage().equalsIgnoreCase(APP_UPDATE_PULL_ERROR.name())) {
-                        retryExecutor.offer(
-                                new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
-                                        new RetryExecutor.Element(
-                                                new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
-                                                        watchElement.getVersion(), watchElement.getStatus()),
-                                                watcher.uid())));
-                    }
-                    logger.warn(e.getMessage());
-                    return false;
+                    EntityClassSyncResponse response =
+                            generateResponse(uid, appUpdateEvent.getAppId(), appUpdateEvent.getEnv(), appUpdateEvent.getVersion(),
+                                    RequestStatus.SYNC, appUpdateEvent.getEntityClassSyncRspProto());
+                    return responseByWatch(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
+                            appUpdateEvent.getVersion(), response, watcher, false);
                 }
-            } else {
-                logger.warn("not exist watcher to handle data sync response, appId: {}, version : {}, uid :{}..."
-                        , watchElement.getAppId(), watchElement.getVersion(), uid);
+                logger.info("current notice version [{}] is large than updateVersion [{}], event will be ignore..."
+                        , watchElement.getVersion(), appUpdateEvent.getVersion());
+                return true;
+            } catch (Exception e) {
+                /**
+                 * 当元数据告知失败将在一分钟后进行重试
+                 */
+                if (e instanceof MetaSyncServerException &&
+                        e.getMessage().equalsIgnoreCase(APP_UPDATE_PULL_ERROR.name())) {
+                    retryExecutor.offer(
+                            new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
+                                    new RetryExecutor.Element(
+                                            new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
+                                                    watchElement.getVersion(), watchElement.getStatus()),
+                                            watcher.uid())));
+                }
+                logger.warn(e.getMessage());
+                return false;
             }
-            return false;
-        });
+        } else {
+            logger.warn("not exist watcher to handle data sync response, appId: {}, version : {}, uid :{}..."
+                    , watchElement.getAppId(), watchElement.getVersion(), uid);
+        }
+        return false;
     }
 
     /**
@@ -492,7 +516,7 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
      */
     private boolean keepAliveCheck() {
         while (!isShutdown) {
-            responseWatchExecutor.keepAliceCheck(gRpcParamsConfig.getDefaultHeartbeatTimeout());
+            responseWatchExecutor.keepAliveCheck(gRpcParamsConfig.getDefaultHeartbeatTimeout());
             /**
              * 等待一秒进入下一次循环
              */
@@ -502,4 +526,5 @@ public class SyncResponseHandler implements IResponseHandler<EntityClassSyncResp
         logger.info("keepAlive check has quited due to server shutdown...");
         return true;
     }
+
 }

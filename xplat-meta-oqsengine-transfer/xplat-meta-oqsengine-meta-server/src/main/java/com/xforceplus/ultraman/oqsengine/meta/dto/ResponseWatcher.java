@@ -28,6 +28,11 @@ public class ResponseWatcher extends AbstractWatcher<EntityClassSyncResponse> {
     }
 
     @Override
+    public boolean isAlive(String uid) {
+        return uid.equals(this.uid) && isOnServe();
+    }
+
+    @Override
     public void reset(String uid, StreamObserver<EntityClassSyncResponse> streamObserver) {
         throw new MetaSyncServerException("un-support function reset.", false);
     }

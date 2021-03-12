@@ -122,7 +122,7 @@ public class MultiClientSyncTest extends BaseInit {
         for (StreamEvent streamEvent : streamEvents) {
             for (Map.Entry<String, WatchElement> entry : streamEvent.getWatchElements().entrySet()) {
                 streamEvent.getStreamObserver().onNext(buildRequest(entry.getValue(), streamEvent.getUid(), RequestStatus.REGISTER));
-                Thread.sleep(1000);
+                Thread.sleep(3000);
                 /**
                  * 判断是否注册成功
                  */

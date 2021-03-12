@@ -26,7 +26,7 @@ public interface IWatcher<T> {
 
     boolean onWatch(WatchElement watchElement);
 
-    boolean isAlive();
+    boolean isAlive(String uid);
 
     void addWatch(WatchElement watchElement);
 
