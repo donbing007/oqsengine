@@ -11,10 +11,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringsValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -44,6 +41,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -213,6 +212,7 @@ public class SQLMasterStorageTest {
     @Test
     public void testBuildEntity() throws Exception {
 
+        LocalDateTime updateTime = LocalDateTime.now();
         IEntity newEntity = Entity.Builder.anEntity()
             .withId(100000)
             .withEntityClassRef(l1EntityClassRef)
@@ -220,7 +220,8 @@ public class SQLMasterStorageTest {
                 new LongValue(l1EntityClass.father().get().field("l0-long").get(), 100),
                 new StringValue(l1EntityClass.father().get().field("l0-string").get(), "l0value"),
                 new LongValue(l1EntityClass.field("l1-long").get(), 200),
-                new StringValue(l1EntityClass.field("l1-string").get(), "l1value")
+                new StringValue(l1EntityClass.field("l1-string").get(), "l1value"),
+                new DateTimeValue(EntityField.UPDATE_TIME_FILED, updateTime)
             )))
             .build();
         int size = storage.build(newEntity, l1EntityClass);
@@ -229,7 +230,12 @@ public class SQLMasterStorageTest {
         Optional<IEntity> entityOptional = storage.selectOne(newEntity.id(), l1EntityClass);
         Assert.assertTrue(entityOptional.isPresent());
         IEntity targetEntity = entityOptional.get();
-        Assert.assertEquals(newEntity, targetEntity);
+        Assert.assertEquals(100, targetEntity.entityValue().getValue("l0-long").get().valueToLong());
+        Assert.assertEquals("l0value", targetEntity.entityValue().getValue("l0-string").get().valueToString());
+        Assert.assertEquals(200, targetEntity.entityValue().getValue("l1-long").get().valueToLong());
+        Assert.assertEquals("l1value", targetEntity.entityValue().getValue("l1-string").get().valueToString());
+        Assert.assertEquals(0, targetEntity.version());
+        Assert.assertEquals(updateTime.atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli(), entityOptional.get().time());
     }
 
 
@@ -256,9 +262,12 @@ public class SQLMasterStorageTest {
 
     @Test
     public void testReplace() throws Exception {
+        LocalDateTime updateTime = LocalDateTime.now();
         IEntity targetEntity = expectedEntitys.get(0);
         targetEntity.entityValue().addValue(
             new LongValue(l1EntityClass.father().get().field("l0-long").get(), 1000000)
+        ).addValue(
+            new DateTimeValue(EntityField.UPDATE_TIME_FILED, updateTime)
         );
 
         int oldVersion = targetEntity.version();
@@ -269,8 +278,11 @@ public class SQLMasterStorageTest {
 
         Optional<IEntity> targetEntityOp = storage.selectOne(targetEntity.id(), l2EntityClass);
         Assert.assertTrue(targetEntityOp.isPresent());
-        Assert.assertEquals(1000000L, targetEntityOp.get().entityValue().getValue("l0-long").get().valueToLong());
+        Assert.assertEquals(1000000L,
+            targetEntityOp.get().entityValue().getValue("l0-long").get().valueToLong());
         Assert.assertEquals(oldVersion + 1, targetEntityOp.get().version());
+        Assert.assertEquals(updateTime.atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli(),
+            targetEntityOp.get().time());
     }
 
     @Test

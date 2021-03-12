@@ -252,12 +252,12 @@ public class ConsumerRunnerTest extends CDCAbstractContainer {
     private void initData(IEntity[] datas, boolean replacement, boolean delete) throws SQLException {
         for (IEntity entity : datas) {
             if (delete) {
-                masterStorage.delete(entity, getEntityClass(entity.entityClassRef().entityClassId()));
+                masterStorage.delete(entity, getEntityClass(entity.entityClassRef().getId()));
             } else if (replacement) {
                 entity.resetVersion(0);
-                masterStorage.replace(entity, getEntityClass(entity.entityClassRef().entityClassId()));
+                masterStorage.replace(entity, getEntityClass(entity.entityClassRef().getId()));
             } else {
-                masterStorage.build(entity, getEntityClass(entity.entityClassRef().entityClassId()));
+                masterStorage.build(entity, getEntityClass(entity.entityClassRef().getId()));
             }
         }
     }

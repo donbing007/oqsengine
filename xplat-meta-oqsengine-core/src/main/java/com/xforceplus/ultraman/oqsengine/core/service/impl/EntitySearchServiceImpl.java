@@ -13,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -375,35 +376,11 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             return true;
         }
 
-        IEntityClass useEntityClass = entityClass;
-        IEntityField field;
-        while (useEntityClass != null) {
-
-            Optional<IEntityField> fOp = useEntityClass.field(c.getField().id());
-            if (fOp.isPresent()) {
-                field = fOp.get();
-                if (!field.config().isSearchable()) {
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("The field {} in the conditional query is not searchable and the query is aborted.",
-                            field.name());
-                    }
-
-                    return false;
-                } else {
-                    return true;
-                }
-            } else {
-
-                useEntityClass = useEntityClass.father();
-
-            }
+        Optional<IEntityField> fOp = entityClass.field(c.getField().id());
+        if (fOp.isPresent() && fOp.get().config().isSearchable()) {
+            return true;
         }
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("All fields in the conditional query are either non-searchable or non-{}({}) entity fields.",
-                entityClass.code(), entityClass.id());
-        }
         return false;
     }
 
@@ -690,7 +667,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             if (commitId > 0) {
                 //trigger master search
-                masterRefs = masterStorage.select(commitId, conditions, entityClass, sort);
+                masterRefs = masterStorage.select(conditions, entityClass,
+                    SelectConfig.Builder.aSelectConfig().withSort(sort).withCommitId(commitId).build());
             }
 
             masterRefs = fixNullSortValue(masterRefs, sort);
@@ -705,7 +683,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             Page indexPage = new Page(page.getIndex(), page.getPageSize());
             Collection<EntityRef> refs = indexStorage.select(
-                conditions, entityClass, sort, indexPage, filterIdsFromMaster, commitId);
+                conditions, entityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withSort(sort)
+                    .withPage(indexPage)
+                    .withExcludedIds(filterIdsFromMaster)
+                    .withCommitId(commitId).build());
 
             Collection<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().
                 filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());

@@ -10,7 +10,7 @@ import java.util.Objects;
  * @version 0.1 2020/2/17 16:55
  * @since 1.8
  */
-public final class EntityRef implements Serializable {
+public final class EntityRef implements Serializable, Comparable<EntityRef> {
 
     private long id;
     private int op;
@@ -91,5 +91,16 @@ public final class EntityRef implements Serializable {
         sb.append(", orderValue='").append(orderValue).append('\'');
         sb.append('}');
         return sb.toString();
+    }
+
+    @Override
+    public int compareTo(EntityRef o) {
+        if (this.id < o.id) {
+            return -1;
+        } else if (this.id > o.id) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 }

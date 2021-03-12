@@ -47,14 +47,14 @@ public class NotMatchConditionBuilder extends SphinxQLConditionBuilder {
 
                 buff.append(FieldDefine.ATTRIBUTE)
                     .append(".")
-                    .append(storageValue.storageName());
+                    .append(storageValue.shortStorageName().toString());
 
             }
             buff.append(" ").append(this.operator().getSymbol());
 
             if (storageValue.type() == StorageType.STRING) {
                 buff.append(" '");
-                buff.append(SphinxQLHelper.encodeSpecialCharset((String) storageValue.value()));
+                buff.append(SphinxQLHelper.encodeJsonCharset((String) storageValue.value()));
             } else {
                 buff.append(" ");
                 buff.append(storageValue.value());

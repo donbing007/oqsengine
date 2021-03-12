@@ -27,7 +27,7 @@ public class AbstractStorageValueTest {
     @Test
     public void testStorageName() throws Exception {
         String logicName = "123456";
-        MockStorageValue instance = new MockStorageValue(logicName, 0L, true);
+        MockLongStorageValue instance = new MockLongStorageValue(logicName, 0L, true);
         Assert.assertEquals(logicName, instance.logicName());
         Assert.assertEquals("123456L", instance.storageName());
     }
@@ -35,13 +35,13 @@ public class AbstractStorageValueTest {
     @Test
     public void testLogicName() throws Exception {
         String storageName = "123456L1";
-        MockStorageValue instance = new MockStorageValue(storageName, 0L, false);
+        MockLongStorageValue instance = new MockLongStorageValue(storageName, 0L, false);
         Assert.assertEquals("123456", instance.logicName());
         Assert.assertEquals("123456L1", instance.storageName());
         Assert.assertEquals(1, instance.location());
 
         storageName = "123456L";
-        instance = new MockStorageValue(storageName, 0L, false);
+        instance = new MockLongStorageValue(storageName, 0L, false);
         Assert.assertEquals("123456", instance.logicName());
         Assert.assertEquals("123456L", instance.storageName());
         Assert.assertEquals(StorageValue.NOT_LOCATION, instance.location());
@@ -49,9 +49,9 @@ public class AbstractStorageValueTest {
 
     @Test
     public void testStick() throws Exception {
-        MockStorageValue v1 = new MockStorageValue("111", 0L, true);
+        MockLongStorageValue v1 = new MockLongStorageValue("111", 0L, true);
         v1.locate(0);
-        MockStorageValue v2 = new MockStorageValue("222", 0L, true);
+        MockLongStorageValue v2 = new MockLongStorageValue("222", 0L, true);
         StorageValue head = v1.stick(v2);
         StorageValue point = head;
 
@@ -68,7 +68,7 @@ public class AbstractStorageValueTest {
         Assert.assertEquals(1, point.location());
         Assert.assertFalse(point.haveNext());
 
-        MockStorageValue v3 = new MockStorageValue("333L4", 0L, false);
+        MockLongStorageValue v3 = new MockLongStorageValue("333L4", 0L, false);
         head = head.stick(v3);
         point = head;
         Assert.assertEquals(point, v1);
@@ -92,9 +92,8 @@ public class AbstractStorageValueTest {
         Assert.assertFalse(point.haveNext());
 
 
-
-        MockStorageValue one = new MockStorageValue("111L1", 0L, false);
-        MockStorageValue two = new MockStorageValue("222L0", 0L, false);
+        MockLongStorageValue one = new MockLongStorageValue("111L1", 0L, false);
+        MockLongStorageValue two = new MockLongStorageValue("222L0", 0L, false);
         head = one.stick(two);
         Assert.assertEquals(two, head);
         Assert.assertTrue(two.haveNext());
@@ -102,19 +101,42 @@ public class AbstractStorageValueTest {
 
     @Test
     public void testGroupName() throws Exception {
-        MockStorageValue v1 = new MockStorageValue("111", 0L, true);
+        MockLongStorageValue v1 = new MockLongStorageValue("111", 0L, true);
         Assert.assertEquals("111L", v1.groupStorageName());
     }
 
-    static class MockStorageValue extends AbstractStorageValue<Long> {
+    @Test
+    public void testShortStorageName() throws Exception {
+        MockLongStorageValue v = new MockLongStorageValue("1", 0L, true);
+        ShortStorageName shortStorageName = v.shortStorageName();
+        Assert.assertEquals("1L", shortStorageName.toString());
+        Assert.assertEquals("1", shortStorageName.getPrefix());
+        Assert.assertEquals("L", shortStorageName.getSuffix());
 
-        public MockStorageValue(String name, Long value, boolean logicName) {
+
+        v = new MockLongStorageValue("1000000000000000000", 0L, true);
+        shortStorageName = v.shortStorageName();
+        Assert.assertEquals("7lieexzx4kxsL", shortStorageName.toString());
+        Assert.assertEquals("7lieex", shortStorageName.getPrefix());
+        Assert.assertEquals("zx4kxsL", shortStorageName.getSuffix());
+    }
+
+    @Test
+    public void testStorageType() throws Exception {
+        MockLongStorageValue v = new MockLongStorageValue("1", 0L, true);
+        Assert.assertEquals(StorageType.LONG, v.type());
+
+        v = new MockLongStorageValue("7lieexzx4kxsL", 0L, false);
+        Assert.assertEquals(StorageType.LONG, v.type());
+
+        v = new MockLongStorageValue("7lieexzx4kxsL1", 0L, false);
+        Assert.assertEquals(StorageType.LONG, v.type());
+    }
+
+    static class MockLongStorageValue extends AbstractStorageValue<Long> {
+
+        public MockLongStorageValue(String name, Long value, boolean logicName) {
             super(name, value, logicName);
-        }
-
-        @Override
-        public StorageType type() {
-            return StorageType.LONG;
         }
     }
 

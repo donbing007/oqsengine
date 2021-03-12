@@ -67,7 +67,7 @@ public interface StorageValue<V> {
      *
      * @return 短名称.
      */
-    String shortStorageName();
+    ShortStorageName shortStorageName();
 
     /**
      * 组名称,此名称表示单个逻辑名称对应的所有物理名称的前辍.

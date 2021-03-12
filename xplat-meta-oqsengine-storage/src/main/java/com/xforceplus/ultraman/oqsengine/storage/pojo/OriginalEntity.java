@@ -18,7 +18,7 @@ import java.util.*;
  * @version 0.1 2021/3/2 13:40
  * @since 1.8
  */
-public class OriginalEntity implements Serializable {
+public class OriginalEntity implements Serializable, Cloneable, Comparable<OriginalEntity> {
     private static final IEntityClass ANY_ENTITYCLASS = AnyEntityClass.getInstance();
     private static final Object[] EMTPY_ATTRIBUTES = new Object[0];
 
@@ -92,6 +92,50 @@ public class OriginalEntity implements Serializable {
         return attributes;
     }
 
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public void setOp(int op) {
+        this.op = op;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public void setOqsMajor(int oqsMajor) {
+        this.oqsMajor = oqsMajor;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public void setCreateTime(long createTime) {
+        this.createTime = createTime;
+    }
+
+    public void setUpdateTime(long updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    public void setTx(long tx) {
+        this.tx = tx;
+    }
+
+    public void setCommitid(long commitid) {
+        this.commitid = commitid;
+    }
+
+    public void setEntityClass(IEntityClass entityClass) {
+        this.entityClass = entityClass;
+    }
+
+    public void setAttributes(Object[] attributes) {
+        this.attributes = attributes;
+    }
+
     public Collection<Map.Entry<String, Object>> listAttributes() {
         final int space = 2;
         List<Map.Entry<String, Object>> attributeList = new ArrayList<>(attributes.length / space);
@@ -140,9 +184,51 @@ public class OriginalEntity implements Serializable {
         return result;
     }
 
-    /**
-     * builder
-     */
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("OriginalEntity{");
+        sb.append("deleted=").append(deleted);
+        sb.append(", op=").append(op);
+        sb.append(", version=").append(version);
+        sb.append(", oqsMajor=").append(oqsMajor);
+        sb.append(", id=").append(id);
+        sb.append(", createTime=").append(createTime);
+        sb.append(", updateTime=").append(updateTime);
+        sb.append(", tx=").append(tx);
+        sb.append(", commitid=").append(commitid);
+        sb.append(", entityClass=").append(entityClass);
+        sb.append(", attributes=").append(attributes == null ? "null" : Arrays.toString(attributes));
+        sb.append('}');
+        return sb.toString();
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return OriginalEntity.Builder.anOriginalEntity()
+            .withId(id)
+            .withEntityClass(entityClass)
+            .withAttributes(Arrays.asList(attributes))
+            .withOqsMajor(oqsMajor)
+            .withDeleted(deleted)
+            .withTx(tx)
+            .withCommitid(commitid)
+            .withUpdateTime(updateTime)
+            .withCreateTime(createTime)
+            .withOp(op)
+            .withVersion(version);
+    }
+
+    @Override
+    public int compareTo(OriginalEntity o) {
+        if (this.getId() < o.getId()) {
+            return -1;
+        } else if (this.getId() > o.getId()) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
     public static final class Builder {
         private boolean deleted;
         private int op;
@@ -153,8 +239,8 @@ public class OriginalEntity implements Serializable {
         private long updateTime;
         private long tx;
         private long commitid;
-        private IEntityClass entityClass;
-        private Collection<Object> attributes;
+        private IEntityClass entityClass = ANY_ENTITYCLASS;
+        private Collection<Object> attributes = Collections.emptyList();
 
         private Builder() {
             attributes = new LinkedList();

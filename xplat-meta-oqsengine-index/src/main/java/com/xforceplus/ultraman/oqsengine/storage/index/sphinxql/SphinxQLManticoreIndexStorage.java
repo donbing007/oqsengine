@@ -2,11 +2,14 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
@@ -14,16 +17,18 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.ResourceTask;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.ManticoreStorageEntitiesSaveExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.CleanExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.OriginEntitiesDeleteExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.QueryConditionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.SaveExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.ManticoreStorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import io.micrometer.core.instrument.Metrics;
@@ -48,9 +53,9 @@ import java.util.stream.Collectors;
  * @version 0.1 2021/3/2 14:00
  * @since 1.8
  */
-public class MantiocreIndexStorage implements IndexStorage {
+public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
-    final Logger logger = LoggerFactory.getLogger(MantiocreIndexStorage.class);
+    final Logger logger = LoggerFactory.getLogger(SphinxQLManticoreIndexStorage.class);
 
     final ObjectMapper jsonMapper = new ObjectMapper();
 
@@ -130,8 +135,16 @@ public class MantiocreIndexStorage implements IndexStorage {
     }
 
     @Override
-    public boolean clean(IEntityClass entityClass, long maintainId, long start, long end) throws SQLException {
-        return false;
+    public long clean(IEntityClass entityClass, long maintainId, long start, long end) throws SQLException {
+        CleanExecutor executor = CleanExecutor.Builder.aCleanExecutor()
+            .withEntityClass(entityClass)
+            .withStart(start)
+            .withEnd(end)
+            .withIndexNames(indexWriteIndexNameSelector.selects())
+            .withDs(writerDataSourceSelector.selects())
+            .build();
+
+        return executor.execute(maintainId);
     }
 
     @Override
@@ -139,6 +152,9 @@ public class MantiocreIndexStorage implements IndexStorage {
         if (originalEntities.isEmpty()) {
             return;
         }
+
+        verifyOriginalEntites(originalEntities);
+
         Collection<OriginalEntitySection> sections = split(originalEntities);
 
         final long retryDurationMs = 3000;
@@ -154,6 +170,14 @@ public class MantiocreIndexStorage implements IndexStorage {
             latch.await();
         } catch (InterruptedException e) {
             logger.warn(e.getMessage(), e);
+        }
+    }
+
+    private void verifyOriginalEntites(Collection<OriginalEntity> originalEntities) throws SQLException {
+        for (OriginalEntity oe : originalEntities) {
+            if (oe.getEntityClass() == null || oe.getEntityClass() == AnyEntityClass.getInstance()) {
+                throw new SQLException("Invalid entityclass!");
+            }
         }
     }
 
@@ -183,8 +207,9 @@ public class MantiocreIndexStorage implements IndexStorage {
                     try {
                         doSave();
                         exit = true;
-                    } catch (SQLException ex) {
-                        logger.error("Batch write error ({}), wait {} milliseconds to try again.", ex.getMessage(), retryDurationMs);
+                    } catch (Exception ex) {
+                        logger.error(ex.getMessage(), ex);
+                        logger.error("Batch write error, wait {} milliseconds to try again.", retryDurationMs);
                         exit = false;
 
                         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(retryDurationMs));
@@ -223,17 +248,19 @@ public class MantiocreIndexStorage implements IndexStorage {
         private int doSaveOpSection(OperationType op, String indexName, String shardKey, Collection<OriginalEntity> originalEntities)
             throws SQLException {
 
-            Collection<ManticoreStorageEntity> manticoreStorageEntities =
-                originalEntities.parallelStream().map(oe -> toStorageEntityFromOriginal(oe)).collect(Collectors.toList());
+            Collection<SphinxQLStorageEntity> manticoreStorageEntities = new ArrayList<>(originalEntities.size());
+            for (OriginalEntity oe : originalEntities) {
+                manticoreStorageEntities.add(toStorageEntityFromOriginal(oe));
+            }
 
             return (int) writeTransactionExecutor.execute(new ResourceTask() {
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                     if (OperationType.CREATE == op) {
-                        return ManticoreStorageEntitiesSaveExecutor.buildCreate(indexName, resource)
+                        return SaveExecutor.buildCreate(indexName, resource)
                             .execute(manticoreStorageEntities);
                     } else if (OperationType.UPDATE == op) {
-                        return ManticoreStorageEntitiesSaveExecutor.buildReplace(indexName, resource)
+                        return SaveExecutor.buildReplace(indexName, resource)
                             .execute(manticoreStorageEntities);
                     } else {
                         throw new SQLException("An operation that cannot be handled.");
@@ -264,8 +291,8 @@ public class MantiocreIndexStorage implements IndexStorage {
         }
     }
 
-    private ManticoreStorageEntity toStorageEntityFromOriginal(OriginalEntity originalEntity) {
-        ManticoreStorageEntity.Builder builder = ManticoreStorageEntity.Builder.aManticoreStorageEntity()
+    private SphinxQLStorageEntity toStorageEntityFromOriginal(OriginalEntity originalEntity) throws SQLException {
+        SphinxQLStorageEntity.Builder builder = SphinxQLStorageEntity.Builder.aManticoreStorageEntity()
             .withId(originalEntity.getId())
             .withCommitId(originalEntity.getCommitid())
             .withTx(originalEntity.getTx())
@@ -279,12 +306,41 @@ public class MantiocreIndexStorage implements IndexStorage {
         return builder.build();
     }
 
+    // 转换成JSON类型属性.
     private String toAttribute(OriginalEntity originalEntity) {
-        Map<String, Object> attributeMap =
-            originalEntity.listAttributes().stream().collect(Collectors.toMap(a -> {
-                String storageName = a.getKey();
-                return AnyStorageValue.getInstance(storageName).shortStorageName();
-            }, a -> a.getValue()));
+        int attrSize = originalEntity.getAttributes().length / 2;
+
+
+        Map<String, Object> attributeMap = new HashMap(MapUtils.calculateInitSize(attrSize, 0.75F));
+        for (Map.Entry<String, Object> attr : originalEntity.listAttributes()) {
+
+            /**
+             * key = 字段物理储存名称.
+             * value = 字段物理值.
+             */
+            StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
+
+            IEntityClass entityClass = originalEntity.getEntityClass();
+            if (!needField(entityClass, anyStorageValue)) {
+                continue;
+            }
+
+            ShortStorageName shortStorageName = anyStorageValue.shortStorageName();
+
+            /**
+             * 字符串需要处理特殊字符.
+             */
+            if (StorageType.STRING == anyStorageValue.type()) {
+
+                attributeMap.put(shortStorageName.toString(),
+                    SphinxQLHelper.encodeJsonCharset(attr.getValue().toString()));
+
+            } else {
+
+                attributeMap.put(shortStorageName.toString(), attr.getValue());
+
+            }
+        }
 
         try {
             return jsonMapper.writeValueAsString(attributeMap);
@@ -294,16 +350,35 @@ public class MantiocreIndexStorage implements IndexStorage {
     }
 
     // 全文属性
-    private String toAttributesF(OriginalEntity originalEntity) {
-        return originalEntity.listAttributes().stream().map(a -> {
-            String storageName = a.getKey();
-            Object value = a.getValue();
+    private String toAttributesF(OriginalEntity originalEntity) throws SQLException {
+        StringBuilder buff = new StringBuilder();
+        for (Map.Entry<String, Object> attr : originalEntity.listAttributes()) {
+            IEntityClass entityClass = originalEntity.getEntityClass();
+            StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
 
-            StorageValue anyStorageValue = AnyStorageValue.getInstance(storageName);
-            storageName = anyStorageValue.shortStorageName();
+            Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(anyStorageValue.logicName()));
 
-            return wrapperAttribute(storageName, value, anyStorageValue.type());
-        }).collect(Collectors.joining(" "));
+            if (StorageType.UNKNOWN == anyStorageValue.type()) {
+                if (fieldOp.isPresent()) {
+                    throw new SQLException(
+                        String.format("Unknown physical storage type.[id=%s, name=%s]",
+                            anyStorageValue.logicName(),
+                            fieldOp.get().name()));
+                } else {
+                    throw new SQLException(
+                        String.format("Unknown physical storage type.[id=%s]",
+                            anyStorageValue.logicName()));
+                }
+            }
+
+            if (!needField(entityClass, anyStorageValue)) {
+                continue;
+            }
+
+            buff.append(
+                wrapperAttribute(anyStorageValue.shortStorageName(), attr.getValue(), anyStorageValue.type())).append(' ');
+        }
+        return buff.toString();
     }
 
     // 全文元信息
@@ -313,21 +388,29 @@ public class MantiocreIndexStorage implements IndexStorage {
     }
 
     /**
+     * 短名称为 aZl8N0y58M7S
      * StorageType.STRING
-     * aZl8N0{空格}test{空格}y58M7S
+     * aZl8N0{空格}aZl8N0testy58M7S{空格}y58M7S
      * StorageType.Long
      * aZl8N0123y58M7S
      */
-    private String wrapperAttribute(String shortStorageName, Object value, StorageType storageType) {
-        Map.Entry<String, String> shortWrapper = SphinxQLHelper.parseShortStorageName(shortStorageName);
+    private String wrapperAttribute(ShortStorageName shortStorageName, Object value, StorageType storageType) {
         StringBuilder buff = new StringBuilder();
-        buff.append(shortWrapper.getKey());
+        buff.append(shortStorageName.getPrefix());
+
+        /**
+         * 字符串需要处理特殊字符.
+         */
         if (StorageType.STRING == storageType) {
-            buff.append(" ").append(value.toString()).append(" ");
+            buff.append(" ")
+                .append(shortStorageName.getPrefix())
+                .append(SphinxQLHelper.encodeFullSearchCharset(value.toString()))
+                .append(shortStorageName.getSuffix())
+                .append(" ");
         } else {
             buff.append(value.toString());
         }
-        buff.append(shortWrapper.getValue());
+        buff.append(shortStorageName.getSuffix());
 
         return buff.toString();
     }
@@ -341,9 +424,9 @@ public class MantiocreIndexStorage implements IndexStorage {
 
         int dsSize = writerDataSourceSelector.selects().size();
         int tSize = indexWriteIndexNameSelector.selects().size();
-        // 防止 rehash
+
         Map<DataSource, Map<String, OriginalEntitySection>> dsSectionMap =
-            new HashMap(dsSize + (int) (dsSize * (1D - 0.75D)));
+            new HashMap(MapUtils.calculateInitSize(dsSize, 0.75F));
 
         Map<String, OriginalEntitySection> nameSectionMap;
 
@@ -354,8 +437,8 @@ public class MantiocreIndexStorage implements IndexStorage {
 
             nameSectionMap = dsSectionMap.get(dataSource);
             if (nameSectionMap == null) {
-                // 防止 rehash
-                nameSectionMap = new HashMap(tSize + (int) (tSize - tSize * 0.75D));
+
+                nameSectionMap = new HashMap(MapUtils.calculateInitSize(tSize, 0.75F));
                 dsSectionMap.put(dataSource, nameSectionMap);
             }
 
@@ -434,6 +517,27 @@ public class MantiocreIndexStorage implements IndexStorage {
                 return op;
             }
         }
+    }
+
+    // 判断字段是否是需要的,存在定义并且可搜索.
+    private boolean needField(IEntityClass entityClass, StorageValue storageValue) {
+        Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(storageValue.logicName()));
+        boolean result;
+        if (!fieldOp.isPresent()) {
+            result = false;
+        } else {
+            IEntityField field = fieldOp.get();
+            result = field.config().isSearchable();
+
+            if (logger.isDebugEnabled()) {
+                if (!result) {
+                    logger.debug("Field {} is filtered out because it is not searchable or does not exist.",
+                        fieldOp.get().name());
+                }
+            }
+        }
+
+        return result;
     }
 
 }

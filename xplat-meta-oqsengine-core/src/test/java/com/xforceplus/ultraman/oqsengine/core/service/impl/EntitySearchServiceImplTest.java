@@ -8,7 +8,10 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.BooleanValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -17,7 +20,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.ManticoreStorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.iterator.DataQueryIterator;
 import org.junit.After;
@@ -659,17 +662,17 @@ public class EntitySearchServiceImplTest {
         }
 
         @Override
-        public void entityValueToStorage(ManticoreStorageEntity manticoreStorageEntity, IEntityValue entityValue) {
+        public void entityValueToStorage(SphinxQLStorageEntity sphinxQLStorageEntity, IEntityValue entityValue) {
 
         }
 
         @Override
-        public int batchSave(Collection<ManticoreStorageEntity> storageEntities, boolean replacement, boolean retry) throws SQLException {
+        public int batchSave(Collection<SphinxQLStorageEntity> storageEntities, boolean replacement, boolean retry) throws SQLException {
             return 0;
         }
 
         @Override
-        public int buildOrReplace(ManticoreStorageEntity manticoreStorageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
+        public int buildOrReplace(SphinxQLStorageEntity sphinxQLStorageEntity, IEntityValue entityValue, boolean replacement) throws SQLException {
             return 0;
         }
 

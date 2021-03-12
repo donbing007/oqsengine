@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Consumer;
 
 /**
  * MeqMatchConditionQueryBuilder Tester.
@@ -49,7 +50,8 @@ public class MeqMatchConditionBuilderTest {
             MeqMatchConditionBuilder builder = new MeqMatchConditionBuilder(
                 storageStrategyFactory, c.condition.getField().type(), c.useGroupName);
 
-            Assert.assertEquals(c.expected, builder.build(c.condition));
+            String result = builder.build(c.condition);
+            c.check.accept(result);
         });
     }
 
@@ -57,61 +59,69 @@ public class MeqMatchConditionBuilderTest {
         return Arrays.asList(
             new Case(
                 new Condition(
-                    new EntityField(11111, "test", FieldType.STRING),
+                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
                     ConditionOperator.MULTIPLE_EQUALS,
-                    new StringValue(new EntityField(11111, "test", FieldType.STRING), "test0"),
-                    new StringValue(new EntityField(11111, "test", FieldType.STRING), "test1"),
-                    new StringValue(new EntityField(11111, "test", FieldType.STRING), "test2")
+                    new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test0"),
+                    new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test1"),
+                    new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test2")
                 ),
-                "(\"test0F11111S\" | \"test1F11111S\" | \"test2F11111S\")"
+                r -> {
+                    Assert.assertEquals("(1y2p0ijtest032e8e7S | 1y2p0ijtest132e8e7S | 1y2p0ijtest232e8e7S)", r);
+                }
             )
             ,
             new Case(
                 new Condition(
-                    new EntityField(11111, "test", FieldType.LONG),
+                    new EntityField(9223372036854775807L, "test", FieldType.LONG),
                     ConditionOperator.MULTIPLE_EQUALS,
-                    new LongValue(new EntityField(11111, "test", FieldType.LONG), 1L),
-                    new LongValue(new EntityField(11111, "test", FieldType.LONG), 2L),
-                    new LongValue(new EntityField(11111, "test", FieldType.LONG), 3L)
+                    new LongValue(new EntityField(9223372036854775807L, "test", FieldType.LONG), 1L),
+                    new LongValue(new EntityField(9223372036854775807L, "test", FieldType.LONG), 2L),
+                    new LongValue(new EntityField(9223372036854775807L, "test", FieldType.LONG), 3L)
                 ),
-                "(\"1F11111L\" | \"2F11111L\" | \"3F11111L\")"
+                r -> {
+                    Assert.assertEquals("(1y2p0ij132e8e7L | 1y2p0ij232e8e7L | 1y2p0ij332e8e7L)", r);
+                }
             )
             ,
             new Case(
                 new Condition(
-                    new EntityField(11111, "test", FieldType.ENUM),
+                    new EntityField(9223372036854775807L, "test", FieldType.ENUM),
                     ConditionOperator.MULTIPLE_EQUALS,
-                    new EnumValue(new EntityField(11111, "test", FieldType.ENUM), "one")
+                    new EnumValue(new EntityField(9223372036854775807L, "test", FieldType.ENUM), "one")
                 ),
-                "(\"oneF11111S\")"
+                r -> {
+                    Assert.assertEquals("(1y2p0ijone32e8e7S)", r);
+                }
             )
             ,
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.STRINGS),
+                    new EntityField(9223372036854775807L, "test", FieldType.STRINGS),
                     ConditionOperator.MULTIPLE_EQUALS,
-                    new StringsValue(new EntityField(1, "test", FieldType.STRINGS), "one"),
-                    new StringsValue(new EntityField(1, "test", FieldType.STRINGS), "two")
+                    new StringsValue(new EntityField(9223372036854775807L, "test", FieldType.STRINGS), "one"),
+                    new StringsValue(new EntityField(9223372036854775807L, "test", FieldType.STRINGS), "two")
                 ),
-                "(\"oneF1S*\" | \"twoF1S*\")",
-                true
+                true,
+                r -> {
+                    Assert.assertEquals("(1y2p0ijone32e8e7S* | 1y2p0ijtwo32e8e7S*)", r);
+                }
             )
         );
     }
 
     private static class Case {
         private Condition condition;
-        private String expected;
         private boolean useGroupName;
+        private Consumer<? super String> check;
 
-        public Case(Condition condition, String expected) {
-            this(condition, expected, false);
+        public Case(Condition condition, Consumer<? super String> check) {
+            this(condition, false, check);
         }
 
-        public Case(Condition condition, String expected, boolean useGroupName) {
+        public Case(Condition condition, boolean useGroupName, Consumer<? super String> check) {
             this.condition = condition;
-            this.expected = expected;
             this.useGroupName = useGroupName;
+            this.check = check;
         }
     }
 

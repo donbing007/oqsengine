@@ -50,4 +50,9 @@ public class FieldDefine {
      * 维护id.
      */
     public static final String MAINTAIN_ID = "maintainid";
+
+    /**
+     * 排序字段别名前辍.
+     */
+    public static final String SORT_FIELD_ALIAS_PREFIX = "sort";
 }

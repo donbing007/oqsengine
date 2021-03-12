@@ -6,7 +6,7 @@ import java.util.Objects;
 /**
  * 索引储存.
  */
-public class ManticoreStorageEntity implements Serializable {
+public class SphinxQLStorageEntity implements Serializable {
     /**
      * 数据标识.
      */
@@ -48,7 +48,7 @@ public class ManticoreStorageEntity implements Serializable {
      */
     private String attribute;
 
-    public ManticoreStorageEntity() {
+    public SphinxQLStorageEntity() {
     }
 
     public long getId() {
@@ -96,10 +96,10 @@ public class ManticoreStorageEntity implements Serializable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ManticoreStorageEntity)) {
+        if (!(o instanceof SphinxQLStorageEntity)) {
             return false;
         }
-        ManticoreStorageEntity that = (ManticoreStorageEntity) o;
+        SphinxQLStorageEntity that = (SphinxQLStorageEntity) o;
         return getId() == that.getId() &&
             getTx() == that.getTx() &&
             getCommitId() == that.getCommitId() &&
@@ -216,19 +216,19 @@ public class ManticoreStorageEntity implements Serializable {
             return this;
         }
 
-        public ManticoreStorageEntity build() {
-            ManticoreStorageEntity manticoreStorageEntity = new ManticoreStorageEntity();
-            manticoreStorageEntity.updateTime = this.updateTime;
-            manticoreStorageEntity.id = this.id;
-            manticoreStorageEntity.attribute = this.attribute;
-            manticoreStorageEntity.tx = this.tx;
-            manticoreStorageEntity.maintainId = this.maintainId;
-            manticoreStorageEntity.createTime = this.createTime;
-            manticoreStorageEntity.entityClassF = this.entityClassF;
-            manticoreStorageEntity.commitId = this.commitId;
-            manticoreStorageEntity.oqsmajor = this.oqsmajor;
-            manticoreStorageEntity.attributeF = this.attributeF;
-            return manticoreStorageEntity;
+        public SphinxQLStorageEntity build() {
+            SphinxQLStorageEntity sphinxQLStorageEntity = new SphinxQLStorageEntity();
+            sphinxQLStorageEntity.updateTime = this.updateTime;
+            sphinxQLStorageEntity.id = this.id;
+            sphinxQLStorageEntity.attribute = this.attribute;
+            sphinxQLStorageEntity.tx = this.tx;
+            sphinxQLStorageEntity.maintainId = this.maintainId;
+            sphinxQLStorageEntity.createTime = this.createTime;
+            sphinxQLStorageEntity.entityClassF = this.entityClassF;
+            sphinxQLStorageEntity.commitId = this.commitId;
+            sphinxQLStorageEntity.oqsmajor = this.oqsmajor;
+            sphinxQLStorageEntity.attributeF = this.attributeF;
+            return sphinxQLStorageEntity;
         }
     }
 }

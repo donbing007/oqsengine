@@ -140,7 +140,7 @@ public class BigBatchSyncTest extends CDCAbstractContainer {
             for (; i < maxTestSize; ) {
                 IEntity[] entities = EntityGenerateToolBar.generateFixedEntities(i, 0);
                 for (IEntity entity : entities) {
-                    masterStorage.build(entity, getEntityClass(entity.entityClassRef().entityClassId()));
+                    masterStorage.build(entity, getEntityClass(entity.entityClassRef().getId()));
                 }
                 expectedSize += entities.length;
                 i += entities.length;
