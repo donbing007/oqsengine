@@ -168,7 +168,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
         return client.channelStub().register(new StreamObserver<EntityClassSyncResponse>() {
             @Override
             public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
-                requestHandler.onNext(entityClassSyncResponse);
+                requestHandler.onNext(entityClassSyncResponse, null);
             }
 
             @Override

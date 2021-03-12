@@ -59,7 +59,8 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
         logger.debug("responseWatchExecutor stop.");
     }
 
-    public void keepAliceCheck(long heartbeatTimeout) {
+    @Override
+    public void keepAliveCheck(long heartbeatTimeout) {
         long current = System.currentTimeMillis();
         uidWatchers.forEach(
                 (k, v) -> {

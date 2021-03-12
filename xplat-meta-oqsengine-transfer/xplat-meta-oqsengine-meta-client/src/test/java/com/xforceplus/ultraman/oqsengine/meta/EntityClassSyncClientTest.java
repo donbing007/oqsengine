@@ -71,7 +71,7 @@ public class EntityClassSyncClientTest extends BaseTest {
 
             logger.debug("current - heartBeat : {}", System.currentTimeMillis() - requestWatchExecutor.watcher().heartBeat());
             i++;
-            TimeWaitUtils.wakeupAfter(1, TimeUnit.MILLISECONDS);
+            TimeWaitUtils.wakeupAfter(1, TimeUnit.SECONDS);
         }
     }
 

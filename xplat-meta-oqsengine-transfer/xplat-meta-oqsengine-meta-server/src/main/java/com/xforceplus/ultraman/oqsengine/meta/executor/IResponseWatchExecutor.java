@@ -27,7 +27,7 @@ public interface IResponseWatchExecutor extends IWatchExecutor {
 
     ResponseWatcher watcher(String uid);
 
-    void keepAliceCheck(long heartbeatTimeout);
+    void keepAliveCheck(long heartbeatTimeout);
 
     Set<String> appWatchers(String appId, String env);
 

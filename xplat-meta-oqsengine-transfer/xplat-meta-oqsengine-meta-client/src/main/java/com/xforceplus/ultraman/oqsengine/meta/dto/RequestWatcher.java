@@ -41,7 +41,7 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
     }
 
     @Override
-    public boolean isAlive() {
+    public boolean isAlive(String uid) {
         /**
          * 判断是否可用
          */

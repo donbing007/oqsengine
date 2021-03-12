@@ -90,7 +90,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
             return false;
         }
 
-        return requestWatcher.isAlive();
+        return requestWatcher.isAlive(uid);
     }
 
     @Override

@@ -61,7 +61,6 @@ public class SyncRequestHandler implements IRequestHandler {
     private List<Thread> longRunTasks = new ArrayList<>(CLIENT_TASK_COUNT);
 
 
-
     @Override
     public void start() {
         /**
@@ -205,7 +204,7 @@ public class SyncRequestHandler implements IRequestHandler {
     }
 
     @Override
-    public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
+    public void onNext(EntityClassSyncResponse entityClassSyncResponse, Void nil) {
         /**
          * 重启中所有的Response将被忽略
          * 不是同批次请求将被忽略
@@ -353,16 +352,18 @@ public class SyncRequestHandler implements IRequestHandler {
         logger.debug("start keepAlive task ok...");
         while (!isShutDown()) {
             RequestWatcher requestWatcher = requestWatchExecutor.watcher();
-            EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
-                    .setUid(requestWatcher.uid()).setStatus(HEARTBEAT.ordinal()).build();
+            if (null != requestWatcher) {
+                try {
+                    EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
+                            .setUid(requestWatcher.uid()).setStatus(HEARTBEAT.ordinal()).build();
 
-            try {
-                sendRequestWithALiveCheck(requestWatcher, request);
-            } catch (Exception e) {
-                //  ignore
-                logger.warn("send keepAlive failed, message [{}], but exception will ignore due to retry...", e.getMessage());
+                    sendRequestWithALiveCheck(requestWatcher, request);
+                } catch (Exception e) {
+                    //  ignore
+                    logger.warn("send keepAlive failed, message [{}], but exception will ignore due to retry...", e.getMessage());
+                }
+                logger.debug("keepAlive ok, next check after duration ({})ms...", gRpcParamsConfig.getKeepAliveSendDuration());
             }
-            logger.debug("keepAlive ok, next check after duration ({})ms...", gRpcParamsConfig.getKeepAliveSendDuration());
             TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getKeepAliveSendDuration(), TimeUnit.MILLISECONDS);
         }
         logger.debug("keepAlive task has quited due to sync-client shutdown...");
