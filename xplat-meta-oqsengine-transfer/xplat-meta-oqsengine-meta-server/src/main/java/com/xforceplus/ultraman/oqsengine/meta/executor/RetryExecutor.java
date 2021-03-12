@@ -23,10 +23,10 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
 
     private static DelayQueue<DelayTask> delayTasks = new DelayQueue<DelayTask>();
 
-    private static volatile boolean isOnServer = true;
+    private volatile boolean isActive = true;
 
     public DelayTask take() {
-        if (isOnServer) {
+        if (isActive) {
             try {
                 return delayTasks.take();
             } catch (InterruptedException e) {
@@ -37,7 +37,7 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
     }
 
     public void offer(DelayTask task) {
-        if (isOnServer) {
+        if (isActive) {
             try {
                 delayTasks.offer(task);
             } catch (Exception e) {
@@ -47,15 +47,13 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
     }
 
     @Override
-    public void off() {
-        isOnServer = false;
-        logger.debug("retryExecutor off.");
+    public void stop() {
+        isActive = false;
     }
 
     @Override
-    public void on() {
-        isOnServer = true;
-        logger.debug("retryExecutor on.");
+    public void start() {
+        isActive = true;
     }
 
 
@@ -99,7 +97,7 @@ public class RetryExecutor implements IDelayTaskExecutor<RetryExecutor.DelayTask
             return uid;
         }
 
-        public WatchElement getW() {
+        public WatchElement getElement() {
             return w;
         }
     }

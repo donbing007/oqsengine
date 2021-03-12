@@ -121,7 +121,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
                 /**
                  * 设置服务可用
                  */
-                requestHandler.watchExecutor().onServe();
+                requestHandler.watchExecutor().active();
                 /**
                  * wait直到countDownLatch = 0;
                  */
@@ -131,7 +131,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
             /**
              * 设置服务不可用
              */
-            requestHandler.watchExecutor().offServe();
+            requestHandler.watchExecutor().inActive();
 
             /**
              * 如果是服务关闭，则直接跳出while循环

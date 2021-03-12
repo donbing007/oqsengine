@@ -71,16 +71,16 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
     }
 
     @Override
-    public void onServe() {
+    public void active() {
         if (null != requestWatcher) {
-            requestWatcher.onServe();
+            requestWatcher.active();
         }
     }
 
     @Override
-    public void offServe() {
+    public void inActive() {
         if (null != requestWatcher) {
-            requestWatcher.offServe();
+            requestWatcher.inActive();
         }
     }
 
@@ -104,7 +104,7 @@ public class RequestWatchExecutor implements IRequestWatchExecutor {
             /**
              * 这里分开设置、等待3S如果有正在进行中的任务
              */
-            requestWatcher.offServe();
+            requestWatcher.inActive();
 
             TimeWaitUtils.wakeupAfter(SHUT_DOWN_WAIT_TIME_OUT, TimeUnit.SECONDS);
 

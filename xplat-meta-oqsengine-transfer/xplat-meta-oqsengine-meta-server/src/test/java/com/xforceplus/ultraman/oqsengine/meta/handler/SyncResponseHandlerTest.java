@@ -159,7 +159,7 @@ public class SyncResponseHandlerTest {
             count ++;
         }
 
-        Assert.assertTrue(responseWatchExecutor.watcher(testCase.get(0).getUid()).isOnServe());
+        Assert.assertTrue(responseWatchExecutor.watcher(testCase.get(0).getUid()).isActive());
 
         Assert.assertNull(responseWatchExecutor.watcher(testCase.get(1).getUid()));
     }

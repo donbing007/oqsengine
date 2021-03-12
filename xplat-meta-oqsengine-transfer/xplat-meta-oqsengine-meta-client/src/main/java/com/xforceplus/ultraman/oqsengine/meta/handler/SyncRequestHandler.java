@@ -240,7 +240,7 @@ public class SyncRequestHandler implements IRequestHandler {
                     accept(entityClassSyncResponse);
                 } catch (Exception e) {
                     logger.warn(e.getMessage());
-                    if (requestWatchExecutor.watcher().isOnServe()) {
+                    if (requestWatchExecutor.watcher().isActive()) {
                         requestWatchExecutor.watcher().observer().onError(e);
                     }
                 }
@@ -362,7 +362,7 @@ public class SyncRequestHandler implements IRequestHandler {
             RequestWatcher requestWatcher = requestWatchExecutor.watcher();
             if (null != requestWatcher) {
                 try {
-                    if (requestWatcher.isOnServe()) {
+                    if (requestWatcher.isActive()) {
                         if (System.currentTimeMillis() - requestWatcher.heartBeat() >
                                 gRpcParamsConfig.getDefaultHeartbeatTimeout()) {
                             requestWatcher.observer().onCompleted();
@@ -398,7 +398,7 @@ public class SyncRequestHandler implements IRequestHandler {
         while (!isShutDown()) {
 
             RequestWatcher requestWatcher = requestWatchExecutor.watcher();
-            if (null != requestWatcher && requestWatcher.isOnServe()) {
+            if (null != requestWatcher && requestWatcher.isActive()) {
                 /**
                  * 将forgetQueue中的数据添加到watch中
                  */

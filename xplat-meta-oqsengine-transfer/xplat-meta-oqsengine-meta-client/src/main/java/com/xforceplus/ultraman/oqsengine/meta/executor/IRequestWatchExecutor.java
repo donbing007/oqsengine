@@ -29,7 +29,7 @@ public interface IRequestWatchExecutor extends IWatchExecutor {
 
     RequestWatcher watcher();
 
-    void onServe();
+    void active();
 
-    void offServe();
+    void inActive();
 }

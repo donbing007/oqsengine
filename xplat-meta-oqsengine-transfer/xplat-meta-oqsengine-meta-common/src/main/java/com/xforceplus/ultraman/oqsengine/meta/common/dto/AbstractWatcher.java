@@ -46,7 +46,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     /**
      * 当前是否已被清理状态
      */
-    private volatile boolean onServe = true;
+    private volatile boolean isActive = true;
 
 
     public AbstractWatcher(String uid, StreamObserver<T> streamObserver) {
@@ -73,14 +73,14 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     @Override
     public void resetHeartBeat() {
-        if (onServe) {
+        if (isActive) {
             heartBeat = System.currentTimeMillis();
         }
     }
 
     @Override
     public <S> void release(Supplier<S> supplier) {
-        offServe();
+        inActive();
         try {
             supplier.get();
         } catch (Exception e) {
@@ -95,8 +95,8 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     }
 
     @Override
-    public boolean isOnServe() {
-        return onServe;
+    public boolean isActive() {
+        return isActive;
     }
 
     /**
@@ -109,7 +109,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     @Override
     public boolean runWithCheck(Function<StreamObserver<T>, Boolean> function) {
-        if (onServe) {
+        if (isActive) {
             return function.apply(streamObserver);
         }
         logger.warn("uid [{}], offServe...", uid);
@@ -133,16 +133,16 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
             //  ignore
         }
     }
-
-    public void onServe() {
-        onServe = true;
+    @Override
+    public void active() {
+        isActive = true;
         /**
          * 打开服务时设置一次heartbeat
          */
         resetHeartBeat();
     }
-
-    public void offServe() {
-        onServe = false;
+    @Override
+    public void inActive() {
+        isActive = false;
     }
 }

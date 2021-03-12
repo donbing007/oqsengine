@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.pojo;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -76,7 +76,7 @@ public class SyncResponseHandler implements IResponseHandler {
         /**
          * 启动retryExecutor
          */
-        retryExecutor.on();
+        retryExecutor.start();
         /**
          * 启动responseWatchExecutor
          */
@@ -112,7 +112,7 @@ public class SyncResponseHandler implements IResponseHandler {
         /**
          * 关闭retryExecutor
          */
-        retryExecutor.off();
+        retryExecutor.stop();
         /**
          * 关闭responseWatchExecutor
          */
@@ -266,7 +266,7 @@ public class SyncResponseHandler implements IResponseHandler {
         /**
          * 判断watcher的可用性
          */
-        if (null != watcher && watcher.isOnServe()) {
+        if (null != watcher && watcher.isActive()) {
             try {
                 AppUpdateEvent appUpdateEvent =
                         entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
@@ -326,7 +326,7 @@ public class SyncResponseHandler implements IResponseHandler {
      */
     private void confirmHeartBeat(String uid) {
         ResponseWatcher responseWatcher = responseWatchExecutor.watcher(uid);
-        if (null != responseWatcher && responseWatcher.isOnServe()) {
+        if (null != responseWatcher && responseWatcher.isActive()) {
             responseWatchExecutor.resetHeartBeat(uid);
 
             confirmResponse(null, null, NOT_EXIST_VERSION, uid, HEARTBEAT);
@@ -474,8 +474,8 @@ public class SyncResponseHandler implements IResponseHandler {
 
             ResponseWatcher watcher = responseWatchExecutor.watcher(task.element().getUid());
             if (null != watcher) {
-                WatchElement w = task.element().getW();
-                if (watcher.isOnServe() && watcher.onWatch(w)) {
+                WatchElement w = task.element().getElement();
+                if (watcher.isActive() && watcher.onWatch(w)) {
                     /**
                      * 直接拉取
                      */

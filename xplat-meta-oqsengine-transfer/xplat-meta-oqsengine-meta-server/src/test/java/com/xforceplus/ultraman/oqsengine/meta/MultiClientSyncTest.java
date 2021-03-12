@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.meta;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
 import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
 import com.xforceplus.ultraman.oqsengine.meta.mock.client.MockerSyncClient;
 import io.grpc.stub.StreamObserver;
@@ -10,6 +11,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -24,6 +27,8 @@ import static com.xforceplus.ultraman.oqsengine.meta.mock.MockEntityClassSyncRsp
  * @since : 1.8
  */
 public class MultiClientSyncTest extends BaseInit {
+
+    private Logger logger = LoggerFactory.getLogger(MultiClientSyncTest.class);
 
     private int testClientSize = 2;
     private StreamEvent[] streamEvents = new StreamEvent[testClientSize];
@@ -113,7 +118,6 @@ public class MultiClientSyncTest extends BaseInit {
         }
     }
 
-
     @Test
     public void pushTest() throws InterruptedException {
         /**
@@ -162,14 +166,15 @@ public class MultiClientSyncTest extends BaseInit {
         syncResponseHandler.push(new AppUpdateEvent("mock", expectedAppId, expectedEnv, expectedVersion,
                             entityClassSyncRspProtoGenerator(new Random().nextLong())));
 
-        Thread.sleep(1000);
+        Thread.sleep(5000);
         for (int i = 0; i < testClientSize; i++) {
-            WatchElement w = streamEvents[i].getMockerSyncClient().getSuccess();
+            WatchElement w = streamEvents[i].getMockerSyncClient().getSuccess(expectedAppId);
             if (watchElementVisitor.getVisitors().contains(i)) {
                 assertEquals(new WatchElement(expectedAppId, expectedEnv, expectedVersion, null), w);
-            }
-            else {
-                assertNotEquals(new WatchElement(expectedAppId, expectedEnv, expectedVersion, null), w);
+            } else {
+                if (null != w) {
+                    assertNotEquals(new WatchElement(expectedAppId, expectedEnv, expectedVersion, null), w);
+                }
             }
         }
     }

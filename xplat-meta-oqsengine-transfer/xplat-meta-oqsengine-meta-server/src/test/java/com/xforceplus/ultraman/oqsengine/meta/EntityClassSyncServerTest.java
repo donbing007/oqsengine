@@ -110,7 +110,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         /**
          * 检查结果，最大3秒
          */
-        waitForResult(3, expectedVersion);
+        waitForResult(3, expectedVersion, appId);
 
         /**
          * 当前版本小于元数据版本，将进入
@@ -120,7 +120,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         entityClassGenerator.reset(expectedVersion, entityId);
         observer.onNext(buildRequest(new WatchElement(appId, env, version + 2, null), uid, RequestStatus.REGISTER));
 
-        waitForResult(3, expectedVersion);
+        waitForResult(3, expectedVersion, appId);
 
         /**
          * 当前版本更新成功
@@ -186,20 +186,18 @@ public class EntityClassSyncServerTest extends BaseInit {
         entityClassGenerator.reset(resetVersion, entityId);
         syncResponseHandler.pull(uid, new WatchElement(appId, env, resetVersion - 1, null), RequestStatus.SYNC_OK);
 
-        Thread.sleep(1_000);
-
-        mockerSyncClient.success = null;
+        Thread.sleep(5_000);
 
         observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), uid, RequestStatus.SYNC_FAIL));
 
-        waitForResult(70, resetVersion);
+        waitForResult(40, resetVersion, appId);
         ThreadUtils.shutdown(t, 1);
     }
 
-    private void waitForResult(int maxWaitLoops, int version) throws InterruptedException {
+    private void waitForResult(int maxWaitLoops, int version, String appId) throws InterruptedException {
         int currentWait = 0;
         while (currentWait < maxWaitLoops) {
-            WatchElement w = mockerSyncClient.getSuccess();
+            WatchElement w = mockerSyncClient.getSuccess(appId);
             if (null != w && version == w.getVersion()) {
                 break;
             }
@@ -209,7 +207,7 @@ public class EntityClassSyncServerTest extends BaseInit {
 
         Assert.assertNotEquals(currentWait, maxWaitLoops);
 
-        mockerSyncClient.releaseSuccess();
+        mockerSyncClient.releaseSuccess(appId);
     }
 
 }

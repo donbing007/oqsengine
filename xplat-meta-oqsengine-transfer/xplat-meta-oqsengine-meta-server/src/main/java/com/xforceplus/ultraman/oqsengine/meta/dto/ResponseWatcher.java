@@ -34,7 +34,7 @@ public class ResponseWatcher extends AbstractWatcher<EntityClassSyncResponse> {
 
     @Override
     public boolean isAlive(String uid) {
-        return uid.equals(this.uid) && isOnServe();
+        return uid.equals(this.uid) && isActive();
     }
 
     @Override
