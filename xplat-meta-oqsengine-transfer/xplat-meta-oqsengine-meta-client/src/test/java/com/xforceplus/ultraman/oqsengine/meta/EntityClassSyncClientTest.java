@@ -43,7 +43,6 @@ public class EntityClassSyncClientTest extends BaseTest {
         ReflectionTestUtils.setField(entityClassSyncClient, "client", mockGRpcClient);
         ReflectionTestUtils.setField(entityClassSyncClient, "requestHandler", requestHandler);
         ReflectionTestUtils.setField(entityClassSyncClient, "gRpcParamsConfig", gRpcParamsConfig);
-        ReflectionTestUtils.setField(entityClassSyncClient, "isShutdown", false);
     }
 
     @After
@@ -64,7 +63,7 @@ public class EntityClassSyncClientTest extends BaseTest {
         start();
         Assert.assertTrue(null != requestWatchExecutor.watcher() && requestWatchExecutor.watcher().isOnServe());
         int i = 0;
-        int max = 10000;
+        int max = 40;
         while (i < max) {
             Assert.assertTrue(System.currentTimeMillis() - requestWatchExecutor.watcher().heartBeat()
                     < gRpcParamsConfig.getDefaultHeartbeatTimeout());

@@ -118,7 +118,7 @@ public class RequestWatchExecutorTest extends BaseTest {
     }
 
     @Test
-    public void canAccessTest() {
+    public void isAliveTest() {
         String expectedId = requestWatchExecutor.watcher().uid();
         /**
          * on server, uid = expectedId

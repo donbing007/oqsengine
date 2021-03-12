@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient.isShutDown;
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
@@ -49,7 +47,7 @@ public class SyncRequestHandler implements IRequestHandler {
     private SyncExecutor syncExecutor;
 
     @Resource
-    private RequestWatchExecutor requestWatchExecutor;
+    private IRequestWatchExecutor requestWatchExecutor;
 
     @Resource
     private GRpcParamsConfig gRpcParamsConfig;
@@ -60,9 +58,12 @@ public class SyncRequestHandler implements IRequestHandler {
     private Queue<WatchElement> forgotQueue = new ConcurrentLinkedDeque<>();
     private List<Thread> longRunTasks = new ArrayList<>(CLIENT_TASK_COUNT);
 
+    private volatile boolean isShutdown = false;
 
     @Override
     public void start() {
+        isShutdown = false;
+
         /**
          * 1.添加keepAlive任务线程
          */
@@ -88,6 +89,9 @@ public class SyncRequestHandler implements IRequestHandler {
 
     @Override
     public void stop() {
+
+        isShutdown = true;
+
         requestWatchExecutor.stop();
 
         longRunTasks.forEach(s -> {
@@ -246,6 +250,11 @@ public class SyncRequestHandler implements IRequestHandler {
                 }
             });
         }
+    }
+
+    @Override
+    public boolean isShutDown() {
+        return isShutdown;
     }
 
     @Override

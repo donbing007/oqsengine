@@ -65,7 +65,11 @@ public class SyncResponseHandler implements IResponseHandler {
 
     private List<Thread> longRunTasks = new ArrayList<>(SERVER_TASK_COUNT);
 
-    private static volatile boolean isShutdown = false;
+    private volatile boolean isShutdown = false;
+
+//    private <T> CompletableFuture<T> async(Supplier<T> supplier) {
+//        return CompletableFuture.supplyAsync(supplier, taskExecutor);
+//    }
 
     /**
      * 创建监听delayTask的线程
@@ -206,33 +210,9 @@ public class SyncResponseHandler implements IResponseHandler {
         }
     }
 
-    /**
-     * 实现SyncHandler中的registerConfirm功能
-     *
-     * @param appId
-     * @param version
-     * @param uid
-     */
-    private boolean confirmRegister(String appId, String env, int version, String uid) {
-        return confirmResponse(appId, env, version, uid, REGISTER_OK);
-    }
-
-    /**
-     * 实现SyncHandler中的heartBeatConfirm功能
-     *
-     * @param uid
-     */
-    private void confirmHeartBeat(String uid) {
-        ResponseWatcher responseWatcher = responseWatchExecutor.watcher(uid);
-        if (null != responseWatcher && responseWatcher.isOnServe()) {
-            responseWatchExecutor.resetHeartBeat(uid);
-
-            confirmResponse(null, null, NOT_EXIST_VERSION, uid, HEARTBEAT);
-        }
-    }
-
-    private <T> CompletableFuture<T> async(Supplier<T> supplier) {
-        return CompletableFuture.supplyAsync(supplier, taskExecutor);
+    @Override
+    public boolean isShutDown() {
+        return isShutdown;
     }
 
     /**
@@ -248,25 +228,74 @@ public class SyncResponseHandler implements IResponseHandler {
         /**
          * 这里异步执行
          */
-        CompletableFuture<Boolean> completableFuture =
-                async(() -> {
-                    return internalPull(uid, watchElement, requestStatus);
-                });
+        taskExecutor.submit(() -> {
+            internalPull(uid, watchElement, requestStatus);
+        });
 
-        try {
+//        CompletableFuture<Boolean> completableFuture =
+//                async(() -> {
+//                    return internalPull(uid, watchElement, requestStatus);
+//                });
+//
+//        try {
+//            /**
+//             * 等待元数据pull处理
+//             */
+//            completableFuture.get(gRpcParamsConfig.getDefaultDelayTaskDuration(), TimeUnit.MILLISECONDS);
+//        } catch (Exception e) {
+//            logger.warn("pull data timeout, uid [{}], watchElement [{}], message [{}]"
+//                                                    , uid, watchElement.toString(), e.getMessage());
+//            retryExecutor.offer(
+//                    new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
+//                            new RetryExecutor.Element(
+//                                    new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
+//                                            watchElement.getVersion(), watchElement.getStatus()), uid)));
+//        }
+    }
+
+
+    /**
+     * 接收外部推送
+     *
+     * @param event
+     * @return
+     */
+    @Override
+    public boolean push(AppUpdateEvent event) {
+
+        /**
+         * 更新版本成功、则推送给外部
+         */
+        if (responseWatchExecutor.addVersion(event.getAppId(), event.getEnv(), event.getVersion())) {
+            List<ResponseWatcher> needList = null;
+            try {
+                needList = responseWatchExecutor.need(new WatchElement(event.getAppId(), event.getEnv(), event.getVersion(), Notice));
+            } catch (Exception e) {
+                logger.warn("push event failed...event [{}], message [{}]", event.toString(), e.getMessage());
+                return false;
+            }
+
+            if (null != needList && !needList.isEmpty()) {
+                for (ResponseWatcher r : needList) {
+                    taskExecutor.submit(() -> {
+                        try {
+                            EntityClassSyncResponse response = generateResponse(r.uid(), event.getAppId(), event.getEnv(), event.getVersion(),
+                                    RequestStatus.SYNC, event.getEntityClassSyncRspProto());
+                            responseByWatch(event.getAppId(), event.getEnv(), event.getVersion(), response, r, false);
+                        } catch (Exception e) {
+                            logger.warn("push event failed..., uid [{}], event [{}], message [{}]", r.uid(), event.toString(), e.getMessage());
+                        }
+                    });
+                }
+            }
+        } else {
             /**
-             * 等待元数据pull处理
+             * 元数据推送的AppId版本小于当前关注版本，忽略...
              */
-            completableFuture.get(gRpcParamsConfig.getDefaultDelayTaskDuration(), TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            logger.warn("pull data timeout, uid [{}], watchElement [{}], message [{}]"
-                                                    , uid, watchElement.toString(), e.getMessage());
-            retryExecutor.offer(
-                    new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
-                            new RetryExecutor.Element(
-                                    new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
-                                            watchElement.getVersion(), watchElement.getStatus()), uid)));
+            logger.warn("appId [{}], env [{}], push version [{}] is less than watcher version [{}], ignore..."
+                    , event.getAppId(), event.getEnv(), event.getVersion(), responseWatchExecutor.version(event.getAppId(), event.getEnv()));
         }
+        return true;
     }
 
     private boolean internalPull(String uid, WatchElement watchElement, RequestStatus requestStatus) {
@@ -318,39 +347,31 @@ public class SyncResponseHandler implements IResponseHandler {
     }
 
     /**
-     * 接收外部推送
+     * 实现SyncHandler中的registerConfirm功能
      *
-     * @param event
-     * @return
+     * @param appId
+     * @param version
+     * @param uid
      */
-    @Override
-    public boolean push(AppUpdateEvent event) {
-
-        /**
-         * 更新版本成功、则推送给外部
-         */
-        if (responseWatchExecutor.addVersion(event.getAppId(), event.getEnv(), event.getVersion())) {
-            try {
-                List<ResponseWatcher> needList = responseWatchExecutor.need(new WatchElement(event.getAppId(), event.getEnv(), event.getVersion(), Notice));
-                if (!needList.isEmpty()) {
-                    needList.forEach(
-                            nl -> {
-                                EntityClassSyncResponse response = generateResponse(nl.uid(), event.getAppId(), event.getEnv(), event.getVersion(),
-                                        RequestStatus.SYNC, event.getEntityClassSyncRspProto());
-                                responseByWatch(event.getAppId(), event.getEnv(), event.getVersion(), response, nl, false);
-                            }
-                    );
-                }
-            } catch (Exception e) {
-                logger.warn("push event failed...event [{}], message [{}]", event.toString(), e.getMessage());
-                return false;
-            }
-        } else {
-            logger.warn("appId [{}], env [{}], push version [{}] is less than watcher version [{}], ignore..."
-                    , event.getAppId(), event.getEnv(), event.getVersion(), responseWatchExecutor.version(event.getAppId(), event.getEnv()));
-        }
-        return true;
+    private boolean confirmRegister(String appId, String env, int version, String uid) {
+        return confirmResponse(appId, env, version, uid, REGISTER_OK);
     }
+
+    /**
+     * 实现SyncHandler中的heartBeatConfirm功能
+     *
+     * @param uid
+     */
+    private void confirmHeartBeat(String uid) {
+        ResponseWatcher responseWatcher = responseWatchExecutor.watcher(uid);
+        if (null != responseWatcher && responseWatcher.isOnServe()) {
+            responseWatchExecutor.resetHeartBeat(uid);
+
+            confirmResponse(null, null, NOT_EXIST_VERSION, uid, HEARTBEAT);
+        }
+    }
+
+
 
     /**
      * 比较期望版本和元数据返回版本
@@ -486,24 +507,21 @@ public class SyncResponseHandler implements IResponseHandler {
         while (!isShutdown) {
             RetryExecutor.DelayTask task = retryExecutor.take();
             if (null == task) {
-                TimeWaitUtils.wakeupAfter(3, TimeUnit.MILLISECONDS);
                 continue;
             }
 
-            taskExecutor.execute(() -> {
-                ResponseWatcher watcher = responseWatchExecutor.watcher(task.element().getUid());
-                if (null != watcher) {
-                    WatchElement w = task.element().getW();
-                    if (watcher.isOnServe() && watcher.onWatch(w)) {
-                        /**
-                         * 直接拉取
-                         */
-                        pull(task.element().getUid(), w, SYNC_FAIL);
-                        logger.debug("delay task re-pull success, uid [{}], appId [{}], env [{}], version [{}] success.",
-                                watcher.uid(), w.getAppId(), w.getEnv(), w.getVersion());
-                    }
+            ResponseWatcher watcher = responseWatchExecutor.watcher(task.element().getUid());
+            if (null != watcher) {
+                WatchElement w = task.element().getW();
+                if (watcher.isOnServe() && watcher.onWatch(w)) {
+                    /**
+                     * 直接拉取
+                     */
+                    pull(task.element().getUid(), w, SYNC_FAIL);
+                    logger.debug("delay task re-pull success, uid [{}], appId [{}], env [{}], version [{}] success.",
+                            watcher.uid(), w.getAppId(), w.getEnv(), w.getVersion());
                 }
-            });
+            }
         }
 
         logger.info("delayTask has quited due to server shutdown...");

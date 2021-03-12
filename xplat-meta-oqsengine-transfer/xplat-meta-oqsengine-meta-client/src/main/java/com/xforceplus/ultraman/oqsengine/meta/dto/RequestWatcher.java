@@ -57,4 +57,10 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
         }
         return false;
     }
+
+    @Override
+    public void release() {
+        uid = null;
+        super.release();
+    }
 }

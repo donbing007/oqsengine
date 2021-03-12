@@ -123,7 +123,6 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     @Override
     public void release() {
         try {
-            uid = null;
             if (null != streamObserver) {
                 streamObserver.onCompleted();
             }
