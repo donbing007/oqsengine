@@ -111,7 +111,6 @@ public class Page implements Externalizable, Cloneable {
         final long fixOne = 1;
         Page page = new Page(fixOne, fixOne);
         page.emptyPage = true;
-        page.setTotalCount(0);
         return page;
     }
 
@@ -158,7 +157,11 @@ public class Page implements Externalizable, Cloneable {
      */
     public long getPageCount() {
         if (ready) {
-            return pageCount;
+            if (isEmptyPage()) {
+                return 0;
+            } else {
+                return pageCount;
+            }
         } else {
             return 0;
         }
@@ -183,6 +186,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 得到当前可见数据量.
+     *
      * @return 可见数据量.
      */
     public long getVisibleTotalCount() {
@@ -191,6 +195,7 @@ public class Page implements Externalizable, Cloneable {
 
     /**
      * 是否设置了可视数据早上限.
+     *
      * @return true 已经设置,false 没有设置.
      */
     public boolean hasVisibleTotalCountLimit() {
@@ -205,19 +210,22 @@ public class Page implements Externalizable, Cloneable {
     public void setTotalCount(long totalCount) {
         this.totalCount = totalCount;
 
-        long useTotalCount = this.totalCount;
+        if (!isEmptyPage()) {
 
-        if (visibleTotalCount != UNSET) {
-            if (this.totalCount > this.visibleTotalCount) {
-                useTotalCount = this.visibleTotalCount;
+            long useTotalCount = this.totalCount;
+
+            if (visibleTotalCount != UNSET) {
+                if (this.totalCount > this.visibleTotalCount) {
+                    useTotalCount = this.visibleTotalCount;
+                }
             }
-        }
 
-        pageCount = this.countPageCount(getPageSize(), useTotalCount);
-        if (lastPage) {
-            pageIndex = pageCount;
+            pageCount = this.countPageCount(getPageSize(), useTotalCount);
+            if (lastPage) {
+                pageIndex = pageCount;
+            }
+            surplusCount = countSurplus(pageIndex, getPageSize(), totalCount);
         }
-        surplusCount = countSurplus(pageIndex, getPageSize(), totalCount);
 
         ready = true;
     }
@@ -240,6 +248,10 @@ public class Page implements Externalizable, Cloneable {
      */
     public PageScope getNextPage() {
         checkReady();
+
+        if (isEmptyPage()) {
+            return new PageScope(0, 0);
+        }
 
         if (!hasNextPage()) {
             return null;
@@ -277,6 +289,10 @@ public class Page implements Externalizable, Cloneable {
     public PageScope getAppointPage(long appointPageIndex) {
         checkReady();
 
+        if (isEmptyPage()) {
+            return new PageScope(0, 0);
+        }
+
         long nowPointIndex = appointPageIndex;
         if (nowPointIndex <= 0) {
             return null;
@@ -305,7 +321,11 @@ public class Page implements Externalizable, Cloneable {
      */
     public boolean hasNextPage() {
         checkReady();
-        return pageIndex <= pageCount;
+        if (isEmptyPage()) {
+            return false;
+        } else {
+            return pageIndex <= pageCount;
+        }
     }
 
     /**

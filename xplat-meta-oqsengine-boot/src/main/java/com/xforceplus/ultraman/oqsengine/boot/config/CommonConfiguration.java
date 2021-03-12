@@ -2,11 +2,8 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 
 import com.xforceplus.ultraman.oqsengine.boot.config.redis.LettuceConfiguration;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
-import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,7 +39,7 @@ public class CommonConfiguration {
 
     @Bean("callWriteThreadPool")
     public ExecutorService callWriteThreadPool(
-            @Value("${threadPool.call.write.worker:0}") int worker, @Value("${threadPool.call.write.queue:500}") int queue) {
+        @Value("${threadPool.call.write.worker:0}") int worker, @Value("${threadPool.call.write.queue:500}") int queue) {
         int useWorker = worker;
         int useQueue = queue;
         if (useWorker == 0) {
@@ -58,7 +55,7 @@ public class CommonConfiguration {
 
     @Bean("callRebuildThreadPool")
     public ExecutorService callRebuildThreadPool(
-            @Value("${threadPool.call.rebuild.worker:0}") int worker, @Value("${threadPool.call.rebuild.queue:500}") int queue) {
+        @Value("${threadPool.call.rebuild.worker:0}") int worker, @Value("${threadPool.call.rebuild.queue:500}") int queue) {
         int useWorker = worker;
         int useQueue = queue;
         if (useWorker == 0) {
@@ -77,16 +74,11 @@ public class CommonConfiguration {
         RedisClient redisClient = RedisClient.create(configuration.getUri());
 
         redisClient.setOptions(ClientOptions.builder()
-                .autoReconnect(true)
-                .requestQueueSize(configuration.getMaxReqQueue())
-                .build()
+            .autoReconnect(true)
+            .requestQueueSize(configuration.getMaxReqQueue())
+            .build()
         );
         return redisClient;
-    }
-
-    @Bean("entityValueBuilder")
-    public IEntityValueBuilder entityValueBuilder() {
-        return new SQLJsonIEntityValueBuilder();
     }
 
     private ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {

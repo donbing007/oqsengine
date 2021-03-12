@@ -168,10 +168,16 @@ public class SQLMasterStorage implements MasterStorage {
 
             return (int) transactionExecutor.execute(
                 (resource, hint) -> {
+
+                    long createTime = findTime(entity, FieldConfig.FieldSense.CREATE_TIME);
+                    long updateTIme = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
                     MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
                         .withId(entity.id())
-                        .withCreateTime(entity.time())
-                        .withUpdateTime(entity.time())
+                        /**
+                         * optimize: 创建时间和更新时间保证和系统字段同步.
+                         */
+                        .withCreateTime(createTime > 0 ? createTime : entity.time())
+                        .withUpdateTime(updateTIme > 0 ? updateTIme : entity.time())
                         .withDeleted(false)
                         .withEntityClassVersion(entityClass.version())
                         .withVersion(0)
@@ -193,6 +199,14 @@ public class SQLMasterStorage implements MasterStorage {
         }
     }
 
+    private long findTime(IEntity entity, FieldConfig.FieldSense sense) {
+        OptionalLong op = entity.entityValue().values().parallelStream()
+            .filter(iValue -> sense == iValue.getField().config().getFieldSense())
+            .mapToLong(iValue -> iValue.valueToLong()).findFirst();
+
+        return op.orElse(0);
+    }
+
     @Override
     public int replace(IEntity entity, IEntityClass entityClass) throws SQLException {
         long startMs = System.currentTimeMillis();
@@ -201,9 +215,20 @@ public class SQLMasterStorage implements MasterStorage {
 
             return (int) transactionExecutor.execute(
                 (resource, hint) -> {
+
+                    long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
+                    /**
+                     * 如果从新结果集中查询到更新时间,但是和当前最后更新时间相等那么使用系统时间.
+                     */
+                    if (updateTime == entity.time()) {
+                        updateTime = 0;
+                    }
                     MasterStorageEntity.Builder storageEntityBuilder = MasterStorageEntity.Builder.aStorageEntity()
                         .withId(entity.id())
-                        .withUpdateTime(entity.time())
+                        /**
+                         * optimize: 更新时间保证和系统字段同步.
+                         */
+                        .withUpdateTime(updateTime > 0 ? updateTime : entity.time())
                         .withVersion(entity.version())
                         .withEntityClassVersion(entityClass.version())
                         .withAttribute(toJson(entity.entityValue()).toJSONString())

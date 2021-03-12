@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.value;
 
-import com.xforceplus.ultraman.oqsengine.storage.StorageType;
-
 /**
  * 任意对象储存.
  *
@@ -25,11 +23,6 @@ public class AnyStorageValue extends AbstractStorageValue<Object> {
      */
     public AnyStorageValue(String name, Object value, boolean logicName) {
         super(name, value, logicName);
-    }
-
-    @Override
-    public StorageType type() {
-        return StorageType.UNKNOWN;
     }
 
     public static StorageValue getInstance(String storageName) {

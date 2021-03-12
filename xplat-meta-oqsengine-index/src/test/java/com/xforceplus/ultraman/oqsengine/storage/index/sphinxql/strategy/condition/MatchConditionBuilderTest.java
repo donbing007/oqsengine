@@ -15,6 +15,7 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Consumer;
 
 /**
  * MatchConditionQueryBuilder Tester.
@@ -47,7 +48,9 @@ public class MatchConditionBuilderTest {
             MatchConditionBuilder builder = new MatchConditionBuilder(
                 storageStrategyFactory, c.condition.getField().type(), c.condition.getOperator(), c.useGroupName);
 
-            Assert.assertEquals(c.expected, builder.build(c.condition));
+
+            String result = builder.build(c.condition);
+            c.check.accept(result);
         });
     }
 
@@ -59,91 +62,109 @@ public class MatchConditionBuilderTest {
                     ConditionOperator.EQUALS,
                     new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test")
                 ),
-                "aZl8N0 << test << y58M7S"
+                r -> {
+                    Assert.assertEquals("1y2p0ijtest32e8e7S", r);
+                }
             ),
             new Case(
                 new Condition(
-                    new EntityField(11111, "test", FieldType.LONG),
+                    new EntityField(9223372036854775807L, "test", FieldType.LONG),
                     ConditionOperator.EQUALS,
-                    new LongValue(new EntityField(11111, "test", FieldType.LONG), 200L)
+                    new LongValue(new EntityField(9223372036854775807L, "test", FieldType.LONG), 200L)
                 ),
-                "\"200F11111L\""
+                r -> {
+                    Assert.assertEquals("1y2p0ij20032e8e7L", r);
+                }
             ),
             new Case(
                 new Condition(
-                    new EntityField(11111, "test", FieldType.DECIMAL),
+                    new EntityField(9223372036854775807L, "test", FieldType.DECIMAL),
                     ConditionOperator.EQUALS,
-                    new DecimalValue(new EntityField(11111, "test", FieldType.DECIMAL), new BigDecimal("123.246"))
+                    new DecimalValue(new EntityField(9223372036854775807L, "test", FieldType.DECIMAL), new BigDecimal("123.246"))
                 ),
-                "(\"123F11111L0\" \"246000000000000000F11111L1\")"
+                r -> {
+                    Assert.assertEquals("(1y2p0ij12332e8e7L0 1y2p0ij24600000000000000032e8e7L1)", r);
+                }
             ),
             new Case(
                 new Condition(
-                    new EntityField(11111, "test", FieldType.STRING),
+                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
                     ConditionOperator.NOT_EQUALS,
-                    new StringValue(new EntityField(11111, "test", FieldType.STRING), "test")
+                    new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test")
                 ),
-                "-\"testF11111S\""
+                r -> {
+                    Assert.assertEquals("-1y2p0ijtest32e8e7S", r);
+                }
             ),
             new Case(
                 new Condition(
-                    new EntityField(11111, "test", FieldType.STRING),
+                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
                     ConditionOperator.LIKE,
-                    new StringValue(new EntityField(11111, "test", FieldType.STRING), "test")
+                    new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test")
                 ),
-                "(ZONESPAN:F11111S \"*test*\")"
+                r -> {
+                    Assert.assertEquals("(1y2p0ij << *test* << 32e8e7S)", r);
+                }
             ),
             new Case(
                 new Condition(
-                    new EntityField(11111, "test", FieldType.ENUM),
+                    new EntityField(9223372036854775807L, "test", FieldType.ENUM),
                     ConditionOperator.EQUALS,
-                    new EnumValue(new EntityField(11111, "test", FieldType.ENUM), "test")
+                    new EnumValue(new EntityField(9223372036854775807L, "test", FieldType.ENUM), "test")
                 ),
-                "\"testF11111S\""
+                r -> {
+                    Assert.assertEquals("1y2p0ijtest32e8e7S", r);
+                }
             ),
             new Case(
                 new Condition(
-                    new EntityField(11111, "test", FieldType.ENUM),
+                    new EntityField(9223372036854775807L, "test", FieldType.ENUM),
                     ConditionOperator.NOT_EQUALS,
-                    new EnumValue(new EntityField(11111, "test", FieldType.ENUM), "test")
+                    new EnumValue(new EntityField(9223372036854775807L, "test", FieldType.ENUM), "test")
                 ),
-                "-\"testF11111S\""
+                r -> {
+                    Assert.assertEquals("-1y2p0ijtest32e8e7S", r);
+                }
             ),
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.DECIMAL),
+                    new EntityField(9223372036854775807L, "test", FieldType.DECIMAL),
                     ConditionOperator.NOT_EQUALS,
-                    new DecimalValue(new EntityField(1, "test", FieldType.DECIMAL), BigDecimal.ZERO)
+                    new DecimalValue(new EntityField(9223372036854775807L, "test", FieldType.DECIMAL), BigDecimal.ZERO)
                 ),
-                "-(\"0F1L0\" \"0F1L1\")"
+                r -> {
+                    Assert.assertEquals("-(1y2p0ij032e8e7L0 1y2p0ij032e8e7L1)", r);
+                }
             ),
             // 多值只处理第一个值.
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.STRINGS),
+                    new EntityField(9223372036854775807L, "test", FieldType.STRINGS),
                     ConditionOperator.EQUALS,
-                    new StringsValue(new EntityField(1, "test", FieldType.STRINGS), "v1"),
-                    new StringsValue(new EntityField(1, "test", FieldType.STRINGS), "v2")
+                    new StringsValue(new EntityField(9223372036854775807L, "test", FieldType.STRINGS), "v1"),
+                    new StringsValue(new EntityField(9223372036854775807L, "test", FieldType.STRINGS), "v2")
                 ),
-                "\"v1F1S*\"",
-                true
-                )
+                true,
+                r -> {
+                    Assert.assertEquals("1y2p0ijv132e8e7S*", r);
+                }
+            )
         );
     }
 
     private static class Case {
         private Condition condition;
-        private String expected;
         private boolean useGroupName;
+        private Consumer<? super String> check;
 
-        public Case(Condition condition, String expected) {
-            this(condition, expected, false);
+        public Case(Condition condition, Consumer<? super String> check) {
+            this(condition, false, check);
         }
 
-        public Case(Condition condition, String expected, boolean useGroupName) {
+        public Case(Condition condition, boolean useGroupName, Consumer<? super String> check) {
             this.condition = condition;
-            this.expected = expected;
             this.useGroupName = useGroupName;
+            this.check = check;
         }
     }
 

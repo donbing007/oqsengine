@@ -3,7 +3,9 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -76,11 +78,17 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
         private String fieldName;
         private String alias;
         private boolean number;
+        private boolean system;
 
         public SortField(String fieldName, String alias, boolean number) {
+            this(fieldName, alias, number, false);
+        }
+
+        public SortField(String fieldName, String alias, boolean number, boolean system) {
             this.fieldName = fieldName;
             this.alias = alias;
             this.number = number;
+            this.system = system;
         }
 
         public String getFieldName() {
@@ -93,6 +101,10 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
 
         public boolean isNumber() {
             return number;
+        }
+
+        public boolean isSystem() {
+            return system;
         }
     }
 
@@ -119,7 +131,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
     }
 
     // 构造排序要用到的字段在select段.
-    // select id,cref,pref, jsonfields.123123L as sort1 from
+    // select id,cref,pref, attr.123123L as sort1 from
     private String buildSortSelectValuesSegment(List<SortField> sortFields) {
         StringBuilder buff = new StringBuilder();
         String fieldName;
@@ -129,7 +141,11 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
             }
 
             if (field.isNumber()) {
-                fieldName = "bigint(" + field.getFieldName() + ")";
+                if (!field.isSystem()) {
+                    fieldName = "bigint(" + field.getFieldName() + ")";
+                } else {
+                    fieldName = field.getFieldName();
+                }
             } else {
                 fieldName = field.getFieldName();
             }
@@ -150,14 +166,23 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
     private List<SortField> buildSortValues(Sort sort) {
         List<SortField> sortFields;
         if (!sort.isOutOfOrder()) {
+
+            /**
+             * optimize: 这里进行一个可能的优化,尝试将排序字段优化成原生字段.
+             *           如果可以使用原生字段字段,即非 NORMAL 类型的字段.
+             */
+            sortFields = new ArrayList<>(tryNativeFieldSorting(sort.getField()));
+            if (!sortFields.isEmpty()) {
+                return sortFields;
+            }
+
             StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
-            Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField());
+            Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField(), true);
 
             String fieldName;
             String alias;
             boolean number;
             int aliasIndex = 0;
-            sortFields = new ArrayList<>();
             StringBuilder buff = new StringBuilder();
             for (String storageName : storageNames) {
                 buff.delete(0, buff.length());
@@ -165,7 +190,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
                 fieldName = buff.toString();
 
                 buff.delete(0, buff.length());
-                buff.append("sort").append(aliasIndex++);
+                buff.append(FieldDefine.SORT_FIELD_ALIAS_PREFIX).append(aliasIndex++);
                 alias = buff.toString();
 
                 if (storageStrategy.storageType() == StorageType.LONG) {
@@ -180,6 +205,31 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
             sortFields = Collections.emptyList();
         }
 
+        return sortFields;
+    }
+
+    // 尝试使用原生的字段排序.
+    private List<SortField> tryNativeFieldSorting(IEntityField field) {
+        FieldConfig.FieldSense sence = field.config().getFieldSense();
+        // 中会有一个排序字段.
+        final int onlyOne = 1;
+        List<SortField> sortFields = new ArrayList<>(onlyOne);
+        switch (sence) {
+            case CREATE_TIME: {
+                sortFields.add(
+                    new SortField(
+                        FieldDefine.CREATE_TIME,
+                        String.format("%s0", FieldDefine.SORT_FIELD_ALIAS_PREFIX), true, true));
+                break;
+            }
+            case UPDATE_TIME: {
+                sortFields.add(
+                    new SortField(
+                        FieldDefine.UPDATE_TIME,
+                        String.format("%s0", FieldDefine.SORT_FIELD_ALIAS_PREFIX), true, true));
+                break;
+            }
+        }
         return sortFields;
     }
 
@@ -247,11 +297,9 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
 
         }
 
-        if (page.isEmptyPage()) {
-            return Collections.emptyList();
+        if (!page.isSinglePage()) {
+            page.setTotalCount(Long.MAX_VALUE);
         }
-
-        page.setTotalCount(Long.MAX_VALUE);
         PageScope scope = page.getNextPage();
 
         if (scope == null) {
@@ -296,7 +344,11 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
 
         try (PreparedStatement st = resource.value().prepareStatement(sql)) {
             st.setLong(1, 0);
-            st.setLong(2, page.getPageSize() * (page.getIndex() - 1));
+            if (page.isEmptyPage()) {
+                st.setLong(2, 0);
+            } else {
+                st.setLong(2, page.getPageSize() * (page.getIndex() - 1));
+            }
             st.setLong(3, page.hasVisibleTotalCountLimit() ?
                 page.getVisibleTotalCount()
                 : page.getPageSize() * page.getIndex());
@@ -361,6 +413,8 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
                 if (!page.isSinglePage()) {
                     long count = count(resource);
                     page.setTotalCount(count);
+                } else {
+                    page.setTotalCount(refs.size());
                 }
 
                 return refs;

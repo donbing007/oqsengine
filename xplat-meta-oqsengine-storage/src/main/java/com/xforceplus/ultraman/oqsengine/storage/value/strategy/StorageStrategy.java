@@ -46,11 +46,22 @@ public interface StorageStrategy {
 
     /**
      * 根据逻辑类型得到物理储存名称.
-     * @param field 目标字段.
+     *
+     * @param field 目标逻辑字段.
      * @return 物理储存名称.
      */
     default Collection<String> toStorageNames(IEntityField field) {
-        String logicName = Long.toString(field.id());
+        return toStorageNames(field, false);
+    }
+
+    /**
+     * 根据逻辑类型得到物理储存名称.
+     * @param field 目标字段.
+     * @param shortName true 需要的为短名称,false不需要.
+     * @return 物理储存名称.
+     */
+    default Collection<String> toStorageNames(IEntityField field, boolean shortName) {
+        String logicName = shortName ? Long.toString(field.id(), 36) : Long.toString(field.id());
 
         return Arrays.asList(
             logicName + storageType().getType()
