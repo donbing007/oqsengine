@@ -111,9 +111,9 @@ public class MultiClientSyncTest extends BaseInit {
          */
         for (int i = 1; i < testClientSize; i++) {
             int j = 0;
-            while (j  < i) {
+            while (j < i) {
                 expectedWatchers.get(privateTestDiffVersion + i).setVisitors(j);
-                j ++;
+                j++;
             }
         }
     }
@@ -141,6 +141,7 @@ public class MultiClientSyncTest extends BaseInit {
             testByCondition(entry.getValue());
         }
     }
+
     private void assertEquals(WatchElement expected, WatchElement actual) {
         Assert.assertEquals(expected.getAppId(), actual.getAppId());
         Assert.assertEquals(expected.getEnv(), actual.getEnv());
@@ -151,7 +152,7 @@ public class MultiClientSyncTest extends BaseInit {
     private void assertNotEquals(WatchElement expected, WatchElement actual) {
         Assert.assertTrue(
                 !expected.getAppId().equals(actual.getAppId()) ||
-                         !expected.getEnv().equals(actual.getEnv()) ||
+                        !expected.getEnv().equals(actual.getEnv()) ||
                         expected.getVersion() != actual.getVersion()
         );
     }
@@ -164,9 +165,9 @@ public class MultiClientSyncTest extends BaseInit {
         String expectedEnv = watchElementVisitor.getWatchElement().getEnv();
         int expectedVersion = watchElementVisitor.getWatchElement().getVersion() + 1;
         syncResponseHandler.push(new AppUpdateEvent("mock", expectedAppId, expectedEnv, expectedVersion,
-                            entityClassSyncRspProtoGenerator(new Random().nextLong())));
+                entityClassSyncRspProtoGenerator(new Random().nextLong())));
 
-        Thread.sleep(5000);
+        Thread.sleep(1000);
         for (int i = 0; i < testClientSize; i++) {
             WatchElement w = streamEvents[i].getMockerSyncClient().getSuccess(expectedAppId);
             if (watchElementVisitor.getVisitors().contains(i)) {
