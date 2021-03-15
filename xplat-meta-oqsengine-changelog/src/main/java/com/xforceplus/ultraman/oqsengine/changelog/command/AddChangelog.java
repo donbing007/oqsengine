@@ -7,13 +7,27 @@ import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
  */
 public class AddChangelog implements ChangelogCommand{
 
+    private long objId;
+
+    private long entityclassId;
+
     private ChangedEvent changedEvent;
+
+    public AddChangelog(long objId, long entityclassId, ChangedEvent changedEvent) {
+        this.objId = objId;
+        this.changedEvent = changedEvent;
+        this.entityclassId = entityclassId;
+    }
 
     public ChangedEvent getChangedEvent() {
         return changedEvent;
     }
 
-    public void setChangedEvent(ChangedEvent changedEvent) {
-        this.changedEvent = changedEvent;
+    public long getObjId() {
+        return objId;
+    }
+
+    public long getEntityclassId() {
+        return entityclassId;
     }
 }

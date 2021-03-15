@@ -40,13 +40,13 @@ public class ChangelogStorageCommand {
      * @return
      * @throws SQLException
      */
-    public List<Changelog> findChangelogById(DataSource dataSource, long id, long reqVersion) throws SQLException {
+    public List<Changelog> findChangelogById(DataSource dataSource, long id, long endVersion, long startVersion) throws SQLException {
 
         String sql;
-        if(reqVersion < 0){
-            sql = String.format(SQL.FIND_SQL, tableName, id);
+        if(endVersion < 0){
+            sql = String.format(SQL.FIND_SQL, tableName, id, startVersion);
         } else {
-            sql = String.format(SQL.FIND_SQL_VERSION, tableName, id, reqVersion);
+            sql = String.format(SQL.FIND_SQL_VERSION, tableName, id, endVersion, startVersion);
         }
 
         Connection connection = dataSource.getConnection();

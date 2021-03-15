@@ -3,9 +3,12 @@ package com.xforceplus.ultraman.oqsengine.changelog.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.changelog.ChangelogHandler;
+import com.xforceplus.ultraman.oqsengine.changelog.command.AddChangelog;
+import com.xforceplus.ultraman.oqsengine.changelog.command.ChangelogCommand;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.TransactionalChangelogEvent;
-import com.xforceplus.ultraman.oqsengine.changelog.listener.ChangelogEventListener;
+import com.xforceplus.ultraman.oqsengine.changelog.event.ChangelogEvent;
+import com.xforceplus.ultraman.oqsengine.changelog.gateway.Gateway;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -17,12 +20,14 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Redis implemention
@@ -35,7 +40,7 @@ public class RedisChangelogHandler<T> implements ChangelogHandler<T> {
     private RedisClient redisClient;
 
     @Resource
-    private List<ChangelogEventListener> listeners;
+    private Gateway<ChangelogCommand, ChangelogEvent> gateway;
 
     @Resource
     private ObjectMapper mapper;
@@ -90,53 +95,52 @@ public class RedisChangelogHandler<T> implements ChangelogHandler<T> {
 
     private String SEND_SCRIPT =
             "redis.call('ZADD', '%s', KEYS[1], KEYS[2]);" +
-            "redis.call('SET', '%s', KEYS[1]..':'..KEYS[3]);" +
-            "return true;";
+                    "redis.call('SET', '%s', KEYS[1]..':'..KEYS[3]);" +
+                    "return true;";
 
     private String SPLIT_FUNCTION =
             "local split = function (s, delimiter)\n" +
-            "    local result = {};\n" +
-            "    for match in (s..delimiter):gmatch(\"(.-)\"..delimiter) do\n" +
-            "        table.insert(result, match);\n" +
-            "    end\n" +
-            "    return result;\n" +
-            "end; \n" ;
-
+                    "    local result = {};\n" +
+                    "    for match in (s..delimiter):gmatch(\"(.-)\"..delimiter) do\n" +
+                    "        table.insert(result, match);\n" +
+                    "    end\n" +
+                    "    return result;\n" +
+                    "end; \n";
 
 
     /**
      * TODO calculate the number
-     *  ZCOUNT myzset -inf +inf
-     *
-     *  KEY
-     *  1: currentTaskKey
-     *  2: currentTimestamp
-     *  3: time threshold
-     *  4: commit threshold
-     *  5: set name
-     *  6: stream name
+     * ZCOUNT myzset -inf +inf
+     * <p>
+     * KEY
+     * 1: currentTaskKey
+     * 2: currentTimestamp
+     * 3: time threshold
+     * 4: commit threshold
+     * 5: set name
+     * 6: stream name
      */
     private String MOVE_AND_ADD =
             SPLIT_FUNCTION +
-            "local currentTask = redis.call('GET', KEYS[1]) "+
-            "if currentTask != false \n" +
-            "then \n" +
-            "  local splitValue = split(currentTask, ':');" +
-            "  local taskCommitId = tonumber(splitValue[1]);" +
-            "  local taskTimestamp = tonumber(splitValue[2]);" +
-            "  local size;" +
-            "  if KEYS[2] - taskTimestamp > KEYS[3]\n" +
-            "  then \n" +
-            "    size = redis.call('ZCOUNT', '0', '+inf')" +
-            "  else \n" +
-            "    local lastFetchCommit = taskCommitId - KEYS[4];" +
-            "    size = redis.call('ZCOUNT', '0', lastFetchCommit)" +
-            "  end \n" +
-            "  redis.call('ZPOPMIN', KEYS[5], size);" +
-            "  for i = 1, #result do \n" +
-            "    redis.call('XADD', KEYS[6], '*', 'payload', result[i]);" +
-            "  end\n" +
-            "end";
+                    "local currentTask = redis.call('GET', KEYS[1]) " +
+                    "if currentTask != false \n" +
+                    "then \n" +
+                    "  local splitValue = split(currentTask, ':');" +
+                    "  local taskCommitId = tonumber(splitValue[1]);" +
+                    "  local taskTimestamp = tonumber(splitValue[2]);" +
+                    "  local size;" +
+                    "  if KEYS[2] - taskTimestamp > KEYS[3]\n" +
+                    "  then \n" +
+                    "    size = redis.call('ZCOUNT', '0', '+inf')" +
+                    "  else \n" +
+                    "    local lastFetchCommit = taskCommitId - KEYS[4];" +
+                    "    size = redis.call('ZCOUNT', '0', lastFetchCommit)" +
+                    "  end \n" +
+                    "  redis.call('ZPOPMIN', KEYS[5], size);" +
+                    "  for i = 1, #result do \n" +
+                    "    redis.call('XADD', KEYS[6], '*', 'payload', result[i]);" +
+                    "  end\n" +
+                    "end";
 
     /**
      * scripts shas
@@ -228,9 +232,9 @@ public class RedisChangelogHandler<T> implements ChangelogHandler<T> {
         initGroup();
     }
 
-    private void startConsumer(){
+    private void startConsumer() {
         consumer.scheduleAtFixedRate(() -> {
-            if(isLeader.get()){
+            if (isLeader.get()) {
                 doConsume();
             }
         }, initDelay, period, TimeUnit.SECONDS);
@@ -238,7 +242,7 @@ public class RedisChangelogHandler<T> implements ChangelogHandler<T> {
 
     private void startMover() {
         mover.scheduleAtFixedRate(() -> {
-            if(isLeader.get()){
+            if (isLeader.get()) {
                 doMove();
             }
         }, initDelay, period, TimeUnit.SECONDS);
@@ -247,30 +251,30 @@ public class RedisChangelogHandler<T> implements ChangelogHandler<T> {
 
     /**
      * TODO calculate the number
-     *  ZCOUNT myzset -inf +inf
-     *
-     *
-     *  KEY
-     *  1: currentTaskKey
-     *  2: currentTimestamp
-     *  3: time threshold
-     *  4: commit threshold
-     *  5: set name
-     *  6: stream name
+     * ZCOUNT myzset -inf +inf
+     * <p>
+     * <p>
+     * KEY
+     * 1: currentTaskKey
+     * 2: currentTimestamp
+     * 3: time threshold
+     * 4: commit threshold
+     * 5: set name
+     * 6: stream name
      */
-    private void doMove(){
+    private void doMove() {
         String[] keys = new String[]{
-            queueCurrentName,
-            Long.toString(LocalDateTime.now().atZone(zoneId).toInstant().toEpochMilli()),
-            Long.toString(move_time_threshold),
-            Long.toString(move_size_threshold),
-            queueName,
-            queueStreamName
+                queueCurrentName,
+                Long.toString(LocalDateTime.now().atZone(zoneId).toInstant().toEpochMilli()),
+                Long.toString(move_time_threshold),
+                Long.toString(move_size_threshold),
+                queueName,
+                queueStreamName
         };
         syncCommands.evalsha(moveScriptSha, ScriptOutputType.BOOLEAN, keys);
     }
 
-    private void doConsume(){
+    private void doConsume() {
         consumeAndDeliver();
     }
 
@@ -283,13 +287,16 @@ public class RedisChangelogHandler<T> implements ChangelogHandler<T> {
         }
     }
 
-    private List<ChangedEvent> toChangeEventList(StreamMessage<String, String> x){
+    private List<ChangelogCommand> toChangeCommandList(StreamMessage<String, String> x) {
         Map<String, String> body = x.getBody();
         String payload = body.get("payload");
 
         try {
             TransactionalChangelogEvent event = mapper.readValue(payload, TransactionalChangelogEvent.class);
-            return event.getChangedEventList();
+            return event.getChangedEventList().stream()
+                    .map(evt -> {
+                        return new AddChangelog(evt.getId(), evt.getEntityClassId(), evt);
+                    }).collect(Collectors.toList());
         } catch (JsonProcessingException e) {
             logger.error("{}", e);
             return Collections.emptyList();
@@ -306,9 +313,12 @@ public class RedisChangelogHandler<T> implements ChangelogHandler<T> {
             return;
         }
 
+        /**
+         * dispatch the command
+         */
         xreadgroup.forEach(x -> {
-            listeners.forEach(list -> {
-                toChangeEventList(x).forEach(list::consume);
+            toChangeCommandList(x).forEach(command -> {
+                gateway.fireAndForget(command, new HashMap<>());
             });
         });
     }

@@ -2,8 +2,11 @@ package com.xforceplus.ultraman.oqsengine.changelog.impl;
 
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.*;
+import com.xforceplus.ultraman.oqsengine.changelog.entity.ChangelogStatefulEntity;
 import com.xforceplus.ultraman.oqsengine.changelog.storage.ChangelogStorage;
+import com.xforceplus.ultraman.oqsengine.changelog.storage.SnapshotStorage;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper;
+import com.xforceplus.ultraman.oqsengine.changelog.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -17,13 +20,14 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeValue.Op.SET;
-import static com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper.deserialize;
-import static com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper.isReferenceSet;
+import static com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper.*;
 
 /**
  * rebuild from changlog
@@ -36,7 +40,14 @@ public class ReplayServiceImpl implements ReplayService {
     private ChangelogStorage changelogStorage;
 
     @Resource
+    private SnapshotStorage snapshotStorage;
+
+    @Resource
     private MetaManager metaManager;
+
+
+    private long snapshotThreshold = 100;
+
 
     /**
      * find all related changelog
@@ -46,32 +57,48 @@ public class ReplayServiceImpl implements ReplayService {
      */
     @Override
     public List<Changelog> getRelatedChangelog(long id) {
-        return changelogStorage.findById(id, -1);
+        return changelogStorage.findById(id, -1, -1);
     }
 
     /**
      * TODO consider the snapshot
+     *
      * @param id
-     * @param version
+     * @param endVersion
+     * @param startVersion
      * @return
      */
     @Override
-    public List<Changelog> getRelatedChangelog(long id, long version) {
-        return changelogStorage.findById(id, version);
+    public List<Changelog> getRelatedChangelog(long id, long endVersion, long startVersion) {
+        return changelogStorage.findById(id, endVersion, startVersion);
     }
 
     @Override
-    public EntityDomain replaySimpleDomain(long entityClass, long id, long version) {
+    public EntityDomain replaySimpleDomain(long entityClass, long id, long endVersion) {
 
-        List<Changelog> relatedChangelogs = this.getRelatedChangelog(id, version);
+        Tuple2<ChangeSnapshot, List<Changelog>> changeTuple = getChangeTuple(id, endVersion);
         Optional<IEntityClass> entityClassOp = metaManager.load(entityClass);
-        if(entityClassOp.isPresent()) {
-            return replaySingleDomain(entityClassOp.get(), id, relatedChangelogs);
-        } else {
-            return null;
-        }
+        return entityClassOp
+                .map(iEntityClass -> replaySingleDomainWithSnapshot(iEntityClass
+                        , id
+                        , changeTuple._1()
+                        , changeTuple._2()))
+                .orElse(null);
     }
 
+    private Tuple2<ChangeSnapshot, List<Changelog>> getChangeTuple(long id, long endVersion){
+        Optional<ChangeSnapshot> snapshotOp = snapshotStorage.query(id, endVersion);
+
+        long startVersion = -1;
+
+        if (snapshotOp.isPresent()) {
+            ChangeSnapshot changeSnapshot = snapshotOp.get();
+            startVersion = changeSnapshot.getVersion();
+        }
+
+        List<Changelog> relatedChangelogs = this.getRelatedChangelog(id, endVersion, startVersion);
+        return Tuple.of(snapshotOp.orElse(null), relatedChangelogs);
+    }
 
     /**
      * side effect
@@ -130,7 +157,7 @@ public class ReplayServiceImpl implements ReplayService {
                             }
 
                             ValueLife valueLife = valueLifeMap.get(value.getRawValue());
-                            if(valueLife == null) {
+                            if (valueLife == null) {
                                 valueLife = new ValueLife();
                                 valueLife.setValue(value.getRawValue());
                                 valueLifeMap.put(value.getRawValue(), valueLife);
@@ -172,6 +199,7 @@ public class ReplayServiceImpl implements ReplayService {
 
     /**
      * BFS
+     *
      * @param entityClass
      * @param id
      * @param version
@@ -185,19 +213,21 @@ public class ReplayServiceImpl implements ReplayService {
         Map<Long, EntityDomain> footprint = new HashMap<>();
 
         taskQueue.offer(Tuple.of(entityClass, id, version));
-        while (!taskQueue.isEmpty()){
+        while (!taskQueue.isEmpty()) {
             Tuple3<Long, Long, Long> task = taskQueue.poll();
 
             Optional<IEntityClass> entityClassOptional = metaManager.load(task._1);
-            if(entityClassOptional.isPresent()) {
-                List<Changelog> relatedChangelog = this.getRelatedChangelog(task._2, task._3);
-                EntityDomain entityDomain = replaySingleDomain(entityClassOptional.get()
-                        , task._2, relatedChangelog);
+            if (entityClassOptional.isPresent()) {
+
+
+                Tuple2<ChangeSnapshot, List<Changelog>> changelogTuple = getChangeTuple(id, version);
+                EntityDomain entityDomain = replaySingleDomainWithSnapshot(entityClassOptional.get()
+                        , task._2, changelogTuple._1(), changelogTuple._2());
                 footprint.put(task._2, entityDomain);
                 entityDomain.getReferenceMap().forEach((key, value) -> {
                     //put in
                     value.forEach(eachId -> {
-                        taskQueue.offer(Tuple.of(key.getEntityClassId(),eachId, version));
+                        taskQueue.offer(Tuple.of(key.getEntityClassId(), eachId, version));
                     });
                 });
             }
@@ -207,7 +237,24 @@ public class ReplayServiceImpl implements ReplayService {
         return head;
     }
 
-    private void buildAggDomain(long id, Map<Long, EntityDomain> map, EntityAggDomain head){
+    /**
+     * @param entityClassId
+     * @param id
+     * @return
+     * @Throws runtime exception
+     */
+    @Override
+    public Optional<ChangelogStatefulEntity> replayStatefulEntity(long entityClassId, long id) {
+
+        Optional<IEntityClass> loadEntityClassOp = metaManager.load(entityClassId);
+        return loadEntityClassOp.map(x -> {
+            EntityDomain entityDomain = replaySimpleDomain(entityClassId, id, -1);
+            ChangelogStatefulEntity statefulEntity = new ChangelogStatefulEntity(id, x, metaManager, entityDomain, snapshotThreshold);
+            return statefulEntity;
+        });
+    }
+
+    private void buildAggDomain(long id, Map<Long, EntityDomain> map, EntityAggDomain head) {
 
         /**
          * current id, currentDomain, preview AggDomain
@@ -216,7 +263,7 @@ public class ReplayServiceImpl implements ReplayService {
 
         taskIdQueue.offer(Tuple.of(id, head, null));
         //BFS
-        while(!taskIdQueue.isEmpty()){
+        while (!taskIdQueue.isEmpty()) {
             Tuple3<Long, EntityAggDomain, Tuple2<OqsRelation, EntityAggDomain>> task = taskIdQueue.poll();
 
             Long currentNodeId = task._1;
@@ -224,9 +271,9 @@ public class ReplayServiceImpl implements ReplayService {
             Tuple2<OqsRelation, EntityAggDomain> previewEntityRelToAgg = task._3;
 
             EntityDomain entityDomain = map.get(currentNodeId);
-            if(entityDomain != null){
+            if (entityDomain != null) {
                 currentEntityAgg.setRootIEntity(entityDomain.getEntity());
-                if(previewEntityRelToAgg != null){
+                if (previewEntityRelToAgg != null) {
                     previewEntityRelToAgg._2().put(previewEntityRelToAgg._1(), currentEntityAgg);
                 }
                 entityDomain.getReferenceMap().forEach((key, value) -> {
@@ -239,9 +286,9 @@ public class ReplayServiceImpl implements ReplayService {
         }
     }
 
-    private IValue getValue(List<ChangeValue> changeValues, IEntityField field){
+    private IValue getValue(List<ChangeValue> changeValues, IEntityField field) {
         Optional<ChangeValue> firstSet = changeValues.stream().filter(x -> x.getOp() == SET).findFirst();
-        if(firstSet.isPresent()){
+        if (firstSet.isPresent()) {
             ChangeValue changeValue = firstSet.get();
             String rawValue = changeValue.getRawValue();
             IValue value = deserialize(rawValue, field);
@@ -252,52 +299,98 @@ public class ReplayServiceImpl implements ReplayService {
     }
 
     /**
-     * replay the changelogs to ane entityDomain
+     * replay with snapshot
+     *
      * @param entityClass
      * @param id
+     * @param changeSnapshot
      * @param changelogs
      * @return
      */
-    private EntityDomain replaySingleDomain(IEntityClass entityClass, long id, List<Changelog> changelogs){
-        EntityDomain entityDomain = new EntityDomain();
+    private EntityDomain replaySingleDomainWithSnapshot(IEntityClass entityClass, long id, ChangeSnapshot changeSnapshot, List<Changelog> changelogs) {
 
         EntityValue entityValue = new EntityValue(id);
         IEntity entity = Entity.Builder.anEntity()
                 .withId(id)
                 .withEntityClass(entityClass)
                 .withEntityValue(entityValue).build();
-        entityDomain.setEntity(entity);
 
         Map<OqsRelation, List<Long>> referenceMap = new HashMap<>();
-        entityDomain.setReferenceMap(referenceMap);
 
-        Map<Long, List<ChangeValue>> mappedValue = ChangelogHelper.getMappedValue(changelogs);
+        EntityDomain entityDomain;
+        if(!changelogs.isEmpty()) {
+            entityDomain = new EntityDomain(changelogs.size(), changelogs.get(0).getVersion(), entity, referenceMap);
+        } else {
+            entityDomain = new EntityDomain(changelogs.size(), 0, entity, referenceMap);
+        }
+
+        Map<Long, List<ChangeValue>> mappedValue = new HashMap<>();
+
+
+        if (changeSnapshot != null) {
+            /**
+             * init reference map with snapshot
+             */
+            changeSnapshot.getReferenceMap().forEach((k, v) -> {
+                Optional<OqsRelation> relationWithFieldId = EntityClassHelper.findRelationWithFieldId(entityClass, k);
+                relationWithFieldId.ifPresent(x -> {
+                    referenceMap.put(x, v);
+                });
+            });
+
+            /**
+             * init mappedValue with snapshot
+             */
+            mappedValue = changeSnapshot.getChangeValues().stream().collect(Collectors.toMap(ChangeValue::getFieldId, x -> {
+                List<ChangeValue> changeValues = new LinkedList<>();
+                changeValues.add(x);
+                return changeValues;
+            }));
+        }
+
+        //init with snapshot
+        //put current changelogs
+        Map<Long, List<ChangeValue>> finalMappedValue = mappedValue;
+        Map<Long, List<ChangeValue>> mappedValueFromChangelogs = getMappedValue(changelogs);
+
+        mappedValueFromChangelogs.forEach((a, b) -> {
+            if (finalMappedValue.containsKey(a)) {
+                List<ChangeValue> changeValues = finalMappedValue.get(a);
+                if (changeValues != null) {
+                    changeValues.addAll(b);
+                } else {
+                    finalMappedValue.put(a, b);
+                }
+            } else {
+                finalMappedValue.put(a, b);
+            }
+        });
+
 
         /**
          * check every field current value
          */
         entityClass.fields().forEach(field -> {
             //TODO check order
-            List<ChangeValue> changeValues = mappedValue.get(field.id());
+            List<ChangeValue> changeValues = finalMappedValue.get(field.id());
             IValue value = null;
-            if(changeValues != null) {
-                 value = getValue(changeValues, field);
+            if (changeValues != null) {
+                value = getValue(changeValues, field);
             }
-            if(value != null){
+
+            if (value != null) {
                 entityValue.addValue(value);
             }
         });
 
-        /**
-         * deal relation value
-         */
         Optional.ofNullable(entityClass.oqsRelations()).orElse(Collections.emptyList()).forEach(rel -> {
-            if(rel.getRelOwnerClassId() == entityClass.id()){
-                List<ChangeValue> changeValues = mappedValue.get(rel.getEntityField().id());
-                if(isReferenceSet(rel)){
+            if (rel.getFieldOwner() != entityClass.id()) {
+                //current entityClass do not have this field
+                List<ChangeValue> changeValues = finalMappedValue.get(rel.getEntityField().id());
+                if (isReferenceSetInCurrentView(rel, entityClass.id())) {
                     List<Long> ids = new LinkedList<>();
                     changeValues.forEach(changeValue -> {
-                        switch(changeValue.getOp()) {
+                        switch (changeValue.getOp()) {
                             case ADD:
                                 ids.add(Long.parseLong(changeValue.getRawValue()));
                                 break;
@@ -309,18 +402,90 @@ public class ReplayServiceImpl implements ReplayService {
                         }
                     });
 
-                    if(!ids.isEmpty()) {
+                    if (!ids.isEmpty()) {
                         referenceMap.put(rel, ids);
                     }
                 } else {
                     IValue value = getValue(changeValues, rel.getEntityField());
-                    if(value != null){
+                    if (value != null) {
                         referenceMap.put(rel, Collections.singletonList(value.valueToLong()));
                     }
                 }
             }
         });
-
         return entityDomain;
     }
+
+//    /**
+//     * replay the changelogs to ane entityDomain
+//     * @param entityClass
+//     * @param id
+//     * @param changelogs
+//     * @return
+//     */
+//    private EntityDomain replaySingleDomain(IEntityClass entityClass, long id, List<Changelog> changelogs){
+//
+//        EntityValue entityValue = new EntityValue(id);
+//        IEntity entity = Entity.Builder.anEntity()
+//                .withId(id)
+//                .withEntityClass(entityClass)
+//                .withEntityValue(entityValue).build();
+//
+//        Map<OqsRelation, List<Long>> referenceMap = new HashMap<>();
+//
+//        EntityDomain entityDomain = new EntityDomain(changelogs.size(), entity, referenceMap);
+//
+//        Map<Long, List<ChangeValue>> mappedValue = ChangelogHelper.getMappedValue(changelogs);
+//
+//        /**
+//         * check every field current value
+//         */
+//        entityClass.fields().forEach(field -> {
+//            //TODO check order
+//            List<ChangeValue> changeValues = mappedValue.get(field.id());
+//            IValue value = null;
+//            if(changeValues != null) {
+//                 value = getValue(changeValues, field);
+//            }
+//            if(value != null){
+//                entityValue.addValue(value);
+//            }
+//        });
+//
+//        /**
+//         * deal relation value
+//         */
+//        Optional.ofNullable(entityClass.oqsRelations()).orElse(Collections.emptyList()).forEach(rel -> {
+//            if(rel.getFieldOwner() != entityClass.id()){
+//                //current entityClass do not have this field
+//                List<ChangeValue> changeValues = mappedValue.get(rel.getEntityField().id());
+//                if(isReferenceSetInCurrentView(rel, entityClass.id())){
+//                    List<Long> ids = new LinkedList<>();
+//                    changeValues.forEach(changeValue -> {
+//                        switch(changeValue.getOp()) {
+//                            case ADD:
+//                                ids.add(Long.parseLong(changeValue.getRawValue()));
+//                                break;
+//                            case DEL:
+//                                ids.remove(Long.parseLong(changeValue.getRawValue()));
+//                                break;
+//                            default:
+//                                logger.warn("unsupport operation for referenceset");
+//                        }
+//                    });
+//
+//                    if(!ids.isEmpty()) {
+//                        referenceMap.put(rel, ids);
+//                    }
+//                } else {
+//                    IValue value = getValue(changeValues, rel.getEntityField());
+//                    if(value != null){
+//                        referenceMap.put(rel, Collections.singletonList(value.valueToLong()));
+//                    }
+//                }
+//            }
+//        });
+//
+//        return entityDomain;
+//    }
 }

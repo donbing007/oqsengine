@@ -100,16 +100,9 @@ public class ChangelogConfiguration {
                 return null;
             }
 
-            /**
-             * TODO
-             * @param id
-             * @param version
-             * @return
-             */
             @Override
-            public List<Changelog> findById(long id, long version) {
-                //TODO
-                return example.getChangelogByIdVersion(id, version);
+            public List<Changelog> findById(long id, long endVersion, long startVersion) {
+                return example.getChangelogByIdVersion(id, endVersion);
             }
         };
     }

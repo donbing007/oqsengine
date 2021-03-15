@@ -48,12 +48,30 @@ public class EntityClassHelper {
         return oqsRelations;
     }
 
+    /**
+     * find
+     * @param oqsRelation
+     * @return
+     */
+    public static Long findIdAssociatedEntityClassId(OqsRelation oqsRelation){
+        if(oqsRelation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.MANY2ONE.getName())
+                || oqsRelation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.ONE2ONE.getName())){
+            return oqsRelation.getEntityClassId();
+        } else {
+            return oqsRelation.getRelOwnerClassId();
+        }
+    }
+
+    public static Optional<OqsRelation> findRelationWithFieldId(IEntityClass entityClass, long fieldId){
+        return entityClass.oqsRelations().stream().filter(x -> x.getEntityField().id() == fieldId).findFirst();
+    }
 
 
     /**
      * what is a associated relation
      * same name or name end with 'MTO'
-     *
+     * first relation is relation
+     * second relation is associated relation
      * @param entityClass
      * @return
      */

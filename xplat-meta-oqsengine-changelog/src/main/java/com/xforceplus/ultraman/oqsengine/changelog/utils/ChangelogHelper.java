@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.changelog.utils;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeValue;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.HistoryValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldLikeRelationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -51,13 +52,21 @@ public class ChangelogHelper {
     }
 
     /**
-     * check if has a fieldOwner
+     * check if has a fieldOwner is referenceSet
      * @param relation
      * @return
      */
-    public static boolean isReferenceSet(OqsRelation relation){
-        return relation.getRelOwnerClassId() != relation.getFieldOwner();
+    public static boolean isReferenceSetInCurrentView(OqsRelation relation, Long entityClassId){
+        if(relation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.MANY2ONE.getName())){
+            return entityClassId != relation.getFieldOwner();
+        } else if(relation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.ONE2MANY.getName())){
+            return entityClassId != relation.getFieldOwner();
+        }
+
+        return false;
     }
+
+
 
 //    /**
 //     * merge changelog to one value

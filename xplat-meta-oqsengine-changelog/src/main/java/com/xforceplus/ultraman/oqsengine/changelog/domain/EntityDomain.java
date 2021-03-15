@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.changelog.domain;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +10,10 @@ import java.util.Map;
  * an entityDomain contains both the entityvalue and a referenceValue
  */
 public class EntityDomain {
+
+    private long id;
+
+    private long version;
 
     /**
      * changelog retrieved
@@ -23,31 +26,37 @@ public class EntityDomain {
     private IEntity entity;
 
     /**
-     * TODO
+     * current relation map with all related or be related
+     * oqsRelation is not self is related --- a reversed set
+     * oqsRelation is self --- a id set
      */
-    private Map<OqsRelation, List<Long>> referenceMap = new HashMap<>();
+    private Map<OqsRelation, List<Long>> referenceMap;
 
-    public IEntity getEntity() {
-        return entity;
-    }
-
-    public void setEntity(IEntity entity) {
+    public EntityDomain(long count, long version, IEntity entity, Map<OqsRelation, List<Long>> referenceMap) {
+        this.count = count;
         this.entity = entity;
-    }
-
-    public Map<OqsRelation, List<Long>> getReferenceMap() {
-        return referenceMap;
-    }
-
-    public void setReferenceMap(Map<OqsRelation, List<Long>> referenceMap) {
+        this.version = version;
         this.referenceMap = referenceMap;
+        this.id = entity.id();
+    }
+
+    public long getId() {
+        return id;
     }
 
     public long getCount() {
         return count;
     }
 
-    public void setCount(long count) {
-        this.count = count;
+    public IEntity getEntity() {
+        return entity;
+    }
+
+    public Map<OqsRelation, List<Long>> getReferenceMap() {
+        return referenceMap;
+    }
+
+    public long getVersion() {
+        return version;
     }
 }

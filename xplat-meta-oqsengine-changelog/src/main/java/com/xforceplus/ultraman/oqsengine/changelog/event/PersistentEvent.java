@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.changelog.event;
 
 import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
 
+import java.util.Map;
+
 /**
  * a event to store in some where
  */
@@ -19,5 +21,14 @@ public class PersistentEvent implements ChangelogEvent{
 
     public void setChangelog(Changelog changelog) {
         this.changelog = changelog;
+    }
+
+    /**
+     * has no context
+     * @return
+     */
+    @Override
+    public Map<String, Object> getContext() {
+        return null;
     }
 }

@@ -171,7 +171,7 @@ public class DefaultChangelogImpl implements ChangelogService {
 
     private List<ChangeVersion> findChangeVersion(List<ChangeVersion> changeVersionList, long objId, long version
             , long entityClassId, Stack<VersiondEntityRef> stack){
-        List<Changelog> relatedChangelog = replayService.getRelatedChangelog(objId, version);
+        List<Changelog> relatedChangelog = replayService.getRelatedChangelog(objId, version, -1);
         if(!relatedChangelog.isEmpty()){
 
             List<ChangeVersion> currentList = relatedChangelog.stream().map(x -> {

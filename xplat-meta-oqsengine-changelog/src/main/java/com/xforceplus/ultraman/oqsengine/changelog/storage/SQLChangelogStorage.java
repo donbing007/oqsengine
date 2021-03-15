@@ -43,9 +43,10 @@ public class SQLChangelogStorage implements ChangelogStorage {
     }
 
     @Override
-    public List<Changelog> findById(long id, long version) {
+    public List<Changelog> findById(long id, long endVersion, long startVersion) {
         try {
-            List<Changelog> result = new ChangelogStorageCommand(table, mapper).findChangelogById(changelogDatasource, id, version);
+            List<Changelog> result = new ChangelogStorageCommand(table, mapper)
+                    .findChangelogById(changelogDatasource, id, startVersion, endVersion);
             return result;
         } catch (SQLException e) {
             return Collections.emptyList();

@@ -20,12 +20,15 @@ public interface ChangelogStorage {
      */
     Either<SQLException, Integer> saveBatch(List<Changelog> changeLogs);
 
+
     /**
-     * TODO add sanpshot
+     * find changelog with startVersion and endVersion
      * @param id
+     * @param endVersion    -1 mean +inf
+     * @param startVersion  -1 means -inf
      * @return
      */
-    List<Changelog> findById(long id, long version);
+    List<Changelog> findById(long id, long endVersion, long startVersion);
 
 
 }
