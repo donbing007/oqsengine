@@ -11,7 +11,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient.isShutDown;
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
@@ -49,7 +47,7 @@ public class SyncRequestHandler implements IRequestHandler {
     private SyncExecutor syncExecutor;
 
     @Resource
-    private RequestWatchExecutor requestWatchExecutor;
+    private IRequestWatchExecutor requestWatchExecutor;
 
     @Resource
     private GRpcParamsConfig gRpcParamsConfig;
@@ -60,23 +58,22 @@ public class SyncRequestHandler implements IRequestHandler {
     private Queue<WatchElement> forgotQueue = new ConcurrentLinkedDeque<>();
     private List<Thread> longRunTasks = new ArrayList<>(CLIENT_TASK_COUNT);
 
+    private volatile boolean isShutdown = false;
 
     @Override
     public void start() {
-        /**
-         * 1.添加keepAlive任务线程
-         */
-        longRunTasks.add(ThreadUtils.create(this::keepAliveTask));
+        isShutdown = false;
 
         /**
-         * 1.添加stream-connect-check任务线程
+         * 1.添加watchElementCheck任务线程
          */
-        longRunTasks.add(ThreadUtils.create(this::streamConnectCheckTask));
+        longRunTasks.add(ThreadUtils.create(this::keepAlive));
+
 
         /**
-         * 3.添加AppCheck任务线程
+         * 2.添加watchElementCheck任务线程
          */
-        longRunTasks.add(ThreadUtils.create(this::appCheckTask));
+        longRunTasks.add(ThreadUtils.create(this::watchElementCheck));
 
         /**
          * 启动所有任务线程
@@ -88,6 +85,9 @@ public class SyncRequestHandler implements IRequestHandler {
 
     @Override
     public void stop() {
+
+        isShutdown = true;
+
         requestWatchExecutor.stop();
 
         longRunTasks.forEach(s -> {
@@ -240,12 +240,17 @@ public class SyncRequestHandler implements IRequestHandler {
                     accept(entityClassSyncResponse);
                 } catch (Exception e) {
                     logger.warn(e.getMessage());
-                    if (requestWatchExecutor.watcher().isOnServe()) {
+                    if (requestWatchExecutor.watcher().isActive()) {
                         requestWatchExecutor.watcher().observer().onError(e);
                     }
                 }
             });
         }
+    }
+
+    @Override
+    public boolean isShutDown() {
+        return isShutdown;
     }
 
     @Override
@@ -258,7 +263,10 @@ public class SyncRequestHandler implements IRequestHandler {
          * 执行OQS更新EntityClass
          */
         EntityClassSyncRequest.Builder entityClassSyncRequestBuilder = execute(entityClassSyncResponse);
-
+        if (entityClassSyncRequestBuilder.getStatus() != SYNC_OK.ordinal()) {
+            logger.warn("execute data sync fail, [{}]", entityClassSyncRequestBuilder.build().toString());
+            return;
+        }
         /**
          * 回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
          */
@@ -348,12 +356,22 @@ public class SyncRequestHandler implements IRequestHandler {
      * 保持和服务端的KeepAlive
      * @return
      */
-    private boolean keepAliveTask() {
+    private boolean keepAlive() {
         logger.debug("start keepAlive task ok...");
         while (!isShutDown()) {
             RequestWatcher requestWatcher = requestWatchExecutor.watcher();
             if (null != requestWatcher) {
                 try {
+                    if (requestWatcher.isActive()) {
+                        if (System.currentTimeMillis() - requestWatcher.heartBeat() >
+                                gRpcParamsConfig.getDefaultHeartbeatTimeout()) {
+                            requestWatcher.observer().onCompleted();
+                            logger.warn("last heartbeat time [{}] reaches max timeout [{}]"
+                                    , System.currentTimeMillis() - requestWatcher.heartBeat(),
+                                    gRpcParamsConfig.getDefaultHeartbeatTimeout());
+                        }
+                    }
+
                     EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
                             .setUid(requestWatcher.uid()).setStatus(HEARTBEAT.ordinal()).build();
 
@@ -370,45 +388,17 @@ public class SyncRequestHandler implements IRequestHandler {
         return true;
     }
 
-    /**
-     * 检查当前的KeepAlive是否已超时
-     * @return
-     */
-    private boolean streamConnectCheckTask() {
-        logger.debug("start stream-connect-check task ok...");
-        while (!isShutDown()) {
-            RequestWatcher requestWatcher = requestWatchExecutor.watcher();
-            if (null != requestWatcher && requestWatcher.isOnServe()) {
-                if (System.currentTimeMillis() - requestWatcher.heartBeat() >
-                        gRpcParamsConfig.getDefaultHeartbeatTimeout()) {
-                    try {
-                        requestWatcher.observer().onCompleted();
-                        logger.warn("last heartbeat time [{}] reaches max timeout [{}]"
-                                , System.currentTimeMillis() - requestWatcher.heartBeat(),
-                                gRpcParamsConfig.getDefaultHeartbeatTimeout());
-                    } catch (Exception e) {
-                        //ignore
-                    }
-
-                }
-            }
-            logger.debug("streamConnect check ok, next check after duration ({})ms...", gRpcParamsConfig.getMonitorSleepDuration());
-            TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
-        }
-        logger.debug("streamConnect check task has quited due to sync-client shutdown...");
-        return true;
-    }
 
     /**
      * 检查当前APP的注册状态，处于INIT、REGISTER的APP将被重新注册到服务端
      * @return
      */
-    private boolean appCheckTask() {
+    private boolean watchElementCheck() {
         logger.debug("start appCheck task ok...");
         while (!isShutDown()) {
 
             RequestWatcher requestWatcher = requestWatchExecutor.watcher();
-            if (null != requestWatcher && requestWatcher.isOnServe()) {
+            if (null != requestWatcher && requestWatcher.isActive()) {
                 /**
                  * 将forgetQueue中的数据添加到watch中
                  */

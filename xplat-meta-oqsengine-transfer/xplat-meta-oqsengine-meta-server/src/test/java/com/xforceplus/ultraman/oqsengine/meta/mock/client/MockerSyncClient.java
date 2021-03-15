@@ -24,12 +24,12 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD
  */
 public class MockerSyncClient {
 
-    @Resource
     private MockClient mockClient;
 
     private Map<String, WatchElement> watchElementMap = new LinkedHashMap<>();
 
-    private WatchElement success;
+    public Map<String, WatchElement> success = new LinkedHashMap<>();
+
 
     public void start(String host, int port) {
         mockClient.start(host, port);
@@ -46,6 +46,7 @@ public class MockerSyncClient {
         return mockClient.channelStub().register(new StreamObserver<EntityClassSyncResponse>() {
             @Override
             public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
+
                 System.out.println("entityClassSyncResponse : " + entityClassSyncResponse.toString());
 
                 if (entityClassSyncResponse.getStatus() == RequestStatus.REGISTER_OK.ordinal()) {
@@ -55,8 +56,10 @@ public class MockerSyncClient {
                 } else if (entityClassSyncResponse.getStatus() == RequestStatus.SYNC.ordinal()) {
                     Assert.assertEquals(entityClassSyncResponse.getMd5(),
                             getMD5(entityClassSyncResponse.getEntityClassSyncRspProto().toByteArray()));
-                    success = new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
+                    WatchElement w = new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
                             entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed);
+
+                    success.put(entityClassSyncResponse.getAppId(), w);
                 } else {
                     Assert.assertEquals(entityClassSyncResponse.getStatus(), RequestStatus.HEARTBEAT.ordinal());
                 }
@@ -76,11 +79,11 @@ public class MockerSyncClient {
         return watchElementMap;
     }
 
-    public WatchElement getSuccess() {
-        return success;
+    public WatchElement getSuccess(String id) {
+        return success.get(id);
     }
 
-    public void releaseSuccess() {
-        success = null;
+    public void releaseSuccess(String id) {
+        success.remove(id);
     }
 }

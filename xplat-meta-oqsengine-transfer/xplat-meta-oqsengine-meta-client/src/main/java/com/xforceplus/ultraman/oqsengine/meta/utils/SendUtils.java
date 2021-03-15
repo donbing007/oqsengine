@@ -29,7 +29,7 @@ public class SendUtils {
         /**
          * 这里由于异步执行了OQS的缓存更新，等待后可能出现新的流始化了，所以必须进行doubleCheck判断uid是否相同
          */
-        if (null == requestWatcher || !requestWatcher.isOnServe()) {
+        if (null == requestWatcher || !requestWatcher.isActive()) {
             logger.warn("stream observer not exists.");
             throw new MetaSyncClientException("stream observer not exists or was expired.", true);
         }

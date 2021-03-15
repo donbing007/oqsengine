@@ -43,9 +43,9 @@ public interface IWatcher<T> {
 
     void release();
 
-    boolean isOnServe();
+    boolean isActive();
 
-    void onServe();
+    void active();
 
-    void offServe();
+    void inActive();
 }

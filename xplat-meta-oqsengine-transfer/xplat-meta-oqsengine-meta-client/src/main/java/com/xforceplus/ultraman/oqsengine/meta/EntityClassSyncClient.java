@@ -45,7 +45,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
 
     private Thread observerStreamMonitorThread;
 
-    private static volatile boolean isShutdown = false;
+
 
     @PostConstruct
     @Override
@@ -55,8 +55,6 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
         if (!client.opened()) {
             throw new MetaSyncClientException("client stub create failed.", true);
         }
-
-        isShutdown = false;
 
         /**
          * 启动observerStream监控, 启动一个新的线程进行stream的监听
@@ -72,7 +70,6 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
 
     @Override
     public void stop() {
-        isShutdown = true;
 
         requestHandler.stop();
 
@@ -84,9 +81,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
         logger.info("entityClassSyncClient stop.");
     }
 
-    public static boolean isShutDown() {
-        return isShutdown;
-    }
+
 
     /**
      * observerStream监控
@@ -95,7 +90,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
         /**
          * 当发生断流时，将会重新进行stream的创建.
          */
-        while (!isShutDown()) {
+        while (!requestHandler.isShutDown()) {
             CountDownLatch countDownLatch = new CountDownLatch(1);
 
             StreamObserver<EntityClassSyncRequest> streamObserver = null;
@@ -126,7 +121,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
                 /**
                  * 设置服务可用
                  */
-                requestHandler.watchExecutor().onServe();
+                requestHandler.watchExecutor().active();
                 /**
                  * wait直到countDownLatch = 0;
                  */
@@ -136,12 +131,12 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
             /**
              * 设置服务不可用
              */
-            requestHandler.watchExecutor().offServe();
+            requestHandler.watchExecutor().inActive();
 
             /**
              * 如果是服务关闭，则直接跳出while循环
              */
-            if (isShutdown) {
+            if (requestHandler.isShutDown()) {
                 logger.warn("stream has broken due to client has been shutdown...");
             } else {
                 logger.warn("stream [{}] has broken, reCreate new stream after ({})ms..."

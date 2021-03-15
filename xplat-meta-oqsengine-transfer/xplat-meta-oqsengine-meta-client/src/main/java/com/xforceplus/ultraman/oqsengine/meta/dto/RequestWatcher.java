@@ -45,7 +45,7 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
         /**
          * 判断是否可用
          */
-        if (null != uid && isOnServe()) {
+        if (null != uid && isActive()) {
             try {
                 return uid.equals(this.uid());
             } catch (Exception e) {
@@ -56,5 +56,11 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
             }
         }
         return false;
+    }
+
+    @Override
+    public void release() {
+        uid = null;
+        super.release();
     }
 }

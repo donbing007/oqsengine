@@ -151,7 +151,7 @@ public class Condition implements Serializable {
 
     @Override
     public String toString() {
-        String code = entityClassRef != null ? entityClassRef.entityClassCode() : "";
+        String code = entityClassRef != null ? entityClassRef.getCode() : "";
         StringBuilder buff = new StringBuilder();
         if (code.length() > 0) {
             buff.append(code).append(".");

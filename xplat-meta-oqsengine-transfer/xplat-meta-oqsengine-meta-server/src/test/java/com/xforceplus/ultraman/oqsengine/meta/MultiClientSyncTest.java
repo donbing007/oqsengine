@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.meta;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
 import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
 import com.xforceplus.ultraman.oqsengine.meta.mock.client.MockerSyncClient;
 import io.grpc.stub.StreamObserver;
@@ -10,6 +11,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -24,6 +27,8 @@ import static com.xforceplus.ultraman.oqsengine.meta.mock.MockEntityClassSyncRsp
  * @since : 1.8
  */
 public class MultiClientSyncTest extends BaseInit {
+
+    private Logger logger = LoggerFactory.getLogger(MultiClientSyncTest.class);
 
     private int testClientSize = 2;
     private StreamEvent[] streamEvents = new StreamEvent[testClientSize];
@@ -106,13 +111,12 @@ public class MultiClientSyncTest extends BaseInit {
          */
         for (int i = 1; i < testClientSize; i++) {
             int j = 0;
-            while (j  < i) {
+            while (j < i) {
                 expectedWatchers.get(privateTestDiffVersion + i).setVisitors(j);
-                j ++;
+                j++;
             }
         }
     }
-
 
     @Test
     public void pushTest() throws InterruptedException {
@@ -137,6 +141,7 @@ public class MultiClientSyncTest extends BaseInit {
             testByCondition(entry.getValue());
         }
     }
+
     private void assertEquals(WatchElement expected, WatchElement actual) {
         Assert.assertEquals(expected.getAppId(), actual.getAppId());
         Assert.assertEquals(expected.getEnv(), actual.getEnv());
@@ -147,7 +152,7 @@ public class MultiClientSyncTest extends BaseInit {
     private void assertNotEquals(WatchElement expected, WatchElement actual) {
         Assert.assertTrue(
                 !expected.getAppId().equals(actual.getAppId()) ||
-                         !expected.getEnv().equals(actual.getEnv()) ||
+                        !expected.getEnv().equals(actual.getEnv()) ||
                         expected.getVersion() != actual.getVersion()
         );
     }
@@ -160,16 +165,17 @@ public class MultiClientSyncTest extends BaseInit {
         String expectedEnv = watchElementVisitor.getWatchElement().getEnv();
         int expectedVersion = watchElementVisitor.getWatchElement().getVersion() + 1;
         syncResponseHandler.push(new AppUpdateEvent("mock", expectedAppId, expectedEnv, expectedVersion,
-                            entityClassSyncRspProtoGenerator(new Random().nextLong())));
+                entityClassSyncRspProtoGenerator(new Random().nextLong())));
 
         Thread.sleep(1000);
         for (int i = 0; i < testClientSize; i++) {
-            WatchElement w = streamEvents[i].getMockerSyncClient().getSuccess();
+            WatchElement w = streamEvents[i].getMockerSyncClient().getSuccess(expectedAppId);
             if (watchElementVisitor.getVisitors().contains(i)) {
                 assertEquals(new WatchElement(expectedAppId, expectedEnv, expectedVersion, null), w);
-            }
-            else {
-                assertNotEquals(new WatchElement(expectedAppId, expectedEnv, expectedVersion, null), w);
+            } else {
+                if (null != w) {
+                    assertNotEquals(new WatchElement(expectedAppId, expectedEnv, expectedVersion, null), w);
+                }
             }
         }
     }

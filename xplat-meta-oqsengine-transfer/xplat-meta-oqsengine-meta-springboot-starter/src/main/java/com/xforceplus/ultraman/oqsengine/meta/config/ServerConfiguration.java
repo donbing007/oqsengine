@@ -3,8 +3,10 @@ package com.xforceplus.ultraman.oqsengine.meta.config;
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncServer;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
+import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IResponseHandler;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import com.xforceplus.ultraman.oqsengine.meta.listener.EntityClassListener;
 import com.xforceplus.ultraman.oqsengine.meta.shutdown.IShutDown;
@@ -38,7 +40,7 @@ public class ServerConfiguration {
     }
 
     @Bean
-    public ResponseWatchExecutor watchExecutor() {
+    public IResponseWatchExecutor watchExecutor() {
         return new ResponseWatchExecutor();
     }
 
@@ -48,7 +50,7 @@ public class ServerConfiguration {
     }
 
     @Bean
-    public SyncResponseHandler entityClassProvider() {
+    public IResponseHandler responseHandler() {
         return new SyncResponseHandler();
     }
 

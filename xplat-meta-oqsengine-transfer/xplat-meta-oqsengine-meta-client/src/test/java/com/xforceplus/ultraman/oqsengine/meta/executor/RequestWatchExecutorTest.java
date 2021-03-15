@@ -118,7 +118,7 @@ public class RequestWatchExecutorTest extends BaseTest {
     }
 
     @Test
-    public void canAccessTest() {
+    public void isAliveTest() {
         String expectedId = requestWatchExecutor.watcher().uid();
         /**
          * on server, uid = expectedId
@@ -139,7 +139,7 @@ public class RequestWatchExecutorTest extends BaseTest {
          * off server, uid = expectedId
          * false
          */
-        requestWatchExecutor.offServe();
+        requestWatchExecutor.inActive();
         ret = requestWatchExecutor.isAlive(expectedId);
         Assert.assertFalse(ret);
 

@@ -12,4 +12,6 @@ import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor
  */
 public interface IObserverHandler<T, Q> extends IBasicSyncExecutor {
     void onNext(T t, Q q);
+
+    boolean isShutDown();
 }

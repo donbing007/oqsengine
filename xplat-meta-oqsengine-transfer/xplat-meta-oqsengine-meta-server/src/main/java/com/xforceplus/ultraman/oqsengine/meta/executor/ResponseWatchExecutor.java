@@ -52,7 +52,7 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     public void stop() {
         uidWatchers.forEach(
                 (k, v) -> {
-                    if (v.isOnServe()) {
+                    if (v.isActive()) {
                         v.release();
                     }
                 });
@@ -144,7 +144,10 @@ public class ResponseWatchExecutor implements IResponseWatchExecutor {
     public void release(String uid) {
         ResponseWatcher watcher = uidWatchers.remove(uid);
 
-        if (null != watcher) {
+        if (null != watcher && watcher.isActive()) {
+
+            watcher.inActive();
+
             watcher.release(() -> {
                 watcher.watches().forEach(
                         (k, v) -> {

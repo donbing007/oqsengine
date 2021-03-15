@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.listener;
 
 import com.xforceplus.ultraman.oqsengine.meta.dto.AppUpdateEvent;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IResponseHandler;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ public class EntityClassListener implements ApplicationListener<AppUpdateEvent> 
     private Logger logger = LoggerFactory.getLogger(EntityClassListener.class);
 
     @Resource
-    private SyncResponseHandler responseHandler;
+    private IResponseHandler responseHandler;
 
     @Override
     public void onApplicationEvent(AppUpdateEvent event) {

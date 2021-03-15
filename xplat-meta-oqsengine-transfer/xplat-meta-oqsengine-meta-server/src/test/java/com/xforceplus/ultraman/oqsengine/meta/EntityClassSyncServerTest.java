@@ -3,16 +3,23 @@ package com.xforceplus.ultraman.oqsengine.meta;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
+import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import com.xforceplus.ultraman.oqsengine.meta.mock.client.MockerSyncClient;
 import io.grpc.stub.StreamObserver;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import static com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils.wakeupAfter;
 
 /**
  * desc :
@@ -24,16 +31,18 @@ import java.util.UUID;
  */
 public class EntityClassSyncServerTest extends BaseInit {
 
+    private Logger logger = LoggerFactory.getLogger(EntityClassSyncServerTest.class);
+
     private MockerSyncClient mockerSyncClient;
 
     @Before
     public void before() throws InterruptedException {
 
         String host = "localhost";
-        int port = 8899;
+        int port = 8999;
 
         initServer(port);
-        Thread.sleep(1_000);
+        Thread.sleep(3_000);
 
         mockerSyncClient = initClient(host, port);
     }
@@ -101,7 +110,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         /**
          * 检查结果，最大3秒
          */
-        waitForResult(3, expectedVersion);
+        waitForResult(3, expectedVersion, appId);
 
         /**
          * 当前版本小于元数据版本，将进入
@@ -111,7 +120,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         entityClassGenerator.reset(expectedVersion, entityId);
         observer.onNext(buildRequest(new WatchElement(appId, env, version + 2, null), uid, RequestStatus.REGISTER));
 
-        waitForResult(3, expectedVersion);
+        waitForResult(3, expectedVersion, appId);
 
         /**
          * 当前版本更新成功
@@ -131,30 +140,74 @@ public class EntityClassSyncServerTest extends BaseInit {
         Integer v = responseWatchExecutor.version(appId, env);
         Assert.assertNull(v);
 
+
+    }
+
+    @Test
+    public void syncFailTest() throws InterruptedException {
+        StreamObserver<EntityClassSyncRequest> observer = mockerSyncClient.responseEvent();
+        String uid = UUID.randomUUID().toString();
+        String appId = "syncFailTest";
+        String env = "test";
+        int version = 0;
+
+        int expectedVersion = version + 1;
+        long entityId = Long.MAX_VALUE - 1000;
+        entityClassGenerator.reset(expectedVersion, entityId);
+        observer.onNext(buildRequest(new WatchElement(appId, env, version, null), uid, RequestStatus.REGISTER));
+
         /**
          * 当前版本更新失败
          * check服务端3秒内重新推一个新版本数据
          */
-        resetVersion = version + 5;
+        Thread t = ThreadUtils.create(() -> {
+            while (true) {
+                try {
+                    EntityClassSyncRequest request = EntityClassSyncRequest.newBuilder()
+                            .setUid(uid)
+                            .setAppId(appId)
+                            .setStatus(RequestStatus.HEARTBEAT.ordinal())
+                            .setEnv(env)
+                            .build();
+
+                    observer.onNext(request);
+
+                    logger.debug("send heartbeat, uid [{}]", uid);
+                } catch (Exception e) {
+
+                }
+                wakeupAfter(5_000, TimeUnit.MILLISECONDS);
+            }
+        });
+
+        t.start();
+
+        int resetVersion = expectedVersion + 1;
         entityClassGenerator.reset(resetVersion, entityId);
+        syncResponseHandler.pull(uid, new WatchElement(appId, env, resetVersion - 1, null), RequestStatus.SYNC_OK);
+
+        Thread.sleep(5_000);
+
         observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), uid, RequestStatus.SYNC_FAIL));
-        waitForResult(3, resetVersion);
+
+        waitForResult(40, resetVersion, appId);
+        ThreadUtils.shutdown(t, 1);
     }
 
-    private void waitForResult(int maxWaitLoops, int version) throws InterruptedException {
+    private void waitForResult(int maxWaitLoops, int version, String appId) throws InterruptedException {
         int currentWait = 0;
         while (currentWait < maxWaitLoops) {
-            if (null == mockerSyncClient.getSuccess()) {
-                Thread.sleep(1_000);
+            WatchElement w = mockerSyncClient.getSuccess(appId);
+            if (null != w && version == w.getVersion()) {
+                break;
             }
             currentWait++;
+            Thread.sleep(1_000);
         }
-        WatchElement w = mockerSyncClient.getSuccess();
 
-        Assert.assertNotNull(w);
-        Assert.assertEquals(version, w.getVersion());
+        Assert.assertNotEquals(currentWait, maxWaitLoops);
 
-        mockerSyncClient.releaseSuccess();
+        mockerSyncClient.releaseSuccess(appId);
     }
 
 }

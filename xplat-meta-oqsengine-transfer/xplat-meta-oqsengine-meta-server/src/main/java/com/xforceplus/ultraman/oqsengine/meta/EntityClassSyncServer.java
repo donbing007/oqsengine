@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.handler.IResponseHandler;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
@@ -25,7 +26,7 @@ public class EntityClassSyncServer extends EntityClassSyncGrpc.EntityClassSyncIm
     private Logger logger = LoggerFactory.getLogger(EntityClassSyncServer.class);
 
     @Resource
-    private SyncResponseHandler responseHandler;
+    private IResponseHandler responseHandler;
 
     @Override
     public void start() {
