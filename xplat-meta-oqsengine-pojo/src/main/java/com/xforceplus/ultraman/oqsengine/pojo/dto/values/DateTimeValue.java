@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -15,6 +17,8 @@ import java.util.Objects;
  */
 public class DateTimeValue extends AbstractValue<LocalDateTime> {
 
+    private Logger logger = LoggerFactory.getLogger(DateTimeValue.class);
+
     /**
      * 格式化时使用的时区.
      */
@@ -25,14 +29,23 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
     }
 
     @Override
-    public long valueToLong() {
-        Instant instant = getValue().atZone(zoneId).toInstant();
-        return instant.toEpochMilli();
+    LocalDateTime fromString(String value) {
+        try {
+            long timestamp = Long.parseLong(value);
+            LocalDateTime time =
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), zoneId);
+
+            return time;
+        } catch(Exception ex){
+            logger.error("{}", ex);
+            return null;
+        }
     }
 
     @Override
-    public boolean compareByString() {
-        return false;
+    public long valueToLong() {
+        Instant instant = getValue().atZone(zoneId).toInstant();
+        return instant.toEpochMilli();
     }
 
     @Override
@@ -53,6 +66,16 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
 
         return Objects.equals(getField(), that.getField()) &&
             Objects.equals(this.getValue(), that.getValue());
+    }
+
+    @Override
+    public IValue<LocalDateTime> shallowClone()  {
+        return new DateTimeValue(this.getField(), getValue());
+    }
+
+    @Override
+    public boolean compareByString() {
+        return false;
     }
 
     @Override

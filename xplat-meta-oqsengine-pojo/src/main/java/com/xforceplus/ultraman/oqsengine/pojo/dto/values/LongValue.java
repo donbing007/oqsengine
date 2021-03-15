@@ -21,6 +21,11 @@ public class LongValue extends AbstractValue<Long> {
     }
 
     @Override
+    Long fromString(String value) {
+        return value == null ? null : Long.parseLong(value);
+    }
+
+    @Override
     public long valueToLong() {
         return getValue();
     }
@@ -43,6 +48,11 @@ public class LongValue extends AbstractValue<Long> {
 
         return Objects.equals(getField(), that.getField()) &&
             Objects.equals(this.getValue(), that.getValue());
+    }
+
+    @Override
+    public IValue<Long> shallowClone(){
+        return new LongValue(this.getField(), getValue());
     }
 
     @Override

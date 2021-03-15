@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.changelog.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldLikeRelationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
@@ -411,10 +412,21 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
     //TODO how to update internal state
     private void updateEntityDomainState(List<ChangeValue> changeValues){
         changeValues.forEach(x -> {
-
-            Optional<IValue> value = entityDomain.getEntity().entityValue().getValue(x.getFieldId());
+            IEntityValue entityValue = entityDomain.getEntity().entityValue();
+            Optional<IValue> value = entityValue.getValue(x.getFieldId());
             if(value.isPresent()){
-
+                //has old value
+                //TODO copy value
+                IValue iValue = value.get().shallowClone();
+                iValue.setValue(x.getRawValue());
+                entityValue.addValue(iValue);
+            } else {
+                Optional<IEntityField> field = entityClass.field(x.getFieldId());
+                if(field.isPresent()){
+                    IEntityField targetField = field.get();
+                    Optional<IValue> iValue = targetField.type().toTypedValue(targetField, x.getRawValue());
+                    iValue.ifPresent(entityValue::addValue);
+                }
             }
         });
     }
