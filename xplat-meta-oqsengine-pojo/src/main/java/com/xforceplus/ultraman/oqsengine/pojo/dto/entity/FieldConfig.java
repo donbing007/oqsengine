@@ -54,6 +54,42 @@ public class FieldConfig implements Serializable {
         }
     }
 
+    public enum FuzzyType {
+        UNKNOWN(0),
+        /**
+         * 不作处理
+         */
+        NOT(1),
+        /**
+         * 通配符
+         */
+        WILDCARD(2),
+        /**
+         * 分词
+         */
+        SEGMENTATION(3);
+
+        private int symbol;
+
+        private FuzzyType(int symbol) {
+            this.symbol = symbol;
+        }
+
+        public int getSymbol() {
+            return symbol;
+        }
+
+        public static FuzzyType getInstance(int symbol) {
+            for (FuzzyType sense : FuzzyType.values()) {
+                if (sense.getSymbol() == symbol) {
+                    return sense;
+                }
+            }
+
+            return null;
+        }
+    }
+
     /**
      * 是否可搜索.true 可搜索,false 不可搜索.
      */
@@ -114,6 +150,9 @@ public class FieldConfig implements Serializable {
 
     @JsonProperty(value = "displayType")
     private String displayType = "";
+
+    @JsonProperty(value = "fuzzyType")
+    private FuzzyType fuzzyType = FuzzyType.UNKNOWN;
 
     /**
      * 创建一个新的 FieldConfig.
