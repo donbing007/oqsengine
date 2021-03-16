@@ -1,7 +1,9 @@
-package com.xforceplus.ultraman.oqsengine.changelog.storage;
+package com.xforceplus.ultraman.oqsengine.changelog.storage.write.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeSnapshot;
+import com.xforceplus.ultraman.oqsengine.changelog.storage.write.SnapshotStorage;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import io.vavr.control.Either;
 
 import javax.annotation.Resource;
@@ -16,6 +18,9 @@ public class SQLSnapshotStorage implements SnapshotStorage {
 
     @Resource(name = "changelogDataSource")
     private DataSource changelogDatasource;
+
+    @Resource(name = "snowFlakeIdGenerator")
+    private LongIdGenerator snowFlakeIdGenerator;
 
     @Resource
     private ObjectMapper mapper;
@@ -34,7 +39,7 @@ public class SQLSnapshotStorage implements SnapshotStorage {
     public Either<SQLException, Integer> saveSnapshot(ChangeSnapshot changeSnapshot) {
         try {
             int result = new SnapshotStorageCommand(tableName, mapper)
-                    .saveSnapshot(changelogDatasource, changeSnapshot);
+                    .saveSnapshot(changelogDatasource, snowFlakeIdGenerator, changeSnapshot);
             return Either.right(result);
         } catch (SQLException e) {
             return Either.left(e);

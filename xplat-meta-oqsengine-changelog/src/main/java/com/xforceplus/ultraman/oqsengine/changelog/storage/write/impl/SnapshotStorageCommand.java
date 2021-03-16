@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.changelog.storage;
+package com.xforceplus.ultraman.oqsengine.changelog.storage.write.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeSnapshot;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeValue;
 import com.xforceplus.ultraman.oqsengine.changelog.sql.SQL;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,11 +87,11 @@ public class SnapshotStorageCommand {
         }
     }
 
-    public int saveSnapshot(DataSource dataSource, ChangeSnapshot changeSnapshot) throws SQLException {
+    public int saveSnapshot(DataSource dataSource, LongIdGenerator longIdGenerator, ChangeSnapshot changeSnapshot) throws SQLException {
         String sql = String.format(SQL.SAVE_SNAPSHOT, tableName);
         Connection connection = dataSource.getConnection();
         try {
-            save(connection, sql, changeSnapshot);
+            save(connection, sql, longIdGenerator, changeSnapshot);
         } finally {
             connection.close();
         }
@@ -98,9 +99,9 @@ public class SnapshotStorageCommand {
         return 1;
     }
 
-    private int save(Connection connection, String sql, ChangeSnapshot changeSnapshot) throws SQLException {
+    private int save(Connection connection, String sql, LongIdGenerator longIdGenerator, ChangeSnapshot changeSnapshot) throws SQLException {
         try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setLong(1, changeSnapshot.getsId());
+            st.setLong(1, longIdGenerator.next());
 
             st.setLong(2, changeSnapshot.getId());
             // entityClassId

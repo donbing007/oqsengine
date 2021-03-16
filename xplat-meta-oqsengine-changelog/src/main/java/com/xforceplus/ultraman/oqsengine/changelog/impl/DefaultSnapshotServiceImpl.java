@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.changelog.impl;
 
 import com.xforceplus.ultraman.oqsengine.changelog.SnapshotService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeSnapshot;
-import com.xforceplus.ultraman.oqsengine.changelog.storage.SnapshotStorage;
+import com.xforceplus.ultraman.oqsengine.changelog.storage.write.SnapshotStorage;
 
 import javax.annotation.Resource;
 import java.util.Optional;

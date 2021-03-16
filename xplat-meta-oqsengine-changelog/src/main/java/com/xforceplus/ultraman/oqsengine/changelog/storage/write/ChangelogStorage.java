@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.changelog.storage;
+package com.xforceplus.ultraman.oqsengine.changelog.storage.write;
 
 import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
 import io.vavr.control.Either;

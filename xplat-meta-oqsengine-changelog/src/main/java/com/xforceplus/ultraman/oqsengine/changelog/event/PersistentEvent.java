@@ -31,4 +31,11 @@ public class PersistentEvent implements ChangelogEvent{
     public Map<String, Object> getContext() {
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "PersistentEvent{" +
+                "changelog=" + changelog +
+                '}';
+    }
 }

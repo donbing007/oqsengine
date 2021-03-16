@@ -23,4 +23,11 @@ public class SnapshotEvent implements ChangelogEvent{
     public Map<String, Object> getContext() {
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "SnapshotEvent{" +
+                "changeSnapshot=" + changeSnapshot +
+                '}';
+    }
 }

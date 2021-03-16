@@ -64,6 +64,7 @@ public class ChangelogExample {
                                         .Builder
                                         .anOqsRelation()
                                         .withRelationType("onetoone")
+                                        .withName("A_B")
                                         .withEntityClassId(B_Class)
                                         .withId(A_B_OTO)
                                         .withIdentity(true)
@@ -109,7 +110,8 @@ public class ChangelogExample {
         idMapping.put(1L, A);
         idMapping.put(2L, B);
 
-        build(1000_000, changelogs);
+//        build(10, changelogs);
+        buildFix(changelogs);
     }
 
 
@@ -127,6 +129,11 @@ public class ChangelogExample {
                 changelogs.add(addRelABChangelog());
             }
         }
+    }
+
+    public void buildFix(List<Changelog> changelogs){
+        changelogs.add(genAChangelog());
+        changelogs.add(addRelABChangelog());
     }
 
 

@@ -30,4 +30,12 @@ public class VersionEvent implements ChangelogEvent{
     public Map<String, Object> getContext() {
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "VersionEvent{" +
+                "objId=" + objId +
+                ", changeVersion=" + changeVersion +
+                '}';
+    }
 }

@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.changelog.storage;
+package com.xforceplus.ultraman.oqsengine.changelog.storage.write.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeValue;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
 import com.xforceplus.ultraman.oqsengine.changelog.sql.SQL;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +92,7 @@ public class ChangelogStorageCommand {
      * @return
      * @throws SQLException
      */
-    public int saveChangelog(DataSource dataSource, List<Changelog> changelogList) throws SQLException{
+    public int saveChangelog(DataSource dataSource, LongIdGenerator longIdGenerator, List<Changelog> changelogList) throws SQLException{
 
         String sql = String.format(SQL.SAVE_SQL, tableName);
 
@@ -99,7 +100,7 @@ public class ChangelogStorageCommand {
         try {
             changelogList.forEach(x -> {
                 try {
-                    save(connection, sql, x);
+                    save(connection, longIdGenerator, sql, x);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -111,10 +112,10 @@ public class ChangelogStorageCommand {
         return 1;
     }
 
-    private int save(Connection connection, String sql, Changelog changelog) throws SQLException {
+    private int save(Connection connection, LongIdGenerator longIdGenerator, String sql, Changelog changelog) throws SQLException {
         try (PreparedStatement st = connection.prepareStatement(sql)) {
 
-            st.setLong(1, changelog.getcId());
+            st.setLong(1, longIdGenerator.next());
 
             st.setLong(2, changelog.getId());
             // entityClassId

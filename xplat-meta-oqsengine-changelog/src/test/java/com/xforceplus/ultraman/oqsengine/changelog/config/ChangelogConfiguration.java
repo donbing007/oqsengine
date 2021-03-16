@@ -2,12 +2,14 @@ package com.xforceplus.ultraman.oqsengine.changelog.config;
 
 import com.xforceplus.ultraman.oqsengine.changelog.ChangelogService;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeSnapshot;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
 import com.xforceplus.ultraman.oqsengine.changelog.impl.DefaultChangelogImpl;
 import com.xforceplus.ultraman.oqsengine.changelog.impl.ReplayServiceImpl;
 import com.xforceplus.ultraman.oqsengine.changelog.relation.ManyToOneRelationChangelog;
 import com.xforceplus.ultraman.oqsengine.changelog.relation.RelationAwareChangelog;
-import com.xforceplus.ultraman.oqsengine.changelog.storage.ChangelogStorage;
+import com.xforceplus.ultraman.oqsengine.changelog.storage.write.ChangelogStorage;
+import com.xforceplus.ultraman.oqsengine.changelog.storage.write.SnapshotStorage;
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -68,7 +70,6 @@ public class ChangelogConfiguration {
         };
     }
 
-
     @Bean
     public LongIdGenerator versionIdGenerator(){
 
@@ -87,6 +88,21 @@ public class ChangelogConfiguration {
             @Override
             public Long next() {
                 return atomicLong.getAndIncrement();
+            }
+        };
+    }
+
+    @Bean
+    public SnapshotStorage snapshotStorage(){
+        return new SnapshotStorage() {
+            @Override
+            public Either<SQLException, Integer> saveSnapshot(ChangeSnapshot changeSnapshot) {
+                return null;
+            }
+
+            @Override
+            public Optional<ChangeSnapshot> query(long objId, long version) {
+                return Optional.empty();
             }
         };
     }

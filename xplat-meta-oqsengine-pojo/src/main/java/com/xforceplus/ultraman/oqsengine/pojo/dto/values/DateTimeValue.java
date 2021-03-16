@@ -30,6 +30,8 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
 
     @Override
     LocalDateTime fromString(String value) {
+        if(value == null)
+            return null;
         try {
             long timestamp = Long.parseLong(value);
             LocalDateTime time =

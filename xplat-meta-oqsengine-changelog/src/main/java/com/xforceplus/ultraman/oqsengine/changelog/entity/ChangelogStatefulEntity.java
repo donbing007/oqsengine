@@ -82,7 +82,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
                 persistentEvent.ifPresent(retList::add);
                 retList.addAll(genPropagationEvent(changedEvent, context));
                 retList.add(genVersionEvent(changedEvent));
-                retList.add(genSnapshotVersionEvent());
+                genSnapshotVersionEvent().ifPresent(retList::add);
             }
         } else {
             logger.error("Unknown Command {}", input);
@@ -94,30 +94,34 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
      * very important
      * @return
      */
-    private SnapshotEvent genSnapshotVersionEvent() {
-
-        ChangeSnapshot changeSnapshot = new ChangeSnapshot();
-        /**
-         *     private long version;
-         *     private long sId;
-         *     private long id;
-         *     private long createTime;
-         *     private List<ChangeValue> changeValues;
-         *     private Map<Long, List<Long>> referenceMap;
-         *     private long entityClass;
-         */
-        changeSnapshot.setVersion(currentVersion);
-        changeSnapshot.setId(id);
-        Map<Long, List<Long>> referenceMap = new HashMap<>();
-        entityDomain.getReferenceMap().forEach((a, b) -> {
-            referenceMap.put(a.getEntityField().id(), b);
-        });
-        changeSnapshot.setReferenceMap(referenceMap);
-        changeSnapshot.setChangeValues(stateToChangeValue());
-        changeSnapshot.setVersion(currentVersion);
-        changeSnapshot.setEntityClass(entityClass.id());
-        changeSnapshot.setCreateTime(new DateTimeValue(null, LocalDateTime.now()).valueToLong());
-        return new SnapshotEvent(changeSnapshot);
+    private Optional<SnapshotEvent> genSnapshotVersionEvent() {
+        if(count >= snapshotThreshold){
+            logger.warn("Trigger snapshot on {}", id);
+            ChangeSnapshot changeSnapshot = new ChangeSnapshot();
+            /**
+             *     private long version;
+             *     private long sId;
+             *     private long id;
+             *     private long createTime;
+             *     private List<ChangeValue> changeValues;
+             *     private Map<Long, List<Long>> referenceMap;
+             *     private long entityClass;
+             */
+            changeSnapshot.setVersion(currentVersion);
+            changeSnapshot.setId(id);
+            Map<Long, List<Long>> referenceMap = new HashMap<>();
+            entityDomain.getReferenceMap().forEach((a, b) -> {
+                referenceMap.put(a.getEntityField().id(), b);
+            });
+            changeSnapshot.setReferenceMap(referenceMap);
+            changeSnapshot.setChangeValues(stateToChangeValue());
+            changeSnapshot.setVersion(currentVersion);
+            changeSnapshot.setEntityClass(entityClass.id());
+            changeSnapshot.setCreateTime(new DateTimeValue(null, LocalDateTime.now()).valueToLong());
+            return Optional.of(new SnapshotEvent(changeSnapshot));
+        } else {
+            return Optional.empty();
+        }
     }
 
     private List<ChangeValue> stateToChangeValue(){
@@ -149,6 +153,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
         changeVersion.setComment(changedEvent.getComment());
         changeVersion.setId(entityDomain.getId());
         changeVersion.setSource(changedEvent.getId());
+        changeVersion.setUsername(changedEvent.getUsername());
         return new VersionEvent(id, changeVersion);
     }
 
@@ -552,7 +557,14 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
 
         Sets.union(beforeIds, afterIds).forEach(id -> {
             IValue beforeValue = before.get(id);
-            IValue afterValue = after.get(id);
+
+            IValue afterValue;
+            if(after.containsKey(id)) {
+                afterValue = after.get(id);
+            } else {
+                // no contains
+                return;
+            }
 
             ChangeValue changeValue = new ChangeValue();
             changeValue.setFieldId(id);
@@ -581,5 +593,18 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
             }
         });
         return changeValues;
+    }
+
+    @Override
+    public String toString() {
+        return "ChangelogStatefulEntity{" +
+                "count=" + count +
+                ", currentVersion=" + currentVersion +
+                ", id=" + id +
+                ", entityDomain=" + entityDomain +
+                ", entityClass=" + entityClass +
+                ", metaManager=" + metaManager +
+                ", snapshotThreshold=" + snapshotThreshold +
+                '}';
     }
 }

@@ -114,6 +114,11 @@ public class ChangelogHelper {
      * @return
      */
     public static String serialize(IValue value){
+
+        if(value == null || value.getValue() == null){
+            return null;
+        }
+
         if(value instanceof StringValue
                 || value instanceof StringsValue
                 || value instanceof DecimalValue

@@ -3,8 +3,8 @@ package com.xforceplus.ultraman.oqsengine.changelog.impl;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.*;
 import com.xforceplus.ultraman.oqsengine.changelog.entity.ChangelogStatefulEntity;
-import com.xforceplus.ultraman.oqsengine.changelog.storage.ChangelogStorage;
-import com.xforceplus.ultraman.oqsengine.changelog.storage.SnapshotStorage;
+import com.xforceplus.ultraman.oqsengine.changelog.storage.write.ChangelogStorage;
+import com.xforceplus.ultraman.oqsengine.changelog.storage.write.SnapshotStorage;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -20,7 +20,6 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -383,8 +382,11 @@ public class ReplayServiceImpl implements ReplayService {
             }
         });
 
+        /**
+         * store relation field in reference map
+         */
         Optional.ofNullable(entityClass.oqsRelations()).orElse(Collections.emptyList()).forEach(rel -> {
-            if (rel.getFieldOwner() != entityClass.id()) {
+//            if (rel.getFieldOwner() != entityClass.id()) {
                 //current entityClass do not have this field
                 List<ChangeValue> changeValues = finalMappedValue.get(rel.getEntityField().id());
                 if (isReferenceSetInCurrentView(rel, entityClass.id())) {
@@ -411,7 +413,7 @@ public class ReplayServiceImpl implements ReplayService {
                         referenceMap.put(rel, Collections.singletonList(value.valueToLong()));
                     }
                 }
-            }
+//           }
         });
         return entityDomain;
     }

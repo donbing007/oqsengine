@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.*;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.relation.RelationAwareChangelog;
-import com.xforceplus.ultraman.oqsengine.changelog.storage.ChangelogStorage;
+import com.xforceplus.ultraman.oqsengine.changelog.storage.write.ChangelogStorage;
 import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;

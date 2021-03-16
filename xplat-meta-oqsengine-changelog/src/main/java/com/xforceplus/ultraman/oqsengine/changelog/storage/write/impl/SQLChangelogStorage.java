@@ -1,7 +1,9 @@
-package com.xforceplus.ultraman.oqsengine.changelog.storage;
+package com.xforceplus.ultraman.oqsengine.changelog.storage.write.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
+import com.xforceplus.ultraman.oqsengine.changelog.storage.write.ChangelogStorage;
+import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import io.vavr.control.Either;
 
 import javax.annotation.Resource;
@@ -9,6 +11,7 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -18,6 +21,9 @@ public class SQLChangelogStorage implements ChangelogStorage {
 
     @Resource(name = "changelogDataSource")
     private DataSource changelogDatasource;
+
+    @Resource(name = "snowFlakeIdGenerator")
+    private LongIdGenerator snowFlakeIdGenerator;
 
     @Resource
     private ObjectMapper mapper;
@@ -35,7 +41,8 @@ public class SQLChangelogStorage implements ChangelogStorage {
     @Override
     public Either<SQLException, Integer> saveBatch(List<Changelog> changeLogs) {
         try {
-            int result = new ChangelogStorageCommand(table, mapper).saveChangelog(changelogDatasource, changeLogs);
+            int result = new ChangelogStorageCommand(table, mapper)
+                    .saveChangelog(changelogDatasource, snowFlakeIdGenerator, changeLogs);
             return Either.right(result);
         } catch (SQLException e) {
             return Either.left(e);

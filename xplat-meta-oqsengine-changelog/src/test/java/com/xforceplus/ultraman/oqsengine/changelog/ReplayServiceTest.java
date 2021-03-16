@@ -1,20 +1,33 @@
 package com.xforceplus.ultraman.oqsengine.changelog;
 
+import com.xforceplus.ultraman.oqsengine.changelog.command.AddChangelog;
 import com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogConfiguration;
 import com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogExample;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityAggDomain;
+import com.xforceplus.ultraman.oqsengine.changelog.entity.ChangelogStatefulEntity;
+import com.xforceplus.ultraman.oqsengine.changelog.event.ChangelogEvent;
+import com.xforceplus.ultraman.oqsengine.common.hash.Hash;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogExample.A_Class;
-import static com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogExample.A_ObjId;
+import static com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogExample.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = ChangelogConfiguration.class)
@@ -72,5 +85,43 @@ public class ReplayServiceTest {
             return a;
         });
         System.out.println(reduce.get());
+    }
+
+    @Test
+    public void testReplayEntity(){
+        long startTime = System.currentTimeMillis();
+        Optional<ChangelogStatefulEntity> changelogStatefulEntity = replayService.replayStatefulEntity(1, 1000001L);
+        System.out.println(System.currentTimeMillis() - startTime);
+        ChangelogStatefulEntity statefulEntity = changelogStatefulEntity.get();
+        System.out.println(statefulEntity);
+
+
+        Changelog changelog = example.genAChangelog();
+
+        ChangedEvent changedEvent = genChangedEvent(changelog);
+
+        List<ChangelogEvent> receive = statefulEntity.receive(new AddChangelog(1000001L, 1, changedEvent), new HashMap<>());
+
+        receive.forEach(System.out::println);
+    }
+
+    //TODO
+    private ChangedEvent genChangedEvent(Changelog changelog){
+        ChangedEvent changedEvent = new ChangedEvent();
+        changedEvent.setCommitId(changelog.getVersion());
+        changedEvent.setCommitId(changelog.getVersion());
+        changedEvent.setEntityClassId(changelog.getEntityClass());
+        changedEvent.setOperationType(OperationType.UPDATE);
+        changedEvent.setId(changelog.getId());
+        changedEvent.setTimestamp(changelog.getCreateTime());
+        Map<Long, IValue> mapValue = new HashMap<>();
+//        Optional<IEntityField> field = example.A.field(A_B_OTO);
+        Optional<IEntityField> field1 = example.A.field(A_Field1);
+//        mapValue.put(A_B_OTO, new LongValue(field.get(), 22222L));
+        mapValue.put(A_Field1, new StringValue(field1.get(), "abc"));
+        changedEvent.setValueMap(mapValue);
+        changedEvent.setUsername("luye");
+        changedEvent.setComment("Test Outer");
+        return changedEvent;
     }
 }

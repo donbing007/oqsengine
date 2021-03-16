@@ -59,4 +59,15 @@ public class EntityDomain {
     public long getVersion() {
         return version;
     }
+
+    @Override
+    public String toString() {
+        return "EntityDomain{" +
+                "id=" + id +
+                ", version=" + version +
+                ", count=" + count +
+                ", entity=" + entity +
+                ", referenceMap=" + referenceMap +
+                '}';
+    }
 }
