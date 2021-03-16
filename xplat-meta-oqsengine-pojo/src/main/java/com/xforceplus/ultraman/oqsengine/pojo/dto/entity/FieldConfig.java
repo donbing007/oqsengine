@@ -54,6 +54,10 @@ public class FieldConfig implements Serializable {
         }
     }
 
+    /**
+     * 模糊类型.
+     * 数字只允许NOT.
+     */
     public enum FuzzyType {
         UNKNOWN(0),
         /**
@@ -80,9 +84,9 @@ public class FieldConfig implements Serializable {
         }
 
         public static FuzzyType getInstance(int symbol) {
-            for (FuzzyType sense : FuzzyType.values()) {
-                if (sense.getSymbol() == symbol) {
-                    return sense;
+            for (FuzzyType type : FuzzyType.values()) {
+                if (type.getSymbol() == symbol) {
+                    return type;
                 }
             }
 
@@ -152,7 +156,7 @@ public class FieldConfig implements Serializable {
     private String displayType = "";
 
     @JsonProperty(value = "fuzzyType")
-    private FuzzyType fuzzyType = FuzzyType.UNKNOWN;
+    private FuzzyType fuzzyType = FuzzyType.NOT;
 
     /**
      * 创建一个新的 FieldConfig.
@@ -211,6 +215,17 @@ public class FieldConfig implements Serializable {
     }
 
     /**
+     * 模糊类型.
+     *
+     * @param type
+     * @return
+     */
+    public FieldConfig fuzzyType(FuzzyType type) {
+        this.fuzzyType = type;
+        return this;
+    }
+
+    /**
      * 是否表示一个数据标识.
      *
      * @return true 数据标识,false 非数据标识.
@@ -246,7 +261,7 @@ public class FieldConfig implements Serializable {
         return min;
     }
 
-    public int getPrecision() {
+    public int precision() {
         return precision;
     }
 
@@ -305,6 +320,13 @@ public class FieldConfig implements Serializable {
         return this;
     }
 
+    public FuzzyType getFuzzyType() {
+        return fuzzyType;
+    }
+
+    public int getPrecision() {
+        return precision;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -318,7 +340,7 @@ public class FieldConfig implements Serializable {
         return isSearchable() == that.isSearchable() &&
             getMax() == that.getMax() &&
             getMin() == that.getMin() &&
-            getPrecision() == that.getPrecision() &&
+            precision() == that.precision() &&
             isIdentifie() == that.isIdentifie() &&
             isRequired() == that.isRequired() &&
             isSplittable() == that.isSplittable() &&
@@ -334,7 +356,7 @@ public class FieldConfig implements Serializable {
             isSearchable(),
             getMax(),
             getMin(),
-            getPrecision(),
+            precision(),
             isIdentifie(),
             isRequired(),
             getFieldSense(),
@@ -362,9 +384,6 @@ public class FieldConfig implements Serializable {
         return sb.toString();
     }
 
-    /**
-     * Builder
-     */
     public static final class Builder {
         private boolean searchable = false;
         private long max = Long.MAX_VALUE;
@@ -372,88 +391,94 @@ public class FieldConfig implements Serializable {
         private int precision = 0;
         private boolean identifie = false;
         private boolean required = false;
-        private FieldSense fieldSense = FieldSense.UNKNOWN;
+        private FieldSense fieldSense = FieldSense.NORMAL;
         private String validateRegexString = "";
         private boolean splittable = false;
         private String delimiter = "";
         private String displayType = "";
+        private FuzzyType fuzzyType = FuzzyType.NOT;
 
         private Builder() {
         }
 
-        public static FieldConfig.Builder anFieldConfig() {
-            return new FieldConfig.Builder();
+        public static Builder aFieldConfig() {
+            return new Builder();
         }
 
-        public FieldConfig.Builder withSearchable(boolean searchable) {
+        public Builder withSearchable(boolean searchable) {
             this.searchable = searchable;
             return this;
         }
 
-        public FieldConfig.Builder withMax(long max) {
+        public Builder withMax(long max) {
             this.max = max;
             return this;
         }
 
-        public FieldConfig.Builder withMin(long min) {
+        public Builder withMin(long min) {
             this.min = min;
             return this;
         }
 
-        public FieldConfig.Builder withPrecision(int precision) {
+        public Builder withPrecision(int precision) {
             this.precision = precision;
             return this;
         }
 
-        public FieldConfig.Builder withIdentifie(boolean identifie) {
+        public Builder withIdentifie(boolean identifie) {
             this.identifie = identifie;
             return this;
         }
 
-        public FieldConfig.Builder withRequired(boolean required) {
+        public Builder withRequired(boolean required) {
             this.required = required;
             return this;
         }
 
-        public FieldConfig.Builder withFieldSense(FieldSense fieldSense) {
+        public Builder withFieldSense(FieldSense fieldSense) {
             this.fieldSense = fieldSense;
             return this;
         }
 
-        public FieldConfig.Builder withValidateRegexString(String validateRegexString) {
+        public Builder withValidateRegexString(String validateRegexString) {
             this.validateRegexString = validateRegexString;
             return this;
         }
 
-        public FieldConfig.Builder withSplittable(boolean splittable) {
+        public Builder withSplittable(boolean splittable) {
             this.splittable = splittable;
             return this;
         }
 
-        public FieldConfig.Builder withDelimiter(String delimiter) {
+        public Builder withDelimiter(String delimiter) {
             this.delimiter = delimiter;
             return this;
         }
 
-        public FieldConfig.Builder withDisplayType(String displayType) {
+        public Builder withDisplayType(String displayType) {
             this.displayType = displayType;
+            return this;
+        }
+
+        public Builder withFuzzyType(FuzzyType fuzzyType) {
+            this.fuzzyType = fuzzyType;
             return this;
         }
 
         public FieldConfig build() {
             FieldConfig fieldConfig = new FieldConfig();
-            fieldConfig.searchable = searchable;
-            fieldConfig.max = max;
-            fieldConfig.min = min;
-            fieldConfig.precision = precision;
-            fieldConfig.identifie = identifie;
-            fieldConfig.required = required;
-            fieldConfig.fieldSense = fieldSense;
-            fieldConfig.validateRegexString = validateRegexString;
-            fieldConfig.splittable = splittable;
-            fieldConfig.delimiter = delimiter;
-            fieldConfig.displayType = displayType;
-
+            fieldConfig.max = this.max;
+            fieldConfig.required = this.required;
+            fieldConfig.identifie = this.identifie;
+            fieldConfig.splittable = this.splittable;
+            fieldConfig.fuzzyType = this.fuzzyType;
+            fieldConfig.validateRegexString = this.validateRegexString;
+            fieldConfig.min = this.min;
+            fieldConfig.searchable = this.searchable;
+            fieldConfig.fieldSense = this.fieldSense;
+            fieldConfig.precision = this.precision;
+            fieldConfig.delimiter = this.delimiter;
+            fieldConfig.displayType = this.displayType;
             return fieldConfig;
         }
     }
