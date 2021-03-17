@@ -1,12 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.devops.rebuild.storage;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.sql.SQL;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.OffsetSnapShot;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
 import org.slf4j.Logger;
@@ -45,6 +43,9 @@ public class TaskStorageCommand {
     }
 
     public Optional<IDevOpsTaskInfo> selectByUnique(DataSource dataSource, long taskId) throws SQLException {
+//        "select maintainid, entity, starts, ends, batchsize, " +
+//                "finishsize, status, createtime, updatetime, message, startId from %s " +
+//                "where maintainid = ?";
         String sql = String.format(SQL.SELECT_SQL_TASK_ID, tableName);
 
         try (Connection connection = dataSource.getConnection();
@@ -55,9 +56,9 @@ public class TaskStorageCommand {
         }
     }
 
-    public int resumeTask(DataSource dataSource, long taskId) throws SQLException {
-        //  "update %s set updatetime = ?, status = ?, message = ? " +
-        //            "where maintainid = ? and status not in (0, 1, 2)";
+    public int resumeTask(DataSource dataSource, long maintainid) throws SQLException {
+//        "update %s set updatetime = ?, status = ?, message = ? " +
+//                "where maintainid = ? and status not in (0, 1, 2)";
         String sql = String.format(SQL.RESUME_SQL, tableName);
 
         try (Connection connection = dataSource.getConnection();
@@ -67,9 +68,9 @@ public class TaskStorageCommand {
             //  Status
             st.setInt(2, BatchStatus.RUNNING.getCode());
             //  message
-            st.setString(3, "task recovering");
+            st.setString(3, "TASK RECOVERING");
             //  taskId
-            st.setLong(4, taskId);
+            st.setLong(4, maintainid);
 
             if (logger.isDebugEnabled()) {
                 logger.debug(st.toString());
@@ -80,7 +81,10 @@ public class TaskStorageCommand {
     }
 
     public Collection<IDevOpsTaskInfo> listActives(DataSource dataSource, Page page) throws SQLException {
+//        "select maintainid, entity, starts, ends, batchsize, " +
+//                "finishsize, status, createtime, updatetime, message, startid from %s where status in (0, 1) order by maintainid desc limit ?, ?";
         String selectSql = String.format(SQL.LIST_ACTIVES, tableName);
+//        "select count(1) from %s where status in (0, 1)";
         String countSql = String.format(SQL.COUNT_ACTIVES, tableName);
         return lists(dataSource, selectSql, countSql, page);
     }
@@ -164,6 +168,8 @@ public class TaskStorageCommand {
             st.setInt(7, taskInfo.getStatus());
             // batchCreateTime
             st.setLong(8, System.currentTimeMillis());
+            // startid
+            st.setLong(9, taskInfo.startId());
 
             if (logger.isDebugEnabled()) {
                 logger.debug(st.toString());
@@ -174,8 +180,8 @@ public class TaskStorageCommand {
     }
 
     public int update(DataSource dataSource, DevOpsTaskInfo taskInfo, BatchStatus status) throws SQLException {
-        //  "update %s set updatetime = ?, finishsize = ?, status = ?, message = ?, checkpoint = ? " +
-        //            "where maintainid = ? and status not in (2, 3, 4)";
+//        "update %s set updatetime = ?, finishsize = ?, status = ?, message = ?, startid = ? " +
+//                "where maintainid = ? and status not in (2, 3, 4)";
         String sql = String.format(SQL.UPDATE_SQL, tableName);
 
         try (Connection connection = dataSource.getConnection();
@@ -188,8 +194,8 @@ public class TaskStorageCommand {
             st.setInt(3, status.getCode());
             //  message
             st.setString(4, taskInfo.message());
-            //  checkpoint
-            st.setString(5, JSON.toJSONString(taskInfo.getOffsetSnapShot()));
+            //  startid
+            st.setLong(5, taskInfo.startId());
             //  taskId
             st.setLong(6, taskInfo.getMaintainid());
 
@@ -202,8 +208,8 @@ public class TaskStorageCommand {
     }
 
     public int error(DataSource dataSource, DevOpsTaskInfo taskInfo) throws SQLException {
-        //  "update %s set updatetime = ?, finishsize = ?, status = ?, message = ?, checkpoint = ? " +
-        //            "where maintainid = ? and status != 2";
+//        "update %s set updatetime = ?, finishsize = ?, status = ?, message = ?, startid = ? " +
+//                "where maintainid = ? and status != 2";
         String sql = String.format(SQL.ERROR_SQL, tableName);
 
         try (Connection connection = dataSource.getConnection();
@@ -216,8 +222,8 @@ public class TaskStorageCommand {
             st.setInt(3, taskInfo.getStatus());
             //  message
             st.setString(4, taskInfo.message());
-            //  checkpoint
-            st.setString(5, JSON.toJSONString(taskInfo.getOffsetSnapShot()));
+            //  startId
+            st.setLong(5, taskInfo.startId());
             //  taskId
             st.setLong(6, taskInfo.getMaintainid());
 
@@ -275,7 +281,7 @@ public class TaskStorageCommand {
             }
 
             if (rs.next()) {
-                return Optional.of(fillByResultSet(rs, true));
+                return Optional.of(fillByResultSet(rs));
             }
             return Optional.empty();
         }
@@ -289,13 +295,13 @@ public class TaskStorageCommand {
 
             Collection<IDevOpsTaskInfo> taskInfoList = new ArrayList<>();
             while (rs.next()) {
-                taskInfoList.add(fillByResultSet(rs, false));
+                taskInfoList.add(fillByResultSet(rs));
             }
             return taskInfoList;
         }
     }
 
-    private IDevOpsTaskInfo fillByResultSet(ResultSet rs, boolean withOffset) throws SQLException {
+    private IDevOpsTaskInfo fillByResultSet(ResultSet rs) throws SQLException {
 
         DevOpsTaskInfo taskInfo = new DevOpsTaskInfo(
                 rs.getLong("maintainid"),
@@ -309,14 +315,7 @@ public class TaskStorageCommand {
                 rs.getLong("updatetime"));
 
         taskInfo.resetMessage(rs.getString("message"));
-
-
-        if (withOffset) {
-            String offset = rs.getString("checkpoint");
-            if (null != offset) {
-                taskInfo.setOffsetSnapShot(JSONObject.parseObject(offset, OffsetSnapShot.class));
-            }
-        }
+        taskInfo.resetStartId(rs.getLong("startid"));
 
         return taskInfo;
     }

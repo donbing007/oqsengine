@@ -146,7 +146,7 @@ public class EntityClassManagerExecutorTest {
 
         EntityClassSyncResponse entityClassSyncResponse =
                 entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
-        mockRequestHandler.onNext(entityClassSyncResponse);
+        mockRequestHandler.onNext(entityClassSyncResponse, null);
 
         Optional<IEntityClass> entityClassOp = entityClassManagerExecutor.load(expectedId);
         Assert.assertTrue(entityClassOp.isPresent());

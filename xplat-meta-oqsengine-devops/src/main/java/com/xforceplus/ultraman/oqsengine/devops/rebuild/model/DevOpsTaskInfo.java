@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.devops.rebuild.model;
 
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.OffsetSnapShot;
 
 /**
  * desc :
@@ -24,7 +23,7 @@ public class DevOpsTaskInfo implements IDevOpsTaskInfo {
     private long createTime;
     private long updateTime;
     private String message = "";
-    private OffsetSnapShot offsetSnapShot;
+    private long startId;
     private IEntityClass entityClass;
 
     private int failedRecovers;
@@ -83,11 +82,6 @@ public class DevOpsTaskInfo implements IDevOpsTaskInfo {
         return batchSize;
     }
 
-    public void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
-    }
-
-
     public int getFinishSize() {
         return finishSize;
     }
@@ -116,6 +110,16 @@ public class DevOpsTaskInfo implements IDevOpsTaskInfo {
     public void resetEntityClass(IEntityClass entityClass) {
         this.entity = entityClass.id();
         this.entityClass = entityClass;
+    }
+
+    @Override
+    public void resetStartId(long startId) {
+        this.startId = startId;
+    }
+
+    @Override
+    public long startId() {
+        return startId;
     }
 
     public synchronized void setFinishSize(int finishSize) {
@@ -152,13 +156,8 @@ public class DevOpsTaskInfo implements IDevOpsTaskInfo {
     }
 
     @Override
-    public OffsetSnapShot getOffsetSnapShot() {
-        return offsetSnapShot;
-    }
-
-    @Override
-    public void setOffsetSnapShot(OffsetSnapShot offsetSnapShot) {
-        this.offsetSnapShot = offsetSnapShot;
+    public void setBatchSize(int size) {
+        this.batchSize = size;
     }
 
     public int failedRecovers() {

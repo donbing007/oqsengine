@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.master;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
@@ -16,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.*;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
@@ -35,6 +37,8 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
 
 /**
  * 主要储存实现.
@@ -78,7 +82,7 @@ public class SQLMasterStorage implements MasterStorage {
     }
 
     @Override
-    public DataIterator<IEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastStart) throws SQLException {
+    public DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastStart) throws SQLException {
         return new IEntityIterator(entityClass, lastStart, startTime, endTime);
     }
 
@@ -433,7 +437,7 @@ public class SQLMasterStorage implements MasterStorage {
     /**
      * 数据迭代器,用以迭代出某个entity的实例列表.
      */
-    private class IEntityIterator implements DataIterator<IEntity> {
+    private class IEntityIterator implements DataIterator<OriginalEntity> {
         private static final int DEFAULT_PAGE_SIZE = 100;
 
         private IEntityClass entityClass;
@@ -441,7 +445,7 @@ public class SQLMasterStorage implements MasterStorage {
         private long startTime;
         private long endTime;
         private int pageSize;
-        private List<MasterStorageEntity> buffer;
+        private List<OriginalEntity> buffer;
 
         public IEntityIterator(IEntityClass entityClass, long startId, long startTime, long endTime) {
             this(entityClass, startId, startTime, endTime, DEFAULT_PAGE_SIZE);
@@ -470,33 +474,53 @@ public class SQLMasterStorage implements MasterStorage {
         }
 
         @Override
-        public IEntity next() {
+        public OriginalEntity next() {
             if (hasNext()) {
-                try {
-                    return buildEntityFromStorageEntity(buffer.remove(0), entityClass).get();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e.getMessage(), e);
-                }
+                OriginalEntity originalEntity = buffer.remove(0);
+                startId = originalEntity.getId();
+                return originalEntity;
             } else {
                 return null;
             }
         }
 
         private void load() throws SQLException {
-
             transactionExecutor.execute((resource, hint) -> {
                 Collection<MasterStorageEntity> storageEntities =
                     BatchQueryExecutor.build(tableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
                         .execute(startId);
 
-                buffer.addAll(storageEntities);
+                Collection<OriginalEntity> originalEntities = new ArrayList<>();
+                for (MasterStorageEntity entity : storageEntities) {
+                    try {
+                        OriginalEntity originalEntity = OriginalEntity.Builder.anOriginalEntity()
+                                .withEntityClass(entityClass)
+                                .withId(entity.getId())
+                                .withCreateTime(entity.getCreateTime())
+                                .withUpdateTime(entity.getUpdateTime())
+                                .withOp(OperationType.UPDATE.ordinal())
+                                .withTx(entity.getTx())
+                                .withDeleted(entity.isDeleted())
+                                .withCommitid(entity.getCommitid())
+                                .withVersion(entity.getVersion())
+                                .withOqsMajor(entity.getOqsMajor())
+                                .withAttributes(attributesToList(entity.getAttribute()))
+                                .build();
+
+                        originalEntities.add(originalEntity);
+                    } catch (JsonProcessingException e) {
+                        throw new SQLException(String.format("to originalEntity failed. message : [%s]", e.getMessage()));
+                    }
+                }
+
+                buffer.addAll(originalEntities);
 
                 return null;
             });
         }
 
         @Override
-        public long size() {
+        public int size() {
             try {
                 return (int) transactionExecutor.execute((resource, hint) -> {
                     return BatchQueryCountExecutor.build(tableName, resource, queryTimeout, entityClass, startTime, endTime)

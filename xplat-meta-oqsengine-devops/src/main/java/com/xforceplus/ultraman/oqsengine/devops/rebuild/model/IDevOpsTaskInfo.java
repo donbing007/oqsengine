@@ -2,7 +2,6 @@ package com.xforceplus.ultraman.oqsengine.devops.rebuild.model;
 
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.OffsetSnapShot;
 
 /**
  * desc :
@@ -60,7 +59,7 @@ public interface IDevOpsTaskInfo {
 
     IEntityClass getEntityClass();
 
-    long getBatchSize();
+    int getBatchSize();
 
     int getFinishSize();
 
@@ -72,11 +71,11 @@ public interface IDevOpsTaskInfo {
 
     void resetEntityClass(IEntityClass entityClass);
 
-    OffsetSnapShot getOffsetSnapShot();
+    void resetStartId(long startId);
 
-    void setOffsetSnapShot(OffsetSnapShot offsetSnapShot);
+    long startId();
 
-    void setBatchSize(long size);
+    void setBatchSize(int size);
 
     int failedRecovers();
 

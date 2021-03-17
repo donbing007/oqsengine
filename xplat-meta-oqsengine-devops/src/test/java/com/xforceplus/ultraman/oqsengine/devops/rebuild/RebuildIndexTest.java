@@ -4,7 +4,14 @@ import com.xforceplus.ultraman.oqsengine.devops.DevOpsAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.ManticoreStorageEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
@@ -17,9 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar.*;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.ONE_HUNDRED_PERCENT;
@@ -35,10 +40,9 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.Constant
 @RunWith(ContainerRunner.class)
 @DependentContainers({ContainerType.REDIS, ContainerType.MYSQL, ContainerType.MANTICORE})
 public class RebuildIndexTest extends DevOpsAbstractContainer {
-    final Logger logger = LoggerFactory.getLogger(RebuildIndexTest.class);
 
-    private int totalSize = 1000;
-    private int testResumeCount = 1000;
+    private int totalSize = 1024;
+    private int testResumeCount = 50000;
     private int defaultSleepInterval = 3_000;
     private int maxSleepWaitLoops = 100;
     long txId = 0;
@@ -59,6 +63,20 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
         close();
     }
 
+
+    private void check(TaskHandler taskHandler, String errorFunction) throws InterruptedException {
+        int wakeUp = 0;
+        while (true) {
+            if (taskHandler.getProgressPercentage() == ONE_HUNDRED_PERCENT) {
+                break;
+            }
+            wakeUp += sleepForWaitStatusOk(wakeUp, errorFunction);
+        }
+
+        Assert.assertTrue(taskHandler.devOpsTaskInfo().getBatchSize() > 0);
+        Assert.assertEquals(taskHandler.devOpsTaskInfo().getBatchSize(),
+                taskHandler.devOpsTaskInfo().getFinishSize());
+    }
     private int sleepForWaitStatusOk(int wakeUp, String errorFunction) throws InterruptedException {
         if (wakeUp >= maxSleepWaitLoops) {
             throw new RuntimeException(String.format("function-[%s] too many wait loops, test failed.", errorFunction));
@@ -73,27 +91,19 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
     @Test
     public void rebuildIndexSimple() throws Exception {
         //  初始化数据
-        boolean initOk = initData(prepareLongStringEntity(totalSize));
+        boolean initOk = initData(prepareLongStringEntity(totalSize), longStringEntityClass);
 
         Assert.assertTrue(initOk);
+        Thread.sleep(1_000);
         long expectSeconds = totalSize - 5;
 
         TaskHandler taskHandler = taskExecutor.rebuildIndex(longStringEntityClass,
                 EntityGenerateTooBar.now,
                 EntityGenerateTooBar.now.plusSeconds(expectSeconds));
 
-        int wakeUp = 0;
-        while (true) {
-            if (taskHandler.getProgressPercentage() == ONE_HUNDRED_PERCENT) {
-                break;
-            }
-            wakeUp += sleepForWaitStatusOk(wakeUp, "rebuildIndexSimple");
-        }
-        Assert.assertTrue(taskHandler.devOpsTaskInfo().getBatchSize() > 0);
-        Assert.assertEquals(taskHandler.devOpsTaskInfo().getBatchSize(),
-                taskHandler.devOpsTaskInfo().getFinishSize());
+        check(taskHandler, "rebuildIndexSimple");
 
-        //  这里减少5毫米，以判断是否
+        //  这里减少5，以判断是否
         Assert.assertEquals(expectSeconds, taskHandler.devOpsTaskInfo().getFinishSize());
     }
 
@@ -103,55 +113,20 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
     @Test
     public void rebuildIndexDeleteSurPlus() throws Exception {
         int skip = 20;
-        boolean initOk = initData(prepareSurPlusNeedDeleteEntity(totalSize), skip);
+        boolean initOk = initData(prepareSurPlusNeedDeleteEntity(totalSize), surPlusEntityClass, skip);
 
         Assert.assertTrue(initOk);
 
         long expectedTasks = totalSize - skip;
 
-        TaskHandler taskHandler = taskExecutor.rebuildIndex(surPlusNeedDeleteEntityClass,
+        TaskHandler taskHandler = taskExecutor.rebuildIndex(surPlusEntityClass,
                 now,
                 now.plusSeconds(totalSize));
 
-        int wakeUp = 0;
-        while (true) {
-            if (taskHandler.getProgressPercentage() == ONE_HUNDRED_PERCENT) {
-                break;
-            }
-            wakeUp += sleepForWaitStatusOk(wakeUp, "rebuildIndexDeleteSurPlus");
-        }
-        Assert.assertTrue(taskHandler.devOpsTaskInfo().getBatchSize() > 0);
-        Assert.assertEquals(taskHandler.devOpsTaskInfo().getBatchSize(),
-                taskHandler.devOpsTaskInfo().getFinishSize());
+        check(taskHandler, "rebuildIndexDeleteSurPlus");
 
         //  这里减少20个，以判断是否
         Assert.assertEquals(expectedTasks, taskHandler.devOpsTaskInfo().getFinishSize());
-    }
-
-    /*
-        父子类重建、数据为整个数据集1/2
-     */
-    @Test
-    public void rebuildIndexIncludePrefCref() throws Exception {
-        boolean initOk = initData(preparePrefCrefEntity(totalSize));
-        Assert.assertTrue(initOk);
-
-        TaskHandler taskHandler = taskExecutor.rebuildIndex(crefEntityClass,
-                now, now.plusSeconds(totalSize));
-
-        int wakeUp = 0;
-        while (true) {
-            if (taskHandler.getProgressPercentage() == ONE_HUNDRED_PERCENT) {
-                break;
-            }
-            wakeUp += sleepForWaitStatusOk(wakeUp, "rebuildIndexIncludePrefCref");
-        }
-        Assert.assertTrue(taskHandler.devOpsTaskInfo().getBatchSize() > 0);
-        Assert.assertEquals(taskHandler.devOpsTaskInfo().getBatchSize(),
-                taskHandler.devOpsTaskInfo().getFinishSize());
-
-        //  由于pos的值为 totalSize的两倍，在相通时间内仅有一半
-        Assert.assertEquals(totalSize / 2, taskHandler.devOpsTaskInfo().getFinishSize());
     }
 
     /*
@@ -161,11 +136,11 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
     public void resumeTest() throws Exception {
 
         //  初始化数据
-        boolean initOk = initData(preparePauseResumeEntity(testResumeCount));
+        boolean initOk = initData(preparePauseResumeEntity(testResumeCount), preparePauseResumeEntityClass, false);
 
         Assert.assertTrue(initOk);
 
-        TaskHandler taskHandler = taskExecutor.rebuildIndex(pauseResumeEntityClass,
+        TaskHandler taskHandler = taskExecutor.rebuildIndex(preparePauseResumeEntityClass,
                 now, now.plusSeconds(testResumeCount));
 
         /*
@@ -192,57 +167,84 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
             taskHandler.cancel();
             Thread.sleep(20 * 1000);
 
-            taskHandler = taskExecutor.resumeIndex(pauseResumeEntityClass, taskHandler.devOpsTaskInfo().id(), 0);
+            taskHandler = taskExecutor.resumeIndex(preparePauseResumeEntityClass, taskHandler.devOpsTaskInfo().id(), 0);
 
             Assert.assertNotNull(taskHandler.devOpsTaskInfo());
         }
     }
 
-    private ManticoreStorageEntity buildStorageEntity(IEntity v, long txId, long commitId) {
-        ManticoreStorageEntity manticoreStorageEntity = new ManticoreStorageEntity();
-        manticoreStorageEntity.setId(v.id());
-        manticoreStorageEntity.setEntity(v.entityClass().id());
-        manticoreStorageEntity.setPref(v.family().parent());
-        manticoreStorageEntity.setCref(v.family().child());
-        manticoreStorageEntity.setTime(v.time());
-        manticoreStorageEntity.setMaintainId(v.maintainId());
-        manticoreStorageEntity.setCommitId(commitId);
-        manticoreStorageEntity.setTx(txId);
-
-        return manticoreStorageEntity;
+    private OriginalEntity buildStorageEntity(IEntity v, IEntityClass entityClass, long txId, long commitId) {
+        return OriginalEntity.Builder.anOriginalEntity()
+                                            .withId(v.id())
+                                            .withCommitid(commitId)
+                                            .withDeleted(false)
+                                            .withCreateTime(v.time())
+                                            .withUpdateTime(v.time())
+                                            .withTx(txId)
+                                            .withOp(OperationType.UPDATE.ordinal())
+                                            .withOqsMajor(v.major())
+                                            .withEntityClass(entityClass)
+                                            .withAttributes(toIndexAttrs(v.entityValue()))
+                                            .build();
     }
 
+
     // 初始化数据
-    private boolean initData(IEntity[] entities) throws Exception {
+    private boolean initData(IEntity[] entities, IEntityClass entityClass, boolean initIndex) throws Exception {
+        List<OriginalEntity> originalEntities = new ArrayList<>();
         for (IEntity entity : entities) {
-            masterStorage.build(entity);
-            indexStorage.buildOrReplace(buildStorageEntity(entity, txId, commitId), entity.entityValue(), false);
+            masterStorage.build(entity, entityClass);
+            if (initIndex) {
+                originalEntities.add(buildStorageEntity(entity, entityClass, txId, commitId));
+            }
+        }
+        if (initIndex) {
+            indexStorage.saveOrDeleteOriginalEntities(originalEntities);
         }
         return true;
     }
 
     // 初始化数据
-    private boolean initData(IEntity[] entities, int skip) throws Exception {
+    private boolean initData(IEntity[] entities, IEntityClass entityClass) throws Exception {
+        List<OriginalEntity> originalEntities = new ArrayList<>();
+        for (IEntity entity : entities) {
+            masterStorage.build(entity, entityClass);
+            originalEntities.add(buildStorageEntity(entity, entityClass, txId, commitId));
+        }
+        indexStorage.saveOrDeleteOriginalEntities(originalEntities);
+        return true;
+    }
+
+    // 初始化数据
+    private boolean initData(IEntity[] entities, IEntityClass entityClass, int skip) throws Exception {
+        List<OriginalEntity> originalEntities = new ArrayList<>();
         for (int i = 0; i < entities.length; i++) {
             if (i >= skip) {
-                masterStorage.build(entities[i]);
+                masterStorage.build(entities[i], entityClass);
             }
-            indexStorage.buildOrReplace(buildStorageEntity(entities[i], txId, commitId), entities[i].entityValue(), false);
+            originalEntities.add(buildStorageEntity(entities[i], entityClass, txId, commitId));
         }
+        indexStorage.saveOrDeleteOriginalEntities(originalEntities);
         return true;
     }
 
-    // 初始化数据
-    private boolean initData(List<AbstractMap.SimpleEntry<IEntity, IEntity>> entities) throws Exception {
-        for (AbstractMap.SimpleEntry<IEntity, IEntity> entity : entities) {
-            IEntity fEntity = entity.getKey();
-            masterStorage.build(fEntity);
-            indexStorage.buildOrReplace(buildStorageEntity(fEntity, txId, commitId), fEntity.entityValue(), false);
 
-            IEntity cEntity = entity.getValue();
-            masterStorage.build(cEntity);
-            indexStorage.buildOrReplace(buildStorageEntity(cEntity, txId, commitId), cEntity.entityValue(), false);
+    private List<Object> toIndexAttrs(IEntityValue value) {
+
+        StorageStrategy storageStrategy;
+
+        List<Object> objects = new ArrayList<>();
+        for (IValue logicValue : value.values()) {
+            storageStrategy = masterStorageStrategyFactory.getStrategy(logicValue.getField().type());
+            StorageValue storageValue = storageStrategy.toStorageValue(logicValue);
+            while (storageValue != null) {
+
+                objects.add(AnyStorageValue.ATTRIBUTE_PREFIX + storageValue.storageName());
+                objects.add(storageValue.value());
+
+                storageValue = storageValue.next();
+            }
         }
-        return true;
+        return objects;
     }
 }

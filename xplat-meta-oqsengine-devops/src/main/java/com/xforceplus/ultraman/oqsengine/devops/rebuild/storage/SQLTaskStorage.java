@@ -5,6 +5,8 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import io.vavr.control.Either;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -13,6 +15,7 @@ import java.util.Collection;
 import java.util.Optional;
 
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.EMPTY_COLLECTION_SIZE;
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.NULL_UPDATE;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.ERROR.DUPLICATE_KEY_ERROR;
 
 
@@ -25,6 +28,8 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.ERROR.DUPLI
  * @since : 1.8
  */
 public class SQLTaskStorage implements TaskStorage {
+
+    final Logger logger = LoggerFactory.getLogger(SQLTaskStorage.class);
 
     @Resource(name = "devOpsDataSource")
     private DataSource devOpsDataSource;
@@ -47,8 +52,8 @@ public class SQLTaskStorage implements TaskStorage {
                 int result = new TaskStorageCommand(table).build(devOpsDataSource, taskInfo);
                 return Either.right(result);
             }
-            return Either.left(new SQLException("reIndex has already been begun, ignore",
-                                        DUPLICATE_KEY_ERROR.name(), DUPLICATE_KEY_ERROR.ordinal()));
+            logger.warn("build result is empty, reIndex has already been begun, ignore...");
+            return Either.right(NULL_UPDATE);
         } catch (SQLException e) {
             return Either.left(e);
         }

@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.devops.rebuild;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.exception.DevopsTaskExistException;
@@ -11,18 +12,14 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.IDevOpsTaskInfo;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.OffsetSnapShot;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.ManticoreStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.iterator.QueryIterator;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import io.vavr.control.Either;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.Assert;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
@@ -39,7 +36,7 @@ import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.ConstantDefine.*;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus.*;
-import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.ERROR.REINDEX_TIME_OUT_ERROR;
+import static com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.ERROR.DUPLICATE_KEY_ERROR;
 import static com.xforceplus.ultraman.oqsengine.devops.rebuild.utils.EitherUtils.eitherRight;
 
 /**
@@ -65,39 +62,15 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     @Resource(name = "snowflakeIdGenerator")
     private LongIdGenerator idGenerator;
 
-    private int splitPart;
-    private int maxQueueSize;
-    private int executionTimeout;
-
-    //  30s
-    private long cacheExpireTime;
-    private long cacheMaxSize;
-
     private int maxRecovers = 5;
-    private int pageSize;
 
     private ZoneOffset zoneOffset = OffsetDateTime.now().getOffset();
 
     private ExecutorService asyncThreadPool;
 
-    private ExecutorService taskThreadPool;
-
     public static Cache<String, BatchStatus> BATCH_STATUS_CACHE;
 
-    public DevOpsRebuildIndexExecutor(int splitPart, int maxQueueSize, int executionTimeout, long cacheExpireTime,
-                                      long cacheMaxSize, int pageSize) {
-        this.splitPart = splitPart;
-        this.maxQueueSize = maxQueueSize;
-        this.executionTimeout = executionTimeout;
-
-        //  30s
-        this.cacheExpireTime = cacheExpireTime;
-        this.cacheMaxSize = cacheMaxSize;
-        this.pageSize = pageSize;
-        init();
-    }
-
-    public void init() {
+    public DevOpsRebuildIndexExecutor(int splitPart, int maxQueueSize, long cacheExpireTime, long cacheMaxSize) {
         //  splitPart 默认为10, 最大任务并发数为 splitPart的1/3, 一般为3个
         int initSize = splitPart / 3;
 
@@ -106,12 +79,6 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                 new ArrayBlockingQueue<>(maxQueueSize),
                 ExecutorHelper.buildNameThreadFactory("task-threads", false));
 
-        //  每个任务处理时内部开启的多线程最大并发数
-        taskThreadPool = new ThreadPoolExecutor(splitPart, splitPart,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(maxQueueSize),
-                ExecutorHelper.buildNameThreadFactory("reindex-call", false));
-
         //  任务状态CACHE, 缓存30秒
         BATCH_STATUS_CACHE = CacheBuilder.newBuilder()
                 .expireAfterWrite(cacheExpireTime, TimeUnit.SECONDS)
@@ -119,49 +86,42 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                 .build();
     }
 
-    private boolean offsetCountCheck(int expected, int real, boolean check) {
-        if (check) {
-            return expected == real;
+    public void destroy() {
+        if (null != asyncThreadPool) {
+            ExecutorHelper.shutdownAndAwaitTermination(asyncThreadPool, 3600);
         }
-        return true;
     }
 
-    private Optional<QueryIterator> initDataQueryIterator(DevOpsTaskInfo taskInfo, boolean isBuild, OffsetSnapShot offsetSnapShot) throws Exception {
+    private DataIterator<OriginalEntity> initDataQueryIterator(DevOpsTaskInfo taskInfo, boolean isBuild) throws Exception {
 
-        QueryIterator dataQueryIterator = masterStorage.newIterator(taskInfo.getEntityClass(), taskInfo.getStarts(), taskInfo.getEnds(),
-                taskThreadPool, executionTimeout, pageSize, true);
+        /**
+         * 获得迭代器
+         */
+        DataIterator<OriginalEntity> dataQueryIterator =
+                masterStorage.iterator(taskInfo.getEntityClass(), taskInfo.getStarts(), taskInfo.getEnds(), taskInfo.startId());
 
-        if (null == dataQueryIterator ||
-                !offsetCountCheck(taskInfo.getBatchSize(), dataQueryIterator.size(), null != offsetSnapShot)) {
-            if (isBuild) {
-                //  entityClass有其他的任务正在执行
-                if (NULL_UPDATE == eitherRight(buildTask().apply(taskInfo))) {
-                    throw new DevopsTaskExistException("entityClass has another running task, current task will be error end!");
-                }
-            }
-            return Optional.empty();
+        if (null == dataQueryIterator) {
+            throw new DevopsTaskExistException("has no iterator to rebuild, current task will be error end!");
         }
 
         Function<DevOpsTaskInfo, Either<SQLException, Integer>> func = null;
+        taskInfo.setBatchSize(dataQueryIterator.size());
+        taskInfo.setStatus(RUNNING.getCode());
         if (isBuild) {
-            taskInfo.setBatchSize(dataQueryIterator.size());
+            taskInfo.resetMessage("TASK PROCESSING");
             func = buildTask();
         } else {
-            if (null != offsetSnapShot) {
-                dataQueryIterator.resetCheckPoint(offsetSnapShot);
-            } else {
-                taskInfo.setFinishSize(EMPTY_COLLECTION_SIZE);
-            }
             func = resumeTask();
         }
 
-
-        //  entityClass有其他的任务正在执行
         if (NULL_UPDATE == eitherRight(func.apply(taskInfo))) {
-            throw new DevopsTaskExistException("entityClass has another running task, current task will be error end!");
+            if (!isBuild) {
+                logger.warn("task {} has finished, un-necessary to reIndex!", taskInfo.getMaintainid());
+            }
+            return null;
         }
 
-        return Optional.of(dataQueryIterator);
+        return dataQueryIterator;
     }
 
     private Function<DevOpsTaskInfo, Either<SQLException, Integer>> buildTask() {
@@ -178,7 +138,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         //  init
         TaskHandler taskHandler = pending(entityClass, start, end);
 
-        logger.info("async submit task, tid[{}], entityClass[{}], start[{}], end[{}]",
+        logger.info("async submit task, maintainId {}, entityClass {}, start {}, end {}",
                 taskHandler.id(),
                 entityClass.id(),
                 start,
@@ -194,25 +154,36 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     public TaskHandler resumeIndex(IEntityClass entityClass, String taskId, int currentRecovers) throws Exception {
 
         //  entityClass有其他的任务正在执行
-        Optional<IDevOpsTaskInfo> devOpsTaskInfo = sqlTaskStorage.selectUnique(Long.parseLong(taskId));
-        if (!devOpsTaskInfo.isPresent()) {
-            throw new SQLException("task not exists or not suitable to resume.");
+        Optional<IDevOpsTaskInfo> devOpsTaskInfoOp = sqlTaskStorage.selectUnique(Long.parseLong(taskId));
+        if (devOpsTaskInfoOp.isPresent()) {
+            IDevOpsTaskInfo devOpsTaskInfo = devOpsTaskInfoOp.get();
+            if (canResumeIndex(devOpsTaskInfo.getStatus())) {
+
+                devOpsTaskInfo.resetStatus(PENDING.getCode());
+                devOpsTaskInfo.resetMessage("TASK RECOVERING");
+                devOpsTaskInfo.resetFailedRecovers(currentRecovers);
+
+                logger.info("async resume task, maintainId {}, entityClass {}, start {}, end {}",
+                        taskId,
+                        entityClass.id(),
+                        devOpsTaskInfo.getStarts(),
+                        devOpsTaskInfo.getEnds()
+                );
+                TaskHandler taskHandler = initResume(entityClass, devOpsTaskInfo);
+
+                asyncThreadPool.submit(executed(taskHandler, false));
+
+                return taskHandler;
+            }
+
+            logger.warn("task {} has been recovered or finished, resumeIndex will be ignore...", taskId);
         }
 
-        devOpsTaskInfo.get().resetMessage("task recovering.");
-        devOpsTaskInfo.get().resetFailedRecovers(currentRecovers);
+        throw new SQLException("task not exists or not suitable to resume.");
+    }
 
-        logger.info("async resume task, tid[{}], entityClass[{}], start[{}], end[{}]",
-                taskId,
-                entityClass.id(),
-                devOpsTaskInfo.get().getStarts(),
-                devOpsTaskInfo.get().getEnds()
-        );
-        TaskHandler taskHandler = initResume(entityClass, devOpsTaskInfo.get());
-
-        asyncThreadPool.submit(executed(taskHandler, false));
-
-        return taskHandler;
+    private boolean canResumeIndex(int status) {
+        return status != RUNNING.getCode() && status != DONE.getCode();
     }
 
     private class ExecutedCallable implements Callable<Boolean> {
@@ -227,41 +198,42 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
         @Override
         public Boolean call() throws Exception {
-            logger.info("task start, tid[{}], entityClass[{}]", taskHandler.id(), taskHandler.devOpsTaskInfo().getEntity());
-
+            logger.info("task start, maintainId {} , entityClass {}", taskHandler.id(), taskHandler.devOpsTaskInfo().getEntity());
+            boolean ret = true;
             try {
                 //  handle
-                execute(taskHandler, isBuild);
-
+                ret = execute(taskHandler, isBuild);
+                if (!ret) {
+                    if (isBuild) {
+                        throw new SQLException(
+                                String.format("task %s, entityClass has another running task, current task will be ignore..."
+                                        , taskHandler.id()), DUPLICATE_KEY_ERROR.name(), DUPLICATE_KEY_ERROR.ordinal());
+                    }
+                    return true;
+                }
                 if (!done(taskHandler)) {
-                    String error = String.format("update task done failed, tid[%s], entityClass[%d]",
+                    String error = String.format("update task done failed, maintainId %s, entityClass %d",
                             taskHandler.id(),
                             taskHandler.devOpsTaskInfo().getEntity());
                     logger.error(error);
                     throw new SQLException(error);
                 }
 
-                logger.info("reIndex task success, tid[{}], entityClass[{}]",
+                logger.info("reIndex task success, maintainId {}, entityClass {}",
                         taskHandler.id(),
                         taskHandler.devOpsTaskInfo().getEntity()
                 );
                 return true;
             } catch (Exception e) {
+                if (!ret) {
+                    throw e;
+                }
+                logger.warn("reIndex task failed, maintainId {}, entityClass {}",
+                        taskHandler.id(),
+                        taskHandler.devOpsTaskInfo().getEntity()
+                );
                 try {
                     error(taskHandler, e.getMessage());
-
-                    if (null != e.getMessage() && e.getMessage().equals(REINDEX_TIME_OUT_ERROR.name())) {
-
-                        taskHandler.devOpsTaskInfo().resetFailedRecovers(
-                                taskHandler.devOpsTaskInfo().failedRecovers() + INCREMENT);
-
-                        if (taskHandler.devOpsTaskInfo().failedRecovers() <= maxRecovers) {
-                            Assert.notNull(
-                                    resumeIndex(taskHandler.devOpsTaskInfo().getEntityClass(), taskHandler.id(),
-                                            taskHandler.devOpsTaskInfo().failedRecovers()),
-                                    String.format("resume task failed, tid : %s", taskHandler.id()));
-                        }
-                    }
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
@@ -269,6 +241,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
             }
         }
     }
+
     public ExecutedCallable executed(TaskHandler taskHandler, boolean isBuild) {
         return new ExecutedCallable(taskHandler, isBuild);
     }
@@ -319,62 +292,67 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
 
     private TaskHandler initResume(IEntityClass entityClass, IDevOpsTaskInfo devOpsTaskInfo) throws Exception {
         if (devOpsTaskInfo.getEntity() != entityClass.id()) {
-            throw new SQLException(String.format("task entity-id not match..., origin tid %d", devOpsTaskInfo.getEntity()));
+            throw new SQLException(String.format("task entity-id not match..., origin maintainId %d", devOpsTaskInfo.getEntity()));
         }
-        devOpsTaskInfo.resetStatus(PENDING.getCode());
         devOpsTaskInfo.resetEntityClass(entityClass);
-        TaskHandler taskHandler = new DefaultDevOpsTaskHandler(sqlTaskStorage, devOpsTaskInfo);
-
-        return taskHandler;
+        return new DefaultDevOpsTaskHandler(sqlTaskStorage, devOpsTaskInfo);
     }
 
-    private void execute(TaskHandler taskHandler, boolean isBuild) throws Exception {
+    private boolean execute(TaskHandler taskHandler, boolean isBuild) throws Exception {
         try {
             //  初始化迭代器
             DevOpsTaskInfo devOpsTaskInfo = (DevOpsTaskInfo) taskHandler.devOpsTaskInfo();
-            Optional<QueryIterator> dataQueryIterator = initDataQueryIterator(devOpsTaskInfo, isBuild, devOpsTaskInfo.getOffsetSnapShot());
+            DataIterator<OriginalEntity> iterator = initDataQueryIterator(devOpsTaskInfo, isBuild);
+            if (null == iterator) {
+                return false;
+            }
 
-            if (dataQueryIterator.isPresent()) {
-                //   更新TaskHandler中的状态为RUNNING
-                if (NULL_UPDATE == sqlTaskStorage.update(taskHandler.devOpsTaskInfo(), RUNNING)) {
-                    //  任务被人为终止
-                    devOpsTaskInfo.setStatus(CANCEL.getCode());
-                    throw new SQLException("task maybe canceled, operation will intercept immediately!");
-                }
+            boolean isFinish = false;
+            while (true) {
+                //  记录最后成功的snap-shot
+                int lastFinish = devOpsTaskInfo.getFinishSize();
+                long startId = devOpsTaskInfo.startId();
 
-                QueryIterator iterator = dataQueryIterator.get();
-
-                while (iterator.hasNext()) {
-                    //  记录最后成功的snap-shot
-                    int lastFinish = devOpsTaskInfo.getFinishSize();
-                    OffsetSnapShot lastSnapShot = (null != devOpsTaskInfo.getOffsetSnapShot()) ?
-                            (OffsetSnapShot) devOpsTaskInfo.getOffsetSnapShot().clone() : null;
-
-                    List<IEntity> entities = iterator.next();
-
-                    try {
-                        devOpsTaskInfo.setOffsetSnapShot(iterator.snapShot());
-                        //  重建索引
-                        consumer(devOpsTaskInfo, entities);
-                    } catch (Exception e) {
-                        //  这里当处理失败时回退到上一个保存点
-                        devOpsTaskInfo.setFinishSize(lastFinish);
-                        devOpsTaskInfo.setOffsetSnapShot(lastSnapShot);
-                        throw e;
+                List<OriginalEntity> batchEntities = new ArrayList<>();
+                for (int i = 0; i < MAX_BATCH_SIZE; i ++) {
+                    if (iterator.hasNext()) {
+                        OriginalEntity originalEntity = iterator.next();
+                        originalEntity.setMaintainid(devOpsTaskInfo.getMaintainid());
+                        batchEntities.add(originalEntity);
+                    } else {
+                        isFinish = true;
+                        break;
                     }
                 }
 
-                //  任务被人为终止
-                if (taskHandler.devOpsTaskInfo().getFinishSize() !=
-                        taskHandler.devOpsTaskInfo().getBatchSize()) {
-                    //  总完成数量和总任务数不等
-                    throw new SQLException("finish size not equal batchSize");
+                try {
+                    consumer(devOpsTaskInfo, batchEntities);
+                    if (isFinish) {
+                        if (devOpsTaskInfo.getBatchSize() != devOpsTaskInfo.getFinishSize()) {
+                            devOpsTaskInfo.setStatus(ERROR.getCode());
+                            throw new SQLException(String.format("task batchSize not equal finishSize when iterator is empty, maintainId %d "
+                                    , devOpsTaskInfo.getMaintainid()));
+                        }
+                        break;
+                    } else {
+                        if (devOpsTaskInfo.getFinishSize() - lastFinish != MAX_BATCH_SIZE) {
+                            devOpsTaskInfo.setStatus(ERROR.getCode());
+                            throw new SQLException(String.format("task batchSize not equal finishSize, maintainId %d "
+                                    , devOpsTaskInfo.getMaintainid()));
+                        }
+                    }
+                } catch (Exception e) {
+                    devOpsTaskInfo.resetStartId(startId);
+                    devOpsTaskInfo.setFinishSize(lastFinish);
+                    throw e;
                 }
             }
         } catch (Exception e) {
-            logger.error("execute failed, message : {}", e.getMessage());
+            logger.error("execute failed, message [{}]", e.getMessage());
             throw e;
         }
+
+        return true;
     }
 
     /*
@@ -383,15 +361,21 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     private boolean done(TaskHandler taskHandler) throws SQLException {
 
         //  需要删除旧的索引
-        indexStorage.clean(taskHandler.devOpsTaskInfo().getEntity(),
+        long total = indexStorage.clean(taskHandler.devOpsTaskInfo().getEntityClass(),
                 taskHandler.devOpsTaskInfo().getMaintainid(),
                 taskHandler.devOpsTaskInfo().getStarts(),
                 taskHandler.devOpsTaskInfo().getEnds());
+        logger.debug("clean data fin, maintainId {}, total clean {}", taskHandler.devOpsTaskInfo().getMaintainid(), total);
 
         taskHandler.devOpsTaskInfo().resetMessage("success");
         boolean isDone = sqlTaskStorage.done(taskHandler.devOpsTaskInfo().getMaintainid()) > NULL_UPDATE;
         if (isDone) {
+            logger.info("task done, maintainId {}, finish batchSize {}"
+                    , taskHandler.devOpsTaskInfo().getMaintainid(), taskHandler.devOpsTaskInfo().getFinishSize());
             ((DevOpsTaskInfo) taskHandler.devOpsTaskInfo()).setStatus(DONE.getCode());
+        } else {
+            logger.warn("task done error, task update finish status error, maintainId {}"
+                    , taskHandler.devOpsTaskInfo().getMaintainid());
         }
         return isDone;
     }
@@ -413,33 +397,30 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
         return new DefaultDevOpsTaskHandler(sqlTaskStorage, taskInfo);
     }
 
-    private void consumer(DevOpsTaskInfo taskInfo, List<IEntity> entityList) throws SQLException {
-        logger.info("start consumer entity, entity size {}", entityList.size());
+    private void consumer(DevOpsTaskInfo taskInfo, List<OriginalEntity> entityList) throws SQLException {
+
         if (EMPTY_COLLECTION_SIZE < entityList.size()) {
-            List<ManticoreStorageEntity> manticoreStorageEntityList = new ArrayList<>();
-            for (IEntity entity : entityList) {
-                ManticoreStorageEntity manticoreStorageEntity = new ManticoreStorageEntity(
-                        entity.id(), entity.entityClass().id(), entity.family().parent(), entity.family().child(),
-                        maintainTxId, maintainCommitId, null, null, entity.time());
+            long startId = entityList.get(entityList.size() - 1).getId();
+            logger.info("start consumer entity, maintainId {}, startId {}, entity size {}"
+                                    , taskInfo.getMaintainid(), startId, entityList.size());
 
-                //  加入maintainId
-                manticoreStorageEntity.setMaintainId(taskInfo.getMaintainid());
-                //  转换JsonFields/FullFields
-                indexStorage.entityValueToStorage(manticoreStorageEntity, entity.entityValue());
-                manticoreStorageEntityList.add(manticoreStorageEntity);
-            }
+
             //  批量更新
-            int finished = indexStorage.batchSave(manticoreStorageEntityList, true, true);
-            taskInfo.addFinishSize(finished);
-
+            indexStorage.saveOrDeleteOriginalEntities(entityList);
+            taskInfo.addFinishSize(entityList.size());
+            taskInfo.resetStartId(startId);
             /*
                 更新状态，如果更新失败，则说明当前任务已被cancel
              */
             if (NULL_UPDATE == sqlTaskStorage.update(taskInfo, RUNNING)) {
                 taskInfo.setStatus(CANCEL.getCode());
-                throw new SQLException("task might be canceled.");
+                throw new SQLException(String.format("task might be canceled, maintainId %d", taskInfo.getMaintainid()));
             }
+            logger.info("finish consumer entity, maintainId {}, startId {}, entity size {}"
+                                            , taskInfo.getMaintainid(), startId, entityList.size());
+        } else {
+            logger.warn("consumer reach empty entities, ignore, maintainId {} ", taskInfo.getMaintainid());
         }
-        logger.info("finish consumer entity, entity size {}", entityList.size());
+
     }
 }

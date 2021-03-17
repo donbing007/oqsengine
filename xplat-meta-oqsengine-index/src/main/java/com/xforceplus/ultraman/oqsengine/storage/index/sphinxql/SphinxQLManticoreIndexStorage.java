@@ -298,7 +298,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             .withTx(originalEntity.getTx())
             .withCreateTime(originalEntity.getCreateTime())
             .withUpdateTime(originalEntity.getUpdateTime())
-            .withMaintainId(0)
+            .withMaintainId(originalEntity.getMaintainid())
             .withOqsmajor(originalEntity.getOqsMajor())
             .withAttributeF(toAttributesF(originalEntity))
             .withEntityClassF(toEntityClassF(originalEntity))

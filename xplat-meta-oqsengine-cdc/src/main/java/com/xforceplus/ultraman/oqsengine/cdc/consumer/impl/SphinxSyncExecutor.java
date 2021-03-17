@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
@@ -11,6 +9,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
@@ -25,6 +24,7 @@ import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUt
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
+import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
 
 /**
  * desc :
@@ -53,7 +53,6 @@ public class SphinxSyncExecutor implements SyncExecutor {
     @Resource
     private MetaManager metaManager;
 
-    final ObjectMapper jsonMapper = new ObjectMapper();
 
     //  执行同步到Sphinx操作
     public int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
@@ -116,21 +115,13 @@ public class SphinxSyncExecutor implements SyncExecutor {
 
     @SuppressWarnings("unchecked")
     private Collection<Object> attrCollection(List<CanalEntry.Column> columns) throws SQLException {
-        List<Object> attributes = new ArrayList<>();
         String attrStr = getStringFromColumn(columns, ATTRIBUTE);
         if (null == attrStr || attrStr.isEmpty()) {
-            return attributes;
+            return new ArrayList<>();
         }
         try {
-            Map<String, Object> keyValues = jsonMapper.readValue(attrStr, Map.class);
-            keyValues.forEach(
-                    (k, v) -> {
-                        attributes.add(k);
-                        attributes.add(v);
-                    }
-            );
-            return attributes;
-        } catch (JsonProcessingException e) {
+            return attributesToList(attrStr);
+        } catch (Exception e) {
             throw new SQLException("attrStr Json to object error");
         }
     }
@@ -147,10 +138,12 @@ public class SphinxSyncExecutor implements SyncExecutor {
             throw new SQLException(String.format("id [%d], commitId [%d] has no attributes...", id, commitId));
         }
 
+        boolean isDelete = getBooleanFromColumn(columns, DELETED);
+
         return OriginalEntity.Builder.anOriginalEntity()
                 .withId(id)
-                .withDeleted(getBooleanFromColumn(columns, DELETED))
-                .withOp(getIntegerFromColumn(columns, OP))
+                .withDeleted(isDelete)
+                .withOp(isDelete ? OperationType.DELETE.ordinal() : OperationType.UPDATE.ordinal())
                 .withVersion(getIntegerFromColumn(columns, VERSION))
                 .withOqsMajor(getIntegerFromColumn(columns, OQSMAJOR))
                 .withCreateTime(getLongFromColumn(columns, CREATETIME))

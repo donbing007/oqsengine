@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.boot.shutdown;
 import com.xforceplus.ultraman.oqsengine.cdc.CDCDaemonService;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
 import io.lettuce.core.RedisClient;
 import org.slf4j.Logger;
@@ -52,6 +54,8 @@ public class Shutdown {
     @Resource
     private DataSourcePackage dataSourcePackage;
 
+    @Resource
+    private RebuildIndexExecutor rebuildIndexExecutor;
 
     @PreDestroy
     public void destroy() throws Exception {
@@ -73,6 +77,10 @@ public class Shutdown {
             } else {
                 break;
             }
+        }
+
+        if (rebuildIndexExecutor instanceof DevOpsRebuildIndexExecutor) {
+            ((DevOpsRebuildIndexExecutor) rebuildIndexExecutor).destroy();
         }
 
         // wait shutdown
