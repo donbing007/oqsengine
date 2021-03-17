@@ -76,6 +76,23 @@ cdc:
     checkCommitReady: true
     skipCommitId: -1
 
+meta:
+  grpc:
+    type: client
+    host: localhost
+    port: 8082
+    seconds:
+      # 心跳超时
+      heartbeatTimeout: 30
+      # 重试间隔
+      delaytaskTimeout: 30
+      # 心跳间隔
+      keepAliveDuration: 5
+      # 指标监控
+      monitorDuration: 1
+      # 重连间隔
+      reconnectDuration: 5
+
 storage:
   tokenizer:
     segmentation:

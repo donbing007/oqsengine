@@ -64,6 +64,17 @@ data:
           cdc:
             worker: {{ .Values.storage.threadPool.cdc.worker | default "1" }}
         maxVisibleNumber: {{ .Values.storage.maxVisibleNumber | default "10000" }}
+        meta:
+          grpc:
+            type: client
+            host: {{ .Values.meta.grpc.host | default "127.0.0.1" | quote }}
+            port: {{ .Values.meta.grpc.port | default "8082" | quote }}
+            seconds:
+              heartbeatTimeout: {{ .Values.meta.grpc.seconds.heartbeatTimeout | default "30"}}
+              delaytaskTimeout: {{ .Values.meta.grpc.seconds.delaytaskTimeout | default "30"}}
+              keepAliveDuration: {{ .Values.meta.grpc.seconds.keepAliveDuration | default "5"}}
+              monitorDuration: {{ .Values.meta.grpc.seconds.monitorDuration | default "1"}}
+              reconnectDuration: {{ .Values.meta.grpc.seconds.reconnectDuration | default "5"}}
         storage:
           tokenizer:
             segmentation:
