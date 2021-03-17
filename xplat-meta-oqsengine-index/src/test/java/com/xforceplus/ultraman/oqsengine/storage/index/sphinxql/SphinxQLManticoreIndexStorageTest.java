@@ -427,7 +427,7 @@ public class SphinxQLManticoreIndexStorageTest {
         initDatas.addAll(buildSyncData(OperationType.CREATE, 10, Long.MAX_VALUE));
 
         storage.saveOrDeleteOriginalEntities(initDatas);
-        storage.clean(l2EntityClass, 0, 0, Long.MAX_VALUE);
+        storage.clean(l2EntityClass, 10, 0, Long.MAX_VALUE);
 
         Page page = Page.newSinglePage(1000);
         Collection<EntityRef> refs = storage.select(Conditions.buildEmtpyConditions(), l2EntityClass,
@@ -439,7 +439,7 @@ public class SphinxQLManticoreIndexStorageTest {
 
         initDatas.addAll(buildSyncData(OperationType.CREATE, 10, Long.MAX_VALUE));
         storage.saveOrDeleteOriginalEntities(initDatas);
-        storage.clean(l2EntityClass, 1, 0, Long.MAX_VALUE);
+        storage.clean(l2EntityClass, 0, 0, Long.MAX_VALUE);
 
         page = Page.newSinglePage(1000);
         refs = storage.select(Conditions.buildEmtpyConditions(), l2EntityClass,
