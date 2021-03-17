@@ -81,7 +81,10 @@ public class SQLMasterStorageQueryTest {
         .withId(1001)
         .withFieldType(FieldType.STRING)
         .withName("l0-string")
-        .withConfig(FieldConfig.build().searchable(true)).build();
+        .withConfig(FieldConfig.Builder.aFieldConfig()
+            .withSearchable(true)
+            .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
+            .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
     private IEntityField l0StringsField = EntityField.Builder.anEntityField()
         .withId(1002)
         .withFieldType(FieldType.STRINGS)
@@ -127,7 +130,10 @@ public class SQLMasterStorageQueryTest {
         .withId(2001)
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
-        .withConfig(FieldConfig.build().searchable(true)).build();
+        .withConfig(FieldConfig.Builder.aFieldConfig()
+            .withSearchable(true)
+            .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
+            .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
     private IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
         .withId(2)
         .withLevel(1)
@@ -528,6 +534,19 @@ public class SQLMasterStorageQueryTest {
 
                     long[] expectedIds = {
                         1000, 1002
+                    };
+                    assertSelect(expectedIds, result, false);
+                })
+            ,
+            new Case(
+                Conditions.buildEmtpyConditions().addAnd(
+                    new Condition(l2EntityClass.field("l0-string").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(l2EntityClass.field("l0-string").get(), "or"))),
+                l2EntityClass,
+                result -> {
+
+                    long[] expectedIds = {
                     };
                     assertSelect(expectedIds, result, false);
                 })

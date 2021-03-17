@@ -29,6 +29,11 @@ public class SQLJsonConditionBuilderTest {
     private static IEntityField idField = new EntityField(Long.MAX_VALUE, "id", FieldType.LONG, FieldConfig.build().identifie(true));
     private static IEntityField longField = new EntityField(1, "long", FieldType.LONG);
     private static IEntityField stringField = new EntityField(2, "string", FieldType.STRING);
+    private static IEntityField wildCardStringField = EntityField.Builder.anEntityField()
+        .withId(3)
+        .withName("wildcard-string")
+        .withFieldType(FieldType.STRING)
+        .withConfig(FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()).build();
 
     @Before
     public void before() throws Exception {
@@ -144,7 +149,25 @@ public class SQLJsonConditionBuilderTest {
                     ConditionOperator.LIKE,
                     new StringValue(stringField, "200L")
                 ),
-                "attribute->>'$.F2S' LIKE \"%200L%\""
+                "2 = 1"
+            )
+            ,
+            new Case(
+                new Condition(
+                    wildCardStringField,
+                    ConditionOperator.LIKE,
+                    new StringValue(wildCardStringField, "186213")
+                ),
+                "attribute->>'$.F3S' LIKE \"%186213%\""
+            )
+            ,
+            new Case(
+                new Condition(
+                    wildCardStringField,
+                    ConditionOperator.LIKE,
+                    new StringValue(wildCardStringField, "18")
+                ),
+                "2 = 1"
             )
         );
     }
