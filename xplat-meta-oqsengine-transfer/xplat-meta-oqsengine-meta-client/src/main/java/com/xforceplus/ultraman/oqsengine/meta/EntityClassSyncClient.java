@@ -102,7 +102,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
                 streamObserver = responseEvent(countDownLatch);
             } catch (Exception e) {
                 logger.warn("observer init error, message : {}, retry after ({})ms"
-                                        , gRpcParamsConfig.getReconnectDuration(), e.getMessage());
+                                , e.getMessage(), gRpcParamsConfig.getReconnectDuration());
                 TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
                 continue;
             }
