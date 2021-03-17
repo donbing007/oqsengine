@@ -239,6 +239,9 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         }
     }
 
+    /**
+     * 构造器.
+     */
     public static final class Builder {
         private boolean deleted;
         private int op;
