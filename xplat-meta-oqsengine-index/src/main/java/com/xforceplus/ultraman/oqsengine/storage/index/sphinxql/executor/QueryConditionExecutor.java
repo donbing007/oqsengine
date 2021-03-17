@@ -34,19 +34,13 @@ import static java.util.stream.Collectors.joining;
 /**
  * Query condition Executor
  */
-public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Conditions, Page, Sort, Set<Long>, Long>, List<EntityRef>> {
+public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple6<IEntityClass, Conditions, Page, Sort, Set<Long>, Long>, List<EntityRef>> {
 
     Logger logger = LoggerFactory.getLogger(QueryConditionExecutor.class);
-
-    private String indexTableName;
-
-    private TransactionResource<Connection> resource;
 
     private StorageStrategyFactory storageStrategyFactory;
 
     private SphinxQLConditionsBuilderFactory conditionsBuilderFactory;
-
-    private Long maxQueryTimeMs;
 
     public QueryConditionExecutor(
         String indexTableName
@@ -55,11 +49,9 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
         , StorageStrategyFactory storageStrategyFactory
         , Long maxQueryTimeMs
     ) {
-        this.indexTableName = indexTableName;
-        this.resource = resource;
+        super(indexTableName, resource, maxQueryTimeMs);
         this.conditionsBuilderFactory = conditionsBuilderFactory;
         this.storageStrategyFactory = storageStrategyFactory;
-        this.maxQueryTimeMs = maxQueryTimeMs;
     }
 
     public static Executor<Tuple6<IEntityClass, Conditions, Page, Sort, Set<Long>, Long>, List<EntityRef>> build(
@@ -340,9 +332,9 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
             }
         }
 
-        String sql = String.format(SQLConstant.SELECT_SQL, sortSelectValuesSegment, indexTableName, whereCondition, orderBySqlSegment);
+        String sql = String.format(SQLConstant.SELECT_SQL, sortSelectValuesSegment, getIndexName(), whereCondition, orderBySqlSegment);
 
-        try (PreparedStatement st = resource.value().prepareStatement(sql)) {
+        try (PreparedStatement st = getTransactionResource().value().prepareStatement(sql)) {
             st.setLong(1, 0);
             if (page.isEmptyPage()) {
                 st.setLong(2, 0);
@@ -352,8 +344,11 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
             st.setLong(3, page.hasVisibleTotalCountLimit() ?
                 page.getVisibleTotalCount()
                 : page.getPageSize() * page.getIndex());
-            // add max query timeout.
-            st.setLong(4, maxQueryTimeMs);
+            // 设置manticore的查询超时时间.
+            st.setLong(4, getTimeoutMs());
+
+            // 设定本地超时时间.
+            checkTimeout(st);
 
             try (ResultSet rs = st.executeQuery()) {
                 List<EntityRef> refs = new ArrayList((int) page.getPageSize());
@@ -411,7 +406,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
                 }
 
                 if (!page.isSinglePage()) {
-                    long count = count(resource);
+                    long count = count(getTransactionResource());
                     page.setTotalCount(count);
                 } else {
                     page.setTotalCount(refs.size());

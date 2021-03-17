@@ -17,13 +17,13 @@ import java.util.Collections;
  * @version 0.1 2021/3/3 11:41
  * @since 1.8
  */
-public class OriginEntitiesDeleteExecutor extends AbstractExecutor<Collection<OriginalEntity>, Integer> {
+public class OriginEntitiesDeleteIndexExecutor extends AbstractIndexExecutor<Collection<OriginalEntity>, Integer> {
 
-    public static OriginEntitiesDeleteExecutor builder(String indexName, TransactionResource tr) {
-        return new OriginEntitiesDeleteExecutor(indexName, tr);
+    public static OriginEntitiesDeleteIndexExecutor builder(String indexName, TransactionResource tr) {
+        return new OriginEntitiesDeleteIndexExecutor(indexName, tr);
     }
 
-    public OriginEntitiesDeleteExecutor(String indexName, TransactionResource transactionResource) {
+    public OriginEntitiesDeleteIndexExecutor(String indexName, TransactionResource transactionResource) {
         super(indexName, transactionResource);
     }
 

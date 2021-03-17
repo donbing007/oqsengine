@@ -312,7 +312,7 @@ public class EntityClassManagerExecutorTest {
             Assert.assertEquals(efc.getSearchable(), afc.isSearchable());
             Assert.assertEquals(efc.getMax(), afc.getMax());
             Assert.assertEquals(efc.getMin(), afc.getMin());
-            Assert.assertEquals(efc.getPrecision(), afc.getPrecision());
+            Assert.assertEquals(efc.getPrecision(), afc.precision());
             Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
             Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
             Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());

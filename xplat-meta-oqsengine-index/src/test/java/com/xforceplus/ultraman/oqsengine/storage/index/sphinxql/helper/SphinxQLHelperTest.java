@@ -3,6 +3,8 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 import com.xforceplus.ultraman.oqsengine.storage.value.LongStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StringStorageValue;
+import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
+import com.xforceplus.ultraman.oqsengine.tokenizer.segmentation.JcsegTokenizer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -67,19 +69,30 @@ public class SphinxQLHelperTest {
     }
 
     @Test
-    public void testBuildFullPreciseQuery() throws Exception {
+    public void testBuildPreciseQuery() throws Exception {
         StorageValue storageValue = new StringStorageValue("9223372036854775807", "test", true);
-        Assert.assertEquals("aZl8N0testy58M7S", SphinxQLHelper.buildFullPreciseQuery(storageValue, false));
-        Assert.assertEquals("aZl8N0testy58M7S*", SphinxQLHelper.buildFullPreciseQuery(storageValue, true));
+        Assert.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildPreciseQuery(storageValue, false));
+        Assert.assertEquals("1y2p0ijtest32e8e7S*", SphinxQLHelper.buildPreciseQuery(storageValue, true));
 
         storageValue = new LongStorageValue("9223372036854775807", 100, true);
-        Assert.assertEquals("aZl8N0100y58M7S", SphinxQLHelper.buildFullPreciseQuery(storageValue, false));
-        Assert.assertEquals("aZl8N0100y58M7S*", SphinxQLHelper.buildFullPreciseQuery(storageValue, true));
+        Assert.assertEquals("1y2p0ij10032e8e7L", SphinxQLHelper.buildPreciseQuery(storageValue, false));
+        Assert.assertEquals("1y2p0ij10032e8e7L*", SphinxQLHelper.buildPreciseQuery(storageValue, true));
     }
 
     @Test
-    public void testBuildFullFuzzyQuery() throws Exception {
+    public void testBuildFuzzyQuery() throws Exception {
+        Tokenizer tokenizer = new JcsegTokenizer();
         StorageValue storageValue = new StringStorageValue("9223372036854775807", "test", true);
-        Assert.assertEquals("(aZl8N0 << *test* << y58M7S)", SphinxQLHelper.buildFullFuzzyQuery(storageValue, false));
+        Assert.assertEquals("(1y2p0ijtest32e8e7S)", SphinxQLHelper.buildSegmentationQuery(storageValue, tokenizer));
+
+        storageValue = new StringStorageValue("9223372036854775807", "测试test", true);
+        Assert.assertEquals("(1y2p0ij测试32e8e7S << 1y2p0ijtest32e8e7S)",
+            SphinxQLHelper.buildSegmentationQuery(storageValue, tokenizer));
+    }
+
+    @Test
+    public void testBuildWirdcardQuery() throws Exception {
+        StorageValue storageValue = new StringStorageValue("9223372036854775807", "test", true);
+        Assert.assertEquals("1y2p0ijtest32e8e7S", SphinxQLHelper.buildWirdcardQuery(storageValue));
     }
 } 

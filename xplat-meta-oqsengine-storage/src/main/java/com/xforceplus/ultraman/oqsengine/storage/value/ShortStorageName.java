@@ -28,8 +28,16 @@ public final class ShortStorageName implements Serializable {
         return suffix;
     }
 
-    public String getNoTypeSuffix() {
-        return suffix.substring(0, suffix.length() - 1);
+    public String getNoLocationSuffix() {
+        int noNumberIndex = 0;
+        for (int i = suffix.length() - 1; i >= 0; i--) {
+            if (!Character.isDigit(this.suffix.charAt(i))) {
+                noNumberIndex = i;
+                break;
+            }
+        }
+
+        return suffix.substring(0, noNumberIndex + 1);
     }
 
     @Override

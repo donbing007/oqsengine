@@ -41,6 +41,11 @@ sync:
   allowMaxUnSyncCommitIdSize: 100
 
 storage:
+  tokenizer:
+    segmentation:
+      lexicon:
+        # 字典URL
+        url: "-"
   debug:
     showsql: true
   timeoutMs:

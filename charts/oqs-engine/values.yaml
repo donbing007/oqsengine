@@ -77,6 +77,11 @@ cdc:
     skipCommitId: -1
 
 storage:
+  tokenizer:
+    segmentation:
+      lexicon:
+        # 字典URL
+        url: "-"
   debug:
     showsql: false
   # Maximum amount of visible data.

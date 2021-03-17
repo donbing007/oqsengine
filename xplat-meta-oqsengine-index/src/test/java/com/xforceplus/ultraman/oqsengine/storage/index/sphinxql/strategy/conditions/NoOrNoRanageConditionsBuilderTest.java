@@ -55,6 +55,7 @@ public class NoOrNoRanageConditionsBuilderTest {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
         builder.setStorageStrategy(storageStrategyFactory);
+        builder.init();
 
 
         buildCase().stream().forEach(c -> {
@@ -80,12 +81,14 @@ public class NoOrNoRanageConditionsBuilderTest {
             new Case(
                 new Conditions(
                     new Condition(
-                        new EntityField(9223372036854775807L, "c1", FieldType.STRING),
+                        new EntityField(9223372036854775807L, "c1", FieldType.STRING,
+                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
                         ConditionOperator.LIKE,
-                        new StringValue(new EntityField(9223372036854775807L, "c1", FieldType.STRING), "test")
+                        new StringValue(new EntityField(9223372036854775807L, "c1", FieldType.STRING,
+                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()), "test")
                     )
                 ),
-                String.format("MATCH('(@%s (1y2p0ij << *test* << 32e8e7S)) (@%s =\"%d\")')",
+                String.format("MATCH('(@%s 1y2p0ijtest32e8e7S) (@%s =\"%d\")')",
                     FieldDefine.ATTRIBUTEF, FieldDefine.ENTITYCLASSF, entityClass.id())
             )
             ,

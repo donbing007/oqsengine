@@ -2,16 +2,19 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,6 +50,11 @@ public class MatchConditionBuilderTest {
         buildCases().stream().forEach(c -> {
             MatchConditionBuilder builder = new MatchConditionBuilder(
                 storageStrategyFactory, c.condition.getField().type(), c.condition.getOperator(), c.useGroupName);
+            try {
+                builder.setTokenizerFacotry(new DefaultTokenizerFactory());
+            } catch (IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
 
 
             String result = builder.build(c.condition);
@@ -98,12 +106,30 @@ public class MatchConditionBuilderTest {
             ),
             new Case(
                 new Condition(
-                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
+                    new EntityField(9223372036854775807L, "test",
+                        FieldType.STRING, FieldConfig.build().fuzzyType(FieldConfig.FuzzyType.WILDCARD)),
                     ConditionOperator.LIKE,
                     new StringValue(new EntityField(9223372036854775807L, "test", FieldType.STRING), "test")
                 ),
                 r -> {
-                    Assert.assertEquals("(1y2p0ij << *test* << 32e8e7S)", r);
+                    Assert.assertEquals("1y2p0ijtest32e8e7S", r);
+                }
+            ),
+            new Case(
+                new Condition(
+                    EntityField.Builder.anEntityField()
+                        .withFieldType(FieldType.STRING)
+                        .withId(9223372036854775807L)
+                        .withConfig(FieldConfig.build().fuzzyType(FieldConfig.FuzzyType.SEGMENTATION))
+                        .build(),
+                    ConditionOperator.LIKE,
+                    new StringValue(EntityField.Builder.anEntityField()
+                        .withFieldType(FieldType.STRING)
+                        .withId(9223372036854775807L)
+                        .withConfig(FieldConfig.build().fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build(), "工作状态有限公司")
+                ),
+                r -> {
+                    Assert.assertEquals("(1y2p0ij工作32e8e7S << 1y2p0ij状态32e8e7S << 1y2p0ij有限公司32e8e7S)", r);
                 }
             ),
             new Case(

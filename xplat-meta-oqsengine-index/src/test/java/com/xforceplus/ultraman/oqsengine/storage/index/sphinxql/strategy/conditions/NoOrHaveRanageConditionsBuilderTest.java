@@ -55,6 +55,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
         builder.setStorageStrategy(storageStrategyFactory);
+        builder.init();
 
         buildCase().stream().forEach(c -> {
             String where = builder.build(entityClass, c.conditions);
@@ -79,9 +80,11 @@ public class NoOrHaveRanageConditionsBuilderTest {
             new Case(
                 new Conditions(
                     new Condition(
-                        new EntityField(9223372036854775807L, "c2", FieldType.STRING),
+                        new EntityField(9223372036854775807L, "c2", FieldType.STRING,
+                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
                         ConditionOperator.LIKE,
-                        new StringValue(new EntityField(9223372036854775807L, "c2", FieldType.STRING), "test")
+                        new StringValue(new EntityField(9223372036854775807L, "c2", FieldType.STRING,
+                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()), "test")
                     )
                 ).addAnd(
                     new Condition(
@@ -91,7 +94,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                     )
                 ),
                 String.format(
-                    "%s.1y2p0ij32e8e6L > 100 AND MATCH('(@%s (1y2p0ij << *test* << 32e8e7S)) (@%s =\"9223372036854775807\")')",
+                    "%s.1y2p0ij32e8e6L > 100 AND MATCH('(@%s 1y2p0ijtest32e8e7S) (@%s =\"9223372036854775807\")')",
                     FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTEF, FieldDefine.ENTITYCLASSF)
             ),
 
@@ -117,13 +120,15 @@ public class NoOrHaveRanageConditionsBuilderTest {
                     )
                 ).addAnd(
                     new Condition(
-                        new EntityField(9223372036854775806L, "c2", FieldType.STRING),
+                        new EntityField(9223372036854775806L, "c2", FieldType.STRING,
+                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
                         ConditionOperator.LIKE,
-                        new StringValue(new EntityField(9223372036854775806L, "c2", FieldType.STRING), "test")
+                        new StringValue(new EntityField(9223372036854775806L, "c2", FieldType.STRING,
+                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()), "test")
                     )
                 ),
                 String.format(
-                    "((%s.1y2p0ij32e8e7L0 > 123) OR (%s.1y2p0ij32e8e7L0 = 123 AND %s.1y2p0ij32e8e7L1 > 567890000000000000)) AND MATCH('(@%s (1y2p0ij << *test* << 32e8e6S)) (@%s =\"9223372036854775807\")')",
+                    "((%s.1y2p0ij32e8e7L0 > 123) OR (%s.1y2p0ij32e8e7L0 = 123 AND %s.1y2p0ij32e8e7L1 > 567890000000000000)) AND MATCH('(@%s 1y2p0ijtest32e8e6S) (@%s =\"9223372036854775807\")')",
                     FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTEF, FieldDefine.ENTITYCLASSF)
             )
             ,
@@ -156,9 +161,11 @@ public class NoOrHaveRanageConditionsBuilderTest {
                     )
                 ).addAnd(
                     new Condition(
-                        new EntityField(9223372036854775806L, "c2", FieldType.STRING),
+                        new EntityField(9223372036854775806L, "c2", FieldType.STRING,
+                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()),
                         ConditionOperator.LIKE,
-                        new StringValue(new EntityField(9223372036854775806L, "c2", FieldType.STRING), "test")
+                        new StringValue(new EntityField(9223372036854775806L, "c2", FieldType.STRING,
+                            FieldConfig.Builder.aFieldConfig().withFuzzyType(FieldConfig.FuzzyType.WILDCARD).build()), "test")
                     )
                 ).addAnd(
                     new Condition(
@@ -170,7 +177,7 @@ public class NoOrHaveRanageConditionsBuilderTest {
                     )
                 ),
                 String.format(
-                    "((%s.1y2p0ij32e8e7L0 > 123) OR (%s.1y2p0ij32e8e7L0 = 123 AND %s.1y2p0ij32e8e7L1 > 567890000000000000)) AND id IN (1,2,3) AND MATCH('(@%s (1y2p0ij << *test* << 32e8e6S)) (@%s =\"9223372036854775807\")')",
+                    "((%s.1y2p0ij32e8e7L0 > 123) OR (%s.1y2p0ij32e8e7L0 = 123 AND %s.1y2p0ij32e8e7L1 > 567890000000000000)) AND id IN (1,2,3) AND MATCH('(@%s 1y2p0ijtest32e8e6S) (@%s =\"9223372036854775807\")')",
                     FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTEF, FieldDefine.ENTITYCLASSF
                 )
             )

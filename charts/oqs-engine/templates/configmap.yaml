@@ -65,6 +65,10 @@ data:
             worker: {{ .Values.storage.threadPool.cdc.worker | default "1" }}
         maxVisibleNumber: {{ .Values.storage.maxVisibleNumber | default "10000" }}
         storage:
+          tokenizer:
+            segmentation:
+              lexicon:
+                url: {{ .Values.storage.tokenizer.segmentation.lexicon.url | default "-" | quote}}
           debug:
             showsql: {{ .Values.storage.debug.showsql | default "false" }}
           timeoutMs:

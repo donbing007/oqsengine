@@ -40,6 +40,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.lettuce.core.RedisClient;
 import org.junit.After;
 import org.junit.Assert;
@@ -89,6 +91,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
     private ExecutorService threadPool;
     private SphinxQLManticoreIndexStorage storage;
     private Collection<OriginalEntity> expectedDatas;
+    private TokenizerFactory tokenizerFactory;
 
     //-------------level 0--------------------
     private IEntityField l0LongField = EntityField.Builder.anEntityField()
@@ -100,7 +103,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         .withId(Long.MAX_VALUE - 1)
         .withFieldType(FieldType.STRING)
         .withName("l0-string")
-        .withConfig(FieldConfig.build().searchable(true)).build();
+        .withConfig(FieldConfig.build().searchable(true).fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build();
     private IEntityField l0StringsField = EntityField.Builder.anEntityField()
         .withId(Long.MAX_VALUE - 2)
         .withFieldType(FieldType.STRINGS)
@@ -125,7 +128,10 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         .withId(Long.MAX_VALUE - 4)
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
-        .withConfig(FieldConfig.build().searchable(true)).build();
+        .withConfig(FieldConfig.Builder.aFieldConfig()
+            .withSearchable(true)
+            .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
+            .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
     private IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 1)
         .withLevel(1)
@@ -201,8 +207,11 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
 
+        tokenizerFactory = new DefaultTokenizerFactory();
+
         SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
         sphinxQLConditionsBuilderFactory.init();
 
         threadPool = Executors.newFixedThreadPool(3);
@@ -214,6 +223,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         ReflectionTestUtils.setField(storage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
+        ReflectionTestUtils.setField(storage, "tokenizerFactory", tokenizerFactory);
         ReflectionTestUtils.setField(storage, "threadPool", threadPool);
         storage.setSearchIndexName("oqsindex");
         storage.setMaxSearchTimeoutMs(1000);
@@ -536,12 +546,102 @@ public class SphinxQLManticoreIndexStorageSearchTest {
             )
             ,
             new Case(
-                "String like",
+                "String like 熊鹤轩 (熊鹤轩)",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l0-string").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(l2EntityClass.field("l0-string").get(), "熊鹤轩")
+                    )),
+                l2EntityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[]{
+                    Long.MAX_VALUE - 2
+                }
+            )
+            ,
+            new Case(
+                "String like 18159301250 (301)",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l1-string").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(l2EntityClass.field("l1-string").get(), "301")
+                    )),
+                l2EntityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[]{
+                    Long.MAX_VALUE - 2
+                }
+            )
+            ,
+            new Case(
+                "String like 18159301250 (3012)",
                 Conditions.buildEmtpyConditions()
                     .addAnd(new Condition(
                         l2EntityClass.field("l1-string").get(),
                         ConditionOperator.LIKE,
                         new StringValue(l2EntityClass.field("l1-string").get(), "3012")
+                    )),
+                l2EntityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[]{
+                    Long.MAX_VALUE - 2
+                }
+            )
+            ,
+            new Case(
+                "String like 18159301250 (30125)",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l1-string").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(l2EntityClass.field("l1-string").get(), "30125")
+                    )),
+                l2EntityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[]{
+                    Long.MAX_VALUE - 2
+                }
+            )
+            ,
+            new Case(
+                "String like 18159301250 (301250)",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l1-string").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(l2EntityClass.field("l1-string").get(), "301250")
+                    )),
+                l2EntityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[]{
+                    Long.MAX_VALUE - 2
+                }
+            )
+            ,
+            new Case(
+                "String like 18159301250 (9301250)",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l1-string").get(),
+                        ConditionOperator.LIKE,
+                        new StringValue(l2EntityClass.field("l1-string").get(), "9301250")
                     )),
                 l2EntityClass,
                 SelectConfig.Builder.aSelectConfig()

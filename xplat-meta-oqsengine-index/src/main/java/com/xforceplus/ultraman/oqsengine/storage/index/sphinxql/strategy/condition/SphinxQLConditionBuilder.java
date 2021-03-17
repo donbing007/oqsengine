@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 
 import java.util.Objects;
 
@@ -37,6 +38,10 @@ public abstract class SphinxQLConditionBuilder implements ConditionBuilder<Strin
      * 物理逻辑转换策略工厂.
      */
     private StorageStrategyFactory storageStrategyFactory;
+    /**
+     * 分词器
+     */
+    private TokenizerFactory tokenizerFactory;
 
     public SphinxQLConditionBuilder(
         StorageStrategyFactory storageStrategyFactory, FieldType fieldType, ConditionOperator operator) {

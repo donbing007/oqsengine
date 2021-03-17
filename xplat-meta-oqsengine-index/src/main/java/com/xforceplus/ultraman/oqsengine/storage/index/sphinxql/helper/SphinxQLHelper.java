@@ -3,8 +3,10 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper;
 import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
+import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
 
 import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * SphinxQL帮助类.
@@ -68,19 +70,18 @@ public class SphinxQLHelper {
 
     /**
      * 构造 sphinxQL 全文索引中精确查询语句.
-     * {value}F{field name}
      *
      * @param value 目标字段.
      * @return 结果.
      */
-    public static String buildFullPreciseQuery(StorageValue value, boolean useGroupName) {
+    public static String buildPreciseQuery(StorageValue value, boolean useGroupName) {
         StringBuilder buff = new StringBuilder();
         ShortStorageName shortStorageName = value.shortStorageName();
 
         buff.append(shortStorageName.getPrefix())
             .append(encodeFullSearchCharset(value.value().toString()));
         if (useGroupName) {
-            buff.append(shortStorageName.getNoTypeSuffix()).append("*");
+            buff.append(shortStorageName.getNoLocationSuffix()).append("*");
         } else {
             buff.append(shortStorageName.getSuffix());
         }
@@ -89,27 +90,49 @@ public class SphinxQLHelper {
     }
 
     /**
-     * 构造 sphinxQL 全文索引中的模糊查询语句.
-     * 物理名称的62进制,拆分为前6后6.
-     * aZl8N0{空格}test{空格}y58M7S
+     * 构造 sphinxQL 全文索引中的分词模糊查询语法构造.
      * 只能处理StorageValue.STRING类型.
      *
-     * @param useGroupName 未使用,只为兼容存在.
+     * @param tokenizer 分词器.
      * @see StorageType
+     * @return 查询语法.
      */
-    public static String buildFullFuzzyQuery(StorageValue value, boolean useGroupName) {
+    public static String buildSegmentationQuery(StorageValue value, Tokenizer tokenizer) {
         StringBuilder buff = new StringBuilder();
         ShortStorageName shortStorageName = value.shortStorageName();
 
-        buff.append("(")
-            .append(shortStorageName.getPrefix())
-            .append(" << *")
-            .append(encodeFullSearchCharset(value.value().toString()))
-            .append("* << ")
-            .append(shortStorageName.getSuffix())
-            .append(")");
+        String strValue = encodeFullSearchCharset(value.value().toString());
+        Iterator<String> words = tokenizer.tokenize(strValue);
+        buff.append('(');
+        int emptyLen = buff.length();
+        while (words.hasNext()) {
+            if (buff.length() > emptyLen) {
+                buff.append(" << ");
+            }
+            buff.append(shortStorageName.getPrefix())
+                .append(words.next())
+                .append(shortStorageName.getSuffix());
+        }
+        // 无法分词,使用原始字符.
+        if (buff.length() == emptyLen) {
+            buff.append(shortStorageName.getPrefix())
+                .append(value.value().toString())
+                .append(shortStorageName.getSuffix());
+        }
+
+        buff.append(')');
 
         return buff.toString();
+    }
+
+    /**
+     * 通配符查询.
+     *
+     * @param value 查询目标值.
+     * @return 查询语法.
+     */
+    public static String buildWirdcardQuery(StorageValue value) {
+        return buildPreciseQuery(value, false);
     }
 
 }

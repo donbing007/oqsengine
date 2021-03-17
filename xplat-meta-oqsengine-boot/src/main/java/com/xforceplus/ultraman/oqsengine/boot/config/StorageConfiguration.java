@@ -40,8 +40,7 @@ public class StorageConfiguration {
     @Bean
     public IndexStorage indexStorage(
         @Value("${storage.index.search.name:oqsindex}") String searchIndexName,
-        @Value("${storage.index.search.maxQueryTimeMs:0}") long maxQueryTimeMs,
-        @Value("${storage.index.search.maxBatchSize:20}") int maxBatchSize) {
+        @Value("${storage.index.search.maxQueryTimeMs:3000}") long maxQueryTimeMs) {
 
         SphinxQLManticoreIndexStorage storage = new SphinxQLManticoreIndexStorage();
         storage.setMaxSearchTimeoutMs(maxQueryTimeMs);

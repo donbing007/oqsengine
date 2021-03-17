@@ -18,6 +18,11 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuilder {
 
     @Override
+    public void init() {
+        super.init();
+    }
+
+    @Override
     public String build(IEntityClass entityClass, Conditions conditions) {
 
         StringBuilder buff = new StringBuilder();

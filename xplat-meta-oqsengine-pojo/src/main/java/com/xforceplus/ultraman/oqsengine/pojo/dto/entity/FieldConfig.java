@@ -158,11 +158,19 @@ public class FieldConfig implements Serializable {
     @JsonProperty(value = "fuzzyType")
     private FuzzyType fuzzyType = FuzzyType.NOT;
 
+    @JsonProperty(value = "wildcardMinWidth")
+    private int wildcardMinWidth = 3;
+
+    @JsonProperty(value = "wildcardMaxWidth")
+    private int wildcardMaxWidth = 6;
+
     /**
      * 创建一个新的 FieldConfig.
      *
      * @return 实例.
+     * @deprecated 已经过期, 请先用FieldConfig.Builder构造实例.
      */
+    @Deprecated
     public static FieldConfig build() {
         return new FieldConfig();
     }
@@ -328,6 +336,14 @@ public class FieldConfig implements Serializable {
         return precision;
     }
 
+    public int getWildcardMinWidth() {
+        return wildcardMinWidth;
+    }
+
+    public int getWildcardMaxWidth() {
+        return wildcardMaxWidth;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -340,14 +356,17 @@ public class FieldConfig implements Serializable {
         return isSearchable() == that.isSearchable() &&
             getMax() == that.getMax() &&
             getMin() == that.getMin() &&
-            precision() == that.precision() &&
+            getPrecision() == that.getPrecision() &&
             isIdentifie() == that.isIdentifie() &&
             isRequired() == that.isRequired() &&
             isSplittable() == that.isSplittable() &&
+            getWildcardMinWidth() == that.getWildcardMinWidth() &&
+            getWildcardMaxWidth() == that.getWildcardMaxWidth() &&
             getFieldSense() == that.getFieldSense() &&
             Objects.equals(getValidateRegexString(), that.getValidateRegexString()) &&
             Objects.equals(getDelimiter(), that.getDelimiter()) &&
-            Objects.equals(getDisplayType(), that.getDisplayType());
+            Objects.equals(getDisplayType(), that.getDisplayType()) &&
+            getFuzzyType() == that.getFuzzyType();
     }
 
     @Override
@@ -356,14 +375,17 @@ public class FieldConfig implements Serializable {
             isSearchable(),
             getMax(),
             getMin(),
-            precision(),
+            getPrecision(),
             isIdentifie(),
             isRequired(),
             getFieldSense(),
             getValidateRegexString(),
             isSplittable(),
             getDelimiter(),
-            getDisplayType());
+            getDisplayType(),
+            getFuzzyType(),
+            getWildcardMinWidth(),
+            getWildcardMaxWidth());
     }
 
     @Override
@@ -397,6 +419,8 @@ public class FieldConfig implements Serializable {
         private String delimiter = "";
         private String displayType = "";
         private FuzzyType fuzzyType = FuzzyType.NOT;
+        private int wildcardMinWidth = 3;
+        private int wildcardMaxWidth = 6;
 
         private Builder() {
         }
@@ -465,19 +489,31 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
+        public Builder withWildcardMinWidth(int wildcardMinWidth) {
+            this.wildcardMinWidth = wildcardMinWidth;
+            return this;
+        }
+
+        public Builder withWildcardMaxWidth(int wildcardMaxWidth) {
+            this.wildcardMaxWidth = wildcardMaxWidth;
+            return this;
+        }
+
         public FieldConfig build() {
             FieldConfig fieldConfig = new FieldConfig();
-            fieldConfig.max = this.max;
-            fieldConfig.required = this.required;
-            fieldConfig.identifie = this.identifie;
-            fieldConfig.splittable = this.splittable;
-            fieldConfig.fuzzyType = this.fuzzyType;
             fieldConfig.validateRegexString = this.validateRegexString;
             fieldConfig.min = this.min;
-            fieldConfig.searchable = this.searchable;
             fieldConfig.fieldSense = this.fieldSense;
             fieldConfig.precision = this.precision;
             fieldConfig.delimiter = this.delimiter;
+            fieldConfig.max = this.max;
+            fieldConfig.identifie = this.identifie;
+            fieldConfig.splittable = this.splittable;
+            fieldConfig.fuzzyType = this.fuzzyType;
+            fieldConfig.wildcardMinWidth = this.wildcardMinWidth;
+            fieldConfig.searchable = this.searchable;
+            fieldConfig.wildcardMaxWidth = this.wildcardMaxWidth;
+            fieldConfig.required = this.required;
             fieldConfig.displayType = this.displayType;
             return fieldConfig;
         }

@@ -18,9 +18,9 @@ import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.hint.ExecutorHint;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.CleanExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.OriginEntitiesDeleteExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.OriginEntitiesDeleteIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.QueryConditionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.SaveExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor.SaveIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.helper.SphinxQLHelper;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
@@ -31,6 +31,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.micrometer.core.instrument.Metrics;
 import io.vavr.Tuple;
 import org.slf4j.Logger;
@@ -79,6 +81,9 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
     @Resource(name = "callWriteThreadPool")
     private ExecutorService threadPool;
+
+    @Resource(name = "tokenizerFactory")
+    private TokenizerFactory tokenizerFactory;
 
     private String searchIndexName;
 
@@ -257,10 +262,10 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
                     if (OperationType.CREATE == op) {
-                        return SaveExecutor.buildCreate(indexName, resource)
+                        return SaveIndexExecutor.buildCreate(indexName, resource)
                             .execute(manticoreStorageEntities);
                     } else if (OperationType.UPDATE == op) {
-                        return SaveExecutor.buildReplace(indexName, resource)
+                        return SaveIndexExecutor.buildReplace(indexName, resource)
                             .execute(manticoreStorageEntities);
                     } else {
                         throw new SQLException("An operation that cannot be handled.");
@@ -280,7 +285,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             return (int) writeTransactionExecutor.execute(new ResourceTask() {
                 @Override
                 public Object run(TransactionResource resource, ExecutorHint hint) throws SQLException {
-                    return OriginEntitiesDeleteExecutor.builder(indexName, resource).execute(originalEntities);
+                    return OriginEntitiesDeleteIndexExecutor.builder(indexName, resource).execute(originalEntities);
                 }
 
                 @Override
@@ -376,7 +381,12 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             }
 
             buff.append(
-                wrapperAttribute(anyStorageValue.shortStorageName(), attr.getValue(), anyStorageValue.type())).append(' ');
+                wrapperAttribute(
+                    anyStorageValue.shortStorageName(),
+                    attr.getValue(),
+                    anyStorageValue.type(),
+                    fieldOp.get()))
+                .append(' ');
         }
         return buff.toString();
     }
@@ -394,23 +404,42 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
      * StorageType.Long
      * aZl8N0123y58M7S
      */
-    private String wrapperAttribute(ShortStorageName shortStorageName, Object value, StorageType storageType) {
+    private String wrapperAttribute(
+        ShortStorageName shortStorageName, Object value, StorageType storageType, IEntityField field) {
+
         StringBuilder buff = new StringBuilder();
-        buff.append(shortStorageName.getPrefix());
 
         /**
          * 字符串需要处理特殊字符.
+         * fuzzyType只有字符串才会处理.
          */
         if (StorageType.STRING == storageType) {
-            buff.append(" ")
-                .append(shortStorageName.getPrefix())
-                .append(SphinxQLHelper.encodeFullSearchCharset(value.toString()))
-                .append(shortStorageName.getSuffix())
-                .append(" ");
+            String strValue = SphinxQLHelper.encodeFullSearchCharset(value.toString());
+            Tokenizer tokenizer = tokenizerFactory.getTokenizer(field);
+            Iterator<String> words = tokenizer.tokenize(strValue);
+            /**
+             * 处理当前字段分词结果.
+             */
+            while (words.hasNext()) {
+                if (buff.length() > 0) {
+                    buff.append(' ');
+                }
+                buff.append(shortStorageName.getPrefix())
+                    .append(words.next())
+                    .append(shortStorageName.getSuffix());
+            }
+            if (buff.length() > 0) {
+                buff.append(' ');
+            }
+
+            buff.append(shortStorageName.getPrefix())
+                .append(strValue)
+                .append(shortStorageName.getSuffix());
         } else {
-            buff.append(value.toString());
+            buff.append(shortStorageName.getPrefix())
+                .append(value.toString())
+                .append(shortStorageName.getSuffix());
         }
-        buff.append(shortStorageName.getSuffix());
 
         return buff.toString();
     }

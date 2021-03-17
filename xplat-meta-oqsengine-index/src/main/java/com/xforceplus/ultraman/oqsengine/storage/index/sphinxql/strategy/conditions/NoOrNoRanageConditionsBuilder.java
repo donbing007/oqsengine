@@ -12,6 +12,8 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
 
 /**
  * 没有范围查询,没有or 条件.主要利用全文搜索字段进行搜索.
@@ -20,11 +22,20 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
  * @version 0.1 2020/2/22 17:27
  * @since 1.8
  */
-public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>, StorageStrategyFactoryAble {
+public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>, StorageStrategyFactoryAble, TokenizerFactoryAble {
 
     private StorageStrategyFactory storageStrategyFactory;
 
     private SphinxQLConditionQueryBuilderFactory conditionQueryBuilderFactory;
+
+    private TokenizerFactory tokenizerFactory;
+
+    @Override
+    public void init() {
+        this.conditionQueryBuilderFactory = new SphinxQLConditionQueryBuilderFactory(this.storageStrategyFactory);
+        this.conditionQueryBuilderFactory.setTokenizerFacotry(tokenizerFactory);
+        this.conditionQueryBuilderFactory.init();
+    }
 
     /**
      * 没有 or 只有 and 不需要关注连接符.
@@ -94,8 +105,6 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
     @Override
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
-
-        this.conditionQueryBuilderFactory = new SphinxQLConditionQueryBuilderFactory(this.storageStrategyFactory);
     }
 
     public StorageStrategyFactory getStorageStrategyFactory() {
@@ -104,5 +113,14 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
 
     public SphinxQLConditionQueryBuilderFactory getConditionQueryBuilderFactory() {
         return conditionQueryBuilderFactory;
+    }
+
+    @Override
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
+        this.tokenizerFactory = tokenizerFacotry;
+    }
+
+    public TokenizerFactory getTokenizerFactory() {
+        return tokenizerFactory;
     }
 }

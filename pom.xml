@@ -105,6 +105,7 @@
     <modules>
         <module>xplat-meta-oqsengine-common</module>
         <module>xplat-meta-oqsengine-pojo</module>
+        <module>xplat-meta-oqsengine-tokenizer</module>
         <module>xplat-meta-oqsengine-status</module>
         <module>xplat-meta-oqsengine-storage</module>
         <module>xplat-meta-oqsengine-testcontainer</module>
@@ -310,6 +311,12 @@
                 <artifactId>javafaker</artifactId>
                 <version>1.0.2</version>
                 <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.lionsoul</groupId>
+                <artifactId>jcseg-core</artifactId>
+                <version>2.6.2</version>
             </dependency>
 
         </dependencies>

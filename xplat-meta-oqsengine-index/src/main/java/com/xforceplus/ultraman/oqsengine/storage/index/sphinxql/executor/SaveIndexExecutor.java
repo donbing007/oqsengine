@@ -17,21 +17,21 @@ import java.util.Collections;
  * @version 0.1 2021/3/3 11:48
  * @since 1.8
  */
-public class SaveExecutor extends AbstractExecutor<Collection<SphinxQLStorageEntity>, Integer> {
+public class SaveIndexExecutor extends AbstractIndexExecutor<Collection<SphinxQLStorageEntity>, Integer> {
 
     private static final String VALUES_TEMPLATE = "(?,?,?,?,?,?,?,?,?,?)";
 
-    public static SaveExecutor buildCreate(String indexName, TransactionResource transactionResource) {
-        return new SaveExecutor(true, indexName, transactionResource);
+    public static SaveIndexExecutor buildCreate(String indexName, TransactionResource transactionResource) {
+        return new SaveIndexExecutor(true, indexName, transactionResource);
     }
 
-    public static SaveExecutor buildReplace(String indexName, TransactionResource transactionResource) {
-        return new SaveExecutor(false, indexName, transactionResource);
+    public static SaveIndexExecutor buildReplace(String indexName, TransactionResource transactionResource) {
+        return new SaveIndexExecutor(false, indexName, transactionResource);
     }
 
     private boolean create;
 
-    public SaveExecutor(boolean create, String indexName, TransactionResource transactionResource) {
+    public SaveIndexExecutor(boolean create, String indexName, TransactionResource transactionResource) {
         super(indexName, transactionResource);
         this.create = create;
     }

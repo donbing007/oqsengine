@@ -26,6 +26,7 @@ import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
@@ -33,12 +34,16 @@ import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.value.ShortStorageName;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.xforceplus.ultraman.oqsengine.tokenizer.DefaultTokenizerFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.Tokenizer;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.lettuce.core.RedisClient;
 import org.junit.After;
 import org.junit.Assert;
@@ -50,6 +55,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
@@ -89,6 +95,7 @@ public class SphinxQLManticoreIndexStorageTest {
     private Selector<DataSource> writeDataSourceSelector;
     private ExecutorService threadPool;
     private SphinxQLManticoreIndexStorage storage;
+    private TokenizerFactory tokenizerFactory;
 
     //-------------level 0--------------------
     private IEntityField l0LongField = EntityField.Builder.anEntityField()
@@ -100,7 +107,7 @@ public class SphinxQLManticoreIndexStorageTest {
         .withId(Long.MAX_VALUE - 1)
         .withFieldType(FieldType.STRING)
         .withName("l0-string")
-        .withConfig(FieldConfig.build().searchable(true)).build();
+        .withConfig(FieldConfig.build().searchable(true).fuzzyType(FieldConfig.FuzzyType.SEGMENTATION)).build();
     private IEntityField l0StringsField = EntityField.Builder.anEntityField()
         .withId(Long.MAX_VALUE - 2)
         .withFieldType(FieldType.STRINGS)
@@ -125,7 +132,10 @@ public class SphinxQLManticoreIndexStorageTest {
         .withId(Long.MAX_VALUE - 4)
         .withFieldType(FieldType.STRING)
         .withName("l1-string")
-        .withConfig(FieldConfig.build().searchable(true)).build();
+        .withConfig(FieldConfig.Builder.aFieldConfig()
+            .withSearchable(true)
+            .withFuzzyType(FieldConfig.FuzzyType.WILDCARD)
+            .withWildcardMinWidth(3).withWildcardMaxWidth(7).build()).build();
     private IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE - 1)
         .withLevel(1)
@@ -198,11 +208,14 @@ public class SphinxQLManticoreIndexStorageTest {
                 transactionManager, new SphinxQLTransactionResourceFactory(),
                 writeDataSourceSelector, indexWriteIndexNameSelector);
 
+        tokenizerFactory = new DefaultTokenizerFactory();
+
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
 
         SphinxQLConditionsBuilderFactory sphinxQLConditionsBuilderFactory = new SphinxQLConditionsBuilderFactory();
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
+        sphinxQLConditionsBuilderFactory.setTokenizerFacotry(tokenizerFactory);
         sphinxQLConditionsBuilderFactory.init();
 
         threadPool = Executors.newFixedThreadPool(3);
@@ -214,6 +227,7 @@ public class SphinxQLManticoreIndexStorageTest {
         ReflectionTestUtils.setField(storage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         ReflectionTestUtils.setField(storage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
+        ReflectionTestUtils.setField(storage, "tokenizerFactory", tokenizerFactory);
         ReflectionTestUtils.setField(storage, "threadPool", threadPool);
         storage.setSearchIndexName("oqsindex");
         storage.setMaxSearchTimeoutMs(1000);
@@ -242,6 +256,82 @@ public class SphinxQLManticoreIndexStorageTest {
         redisClient.shutdown();
 
         ExecutorHelper.shutdownAndAwaitTermination(threadPool);
+    }
+
+    @Test
+    public void testFuzzyValue() throws Exception {
+        StorageStrategy l0StorageStrategy = storageStrategyFactory.getStrategy(
+            l2EntityClass.field("l0-string").get().type());
+        StorageValue l0StorageValue = l0StorageStrategy.toStorageValue(
+            new StringValue(
+                l2EntityClass.field("l0-string").get(),
+                "这是一个测试"));
+
+        StorageStrategy l1StorageStrategy = storageStrategyFactory.getStrategy(
+            l2EntityClass.field("l1-string").get().type());
+        StorageValue l1StorageValue = l1StorageStrategy.toStorageValue(
+            new StringValue(
+                l2EntityClass.field("l1-string").get(),
+                "abcdefg"
+            ));
+
+        OriginalEntity target = OriginalEntity.Builder.anOriginalEntity()
+            .withId(Long.MAX_VALUE - 300)
+            .withAttribute(l0StorageValue.storageName(), l0StorageValue.value())
+            .withAttribute(l1StorageValue.storageName(), l1StorageValue.value())
+            .withEntityClass(l2EntityClass)
+            .withCreateTime(System.currentTimeMillis())
+            .withVersion(0)
+            .withDeleted(false)
+            .withOp(OperationType.CREATE.getValue())
+            .withCommitid(0)
+            .withTx(0)
+            .withOqsMajor(OqsVersion.MAJOR)
+            .build();
+
+        storage.saveOrDeleteOriginalEntities(Arrays.asList(target));
+
+        List<String> attrs;
+        try (Connection conn = buildSearchDataSourceSelector().getConnection()) {
+            try (Statement st = conn.createStatement()) {
+                try (ResultSet rs = st.executeQuery(
+                    String.format(
+                        "select %s from %s where %s = %d",
+                        FieldDefine.ATTRIBUTEF, "oqsindex", FieldDefine.ID, target.getId()))) {
+
+                    rs.next();
+
+                    String attrf = rs.getString(FieldDefine.ATTRIBUTEF);
+                    attrs = Arrays.asList(attrf.split(" "));
+                }
+            }
+        }
+
+        ShortStorageName shortStorageName = l0StorageValue.shortStorageName();
+        Tokenizer tokenizer = tokenizerFactory.getTokenizer(l2EntityClass.field("l0-string").get());
+        Iterator<String> words = tokenizer.tokenize(l0StorageValue.value().toString());
+        while (words.hasNext()) {
+            Assert.assertTrue(
+                attrs.contains(
+                    String.format("%s%s%s", shortStorageName.getPrefix(), words.next(), shortStorageName.getSuffix())));
+        }
+        Assert.assertTrue(
+            attrs.contains(
+                String.format("%s%s%s",
+                    shortStorageName.getPrefix(), l0StorageValue.value().toString(), shortStorageName.getSuffix())));
+
+        shortStorageName = l1StorageValue.shortStorageName();
+        tokenizer = tokenizerFactory.getTokenizer(l2EntityClass.field("l1-string").get());
+        words = tokenizer.tokenize(l1StorageValue.value().toString());
+        while (words.hasNext()) {
+            Assert.assertTrue(
+                attrs.contains(
+                    String.format("%s%s%s", shortStorageName.getPrefix(), words.next(), shortStorageName.getSuffix())));
+        }
+        Assert.assertTrue(
+            attrs.contains(
+                String.format("%s%s%s",
+                    shortStorageName.getPrefix(), l1StorageValue.value().toString(), shortStorageName.getSuffix())));
     }
 
     @Test
