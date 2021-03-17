@@ -86,50 +86,11 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
                 .build();
     }
 
+    @Override
     public void destroy() {
         if (null != asyncThreadPool) {
             ExecutorHelper.shutdownAndAwaitTermination(asyncThreadPool, 3600);
         }
-    }
-
-    private DataIterator<OriginalEntity> initDataQueryIterator(DevOpsTaskInfo taskInfo, boolean isBuild) throws Exception {
-
-        /**
-         * 获得迭代器
-         */
-        DataIterator<OriginalEntity> dataQueryIterator =
-                masterStorage.iterator(taskInfo.getEntityClass(), taskInfo.getStarts(), taskInfo.getEnds(), taskInfo.startId());
-
-        if (null == dataQueryIterator) {
-            throw new DevopsTaskExistException("has no iterator to rebuild, current task will be error end!");
-        }
-
-        Function<DevOpsTaskInfo, Either<SQLException, Integer>> func = null;
-        taskInfo.setBatchSize(dataQueryIterator.size());
-        taskInfo.setStatus(RUNNING.getCode());
-        if (isBuild) {
-            taskInfo.resetMessage("TASK PROCESSING");
-            func = buildTask();
-        } else {
-            func = resumeTask();
-        }
-
-        if (NULL_UPDATE == eitherRight(func.apply(taskInfo))) {
-            if (!isBuild) {
-                logger.warn("task {} has finished, un-necessary to reIndex!", taskInfo.getMaintainid());
-            }
-            return null;
-        }
-
-        return dataQueryIterator;
-    }
-
-    private Function<DevOpsTaskInfo, Either<SQLException, Integer>> buildTask() {
-        return sqlTaskStorage::build;
-    }
-
-    private Function<DevOpsTaskInfo, Either<SQLException, Integer>> resumeTask() {
-        return sqlTaskStorage::resumeTask;
     }
 
     @Override
@@ -277,6 +238,46 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
     @Override
     public Optional<TaskHandler> syncTask(String taskId) throws SQLException {
         return sqlTaskStorage.selectUnique(Long.parseLong(taskId)).map(this::newTaskHandler);
+    }
+
+    private DataIterator<OriginalEntity> initDataQueryIterator(DevOpsTaskInfo taskInfo, boolean isBuild) throws Exception {
+
+        /**
+         * 获得迭代器
+         */
+        DataIterator<OriginalEntity> dataQueryIterator =
+                masterStorage.iterator(taskInfo.getEntityClass(), taskInfo.getStarts(), taskInfo.getEnds(), taskInfo.startId());
+
+        if (null == dataQueryIterator) {
+            throw new DevopsTaskExistException("has no iterator to rebuild, current task will be error end!");
+        }
+
+        Function<DevOpsTaskInfo, Either<SQLException, Integer>> func = null;
+        taskInfo.setBatchSize(dataQueryIterator.size());
+        taskInfo.setStatus(RUNNING.getCode());
+        if (isBuild) {
+            taskInfo.resetMessage("TASK PROCESSING");
+            func = buildTask();
+        } else {
+            func = resumeTask();
+        }
+
+        if (NULL_UPDATE == eitherRight(func.apply(taskInfo))) {
+            if (!isBuild) {
+                logger.warn("task {} has finished, un-necessary to reIndex!", taskInfo.getMaintainid());
+            }
+            return null;
+        }
+
+        return dataQueryIterator;
+    }
+
+    private Function<DevOpsTaskInfo, Either<SQLException, Integer>> buildTask() {
+        return sqlTaskStorage::build;
+    }
+
+    private Function<DevOpsTaskInfo, Either<SQLException, Integer>> resumeTask() {
+        return sqlTaskStorage::resumeTask;
     }
 
     private TaskHandler pending(IEntityClass entityClass, LocalDateTime start, LocalDateTime end) {

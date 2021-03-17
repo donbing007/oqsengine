@@ -171,6 +171,7 @@ public class MultiClientSyncTest extends BaseInit {
         for (int i = 0; i < testClientSize; i++) {
             WatchElement w = streamEvents[i].getMockerSyncClient().getSuccess(expectedAppId);
             if (watchElementVisitor.getVisitors().contains(i)) {
+
                 assertEquals(new WatchElement(expectedAppId, expectedEnv, expectedVersion, null), w);
             } else {
                 if (null != w) {

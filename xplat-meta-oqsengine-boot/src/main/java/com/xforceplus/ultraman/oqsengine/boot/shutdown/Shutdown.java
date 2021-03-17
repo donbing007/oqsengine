@@ -79,9 +79,7 @@ public class Shutdown {
             }
         }
 
-        if (rebuildIndexExecutor instanceof DevOpsRebuildIndexExecutor) {
-            ((DevOpsRebuildIndexExecutor) rebuildIndexExecutor).destroy();
-        }
+        rebuildIndexExecutor.destroy();
 
         // wait shutdown
         logger.info("Start closing the IO read worker thread...");

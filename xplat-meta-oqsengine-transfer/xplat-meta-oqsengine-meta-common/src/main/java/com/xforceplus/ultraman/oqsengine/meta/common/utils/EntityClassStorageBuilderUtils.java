@@ -188,6 +188,9 @@ public class EntityClassStorageBuilderUtils {
                 .withDelimiter("")
                 .withDisplayType(fieldConfig.getDisplayType())
                 .withFieldSense(FieldConfig.FieldSense.getInstance(fieldConfig.getMetaFieldSenseValue()))
+                .withFuzzyType(FieldConfig.FuzzyType.getInstance(fieldConfig.getFuzzyType()))
+                .withWildcardMinWidth(fieldConfig.getWildcardMinWidth())
+                .withWildcardMaxWidth(fieldConfig.getWildcardMaxWidth())
                 .build();
     }
 }

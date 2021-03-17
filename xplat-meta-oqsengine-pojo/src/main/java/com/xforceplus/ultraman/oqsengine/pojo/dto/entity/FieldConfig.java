@@ -158,6 +158,12 @@ public class FieldConfig implements Serializable {
     @JsonProperty(value = "fuzzyType")
     private FuzzyType fuzzyType = FuzzyType.NOT;
 
+    @JsonProperty(value = "wildcardMinWidth")
+    private int wildcardMinWidth = 3;
+
+    @JsonProperty(value = "wildcardMaxWidth")
+    private int wildcardMaxWidth = 7;
+
     /**
      * 创建一个新的 FieldConfig.
      *
@@ -328,6 +334,14 @@ public class FieldConfig implements Serializable {
         return precision;
     }
 
+    public int getWildcardMinWidth() {
+        return wildcardMinWidth;
+    }
+
+    public int getWildcardMaxWidth() {
+        return wildcardMaxWidth;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -384,6 +398,9 @@ public class FieldConfig implements Serializable {
         return sb.toString();
     }
 
+    /**
+     * builder
+     */
     public static final class Builder {
         private boolean searchable = false;
         private long max = Long.MAX_VALUE;
@@ -397,6 +414,8 @@ public class FieldConfig implements Serializable {
         private String delimiter = "";
         private String displayType = "";
         private FuzzyType fuzzyType = FuzzyType.NOT;
+        private int wildcardMinWidth;
+        private int wildcardMaxWidth;
 
         private Builder() {
         }
@@ -465,6 +484,15 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
+        public Builder withWildcardMinWidth(int wildcardMinWidth) {
+            this.wildcardMinWidth = wildcardMinWidth;
+            return this;
+        }
+
+        public Builder withWildcardMaxWidth(int wildcardMaxWidth) {
+            this.wildcardMaxWidth = wildcardMaxWidth;
+            return this;
+        }
         public FieldConfig build() {
             FieldConfig fieldConfig = new FieldConfig();
             fieldConfig.max = this.max;
@@ -479,6 +507,9 @@ public class FieldConfig implements Serializable {
             fieldConfig.precision = this.precision;
             fieldConfig.delimiter = this.delimiter;
             fieldConfig.displayType = this.displayType;
+            fieldConfig.wildcardMinWidth = this.wildcardMinWidth;
+            fieldConfig.wildcardMaxWidth = this.wildcardMaxWidth;
+
             return fieldConfig;
         }
     }
