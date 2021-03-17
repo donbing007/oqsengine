@@ -12,10 +12,8 @@ import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.TaskStorage;
 import com.xforceplus.ultraman.oqsengine.devops.repair.CommitIdRepairExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.summary.TableSummary;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.iterator.QueryIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

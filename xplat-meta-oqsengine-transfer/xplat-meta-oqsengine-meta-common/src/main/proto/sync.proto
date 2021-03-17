@@ -90,6 +90,10 @@ message FieldConfig {
 			UPDATE_USER_NAME = 9;
 			DELETE_FLAG = 10;
 	}
+
+	int32 fuzzyType = 10;
+	int32 wildcardMinWidth = 11;
+	int32 wildcardMaxWidth = 12;
 }
 
 message RelationInfo {

@@ -108,34 +108,37 @@ public class CDCMetricsService {
         }
     }
 
-    public void isReadyCommit(long commitId, CDCMetricsService cdcMetricsService) {
+    public void isReadyCommit(long commitId) {
         long start = System.currentTimeMillis();
         int loops = 0;
+        boolean recoverMonitor = false;
         try {
             if (logger.isDebugEnabled()) {
                 logger.debug("[cdc-metrics] attempt check ready to commitId , commitId : {}", commitId);
             }
             while (true) {
-                if (!cdcMetricsCallback.isReadyCommit(commitId)) {
-                    try {
-                        Thread.sleep(COMMIT_ID_READY_CHECK_INTERVAL);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    loops++;
-                    if (loops > COMMIT_ID_LOG_MAX_LOOPS) {
-                        int totalLoops = 0;
-                        totalLoops += loops;
-                        loops = 0;
-                        logger.warn(
-                                "[cdc-metrics] loops for wait ready commit missed current check point, current-wait-time : {}ms, commitId : {}"
-                                , totalLoops * COMMIT_ID_READY_CHECK_INTERVAL, commitId);
-                        //  输出NotReady指标
-                        notReady(commitId);
-                    }
-                    continue;
+                if (cdcMetricsCallback.isReadyCommit(commitId)) {
+                    break;
                 }
-                break;
+
+                try {
+                    Thread.sleep(COMMIT_ID_READY_CHECK_INTERVAL);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                loops++;
+
+                if (loops > COMMIT_ID_LOG_MAX_LOOPS) {
+                    recoverMonitor = true;
+                    loops = 0;
+                    logger.warn(
+                            "[cdc-metrics] loops for wait ready commit missed current check point (10s), commitId : {}"
+                            , commitId);
+
+                    //  输出NotReady指标
+                    notReady(commitId);
+                }
             }
         } finally {
             long duration = System.currentTimeMillis() - start;
@@ -146,7 +149,7 @@ public class CDCMetricsService {
                 logger.warn("[cdc-metrics] wait for ready commitId use too much times, commitId {}, use time : {}ms"
                         , commitId, duration);
             }
-            if (loops > COMMIT_ID_LOG_MAX_LOOPS) {
+            if (recoverMonitor) {
                 //  恢复isReady指标
                 notReady(INIT_ID);
             }

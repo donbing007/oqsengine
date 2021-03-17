@@ -78,28 +78,30 @@ public final class EntityClassSyncProto {
       "(\t\022!\n\013fieldConfig\030\007 \001(\0132\014.FieldConfig\"m\n" +
       "\tFieldType\022\013\n\007UNKNOWN\020\000\022\013\n\007BOOLEAN\020\001\022\010\n\004" +
       "ENUM\020\002\022\014\n\010DATETIME\020\003\022\010\n\004LONG\020\004\022\n\n\006STRING" +
-      "\020\005\022\013\n\007STRINGS\020\006\022\013\n\007DECIMAL\020\007\"\260\003\n\013FieldCo" +
+      "\020\005\022\013\n\007STRINGS\020\006\022\013\n\007DECIMAL\020\007\"\367\003\n\013FieldCo" +
       "nfig\022\022\n\nsearchable\030\001 \001(\010\022\013\n\003max\030\002 \001(\003\022\013\n" +
       "\003min\030\003 \001(\003\022\021\n\tprecision\030\004 \001(\005\022\022\n\nidentif" +
       "ier\030\005 \001(\010\022\022\n\nisRequired\030\006 \001(\010\022\033\n\023validat" +
       "eRegexString\030\007 \001(\t\022\023\n\013displayType\030\010 \001(\t\022" +
       "3\n\016metaFieldSense\030\t \001(\0162\033.FieldConfig.Me" +
-      "taFieldSense\"\320\001\n\016MetaFieldSense\022\013\n\007UNKNO" +
-      "WN\020\000\022\n\n\006NORMAL\020\001\022\r\n\tTENANT_ID\020\002\022\017\n\013TENAN" +
-      "T_CODE\020\003\022\017\n\013CREATE_TIME\020\004\022\017\n\013UPDATE_TIME" +
-      "\020\005\022\022\n\016CREATE_USER_ID\020\006\022\022\n\016UPDATE_USER_ID" +
-      "\020\007\022\024\n\020CREATE_USER_NAME\020\010\022\024\n\020UPDATE_USER_" +
-      "NAME\020\t\022\017\n\013DELETE_FLAG\020\n\"\331\001\n\014RelationInfo" +
-      "\022\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 \001(\t\022\025\n\rentityClas" +
-      "sId\030\003 \001(\003\022\027\n\017relOwnerClassId\030\004 \001(\003\022\031\n\021re" +
-      "lOwnerClassName\030\005 \001(\t\022\024\n\014relationType\030\006 " +
-      "\001(\t\022\020\n\010identity\030\007 \001(\010\022%\n\013entityField\030\010 \001" +
-      "(\0132\020.EntityFieldInfo\022\025\n\rbelongToOwner\030\t " +
-      "\001(\0102V\n\017EntityClassSync\022C\n\010register\022\027.Ent" +
-      "ityClassSyncRequest\032\030.EntityClassSyncRes" +
-      "ponse\"\000(\0010\001BM\n3com.xforceplus.ultraman.o" +
-      "qsengine.meta.common.protoB\024EntityClassS" +
-      "yncProtoP\001b\006proto3"
+      "taFieldSense\022\021\n\tfuzzyType\030\n \001(\005\022\030\n\020wildc" +
+      "ardMinWidth\030\013 \001(\005\022\030\n\020wildcardMaxWidth\030\014 " +
+      "\001(\005\"\320\001\n\016MetaFieldSense\022\013\n\007UNKNOWN\020\000\022\n\n\006N" +
+      "ORMAL\020\001\022\r\n\tTENANT_ID\020\002\022\017\n\013TENANT_CODE\020\003\022" +
+      "\017\n\013CREATE_TIME\020\004\022\017\n\013UPDATE_TIME\020\005\022\022\n\016CRE" +
+      "ATE_USER_ID\020\006\022\022\n\016UPDATE_USER_ID\020\007\022\024\n\020CRE" +
+      "ATE_USER_NAME\020\010\022\024\n\020UPDATE_USER_NAME\020\t\022\017\n" +
+      "\013DELETE_FLAG\020\n\"\331\001\n\014RelationInfo\022\n\n\002id\030\001 " +
+      "\001(\003\022\014\n\004name\030\002 \001(\t\022\025\n\rentityClassId\030\003 \001(\003" +
+      "\022\027\n\017relOwnerClassId\030\004 \001(\003\022\031\n\021relOwnerCla" +
+      "ssName\030\005 \001(\t\022\024\n\014relationType\030\006 \001(\t\022\020\n\010id" +
+      "entity\030\007 \001(\010\022%\n\013entityField\030\010 \001(\0132\020.Enti" +
+      "tyFieldInfo\022\025\n\rbelongToOwner\030\t \001(\0102V\n\017En" +
+      "tityClassSync\022C\n\010register\022\027.EntityClassS" +
+      "yncRequest\032\030.EntityClassSyncResponse\"\000(\001" +
+      "0\001BM\n3com.xforceplus.ultraman.oqsengine." +
+      "meta.common.protoB\024EntityClassSyncProtoP" +
+      "\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -148,7 +150,7 @@ public final class EntityClassSyncProto {
     internal_static_FieldConfig_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldConfig_descriptor,
-        new java.lang.String[] { "Searchable", "Max", "Min", "Precision", "Identifier", "IsRequired", "ValidateRegexString", "DisplayType", "MetaFieldSense", });
+        new java.lang.String[] { "Searchable", "Max", "Min", "Precision", "Identifier", "IsRequired", "ValidateRegexString", "DisplayType", "MetaFieldSense", "FuzzyType", "WildcardMinWidth", "WildcardMaxWidth", });
     internal_static_RelationInfo_descriptor =
       getDescriptor().getMessageTypes().get(6);
     internal_static_RelationInfo_fieldAccessorTable = new

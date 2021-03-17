@@ -74,4 +74,9 @@ public interface RebuildIndexExecutor {
      * @return 任务列表.
      */
     Optional<TaskHandler> syncTask(String taskId) throws SQLException;
+
+    /**
+     * 销毁
+     */
+    void destroy();
 }

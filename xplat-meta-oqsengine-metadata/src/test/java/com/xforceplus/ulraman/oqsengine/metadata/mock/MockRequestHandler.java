@@ -43,7 +43,7 @@ public class MockRequestHandler implements IRequestHandler {
         }
 
         onNext(entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
-                                                        mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
+                                                        mockSelfFatherAncestorsGenerate(System.currentTimeMillis())), null);
         return true;
     }
 
@@ -60,7 +60,7 @@ public class MockRequestHandler implements IRequestHandler {
         appIdEntries.forEach(
                 a -> {
                     onNext(entityClassSyncResponseGenerator(a.getAppId(), a.getVersion(),
-                            mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
+                            mockSelfFatherAncestorsGenerate(System.currentTimeMillis())), null);
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {
@@ -78,12 +78,6 @@ public class MockRequestHandler implements IRequestHandler {
     }
 
     @Override
-    public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
-        syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
-                entityClassSyncResponse.getEntityClassSyncRspProto());
-    }
-
-    @Override
     public IRequestWatchExecutor watchExecutor() {
         return null;
     }
@@ -97,5 +91,16 @@ public class MockRequestHandler implements IRequestHandler {
     @Override
     public void stop() {
 
+    }
+
+    @Override
+    public void onNext(EntityClassSyncResponse entityClassSyncResponse, Void aVoid) {
+        syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
+                entityClassSyncResponse.getEntityClassSyncRspProto());
+    }
+
+    @Override
+    public boolean isShutDown() {
+        return false;
     }
 }

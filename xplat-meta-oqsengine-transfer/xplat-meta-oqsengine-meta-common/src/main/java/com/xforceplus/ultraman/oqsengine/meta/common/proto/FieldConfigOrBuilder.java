@@ -65,4 +65,19 @@ public interface FieldConfigOrBuilder extends
    * <code>.FieldConfig.MetaFieldSense metaFieldSense = 9;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense getMetaFieldSense();
+
+  /**
+   * <code>int32 fuzzyType = 10;</code>
+   */
+  int getFuzzyType();
+
+  /**
+   * <code>int32 wildcardMinWidth = 11;</code>
+   */
+  int getWildcardMinWidth();
+
+  /**
+   * <code>int32 wildcardMaxWidth = 12;</code>
+   */
+  int getWildcardMaxWidth();
 }

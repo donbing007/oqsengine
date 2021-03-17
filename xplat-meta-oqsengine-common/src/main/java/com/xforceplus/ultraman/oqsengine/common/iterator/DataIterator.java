@@ -17,6 +17,6 @@ public interface DataIterator<E> extends Iterator<E> {
      *
      * @return
      */
-    long size();
+    int size();
 
 }

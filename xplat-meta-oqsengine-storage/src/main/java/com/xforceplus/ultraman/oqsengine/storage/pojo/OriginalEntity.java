@@ -33,6 +33,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
     private long commitid;
     private IEntityClass entityClass;
     private Object[] attributes;
+    private long maintainid;
 
     public OriginalEntity() {
         deleted = false;
@@ -44,6 +45,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         updateTime = 0;
         tx = 0;
         commitid = 0;
+        maintainid = 0;
         entityClass = ANY_ENTITYCLASS;
         attributes = EMTPY_ATTRIBUTES;
     }
@@ -132,8 +134,16 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         this.entityClass = entityClass;
     }
 
+    public void setMaintainid(long maintainid) {
+        this.maintainid = maintainid;
+    }
+
     public void setAttributes(Object[] attributes) {
         this.attributes = attributes;
+    }
+
+    public long getMaintainid() {
+        return maintainid;
     }
 
     public Collection<Map.Entry<String, Object>> listAttributes() {
@@ -241,6 +251,7 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
         private long commitid;
         private IEntityClass entityClass = ANY_ENTITYCLASS;
         private Collection<Object> attributes = Collections.emptyList();
+        private long maintainid;
 
         private Builder() {
             attributes = new LinkedList();
@@ -257,6 +268,11 @@ public class OriginalEntity implements Serializable, Cloneable, Comparable<Origi
 
         public Builder withOp(int op) {
             this.op = op;
+            return this;
+        }
+
+        public Builder withMaintainid(long maintainid) {
+            this.maintainid = maintainid;
             return this;
         }
 

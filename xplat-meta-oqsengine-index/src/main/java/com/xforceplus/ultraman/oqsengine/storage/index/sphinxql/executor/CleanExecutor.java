@@ -27,11 +27,11 @@ public class CleanExecutor implements Executor<Long, Long> {
         StringBuilder buff = new StringBuilder();
         buff.append("DELETE FROM %s")
             .append(" WHERE ")
-            .append(FieldDefine.MAINTAIN_ID).append("=?")
+            .append(FieldDefine.MAINTAIN_ID).append(" != ?")
             .append(" AND ")
-            .append(FieldDefine.UPDATE_TIME).append(">=?")
+            .append(FieldDefine.UPDATE_TIME).append(" >= ?")
             .append(" AND ")
-            .append(FieldDefine.UPDATE_TIME).append("<=?")
+            .append(FieldDefine.UPDATE_TIME).append(" <= ?")
             .append(" AND ")
             .append("MATCH('(@").append(FieldDefine.ENTITYCLASSF).append(" =").append("\"%d\")')");
         sql = buff.toString();

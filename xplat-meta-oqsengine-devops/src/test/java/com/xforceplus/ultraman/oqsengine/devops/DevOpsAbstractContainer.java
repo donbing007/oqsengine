@@ -6,18 +6,19 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.SnowflakeLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.node.StaticNodeIdGenerator;
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.HashSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
-import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLManticoreIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.SphinxQLTransactionResourceFactory;
@@ -26,10 +27,8 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJ
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
-import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import io.lettuce.core.RedisClient;
 import org.junit.Ignore;
@@ -39,6 +38,10 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * desc :
@@ -50,18 +53,19 @@ import java.sql.Statement;
  */
 @Ignore
 public abstract class DevOpsAbstractContainer {
-    protected DataSourcePackage dataSourcePackage;
 
-    protected RedisClient redisClient;
-    protected LongIdGenerator idGenerator;
-    protected DataSource dataSource;
-
-    protected SQLMasterStorage masterStorage;
-    protected SphinxQLIndexStorage indexStorage;
     protected StorageStrategyFactory masterStorageStrategyFactory;
     protected CommitIdStatusServiceImpl commitIdStatusService;
+    protected IndexStorage indexStorage;
     protected TransactionManager transactionManager;
+    protected DataSourcePackage dataSourcePackage;
+    protected SQLMasterStorage masterStorage;
+    protected DataSource dataSource;
     protected TransactionExecutor masterTransactionExecutor;
+    protected RedisClient redisClient;
+
+    protected LongIdGenerator idGenerator;
+    protected ExecutorService executorService;
     protected DevOpsRebuildIndexExecutor taskExecutor;
     protected static String tableName = "oqsbigentity";
 
@@ -88,16 +92,24 @@ public abstract class DevOpsAbstractContainer {
         initDevOps();
     }
 
+
     protected void close() {
         commitIdStatusService.destroy();
         redisClient.connect().sync().flushall();
         redisClient.shutdown();
 
         dataSourcePackage.close();
-    }
 
+        if (null != executorService) {
+            ExecutorHelper.shutdownAndAwaitTermination(executorService, 3600);
+        }
+    }
     protected DataSource buildDataSourceSelectorMaster() {
         return dataSourcePackage.getMaster().get(0);
+    }
+
+    private void initDevOps() throws Exception {
+        initTaskStorage(buildDevOpsDataSource());
     }
 
     private void initMaster() throws Exception {
@@ -105,26 +117,21 @@ public abstract class DevOpsAbstractContainer {
         dataSource = buildDataSourceSelectorMaster();
 
         masterTransactionExecutor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory(tableName),
-            NoSelector.build(dataSource), NoSelector.build(tableName));
+                transactionManager, new SqlConnectionTransactionResourceFactory(tableName),
+                NoSelector.build(dataSource), NoSelector.build(tableName));
 
 
         masterStorageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         masterStorageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
         masterStorageStrategyFactory.register(FieldType.STRINGS, new MasterStringsStorageStrategy());
 
-        IEntityValueBuilder<String> entityValueBuilder = new SQLJsonIEntityValueBuilder();
-        ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", masterStorageStrategyFactory);
-
         SQLJsonConditionsBuilderFactory sqlJsonConditionsBuilderFactory = new SQLJsonConditionsBuilderFactory();
         sqlJsonConditionsBuilderFactory.setStorageStrategy(masterStorageStrategyFactory);
         sqlJsonConditionsBuilderFactory.init();
 
         masterStorage = new SQLMasterStorage();
-        ReflectionTestUtils.setField(masterStorage, "masterDataSource", dataSource);
         ReflectionTestUtils.setField(masterStorage, "transactionExecutor", masterTransactionExecutor);
         ReflectionTestUtils.setField(masterStorage, "storageStrategyFactory", masterStorageStrategyFactory);
-        ReflectionTestUtils.setField(masterStorage, "entityValueBuilder", entityValueBuilder);
         ReflectionTestUtils.setField(masterStorage, "conditionsBuilderFactory", sqlJsonConditionsBuilderFactory);
         masterStorage.setTableName(tableName);
         masterStorage.init();
@@ -134,12 +141,13 @@ public abstract class DevOpsAbstractContainer {
         Selector<DataSource> writeDataSourceSelector = buildWriteDataSourceSelector();
         DataSource searchDataSource = buildSearchDataSource();
 
-        Selector<String> indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 3);
+        // 等待加载完毕
+        TimeUnit.SECONDS.sleep(1L);
 
-        TransactionExecutor searchTransactionExecutor = new AutoJoinTransactionExecutor(transactionManager,
-            new SphinxQLTransactionResourceFactory(), NoSelector.build(searchDataSource), NoSelector.build("oqsindex"));
-        TransactionExecutor writeTransactionExecutor = new AutoJoinTransactionExecutor(transactionManager,
-            new SphinxQLTransactionResourceFactory(), writeDataSourceSelector, indexWriteIndexNameSelector);
+        TransactionExecutor writeExecutor = new AutoJoinTransactionExecutor(transactionManager,
+                new SphinxQLTransactionResourceFactory(), writeDataSourceSelector, NoSelector.build("oqsindex"));
+        TransactionExecutor searchExecutor = new AutoJoinTransactionExecutor(transactionManager,
+                new SphinxQLTransactionResourceFactory(), NoSelector.build(searchDataSource), NoSelector.build("oqsindex"));
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
@@ -148,37 +156,39 @@ public abstract class DevOpsAbstractContainer {
         sphinxQLConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
         sphinxQLConditionsBuilderFactory.init();
 
-        indexStorage = new SphinxQLIndexStorage();
+        Selector<String> indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
+
+        ExecutorService executorService = new ThreadPoolExecutor(5, 5, 0,
+                TimeUnit.SECONDS, new LinkedBlockingDeque<>(50));
+
+        indexStorage = new SphinxQLManticoreIndexStorage();
         ReflectionTestUtils.setField(indexStorage, "writerDataSourceSelector", writeDataSourceSelector);
-        ReflectionTestUtils.setField(indexStorage, "writeTransactionExecutor", writeTransactionExecutor);
-        ReflectionTestUtils.setField(indexStorage, "searchTransactionExecutor", searchTransactionExecutor);
+        ReflectionTestUtils.setField(indexStorage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
+        ReflectionTestUtils.setField(indexStorage, "searchTransactionExecutor", searchExecutor);
+        ReflectionTestUtils.setField(indexStorage, "writeTransactionExecutor", writeExecutor);
         ReflectionTestUtils.setField(indexStorage, "sphinxQLConditionsBuilderFactory", sphinxQLConditionsBuilderFactory);
         ReflectionTestUtils.setField(indexStorage, "storageStrategyFactory", storageStrategyFactory);
-        ReflectionTestUtils.setField(indexStorage, "indexWriteIndexNameSelector", indexWriteIndexNameSelector);
-        indexStorage.setSearchIndexName("oqsindex");
-        indexStorage.setMaxSearchTimeoutMs(1000);
+        ReflectionTestUtils.setField(indexStorage, "threadPool", executorService);
+
+        ((SphinxQLManticoreIndexStorage) indexStorage).setMaxSearchTimeoutMs(1000);
         indexStorage.init();
     }
 
-    private void initTaskStorage(DataSource devOpsDataSource) throws IllegalAccessException, InstantiationException {
+
+
+    private void initTaskStorage(DataSource devOpsDataSource) {
 
         SQLTaskStorage sqlTaskStorage = new SQLTaskStorage();
         ReflectionTestUtils.setField(sqlTaskStorage, "devOpsDataSource", devOpsDataSource);
         sqlTaskStorage.setTable(rebuildTableName);
 
-//        LockExecutor lockExecutor = new LockExecutor();
-//        ReflectionTestUtils.setField(lockExecutor, "resourceLocker",
-//                new LocalResourceLocker());
 
-        taskExecutor = new DevOpsRebuildIndexExecutor(10, 3000, 30000,
-            30, 300, 100);
+        taskExecutor = new DevOpsRebuildIndexExecutor(10, 3000, 30000, 300);
 
         ReflectionTestUtils.setField(taskExecutor, "indexStorage", indexStorage);
         ReflectionTestUtils.setField(taskExecutor, "sqlTaskStorage", sqlTaskStorage);
         ReflectionTestUtils.setField(taskExecutor, "masterStorage", masterStorage);
         ReflectionTestUtils.setField(taskExecutor, "idGenerator", idGenerator);
-//        ReflectionTestUtils.setField(taskExecutor, "lockExecutor", lockExecutor);
-        taskExecutor.init();
     }
 
     private DataSource buildDevOpsDataSource() {
@@ -208,7 +218,6 @@ public abstract class DevOpsAbstractContainer {
                 try (Statement st = conn.createStatement()) {
                     st.executeUpdate("truncate table oqsindex0");
                     st.executeUpdate("truncate table oqsindex1");
-                    st.executeUpdate("truncate table oqsindex2");
                 }
             }
         }
@@ -216,7 +225,6 @@ public abstract class DevOpsAbstractContainer {
         DataSource ds = dataSourcePackage.getDevOps();
         try (Connection conn = ds.getConnection()) {
             try (Statement st = conn.createStatement()) {
-                st.executeUpdate("truncate table " + cdcErrorsTableName);
                 st.executeUpdate("truncate table " + rebuildTableName);
             }
         }

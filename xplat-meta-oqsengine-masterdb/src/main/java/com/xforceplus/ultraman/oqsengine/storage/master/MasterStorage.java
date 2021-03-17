@@ -7,6 +7,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
+import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 
 import java.sql.SQLException;
 import java.util.Collection;
@@ -30,7 +32,7 @@ public interface MasterStorage extends Storage {
      * @return 迭代器.
      * @throws SQLException
      */
-    DataIterator<IEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId) throws SQLException;
+    DataIterator<OriginalEntity> iterator(IEntityClass entityClass, long startTime, long endTime, long lastId) throws SQLException;
 
 
     /**

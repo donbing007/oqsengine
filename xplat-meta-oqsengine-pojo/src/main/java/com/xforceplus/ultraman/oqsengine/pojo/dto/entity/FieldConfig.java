@@ -356,7 +356,7 @@ public class FieldConfig implements Serializable {
         return isSearchable() == that.isSearchable() &&
             getMax() == that.getMax() &&
             getMin() == that.getMin() &&
-            getPrecision() == that.getPrecision() &&
+            precision() == that.precision() &&
             isIdentifie() == that.isIdentifie() &&
             isRequired() == that.isRequired() &&
             isSplittable() == that.isSplittable() &&
@@ -375,17 +375,14 @@ public class FieldConfig implements Serializable {
             isSearchable(),
             getMax(),
             getMin(),
-            getPrecision(),
+            precision(),
             isIdentifie(),
             isRequired(),
             getFieldSense(),
             getValidateRegexString(),
             isSplittable(),
             getDelimiter(),
-            getDisplayType(),
-            getFuzzyType(),
-            getWildcardMinWidth(),
-            getWildcardMaxWidth());
+            getDisplayType());
     }
 
     @Override
@@ -406,6 +403,9 @@ public class FieldConfig implements Serializable {
         return sb.toString();
     }
 
+    /**
+     * builder
+     */
     public static final class Builder {
         private boolean searchable = false;
         private long max = Long.MAX_VALUE;
@@ -510,8 +510,8 @@ public class FieldConfig implements Serializable {
             fieldConfig.identifie = this.identifie;
             fieldConfig.splittable = this.splittable;
             fieldConfig.fuzzyType = this.fuzzyType;
-            fieldConfig.wildcardMinWidth = this.wildcardMinWidth;
             fieldConfig.searchable = this.searchable;
+            fieldConfig.wildcardMinWidth = this.wildcardMinWidth;
             fieldConfig.wildcardMaxWidth = this.wildcardMaxWidth;
             fieldConfig.required = this.required;
             fieldConfig.displayType = this.displayType;

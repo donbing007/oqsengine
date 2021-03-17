@@ -25,6 +25,9 @@ private static final long serialVersionUID = 0L;
     validateRegexString_ = "";
     displayType_ = "";
     metaFieldSense_ = 0;
+    fuzzyType_ = 0;
+    wildcardMinWidth_ = 0;
+    wildcardMaxWidth_ = 0;
   }
 
   @java.lang.Override
@@ -104,6 +107,21 @@ private static final long serialVersionUID = 0L;
             int rawValue = input.readEnum();
 
             metaFieldSense_ = rawValue;
+            break;
+          }
+          case 80: {
+
+            fuzzyType_ = input.readInt32();
+            break;
+          }
+          case 88: {
+
+            wildcardMinWidth_ = input.readInt32();
+            break;
+          }
+          case 96: {
+
+            wildcardMaxWidth_ = input.readInt32();
             break;
           }
         }
@@ -447,6 +465,33 @@ private static final long serialVersionUID = 0L;
     return result == null ? com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.UNRECOGNIZED : result;
   }
 
+  public static final int FUZZYTYPE_FIELD_NUMBER = 10;
+  private int fuzzyType_;
+  /**
+   * <code>int32 fuzzyType = 10;</code>
+   */
+  public int getFuzzyType() {
+    return fuzzyType_;
+  }
+
+  public static final int WILDCARDMINWIDTH_FIELD_NUMBER = 11;
+  private int wildcardMinWidth_;
+  /**
+   * <code>int32 wildcardMinWidth = 11;</code>
+   */
+  public int getWildcardMinWidth() {
+    return wildcardMinWidth_;
+  }
+
+  public static final int WILDCARDMAXWIDTH_FIELD_NUMBER = 12;
+  private int wildcardMaxWidth_;
+  /**
+   * <code>int32 wildcardMaxWidth = 12;</code>
+   */
+  public int getWildcardMaxWidth() {
+    return wildcardMaxWidth_;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -485,6 +530,15 @@ private static final long serialVersionUID = 0L;
     }
     if (metaFieldSense_ != com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.UNKNOWN.getNumber()) {
       output.writeEnum(9, metaFieldSense_);
+    }
+    if (fuzzyType_ != 0) {
+      output.writeInt32(10, fuzzyType_);
+    }
+    if (wildcardMinWidth_ != 0) {
+      output.writeInt32(11, wildcardMinWidth_);
+    }
+    if (wildcardMaxWidth_ != 0) {
+      output.writeInt32(12, wildcardMaxWidth_);
     }
     unknownFields.writeTo(output);
   }
@@ -528,6 +582,18 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeEnumSize(9, metaFieldSense_);
     }
+    if (fuzzyType_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(10, fuzzyType_);
+    }
+    if (wildcardMinWidth_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(11, wildcardMinWidth_);
+    }
+    if (wildcardMaxWidth_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(12, wildcardMaxWidth_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -561,6 +627,12 @@ private static final long serialVersionUID = 0L;
     result = result && getDisplayType()
         .equals(other.getDisplayType());
     result = result && metaFieldSense_ == other.metaFieldSense_;
+    result = result && (getFuzzyType()
+        == other.getFuzzyType());
+    result = result && (getWildcardMinWidth()
+        == other.getWildcardMinWidth());
+    result = result && (getWildcardMaxWidth()
+        == other.getWildcardMaxWidth());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -595,6 +667,12 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getDisplayType().hashCode();
     hash = (37 * hash) + METAFIELDSENSE_FIELD_NUMBER;
     hash = (53 * hash) + metaFieldSense_;
+    hash = (37 * hash) + FUZZYTYPE_FIELD_NUMBER;
+    hash = (53 * hash) + getFuzzyType();
+    hash = (37 * hash) + WILDCARDMINWIDTH_FIELD_NUMBER;
+    hash = (53 * hash) + getWildcardMinWidth();
+    hash = (37 * hash) + WILDCARDMAXWIDTH_FIELD_NUMBER;
+    hash = (53 * hash) + getWildcardMaxWidth();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -742,6 +820,12 @@ private static final long serialVersionUID = 0L;
 
       metaFieldSense_ = 0;
 
+      fuzzyType_ = 0;
+
+      wildcardMinWidth_ = 0;
+
+      wildcardMaxWidth_ = 0;
+
       return this;
     }
 
@@ -773,6 +857,9 @@ private static final long serialVersionUID = 0L;
       result.validateRegexString_ = validateRegexString_;
       result.displayType_ = displayType_;
       result.metaFieldSense_ = metaFieldSense_;
+      result.fuzzyType_ = fuzzyType_;
+      result.wildcardMinWidth_ = wildcardMinWidth_;
+      result.wildcardMaxWidth_ = wildcardMaxWidth_;
       onBuilt();
       return result;
     }
@@ -842,6 +929,15 @@ private static final long serialVersionUID = 0L;
       }
       if (other.metaFieldSense_ != 0) {
         setMetaFieldSenseValue(other.getMetaFieldSenseValue());
+      }
+      if (other.getFuzzyType() != 0) {
+        setFuzzyType(other.getFuzzyType());
+      }
+      if (other.getWildcardMinWidth() != 0) {
+        setWildcardMinWidth(other.getWildcardMinWidth());
+      }
+      if (other.getWildcardMaxWidth() != 0) {
+        setWildcardMaxWidth(other.getWildcardMaxWidth());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1204,6 +1300,84 @@ private static final long serialVersionUID = 0L;
     public Builder clearMetaFieldSense() {
       
       metaFieldSense_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int fuzzyType_ ;
+    /**
+     * <code>int32 fuzzyType = 10;</code>
+     */
+    public int getFuzzyType() {
+      return fuzzyType_;
+    }
+    /**
+     * <code>int32 fuzzyType = 10;</code>
+     */
+    public Builder setFuzzyType(int value) {
+      
+      fuzzyType_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 fuzzyType = 10;</code>
+     */
+    public Builder clearFuzzyType() {
+      
+      fuzzyType_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int wildcardMinWidth_ ;
+    /**
+     * <code>int32 wildcardMinWidth = 11;</code>
+     */
+    public int getWildcardMinWidth() {
+      return wildcardMinWidth_;
+    }
+    /**
+     * <code>int32 wildcardMinWidth = 11;</code>
+     */
+    public Builder setWildcardMinWidth(int value) {
+      
+      wildcardMinWidth_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 wildcardMinWidth = 11;</code>
+     */
+    public Builder clearWildcardMinWidth() {
+      
+      wildcardMinWidth_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private int wildcardMaxWidth_ ;
+    /**
+     * <code>int32 wildcardMaxWidth = 12;</code>
+     */
+    public int getWildcardMaxWidth() {
+      return wildcardMaxWidth_;
+    }
+    /**
+     * <code>int32 wildcardMaxWidth = 12;</code>
+     */
+    public Builder setWildcardMaxWidth(int value) {
+      
+      wildcardMaxWidth_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int32 wildcardMaxWidth = 12;</code>
+     */
+    public Builder clearWildcardMaxWidth() {
+      
+      wildcardMaxWidth_ = 0;
       onChanged();
       return this;
     }
