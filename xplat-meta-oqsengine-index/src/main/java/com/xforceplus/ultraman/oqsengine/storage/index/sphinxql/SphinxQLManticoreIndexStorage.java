@@ -531,7 +531,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             return entities;
         }
 
-        public void add(OriginalEntity originalEntity) {
+        public final void add(OriginalEntity originalEntity) {
             if (entities == null) {
                 entities = new HashMap();
             }
