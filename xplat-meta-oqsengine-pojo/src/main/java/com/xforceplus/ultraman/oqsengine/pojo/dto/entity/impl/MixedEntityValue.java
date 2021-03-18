@@ -62,10 +62,10 @@ public class MixedEntityValue implements IEntityValue, Cloneable, Serializable {
     }
 
     @Override
-    public IValue remove(IEntityField field) {
+    public Optional<IValue> remove(IEntityField field) {
         lazyInit();
 
-        return values.remove(field.name());
+        return Optional.ofNullable(values.remove(field.name()));
     }
 
     @Override

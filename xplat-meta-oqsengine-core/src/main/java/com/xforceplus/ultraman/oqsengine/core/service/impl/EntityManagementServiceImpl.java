@@ -170,7 +170,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "build"})
     @Override
-    public IEntity build(IEntity entity) throws SQLException {
+    public ResultStatus build(IEntity entity) throws SQLException {
         checkReady();
 
         markTime(entity);
@@ -179,15 +179,19 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         try {
 
-            return (IEntity) transactionExecutor.execute((resource, hint) -> {
+            return (ResultStatus) transactionExecutor.execute((resource, hint) -> {
 
-                long newId = idGenerator.next();
-                entity.resetId(newId);
+                if (entity.id() <= 0) {
+                    long newId = idGenerator.next();
+                    entity.resetId(newId);
+                }
                 entity.resetVersion(0);
                 entity.restMaintainId(0);
 
-                masterStorage.build(entity, entityClass);
-                return entity;
+                if (masterStorage.build(entity, entityClass) <= 0) {
+                    return ResultStatus.UNCREATED;
+                }
+                return ResultStatus.SUCCESS;
 
             });
         } catch (Exception ex) {
@@ -216,11 +220,17 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         try {
             return (ResultStatus) transactionExecutor.execute((resource, hint) -> {
 
-                if (!masterStorage.exist(entity.id())) {
+                Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
+                if (!targetEntityOp.isPresent()) {
                     return ResultStatus.NOT_FOUND;
                 }
 
-                if (isConflict(masterStorage.replace(entity, entityClass))) {
+                IEntity targetEntity = targetEntityOp.get();
+                // 操作时间
+                targetEntity.markTime(entity.time());
+                targetEntity.entityValue().addValues(entity.entityValue().values());
+
+                if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
                     return ResultStatus.CONFLICT;
                 }
@@ -300,7 +310,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     }
 
     private void markTime(IEntity entity) {
-        entity.markTime(System.currentTimeMillis());
+        if (entity.time() <= 0) {
+            entity.markTime(System.currentTimeMillis());
+        }
     }
 
     private void setNormalMode() {

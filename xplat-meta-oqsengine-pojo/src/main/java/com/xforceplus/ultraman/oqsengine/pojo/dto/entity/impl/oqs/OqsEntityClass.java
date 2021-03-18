@@ -154,6 +154,45 @@ public class OqsEntityClass implements IEntityClass {
         return father.field(id);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof OqsEntityClass)) {
+            return false;
+        }
+        OqsEntityClass that = (OqsEntityClass) o;
+        return id == that.id &&
+            version == that.version &&
+            level == that.level &&
+            Objects.equals(name, that.name) &&
+            Objects.equals(code, that.code) &&
+            Objects.equals(father, that.father) &&
+            Objects.equals(relations, that.relations) &&
+            Objects.equals(fields, that.fields);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, code, version, level, relations, father, fields);
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("OqsEntityClass{");
+        sb.append("id=").append(id);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", code='").append(code).append('\'');
+        sb.append(", version=").append(version);
+        sb.append(", level=").append(level);
+        sb.append(", relations=").append(relations);
+        sb.append(", father=").append(father);
+        sb.append(", fields=").append(fields);
+        sb.append('}');
+        return sb.toString();
+    }
+
     /**
      * Builder
      */
