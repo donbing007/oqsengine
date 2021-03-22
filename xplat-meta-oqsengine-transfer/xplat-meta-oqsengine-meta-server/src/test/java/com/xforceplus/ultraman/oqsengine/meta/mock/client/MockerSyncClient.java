@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 
 /**
@@ -51,13 +52,13 @@ public class MockerSyncClient {
 
                 if (entityClassSyncResponse.getStatus() == RequestStatus.REGISTER_OK.ordinal()) {
                     WatchElement w = new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
-                            entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed);
+                            entityClassSyncResponse.getVersion(), Confirmed);
                     watchElementMap.put(w.getAppId(), w);
                 } else if (entityClassSyncResponse.getStatus() == RequestStatus.SYNC.ordinal()) {
                     Assert.assertEquals(entityClassSyncResponse.getMd5(),
                             getMD5(entityClassSyncResponse.getEntityClassSyncRspProto().toByteArray()));
                     WatchElement w = new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
-                            entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed);
+                            entityClassSyncResponse.getVersion(), Confirmed);
 
                     success.put(entityClassSyncResponse.getAppId(), w);
                 } else {

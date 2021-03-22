@@ -1,11 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
-import com.xforceplus.ultraman.oqsengine.meta.client.TestClientStart;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import org.junit.Assert;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
 
 /**
  * desc :
@@ -23,25 +24,25 @@ public class Commons {
      * case heartBeat & confirmed
      */
     public static final String caseHeartBeat = "caseHearBeat";
-    public static final WatchElement watchElementHeartBeat = new WatchElement(caseHeartBeat, "test", 0, WatchElement.AppStatus.Register);
+    public static final WatchElement watchElementHeartBeat = new WatchElement(caseHeartBeat, "test", 0, Register);
 
     /**
      * case registerPull then sync-ok
      */
     public static final String caseRegisterPull = "caseRegisterPull";
-    public static final WatchElement watchElementRegisterPull = new WatchElement(caseRegisterPull, "test", -1, WatchElement.AppStatus.Register);
+    public static final WatchElement watchElementRegisterPull = new WatchElement(caseRegisterPull, "test", -1, Register);
 
     /**
      * case registerPush then sync-failed at once and triggered retry and sync-ok last
      */
     public static final String caseRegisterPush = "caseRegisterPush";
-    public static final WatchElement watchElementRegisterPush = new WatchElement(caseRegisterPush, "test", 1, WatchElement.AppStatus.Register);
+    public static final WatchElement watchElementRegisterPush = new WatchElement(caseRegisterPush, "test", 1, Register);
 
     /**
      * case sync result from client to server time-out
      */
     public static final String caseSyncResultTimeOut = "caseSyncResultTimeOut";
-    public static final WatchElement watchElementSyncResultTimeOut = new WatchElement(caseSyncResultTimeOut, "test", -1, WatchElement.AppStatus.Register);
+    public static final WatchElement watchElementSyncResultTimeOut = new WatchElement(caseSyncResultTimeOut, "test", -1, Register);
 
 
     /**
@@ -57,7 +58,7 @@ public class Commons {
         cases.put(caseSyncResultTimeOut, watchElementSyncResultTimeOut);
     }
 
-    public static boolean assertWatchElement(String caseName, WatchElement.AppStatus appStatus, WatchElement w) {
+    public static boolean assertWatchElement(String caseName, WatchElement.ElementStatus appStatus, WatchElement w) {
         Assert.assertEquals(w.getAppId(), Commons.cases.get(caseName).getAppId());
         Assert.assertEquals(w.getEnv(), Commons.cases.get(caseName).getEnv());
         Assert.assertEquals(w.getVersion(), Commons.cases.get(caseName).getVersion());

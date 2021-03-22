@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
 import static com.xforceplus.ultraman.oqsengine.meta.mock.MockEntityClassSyncRspProtoBuilder.entityClassSyncRspProtoGenerator;
 
 /**
@@ -77,7 +79,7 @@ public class MultiClientSyncTest extends BaseInit {
             /**
              * 测试通用更新、多个客户端同时更新某1个AppID+ENV的相同版本
              */
-            WatchElement common = new WatchElement(commonAppId, commonEnv, commonStartVersion, WatchElement.AppStatus.Register);
+            WatchElement common = new WatchElement(commonAppId, commonEnv, commonStartVersion, Register);
 
             streamEvents[i].getWatchElements().put(commonAppId, common);
             /**
@@ -88,7 +90,7 @@ public class MultiClientSyncTest extends BaseInit {
             /**
              * 测试多个客户端所关注同一个AppID的ENV不一致
              */
-            WatchElement selfTestDiffEnv = new WatchElement(privateTestDiffEnv, privateEnvPrefix + i, commonStartVersion, WatchElement.AppStatus.Register);
+            WatchElement selfTestDiffEnv = new WatchElement(privateTestDiffEnv, privateEnvPrefix + i, commonStartVersion, Register);
             streamEvents[i].getWatchElements().put(privateTestDiffEnv, selfTestDiffEnv);
             /**
              * 增加expected
@@ -100,7 +102,7 @@ public class MultiClientSyncTest extends BaseInit {
             /**
              * 测试多个客户端所关注同一个AppID的不同版本
              */
-            WatchElement selfTestDiffVersion = new WatchElement(privateTestDiffVersion, commonEnv, i, WatchElement.AppStatus.Register);
+            WatchElement selfTestDiffVersion = new WatchElement(privateTestDiffVersion, commonEnv, i, Register);
             streamEvents[i].getWatchElements().put(privateTestDiffVersion, selfTestDiffVersion);
 
             expectedWatchers.computeIfAbsent(privateTestDiffVersion + i, v -> new WatchElementVisitor(selfTestDiffVersion)).setVisitors(i);
@@ -146,7 +148,7 @@ public class MultiClientSyncTest extends BaseInit {
         Assert.assertEquals(expected.getAppId(), actual.getAppId());
         Assert.assertEquals(expected.getEnv(), actual.getEnv());
         Assert.assertEquals(expected.getVersion(), actual.getVersion());
-        Assert.assertEquals(WatchElement.AppStatus.Confirmed, actual.getStatus());
+        Assert.assertEquals(Confirmed, actual.getStatus());
     }
 
     private void assertNotEquals(WatchElement expected, WatchElement actual) {

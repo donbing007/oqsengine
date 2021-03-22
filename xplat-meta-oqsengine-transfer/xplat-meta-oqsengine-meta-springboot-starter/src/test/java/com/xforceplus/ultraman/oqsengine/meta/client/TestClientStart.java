@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 
 import static com.xforceplus.ultraman.oqsengine.meta.Commons.*;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
 
 /**
  * desc :
@@ -119,7 +120,7 @@ public class TestClientStart {
 
         Assert.assertEquals(uid, requestWatchExecutor.watcher().uid());
 
-        return assertWatchElement(caseHeartBeat, WatchElement.AppStatus.Confirmed,
+        return assertWatchElement(caseHeartBeat, Confirmed,
                 requestHandler.watchExecutor().watcher().watches().get(caseName));
     }
     /**

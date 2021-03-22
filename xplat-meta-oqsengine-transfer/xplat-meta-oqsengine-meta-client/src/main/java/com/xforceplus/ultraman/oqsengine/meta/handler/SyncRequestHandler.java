@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Init;
 import static com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils.getMD5;
 import static com.xforceplus.ultraman.oqsengine.meta.constant.ClientConstant.CLIENT_TASK_COUNT;
 import static com.xforceplus.ultraman.oqsengine.meta.utils.SendUtils.sendRequest;
@@ -152,7 +154,7 @@ public class SyncRequestHandler implements IRequestHandler {
                                     logger.info("register success uid [{}], appId [{}], env [{}], version [{}]."
                                             , watcher.uid(), v.getAppId(), v.getEnv(), v.getVersion());
                                 } catch (Exception e) {
-                                    v.setStatus(WatchElement.AppStatus.Init);
+                                    v.setStatus(Init);
                                     ret.set(false);
                                 }
                             }
@@ -223,7 +225,7 @@ public class SyncRequestHandler implements IRequestHandler {
          */
         if (entityClassSyncResponse.getStatus() == RequestStatus.REGISTER_OK.ordinal()) {
             boolean ret = requestWatchExecutor.update(new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
-                    entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed));
+                    entityClassSyncResponse.getVersion(), Confirmed));
 
             if (ret) {
                 logger.debug("register success, uid [{}], appId [{}], env [{}], version [{}] success.",
@@ -309,7 +311,7 @@ public class SyncRequestHandler implements IRequestHandler {
                 EntityClassSyncRspProto result = entityClassSyncResponse.getEntityClassSyncRspProto();
                 if (md5Check(entityClassSyncResponse.getMd5(), result)) {
                     WatchElement w = new WatchElement(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getEnv(),
-                            entityClassSyncResponse.getVersion(), WatchElement.AppStatus.Confirmed);
+                            entityClassSyncResponse.getVersion(), Confirmed);
                     /**
                      * 当前关注此版本
                      */
@@ -421,8 +423,8 @@ public class SyncRequestHandler implements IRequestHandler {
                      * 过滤出INIT、已经长时间处于REGISTER的watchElement
                      * 时间超长的判定标准为当前时间-最后注册时间 > delay时间
                      */
-                    return s.getStatus().ordinal() == WatchElement.AppStatus.Init.ordinal() ||
-                            (s.getStatus().ordinal() < WatchElement.AppStatus.Confirmed.ordinal() &&
+                    return s.getStatus().ordinal() == Init.ordinal() ||
+                            (s.getStatus().ordinal() <  Confirmed.ordinal() &&
                                     System.currentTimeMillis() - s.getRegisterTime() > gRpcParamsConfig.getDefaultDelayTaskDuration());
                 }).forEach(
                         k -> {
@@ -435,7 +437,7 @@ public class SyncRequestHandler implements IRequestHandler {
                                 sendRequestWithALiveCheck(requestWatcher, entityClassSyncRequest);
                                 k.setRegisterTime(System.currentTimeMillis());
                             } catch (Exception e) {
-                                k.setStatus(WatchElement.AppStatus.Init);
+                                k.setStatus(Init);
                             }
                         }
                 );
