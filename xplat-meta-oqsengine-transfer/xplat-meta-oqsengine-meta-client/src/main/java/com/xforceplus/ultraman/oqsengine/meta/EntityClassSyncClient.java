@@ -113,7 +113,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
             requestHandler.watchExecutor().create(uid, streamObserver);
 
             /**
-             * 重新注册所有watchList到服务段
+             * 重新注册所有watchList到服务端
              * 当注册失败时，将直接标记该observer不可用
              * 注册成功则直接进入wait状态，直到observer上发生错误为止
              */
@@ -143,7 +143,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
                         , uid, gRpcParamsConfig.getReconnectDuration());
 
                 /**
-                 * 这里线设置睡眠再进行资源清理
+                 * 这里先设置睡眠再进行资源清理
                  */
                 TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getReconnectDuration(), TimeUnit.MILLISECONDS);
 
