@@ -46,6 +46,6 @@ public class SQLJsonConditionsBuilder implements ConditionsBuilder<String>, Stor
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
 
-        this.sqlConditionQueryBuilderFactory = new SQLConditionQueryBuilderFactory(storageStrategyFactory);
+        this.sqlConditionQueryBuilderFactory = new SQLConditionQueryBuilderFactory(this.storageStrategyFactory);
     }
 }

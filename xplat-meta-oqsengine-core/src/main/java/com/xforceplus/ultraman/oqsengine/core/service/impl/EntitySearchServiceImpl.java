@@ -681,7 +681,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 .map(EntityRef::getId)
                 .collect(toSet());
 
-            Page indexPage = new Page(page.getIndex(), page.getPageSize());
+
+            Page indexPage;
+            if (page.isEmptyPage()) {
+                indexPage = Page.emptyPage();
+            } else {
+                indexPage = new Page(page.getIndex(), page.getPageSize());
+            }
+
             Collection<EntityRef> refs = indexStorage.select(
                 conditions, entityClass,
                 SelectConfig.Builder.aSelectConfig()
@@ -704,6 +711,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
 
             page.setTotalCount(indexPage.getTotalCount() + masterRefsWithoutDeleted.size());
+            if (page.isEmptyPage()) {
+                return Collections.emptyList();
+            }
+
             if (!page.hasNextPage()) {
                 return Collections.emptyList();
             }

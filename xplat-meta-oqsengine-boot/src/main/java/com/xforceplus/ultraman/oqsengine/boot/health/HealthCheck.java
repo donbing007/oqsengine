@@ -1,16 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.boot.health;
 
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import org.slf4j.Logger;
@@ -40,33 +32,19 @@ public class HealthCheck implements HealthIndicator {
     @Resource
     private CommitIdStatusService commitIdStatusService;
 
-    private IEntityField notExistField =
-        EntityField.Builder.anEntityField().withId(1).withName("test").withFieldType(FieldType.STRING).build();
-    private IEntityClass notExistClass =
-        EntityClass.Builder.anEntityClass().withId(1).withCode("test").withField(notExistField).build();
-    private IValue notExistValue = new StringValue(notExistField, "test");
+    private EntityClassRef entityClassRef = EntityClassRef.Builder.anEntityClassRef()
+        .withEntityClassId(1)
+        .withEntityClassCode("test")
+        .build();
 
     @Override
     public Health health() {
 
-        try {
-            entitySearchService.selectOne(1, notExistClass);
-        } catch (SQLException e) {
-            logger.error(e.getMessage(), e);
-            return Health.down(e).build();
-        }
 
-
-        Conditions conditions = Conditions.buildEmtpyConditions().addAnd(
-            new Condition(
-                notExistField,
-                ConditionOperator.EQUALS,
-                notExistValue
-            )
-        );
+        Conditions conditions = Conditions.buildEmtpyConditions();
 
         try {
-            entitySearchService.selectByConditions(conditions, notExistClass, Page.newSinglePage(1));
+            entitySearchService.selectByConditions(conditions, entityClassRef, Page.emptyPage());
         } catch (SQLException e) {
             logger.error(e.getMessage(), e);
             return Health.down(e).build();

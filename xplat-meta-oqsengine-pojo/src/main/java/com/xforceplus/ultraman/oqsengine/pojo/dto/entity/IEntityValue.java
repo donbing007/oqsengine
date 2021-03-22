@@ -56,7 +56,7 @@ public interface IEntityValue extends Cloneable{
      * @param field 目标字段信息.
      * @return 被删除的值.
      */
-    public IValue remove(IEntityField field);
+    public Optional<IValue> remove(IEntityField field);
 
     /**
      * 根据条件过滤掉不需要的.

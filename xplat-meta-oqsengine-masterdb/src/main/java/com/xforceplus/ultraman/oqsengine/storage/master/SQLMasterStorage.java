@@ -26,7 +26,6 @@ import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Metrics;
 import org.slf4j.Logger;
@@ -60,9 +59,6 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Resource(name = "masterConditionsBuilderFactory")
     private SQLJsonConditionsBuilderFactory conditionsBuilderFactory;
-
-    @Resource(name = "tokenizerFactory")
-    private TokenizerFactory tokenizerFactory;
 
     private String tableName;
 

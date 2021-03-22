@@ -138,7 +138,7 @@ public class SQLJsonConditionBuilder implements ConditionBuilder<String> {
         }
     }
 
-    private static char[] ESCAPE_CHARACTER = {
+    private static final char[] ESCAPE_CHARACTER = {
         '\n',
         '\t',
         '\r',

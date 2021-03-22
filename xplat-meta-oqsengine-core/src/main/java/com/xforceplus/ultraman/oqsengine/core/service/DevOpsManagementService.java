@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -82,43 +81,6 @@ public interface DevOpsManagementService {
      * @throws SQLException
      */
     void cancel(String taskId) throws SQLException;
-
-
-    /**
-     * repair
-     */
-
-    /**
-     * 修复小于当前主版本号的oqs产生的数据.
-     * 升级过程是一个异常过程,会马上返回并有一个后台任务在运行.
-     *
-     * @param classes 目标对象信息列表.
-     * @throws SQLException
-     */
-    void entityRepair(IEntityClass... classes) throws SQLException;
-
-    /**
-     * 取消正在执行的修复任务.
-     */
-    void cancelEntityRepair(Long... ids) throws SQLException;
-
-    /**
-     * 是否已经完成.
-     */
-    boolean isEntityRepaired(Long... ids);
-
-    /**
-     * 查看修复任务列表
-     * @param ids
-     * @return
-     */
-    Collection<IDevOpsTaskInfo> repairedInfoList(Long... ids);
-
-    /**
-     * 清除任务信息
-     * @param ids
-     */
-    void clearRepairedInfos(Long... ids);
 
     /**
         根据id列表清理Redis中的CommitId

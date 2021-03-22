@@ -47,12 +47,13 @@ public class EntityClassRef implements Serializable {
             return false;
         }
         EntityClassRef that = (EntityClassRef) o;
-        return id == that.id;
+        return getId() == that.getId() &&
+            Objects.equals(getCode(), that.getCode());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(getId(), getCode());
     }
 
     /**

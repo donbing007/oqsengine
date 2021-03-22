@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.AnyEntityClass;
@@ -415,23 +416,33 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
          */
         if (StorageType.STRING == storageType) {
             String strValue = SphinxQLHelper.encodeFullSearchCharset(value.toString());
-            Tokenizer tokenizer = tokenizerFactory.getTokenizer(field);
-            Iterator<String> words = tokenizer.tokenize(strValue);
-            /**
-             * 处理当前字段分词结果.
-             */
-            while (words.hasNext()) {
+
+            if (FieldConfig.FuzzyType.SEGMENTATION == field.config().getFuzzyType()
+                || FieldConfig.FuzzyType.WILDCARD == field.config().getFuzzyType()) {
+                /**
+                 * 硬编码字符串长度超过30的将只分词前30个字符.
+                 */
+                String limitLenStrValue = strValue.length() > 30 ? strValue.substring(0, 31) : strValue;
+
+                Tokenizer tokenizer = tokenizerFactory.getTokenizer(field);
+                Iterator<String> words = tokenizer.tokenize(limitLenStrValue);
+                /**
+                 * 处理当前字段分词结果.
+                 */
+                while (words.hasNext()) {
+                    if (buff.length() > 0) {
+                        buff.append(' ');
+                    }
+                    buff.append(shortStorageName.getPrefix())
+                        .append(words.next())
+                        .append(shortStorageName.getSuffix());
+                }
                 if (buff.length() > 0) {
                     buff.append(' ');
                 }
-                buff.append(shortStorageName.getPrefix())
-                    .append(words.next())
-                    .append(shortStorageName.getSuffix());
-            }
-            if (buff.length() > 0) {
-                buff.append(' ');
             }
 
+            // 原始字符.
             buff.append(shortStorageName.getPrefix())
                 .append(strValue)
                 .append(shortStorageName.getSuffix());
@@ -520,7 +531,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             return entities;
         }
 
-        public void add(OriginalEntity originalEntity) {
+        public final void add(OriginalEntity originalEntity) {
             if (entities == null) {
                 entities = new HashMap();
             }
