@@ -41,7 +41,6 @@ public class MetaSyncGRpcClient implements GRpcClient {
     }
 
     @Override
-    @PostConstruct
     public void start() {
 
         channel = ManagedChannelBuilder.forAddress(host, port)
