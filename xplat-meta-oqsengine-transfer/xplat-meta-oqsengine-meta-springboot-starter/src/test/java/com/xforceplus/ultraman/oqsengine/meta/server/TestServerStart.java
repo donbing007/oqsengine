@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.xforceplus.ultraman.oqsengine.meta.Commons.*;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
 import static com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor.keyAppWithEnv;
 
 /**
@@ -212,8 +213,8 @@ public class TestServerStart {
             try {
                 responseWatcher = getWatchersFirst();
                 if (null != responseWatcher && null != responseWatcher.watches().get(caseName)) {
-                    WatchElement.AppStatus appStatus = responseWatcher.watches().get(caseName).getStatus();
-                    if (appStatus.equals(WatchElement.AppStatus.Confirmed)) {
+                    WatchElement.ElementStatus appStatus = responseWatcher.watches().get(caseName).getStatus();
+                    if (appStatus.equals(Confirmed)) {
                         break;
                     }
                 }

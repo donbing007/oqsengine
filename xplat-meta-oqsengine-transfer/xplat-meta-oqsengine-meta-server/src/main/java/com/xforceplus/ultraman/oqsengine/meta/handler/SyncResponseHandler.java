@@ -29,8 +29,9 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsCon
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
-import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Confirmed;
-import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Notice;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Notice;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
 import static com.xforceplus.ultraman.oqsengine.meta.common.exception.Code.APP_UPDATE_PULL_ERROR;
 import static com.xforceplus.ultraman.oqsengine.meta.constant.ServerConstant.SERVER_TASK_COUNT;
 
@@ -142,7 +143,7 @@ public class SyncResponseHandler implements IResponseHandler {
              */
             WatchElement w =
                     new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
-                            entityClassSyncRequest.getVersion(), WatchElement.AppStatus.Register);
+                            entityClassSyncRequest.getVersion(), Register);
 
             responseWatchExecutor.add(entityClassSyncRequest.getUid(), responseStreamObserver, w);
 

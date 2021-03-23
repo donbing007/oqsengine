@@ -11,6 +11,8 @@ import org.junit.Test;
 
 import java.util.*;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.*;
+
 /**
  * desc :
  * name : ResponseWatchExecutorTest
@@ -40,7 +42,7 @@ public class ResponseWatchExecutorTest {
         String env = "test";
         int version = 1;
         String uid = UUID.randomUUID().toString();
-        responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, WatchElement.AppStatus.Init));
+        responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, Init));
         responseWatchExecutor.watcher(uid).resetHeartBeat();
 
         Assert.assertTrue(System.currentTimeMillis() - responseWatchExecutor.watcher(uid).heartBeat() <= 1);
@@ -53,10 +55,10 @@ public class ResponseWatchExecutorTest {
         int version = 10;
         String uid = UUID.randomUUID().toString();
 
-        boolean result = responseWatchExecutor.update(uid, new WatchElement(appId, env, version, WatchElement.AppStatus.Init));
+        boolean result = responseWatchExecutor.update(uid, new WatchElement(appId, env, version, Init));
         Assert.assertFalse(result);
 
-        responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, WatchElement.AppStatus.Init));
+        responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, Init));
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
         Assert.assertNotNull(watcher);
 
@@ -64,19 +66,19 @@ public class ResponseWatchExecutorTest {
         /**
          * 修改为一个低版本
          */
-        cases.add(new Cases<Boolean>(new WatchElement(appId, env, version - 1, WatchElement.AppStatus.Init), false));
+        cases.add(new Cases<Boolean>(new WatchElement(appId, env, version - 1, Init), false));
         /**
          * 修改为一个相同的版本、状态
          */
-        cases.add(new Cases<Boolean>(new WatchElement(appId, env, version, WatchElement.AppStatus.Init), false));
+        cases.add(new Cases<Boolean>(new WatchElement(appId, env, version, Init), false));
         /**
          * 修改为一个高状态
          */
-        cases.add(new Cases<Boolean>(new WatchElement(appId, env, version, WatchElement.AppStatus.Confirmed), true));
+        cases.add(new Cases<Boolean>(new WatchElement(appId, env, version, Confirmed), true));
         /**
          * 修改为一个高版本
          */
-        cases.add(new Cases<Boolean>(new WatchElement(appId, env, version + 1, WatchElement.AppStatus.Init), true));
+        cases.add(new Cases<Boolean>(new WatchElement(appId, env, version + 1, Init), true));
 
         cases.forEach(
                 cas -> {
@@ -102,9 +104,9 @@ public class ResponseWatchExecutorTest {
         int version2 = 1;
         String uid2 = UUID.randomUUID().toString();
 
-        responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, WatchElement.AppStatus.Init));
+        responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, Init));
 
-        responseWatchExecutor.add(uid2, streamObserver(), new WatchElement(appId2, env, version2, WatchElement.AppStatus.Init));
+        responseWatchExecutor.add(uid2, streamObserver(), new WatchElement(appId2, env, version2, Init));
 
         responseWatchExecutor.release(uid);
 
@@ -130,11 +132,11 @@ public class ResponseWatchExecutorTest {
         String uid = UUID.randomUUID().toString();
 
         for (int i = 0; i < 3; i++) {
-            responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, WatchElement.AppStatus.Init));
+            responseWatchExecutor.add(uid, streamObserver(), new WatchElement(appId, env, version, Init));
             ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
             Assert.assertNotNull(watcher);
 
-            WatchElement other = new WatchElement(appId, env, version + 1, WatchElement.AppStatus.Confirmed);
+            WatchElement other = new WatchElement(appId, env, version + 1, Confirmed);
             Assert.assertTrue(watcher.onWatch(other));
 
             /**
@@ -170,16 +172,16 @@ public class ResponseWatchExecutorTest {
         List<AbstractMap.SimpleEntry<String, Cases<Integer>>> cases = new ArrayList<>();
 
         String expectedUid1 = UUID.randomUUID().toString();
-        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid1, new Cases<Integer>(new WatchElement("test1", "test", 1, WatchElement.AppStatus.Register), 0)));
-        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid1, new Cases<Integer>(new WatchElement("test2", "prod", 1, WatchElement.AppStatus.Register), 1)));
+        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid1, new Cases<Integer>(new WatchElement("test1", "test", 1, Register), 0)));
+        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid1, new Cases<Integer>(new WatchElement("test2", "prod", 1, Register), 1)));
 
         String expectedUid2 = UUID.randomUUID().toString();
-        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid2, new Cases<Integer>(new WatchElement("test2", "prod", 2, WatchElement.AppStatus.Register), 2)));
-        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid2, new Cases<Integer>(new WatchElement("test3", "test", 5, WatchElement.AppStatus.Register), 3)));
+        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid2, new Cases<Integer>(new WatchElement("test2", "prod", 2, Register), 2)));
+        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid2, new Cases<Integer>(new WatchElement("test3", "test", 5, Register), 3)));
 
         String expectedUid3 = UUID.randomUUID().toString();
-        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid3, new Cases<Integer>(new WatchElement("test2", "prod", 4, WatchElement.AppStatus.Register), 4)));
-        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid3, new Cases<Integer>(new WatchElement("test3", "prod", 5, WatchElement.AppStatus.Register), 5)));
+        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid3, new Cases<Integer>(new WatchElement("test2", "prod", 4, Register), 4)));
+        cases.add(new AbstractMap.SimpleEntry<String, Cases<Integer>>(expectedUid3, new Cases<Integer>(new WatchElement("test3", "prod", 5, Register), 5)));
 
         for (AbstractMap.SimpleEntry<String, Cases<Integer>> cas : cases) {
             responseWatchExecutor.add(cas.getKey(), streamObserver(), cas.getValue().getWatchElement());

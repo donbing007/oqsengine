@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 import java.util.concurrent.TimeUnit;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.*;
+
 /**
  * desc :
  * name : EntityClassSyncClientTest
@@ -81,12 +83,12 @@ public class EntityClassSyncClientTest extends BaseTest {
         String env = "test";
         int version = 1;
 
-        boolean ret = requestHandler.register(new WatchElement(appId, env, version, WatchElement.AppStatus.Register));
+        boolean ret = requestHandler.register(new WatchElement(appId, env, version, Register));
         Assert.assertTrue(ret);
         /**
          * 重复注册
          */
-        ret = requestHandler.register(new WatchElement(appId, env, version, WatchElement.AppStatus.Register));
+        ret = requestHandler.register(new WatchElement(appId, env, version, Register));
         Assert.assertTrue(ret);
 
         Assert.assertNotNull(requestWatchExecutor.watcher().watches());
@@ -102,7 +104,7 @@ public class EntityClassSyncClientTest extends BaseTest {
 
         w = requestWatchExecutor.watcher().watches().get(appId);
 
-        Assert.assertEquals(WatchElement.AppStatus.Confirmed, w.getStatus());
+        Assert.assertEquals(Confirmed, w.getStatus());
     }
 
     @Test
@@ -111,14 +113,14 @@ public class EntityClassSyncClientTest extends BaseTest {
         String env = "test";
         int version = 1;
 
-        boolean ret = requestHandler.register(new WatchElement(appId, env, version, WatchElement.AppStatus.Init));
+        boolean ret = requestHandler.register(new WatchElement(appId, env, version, Init));
         Assert.assertFalse(ret);
         Assert.assertEquals(1, ((SyncRequestHandler) requestHandler).getForgotQueue().size());
         WatchElement element = ((SyncRequestHandler) requestHandler).getForgotQueue().peek();
         Assert.assertNotNull(element);
         Assert.assertEquals(appId, element.getAppId());
         Assert.assertEquals(version, element.getVersion());
-        Assert.assertEquals(WatchElement.AppStatus.Init, element.getStatus());
+        Assert.assertEquals(Init, element.getStatus());
 
         start();
 
@@ -168,7 +170,7 @@ public class EntityClassSyncClientTest extends BaseTest {
         element = requestWatchExecutor.watcher().watches().get(appId);
         loops = 0;
         while (loops < 10) {
-            if (element.getStatus().equals(WatchElement.AppStatus.Confirmed)) {
+            if (element.getStatus().equals(Confirmed)) {
                 break;
             }
             try {
@@ -191,13 +193,13 @@ public class EntityClassSyncClientTest extends BaseTest {
          */
         MockServer.isTestOk = false;
 
-        boolean ret = requestHandler.register(new WatchElement(appId, env, version, WatchElement.AppStatus.Register));
+        boolean ret = requestHandler.register(new WatchElement(appId, env, version, Register));
         Assert.assertTrue(ret);
 
         Assert.assertTrue(null != requestWatchExecutor.watcher().watches() &&
                 !requestWatchExecutor.watcher().watches().isEmpty());
         requestWatchExecutor.watcher().watches().forEach(
-                (key, value) -> Assert.assertNotEquals(WatchElement.AppStatus.Confirmed, value.getStatus())
+                (key, value) -> Assert.assertNotEquals(Confirmed, value.getStatus())
         );
 
         String uid = requestWatchExecutor.watcher().uid();
@@ -241,7 +243,7 @@ public class EntityClassSyncClientTest extends BaseTest {
         WatchElement element = requestWatchExecutor.watcher().watches().get(appId);
         count = 0;
         while (count < 10) {
-            if (element.getStatus().equals(WatchElement.AppStatus.Confirmed)) {
+            if (element.getStatus().equals(Confirmed)) {
                 break;
             }
             try {

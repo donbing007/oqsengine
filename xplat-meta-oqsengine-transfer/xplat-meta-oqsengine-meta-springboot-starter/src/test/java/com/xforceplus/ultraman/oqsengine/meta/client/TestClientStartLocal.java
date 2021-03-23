@@ -17,6 +17,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
+
 /**
  * desc :
  * name : TestClientStartLocal
@@ -58,7 +60,7 @@ public class TestClientStartLocal {
     public void test() throws InterruptedException {
         if (ifTest) {
             boolean ret =
-                    requestHandler.register(new WatchElement("7", "0", -1, WatchElement.AppStatus.Register));
+                    requestHandler.register(new WatchElement("7", "0", -1, Register));
 
             Assert.assertTrue(ret);
 

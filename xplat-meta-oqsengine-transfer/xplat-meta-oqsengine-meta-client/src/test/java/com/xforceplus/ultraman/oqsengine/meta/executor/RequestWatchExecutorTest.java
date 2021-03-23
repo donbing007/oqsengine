@@ -13,6 +13,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.UUID;
 
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.*;
+
 
 /**
  * desc :
@@ -66,7 +68,7 @@ public class RequestWatchExecutorTest extends BaseTest {
         String appId = "testAdd";
         String env = "test";
         int version = 12345;
-        WatchElement w = new WatchElement(appId, env, version, WatchElement.AppStatus.Init);
+        WatchElement w = new WatchElement(appId, env, version, Init);
 
         requestWatchExecutor.add(w);
 
@@ -84,35 +86,35 @@ public class RequestWatchExecutorTest extends BaseTest {
         String appId = "testAdd";
         String env = "test";
         int version = 10;
-        WatchElement w = new WatchElement(appId, env, version, WatchElement.AppStatus.Init);
+        WatchElement w = new WatchElement(appId, env, version, Init);
 
         requestWatchExecutor.add(w);
 
         /**
          * 设置一个小于当前的版本,将被拒绝
          */
-        w = new WatchElement(appId, env, 9, WatchElement.AppStatus.Confirmed);
+        w = new WatchElement(appId, env, 9, Confirmed);
         boolean ret = requestWatchExecutor.update(w);
         Assert.assertFalse(ret);
 
         /**
          * 设置当前版本 10 -> 10, init -> register,将被接收
          */
-        w = new WatchElement(appId, env, 10, WatchElement.AppStatus.Register);
+        w = new WatchElement(appId, env, 10, Register);
         ret = requestWatchExecutor.update(w);
         Assert.assertTrue(ret);
 
         /**
          * 设置当前版本 10 -> 10, register -> init,将被拒绝
          */
-        w = new WatchElement(appId, env,10, WatchElement.AppStatus.Init);
+        w = new WatchElement(appId, env,10, Init);
         ret = requestWatchExecutor.update(w);
         Assert.assertFalse(ret);
 
         /**
          * 设置当前版本 10 -> 10, register -> confirm,将被接收
          */
-        w = new WatchElement(appId, env,10, WatchElement.AppStatus.Confirmed);
+        w = new WatchElement(appId, env,10, Confirmed);
         ret = requestWatchExecutor.update(w);
         Assert.assertTrue(ret);
     }

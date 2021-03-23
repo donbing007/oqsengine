@@ -28,8 +28,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
-import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Confirmed;
-import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.AppStatus.Register;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
+import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Register;
 import static com.xforceplus.ultraman.oqsengine.meta.mock.MockEntityClassSyncRequestBuilder.entityClassSyncRequest;
 
 
