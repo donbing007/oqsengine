@@ -99,4 +99,9 @@ public class FieldDefine {
      * 产生数据的大版本号.
      */
     public static final String OQS_MAJOR = "oqsmajor";
+
+    /**
+     * 业务主键字段
+     */
+    public static final String UNIQUE_KEY = "key";
 }
