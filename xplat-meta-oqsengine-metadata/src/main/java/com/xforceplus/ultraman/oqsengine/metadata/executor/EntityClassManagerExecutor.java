@@ -78,7 +78,7 @@ public class EntityClassManagerExecutor implements MetaManager {
 
             int version = cacheExecutor.version(appId);
 
-            requestHandler.register(new WatchElement(appId, env, version, WatchElement.AppStatus.Register));
+            requestHandler.register(new WatchElement(appId, env, version, WatchElement.ElementStatus.Register));
 
             if (version < 0) {
                 CompletableFuture<Integer> future = async(() -> {
