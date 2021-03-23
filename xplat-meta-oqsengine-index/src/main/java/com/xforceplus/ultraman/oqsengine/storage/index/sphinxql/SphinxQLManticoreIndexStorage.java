@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRefs;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -107,11 +108,11 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     }
 
     @Override
-    public Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config) throws SQLException {
+    public EntityRefs select(Conditions conditions, IEntityClass entityClass, SelectConfig config) throws SQLException {
         long startMs = System.currentTimeMillis();
 
         try {
-            return (Collection<EntityRef>) searchTransactionExecutor.execute((resource, hint) -> {
+            Collection<EntityRef> refs = (Collection<EntityRef>) searchTransactionExecutor.execute((resource, hint) -> {
                 Set<Long> useFilterIds = null;
 
                 if (resource.getTransaction().isPresent()) {
@@ -134,6 +135,8 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                     getMaxSearchTimeoutMs()).execute(
                     Tuple.of(entityClass, conditions, config.getPage(), config.getSort(), useFilterIds, config.getCommitId()));
             });
+
+            return new EntityRefs(refs, config.getPage());
         } finally {
             Metrics.timer(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, "initiator", "index", "action", "condition")
                 .record(System.currentTimeMillis() - startMs, TimeUnit.MILLISECONDS);

@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRefs;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -258,7 +259,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
 
     @Test
     public void testSelect() throws Exception {
-        Collection<EntityRef> refs;
+        EntityRefs refs;
         for (Case c : buildSelectCases()) {
             refs = storage.select(c.conditions, c.entityClass, c.selectConfig);
 
@@ -269,13 +270,13 @@ public class SphinxQLManticoreIndexStorageSearchTest {
             Arrays.sort(expectedIds);
             Assert.assertEquals(
                 String.format("%s check length failed.", c.description), expectedIds.length, refs.size());
-            for (EntityRef ref : refs) {
+            for (EntityRef ref : refs.getRefs()) {
                 Assert.assertTrue(String.format("%s validation failed to find expected %d.", c.description, ref.getId()),
                     Arrays.binarySearch(expectedIds, ref.getId()) >= 0);
             }
 
             if (c.otherCheck != null) {
-                String r = (String) c.otherCheck.apply(new SelectResult(refs, c.selectConfig.getPage()));
+                String r = (String) c.otherCheck.apply(new SelectResult(refs.getRefs(), c.selectConfig.getPage()));
                 if (r != null && r.length() > 0) {
                     Assert.fail(String.format("%s validation failed due to %s.", c.description, r));
                 }

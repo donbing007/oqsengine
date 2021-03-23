@@ -247,6 +247,34 @@ public class Conditions implements Serializable {
         return node instanceof LinkConditionNode;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Conditions)) {
+            return false;
+        }
+        Conditions that = (Conditions) o;
+        boolean result = size == that.size &&
+            or == that.or &&
+            range == that.range;
+        if (result) {
+            if (head == null) {
+                return that.head == null ? true : false;
+            } else {
+                return that.head == null ? false : Objects.equals(head, that.head);
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(size, or, range, head.toString());
+    }
+
     /**
      * 实际增加条件处理.
      */

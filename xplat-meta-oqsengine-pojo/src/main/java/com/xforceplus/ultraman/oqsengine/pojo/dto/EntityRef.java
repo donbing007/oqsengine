@@ -30,6 +30,19 @@ public final class EntityRef implements Serializable, Comparable<EntityRef> {
         this.orderValue = orderValue;
     }
 
+    public EntityRef(long id, int op, int major, String orderValue) {
+        this.id = id;
+        this.op = op;
+        this.major = major;
+        this.orderValue = orderValue;
+    }
+
+    public EntityRef(long id, int op, int major) {
+        this.id = id;
+        this.op = op;
+        this.major = major;
+    }
+
     public long getId() {
         return id;
     }
