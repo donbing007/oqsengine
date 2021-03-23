@@ -1,0 +1,211 @@
+package com.xforceplus.ultraman.oqsengine.core.service.impl;
+
+import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
+import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
+import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.MockMetaManager;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRefs;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
+import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
+import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+/**
+ * EntitySearchServiceImpl Tester.
+ *
+ * @author <Authors name>
+ * @version 1.0 03/18/2021
+ * @since <pre>Mar 18, 2021</pre>
+ */
+public class EntitySearchServiceImplTest {
+
+    private CommitIdStatusService commitIdStatusService;
+    private MasterStorage masterStorage;
+    private IndexStorage indexStorage;
+    private ExecutorService threadPool;
+    private MetaManager metaManager;
+    private EntitySearchServiceImpl impl;
+
+    @Before
+    public void before() throws Exception {
+        commitIdStatusService = mock(CommitIdStatusService.class);
+        when(commitIdStatusService.getMin()).thenReturn((Optional.of(Long.valueOf("1"))));
+
+        threadPool = Executors.newFixedThreadPool(3);
+        metaManager = new MockMetaManager();
+
+        masterStorage = mock(MasterStorage.class);
+        indexStorage = mock(IndexStorage.class);
+
+        impl = new EntitySearchServiceImpl();
+        ReflectionTestUtils.setField(impl, "metaManager", metaManager);
+        ReflectionTestUtils.setField(impl, "masterStorage", masterStorage);
+        ReflectionTestUtils.setField(impl, "indexStorage", indexStorage);
+        ReflectionTestUtils.setField(impl, "threadPool", threadPool);
+        ReflectionTestUtils.setField(impl, "commitIdStatusService", commitIdStatusService);
+        impl.init();
+    }
+
+    @After
+    public void after() throws Exception {
+        ExecutorHelper.shutdownAndAwaitTermination(threadPool);
+    }
+
+    @Test
+    public void testCountSearch() throws Exception {
+
+        when(masterStorage.select(
+            Conditions.buildEmtpyConditions(),
+            MockMetaManager.l1EntityClass,
+            SelectConfig.Builder.aSelectConfig().withCommitId(1).withSort(
+                Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build()))
+            .thenReturn(Arrays.asList(
+                new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
+                new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR)
+            ));
+
+        Page indexPage = Page.emptyPage();
+        indexPage.setTotalCount(0);
+        when(indexStorage.select(
+            Conditions.buildEmtpyConditions(),
+            MockMetaManager.l1EntityClass,
+            SelectConfig.Builder.aSelectConfig()
+                .withCommitId(1)
+                .withPage(Page.emptyPage())
+                .withExcludedIds(new HashSet())
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .build()
+        )).thenReturn(new EntityRefs(Collections.emptyList(), indexPage));
+
+        Page page = Page.emptyPage();
+        Collection<IEntity> entities = impl.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            EntityClassRef.Builder.anEntityClassRef()
+                .withEntityClassId(MockMetaManager.l1EntityClass.id())
+                .withEntityClassCode(MockMetaManager.l1EntityClass.code())
+                .build(),
+            page
+        );
+
+        Assert.assertEquals(0, entities.size());
+        Assert.assertEquals(2, page.getTotalCount());
+    }
+
+    /**
+     * 测试主库查询有需要过滤.
+     */
+    @Test
+    public void testFilter() throws Exception {
+        when(masterStorage.select(
+            Conditions.buildEmtpyConditions(),
+            MockMetaManager.l1EntityClass,
+            SelectConfig.Builder.aSelectConfig().withCommitId(1).withSort(
+                Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build()))
+            .thenReturn(Arrays.asList(
+                new EntityRef(1, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
+                new EntityRef(2, OperationType.CREATE.getValue(), OqsVersion.MAJOR),
+                new EntityRef(3, OperationType.DELETE.getValue(), OqsVersion.MAJOR),
+                new EntityRef(4, OperationType.UPDATE.getValue(), OqsVersion.MAJOR)
+            ));
+        when(masterStorage.selectMultiple(new long[]{1, 2, 4}, MockMetaManager.l1EntityClass)).thenReturn(
+            Arrays.asList(
+                Entity.Builder.anEntity().withId(1).build(),
+                Entity.Builder.anEntity().withId(2).build(),
+                Entity.Builder.anEntity().withId(4).build()
+            )
+        );
+
+        Page indexPage = new Page(Page.newSinglePage(1000).getIndex(), Page.newSinglePage(1000).getPageSize());
+        indexPage.setTotalCount(0);
+        when(indexStorage.select(
+            Conditions.buildEmtpyConditions(),
+            MockMetaManager.l1EntityClass,
+            SelectConfig.Builder.aSelectConfig()
+                .withCommitId(1)
+                .withPage(new Page(Page.newSinglePage(1000).getIndex(), Page.newSinglePage(1000).getPageSize()))
+                .withExcludedIds(new HashSet())
+                .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
+                .withExcludeId(3)
+                .withExcludeId(4)
+                .build()
+        )).thenReturn(new EntityRefs(Collections.emptyList(), indexPage));
+
+        Page page = Page.newSinglePage(1000);
+        Collection<IEntity> entities = impl.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            EntityClassRef.Builder.anEntityClassRef()
+                .withEntityClassId(MockMetaManager.l1EntityClass.id())
+                .withEntityClassCode(MockMetaManager.l1EntityClass.code())
+                .build(),
+            page
+        );
+
+        Assert.assertEquals(3, entities.size());
+        Assert.assertEquals(3, page.getTotalCount());
+    }
+
+    @Test
+    public void testSelectOne() throws Exception {
+        when(masterStorage.selectOne(1, MockMetaManager.l0EntityClass)).thenReturn(
+            Optional.of(Entity.Builder.anEntity().withId(1).build())
+        );
+        Optional<IEntity> entityOp = impl.selectOne(1,
+            EntityClassRef.Builder.anEntityClassRef()
+                .withEntityClassId(MockMetaManager.l0EntityClass.id())
+                .withEntityClassCode(MockMetaManager.l0EntityClass.code()).build());
+
+        Assert.assertTrue(entityOp.isPresent());
+        Assert.assertEquals(1, entityOp.get().id());
+    }
+
+    @Test
+    public void testSelectMultiple() throws Exception {
+        long[] ids = new long[]{
+            1, 2, 3
+        };
+        when(masterStorage.selectMultiple(ids, MockMetaManager.l2EntityClass)).thenReturn(
+            Arrays.asList(
+                Entity.Builder.anEntity().withId(1).build(),
+                Entity.Builder.anEntity().withId(2).build(),
+                Entity.Builder.anEntity().withId(3).build()
+            )
+        );
+
+        Collection<IEntity> entities = impl.selectMultiple(ids, EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(MockMetaManager.l2EntityClass.id())
+            .withEntityClassCode(MockMetaManager.l2EntityClass.code()).build());
+
+        Assert.assertEquals(ids.length, entities.size());
+        List<IEntity> entityList = new ArrayList<>(entities);
+        for (int i = 0; i < ids.length; i++) {
+            Assert.assertEquals(ids[i], entityList.get(i).id());
+        }
+    }
+
+    @Test
+    public void testSelectByConditions() throws Exception {
+
+    }
+
+} 

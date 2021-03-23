@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.sort;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
+import java.util.Objects;
+
 /**
  * 查询排序方式.
  * @author dongbin
@@ -87,5 +89,24 @@ public class Sort {
      */
     public boolean isOutOfOrder() {
         return outOfOrder;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Sort)) {
+            return false;
+        }
+        Sort sort = (Sort) o;
+        return isAsc() == sort.isAsc() &&
+            isOutOfOrder() == sort.isOutOfOrder() &&
+            Objects.equals(getField(), sort.getField());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getField(), isAsc(), isOutOfOrder());
     }
 }

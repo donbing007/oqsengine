@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRefs;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
@@ -29,7 +29,7 @@ public interface IndexStorage extends Storage {
      * @return 搜索结果列表.
      * @throws SQLException
      */
-    Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config) throws SQLException;
+    EntityRefs select(Conditions conditions, IEntityClass entityClass, SelectConfig config) throws SQLException;
 
     /**
      * 维护接口,时间范围清理.
