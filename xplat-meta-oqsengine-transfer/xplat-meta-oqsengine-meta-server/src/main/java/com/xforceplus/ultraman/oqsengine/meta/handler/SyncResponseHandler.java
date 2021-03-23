@@ -61,7 +61,7 @@ public class SyncResponseHandler implements IResponseHandler {
     private ExecutorService taskExecutor;
 
     @Resource
-    private GRpcParams gRpcParamsConfig;
+    private GRpcParams gRpcParams;
 
     private List<Thread> longRunTasks = new ArrayList<>(SERVER_TASK_COUNT);
 
@@ -293,7 +293,7 @@ public class SyncResponseHandler implements IResponseHandler {
                 if (e instanceof MetaSyncServerException &&
                         e.getMessage().equalsIgnoreCase(APP_UPDATE_PULL_ERROR.name())) {
                     retryExecutor.offer(
-                            new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
+                            new RetryExecutor.DelayTask(gRpcParams.getDefaultDelayTaskDuration(),
                                     new RetryExecutor.Element(
                                             new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
                                                     watchElement.getVersion(), watchElement.getStatus()),
@@ -406,7 +406,7 @@ public class SyncResponseHandler implements IResponseHandler {
          */
         if (ret && !registerOrHeartBeat) {
             retryExecutor.offer(
-                    new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
+                    new RetryExecutor.DelayTask(gRpcParams.getDefaultDelayTaskDuration(),
                             new RetryExecutor.Element(new WatchElement(appId, env, version, Notice), watcher.uid())));
         }
         return ret;
@@ -497,11 +497,11 @@ public class SyncResponseHandler implements IResponseHandler {
      */
     private boolean keepAlive() {
         while (!isShutdown) {
-            responseWatchExecutor.keepAliveCheck(gRpcParamsConfig.getDefaultHeartbeatTimeout());
+            responseWatchExecutor.keepAliveCheck(gRpcParams.getDefaultHeartbeatTimeout());
             /**
              * 等待一秒进入下一次循环
              */
-            TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
+            TimeWaitUtils.wakeupAfter(gRpcParams.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
         }
 
         logger.info("keepAlive check has quited due to server shutdown...");

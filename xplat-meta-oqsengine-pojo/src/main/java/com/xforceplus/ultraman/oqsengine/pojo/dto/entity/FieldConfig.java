@@ -164,6 +164,9 @@ public class FieldConfig implements Serializable {
     @JsonProperty(value = "wildcardMaxWidth")
     private int wildcardMaxWidth = 6;
 
+    @JsonProperty(value = "uniqueName")
+    private String uniqueName = "";
+
     /**
      * 创建一个新的 FieldConfig.
      *
@@ -344,6 +347,10 @@ public class FieldConfig implements Serializable {
         return wildcardMaxWidth;
     }
 
+    public String getUniqueName() {
+        return uniqueName;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -421,6 +428,7 @@ public class FieldConfig implements Serializable {
         private FuzzyType fuzzyType = FuzzyType.NOT;
         private int wildcardMinWidth = 3;
         private int wildcardMaxWidth = 6;
+        private String uniqueName = "";
 
         private Builder() {
         }
@@ -499,6 +507,11 @@ public class FieldConfig implements Serializable {
             return this;
         }
 
+        public Builder withUniqueName(String uniqueName) {
+            this.uniqueName = uniqueName;
+            return this;
+        }
+
         public FieldConfig build() {
             FieldConfig fieldConfig = new FieldConfig();
             fieldConfig.validateRegexString = this.validateRegexString;
@@ -515,6 +528,7 @@ public class FieldConfig implements Serializable {
             fieldConfig.wildcardMaxWidth = this.wildcardMaxWidth;
             fieldConfig.required = this.required;
             fieldConfig.displayType = this.displayType;
+            fieldConfig.uniqueName = this.uniqueName;
             return fieldConfig;
         }
     }

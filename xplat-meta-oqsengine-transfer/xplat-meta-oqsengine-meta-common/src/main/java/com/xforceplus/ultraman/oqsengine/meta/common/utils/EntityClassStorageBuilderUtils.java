@@ -191,6 +191,7 @@ public class EntityClassStorageBuilderUtils {
                 .withFuzzyType(FieldConfig.FuzzyType.getInstance(fieldConfig.getFuzzyType()))
                 .withWildcardMinWidth(fieldConfig.getWildcardMinWidth())
                 .withWildcardMaxWidth(fieldConfig.getWildcardMaxWidth())
+                .withUniqueName(fieldConfig.getUniqueName())
                 .build();
     }
 }

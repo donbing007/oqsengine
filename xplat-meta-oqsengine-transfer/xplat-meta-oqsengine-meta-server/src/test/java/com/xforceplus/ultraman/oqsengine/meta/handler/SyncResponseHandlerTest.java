@@ -71,7 +71,7 @@ public class SyncResponseHandlerTest {
         ReflectionTestUtils.setField(syncResponseHandler, "retryExecutor", retryExecutor);
         ReflectionTestUtils.setField(syncResponseHandler, "entityClassGenerator", entityClassGenerator);
         ReflectionTestUtils.setField(syncResponseHandler, "taskExecutor", executor);
-        ReflectionTestUtils.setField(syncResponseHandler, "gRpcParamsConfig", gRpcParamsConfig);
+        ReflectionTestUtils.setField(syncResponseHandler, "gRpcParams", gRpcParamsConfig);
 
         syncResponseHandler.start();
     }

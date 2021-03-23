@@ -28,6 +28,7 @@ private static final long serialVersionUID = 0L;
     fuzzyType_ = 0;
     wildcardMinWidth_ = 0;
     wildcardMaxWidth_ = 0;
+    uniqueName_ = "";
   }
 
   @java.lang.Override
@@ -122,6 +123,12 @@ private static final long serialVersionUID = 0L;
           case 96: {
 
             wildcardMaxWidth_ = input.readInt32();
+            break;
+          }
+          case 106: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            uniqueName_ = s;
             break;
           }
         }
@@ -492,6 +499,40 @@ private static final long serialVersionUID = 0L;
     return wildcardMaxWidth_;
   }
 
+  public static final int UNIQUENAME_FIELD_NUMBER = 13;
+  private volatile java.lang.Object uniqueName_;
+  /**
+   * <code>string uniqueName = 13;</code>
+   */
+  public java.lang.String getUniqueName() {
+    java.lang.Object ref = uniqueName_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      uniqueName_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>string uniqueName = 13;</code>
+   */
+  public com.google.protobuf.ByteString
+      getUniqueNameBytes() {
+    java.lang.Object ref = uniqueName_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      uniqueName_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -539,6 +580,9 @@ private static final long serialVersionUID = 0L;
     }
     if (wildcardMaxWidth_ != 0) {
       output.writeInt32(12, wildcardMaxWidth_);
+    }
+    if (!getUniqueNameBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 13, uniqueName_);
     }
     unknownFields.writeTo(output);
   }
@@ -594,6 +638,9 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(12, wildcardMaxWidth_);
     }
+    if (!getUniqueNameBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(13, uniqueName_);
+    }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
     return size;
@@ -633,6 +680,8 @@ private static final long serialVersionUID = 0L;
         == other.getWildcardMinWidth());
     result = result && (getWildcardMaxWidth()
         == other.getWildcardMaxWidth());
+    result = result && getUniqueName()
+        .equals(other.getUniqueName());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -673,6 +722,8 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getWildcardMinWidth();
     hash = (37 * hash) + WILDCARDMAXWIDTH_FIELD_NUMBER;
     hash = (53 * hash) + getWildcardMaxWidth();
+    hash = (37 * hash) + UNIQUENAME_FIELD_NUMBER;
+    hash = (53 * hash) + getUniqueName().hashCode();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -826,6 +877,8 @@ private static final long serialVersionUID = 0L;
 
       wildcardMaxWidth_ = 0;
 
+      uniqueName_ = "";
+
       return this;
     }
 
@@ -860,6 +913,7 @@ private static final long serialVersionUID = 0L;
       result.fuzzyType_ = fuzzyType_;
       result.wildcardMinWidth_ = wildcardMinWidth_;
       result.wildcardMaxWidth_ = wildcardMaxWidth_;
+      result.uniqueName_ = uniqueName_;
       onBuilt();
       return result;
     }
@@ -938,6 +992,10 @@ private static final long serialVersionUID = 0L;
       }
       if (other.getWildcardMaxWidth() != 0) {
         setWildcardMaxWidth(other.getWildcardMaxWidth());
+      }
+      if (!other.getUniqueName().isEmpty()) {
+        uniqueName_ = other.uniqueName_;
+        onChanged();
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -1378,6 +1436,75 @@ private static final long serialVersionUID = 0L;
     public Builder clearWildcardMaxWidth() {
       
       wildcardMaxWidth_ = 0;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object uniqueName_ = "";
+    /**
+     * <code>string uniqueName = 13;</code>
+     */
+    public java.lang.String getUniqueName() {
+      java.lang.Object ref = uniqueName_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        uniqueName_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>string uniqueName = 13;</code>
+     */
+    public com.google.protobuf.ByteString
+        getUniqueNameBytes() {
+      java.lang.Object ref = uniqueName_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        uniqueName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>string uniqueName = 13;</code>
+     */
+    public Builder setUniqueName(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      uniqueName_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string uniqueName = 13;</code>
+     */
+    public Builder clearUniqueName() {
+      
+      uniqueName_ = getDefaultInstance().getUniqueName();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>string uniqueName = 13;</code>
+     */
+    public Builder setUniqueNameBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      uniqueName_ = value;
       onChanged();
       return this;
     }

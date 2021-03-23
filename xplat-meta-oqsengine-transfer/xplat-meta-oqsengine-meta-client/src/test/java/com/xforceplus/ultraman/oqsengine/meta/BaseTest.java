@@ -85,7 +85,7 @@ public class BaseTest {
 
         ReflectionTestUtils.setField(requestHandler, "syncExecutor", syncExecutor);
         ReflectionTestUtils.setField(requestHandler, "requestWatchExecutor", requestWatchExecutor);
-        ReflectionTestUtils.setField(requestHandler, "gRpcParamsConfig", gRpcParams);
+        ReflectionTestUtils.setField(requestHandler, "gRpcParams", gRpcParams);
         ReflectionTestUtils.setField(requestHandler, "executorService", executorService);
 
         return requestHandler;

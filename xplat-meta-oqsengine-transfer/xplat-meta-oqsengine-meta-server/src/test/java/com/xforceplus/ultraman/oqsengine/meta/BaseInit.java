@@ -88,7 +88,7 @@ public class BaseInit {
         ReflectionTestUtils.setField(syncResponseHandler, "retryExecutor", retryExecutor);
         ReflectionTestUtils.setField(syncResponseHandler, "entityClassGenerator", entityClassGenerator);
         ReflectionTestUtils.setField(syncResponseHandler, "taskExecutor", taskExecutor);
-        ReflectionTestUtils.setField(syncResponseHandler, "gRpcParamsConfig", gRpcParamsConfig);
+        ReflectionTestUtils.setField(syncResponseHandler, "gRpcParams", gRpcParamsConfig);
 
         return syncResponseHandler;
     }

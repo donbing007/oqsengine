@@ -80,4 +80,14 @@ public interface FieldConfigOrBuilder extends
    * <code>int32 wildcardMaxWidth = 12;</code>
    */
   int getWildcardMaxWidth();
+
+  /**
+   * <code>string uniqueName = 13;</code>
+   */
+  java.lang.String getUniqueName();
+  /**
+   * <code>string uniqueName = 13;</code>
+   */
+  com.google.protobuf.ByteString
+      getUniqueNameBytes();
 }

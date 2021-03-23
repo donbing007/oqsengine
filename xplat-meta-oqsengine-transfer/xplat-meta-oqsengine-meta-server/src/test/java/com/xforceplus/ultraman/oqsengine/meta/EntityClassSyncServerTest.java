@@ -73,7 +73,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         observer.onNext(buildRequest(new WatchElement(appId, env, version, null), uid, RequestStatus.HEARTBEAT));
 
 
-        Thread.sleep(1_000);
+        Thread.sleep(2_000);
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
 
         Assert.assertNotNull(watcher);

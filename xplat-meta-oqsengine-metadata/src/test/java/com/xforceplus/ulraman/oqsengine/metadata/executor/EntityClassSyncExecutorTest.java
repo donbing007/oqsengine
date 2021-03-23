@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler;
 import com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassManagerExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;

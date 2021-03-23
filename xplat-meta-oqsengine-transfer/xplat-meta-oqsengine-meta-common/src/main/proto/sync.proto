@@ -94,6 +94,7 @@ message FieldConfig {
 	int32 fuzzyType = 10;
 	int32 wildcardMinWidth = 11;
 	int32 wildcardMaxWidth = 12;
+	string uniqueName = 13;
 }
 
 message RelationInfo {
