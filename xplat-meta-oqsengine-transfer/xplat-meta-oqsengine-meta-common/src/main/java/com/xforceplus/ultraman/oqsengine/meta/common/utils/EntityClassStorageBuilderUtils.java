@@ -3,10 +3,10 @@ package com.xforceplus.ultraman.oqsengine.meta.common.utils;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassInfo;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
@@ -175,7 +175,7 @@ public class EntityClassStorageBuilderUtils {
      * @param fieldConfig
      * @return
      */
-    private static FieldConfig toFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig fieldConfig) {
+    private static FieldConfig toFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig fieldConfig) {
         return FieldConfig.Builder.aFieldConfig()
                 .withSearchable(fieldConfig.getSearchable())
                 .withMax(fieldConfig.getMax())

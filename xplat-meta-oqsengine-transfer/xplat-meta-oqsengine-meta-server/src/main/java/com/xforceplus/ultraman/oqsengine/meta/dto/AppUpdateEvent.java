@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.dto;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import org.springframework.context.ApplicationEvent;
 
 /**

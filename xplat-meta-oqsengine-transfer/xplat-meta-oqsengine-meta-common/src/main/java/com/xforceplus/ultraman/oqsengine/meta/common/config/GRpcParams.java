@@ -2,13 +2,13 @@ package com.xforceplus.ultraman.oqsengine.meta.common.config;
 
 /**
  * desc :
- * name : GRpcClientConfig
+ * name : GRpcParams
  *
  * @author : xujia
  * date : 2021/2/7
  * @since : 1.8
  */
-public class GRpcParamsConfig {
+public class GRpcParams {
 
     public static final long SHUT_DOWN_WAIT_TIME_OUT = 3;
 

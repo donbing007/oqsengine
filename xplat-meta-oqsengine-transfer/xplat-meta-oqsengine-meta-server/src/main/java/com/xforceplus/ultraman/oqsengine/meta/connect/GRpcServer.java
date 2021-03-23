@@ -2,9 +2,10 @@ package com.xforceplus.ultraman.oqsengine.meta.connect;
 
 import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncServer;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
+import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.internal.GrpcUtil;
@@ -16,6 +17,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -39,19 +41,22 @@ public class GRpcServer implements IBasicSyncExecutor {
     private EntityClassSyncServer entityClassSyncServer;
 
     @Resource
-    private GRpcParamsConfig configuration;
+    private GRpcParams configuration;
+
+    @Resource(name = "outerBindingService")
+    private List<BindableService> outerServiceList;
 
     private int port;
 
     private Server gRpcServer;
 
-
     public GRpcServer(int port) {
         this.port = port;
     }
 
-    @PostConstruct
+
     @Override
+    @PostConstruct
     public void start() {
         entityClassSyncServer.start();
 
@@ -94,7 +99,8 @@ public class GRpcServer implements IBasicSyncExecutor {
     }
 
     private ServerBuilder serverBuilder() {
-        return NettyServerBuilder.forPort(port)
+        logger.info("server build start...");
+        ServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
                         .executor(gRpcExecutor)
                         .addService(entityClassSyncServer)
                         .maxInboundMetadataSize(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE)
@@ -103,5 +109,19 @@ public class GRpcServer implements IBasicSyncExecutor {
                         .keepAliveTimeout(configuration.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
                         .permitKeepAliveWithoutCalls(true)
                         .permitKeepAliveTime(1, TimeUnit.SECONDS);
+
+        if (null != outerServiceList) {
+            outerServiceList.forEach(
+                    o -> {
+                        serverBuilder.addService(o);
+                        logger.info("server build, add outerService [{}]", o.getClass().getCanonicalName());
+                    }
+            );
+
+        }
+
+        logger.info("server build ok...");
+
+        return serverBuilder;
     }
 }

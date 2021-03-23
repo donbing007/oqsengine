@@ -1,12 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement.ElementStatus.Confirmed;
@@ -52,7 +52,7 @@ public class SyncRequestHandler implements IRequestHandler {
     private IRequestWatchExecutor requestWatchExecutor;
 
     @Resource
-    private GRpcParamsConfig gRpcParamsConfig;
+    private GRpcParams gRpcParams;
 
     @Resource(name = "grpcTaskExecutor")
     private ExecutorService executorService;
@@ -206,7 +206,7 @@ public class SyncRequestHandler implements IRequestHandler {
     }
 
     @Override
-    public void onNext(EntityClassSyncResponse entityClassSyncResponse, Void nil) {
+    public void invoke(EntityClassSyncResponse entityClassSyncResponse, Void nil) {
         /**
          * 重启中所有的Response将被忽略
          * 不是同批次请求将被忽略
@@ -366,11 +366,11 @@ public class SyncRequestHandler implements IRequestHandler {
                 try {
                     if (requestWatcher.isActive()) {
                         if (System.currentTimeMillis() - requestWatcher.heartBeat() >
-                                gRpcParamsConfig.getDefaultHeartbeatTimeout()) {
+                                gRpcParams.getDefaultHeartbeatTimeout()) {
                             requestWatcher.observer().onCompleted();
                             logger.warn("last heartbeat time [{}] reaches max timeout [{}]"
                                     , System.currentTimeMillis() - requestWatcher.heartBeat(),
-                                    gRpcParamsConfig.getDefaultHeartbeatTimeout());
+                                    gRpcParams.getDefaultHeartbeatTimeout());
                         }
                     }
 
@@ -382,9 +382,9 @@ public class SyncRequestHandler implements IRequestHandler {
                     //  ignore
                     logger.warn("send keepAlive failed, message [{}], but exception will ignore due to retry...", e.getMessage());
                 }
-                logger.debug("keepAlive ok, next check after duration ({})ms...", gRpcParamsConfig.getKeepAliveSendDuration());
+                logger.debug("keepAlive ok, next check after duration ({})ms...", gRpcParams.getKeepAliveSendDuration());
             }
-            TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getKeepAliveSendDuration(), TimeUnit.MILLISECONDS);
+            TimeWaitUtils.wakeupAfter(gRpcParams.getKeepAliveSendDuration(), TimeUnit.MILLISECONDS);
         }
         logger.debug("keepAlive task has quited due to sync-client shutdown...");
         return true;
@@ -425,7 +425,7 @@ public class SyncRequestHandler implements IRequestHandler {
                      */
                     return s.getStatus().ordinal() == Init.ordinal() ||
                             (s.getStatus().ordinal() <  Confirmed.ordinal() &&
-                                    System.currentTimeMillis() - s.getRegisterTime() > gRpcParamsConfig.getDefaultDelayTaskDuration());
+                                    System.currentTimeMillis() - s.getRegisterTime() > gRpcParams.getDefaultDelayTaskDuration());
                 }).forEach(
                         k -> {
                             EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
@@ -442,9 +442,9 @@ public class SyncRequestHandler implements IRequestHandler {
                         }
                 );
 
-                logger.debug("app check ok, next check after duration ({})ms...", gRpcParamsConfig.getMonitorSleepDuration());
+                logger.debug("app check ok, next check after duration ({})ms...", gRpcParams.getMonitorSleepDuration());
             }
-            TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
+            TimeWaitUtils.wakeupAfter(gRpcParams.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
         }
         logger.debug("appCheck task has quited due to sync-client shutdown...");
 

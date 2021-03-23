@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.mock;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.*;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,7 +63,7 @@ public class MockEntityClassSyncRspProtoBuilder {
                 .setCname(id + "_cname")
                 .setFieldType(fieldType)
                 .setDictId(id + "_dictId")
-                .setFieldConfig(fieldConfig(true, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.NORMAL))
+                .setFieldConfig(fieldConfig(true, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.NORMAL))
                 .build();
     }
 
@@ -85,9 +85,9 @@ public class MockEntityClassSyncRspProtoBuilder {
 
     }
 
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig
-    fieldConfig(boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense systemFieldType) {
-        return com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.newBuilder()
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig
+    fieldConfig(boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
+        return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
                 .setSearchable(searchable)
                 .setIsRequired(true)
                 .setMetaFieldSense(systemFieldType)

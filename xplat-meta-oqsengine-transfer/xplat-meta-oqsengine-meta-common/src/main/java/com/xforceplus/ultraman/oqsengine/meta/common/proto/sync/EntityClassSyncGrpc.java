@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.meta.common.proto;
+package com.xforceplus.ultraman.oqsengine.meta.common.proto.sync;
 
 import static io.grpc.MethodDescriptor.generateFullMethodName;
 import static io.grpc.stub.ClientCalls.asyncBidiStreamingCall;
@@ -27,30 +27,30 @@ public final class EntityClassSyncGrpc {
   public static final String SERVICE_NAME = "EntityClassSync";
 
   // Static method descriptors that strictly reflect the proto.
-  private static volatile io.grpc.MethodDescriptor<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest,
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse> getRegisterMethod;
+  private static volatile io.grpc.MethodDescriptor<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest,
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse> getRegisterMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
       fullMethodName = SERVICE_NAME + '/' + "register",
-      requestType = com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest.class,
-      responseType = com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse.class,
+      requestType = com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.class,
+      responseType = com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse.class,
       methodType = io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING)
-  public static io.grpc.MethodDescriptor<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest,
-      com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse> getRegisterMethod() {
-    io.grpc.MethodDescriptor<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse> getRegisterMethod;
+  public static io.grpc.MethodDescriptor<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest,
+      com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse> getRegisterMethod() {
+    io.grpc.MethodDescriptor<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse> getRegisterMethod;
     if ((getRegisterMethod = EntityClassSyncGrpc.getRegisterMethod) == null) {
       synchronized (EntityClassSyncGrpc.class) {
         if ((getRegisterMethod = EntityClassSyncGrpc.getRegisterMethod) == null) {
           EntityClassSyncGrpc.getRegisterMethod = getRegisterMethod = 
-              io.grpc.MethodDescriptor.<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest, com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse>newBuilder()
+              io.grpc.MethodDescriptor.<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING)
               .setFullMethodName(generateFullMethodName(
                   "EntityClassSync", "register"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest.getDefaultInstance()))
+                  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse.getDefaultInstance()))
+                  com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse.getDefaultInstance()))
                   .setSchemaDescriptor(new EntityClassSyncMethodDescriptorSupplier("register"))
                   .build();
           }
@@ -88,8 +88,8 @@ public final class EntityClassSyncGrpc {
 
     /**
      */
-    public io.grpc.stub.StreamObserver<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest> register(
-        io.grpc.stub.StreamObserver<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse> responseObserver) {
+    public io.grpc.stub.StreamObserver<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest> register(
+        io.grpc.stub.StreamObserver<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse> responseObserver) {
       return asyncUnimplementedStreamingCall(getRegisterMethod(), responseObserver);
     }
 
@@ -99,8 +99,8 @@ public final class EntityClassSyncGrpc {
             getRegisterMethod(),
             asyncBidiStreamingCall(
               new MethodHandlers<
-                com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest,
-                com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse>(
+                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest,
+                com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse>(
                   this, METHODID_REGISTER)))
           .build();
     }
@@ -126,8 +126,8 @@ public final class EntityClassSyncGrpc {
 
     /**
      */
-    public io.grpc.stub.StreamObserver<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest> register(
-        io.grpc.stub.StreamObserver<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse> responseObserver) {
+    public io.grpc.stub.StreamObserver<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest> register(
+        io.grpc.stub.StreamObserver<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse> responseObserver) {
       return asyncBidiStreamingCall(
           getChannel().newCall(getRegisterMethod(), getCallOptions()), responseObserver);
     }
@@ -202,7 +202,7 @@ public final class EntityClassSyncGrpc {
       switch (methodId) {
         case METHODID_REGISTER:
           return (io.grpc.stub.StreamObserver<Req>) serviceImpl.register(
-              (io.grpc.stub.StreamObserver<com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse>) responseObserver);
+              (io.grpc.stub.StreamObserver<com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse>) responseObserver);
         default:
           throw new AssertionError();
       }
@@ -215,7 +215,7 @@ public final class EntityClassSyncGrpc {
 
     @java.lang.Override
     public com.google.protobuf.Descriptors.FileDescriptor getFileDescriptor() {
-      return com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncProto.getDescriptor();
+      return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncProto.getDescriptor();
     }
 
     @java.lang.Override

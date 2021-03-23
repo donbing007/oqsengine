@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.provider.outter;
 
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 
 /**
  * desc :

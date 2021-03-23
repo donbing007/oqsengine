@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.config;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.shutdown.ShutDownExecutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,13 +22,13 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper
 @Configuration
 public class CommonConfiguration {
     @Bean
-    public GRpcParamsConfig gRpcParamsConfig(
+    public GRpcParams gRpcParamsConfig(
             @Value("${meta.grpc.seconds.heartbeatTimeout:30}") long heartbeatTimeoutSec,
             @Value("${meta.grpc.seconds.delaytaskTimeout:30}") long delayTaskDurationSec,
             @Value("${meta.grpc.seconds.monitorDuration:1}") long sleepMonitorSec,
             @Value("${meta.grpc.seconds.reconnectDuration:5}") long sleepReconnectSec,
             @Value("${meta.grpc.seconds.keepAliveDuration:5}") long keepAliveSendDuration) {
-        GRpcParamsConfig gRpcParamsConfig = new GRpcParamsConfig();
+        GRpcParams gRpcParamsConfig = new GRpcParams();
         gRpcParamsConfig.setDefaultHeartbeatTimeout(TimeUnit.SECONDS.toMillis(heartbeatTimeoutSec));
         gRpcParamsConfig.setDefaultDelayTaskDuration(TimeUnit.SECONDS.toMillis(delayTaskDurationSec));
         gRpcParamsConfig.setMonitorSleepDuration(TimeUnit.SECONDS.toMillis(sleepMonitorSec));
