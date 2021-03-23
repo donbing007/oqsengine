@@ -66,10 +66,12 @@ public class SelectConfig implements Serializable {
             return false;
         }
         SelectConfig that = (SelectConfig) o;
-        return getCommitId() == that.getCommitId() &&
+
+        boolean result = getCommitId() == that.getCommitId() &&
             Objects.equals(getSort(), that.getSort()) &&
             Objects.equals(getPage(), that.getPage()) &&
             Objects.equals(getExcludedIds(), that.getExcludedIds());
+        return result;
     }
 
     @Override
@@ -109,7 +111,7 @@ public class SelectConfig implements Serializable {
         }
 
         public Builder withExcludedIds(Set<Long> excludedIds) {
-            if (Collections.emptySet().getClass().isInstance(this.excludedIds)) {
+            if (this.excludedIds == null) {
                 this.excludedIds = new HashSet(excludedIds);
             } else {
                 this.excludedIds.clear();
@@ -119,7 +121,7 @@ public class SelectConfig implements Serializable {
         }
 
         public Builder withExcludeId(long excludeId) {
-            if (Collections.emptySet().getClass().isInstance(this.excludedIds)) {
+            if (this.excludedIds == null) {
                 this.excludedIds = new HashSet<>();
             }
             this.excludedIds.add(excludeId);

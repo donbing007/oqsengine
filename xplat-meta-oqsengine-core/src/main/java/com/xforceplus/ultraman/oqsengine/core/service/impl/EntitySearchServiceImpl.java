@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityRefComparator;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRefs;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -669,6 +670,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 //trigger master search
                 masterRefs = masterStorage.select(conditions, entityClass,
                     SelectConfig.Builder.aSelectConfig().withSort(sort).withCommitId(commitId).build());
+
+                for (EntityRef ref : masterRefs) {
+                    if (ref.getOp() == OperationType.UNKNOWN.getValue()) {
+                        throw new SQLException(String.format("Expected operation type unknown.[id=%d]", ref.getId()));
+                    }
+                }
             }
 
             masterRefs = fixNullSortValue(masterRefs, sort);
@@ -689,13 +696,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 indexPage = new Page(page.getIndex(), page.getPageSize());
             }
 
-            Collection<EntityRef> refs = indexStorage.select(
+            EntityRefs refs = indexStorage.select(
                 conditions, entityClass,
                 SelectConfig.Builder.aSelectConfig()
                     .withSort(sort)
                     .withPage(indexPage)
                     .withExcludedIds(filterIdsFromMaster)
                     .withCommitId(commitId).build());
+            indexPage = refs.getPage();
 
             Collection<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().
                 filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());
@@ -703,11 +711,11 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Collection<EntityRef> retRefs;
             //combine two refs
             if (sort != null && !sort.isOutOfOrder()) {
-                retRefs = merge(masterRefsWithoutDeleted, refs, sort);
+                retRefs = merge(masterRefsWithoutDeleted, refs.getRefs(), sort);
             } else {
                 retRefs = new ArrayList<>(masterRefsWithoutDeleted.size() + refs.size());
                 retRefs.addAll(masterRefsWithoutDeleted);
-                retRefs.addAll(refs);
+                retRefs.addAll(refs.getRefs());
             }
 
             page.setTotalCount(indexPage.getTotalCount() + masterRefsWithoutDeleted.size());

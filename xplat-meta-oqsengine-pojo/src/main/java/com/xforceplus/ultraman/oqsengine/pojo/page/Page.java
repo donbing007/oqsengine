@@ -441,10 +441,6 @@ public class Page implements Externalizable, Cloneable {
         if (getIndex() != other.getIndex()) {
             return false;
         }
-        //数据总量
-        if (getTotalCount() != other.getTotalCount()) {
-            return false;
-        }
 
         return true;
     }
