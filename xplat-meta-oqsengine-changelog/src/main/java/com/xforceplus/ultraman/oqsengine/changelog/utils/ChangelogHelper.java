@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.changelog.utils;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeValue;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.HistoryValue;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ValueWrapper;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldLikeRelationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -107,6 +108,10 @@ public class ChangelogHelper {
 //
 //        return values;
 //    }
+
+    public static String serialize(ValueWrapper valueWrapper){
+        return serialize(valueWrapper.getIValue());
+    }
 
     /**
      * serialize to String

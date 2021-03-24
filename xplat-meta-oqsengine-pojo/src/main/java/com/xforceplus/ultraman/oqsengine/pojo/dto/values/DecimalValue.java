@@ -20,7 +20,7 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
 
     @Override
     BigDecimal fromString(String value) {
-        if(value != null){
+        if (value != null) {
             return new BigDecimal(value);
         }
         return null;
@@ -59,7 +59,7 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
         DecimalValue that = (DecimalValue) o;
 
         return Objects.equals(getField(), that.getField()) &&
-            Objects.equals(this.getValue(), that.getValue());
+                Objects.equals(this.getValue(), that.getValue());
     }
 
     @Override
@@ -70,8 +70,8 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
     @Override
     public String toString() {
         return "DecimalValue{" +
-            "field=" + getField() +
-            ", value=" + getValue() +
-            '}';
+                "field=" + getField() +
+                ", value=" + getValue() +
+                '}';
     }
 }

@@ -60,6 +60,14 @@ public class EntityDomain {
         return version;
     }
 
+    /**
+     * internal update
+     * @param changeValues
+     */
+    public void updateInternalState(List<ChangeValue> changeValues){
+
+    }
+
     @Override
     public String toString() {
         return "EntityDomain{" +

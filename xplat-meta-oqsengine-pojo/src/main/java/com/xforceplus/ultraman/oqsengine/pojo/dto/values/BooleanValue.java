@@ -6,6 +6,7 @@ import java.util.Objects;
 
 /**
  * 表示 boolean 的属性名.
+ *
  * @author wangzheng dongbin
  * @version 0.1 2020/2/18 20:54
  * @since 1.8
@@ -20,11 +21,11 @@ public class BooleanValue extends AbstractValue<Boolean> {
     @Override
     Boolean fromString(String value) {
 
-        if(value.equalsIgnoreCase("1")){
+        if (value.equalsIgnoreCase("1")) {
             return true;
         }
 
-        if(value.equalsIgnoreCase("0")){
+        if (value.equalsIgnoreCase("0")) {
             return false;
         }
 
@@ -53,19 +54,19 @@ public class BooleanValue extends AbstractValue<Boolean> {
         BooleanValue that = (BooleanValue) o;
 
         return Objects.equals(getField(), that.getField()) &&
-            Objects.equals(this.getValue(), that.getValue());
+                Objects.equals(this.getValue(), that.getValue());
     }
 
     @Override
-    public IValue<Boolean> shallowClone()  {
+    public IValue<Boolean> shallowClone() {
         return new BooleanValue(this.getField(), getValue());
     }
 
     @Override
     public String toString() {
         return "BooleanValue{" +
-            "field=" + getField() +
-            ", value=" + getValue() +
-            '}';
+                "field=" + getField() +
+                ", value=" + getValue() +
+                '}';
     }
 }

@@ -22,8 +22,8 @@ public class SQLChangelogStorage implements ChangelogStorage {
     @Resource(name = "changelogDataSource")
     private DataSource changelogDatasource;
 
-    @Resource(name = "snowFlakeIdGenerator")
-    private LongIdGenerator snowFlakeIdGenerator;
+    @Resource(name = "snowflakeIdGenerator")
+    private LongIdGenerator idGenerator;
 
     @Resource
     private ObjectMapper mapper;
@@ -42,7 +42,7 @@ public class SQLChangelogStorage implements ChangelogStorage {
     public Either<SQLException, Integer> saveBatch(List<Changelog> changeLogs) {
         try {
             int result = new ChangelogStorageCommand(table, mapper)
-                    .saveChangelog(changelogDatasource, snowFlakeIdGenerator, changeLogs);
+                    .saveChangelog(changelogDatasource, idGenerator, changeLogs);
             return Either.right(result);
         } catch (SQLException e) {
             return Either.left(e);

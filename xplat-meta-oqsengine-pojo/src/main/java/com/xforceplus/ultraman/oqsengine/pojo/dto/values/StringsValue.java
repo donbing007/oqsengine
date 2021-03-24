@@ -12,9 +12,9 @@ import java.util.Objects;
  */
 public class StringsValue extends AbstractValue<String[]> {
 
-    private final static String DELIMITER = ",";
+    private static final String DELIMITER = ",";
 
-    public StringsValue(IEntityField field, String ...value) {
+    public StringsValue(IEntityField field, String... value) {
         super(field, value);
     }
 
@@ -79,8 +79,8 @@ public class StringsValue extends AbstractValue<String[]> {
     @Override
     public String toString() {
         return "StringValue{" +
-            "field=" + getField() +
-            ", value=" + Arrays.toString(this.getValue()) +
-            '}';
+                "field=" + getField() +
+                ", value=" + Arrays.toString(this.getValue()) +
+                '}';
     }
 }

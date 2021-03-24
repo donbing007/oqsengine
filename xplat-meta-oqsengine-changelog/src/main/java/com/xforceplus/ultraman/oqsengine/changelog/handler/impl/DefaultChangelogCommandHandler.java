@@ -37,6 +37,7 @@ public class DefaultChangelogCommandHandler implements ChangelogCommandHandler<C
     @Override
     public void onCommand(ChangelogCommand command, Map<String, Object> context) {
         if(command instanceof AddChangelog){
+            logger.info("Got Add Changelog Command");
             ChangedEvent changedEvent = ((AddChangelog) command).getChangedEvent();
             if(changedEvent != null){
                 long entityClassId = changedEvent.getEntityClassId();

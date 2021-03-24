@@ -10,15 +10,15 @@ public class TransactionalChangelogEvent {
     /**
      * commitId
      */
-    private long commitId;
+    private Long commitId;
 
     private List<ChangedEvent> changedEventList;
 
-    public long getCommitId() {
+    public Long getCommitId() {
         return commitId;
     }
 
-    public void setCommitId(long commitId) {
+    public void setCommitId(Long commitId) {
         this.commitId = commitId;
     }
 
@@ -28,5 +28,13 @@ public class TransactionalChangelogEvent {
 
     public void setChangedEventList(List<ChangedEvent> changedEventList) {
         this.changedEventList = changedEventList;
+    }
+
+    @Override
+    public String toString() {
+        return "TransactionalChangelogEvent{" +
+                "commitId=" + commitId +
+                ", changedEventList=" + changedEventList +
+                '}';
     }
 }

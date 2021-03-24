@@ -15,11 +15,11 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.security.krb5.internal.crypto.HmacSha1Aes128CksumType;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -70,9 +70,9 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
         List<ChangelogEvent> retList = new LinkedList<>();
         if (input instanceof AddChangelog) {
             long newVersion = ((AddChangelog) input).getChangedEvent().getCommitId();
-            if(newVersion <= currentVersion){
+            if (newVersion <= currentVersion) {
                 //reject the same version
-                logger.error("Got old version {} on {}:{}",  newVersion, entityClass.id(), id);
+                logger.error("Got old version {} on {}:{}", newVersion, entityClass.id(), id);
                 return Collections.emptyList();
             } else {
                 ChangedEvent changedEvent = ((AddChangelog) input).getChangedEvent();
@@ -90,12 +90,18 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
         return retList;
     }
 
+    @Override
+    public EntityDomain getState() {
+        return entityDomain;
+    }
+
     /**
      * very important
+     *
      * @return
      */
     private Optional<SnapshotEvent> genSnapshotVersionEvent() {
-        if(count >= snapshotThreshold){
+        if (count >= snapshotThreshold) {
             logger.warn("Trigger snapshot on {}", id);
             ChangeSnapshot changeSnapshot = new ChangeSnapshot();
             /**
@@ -124,9 +130,9 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
         }
     }
 
-    private List<ChangeValue> stateToChangeValue(){
+    private List<ChangeValue> stateToChangeValue() {
         IEntityValue entityValue = entityDomain.getEntity().entityValue();
-        if(entityValue != null) {
+        if (entityValue != null) {
             return entityValue.values().stream().map(x -> {
                 ChangeValue changeValue = new ChangeValue();
                 changeValue.setFieldId(x.getField().id());
@@ -164,7 +170,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
      * @return
      */
     private List<PropagationChangelogEvent> genPropagationEvent(ChangedEvent changedEvent, Map<String, Object> context) {
-        Map<Long, IValue> valueMap = changedEvent.getValueMap();
+        Map<Long, ValueWrapper> valueMap = changedEvent.getValueMap();
 
         /**
          * find event to propagation
@@ -197,13 +203,13 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
      * @param valueMap
      * @return
      */
-    private List<Tuple2<Long, Long>> findNextObjIds(OqsRelation oqsRelation, Map<Long, IValue> valueMap) {
+    private List<Tuple2<Long, Long>> findNextObjIds(OqsRelation oqsRelation, Map<Long, ValueWrapper> valueMap) {
 
         List<Long> nextObjIds = new LinkedList<>();
         long entityClass = EntityClassHelper.findIdAssociatedEntityClassId(oqsRelation);
         long id = oqsRelation.getEntityField().id();
         Optional<IValue> currentValue = entityDomain.getEntity().entityValue().getValue(id);
-        IValue nextValue = valueMap.get(id);
+        ValueWrapper nextValue = valueMap.get(id);
 
         currentValue.ifPresent(iValue -> nextObjIds.add(iValue.valueToLong()));
 
@@ -226,7 +232,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
      */
     private List<Tuple2<Long, Long>> findRelatedObjIds(OqsRelation oqsRelation
             , List<Tuple2<OqsRelation, OqsRelation>> associatedRelations
-            , Map<Long, IValue> valueMap) {
+            , Map<Long, ValueWrapper> valueMap) {
         //find value has two method
         // 1 -> if this oqsRelation has a associate relation find the associate
         // 2 -> all find in map
@@ -237,7 +243,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
             // what is this id's entityClassID
             long id = associatedOqsRelation.get()._2().getEntityField().id();
             Optional<IValue> currentIdValue = entityDomain.getEntity().entityValue().getValue(id);
-            IValue nextIdValue = valueMap.get(id);
+            ValueWrapper nextIdValue = valueMap.get(id);
 
             boolean hasOldValue = currentIdValue.isPresent();
             boolean hasNextValue = nextIdValue != null;
@@ -338,7 +344,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
                     .filter(x -> x.getEntityClassId() == entityClass.id())
                     .forEach(oqsRelation -> {
                         if (oqsRelation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.ONE2ONE.getName())) {
-                            IValue iValue = changedEvent.getValueMap().get(oqsRelation.getEntityField().id());
+                            ValueWrapper iValue = changedEvent.getValueMap().get(oqsRelation.getEntityField().id());
                             if (iValue != null && iValue.valueToLong() != entityDomain.getId()) {
                                 ChangeValue changeValue = new ChangeValue();
                                 changeValue.setRawValue(null);
@@ -364,7 +370,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
 
                             List<Long> currentValues = getCurrentRelatedValue(mapping, oqsRelation);
                             //TODO find related value
-                            IValue iValue = changedEvent.getValueMap().get(oqsRelation.getEntityField().id());
+                            ValueWrapper iValue = changedEvent.getValueMap().get(oqsRelation.getEntityField().id());
                             if (iValue != null) {
                                 //if relation value changed
                                 long currentIdValue = iValue.valueToLong();
@@ -414,12 +420,12 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
         return Optional.empty();
     }
 
-    //TODO how to update internal state
-    private void updateEntityDomainState(List<ChangeValue> changeValues){
+    //should update referenceMap
+    private void updateEntityDomainState(List<ChangeValue> changeValues) {
         changeValues.forEach(x -> {
             IEntityValue entityValue = entityDomain.getEntity().entityValue();
             Optional<IValue> value = entityValue.getValue(x.getFieldId());
-            if(value.isPresent()){
+            if (value.isPresent()) {
                 //has old value
                 //TODO copy value
                 IValue iValue = value.get().shallowClone();
@@ -427,7 +433,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
                 entityValue.addValue(iValue);
             } else {
                 Optional<IEntityField> field = entityClass.field(x.getFieldId());
-                if(field.isPresent()){
+                if (field.isPresent()) {
                     IEntityField targetField = field.get();
                     Optional<IValue> iValue = targetField.type().toTypedValue(targetField, x.getRawValue());
                     iValue.ifPresent(entityValue::addValue);
@@ -439,20 +445,21 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
     /**
      * TODO make this a common method
      * replay with no changeValues
+     *
      * @param changeValues
      */
-    private void updateEntityDomainRelation(List<ChangeValue> changeValues){
+    private void updateEntityDomainRelation(List<ChangeValue> changeValues) {
         Map<Long, List<ChangeValue>> idChangesMapping = changeValues.stream()
                 .collect(Collectors.groupingBy(ChangeValue::getFieldId));
 
         Map<OqsRelation, List<Long>> referenceMap = entityDomain.getReferenceMap();
-        idChangesMapping.forEach((a,b) -> {
+        idChangesMapping.forEach((a, b) -> {
             Optional<Map.Entry<OqsRelation, List<Long>>> related = referenceMap
                     .entrySet().stream().filter(x -> x.getKey().getEntityField().id() == a).findFirst();
-            if(related.isPresent()){
+            if (related.isPresent()) {
 
                 List<Long> value = related.get().getValue();
-                if(value == null){
+                if (value == null) {
                     value = new ArrayList<>();
                 }
 
@@ -463,23 +470,23 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
                     ChangeValue.Op op = changeValue.getOp();
                     String rawValue = changeValue.getRawValue();
 
-                    switch(op){
+                    switch (op) {
                         case SET:
-                            if(finalValue.isEmpty() && rawValue != null){
+                            if (finalValue.isEmpty() && rawValue != null) {
                                 finalValue.add(Long.parseLong(rawValue));
                             }
 
-                            if(!finalValue.isEmpty()){
+                            if (!finalValue.isEmpty()) {
                                 finalValue.set(0, rawValue == null ? null : Long.parseLong(rawValue));
                             }
                             break;
                         case ADD:
-                            if(rawValue != null) {
+                            if (rawValue != null) {
                                 finalValue.add(Long.parseLong(rawValue));
                             }
                             break;
                         case DEL:
-                            if(rawValue != null) {
+                            if (rawValue != null) {
                                 finalValue.remove(Long.parseLong(rawValue));
                             }
                             break;
@@ -492,6 +499,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
 
     /**
      * TODO side effect
+     *
      * @param changedEvent
      * @return
      */
@@ -499,11 +507,11 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
         /**
          * full new state
          */
-        Map<Long, IValue> after = changedEvent.getValueMap();
+        Map<Long, ValueWrapper> after = changedEvent.getValueMap();
         IEntityValue entityValue = entityDomain.getEntity().entityValue();
         if (entityValue != null) {
             Map<Long, IValue> before = entityValue.values().stream().collect(Collectors.toMap(x -> x.getField().id(), y -> y));
-            List<ChangeValue> selfResult = compareSelf(before, after);
+            List<ChangeValue> selfResult = compareSelf(before, entityDomain.getReferenceMap(), after);
 
             Changelog changelog = new Changelog();
             changelog.setComment(changedEvent.getComment());
@@ -515,51 +523,120 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
             changelog.setChangeValues(selfResult);
 
             updateEntityDomainState(selfResult);
+            updateEntityDomainRelation(selfResult);
             return Optional.of(new PersistentEvent(changelog));
         } else {
             //TODO new empty value
-        }
+            Changelog changelog = new Changelog();
+            changelog.setComment(changedEvent.getComment());
+            changelog.setUsername(changedEvent.getUsername());
+            changelog.setCreateTime(changedEvent.getTimestamp());
+            changelog.setVersion(changedEvent.getCommitId());
+            changelog.setEntityClass(changedEvent.getEntityClassId());
+            changelog.setId(changedEvent.getId());
 
-        return Optional.empty();
+            List<ChangeValue> changeValues = genNewChangeValue(after);
+            changelog.setChangeValues(changeValues);
+
+            updateEntityDomainState(changeValues);
+            updateEntityDomainRelation(changeValues);
+
+            return Optional.of(new PersistentEvent(changelog));
+        }
+    }
+
+    private List<ChangeValue> genNewChangeValue(Map<Long, ValueWrapper> values) {
+
+        List<ChangeValue> changeValues = new ArrayList<>();
+
+        values.forEach((key, value) -> {
+            ChangeValue cv = new ChangeValue();
+            cv.setRawValue(value == null ? null : ChangelogHelper.serialize(value));
+            cv.setOp(ChangeValue.Op.SET);
+            cv.setFieldId(key);
+            cv.setReferenceSet(false);
+            changeValues.add(cv);
+        });
+
+        return changeValues;
     }
 
     /**
+     * TODO update this
      * update the internalState
      */
-    synchronized  private Optional<PersistentEvent> updateInternalState(ChangedEvent changedEvent) {
+    synchronized private Optional<PersistentEvent> updateInternalState(ChangedEvent changedEvent) {
 
-        long changeEventRelatedId = changedEvent.getId();
+        /**
+         * changeEvent owner id
+         */
+        long changeEventOwnerId = changedEvent.getId();
 
         /**
          * update common state
          */
         updateCommonState(changedEvent);
 
-        if (changeEventRelatedId != entityDomain.getId()) {
+        if (changeEventOwnerId != entityDomain.getId()) {
             //deal the relation
             return updateRelation(changedEvent);
         } else {
+            /**
+             * will gen related event and update relation internal
+             */
             return updateSelf(changedEvent);
         }
     }
 
-    private void updateCommonState(ChangedEvent changedEvent){
+    private void updateCommonState(ChangedEvent changedEvent) {
         long newVersion = changedEvent.getCommitId();
         this.currentVersion = newVersion;
-        this.count ++;
+        this.count++;
     }
 
-    private List<ChangeValue> compareSelf(Map<Long, IValue> before, Map<Long, IValue> after) {
+    /**
+     * after will effect the referenceMap
+     * compare  before + referenceMap with after
+     *
+     * @param before
+     * @param referenceMap
+     * @param after
+     * @return
+     */
+    private List<ChangeValue> compareSelf(Map<Long, IValue> before, Map<OqsRelation, List<Long>> referenceMap, Map<Long, ValueWrapper> after) {
         List<ChangeValue> changeValues = new ArrayList<>();
 
         Set<Long> beforeIds = before.keySet();
         Set<Long> afterIds = after.keySet();
+        Map<Long, IValue> referenceMapWithIValue = new HashMap<>();
+        referenceMap.entrySet()
+                .stream()
+                .filter(x -> {
+                    OqsRelation rel = x.getKey();
+                    return rel.getRelOwnerClassId() == entityClass.id()
+                            && !rel.getRelationType().equalsIgnoreCase(FieldLikeRelationType.ONE2MANY.getName());
+                }).forEach(entry -> {
+            OqsRelation key = entry.getKey();
+            List<Long> value = entry.getValue();
+            if (value != null) {
+                referenceMapWithIValue.put(key.getEntityField().id(), new LongValue(key.getEntityField(), value.get(0)));
+            } else {
+                referenceMapWithIValue.put(key.getEntityField().id(), null);
+            }
+        });
 
-        Sets.union(beforeIds, afterIds).forEach(id -> {
+        Set<Long> referenceIdSet = referenceMapWithIValue.keySet();
+
+        Sets.union(referenceIdSet, Sets.union(beforeIds, afterIds)).forEach(id -> {
+
             IValue beforeValue = before.get(id);
 
-            IValue afterValue;
-            if(after.containsKey(id)) {
+            if(beforeValue == null){
+                beforeValue = referenceMapWithIValue.get(id);
+            }
+
+            ValueWrapper afterValue;
+            if (after.containsKey(id)) {
                 afterValue = after.get(id);
             } else {
                 // no contains
@@ -568,11 +645,11 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
 
             ChangeValue changeValue = new ChangeValue();
             changeValue.setFieldId(id);
-            if (afterValue != null
-                    && afterValue.getField() != null
-                    && afterValue.getField().name() != null) {
-                changeValue.setFieldCode(afterValue.getField().name());
-            }
+//            if (afterValue != null
+//                    && afterValue.getField() != null
+//                    && afterValue.getField().name() != null) {
+//                changeValue.setFieldCode(afterValue.getField().name());
+//            }
 
             if (beforeValue == null) {
                 //TODO ADD?

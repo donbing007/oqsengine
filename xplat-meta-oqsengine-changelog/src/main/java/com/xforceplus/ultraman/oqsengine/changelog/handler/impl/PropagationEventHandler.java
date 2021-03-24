@@ -7,6 +7,8 @@ import com.xforceplus.ultraman.oqsengine.changelog.event.ChangelogEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.event.PropagationChangelogEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.gateway.Gateway;
 import com.xforceplus.ultraman.oqsengine.changelog.handler.ChangelogEventHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.util.HashSet;
@@ -23,6 +25,8 @@ public class PropagationEventHandler implements ChangelogEventHandler<Propagatio
      */
     private static final String FOOTPRINT = "footprint";
 
+    private Logger logger = LoggerFactory.getLogger(PropagationEventHandler.class);
+
     @Resource
     private Gateway<ChangelogCommand, ChangelogEvent> gateway;
 
@@ -38,6 +42,7 @@ public class PropagationEventHandler implements ChangelogEventHandler<Propagatio
         long entityClassId = changelogEvent.getEntityClassId();
         Map<String, Object> context = changelogEvent.getContext();
         if(shouldDeliver(changelogEvent)) {
+            logger.info("deliver changelog to {}", destinationObjId);
             gateway.fireAndForget(new AddChangelog(destinationObjId, entityClassId, changedEvent), context);
         }
     }

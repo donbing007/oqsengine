@@ -29,10 +29,10 @@ public class SQLQueryStorage implements QueryStorage {
 
     final Logger logger = LoggerFactory.getLogger(SQLQueryStorage.class);
 
-    @Resource(name = "changelogQueryDataSource")
+    @Resource(name = "changelogDataSource")
     private DataSource changelogQueryDataSource;
 
-    @Resource(name = "snowFlakeIdGenerator")
+    @Resource(name = "snowflakeIdGenerator")
     private LongIdGenerator snowFlakeIdGenerator;
 
     private String tableName = "changeversion";
@@ -142,7 +142,6 @@ public class SQLQueryStorage implements QueryStorage {
             st.setLong(5, changeVersion.getTimestamp());
             st.setString(6, changeVersion.getUsername());
             st.setLong(7, changeVersion.getSource());
-
 
             if (logger.isDebugEnabled()) {
                 logger.debug(st.toString());

@@ -2,9 +2,18 @@ package com.xforceplus.ultraman.oqsengine.changelog.config;
 
 import com.xforceplus.ultraman.oqsengine.changelog.ChangelogService;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
+import com.xforceplus.ultraman.oqsengine.changelog.SnapshotService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeSnapshot;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
+import com.xforceplus.ultraman.oqsengine.changelog.gateway.Gateway;
+import com.xforceplus.ultraman.oqsengine.changelog.gateway.impl.DefaultChangelogGateway;
+import com.xforceplus.ultraman.oqsengine.changelog.handler.ChangelogCommandHandler;
+import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.DefaultChangelogCommandHandler;
+import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.PersistentEventHandler;
+import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.PropagationEventHandler;
+import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.SnapshotEventHandler;
 import com.xforceplus.ultraman.oqsengine.changelog.impl.DefaultChangelogImpl;
+import com.xforceplus.ultraman.oqsengine.changelog.impl.DefaultSnapshotServiceImpl;
 import com.xforceplus.ultraman.oqsengine.changelog.impl.ReplayServiceImpl;
 import com.xforceplus.ultraman.oqsengine.changelog.relation.ManyToOneRelationChangelog;
 import com.xforceplus.ultraman.oqsengine.changelog.relation.RelationAwareChangelog;
@@ -14,6 +23,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import io.lettuce.core.RedisClient;
 import io.vavr.control.Either;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +35,42 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Configuration
 public class ChangelogConfiguration {
+
+    @Bean
+    public RedisClient redisClient(){
+        RedisClient redisClient = RedisClient.create("redis://localhost:6379");
+        return redisClient;
+    }
+
+    @Bean
+    public SnapshotEventHandler snapshotEventHandler(){
+        return new SnapshotEventHandler();
+    }
+
+    @Bean
+    public SnapshotService snapshotService(){
+        return new DefaultSnapshotServiceImpl();
+    }
+
+    @Bean
+    public Gateway gateway(){
+        return new DefaultChangelogGateway();
+    }
+
+    @Bean
+    public ChangelogCommandHandler changelogCommandHandler(){
+        return new DefaultChangelogCommandHandler();
+    }
+
+    @Bean
+    public PersistentEventHandler persistentEventHandler(){
+        return new PersistentEventHandler();
+    }
+
+    @Bean
+    public PropagationEventHandler propagationEventHandler(){
+        return new PropagationEventHandler();
+    }
 
     @Bean
     public ChangelogExample example(IdGenerator<Long> versionIdGenerator){

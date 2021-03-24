@@ -1,4 +1,4 @@
-package com.xforceplus.ultraman.oqsengine.boot.config;
+package com.xforceplus.ultraman.oqsengine.changelog.config;
 
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;

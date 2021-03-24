@@ -11,6 +11,7 @@ import java.util.Objects;
 
 /**
  * 表示日期/时间值,储存时时间使用 Asia/Shanghai.
+ *
  * @author wangzheng dongbin
  * @version 0.1 2020/2/18 20:54
  * @since 1.8
@@ -30,7 +31,7 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
 
     @Override
     LocalDateTime fromString(String value) {
-        if(value == null)
+        if (value == null)
             return null;
         try {
             long timestamp = Long.parseLong(value);
@@ -38,7 +39,7 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
                     LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), zoneId);
 
             return time;
-        } catch(Exception ex){
+        } catch (Exception ex) {
             logger.error("{}", ex);
             return null;
         }
@@ -67,11 +68,11 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
         DateTimeValue that = (DateTimeValue) o;
 
         return Objects.equals(getField(), that.getField()) &&
-            Objects.equals(this.getValue(), that.getValue());
+                Objects.equals(this.getValue(), that.getValue());
     }
 
     @Override
-    public IValue<LocalDateTime> shallowClone()  {
+    public IValue<LocalDateTime> shallowClone() {
         return new DateTimeValue(this.getField(), getValue());
     }
 
@@ -83,8 +84,8 @@ public class DateTimeValue extends AbstractValue<LocalDateTime> {
     @Override
     public String toString() {
         return "DateTimeValue{" +
-            "field=" + getField() +
-            ", value=" + getValue() +
-            '}';
+                "field=" + getField() +
+                ", value=" + getValue() +
+                '}';
     }
 }

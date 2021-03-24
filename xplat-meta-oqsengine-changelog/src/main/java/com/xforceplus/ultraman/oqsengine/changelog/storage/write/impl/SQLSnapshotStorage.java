@@ -19,8 +19,8 @@ public class SQLSnapshotStorage implements SnapshotStorage {
     @Resource(name = "changelogDataSource")
     private DataSource changelogDatasource;
 
-    @Resource(name = "snowFlakeIdGenerator")
-    private LongIdGenerator snowFlakeIdGenerator;
+    @Resource(name = "snowflakeIdGenerator")
+    private LongIdGenerator idGenerator;
 
     @Resource
     private ObjectMapper mapper;
@@ -39,7 +39,7 @@ public class SQLSnapshotStorage implements SnapshotStorage {
     public Either<SQLException, Integer> saveSnapshot(ChangeSnapshot changeSnapshot) {
         try {
             int result = new SnapshotStorageCommand(tableName, mapper)
-                    .saveSnapshot(changelogDatasource, snowFlakeIdGenerator, changeSnapshot);
+                    .saveSnapshot(changelogDatasource, idGenerator, changeSnapshot);
             return Either.right(result);
         } catch (SQLException e) {
             return Either.left(e);

@@ -6,4 +6,6 @@ import java.util.Map;
 public interface StatefulEntity<S, I, O> {
 
     List<O> receive(I input, Map<String, Object> context);
+
+    S getState();
 }

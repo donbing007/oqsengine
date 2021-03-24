@@ -3,13 +3,11 @@ package com.xforceplus.ultraman.oqsengine.changelog;
 import com.xforceplus.ultraman.oqsengine.changelog.command.AddChangelog;
 import com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogConfiguration;
 import com.xforceplus.ultraman.oqsengine.changelog.config.ChangelogExample;
-import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
-import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
-import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
-import com.xforceplus.ultraman.oqsengine.changelog.domain.EntityAggDomain;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.*;
 import com.xforceplus.ultraman.oqsengine.changelog.entity.ChangelogStatefulEntity;
 import com.xforceplus.ultraman.oqsengine.changelog.event.ChangelogEvent;
 import com.xforceplus.ultraman.oqsengine.common.hash.Hash;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -98,30 +96,57 @@ public class ReplayServiceTest {
 
         Changelog changelog = example.genAChangelog();
 
-        ChangedEvent changedEvent = genChangedEvent(changelog);
+        ChangedEvent changedEvent = genChangedEventA(changelog);
 
         List<ChangelogEvent> receive = statefulEntity.receive(new AddChangelog(1000001L, 1, changedEvent), new HashMap<>());
 
         receive.forEach(System.out::println);
+        System.out.println(statefulEntity);
+
+
+        Changelog changelogRel = example.addRelABChangelog();
+        ChangedEvent changedEvent1 = genChangedEventAB(changelogRel);
+
+        List<ChangelogEvent> receive2 = statefulEntity.receive(new AddChangelog(1000001L, 1, changedEvent1), new HashMap<>());
+        System.out.println(statefulEntity);
+
+        receive2.forEach(System.out::println);
     }
 
     //TODO
-    private ChangedEvent genChangedEvent(Changelog changelog){
+    private ChangedEvent genChangedEventA(Changelog changelog){
         ChangedEvent changedEvent = new ChangedEvent();
-        changedEvent.setCommitId(changelog.getVersion());
         changedEvent.setCommitId(changelog.getVersion());
         changedEvent.setEntityClassId(changelog.getEntityClass());
         changedEvent.setOperationType(OperationType.UPDATE);
         changedEvent.setId(changelog.getId());
         changedEvent.setTimestamp(changelog.getCreateTime());
-        Map<Long, IValue> mapValue = new HashMap<>();
+        Map<Long, ValueWrapper> mapValue = new HashMap<>();
 //        Optional<IEntityField> field = example.A.field(A_B_OTO);
         Optional<IEntityField> field1 = example.A.field(A_Field1);
 //        mapValue.put(A_B_OTO, new LongValue(field.get(), 22222L));
-        mapValue.put(A_Field1, new StringValue(field1.get(), "abc"));
+        mapValue.put(A_Field1, new ValueWrapper("12312312", field1.get().type(), field1.get().id()));
         changedEvent.setValueMap(mapValue);
         changedEvent.setUsername("luye");
         changedEvent.setComment("Test Outer");
+        return changedEvent;
+    }
+
+    private ChangedEvent genChangedEventAB(Changelog changelog){
+        ChangedEvent changedEvent = new ChangedEvent();
+        changedEvent.setCommitId(changelog.getVersion());
+        changedEvent.setEntityClassId(changelog.getEntityClass());
+        changedEvent.setOperationType(OperationType.UPDATE);
+        changedEvent.setId(changelog.getId());
+        changedEvent.setTimestamp(changelog.getCreateTime());
+        Map<Long, ValueWrapper> mapValue = new HashMap<>();
+//        Optional<IEntityField> field = example.A.field(A_B_OTO);
+        Optional<IEntityField> field1 = example.A.field(A_Field1);
+//        mapValue.put(A_B_OTO, new LongValue(field.get(), 22222L));
+        mapValue.put(example.A_B_OTO, new ValueWrapper(8292032L, FieldType.LONG, field1.get().id()));
+        changedEvent.setValueMap(mapValue);
+        changedEvent.setUsername("luye");
+        changedEvent.setComment("Test Reference");
         return changedEvent;
     }
 }

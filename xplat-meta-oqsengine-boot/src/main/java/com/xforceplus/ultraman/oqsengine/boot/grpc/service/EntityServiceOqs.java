@@ -1,6 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.service;
 
 import akka.grpc.javadsl.Metadata;
+import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
+import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangeVersion;
+import com.xforceplus.ultraman.oqsengine.changelog.storage.query.QueryStorage;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import javax.annotation.Resources;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +66,15 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Resource(name = "callWriteThreadPool")
     private ExecutorService asyncWriteDispatcher;
 
+    @Resource(name = "callChangelogThreadPool")
+    private ExecutorService asyncChangelogDispatcher;
+
+    @Resource
+    private QueryStorage queryStorage;
+
+    @Resource
+    private ReplayService replayService;
+
     @Autowired
     private TransactionManager transactionManager;
 
@@ -69,12 +82,18 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     private Logger logger = LoggerFactory.getLogger(EntityServiceOqs.class);
 
+
+
     private <T> CompletableFuture<T> asyncRead(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier, asyncReadDispatcher);
     }
 
     private <T> CompletableFuture<T> asyncWrite(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier, asyncWriteDispatcher);
+    }
+
+    private <T> CompletableFuture<T> asyncChangelog(Supplier<T> supplier) {
+        return CompletableFuture.supplyAsync(supplier, asyncChangelogDispatcher);
     }
 
     @Override
@@ -519,7 +538,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 if (ds.isPresent()) {
                     if (ds.get().family() != null && ds.get().family().parent() > 0 && entityClass.father() != null) {
                         Optional<IEntity> parentDS = entitySearchService
-                            .selectOne(ds.get().family().parent(), entityClass.father());
+                                .selectOne(ds.get().family().parent(), entityClass.father());
 
                         Optional<IEntity> finalDs = ds;
                         parentDS.ifPresent(x ->
@@ -848,6 +867,101 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                     .buildPartial();
         }
         return CompletableFuture.completedFuture(result);
+    }
+
+    /**
+     * TODO
+     *
+     * @param selectByTree
+     * @param metadata
+     * @return
+     */
+    @Override
+    public CompletionStage<OperationResult> selectByTreeFilter(SelectByTree selectByTree, Metadata metadata) {
+        return asyncRead(() -> {
+            return OperationResult
+                    .newBuilder()
+                    .setCode(OperationResult.Code.UNRECOGNIZED)
+                    .setMessage("Not Implemented")
+                    .build();
+        });
+    }
+
+    /**
+     * @param entityUp
+     * @param metadata
+     * @return
+     */
+    @Override
+    public CompletionStage<OperationResult> prepare(EntityUp entityUp, Metadata metadata) {
+        return asyncRead(() -> {
+            return OperationResult
+                    .newBuilder()
+                    .setCode(OperationResult.Code.UNRECOGNIZED)
+                    .setMessage("Not Implemented")
+                    .build();
+        });
+    }
+
+    @Override
+    public CompletionStage<OperationResult> selectBySql(SelectBySql in, Metadata metadata) {
+        return asyncRead(() -> {
+            return OperationResult
+                    .newBuilder()
+                    .setCode(OperationResult.Code.UNRECOGNIZED)
+                    .setMessage("Not Implemented")
+                    .build();
+        });
+    }
+
+    //TODO
+    @Override
+    public CompletionStage<OperationResult> compatible(CompatibleRequest compatibleRequest, Metadata metadata) {
+        return asyncRead(() -> {
+            return OperationResult
+                    .newBuilder()
+                    .setCode(OperationResult.Code.UNRECOGNIZED)
+                    .setMessage("Not Implemented")
+                    .build();
+        });
+    }
+
+    @Override
+    public CompletionStage<ChangelogResponseList> changelogList(ChangelogRequest changelogRequest, Metadata metadata) {
+        return asyncChangelog(() -> {
+            long objId = changelogRequest.getObjId();
+            long entityClassId = changelogRequest.getEntityClassId();
+            int pageSize = changelogRequest.getPageSize();
+            int pageNo = changelogRequest.getPageNo();
+            boolean isSelf = changelogRequest.getIsSelf();
+            try {
+                List<ChangeVersion> changeVersions = queryStorage.queryChangelog(objId, isSelf, pageNo, pageSize);
+                return ChangelogResponseList.newBuilder().addAllResponse(changeVersions.stream().map(x ->
+                        ChangelogResponse
+                                .newBuilder()
+                                .setComment(x.getComment())
+                                .setId(x.getId())
+                                .setSource(x.getSource())
+                                .setUsername(x.getUsername())
+                                .setVersion(x.getVersion())
+                                .setTimestamp(x.getTimestamp())
+                                .build()).collect(Collectors.toList())).build();
+            } catch (SQLException e) {
+                logger.error("{}");
+            }
+
+            return  ChangelogResponseList.newBuilder().build();
+        });
+    }
+
+    @Override
+    public CompletionStage<OperationResult> replay(ReplayRequest replayRequest, Metadata metadata) {
+        return null;
+    }
+
+    @Override
+    public CompletionStage<ChangelogCountResponse> changelogCount(ChangelogCountRequest changelogCountRequest, Metadata metadata) {
+        return null;
     }
 
     private Optional<Long> extractTransaction(Metadata metadata) {

@@ -23,6 +23,22 @@ public class DefaultChangelogGateway implements Gateway<ChangelogCommand, Change
 
     public DefaultChangelogGateway() {}
 
+    public List<ChangelogCommandHandler> getChangelogCommandHandlerList() {
+        return changelogCommandHandlerList;
+    }
+
+    public void setChangelogCommandHandlerList(List<ChangelogCommandHandler> changelogCommandHandlerList) {
+        this.changelogCommandHandlerList = changelogCommandHandlerList;
+    }
+
+    public List<ChangelogEventHandler> getChangelogEventHandlerList() {
+        return changelogEventHandlerList;
+    }
+
+    public void setChangelogEventHandlerList(List<ChangelogEventHandler> changelogEventHandlerList) {
+        this.changelogEventHandlerList = changelogEventHandlerList;
+    }
+
     @Override
     public void fireAndForget(ChangelogCommand changelogCommand, Map<String, Object> context) {
         changelogCommandHandlerList.stream()

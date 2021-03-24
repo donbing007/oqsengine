@@ -1,8 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.changelog.impl;
 
+import com.github.benmanes.caffeine.cache.CacheLoader;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.xforceplus.ultraman.oqsengine.changelog.ReplayService;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.*;
 import com.xforceplus.ultraman.oqsengine.changelog.entity.ChangelogStatefulEntity;
+import com.xforceplus.ultraman.oqsengine.changelog.entity.StatefulEntity;
 import com.xforceplus.ultraman.oqsengine.changelog.storage.write.ChangelogStorage;
 import com.xforceplus.ultraman.oqsengine.changelog.storage.write.SnapshotStorage;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper;
@@ -18,6 +22,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +38,12 @@ import static com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper.
  * rebuild from changlog
  */
 public class ReplayServiceImpl implements ReplayService {
+
+    private LoadingCache<Tuple2<Long, Long>, ChangelogStatefulEntity> cache =
+           Caffeine.newBuilder().maximumSize(1000L).build((x) ->  {
+                    return replayStatefulEntityInternal(x._1(), x._2()).orElse(null);
+            });
+
 
     private Logger logger = LoggerFactory.getLogger(ReplayService.class);
 
@@ -149,11 +161,8 @@ public class ReplayServiceImpl implements ReplayService {
                         //travel every history value
                         historyValues.stream().sorted().forEach(historyValue -> {
                             ChangeValue value = historyValue.getValue();
-                            Map<String, ValueLife> valueLifeMap = valueMap.get(x.getEntityField().id());
-                            if (valueLifeMap == null) {
-                                valueLifeMap = new HashMap<>();
-                                valueMap.put(x.getEntityField().id(), valueLifeMap);
-                            }
+                            Map<String, ValueLife> valueLifeMap = valueMap
+                                    .computeIfAbsent(x.getEntityField().id(), k -> new HashMap<>());
 
                             ValueLife valueLife = valueLifeMap.get(value.getRawValue());
                             if (valueLife == null) {
@@ -236,6 +245,17 @@ public class ReplayServiceImpl implements ReplayService {
         return head;
     }
 
+    private Optional<ChangelogStatefulEntity> replayStatefulEntityInternal(long entityClassId, long id) {
+
+        Optional<IEntityClass> loadEntityClassOp = metaManager.load(entityClassId);
+        return loadEntityClassOp.map(x -> {
+            EntityDomain entityDomain = replaySimpleDomain(entityClassId, id, -1);
+            ChangelogStatefulEntity statefulEntity = new ChangelogStatefulEntity(id, x, metaManager, entityDomain, snapshotThreshold);
+            return statefulEntity;
+        });
+    }
+
+
     /**
      * @param entityClassId
      * @param id
@@ -244,13 +264,7 @@ public class ReplayServiceImpl implements ReplayService {
      */
     @Override
     public Optional<ChangelogStatefulEntity> replayStatefulEntity(long entityClassId, long id) {
-
-        Optional<IEntityClass> loadEntityClassOp = metaManager.load(entityClassId);
-        return loadEntityClassOp.map(x -> {
-            EntityDomain entityDomain = replaySimpleDomain(entityClassId, id, -1);
-            ChangelogStatefulEntity statefulEntity = new ChangelogStatefulEntity(id, x, metaManager, entityDomain, snapshotThreshold);
-            return statefulEntity;
-        });
+        return Optional.ofNullable(cache.get(Tuple.of(entityClassId, id)));
     }
 
     private void buildAggDomain(long id, Map<Long, EntityDomain> map, EntityAggDomain head) {
@@ -410,7 +424,10 @@ public class ReplayServiceImpl implements ReplayService {
                 } else {
                     IValue value = getValue(changeValues, rel.getEntityField());
                     if (value != null) {
-                        referenceMap.put(rel, Collections.singletonList(value.valueToLong()));
+                        //caution should be
+                        List<Long> ids = new ArrayList<>();
+                        ids.add(value.valueToLong());
+                        referenceMap.put(rel, ids);
                     }
                 }
 //           }
