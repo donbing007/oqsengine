@@ -10,7 +10,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRefs;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
@@ -343,7 +343,7 @@ public class SphinxQLManticoreIndexStorageTest {
 
         // 查询id降序
         Page page = Page.newSinglePage(1000);
-        EntityRefs refs = storage.select(Conditions.buildEmtpyConditions(), l2EntityClass,
+        Collection<EntityRef> refs = storage.select(Conditions.buildEmtpyConditions(), l2EntityClass,
             SelectConfig.Builder.aSelectConfig()
                 .withPage(page).withCommitId(0).withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD)).build());
         Assert.assertEquals(initDatas.size(), refs.size());
@@ -430,7 +430,7 @@ public class SphinxQLManticoreIndexStorageTest {
         storage.clean(l2EntityClass, 10, 0, Long.MAX_VALUE);
 
         Page page = Page.newSinglePage(1000);
-        EntityRefs refs = storage.select(Conditions.buildEmtpyConditions(), l2EntityClass,
+        Collection<EntityRef> refs = storage.select(Conditions.buildEmtpyConditions(), l2EntityClass,
             SelectConfig.Builder.aSelectConfig().withPage(page).withCommitId(0).build());
         Assert.assertEquals(0, refs.size());
         Assert.assertEquals(0, page.getTotalCount());

@@ -236,7 +236,6 @@ public class Page implements Externalizable, Cloneable {
      * @return 当前数据总量，如果为-1代表没有设置真实数据总量。
      */
     public long getTotalCount() {
-        checkReady();
         return this.totalCount;
     }
 
@@ -248,10 +247,6 @@ public class Page implements Externalizable, Cloneable {
      */
     public PageScope getNextPage() {
         checkReady();
-
-        if (isEmptyPage()) {
-            return new PageScope(0, 0);
-        }
 
         if (!hasNextPage()) {
             return null;
@@ -381,7 +376,20 @@ public class Page implements Externalizable, Cloneable {
      */
     @Override
     public Page clone() throws CloneNotSupportedException {
-        return (Page) super.clone();
+        if (this.isEmptyPage()) {
+            return Page.emptyPage();
+        } else if (this.isSinglePage()) {
+            return Page.newSinglePage(this.getPageSize());
+        } else {
+            Page newPage = new Page(this.getIndex(), this.getPageSize());
+            if (this.isReady()) {
+                newPage.setTotalCount(this.getTotalCount());
+            }
+            if (this.hasVisibleTotalCountLimit()) {
+                newPage.setVisibleTotalCount(this.getVisibleTotalCount());
+            }
+            return newPage;
+        }
     }
 
     /**
@@ -421,16 +429,17 @@ public class Page implements Externalizable, Cloneable {
             return false;
         }
         final Page other = (Page) obj;
+
+        //是否为单页
+        if (isEmptyPage() != other.isEmptyPage()) {
+            return false;
+        }
         //是否都是准备好的.
         if (isReady() != other.isReady()) {
             return false;
         }
         //是否为单页
         if (isSinglePage() != other.isSinglePage()) {
-            return false;
-        }
-        //是否为单页
-        if (isEmptyPage() != other.isEmptyPage()) {
             return false;
         }
         //分页大小

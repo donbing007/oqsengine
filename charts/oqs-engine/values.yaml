@@ -117,6 +117,9 @@ storage:
         queue: 1000
     cdc:
       worker: 1
+    event:
+      worker: 3
+      queue: 1000
   transaction:
     # The transaction is valid for a period of time that will be rollback.
     timeoutMs: 3000

@@ -31,13 +31,18 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
 
     @Override
     public long begin(long timeoutMs) throws SQLException {
+        return begin(timeoutMs);
+    }
+
+    @Override
+    public long begin(long timeoutMs, String msg) throws SQLException {
         long txId;
 
         try {
             if (DEFAULT_TRANSACTION_TIMEOUT == timeoutMs) {
                 txId = transactionManager.create().id();
             } else if (timeoutMs > DEFAULT_TRANSACTION_TIMEOUT) {
-                txId = transactionManager.create(timeoutMs).id();
+                txId = transactionManager.create(timeoutMs, msg).id();
             } else {
                 throw new SQLException(
                     String.format("%d is an invalid transaction timeout and must be an integer greater than 0.", timeoutMs));

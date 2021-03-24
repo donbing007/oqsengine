@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
+import java.io.Serializable;
+
 /**
  * 所有Value 对的超类实现.
  * @author dongbin
@@ -9,7 +11,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
  * @since 1.8
  * @param <V>
  */
-public abstract class AbstractValue<V> implements IValue<V> {
+public abstract class AbstractValue<V> implements IValue<V>, Serializable {
 
     private IEntityField field;
     private V value;

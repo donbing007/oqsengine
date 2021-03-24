@@ -102,6 +102,11 @@ public abstract class AbstractTransactionManager implements TransactionManager {
 
     @Override
     public Transaction create(long timeoutMs) {
+        return create(timeoutMs, null);
+    }
+
+    @Override
+    public Transaction create(long timeoutMs, String message) {
         if (frozenness.get()) {
             throw new IllegalStateException("Unable to create transaction, frozen.");
         }
@@ -111,7 +116,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         Transaction transaction = null;
 
         try {
-            transaction = doCreate();
+            transaction = doCreate(message);
 
             survival.put(transaction.id(), transaction);
 
@@ -154,7 +159,7 @@ public abstract class AbstractTransactionManager implements TransactionManager {
         }
     }
 
-    protected abstract Transaction doCreate();
+    protected abstract Transaction doCreate(String msg);
 
     @Override
     public Optional<Transaction> getCurrent() {

@@ -31,6 +31,16 @@ public interface TransactionManagementService {
     long begin(long timeoutMs) throws SQLException;
 
     /**
+     * 开始一个新的事务,并指定事务超时时间和事务消息.
+     *
+     * @param timeoutMs 超时毫秒数,不可为负数.0表示无限制.
+     * @param msg       事务消息.
+     * @return 事务id.
+     * @throws SQLException 创建事务失败.
+     */
+    long begin(long timeoutMs, String msg) throws SQLException;
+
+    /**
      * 恢复事务.
      *
      * @param id 事务 id.

@@ -25,9 +25,19 @@ public interface Transaction {
 
     /**
      * The unique ID number of the transaction.
+     *
      * @return transaction`s id.
      */
     long id();
+
+    /**
+     * Gets the transaction message.
+     *
+     * @return the transaction message.
+     */
+    default Optional<String> message() {
+        return Optional.empty();
+    }
 
     /**
      * All operations were successful. Commit operation.
@@ -41,30 +51,35 @@ public interface Transaction {
 
     /**
      * Determines whether the current transaction is committed.
+     *
      * @return true Have committed, false not commit.
      */
     boolean isCommitted();
 
     /**
      * Determine whether or not a rollback has occurred.
+     *
      * @return true rollback, false not rollback.
      */
     boolean isRollback();
 
     /**
      * Determines whether the transaction has ended, whether it is a commit or a rollback.
+     *
      * @return true completed, false not.
      */
     boolean isCompleted();
 
     /**
      * A new connection joins the transaction.
+     *
      * @param transactionResource target resource.
      */
     void join(TransactionResource transactionResource) throws SQLException;
 
     /**
      * Determine if resource have joined.
+     *
      * @param key resource`s key.
      * @return true Has joined. false not.
      */
@@ -72,12 +87,14 @@ public interface Transaction {
 
     /**
      * Attachment id. Usually a thread id.
+     *
      * @return attachment id.
      */
     long attachment();
 
     /**
      * Set attachment.Usually a thread id.
+     *
      * @param id attachment id.
      */
     void attach(long id);
@@ -91,7 +108,8 @@ public interface Transaction {
 
     /**
      * Returns the transaction accumulator.
-     * @return
+     *
+     * @return Accumulator instance, not NULL.
      */
     TransactionAccumulator getAccumulator();
 
@@ -101,6 +119,5 @@ public interface Transaction {
      * @param action Actions that need to be performed.
      */
     void exclusiveAction(TransactionExclusiveAction action) throws SQLException;
-
 
 }
