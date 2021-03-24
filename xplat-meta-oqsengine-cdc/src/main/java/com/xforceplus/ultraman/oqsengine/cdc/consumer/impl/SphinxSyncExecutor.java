@@ -2,28 +2,29 @@ package com.xforceplus.ultraman.oqsengine.cdc.consumer.impl;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.CdcErrorStorage;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.dto.RawEntry;
+import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.devops.CdcErrorTask;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.command.StorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.utils.IEntityValueBuilder;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.util.*;
-
 import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.*;
-import static com.xforceplus.ultraman.oqsengine.common.error.CommonErrors.INVALID_ENTITY_ID;
-import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.*;
+import static com.xforceplus.ultraman.oqsengine.cdc.consumer.tools.BinLogParseUtils.getLongFromColumn;
+import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.OqsBigEntityColumns.*;
-import static com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityFieldBuildUtils.metaToFieldTypeMap;
+import static com.xforceplus.ultraman.oqsengine.storage.master.utils.OriginalEntityUtils.attributesToList;
 
 /**
  * desc :
@@ -46,39 +47,32 @@ public class SphinxSyncExecutor implements SyncExecutor {
     @Resource(name = "cdcErrorStorage")
     private CdcErrorStorage cdcErrorStorage;
 
-    @Resource(name = "entityValueBuilder")
-    private IEntityValueBuilder<String> entityValueBuilder;
-
     @Resource(name = "snowflakeIdGenerator")
     private LongIdGenerator seqNoGenerator;
+
+    @Resource
+    private MetaManager metaManager;
+
 
     //  执行同步到Sphinx操作
     public int execute(Collection<RawEntry> rawEntries, CDCMetrics cdcMetrics) throws SQLException {
         int synced = 0;
-        List<StorageEntity> storageEntityList = new ArrayList<>();
+        List<OriginalEntity> storageEntityList = new ArrayList<>();
         long startTime = 0;
         for (RawEntry rawEntry : rawEntries) {
             try {
-                boolean isDelete = getBooleanFromColumn(rawEntry.getColumns(), DELETED);
-                if (!isDelete) {
-                    //  加入批量更新Map中
-                    if (rawEntry.getExecuteTime() < startTime || startTime == 0) {
-                        startTime = rawEntry.getExecuteTime();
-                    }
-                    storageEntityList.add(
-                            prepareForReplace(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId()));
-                } else {
-                    synced += doDelete(rawEntry.getId(), rawEntry.getCommitId(), cdcMetrics.getBatchId());
-                    syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - rawEntry.getExecuteTime()));
-                }
+                storageEntityList.add(prepareForUpdateDelete(rawEntry.getColumns(), rawEntry.getId(), rawEntry.getCommitId()));
             } catch (Exception e) {
+                //  组装数据失败，记录错误日志
                 e.printStackTrace();
                 errorRecord(cdcMetrics.getBatchId(), rawEntry.getId(), rawEntry.getCommitId(), e.getMessage());
             }
         }
 
         if (!storageEntityList.isEmpty()) {
-            synced += sphinxQLIndexStorage.batchSave(storageEntityList, true, true);
+            sphinxQLIndexStorage.saveOrDeleteOriginalEntities(storageEntityList);
+
+            synced += storageEntityList.size();
             syncMetrics(cdcMetrics, Math.abs(System.currentTimeMillis() - startTime));
         }
         return synced;
@@ -90,27 +84,6 @@ public class SphinxSyncExecutor implements SyncExecutor {
         cdcErrorStorage.buildCdcError(CdcErrorTask.buildErrorTask(seqNoGenerator.next(), id, commitId, null == message ? "unKnow" : message));
     }
 
-    //  删除,不停的循环删除, 直到成功为止
-    private int doDelete(long id, long commitId, long batchId) throws SQLException {
-        while (true) {
-            try {
-                return sphinxQLIndexStorage.delete(id);
-            } catch (Exception e) {
-                //  delete error
-                logger.warn("[cdc-sync-executor] batch : {}, delete error, will retry, id : {}, commitId : {}, message : {}",
-                                                                        batchId, id, commitId, e.getMessage());
-                if (e instanceof SQLException) {
-                    SQLException el = (SQLException) e;
-                    if (el.getSQLState().equals(INVALID_ENTITY_ID.name())) {
-                        throw new SQLException(String.format("batch : %d, replace-delete error, id : %d, commitId : %d, message : %s",
-                                batchId, id, commitId, e.getMessage()));
-                    }
-                }
-                sleepNoInterrupted(SECOND);
-            }
-        }
-    }
-
     //  同步时间
     private synchronized void syncMetrics(CDCMetrics cdcMetrics, long useTime) {
         if (cdcMetrics.getCdcAckMetrics().getMaxSyncUseTime() < useTime) {
@@ -118,69 +91,67 @@ public class SphinxSyncExecutor implements SyncExecutor {
         }
     }
 
-    private StorageEntity prepareForReplace(List<CanalEntry.Column> columns, long id, long commitId) throws SQLException {
-        //  通过解析binlog获取
-
-        long cref = getLongFromColumn(columns, CREF);
-        long pref = getLongFromColumn(columns, PREF);
-
-        int oqsMajor = getIntegerFromColumn(columns, OQSMAJOR);
-
-        StorageEntity storageEntity = new StorageEntity(
-                id,                                               //  id
-                getLongFromColumn(columns, ENTITY),               //  entity
-                pref,                                             //  pref
-                cref,                                             //  cref
-                getLongFromColumn(columns, TX),                   //  tx
-                commitId,                                         //  commitid
-                null,                                   //  由sphinxQLIndexStorage内部转换  entityValue
-                null,                                    //  由sphinxQLIndexStorage内部转换  entityValue
-                getLongFromColumn(columns, TIME)                  //  time
-        );
-        storageEntity.setOqsmajor(oqsMajor);
-
-        //  取自己的entityValue
-        IEntityValue entityValue = buildEntityValue(
-                storageEntity.getId(), getStringFromColumn(columns, META), getStringFromColumn(columns, ATTRIBUTE));
-
-         /*
-            老数据，有父类
-         */
-        if (oqsMajor != OqsVersion.MAJOR && pref > 0) {
-            //  通过pref拿到父类的EntityValue
-            IEntityValue entityValueF = queryEntityValue(pref);
-            entityValue.addValues(null == entityValueF ? Collections.emptyList() : entityValueF.values());
-        }
-
-        //  将entityValue转换为JsonFields和FullFields并写入storageEntity
-        sphinxQLIndexStorage.entityValueToStorage(storageEntity, entityValue);
-
-        return storageEntity;
-    }
-
-    //  IEntityValue build
-    private IEntityValue buildEntityValue(Long id, String meta, String attribute) throws SQLException {
-        return entityValueBuilder.build(id, metaToFieldTypeMap(meta), attribute);
-    }
-
-    //  通过pref获得IEntityValue，当拉取不到数据时从主库拉取
-    private IEntityValue queryEntityValue(long pref) {
-        while (true) {
-            try {
-                return masterStorage.selectEntityValue(pref).orElse(null);
-            } catch (Exception e) {
-                logger.warn("[cdc-sync-executor] entityValueGet from master db error, will retry..., id : {}, " +
-                        "message : {}", pref, e.getMessage());
-                sleepNoInterrupted(SECOND);
+    private IEntityClass getEntityClass(List<CanalEntry.Column> columns) throws SQLException {
+        for (int o = ENTITYCLASSL4.ordinal(); o >= ENTITYCLASSL0.ordinal(); o--) {
+            Optional<OqsBigEntityColumns> op = getByOrdinal(o);
+            if (op.isPresent()) {
+                long id = getLongFromColumn(columns, op.get());
+                /**
+                 * 从大到小找到的第一个entityClass > 0的id即为selfEntityClassId
+                 */
+                if (id > ZERO) {
+                    Optional<IEntityClass> entityClassOptional = metaManager.load(id);
+                    if (entityClassOptional.isPresent()) {
+                        return entityClassOptional.get();
+                    }
+                    logger.warn("entityId [{}] has no entityClass in meta.", id);
+                    break;
+                }
             }
         }
+
+        return null;
     }
 
-    private void sleepNoInterrupted(long interval) {
-        try {
-            Thread.sleep(interval);
-        } catch (InterruptedException ex) {
-            //  ignore
+    @SuppressWarnings("unchecked")
+    private Collection<Object> attrCollection(List<CanalEntry.Column> columns) throws SQLException {
+        String attrStr = getStringFromColumn(columns, ATTRIBUTE);
+        if (null == attrStr || attrStr.isEmpty()) {
+            return new ArrayList<>();
         }
+        try {
+            return attributesToList(attrStr);
+        } catch (Exception e) {
+            throw new SQLException("attrStr Json to object error");
+        }
+    }
+
+    private OriginalEntity prepareForUpdateDelete(List<CanalEntry.Column> columns, long id, long commitId) throws SQLException {
+        //  通过解析binlog获取
+
+        IEntityClass entityClass = getEntityClass(columns);
+        if (null == entityClass) {
+            throw new SQLException(String.format("id [%d], commitId [%d] has no entityClass...", id, commitId));
+        }
+        Collection<Object> attributes = attrCollection(columns);
+        if (attributes.isEmpty()) {
+            throw new SQLException(String.format("id [%d], commitId [%d] has no attributes...", id, commitId));
+        }
+
+        boolean isDelete = getBooleanFromColumn(columns, DELETED);
+
+        return OriginalEntity.Builder.anOriginalEntity()
+                .withId(id)
+                .withDeleted(isDelete)
+                .withOp(isDelete ? OperationType.DELETE.ordinal() : OperationType.UPDATE.ordinal())
+                .withVersion(getIntegerFromColumn(columns, VERSION))
+                .withOqsMajor(getIntegerFromColumn(columns, OQSMAJOR))
+                .withCreateTime(getLongFromColumn(columns, CREATETIME))
+                .withUpdateTime(getLongFromColumn(columns, UPDATETIME))
+                .withTx(getLongFromColumn(columns, TX))
+                .withCommitid(commitId)
+                .withEntityClass(entityClass)
+                .withAttributes(attributes)
+                .build();
     }
 }

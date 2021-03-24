@@ -34,7 +34,7 @@ public class MeqNotMatchConditionBuilder extends SphinxQLConditionBuilder {
         if (condition.getField().config().isIdentifie()) {
             buff.append(FieldDefine.ID);
         } else {
-            buff.append(FieldDefine.JSON_FIELDS).append(".").append(sValue.storageName());
+            buff.append(FieldDefine.ATTRIBUTE).append(".").append(sValue.shortStorageName().toString());
         }
         buff.append(" IN (");
         buff.append(buildConditionValue(sValue, storageStrategy));
@@ -51,7 +51,7 @@ public class MeqNotMatchConditionBuilder extends SphinxQLConditionBuilder {
     private String buildConditionValue(StorageValue storageValue, StorageStrategy storageStrategy) {
         String conditionValue;
         if (storageStrategy.storageType() == StorageType.STRING) {
-            conditionValue = "'" + SphinxQLHelper.encodeSpecialCharset((String) storageValue.value()) + "'";
+            conditionValue = "'" + SphinxQLHelper.encodeJsonCharset((String) storageValue.value()) + "'";
         } else {
             conditionValue = storageValue.value().toString();
         }

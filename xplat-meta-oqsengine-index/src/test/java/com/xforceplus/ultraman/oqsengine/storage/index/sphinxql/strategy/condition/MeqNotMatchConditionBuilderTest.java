@@ -57,45 +57,45 @@ public class MeqNotMatchConditionBuilderTest {
         return Arrays.asList(
             new Case(
                 new Condition(
-                    new EntityField(Long.MAX_VALUE, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                    new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
                     ConditionOperator.MULTIPLE_EQUALS,
                     new LongValue(
-                        new EntityField(Long.MAX_VALUE, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
                         1L),
                     new LongValue(
-                        new EntityField(Long.MAX_VALUE, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
                         2L),
                     new LongValue(
-                        new EntityField(Long.MAX_VALUE, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG, FieldConfig.build().identifie(true)),
                         3L)
                 ),
                 "id IN (1,2,3)"
             ),
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.LONG),
+                    new EntityField(9223372036854775807L, "test", FieldType.LONG),
                     ConditionOperator.MULTIPLE_EQUALS,
                     new LongValue(
-                        new EntityField(1, "test", FieldType.LONG),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG),
                         1L),
                     new LongValue(
-                        new EntityField(1, "test", FieldType.LONG),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG),
                         2L),
                     new LongValue(
-                        new EntityField(1, "test", FieldType.LONG),
+                        new EntityField(9223372036854775807L, "test", FieldType.LONG),
                         3L)
                 ),
-                FieldDefine.JSON_FIELDS + ".1L IN (1,2,3)"
+                FieldDefine.ATTRIBUTE + ".1y2p0ij32e8e7L IN (1,2,3)"
             ),
             new Case(
                 new Condition(
-                    new EntityField(1, "test", FieldType.STRING),
+                    new EntityField(9223372036854775807L, "test", FieldType.STRING),
                     ConditionOperator.MULTIPLE_EQUALS,
                     new StringValue(
-                        new EntityField(1, "test", FieldType.STRING),
+                        new EntityField(9223372036854775807L, "test", FieldType.STRING),
                         "!@#$%^&*()300")
                 ),
-                FieldDefine.JSON_FIELDS + ".1S IN ('！＠#＄%＾&＊（）300')"
+                FieldDefine.ATTRIBUTE + ".1y2p0ij32e8e7S IN ('!@#$%^&*()300')"
             )
         );
     }

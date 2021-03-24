@@ -19,6 +19,11 @@ public interface IValue<T> {
      */
     public IEntityField getField();
 
+    /**
+     * 修改当前数据字段.
+     *
+     * @param field 新的字段.
+     */
     public void setField(IEntityField field);
 
     public void setValue(String value);
@@ -42,10 +47,15 @@ public interface IValue<T> {
     public long valueToLong();
 
 
+
     IValue<T> shallowClone();
 
+    /**
+     * 是否可能转型成字符串表示.
+     *
+     * @return true可以, false不可以..
+     */
     default boolean compareByString(){
         return true;
     }
-
 }

@@ -1,17 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.utils;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
-import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.sdk.EntityUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldUp;
 import com.xforceplus.ultraman.oqsengine.sdk.RelationUp;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.pojo.utils.OptionalHelper.ofEmptyStr;
@@ -95,22 +97,5 @@ public class EntityHelper {
                 , null
                 , entityUp.getFieldsList().stream().map(EntityHelper::toEntityField).collect(Collectors.toList())
         );
-    }
-
-    public static IEntityValue toEntityValue(IEntityClass entityClass, EntityUp entityUp) {
-
-        IEntityClassReader reader = new IEntityClassReader(entityClass);
-
-        List<IValue> valueList = entityUp.getValuesList().stream()
-                .flatMap(y -> {
-                    Optional<? extends IEntityField> entityFieldOp = reader.field(y.getFieldId()).map(AliasField::getOrigin);
-                    return entityFieldOp
-                            .map(x -> toTypedValue(x, y.getValue()))
-                            .orElseGet(Collections::emptyList)
-                            .stream();
-                }).filter(Objects::nonNull).collect(Collectors.toList());
-        EntityValue entityValue = new EntityValue(entityUp.getId());
-        entityValue.addValues(valueList);
-        return entityValue;
     }
 }

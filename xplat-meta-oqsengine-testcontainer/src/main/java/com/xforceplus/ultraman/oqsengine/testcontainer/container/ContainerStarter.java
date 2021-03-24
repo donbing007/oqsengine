@@ -132,7 +132,7 @@ public final class ContainerStarter {
 
     public static synchronized void startManticore() {
         if (manticore0 == null) {
-            manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.0")
+            manticore0 = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
                 .withNetwork(network)
                 .withNetworkAliases("manticore0")
@@ -153,7 +153,7 @@ public final class ContainerStarter {
         }
 
         if (manticore1 == null) {
-            manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.0")
+            manticore1 = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
                 .withNetwork(network)
                 .withNetworkAliases("manticore1")
@@ -174,7 +174,7 @@ public final class ContainerStarter {
         }
 
         if (searchManticore == null) {
-            searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.0")
+            searchManticore = new GenericContainer<>("manticoresearch/manticore:3.5.4")
                 .withExposedPorts(9306)
                 .withNetwork(network)
                 .withNetworkAliases("searchManticore")

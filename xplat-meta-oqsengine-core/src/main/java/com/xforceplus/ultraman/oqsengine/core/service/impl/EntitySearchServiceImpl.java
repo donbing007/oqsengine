@@ -2,27 +2,28 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
+import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityRefComparator;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRefs;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
 import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
+import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -36,9 +37,9 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * entity 搜索服务.
@@ -83,6 +84,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Resource
     private CommitIdStatusService commitIdStatusService;
+
+    @Resource
+    private MetaManager metaManager;
 
     private long maxVisibleTotalCount;
     private int maxJoinEntityNumber;
@@ -147,14 +151,13 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "one"})
     @Override
-    public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
+    public Optional<IEntity> selectOne(long id, EntityClassRef entityClassRef) throws SQLException {
+
+        IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entityClassRef);
         try {
 
             Optional<IEntity> entityOptional = masterStorage.selectOne(id, entityClass);
             if (entityOptional.isPresent()) {
-                final int onlyOne = 0;
-                entityOptional = Optional.of(
-                    buildEntitiesFromEntities(Arrays.asList(entityOptional.get()), entityClass).get(onlyOne));
 
                 if (isShowResult()) {
                     logger.info("Select one result: [{}].", entityOptional.get());
@@ -174,13 +177,12 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "multiple"})
     @Override
-    public Collection<IEntity> selectMultiple(long[] ids, IEntityClass entityClass) throws SQLException {
+    public Collection<IEntity> selectMultiple(long[] ids, EntityClassRef entityClassRef) throws SQLException {
 
-        Map<Long, IEntityClass> request =
-            Arrays.stream(ids).collect(HashMap::new, (hashMap, i) -> hashMap.put(i, entityClass), HashMap::putAll);
+        IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entityClassRef);
 
         try {
-            Collection<IEntity> entities = buildEntitiesFromEntities(masterStorage.selectMultiple(request), entityClass);
+            Collection<IEntity> entities = masterStorage.selectMultiple(ids, entityClass);
 
             if (isShowResult()) {
                 entities.stream().forEach(e -> {
@@ -199,30 +201,31 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
-    public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Page page) throws SQLException {
-        return selectByConditions(conditions, entityClass, Sort.buildOutOfSort(), page);
+    public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Page page) throws SQLException {
+        return selectByConditions(conditions, entityClassRef, Sort.buildOutOfSort(), page);
     }
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
-    public Collection<IEntity> selectByConditions(Conditions conditions, IEntityClass entityClass, Sort sort, Page page)
+    public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page)
         throws SQLException {
 
         if (conditions == null) {
             throw new SQLException("Incorrect query condition.");
         }
 
-        if (entityClass == null) {
+        if (entityClassRef == null) {
             throw new SQLException("Invalid entityClass.");
         }
 
+        IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entityClassRef);
+
         // 检查是否有非可搜索的字段,如果有将空返回.
-        Optional<IEntityClass> entityClassOp;
         boolean checkResult;
         for (Condition c : conditions.collectCondition()) {
-            entityClassOp = c.getEntityClass();
-            if (entityClassOp.isPresent()) {
-                checkResult = checkCanSearch(c, entityClassOp.get());
+            if (c.getEntityClassRef().isPresent()) {
+                checkResult = checkCanSearch(c,
+                    EntityClassHelper.checkEntityClass(metaManager, c.getEntityClassRef().get()));
             } else {
                 checkResult = checkCanSearch(c, entityClass);
             }
@@ -237,7 +240,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         if (isOneIdQuery(conditions)) {
             Condition onlyCondition = conditions.collectCondition().stream().findFirst().get();
             long id = onlyCondition.getFirstValue().valueToLong();
-            Optional<IEntity> entityOptional = selectOne(id, entityClass);
+            Optional<IEntity> entityOptional = masterStorage.selectOne(id, entityClass);
             if (entityOptional.isPresent()) {
                 return Arrays.asList(entityOptional.get());
             } else {
@@ -336,7 +339,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Collection<EntityRef> refs = combinedStorage.select(
                 minUnSyncCommitId, useConditions, entityClass, useSort, usePage);
 
-            List<IEntity> entities = buildEntitiesFromRefs(refs, entityClass);
+            Collection<IEntity> entities = buildEntitiesFromRefs(refs, entityClass);
 
             if (isShowResult()) {
                 if (entities.size() == 0) {
@@ -374,35 +377,11 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             return true;
         }
 
-        IEntityClass useEntityClass = entityClass;
-        IEntityField field;
-        while (useEntityClass != null) {
-
-            Optional<IEntityField> fOp = useEntityClass.field(c.getField().id());
-            if (fOp.isPresent()) {
-                field = fOp.get();
-                if (!field.config().isSearchable()) {
-
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("The field {} in the conditional query is not searchable and the query is aborted.",
-                            field.name());
-                    }
-
-                    return false;
-                } else {
-                    return true;
-                }
-            } else {
-
-                useEntityClass = useEntityClass.father();
-
-            }
+        Optional<IEntityField> fOp = entityClass.field(c.getField().id());
+        if (fOp.isPresent() && fOp.get().config().isSearchable()) {
+            return true;
         }
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("All fields in the conditional query are either non-searchable or non-{}({}) entity fields.",
-                entityClass.code(), entityClass.id());
-        }
         return false;
     }
 
@@ -411,8 +390,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      */
     private Collection<IEntityClass> collectEntityClass(Conditions conditions, IEntityClass mainEntityClass) {
         Set<IEntityClass> entityClasses = conditions.collectCondition().stream().map(c -> {
-            if (c.getEntityClass().isPresent()) {
-                return c.getEntityClass().get();
+            if (c.getEntityClassRef().isPresent()) {
+                return EntityClassHelper.checkEntityClass(metaManager, c.getEntityClassRef().get());
             } else {
                 return mainEntityClass;
             }
@@ -425,76 +404,18 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     }
 
     /**
-     * 构造最终返回的Entity.
-     * 会根据oqsmajor来处理兼容.
-     */
-    private List<IEntity> buildEntitiesFromEntities(Collection<IEntity> entities, IEntityClass entityClass) throws SQLException {
-        Collection<EntityRef> refs =
-            entities.stream().map(e -> new EntityRef(e.id(), e.family().parent(), e.family().child(), e.major()))
-                .collect(Collectors.toList());
-
-        return buildEntitiesFromRefs(refs, entityClass);
-    }
-
-    /**
      * 将根据数据查询的产生oqsmajor版本号来决定如何处理.
      */
-    private List<IEntity> buildEntitiesFromRefs(Collection<EntityRef> refs, IEntityClass entityClass) throws SQLException {
+    private Collection<IEntity> buildEntitiesFromRefs(Collection<EntityRef> refs, IEntityClass entityClass)
+        throws SQLException {
 
         if (refs.isEmpty()) {
             return Collections.emptyList();
         }
 
-        /**
-         * 整理出需要加载的id.
-         */
-        Map<Long, IEntityClass> select;
-        if (entityClass.father() != null) {
-
-            select = new HashMap();
-            for (EntityRef ref : refs) {
-
-                if (ref.getMajor() == 0) {
-                    /**
-                     * 大版本为0,数据格式为子类只含有子类部份的字段信息.
-                     */
-                    select.put(ref.getId(), entityClass);
-                    select.put(ref.getPref(), entityClass.father());
-
-                } else {
-
-                    select.put(ref.getId(), entityClass);
-
-                }
-            }
-
-        } else {
-            select = refs.parallelStream().collect(
-                toMap(EntityRef::getId, e -> entityClass, (e0, e1) -> e0));
-        }
-
-        // 加载所有需要的数据,包含父子类.
-        Map<Long, IEntity> iEntityMap = masterStorage.selectMultiple(select)
-            .parallelStream().collect(toMap(IEntity::id, e -> e, (e0, e1) -> e0));
-
-        return refs.stream().map(ref -> {
-            IEntity entity = iEntityMap.get(ref.getId());
-            if (entity == null) {
-                logger.warn("The expected Entity {} was not found.", ref.getId());
-                return null;
-            }
-
-            if (ref.getMajor() == 0 && entityClass.father() != null) {
-                IEntity father = iEntityMap.get(ref.getPref());
-                if (father != null) {
-                    entity.entityValue().addValues(father.entityValue().values());
-                } else {
-                    logger.warn("The parent class {} for {} was not found.", ref.getId(), ref.getPref());
-                }
-            }
-
-            return entity;
-        }).collect(Collectors.toList());
+        long[] ids = refs.stream().mapToLong(ref -> ref.getId()).toArray();
+        Collection<IEntity> entities = masterStorage.selectMultiple(ids, entityClass);
+        return entities;
     }
 
     /**
@@ -508,7 +429,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         // 只包含驱动 entity 条件的集合.
         Collection<Condition> driverConditionCollection = processConditions.collectCondition().stream()
-            .filter(c -> c.getEntityClass().isPresent())
+            .filter(c -> c.getEntityClassRef().isPresent())
             .collect(toList());
 
         // 按照驱动 entity 的 entityClass 和关联字段来分组条件.
@@ -567,7 +488,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
 
         // 之前过滤掉了非 driver 的条件,这里需要加入.
-        processConditions.collectCondition().stream().filter(c -> !c.getEntityClass().isPresent()).forEach(c -> {
+        processConditions.collectCondition().stream().filter(c -> !c.getEntityClassRef().isPresent()).forEach(c -> {
                 conditions.addAnd(c);
             }
         );
@@ -592,9 +513,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         DriverEntityKey key;
         Conditions driverConditions;
         for (Condition c : conditionCollection) {
-            entityClassOptional = c.getEntityClass();
-            if (entityClassOptional.isPresent()) {
-                entityClass = entityClassOptional.get();
+            if (c.getEntityClassRef().isPresent()) {
+                entityClass = EntityClassHelper.checkEntityClass(metaManager, c.getEntityClassRef().get());
             } else {
                 throw new SQLException("An attempt was made to correlate the query, but the entityClass for the driver table was not set!");
             }
@@ -748,7 +668,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
             if (commitId > 0) {
                 //trigger master search
-                masterRefs = masterStorage.select(commitId, conditions, entityClass, sort);
+                masterRefs = masterStorage.select(conditions, entityClass,
+                    SelectConfig.Builder.aSelectConfig().withSort(sort).withCommitId(commitId).build());
+
+                for (EntityRef ref : masterRefs) {
+                    if (ref.getOp() == OperationType.UNKNOWN.getValue()) {
+                        throw new SQLException(String.format("Expected operation type unknown.[id=%d]", ref.getId()));
+                    }
+                }
             }
 
             masterRefs = fixNullSortValue(masterRefs, sort);
@@ -761,9 +688,22 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 .map(EntityRef::getId)
                 .collect(toSet());
 
-            Page indexPage = new Page(page.getIndex(), page.getPageSize());
-            Collection<EntityRef> refs = indexStorage.select(
-                conditions, entityClass, sort, indexPage, filterIdsFromMaster, commitId);
+
+            Page indexPage;
+            if (page.isEmptyPage()) {
+                indexPage = Page.emptyPage();
+            } else {
+                indexPage = new Page(page.getIndex(), page.getPageSize());
+            }
+
+            EntityRefs refs = indexStorage.select(
+                conditions, entityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withSort(sort)
+                    .withPage(indexPage)
+                    .withExcludedIds(filterIdsFromMaster)
+                    .withCommitId(commitId).build());
+            indexPage = refs.getPage();
 
             Collection<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().
                 filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());
@@ -771,14 +711,18 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Collection<EntityRef> retRefs;
             //combine two refs
             if (sort != null && !sort.isOutOfOrder()) {
-                retRefs = merge(masterRefsWithoutDeleted, refs, sort);
+                retRefs = merge(masterRefsWithoutDeleted, refs.getRefs(), sort);
             } else {
                 retRefs = new ArrayList<>(masterRefsWithoutDeleted.size() + refs.size());
                 retRefs.addAll(masterRefsWithoutDeleted);
-                retRefs.addAll(refs);
+                retRefs.addAll(refs.getRefs());
             }
 
             page.setTotalCount(indexPage.getTotalCount() + masterRefsWithoutDeleted.size());
+            if (page.isEmptyPage()) {
+                return Collections.emptyList();
+            }
+
             if (!page.hasNextPage()) {
                 return Collections.emptyList();
             }

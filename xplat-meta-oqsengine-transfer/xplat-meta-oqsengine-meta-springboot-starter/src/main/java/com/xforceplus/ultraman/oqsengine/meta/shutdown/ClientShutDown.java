@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.shutdown;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.executor.ITransferExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.EntityClassSyncClient;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,20 +19,20 @@ public class ClientShutDown implements IShutDown {
 
     private Logger logger = LoggerFactory.getLogger(ClientShutDown.class);
 
-    @Resource(name = "grpcWorkThreadPool")
-    private ExecutorService metaSyncThreadPool;
+    @Resource(name = "grpcTaskExecutor")
+    private ExecutorService grpcTaskExecutor;
 
     @Resource
-    private ITransferExecutor entityClassSyncClient;
+    private EntityClassSyncClient entityClassSyncClient;
 
     @Override
     public void shutdown() {
-
+        logger.info("meta sync client tear down...");
         entityClassSyncClient.stop();
 
         // wait shutdown
         logger.info("Start closing the gRpc worker thread...");
-        ExecutorHelper.shutdownAndAwaitTermination(metaSyncThreadPool, 3600);
+        ExecutorHelper.shutdownAndAwaitTermination(grpcTaskExecutor, 3600);
         logger.info("Succeed closing the gRpc worker thread...ok!");
     }
 }

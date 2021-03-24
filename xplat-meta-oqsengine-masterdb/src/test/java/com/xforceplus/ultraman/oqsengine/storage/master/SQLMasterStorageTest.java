@@ -1,26 +1,23 @@
 package com.xforceplus.ultraman.oqsengine.storage.master;
 
-import com.alibaba.fastjson.JSONArray;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourceFactory;
 import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
-import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.CommonRangeShardingAlgorithm;
-import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.HashPreciseShardingAlgorithm;
-import com.xforceplus.ultraman.oqsengine.common.datasource.shardjdbc.SuffixNumberHashPreciseShardingAlgorithm;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
-import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.iterator.QueryIterator;
+import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
-import com.xforceplus.ultraman.oqsengine.storage.master.utils.SQLJsonIEntityValueBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -28,12 +25,8 @@ import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyF
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import com.zaxxer.hikari.HikariDataSource;
 import io.lettuce.core.RedisClient;
-import org.apache.shardingsphere.api.config.sharding.ShardingRuleConfiguration;
-import org.apache.shardingsphere.api.config.sharding.TableRuleConfiguration;
-import org.apache.shardingsphere.api.config.sharding.strategy.StandardShardingStrategyConfiguration;
-import org.apache.shardingsphere.shardingjdbc.api.ShardingDataSourceFactory;
-import org.apache.shardingsphere.shardingjdbc.jdbc.core.datasource.ShardingDataSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,18 +37,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toMap;
 
 /**
  * SQLMasterStorage Tester.
@@ -76,19 +66,87 @@ public class SQLMasterStorageTest {
 
     private DataSource dataSource;
     private SQLMasterStorage storage;
+
+    //-------------level 0--------------------
+    private IEntityField l0LongField = EntityField.Builder.anEntityField()
+        .withId(1000)
+        .withFieldType(FieldType.LONG)
+        .withName("l0-long")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l0StringField = EntityField.Builder.anEntityField()
+        .withId(1001)
+        .withFieldType(FieldType.STRING)
+        .withName("l0-string")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l0StringsField = EntityField.Builder.anEntityField()
+        .withId(1003)
+        .withFieldType(FieldType.STRINGS)
+        .withName("l0-strings")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityClass l0EntityClass = OqsEntityClass.Builder.anEntityClass()
+        .withId(1)
+        .withLevel(0)
+        .withCode("l0")
+        .withField(l0LongField)
+        .withField(l0StringField)
+        .withField(l0StringsField)
+        .build();
+    private EntityClassRef l0EntityClassRef =
+        EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(l0EntityClass.id()).withEntityClassCode(l0EntityClass.code()).build();
+
+    //-------------level 1--------------------
+    private IEntityField l1LongField = EntityField.Builder.anEntityField()
+        .withId(2000)
+        .withFieldType(FieldType.LONG)
+        .withName("l1-long")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l1StringField = EntityField.Builder.anEntityField()
+        .withId(2001)
+        .withFieldType(FieldType.STRING)
+        .withName("l1-string")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityClass l1EntityClass = OqsEntityClass.Builder.anEntityClass()
+        .withId(2)
+        .withLevel(1)
+        .withCode("l1")
+        .withField(l1LongField)
+        .withField(l1StringField)
+        .withFather(l0EntityClass)
+        .build();
+    private EntityClassRef l1EntityClassRef =
+        EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(l1EntityClass.id()).withEntityClassCode(l1EntityClass.code()).build();
+
+    //-------------level 2--------------------
+    private IEntityField l2LongField = EntityField.Builder.anEntityField()
+        .withId(3000)
+        .withFieldType(FieldType.LONG)
+        .withName("l2-long")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityField l2StringField = EntityField.Builder.anEntityField()
+        .withId(3001)
+        .withFieldType(FieldType.STRING)
+        .withName("l2-string")
+        .withConfig(FieldConfig.build().searchable(true)).build();
+    private IEntityClass l2EntityClass = OqsEntityClass.Builder.anEntityClass()
+        .withId(3)
+        .withLevel(2)
+        .withCode("l2")
+        .withField(l2LongField)
+        .withField(l2StringField)
+        .withFather(l1EntityClass)
+        .build();
+    private EntityClassRef l2EntityClassRef =
+        EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(l2EntityClass.id()).withEntityClassCode(l2EntityClass.code()).build();
+
     private List<IEntity> expectedEntitys;
-    private List<IEntity> expectedEntitiesWithTime;
-    private IEntityField fixStringsField = new EntityField(100000, "strings", FieldType.STRINGS);
-    private StringsValue fixStringsValue = new StringsValue(fixStringsField, "1,2,3,500002,测试".split(","));
-
-    private long timeId = LocalDateTime.now().toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
-
-    private IEntityClass expectEntityClass;
 
     @Before
     public void before() throws Exception {
 
-        DataSource ds = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
+        dataSource = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
 
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
@@ -107,30 +165,24 @@ public class SQLMasterStorageTest {
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
             transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
-            new NoSelector<>(ds), new NoSelector<>("oqsbigentity"));
+            new NoSelector<>(dataSource), new NoSelector<>("oqsbigentity"));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new MasterDecimalStorageStrategy());
-        SQLJsonIEntityValueBuilder entityValueBuilder = new SQLJsonIEntityValueBuilder();
-        ReflectionTestUtils.setField(entityValueBuilder, "storageStrategyFactory", storageStrategyFactory);
+
 
         storage = new SQLMasterStorage();
-        ReflectionTestUtils.setField(storage, "masterDataSource", ds);
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
-        ReflectionTestUtils.setField(storage, "entityValueBuilder", entityValueBuilder);
         storage.setTableName("oqsbigentity");
         storage.setQueryTimeout(100000000);
         storage.init();
 
         Transaction tx = transactionManager.create();
         transactionManager.bind(tx.id());
-        expectedEntitys = initData(storage, 10);
-
-        tx = transactionManager.create();
-        transactionManager.bind(tx.id());
-        initMultiDataSourceData(storage, 100);
+        expectedEntitys = initData(storage, 100);
+        transactionManager.finish();
     }
 
     @After
@@ -144,118 +196,12 @@ public class SQLMasterStorageTest {
         stat.close();
         conn.close();
 
-        ((ShardingDataSource) dataSource).close();
+        ((HikariDataSource) dataSource).close();
 
         commitIdStatusService.destroy();
 
         redisClient.connect().sync().flushall();
         redisClient.shutdown();
-    }
-
-    @Test
-    public void testSynchronizedChild() throws SQLException {
-        IEntityClass fatherClass = new EntityClass(100, "father", Arrays.asList(
-            new EntityField(123, "c1", FieldType.LONG, FieldConfig.build().searchable(true)),
-            new EntityField(456, "c2", FieldType.STRING, FieldConfig.build().searchable(true))
-        ));
-        IEntityClass childClass = new EntityClass(200, "child", null, null, fatherClass,
-            Arrays.asList(
-                new EntityField(789, "c3", FieldType.ENUM, FieldConfig.build().searchable(true)),
-                new EntityField(910, "c4", FieldType.BOOLEAN, FieldConfig.build().searchable(true))
-            )
-        );
-
-        IEntity father = new Entity(10000, fatherClass, new EntityValue(100).addValues(
-            Arrays.asList(
-                new LongValue(fatherClass.field("c1").get(), 100),
-                new StringValue(fatherClass.field("c2").get(), "father.value")
-            )
-        ),
-            new EntityFamily(0, 20000),
-            0,
-            OqsVersion.MAJOR
-        );
-        IEntity child = new Entity(20000, childClass, new EntityValue(200).addValues(
-            Arrays.asList(
-                new LongValue(fatherClass.field("c1").get(), 100),
-                new StringValue(fatherClass.field("c2").get(), "father.value"),
-                new EnumValue(childClass.field("c3").get(), "是"),
-                new BooleanValue(childClass.field("c4").get(), false)
-            )
-        ),
-            new EntityFamily(10000, 0),
-            0,
-            OqsVersion.MAJOR
-        );
-
-        storage.build(father);
-        storage.build(child);
-
-        father.entityValue().addValue(new LongValue(fatherClass.field("c1").get(), 200));
-        Assert.assertEquals(1, storage.replace(father));
-        Assert.assertEquals(1, storage.synchronizeToChild(father));
-
-        child = storage.selectOne(child.id(), childClass).get();
-        Assert.assertEquals(200, child.entityValue().getValue("c1").get().valueToLong());
-        Assert.assertEquals("father.value", child.entityValue().getValue("c2").get().valueToString());
-        Assert.assertEquals("是", child.entityValue().getValue("c3").get().valueToString());
-        Assert.assertEquals(false, child.entityValue().getValue("c4").get().getValue());
-
-        try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stat = conn.prepareStatement("select meta from oqsbigentity where id = ?")) {
-                stat.setLong(1, child.id());
-
-                try (ResultSet rs = stat.executeQuery()) {
-                    rs.next();
-                    String meta = rs.getString(1);
-                    JSONArray metas = JSONArray.parseArray(meta);
-                    Map<String, Integer> numbers = new HashMap();
-                    for (String m : metas.toJavaList(String.class)) {
-                        if (numbers.containsKey(m)) {
-                            Assert.fail(String.format("Duplicate meta definitions found.[%s]", m));
-                        } else {
-                            numbers.put(m, 0);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @Test
-    public void testNewDataQueryIterator() throws SQLException {
-
-        ExecutorService consumerPool = new ThreadPoolExecutor(10, 10,
-            0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(2048),
-            ExecutorHelper.buildNameThreadFactory("consumerThreads", true),
-            new ThreadPoolExecutor.AbortPolicy());
-
-        long startId = timeId + 23;
-        long endId = timeId + 74;
-        QueryIterator dataQueryIterator =
-            storage.newIterator(expectEntityClass, startId, endId, consumerPool, 3000, 10, true);
-
-        Assert.assertNotNull(dataQueryIterator);
-
-        int expected = Integer.parseInt(endId - startId + 1 + "");
-        Assert.assertEquals(expected, dataQueryIterator.size());
-
-        Assert.assertTrue(dataQueryIterator.hasNext());
-
-        int count = 0;
-        List<IEntity> allEntities = new ArrayList<>();
-        int loops = 0;
-        while (dataQueryIterator.hasNext()) {
-            loops++;
-            List<IEntity> entities = dataQueryIterator.next();
-            for (IEntity entity : entities) {
-                logger.debug("query loops : {}, id : {}, time : {}", loops, entity.id(), entity.time());
-                allEntities.add(entity);
-                count++;
-            }
-        }
-        Assert.assertEquals(expected, count);
     }
 
     /**
@@ -266,129 +212,135 @@ public class SQLMasterStorageTest {
     @Test
     public void testBuildEntity() throws Exception {
 
-        List<IEntity> queryEntitys = expectedEntitys.stream().map(e -> {
-            try {
-                Optional<IEntity> entity = storage.selectOne(e.id(), e.entityClass());
-                if (entity.isPresent()) {
-                    return entity.get();
-                } else {
-                    return null;
-                }
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex.getMessage(), ex);
-            }
-        }).collect(Collectors.toList());
+        LocalDateTime updateTime = LocalDateTime.now();
+        IEntity newEntity = Entity.Builder.anEntity()
+            .withId(100000)
+            .withEntityClassRef(l1EntityClassRef)
+            .withEntityValue(EntityValue.build().addValues(Arrays.asList(
+                new LongValue(l1EntityClass.father().get().field("l0-long").get(), 100),
+                new StringValue(l1EntityClass.father().get().field("l0-string").get(), "l0value"),
+                new LongValue(l1EntityClass.field("l1-long").get(), 200),
+                new StringValue(l1EntityClass.field("l1-string").get(), "l1value"),
+                new DateTimeValue(EntityField.UPDATE_TIME_FILED, updateTime)
+            )))
+            .build();
+        int size = storage.build(newEntity, l1EntityClass);
+        Assert.assertEquals(1, size);
 
-        Assert.assertEquals(expectedEntitys.size(), queryEntitys.size());
-
-
-        Assert.assertEquals(0,
-            queryEntitys.stream().filter(e -> !expectedEntitys.contains(e)).collect(Collectors.toList()).size());
+        Optional<IEntity> entityOptional = storage.selectOne(newEntity.id(), l1EntityClass);
+        Assert.assertTrue(entityOptional.isPresent());
+        IEntity targetEntity = entityOptional.get();
+        Assert.assertEquals(100, targetEntity.entityValue().getValue("l0-long").get().valueToLong());
+        Assert.assertEquals("l0value", targetEntity.entityValue().getValue("l0-string").get().valueToString());
+        Assert.assertEquals(200, targetEntity.entityValue().getValue("l1-long").get().valueToLong());
+        Assert.assertEquals("l1value", targetEntity.entityValue().getValue("l1-string").get().valueToString());
+        Assert.assertEquals(0, targetEntity.version());
+        Assert.assertEquals(updateTime.atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli(), entityOptional.get().time());
     }
 
 
     @Test
-    public void testSelectMultipleIdQuery() throws Exception {
-        Map<Long, IEntityClass> idMap = expectedEntitys.stream().collect(toMap(IEntity::id, IEntity::entityClass));
+    public void testSelectMultiple() throws Exception {
+        long[] ids = expectedEntitys.stream().mapToLong(e -> e.id()).toArray();
+        Collection<IEntity> entities = storage.selectMultiple(ids, l2EntityClass);
 
-        Collection<IEntity> queryEntitys = storage.selectMultiple(idMap);
+        Map<Long, IEntity> expectedEntityMap =
+            expectedEntitys.stream().collect(Collectors.toMap(e -> e.id(), e -> e, (e0, e1) -> e0));
 
-        Assert.assertEquals(expectedEntitys.size(), queryEntitys.size());
+        Assert.assertEquals(expectedEntityMap.size(), entities.size());
 
-        Assert.assertEquals(0,
-            queryEntitys.stream().filter(e -> !expectedEntitys.contains(e)).collect(Collectors.toList()).size());
+        IEntity expectedEntity;
+        for (IEntity e : entities) {
+            expectedEntity = expectedEntityMap.get(e.id());
+            Assert.assertNotNull(
+                String.format("An instance of the %d object should be found, but not found.", e.id()), expectedEntity);
+
+            Assert.assertEquals(expectedEntity, e);
+
+        }
     }
 
     @Test
     public void testReplace() throws Exception {
+        LocalDateTime updateTime = LocalDateTime.now();
+        IEntity targetEntity = expectedEntitys.get(0);
+        targetEntity.entityValue().addValue(
+            new LongValue(l1EntityClass.father().get().field("l0-long").get(), 1000000)
+        ).addValue(
+            new DateTimeValue(EntityField.UPDATE_TIME_FILED, updateTime)
+        );
 
-        Transaction tx = transactionManager.create();
-        transactionManager.bind(tx.id());
-        IEntity entity = expectedEntitys.get(0);
-        entity.entityValue().remove(entity.entityClass().fields().stream().findAny().get());
-        storage.replace(entity);
+        int oldVersion = targetEntity.version();
 
-        entity = expectedEntitys.get(1);
-        entity.entityValue().remove(entity.entityClass().fields().stream().findAny().get());
-        storage.replace(entity);
-        transactionManager.getCurrent().get().commit();
-        transactionManager.finish();
-
-        Map<Long, IEntityClass> idMap = expectedEntitys.stream().collect(toMap(IEntity::id, IEntity::entityClass));
-        Collection<IEntity> queryEntitys = storage.selectMultiple(idMap);
-
-        Assert.assertEquals(expectedEntitys.size(), queryEntitys.size());
-
-        // 因为最后更新时间和版本变化,应该有两个不同.
-        Assert.assertEquals(2,
-            queryEntitys.stream().filter(e -> !expectedEntitys.contains(e)).collect(Collectors.toList()).size());
-
-        // 忽略版本号和更新时间的比对.
-        Assert.assertEquals(0,
-            queryEntitys.stream().filter(e -> {
-
-                return !(expectedEntitys.stream().filter(ee -> {
-                    return e.id() == ee.id() &&
-                        Objects.equals(e.entityClass(), ee.entityClass()) &&
-                        Objects.equals(e.entityValue(), ee.entityValue()) &&
-                        Objects.equals(e.family(), ee.family());
-                }).collect(Collectors.toList()).size() > 0);
-
-            }).collect(Collectors.toList()).size());
-
-    }
-
-    @Test
-    public void testSync() throws Exception {
-        IEntity expectedEntity = expectedEntitys.stream().findFirst().get();
-        IEntity source = storage.selectOne(expectedEntity.id(), expectedEntity.entityClass()).get();
-        Assert.assertEquals(0, source.version());
-
-        storage.replace(source);
-        source = storage.selectOne(expectedEntity.id(), expectedEntity.entityClass()).get();
-
-        Assert.assertEquals(1, source.version());
+        int size = storage.replace(targetEntity, l2EntityClass);
+        Assert.assertEquals(1, size);
 
 
-        IEntity target = expectedEntitys.stream().skip(1).findFirst().get();
-        target = storage.selectOne(target.id(), target.entityClass()).get();
-
-        Assert.assertEquals(0, target.version());
-
-        storage.synchronize(source.id(), target.id());
-        target = storage.selectOne(target.id(), target.entityClass()).get();
-
-        Assert.assertEquals(source.version(), target.version());
-
+        Optional<IEntity> targetEntityOp = storage.selectOne(targetEntity.id(), l2EntityClass);
+        Assert.assertTrue(targetEntityOp.isPresent());
+        Assert.assertEquals(1000000L,
+            targetEntityOp.get().entityValue().getValue("l0-long").get().valueToLong());
+        Assert.assertEquals(oldVersion + 1, targetEntityOp.get().version());
+        Assert.assertEquals(updateTime.atZone(ZoneId.of("Asia/Shanghai")).toInstant().toEpochMilli(),
+            targetEntityOp.get().time());
     }
 
     @Test
     public void testDelete() throws Exception {
+        IEntity targetEntity = expectedEntitys.get(1);
+        storage.replace(targetEntity, l2EntityClass);
+        targetEntity = storage.selectOne(targetEntity.id(), l2EntityClass).get();
 
-        Map<Long, IEntityClass> idMap = expectedEntitys.stream().collect(toMap(IEntity::id, IEntity::entityClass));
-        IEntity targetEntity = expectedEntitys.stream().findAny().get();
-        storage.delete(targetEntity);
-        Collection<IEntity> queryEntitys = storage.selectMultiple(idMap);
-        Assert.assertEquals(expectedEntitys.size() - 1, queryEntitys.size());
+        Assert.assertEquals(1, storage.delete(targetEntity, l2EntityClass));
 
-        Assert.assertEquals(expectedEntitys.size() - 1, queryEntitys.size());
-        queryEntitys.stream().forEach(e -> {
-            Assert.assertNotEquals(targetEntity.id(), e.id());
-        });
+        Assert.assertFalse(storage.selectOne(targetEntity.id(), l2EntityClass).isPresent());
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ")
+            .append(FieldDefine.DELETED)
+            .append(",")
+            .append(FieldDefine.VERSION)
+            .append(" FROM oqsbigentity WHERE ")
+            .append(FieldDefine.ID).append("=").append(targetEntity.id());
+
+        try (Connection conn = dataSource.getConnection()) {
+            try (Statement statement = conn.createStatement()) {
+                try (ResultSet rs = statement.executeQuery(sql.toString())) {
+                    rs.next();
+                    Assert.assertTrue(rs.getBoolean(FieldDefine.DELETED));
+                    Assert.assertEquals(targetEntity.version() + 1, rs.getInt(FieldDefine.VERSION));
+                }
+            }
+        }
     }
 
     @Test
     public void testDeleteWithoutVersion() throws Exception {
-        IEntity targetEntity = expectedEntitys.get(0);
-        storage.replace(targetEntity);
-
-        targetEntity = storage.selectOne(targetEntity.id(), targetEntity.entityClass()).get();
-        Assert.assertEquals(1, targetEntity.version());
-
+        IEntity targetEntity = expectedEntitys.get(2);
+        storage.replace(targetEntity, l2EntityClass);
+        targetEntity = storage.selectOne(targetEntity.id(), l2EntityClass).get();
         targetEntity.resetVersion(VersionHelp.OMNIPOTENCE_VERSION);
-        Assert.assertEquals(1, storage.delete(targetEntity));
 
-        Assert.assertFalse(storage.selectOne(targetEntity.id(), targetEntity.entityClass()).isPresent());
+        Assert.assertEquals(1, storage.delete(targetEntity, l2EntityClass));
+        Assert.assertFalse(storage.selectOne(targetEntity.id(), l2EntityClass).isPresent());
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ")
+            .append(FieldDefine.DELETED)
+            .append(",")
+            .append(FieldDefine.VERSION)
+            .append(" FROM oqsbigentity WHERE ")
+            .append(FieldDefine.ID).append("=").append(targetEntity.id());
+
+        try (Connection conn = dataSource.getConnection()) {
+            try (Statement statement = conn.createStatement()) {
+                try (ResultSet rs = statement.executeQuery(sql.toString())) {
+                    rs.next();
+                    Assert.assertTrue(rs.getBoolean(FieldDefine.DELETED));
+                    Assert.assertEquals(VersionHelp.OMNIPOTENCE_VERSION, rs.getInt(FieldDefine.VERSION));
+                }
+            }
+        }
     }
 
     // 初始化数据
@@ -401,7 +353,7 @@ public class SQLMasterStorageTest {
         try {
             expectedEntitys.stream().forEach(e -> {
                 try {
-                    storage.build(e);
+                    storage.build(e, l2EntityClass);
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex.getMessage(), ex);
                 }
@@ -421,48 +373,31 @@ public class SQLMasterStorageTest {
     }
 
     private IEntity buildEntity(long baseId) {
-        Collection<IEntityField> fields = buildRandomFields(baseId, 3);
-        fields.add(fixStringsField);
-
-        IEntity entity = new Entity(
-            baseId,
-            new EntityClass(baseId, "test", fields),
-            buildRandomValue(baseId, fields),
-            OqsVersion.MAJOR
-        );
-        return entity;
+        return Entity.Builder.anEntity()
+            .withId(baseId)
+            .withMajor(OqsVersion.MAJOR)
+            .withEntityClassRef(l2EntityClassRef)
+            .withEntityValue(buildEntityValue(baseId,
+                Arrays.asList(
+                    l0LongField, l0StringField, l0StringsField,
+                    l1LongField, l1StringField,
+                    l2LongField, l2StringField)))
+            .build();
     }
 
-    private Collection<IEntityField> buildRandomFields(long baseId, int size) {
-        List<IEntityField> fields = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-            long fieldId = baseId + i;
-            fields.add(
-                new EntityField(
-                    fieldId,
-                    "c" + fieldId,
-                    ("c" + fieldId).hashCode() % 2 == 1 ? FieldType.LONG : FieldType.STRING,
-                    FieldConfig.build().searchable(true)));
-        }
-
-        return fields;
-    }
-
-    private IEntityValue buildRandomValue(long id, Collection<IEntityField> fields) {
+    private IEntityValue buildEntityValue(long id, Collection<IEntityField> fields) {
         Collection<IValue> values = fields.stream().map(f -> {
             switch (f.type()) {
                 case STRING:
-                    return new StringValue(f, buildRandomString(30));
+                    return new StringValue(f, buildRandomString(10));
                 case STRINGS:
-                    return fixStringsValue;
+                    return new StringsValue(f, buildRandomString(5), buildRandomString(3), buildRandomString(7));
                 default:
                     return new LongValue(f, (long) buildRandomLong(10, 100000));
             }
         }).collect(Collectors.toList());
 
-        EntityValue value = new EntityValue(id);
-        value.addValues(values);
-        return value;
+        return EntityValue.build().addValues(values);
     }
 
     private String buildRandomString(int size) {
@@ -483,74 +418,7 @@ public class SQLMasterStorageTest {
     private DataSource buildDataSource(String file) throws SQLException {
         System.setProperty(DataSourceFactory.CONFIG_FILE, file);
         DataSourcePackage dataSourcePackage = DataSourceFactory.build(true);
-
-        AtomicInteger index = new AtomicInteger(0);
-        Map<String, DataSource> dsMap = dataSourcePackage.getMaster().stream().collect(Collectors.toMap(
-            d -> "ds", d -> d));
-
-        int dsSize = dsMap.size();
-
-        TableRuleConfiguration tableRuleConfiguration = new TableRuleConfiguration(
-            "oqsbigentity", "ds.oqsbigentity${0..2}");
-        tableRuleConfiguration.setDatabaseShardingStrategyConfig(
-            new StandardShardingStrategyConfiguration("id", new HashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
-        tableRuleConfiguration.setTableShardingStrategyConfig(
-            new StandardShardingStrategyConfiguration("id", new SuffixNumberHashPreciseShardingAlgorithm(), new CommonRangeShardingAlgorithm()));
-
-
-        ShardingRuleConfiguration shardingRuleConfig = new ShardingRuleConfiguration();
-        shardingRuleConfig.getTableRuleConfigs().add(tableRuleConfiguration);
-
-        Properties prop = new Properties();
-//        prop.setProperty("allow.range.query.with.inline.sharding", "true");
-//        prop.put("sql.show", "true");
-        dataSource = ShardingDataSourceFactory.createDataSource(dsMap, shardingRuleConfig, prop);
-        return dataSource;
+        return dataSourcePackage.getMaster().get(0);
     }
 
-    private void initMultiDataSourceData(SQLMasterStorage storage, int size) throws Exception {
-        if (null == expectEntityClass) {
-            expectEntityClass =
-                new EntityClass(timeId, "test", Collections.emptyList());
-        }
-
-        expectedEntitiesWithTime = new ArrayList<>(size);
-        for (int i = 1; i < size; i++) {
-            expectedEntitiesWithTime.add(buildEntityWithEntityClassInit(timeId, timeId + i));
-        }
-
-        try {
-            expectedEntitiesWithTime.stream().forEach(e -> {
-                try {
-                    storage.build(e);
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex.getMessage(), ex);
-                }
-            });
-        } catch (Exception e) {
-            transactionManager.getCurrent().get().rollback();
-            throw e;
-        }
-
-        //将事务正常提交,并从事务管理器中销毁事务.
-        Transaction tx = transactionManager.getCurrent().get();
-        tx.commit();
-        transactionManager.finish();
-    }
-
-    private IEntity buildEntityWithEntityClassInit(long entityClassId, long id) {
-        Collection<IEntityField> fields = buildRandomFields(id, 3);
-        fields.add(fixStringsField);
-
-        IEntity entity = new Entity(
-            id,
-            new EntityClass(entityClassId, "test", fields),
-            buildRandomValue(id, fields),
-            null,
-            0,
-            OqsVersion.MAJOR
-        );
-        entity.markTime(id);
-        return entity;
-    }
 }

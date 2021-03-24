@@ -1,7 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.*;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
@@ -10,9 +12,8 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
 
 /**
  * 没有范围查询,没有or 条件.主要利用全文搜索字段进行搜索.
@@ -21,11 +22,20 @@ import java.util.List;
  * @version 0.1 2020/2/22 17:27
  * @since 1.8
  */
-public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>, StorageStrategyFactoryAble {
+public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>, StorageStrategyFactoryAble, TokenizerFactoryAble {
 
     private StorageStrategyFactory storageStrategyFactory;
 
     private SphinxQLConditionQueryBuilderFactory conditionQueryBuilderFactory;
+
+    private TokenizerFactory tokenizerFactory;
+
+    @Override
+    public void init() {
+        this.conditionQueryBuilderFactory = new SphinxQLConditionQueryBuilderFactory(this.storageStrategyFactory);
+        this.conditionQueryBuilderFactory.setTokenizerFacotry(tokenizerFactory);
+        this.conditionQueryBuilderFactory.init();
+    }
 
     /**
      * 没有 or 只有 and 不需要关注连接符.
@@ -35,19 +45,14 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
 
         StringBuilder idBuff = new StringBuilder();
         StringBuilder buff = new StringBuilder();
-        buff.append("MATCH('(@").append(FieldDefine.FULL_FIELDS).append(" ");
+        buff.append("MATCH('(@").append(FieldDefine.ATTRIBUTEF).append(" ");
         // 用以判断是否还没有条件,方便条件之间的空格.
         int idEmptyLen = idBuff.length();
         int emtpyLen = buff.length();
-        boolean allNegative = true;
+
         boolean allIdentifie = true;
         SphinxQLConditionBuilder conditionQueryBuilder;
 
-        /**
-         * issue #14
-         * 在 match 结束后增加同样的条件,利用属性进行二次过滤保证结果正确.
-         */
-        List<Condition> secondaryFilterConditions = new ArrayList<>(conditions.size());
         for (ConditionNode node : conditions.collect()) {
             if (Conditions.isValueNode(node)) {
                 Condition condition = ((ValueConditionNode) node).getCondition();
@@ -67,22 +72,6 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
                         buff.append(" ");
                     }
                     buff.append(conditionQueryBuilder.build(condition));
-
-                    // issue #14
-                    secondaryFilterConditions.add(condition);
-
-                    // 如果全部都是否定条件需要标示出来.
-                    switch (condition.getOperator()) {
-                        case EQUALS:
-                        case MULTIPLE_EQUALS:
-                        case LIKE: {
-                            allNegative = false;
-                            break;
-                        }
-                        case NOT_EQUALS: {
-                            break;
-                        }
-                    }
                 }
             }
         }
@@ -90,14 +79,10 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
         // 如果全是主键id查询,那不需要以下处理.
         if (!allIdentifie) {
 
-            //判断是否都是不等于条件,是的话需要补充所有字段才能成立排除.
-            // -F123 =Sg 表示从所有字段中排除掉 F123.
-            if (allNegative) {
-                buff.append(") (@entityf =\"").append(entityClass.id()).append("\")");
-                buff.append("')");
-            } else {
-                buff.append(")')");
-            }
+            buff.append(") (@")
+                .append(FieldDefine.ENTITYCLASSF)
+                .append(" =\"").append(entityClass.id()).append("\")");
+            buff.append("')");
 
             StringBuilder temp = new StringBuilder();
             if (idBuff.length() > 0) {
@@ -105,26 +90,6 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
                 buff.insert(0, temp.toString());
             }
 
-            // issue #14
-            if (!secondaryFilterConditions.isEmpty()) {
-                String condtitonStr = buildSecondFilterConditions(secondaryFilterConditions);
-                if (!condtitonStr.isEmpty()) {
-                    temp.delete(0, temp.length());
-                    temp.append(condtitonStr)
-                        .append(" ")
-                        .append(SqlKeywordDefine.AND)
-                        .append(" ");
-                    buff.insert(0, temp.toString());
-                }
-            }
-
-            if (!allNegative) {
-                // add entity filter
-                temp.delete(0, temp.length());
-                temp.append(FieldDefine.ENTITY).append(" = ").append(entityClass.id())
-                    .append(" ").append(SqlKeywordDefine.AND).append(" ");
-                buff.insert(0, temp.toString());
-            }
         } else {
 
             buff.delete(0, buff.length());
@@ -140,8 +105,6 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
     @Override
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
-
-        this.conditionQueryBuilderFactory = new SphinxQLConditionQueryBuilderFactory(this.storageStrategyFactory);
     }
 
     public StorageStrategyFactory getStorageStrategyFactory() {
@@ -152,36 +115,12 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
         return conditionQueryBuilderFactory;
     }
 
-    // issue #14
-    private String buildSecondFilterConditions(List<Condition> conditions) {
-        StringBuilder buff = new StringBuilder();
-
-        SphinxQLConditionBuilder conditionQueryBuilder;
-        for (Condition condition : conditions) {
-            if (isIgnoreSecondaryFiltering(condition)) {
-                continue;
-            }
-            conditionQueryBuilder = conditionQueryBuilderFactory.getQueryBuilder(condition, false);
-            if (buff.length() > 0) {
-                buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
-            }
-
-            buff.append(conditionQueryBuilder.build(condition));
-        }
-
-        return buff.toString();
+    @Override
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
+        this.tokenizerFactory = tokenizerFacotry;
     }
 
-    private boolean isIgnoreSecondaryFiltering(Condition condition) {
-        if (ConditionOperator.LIKE == condition.getOperator()) {
-            return true;
-        } else if (ConditionOperator.MULTIPLE_EQUALS == condition.getOperator()) {
-            return true;
-        } else if (FieldType.STRINGS == condition.getField().type()) {
-            return true;
-        } else if (FieldType.DECIMAL == condition.getField().type()) {
-            return true;
-        }
-        return false;
+    public TokenizerFactory getTokenizerFactory() {
+        return tokenizerFactory;
     }
 }

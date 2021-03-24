@@ -1,10 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.storage.value;
 
+import com.xforceplus.ultraman.oqsengine.storage.StorageType;
+
 import java.util.Objects;
 
 /**
  * 储存类型的抽像.
  * 实现了基本的多值处理.
+ * 短名称假定
  *
  * @param <V> 实际值类型.
  * @author dongbin
@@ -18,21 +21,25 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
     private StorageValue<V> next;
     private String logicName;
     private int location;
+    private StorageType type;
     private V value;
 
     /**
      * 使用物理字段名和名构造一个储存值实例.
-     * @param name 字段名称.
-     * @param value 储存的值.
+     *
+     * @param name      字段名称.
+     * @param value     储存的值.
      * @param logicName true 逻辑名称,false 物理储存名称.
      */
     public AbstractStorageValue(String name, V value, boolean logicName) {
         if (logicName) {
             this.logicName = name;
             this.location = EMPTY_LOCATION;
+            this.type = parseValueType(value);
         } else {
             this.logicName = parseLocigName(name);
             this.location = parseStorageFieldLocation(name);
+            this.type = parseStorageType(name);
         }
         this.value = value;
     }
@@ -87,6 +94,11 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
     }
 
     @Override
+    public StorageType type() {
+        return type;
+    }
+
+    @Override
     public boolean haveNext() {
         return next != null;
     }
@@ -108,8 +120,22 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
 
     @Override
     public String storageName() {
+        return doStorageName(logicName);
+    }
+
+    @Override
+    public ShortStorageName shortStorageName() {
+        String nameRadix36 = Long.toString(Long.parseLong(logicName), 36);
+
+        String shortStorageName = doStorageName(nameRadix36);
+
+        int middle = shortStorageName.length() / 2 - 1;
+        return new ShortStorageName(shortStorageName.substring(0, middle + 1), shortStorageName.substring(middle + 1));
+    }
+
+    private String doStorageName(String base) {
         StringBuilder buff = new StringBuilder();
-        buff.append(logicName)
+        buff.append(base)
             .append(this.type().getType());
         if (location != EMPTY_LOCATION) {
             buff.append(location);
@@ -166,6 +192,20 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
         return this.location;
     }
 
+    // 根据值类型解析.
+    private static StorageType parseValueType(Object value) {
+        if (value == null) {
+            return StorageType.UNKNOWN;
+        }
+        if (String.class.isInstance(value)) {
+            return StorageType.STRING;
+        } else if (Integer.class.isInstance(value) || Long.class.isInstance(value)) {
+            return StorageType.LONG;
+        } else {
+            return StorageType.UNKNOWN;
+        }
+    }
+
     // 解析逻辑字段名.
     private static String parseLocigName(String target) {
         int index = findTypeFlagIndex(target);
@@ -182,6 +222,15 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
         return Integer.parseInt(target.substring(index + 1));
     }
 
+    // 解析类型
+    private static StorageType parseStorageType(String target) {
+        int index = findTypeFlagIndex(target);
+
+        char t = target.charAt(index);
+        t = Character.toUpperCase(t);
+        return StorageType.valueOf(t);
+    }
+
     // 查找类型标识符位置.
     private static int findTypeFlagIndex(String target) {
         int index = target.length() - 1;
@@ -192,6 +241,12 @@ public abstract class AbstractStorageValue<V> implements StorageValue<V> {
                 index = i;
                 break;
             }
+        }
+
+        if (index <= 0) {
+            throw new IllegalArgumentException(
+                String.format(
+                    "Invalid physical storage field because the type identifier could not be located.[%s]", target));
         }
 
         return index;

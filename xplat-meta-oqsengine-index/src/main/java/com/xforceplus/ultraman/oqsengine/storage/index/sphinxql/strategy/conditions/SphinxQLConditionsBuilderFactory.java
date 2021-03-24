@@ -4,6 +4,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -19,7 +21,7 @@ import java.util.Map;
  * @version 0.1 2020/4/21 11:04
  * @since 1.8
  */
-public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryAble {
+public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryAble, TokenizerFactoryAble {
 
     private Map<Integer, ConditionsBuilder> builderMap;
 
@@ -28,6 +30,8 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
     @Resource(name = "indexStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
 
+    @Resource(name = "tokenizerFactory")
+    private TokenizerFactory tokenizerFactory;
 
     @PostConstruct
     public void init() {
@@ -43,6 +47,11 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
             if (StorageStrategyFactoryAble.class.isInstance(b)) {
                 ((StorageStrategyFactoryAble) b).setStorageStrategy(storageStrategyFactory);
             }
+            if (TokenizerFactoryAble.class.isInstance(b)) {
+                ((TokenizerFactoryAble) b).setTokenizerFacotry(tokenizerFactory);
+            }
+
+            b.init();
         });
     }
 
@@ -65,5 +74,10 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
     @Override
     public void setStorageStrategy(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
+    }
+
+    @Override
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
+        this.tokenizerFactory = tokenizerFacotry;
     }
 }

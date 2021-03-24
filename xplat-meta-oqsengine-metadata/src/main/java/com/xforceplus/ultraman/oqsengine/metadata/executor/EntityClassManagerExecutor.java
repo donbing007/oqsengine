@@ -7,8 +7,8 @@ import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
-import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.*;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
 
 /**
  * desc :
@@ -78,7 +78,7 @@ public class EntityClassManagerExecutor implements MetaManager {
 
             int version = cacheExecutor.version(appId);
 
-            requestHandler.register(new WatchElement(appId, env, version, WatchElement.AppStatus.Register));
+            requestHandler.register(new WatchElement(appId, env, version, WatchElement.ElementStatus.Register));
 
             if (version < 0) {
                 CompletableFuture<Integer> future = async(() -> {
@@ -165,7 +165,8 @@ public class EntityClassManagerExecutor implements MetaManager {
                                                     .withIdentity(r.isIdentity())
                                                     .withEntityClassId(r.getEntityClassId())
                                                     .withFunction(this::load)
-                                                    .withEntityField(r.getEntityField());
+                                                    .withEntityField(r.getEntityField())
+                                                    .withBelongToOwner(r.isBelongToOwner());
 
                     oqsRelations.add(builder.build());
                 }

@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.utils;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.*;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,8 +75,6 @@ public class EntityClassSyncResponseBuilder {
                 .setLevel(level)
                 .addAllEntityFields(entityFieldInfos)
                 .addAllRelations(relationInfos)
-                .setIsAny(false)
-                .setIsDynamic(false)
                 .build();
     }
 
@@ -87,7 +85,7 @@ public class EntityClassSyncResponseBuilder {
                 .setCname(id + "_cname")
                 .setFieldType(fieldType)
                 .setDictId(id + "_dictId")
-                .setFieldConfig(fieldConfig(true, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.NORMAL))
+                .setFieldConfig(fieldConfig(true, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.NORMAL))
                 .build();
     }
 
@@ -98,14 +96,19 @@ public class EntityClassSyncResponseBuilder {
                 .setEntityClassId(entityId)
                 .setRelOwnerClassId(ownerId)
                 .setRelationType(relationType)
-                .setEntityFieldCode(fieldId + "_name")
+                .setBelongToOwner(id % 2 == 0)
+                .setEntityField(EntityFieldInfo.newBuilder()
+                        .setId(fieldId)
+                        .setFieldType(EntityFieldInfo.FieldType.LONG)
+                        .setName(fieldId + "_name")
+                        .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
+                        .build())
                 .build();
-
     }
 
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig
-    fieldConfig(boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense systemFieldType) {
-        return com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.newBuilder()
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig
+    fieldConfig(boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
+        return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
                 .setSearchable(searchable)
                 .setIsRequired(true)
                 .setMetaFieldSense(systemFieldType)

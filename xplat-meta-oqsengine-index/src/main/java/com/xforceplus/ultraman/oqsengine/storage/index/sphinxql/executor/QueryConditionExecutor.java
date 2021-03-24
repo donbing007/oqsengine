@@ -3,7 +3,9 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.executor;
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -32,40 +34,32 @@ import static java.util.stream.Collectors.joining;
 /**
  * Query condition Executor
  */
-public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Conditions, Page, Sort, Set<Long>, Long>, List<EntityRef>> {
+public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple6<IEntityClass, Conditions, Page, Sort, Set<Long>, Long>, List<EntityRef>> {
 
     Logger logger = LoggerFactory.getLogger(QueryConditionExecutor.class);
-
-    private String indexTableName;
-
-    private TransactionResource<Connection> resource;
 
     private StorageStrategyFactory storageStrategyFactory;
 
     private SphinxQLConditionsBuilderFactory conditionsBuilderFactory;
 
-    private Long maxQueryTimeMs;
-
     public QueryConditionExecutor(
-            String indexTableName
-            , TransactionResource<Connection> resource
-            , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
-            , StorageStrategyFactory storageStrategyFactory
-            , Long maxQueryTimeMs
+        String indexTableName
+        , TransactionResource<Connection> resource
+        , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
+        , StorageStrategyFactory storageStrategyFactory
+        , Long maxQueryTimeMs
     ) {
-        this.indexTableName = indexTableName;
-        this.resource = resource;
+        super(indexTableName, resource, maxQueryTimeMs);
         this.conditionsBuilderFactory = conditionsBuilderFactory;
         this.storageStrategyFactory = storageStrategyFactory;
-        this.maxQueryTimeMs = maxQueryTimeMs;
     }
 
     public static Executor<Tuple6<IEntityClass, Conditions, Page, Sort, Set<Long>, Long>, List<EntityRef>> build(
-            String indexTableName
-            , TransactionResource<Connection> resource
-            , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
-            , StorageStrategyFactory storageStrategyFactory
-            , Long maxQueryTimeMs
+        String indexTableName
+        , TransactionResource<Connection> resource
+        , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
+        , StorageStrategyFactory storageStrategyFactory
+        , Long maxQueryTimeMs
     ) {
         return new QueryConditionExecutor(indexTableName, resource, conditionsBuilderFactory, storageStrategyFactory, maxQueryTimeMs);
     }
@@ -76,11 +70,17 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
         private String fieldName;
         private String alias;
         private boolean number;
+        private boolean system;
 
         public SortField(String fieldName, String alias, boolean number) {
+            this(fieldName, alias, number, false);
+        }
+
+        public SortField(String fieldName, String alias, boolean number, boolean system) {
             this.fieldName = fieldName;
             this.alias = alias;
             this.number = number;
+            this.system = system;
         }
 
         public String getFieldName() {
@@ -93,6 +93,10 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
 
         public boolean isNumber() {
             return number;
+        }
+
+        public boolean isSystem() {
+            return system;
         }
     }
 
@@ -110,16 +114,16 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
             }
             first = false;
             buff.append(' ')
-                    .append(field.getAlias())
-                    .append(' ')
-                    .append(desc ? SqlKeywordDefine.ORDER_TYPE_DESC : SqlKeywordDefine.ORDER_TYPE_ASC);
+                .append(field.getAlias())
+                .append(' ')
+                .append(desc ? SqlKeywordDefine.ORDER_TYPE_DESC : SqlKeywordDefine.ORDER_TYPE_ASC);
 
         }
         return buff.toString();
     }
 
     // 构造排序要用到的字段在select段.
-    // select id,cref,pref, jsonfields.123123L as sort1 from
+    // select id,cref,pref, attr.123123L as sort1 from
     private String buildSortSelectValuesSegment(List<SortField> sortFields) {
         StringBuilder buff = new StringBuilder();
         String fieldName;
@@ -129,14 +133,18 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
             }
 
             if (field.isNumber()) {
-                fieldName = "bigint(" + field.getFieldName() + ")";
+                if (!field.isSystem()) {
+                    fieldName = "bigint(" + field.getFieldName() + ")";
+                } else {
+                    fieldName = field.getFieldName();
+                }
             } else {
                 fieldName = field.getFieldName();
             }
 
             buff.append(fieldName)
-                    .append(' ').append(SqlKeywordDefine.ALIAS_LINK).append(' ')
-                    .append(field.getAlias());
+                .append(' ').append(SqlKeywordDefine.ALIAS_LINK).append(' ')
+                .append(field.getAlias());
         }
 
         if (buff.length() > 0) {
@@ -150,22 +158,31 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
     private List<SortField> buildSortValues(Sort sort) {
         List<SortField> sortFields;
         if (!sort.isOutOfOrder()) {
+
+            /**
+             * optimize: 这里进行一个可能的优化,尝试将排序字段优化成原生字段.
+             *           如果可以使用原生字段字段,即非 NORMAL 类型的字段.
+             */
+            sortFields = new ArrayList<>(tryNativeFieldSorting(sort.getField()));
+            if (!sortFields.isEmpty()) {
+                return sortFields;
+            }
+
             StorageStrategy storageStrategy = storageStrategyFactory.getStrategy(sort.getField().type());
-            Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField());
+            Collection<String> storageNames = storageStrategy.toStorageNames(sort.getField(), true);
 
             String fieldName;
             String alias;
             boolean number;
             int aliasIndex = 0;
-            sortFields = new ArrayList<>();
             StringBuilder buff = new StringBuilder();
             for (String storageName : storageNames) {
                 buff.delete(0, buff.length());
-                buff.append(FieldDefine.JSON_FIELDS).append(".").append(storageName);
+                buff.append(FieldDefine.ATTRIBUTE).append(".").append(storageName);
                 fieldName = buff.toString();
 
                 buff.delete(0, buff.length());
-                buff.append("sort").append(aliasIndex++);
+                buff.append(FieldDefine.SORT_FIELD_ALIAS_PREFIX).append(aliasIndex++);
                 alias = buff.toString();
 
                 if (storageStrategy.storageType() == StorageType.LONG) {
@@ -180,6 +197,31 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
             sortFields = Collections.emptyList();
         }
 
+        return sortFields;
+    }
+
+    // 尝试使用原生的字段排序.
+    private List<SortField> tryNativeFieldSorting(IEntityField field) {
+        FieldConfig.FieldSense sence = field.config().getFieldSense();
+        // 中会有一个排序字段.
+        final int onlyOne = 1;
+        List<SortField> sortFields = new ArrayList<>(onlyOne);
+        switch (sence) {
+            case CREATE_TIME: {
+                sortFields.add(
+                    new SortField(
+                        FieldDefine.CREATE_TIME,
+                        String.format("%s0", FieldDefine.SORT_FIELD_ALIAS_PREFIX), true, true));
+                break;
+            }
+            case UPDATE_TIME: {
+                sortFields.add(
+                    new SortField(
+                        FieldDefine.UPDATE_TIME,
+                        String.format("%s0", FieldDefine.SORT_FIELD_ALIAS_PREFIX), true, true));
+                break;
+            }
+        }
         return sortFields;
     }
 
@@ -247,11 +289,9 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
 
         }
 
-        if (page.isEmptyPage()) {
-            return Collections.emptyList();
+        if (!page.isSinglePage()) {
+            page.setTotalCount(Long.MAX_VALUE);
         }
-
-        page.setTotalCount(Long.MAX_VALUE);
         PageScope scope = page.getNextPage();
 
         if (scope == null) {
@@ -292,16 +332,23 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
             }
         }
 
-        String sql = String.format(SQLConstant.SELECT_SQL, sortSelectValuesSegment, indexTableName, whereCondition, orderBySqlSegment);
+        String sql = String.format(SQLConstant.SELECT_SQL, sortSelectValuesSegment, getIndexName(), whereCondition, orderBySqlSegment);
 
-        try (PreparedStatement st = resource.value().prepareStatement(sql)) {
+        try (PreparedStatement st = getTransactionResource().value().prepareStatement(sql)) {
             st.setLong(1, 0);
-            st.setLong(2, page.getPageSize() * (page.getIndex() - 1));
+            if (page.isEmptyPage()) {
+                st.setLong(2, 0);
+            } else {
+                st.setLong(2, page.getPageSize() * (page.getIndex() - 1));
+            }
             st.setLong(3, page.hasVisibleTotalCountLimit() ?
-                    page.getVisibleTotalCount()
-                    : page.getPageSize() * page.getIndex());
-            // add max query timeout.
-            st.setLong(4, maxQueryTimeMs);
+                page.getVisibleTotalCount()
+                : page.getPageSize() * page.getIndex());
+            // 设置manticore的查询超时时间.
+            st.setLong(4, getTimeoutMs());
+
+            // 设定本地超时时间.
+            checkTimeout(st);
 
             try (ResultSet rs = st.executeQuery()) {
                 List<EntityRef> refs = new ArrayList((int) page.getPageSize());
@@ -309,9 +356,7 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
                 while (rs.next()) {
                     EntityRef entityRef = new EntityRef();
                     entityRef.setId(rs.getLong(FieldDefine.ID));
-                    entityRef.setCref(rs.getLong(FieldDefine.CREF));
-                    entityRef.setPref(rs.getLong(FieldDefine.PREF));
-                    entityRef.setMajor(rs.getInt(FieldDefine.OQS_MAJOR));
+                    entityRef.setMajor(rs.getInt(FieldDefine.OQSMAJOR));
 
                     if (!useSort.isOutOfOrder()) {
                         if (useSort.getField().config().isIdentifie()) {
@@ -327,14 +372,14 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
                                     switch (finalStorageStrategy.storageType()) {
                                         case LONG:
                                             return StorageValueFactory.buildStorageValue(
-                                                    finalStorageStrategy.storageType(),
-                                                    x.fieldName,
-                                                    finalRs.getLong("sort" + index.getAndIncrement()));
+                                                finalStorageStrategy.storageType(),
+                                                x.fieldName,
+                                                finalRs.getLong("sort" + index.getAndIncrement()));
                                         case STRING:
                                             return StorageValueFactory.buildStorageValue(
-                                                    finalStorageStrategy.storageType(),
-                                                    x.fieldName,
-                                                    finalRs.getString("sort" + index.getAndIncrement()));
+                                                finalStorageStrategy.storageType(),
+                                                x.fieldName,
+                                                finalRs.getString("sort" + index.getAndIncrement()));
                                         default:
                                             return null;
                                     }
@@ -348,14 +393,10 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
 
                                 IValue iValue = storageStrategy.toLogicValue(useSort.getField(), reduce.get());
 
-                                if (iValue.getValue() == null) {
-                                    entityRef.setOrderValue(null);
+                                if (iValue.compareByString()) {
+                                    entityRef.setOrderValue(iValue.valueToString());
                                 } else {
-                                    if (iValue.compareByString()) {
-                                        entityRef.setOrderValue(iValue.valueToString());
-                                    } else {
-                                        entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
-                                    }
+                                    entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
                                 }
 
                             }
@@ -365,8 +406,10 @@ public class QueryConditionExecutor implements Executor<Tuple6<IEntityClass, Con
                 }
 
                 if (!page.isSinglePage()) {
-                    long count = count(resource);
+                    long count = count(getTransactionResource());
                     page.setTotalCount(count);
+                } else {
+                    page.setTotalCount(refs.size());
                 }
 
                 return refs;

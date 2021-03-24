@@ -18,10 +18,11 @@ public interface EntityManagementService {
      * @param entity 目标 entity 数据.
      * @return 新对象的标识.
      */
-    IEntity build(IEntity entity) throws SQLException;
+    ResultStatus build(IEntity entity) throws SQLException;
 
     /**
      * 替换一个已经存在的 entity 的信息.
+     * 注意: 可能只包含需要替换的属性即可.
      * @param entity 目标 entity.
      */
     ResultStatus replace(IEntity entity) throws SQLException;

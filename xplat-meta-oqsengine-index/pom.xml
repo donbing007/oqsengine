@@ -19,8 +19,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-beans</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>xplat-meta-oqsengine-tokenizer</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
@@ -61,6 +62,12 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-testcontainer</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.javafaker</groupId>
+            <artifactId>javafaker</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

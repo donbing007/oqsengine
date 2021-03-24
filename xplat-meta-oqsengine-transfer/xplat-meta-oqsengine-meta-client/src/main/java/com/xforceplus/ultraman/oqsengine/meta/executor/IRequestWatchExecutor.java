@@ -2,12 +2,9 @@ package com.xforceplus.ultraman.oqsengine.meta.executor;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import io.grpc.stub.StreamObserver;
-
-import java.util.Queue;
-import java.util.function.Function;
 
 /**
  * desc :
@@ -25,13 +22,11 @@ public interface IRequestWatchExecutor extends IWatchExecutor {
 
     boolean update(WatchElement watchElement);
 
-    boolean canAccess(String uid);
-
-    void addForgot(WatchElement watchElement);
-
-    Queue<WatchElement> forgot();
-
-    Function<String, Boolean> accessFunction();
+    boolean isAlive(String uid);
 
     RequestWatcher watcher();
+
+    void active();
+
+    void inActive();
 }

@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.meta.dto;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.AbstractWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import io.grpc.stub.StreamObserver;
 
 /**
@@ -27,11 +27,6 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
     }
 
     @Override
-    public StreamObserver<EntityClassSyncRequest> observer() {
-        return streamObserver;
-    }
-
-    @Override
     public boolean onWatch(WatchElement watchElement) {
         WatchElement v = watches.get(watchElement.getAppId());
         if (null == v) {
@@ -46,14 +41,26 @@ public class RequestWatcher extends AbstractWatcher<EntityClassSyncRequest> {
     }
 
     @Override
-    public void release() {
-        try {
-            uid = null;
-            if (null != streamObserver) {
-                streamObserver.onCompleted();
+    public boolean isAlive(String uid) {
+        /**
+         * 判断是否可用
+         */
+        if (null != uid && isActive()) {
+            try {
+                return uid.equals(this.uid());
+            } catch (Exception e) {
+                /**
+                 * 兜底瞬间将uid置为null的逻辑.
+                 */
+                return false;
             }
-        } catch (Exception e) {
-            //  ignore
         }
+        return false;
+    }
+
+    @Override
+    public void release() {
+        uid = null;
+        super.release();
     }
 }

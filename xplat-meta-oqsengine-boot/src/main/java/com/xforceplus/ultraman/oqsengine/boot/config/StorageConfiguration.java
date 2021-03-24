@@ -5,7 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
 import com.xforceplus.ultraman.oqsengine.common.selector.SuffixNumberHashSelector;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLIndexStorage;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.SphinxQLManticoreIndexStorage;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.value.SphinxQLDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
@@ -40,13 +40,11 @@ public class StorageConfiguration {
     @Bean
     public IndexStorage indexStorage(
         @Value("${storage.index.search.name:oqsindex}") String searchIndexName,
-        @Value("${storage.index.search.maxQueryTimeMs:0}") long maxQueryTimeMs,
-        @Value("${storage.index.search.maxBatchSize:20}") int maxBatchSize) {
+        @Value("${storage.index.search.maxQueryTimeMs:3000}") long maxQueryTimeMs) {
 
-        SphinxQLIndexStorage storage = new SphinxQLIndexStorage();
-        storage.setSearchIndexName(searchIndexName);
+        SphinxQLManticoreIndexStorage storage = new SphinxQLManticoreIndexStorage();
         storage.setMaxSearchTimeoutMs(maxQueryTimeMs);
-        storage.setMaxBatchSize(maxBatchSize);
+        storage.setSearchIndexName(searchIndexName);
         return storage;
     }
 

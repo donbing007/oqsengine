@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -18,7 +17,7 @@ public class FieldConfig implements Serializable {
     /**
      * 字段意义.
      */
-    public static enum FieldSense {
+    public enum FieldSense {
         UNKNOWN(0),
         /**
          * 普通属性.
@@ -48,6 +47,46 @@ public class FieldConfig implements Serializable {
             for (FieldSense sense : FieldSense.values()) {
                 if (sense.getSymbol() == symbol) {
                     return sense;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     * 模糊类型.
+     * 数字只允许NOT.
+     */
+    public enum FuzzyType {
+        UNKNOWN(0),
+        /**
+         * 不作处理
+         */
+        NOT(1),
+        /**
+         * 通配符
+         */
+        WILDCARD(2),
+        /**
+         * 分词
+         */
+        SEGMENTATION(3);
+
+        private int symbol;
+
+        private FuzzyType(int symbol) {
+            this.symbol = symbol;
+        }
+
+        public int getSymbol() {
+            return symbol;
+        }
+
+        public static FuzzyType getInstance(int symbol) {
+            for (FuzzyType type : FuzzyType.values()) {
+                if (type.getSymbol() == symbol) {
+                    return type;
                 }
             }
 
@@ -99,7 +138,7 @@ public class FieldConfig implements Serializable {
      * 字段意义.
      */
     @JsonProperty(value = "fieldSense")
-    private FieldSense fieldSense = FieldSense.UNKNOWN;
+    private FieldSense fieldSense = FieldSense.NORMAL;
 
     /**
      * 校验正则.
@@ -116,11 +155,25 @@ public class FieldConfig implements Serializable {
     @JsonProperty(value = "displayType")
     private String displayType = "";
 
+    @JsonProperty(value = "fuzzyType")
+    private FuzzyType fuzzyType = FuzzyType.NOT;
+
+    @JsonProperty(value = "wildcardMinWidth")
+    private int wildcardMinWidth = 3;
+
+    @JsonProperty(value = "wildcardMaxWidth")
+    private int wildcardMaxWidth = 6;
+
+    @JsonProperty(value = "uniqueName")
+    private String uniqueName = "";
+
     /**
      * 创建一个新的 FieldConfig.
      *
      * @return 实例.
+     * @deprecated 已经过期, 请先用FieldConfig.Builder构造实例.
      */
+    @Deprecated
     public static FieldConfig build() {
         return new FieldConfig();
     }
@@ -173,6 +226,17 @@ public class FieldConfig implements Serializable {
     }
 
     /**
+     * 模糊类型.
+     *
+     * @param type
+     * @return
+     */
+    public FieldConfig fuzzyType(FuzzyType type) {
+        this.fuzzyType = type;
+        return this;
+    }
+
+    /**
      * 是否表示一个数据标识.
      *
      * @return true 数据标识,false 非数据标识.
@@ -208,7 +272,7 @@ public class FieldConfig implements Serializable {
         return min;
     }
 
-    public int getPrecision() {
+    public int precision() {
         return precision;
     }
 
@@ -267,6 +331,25 @@ public class FieldConfig implements Serializable {
         return this;
     }
 
+    public FuzzyType getFuzzyType() {
+        return fuzzyType;
+    }
+
+    public int getPrecision() {
+        return precision;
+    }
+
+    public int getWildcardMinWidth() {
+        return wildcardMinWidth;
+    }
+
+    public int getWildcardMaxWidth() {
+        return wildcardMaxWidth;
+    }
+
+    public String getUniqueName() {
+        return uniqueName;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -280,14 +363,17 @@ public class FieldConfig implements Serializable {
         return isSearchable() == that.isSearchable() &&
             getMax() == that.getMax() &&
             getMin() == that.getMin() &&
-            getPrecision() == that.getPrecision() &&
+            precision() == that.precision() &&
             isIdentifie() == that.isIdentifie() &&
             isRequired() == that.isRequired() &&
             isSplittable() == that.isSplittable() &&
+            getWildcardMinWidth() == that.getWildcardMinWidth() &&
+            getWildcardMaxWidth() == that.getWildcardMaxWidth() &&
             getFieldSense() == that.getFieldSense() &&
             Objects.equals(getValidateRegexString(), that.getValidateRegexString()) &&
             Objects.equals(getDelimiter(), that.getDelimiter()) &&
-            Objects.equals(getDisplayType(), that.getDisplayType());
+            Objects.equals(getDisplayType(), that.getDisplayType()) &&
+            getFuzzyType() == that.getFuzzyType();
     }
 
     @Override
@@ -296,7 +382,7 @@ public class FieldConfig implements Serializable {
             isSearchable(),
             getMax(),
             getMin(),
-            getPrecision(),
+            precision(),
             isIdentifie(),
             isRequired(),
             getFieldSense(),
@@ -325,7 +411,7 @@ public class FieldConfig implements Serializable {
     }
 
     /**
-     * Builder
+     * builder
      */
     public static final class Builder {
         private boolean searchable = false;
@@ -334,89 +420,115 @@ public class FieldConfig implements Serializable {
         private int precision = 0;
         private boolean identifie = false;
         private boolean required = false;
-        private FieldSense fieldSense = FieldSense.UNKNOWN;
+        private FieldSense fieldSense = FieldSense.NORMAL;
         private String validateRegexString = "";
         private boolean splittable = false;
         private String delimiter = "";
         private String displayType = "";
+        private FuzzyType fuzzyType = FuzzyType.NOT;
+        private int wildcardMinWidth = 3;
+        private int wildcardMaxWidth = 6;
+        private String uniqueName = "";
 
         private Builder() {
         }
 
-        public static FieldConfig.Builder anFieldConfig() {
-            return new FieldConfig.Builder();
+        public static Builder aFieldConfig() {
+            return new Builder();
         }
 
-        public FieldConfig.Builder withSearchable(boolean searchable) {
+        public Builder withSearchable(boolean searchable) {
             this.searchable = searchable;
             return this;
         }
 
-        public FieldConfig.Builder withMax(long max) {
+        public Builder withMax(long max) {
             this.max = max;
             return this;
         }
 
-        public FieldConfig.Builder withMin(long min) {
+        public Builder withMin(long min) {
             this.min = min;
             return this;
         }
 
-        public FieldConfig.Builder withPrecision(int precision) {
+        public Builder withPrecision(int precision) {
             this.precision = precision;
             return this;
         }
 
-        public FieldConfig.Builder withIdentifie(boolean identifie) {
+        public Builder withIdentifie(boolean identifie) {
             this.identifie = identifie;
             return this;
         }
 
-        public FieldConfig.Builder withRequired(boolean required) {
+        public Builder withRequired(boolean required) {
             this.required = required;
             return this;
         }
 
-        public FieldConfig.Builder withFieldSense(FieldSense fieldSense) {
+        public Builder withFieldSense(FieldSense fieldSense) {
             this.fieldSense = fieldSense;
             return this;
         }
 
-        public FieldConfig.Builder withValidateRegexString(String validateRegexString) {
+        public Builder withValidateRegexString(String validateRegexString) {
             this.validateRegexString = validateRegexString;
             return this;
         }
 
-        public FieldConfig.Builder withSplittable(boolean splittable) {
+        public Builder withSplittable(boolean splittable) {
             this.splittable = splittable;
             return this;
         }
 
-        public FieldConfig.Builder withDelimiter(String delimiter) {
+        public Builder withDelimiter(String delimiter) {
             this.delimiter = delimiter;
             return this;
         }
 
-        public FieldConfig.Builder withDisplayType(String displayType) {
+        public Builder withDisplayType(String displayType) {
             this.displayType = displayType;
             return this;
         }
 
+        public Builder withFuzzyType(FuzzyType fuzzyType) {
+            this.fuzzyType = fuzzyType;
+            return this;
+        }
+
+        public Builder withWildcardMinWidth(int wildcardMinWidth) {
+            this.wildcardMinWidth = wildcardMinWidth;
+            return this;
+        }
+
+        public Builder withWildcardMaxWidth(int wildcardMaxWidth) {
+            this.wildcardMaxWidth = wildcardMaxWidth;
+            return this;
+        }
+
+        public Builder withUniqueName(String uniqueName) {
+            this.uniqueName = uniqueName;
+            return this;
+        }
 
         public FieldConfig build() {
             FieldConfig fieldConfig = new FieldConfig();
-            fieldConfig.searchable = searchable;
-            fieldConfig.max = max;
-            fieldConfig.min = min;
-            fieldConfig.precision = precision;
-            fieldConfig.identifie = identifie;
-            fieldConfig.required = required;
-            fieldConfig.fieldSense = fieldSense;
-            fieldConfig.validateRegexString = validateRegexString;
-            fieldConfig.splittable = splittable;
-            fieldConfig.delimiter = delimiter;
-            fieldConfig.displayType = displayType;
-
+            fieldConfig.validateRegexString = this.validateRegexString;
+            fieldConfig.min = this.min;
+            fieldConfig.fieldSense = this.fieldSense;
+            fieldConfig.precision = this.precision;
+            fieldConfig.delimiter = this.delimiter;
+            fieldConfig.max = this.max;
+            fieldConfig.identifie = this.identifie;
+            fieldConfig.splittable = this.splittable;
+            fieldConfig.fuzzyType = this.fuzzyType;
+            fieldConfig.searchable = this.searchable;
+            fieldConfig.wildcardMinWidth = this.wildcardMinWidth;
+            fieldConfig.wildcardMaxWidth = this.wildcardMaxWidth;
+            fieldConfig.required = this.required;
+            fieldConfig.displayType = this.displayType;
+            fieldConfig.uniqueName = this.uniqueName;
             return fieldConfig;
         }
     }

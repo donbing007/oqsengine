@@ -23,6 +23,7 @@ public class SQLJsonConditionsBuilderFactory implements StorageStrategyFactoryAb
     public void init() {
         SQLJsonConditionsBuilder cb = new SQLJsonConditionsBuilder();
         cb.setStorageStrategy(storageStrategyFactory);
+        cb.init();
         conditionsBuilder = cb;
     }
 

@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta.connect;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
@@ -9,6 +9,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
+
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
+
 
 /**
  * desc :
@@ -23,7 +26,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
     private Logger logger = LoggerFactory.getLogger(MetaSyncGRpcClient.class);
 
     @Resource
-    private GRpcParamsConfig gRpcParamsConfig;
+    private GRpcParams gRpcParams;
 
     private ManagedChannel channel;
     private EntityClassSyncGrpc.EntityClassSyncStub stub;
@@ -32,24 +35,18 @@ public class MetaSyncGRpcClient implements GRpcClient {
     private int port;
     private boolean isClientOpen;
 
-    /**
-     * 延时销毁最大值30秒
-     */
-    private static final long destroySeconds = 30_000;
-
-
     public MetaSyncGRpcClient(String host, int port) {
         this.host = host;
         this.port = port;
     }
 
     @Override
-    public void create() {
+    public void start() {
 
         channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
-                .keepAliveTime(gRpcParamsConfig.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
-                .keepAliveTimeout(gRpcParamsConfig.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
+                .keepAliveTime(gRpcParams.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
+                .keepAliveTimeout(gRpcParams.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
                 .build();
 
         stub = EntityClassSyncGrpc.newStub(channel);
@@ -60,9 +57,9 @@ public class MetaSyncGRpcClient implements GRpcClient {
     }
 
     @Override
-    public void destroy() {
+    public void stop() {
         try {
-            channel.shutdown().awaitTermination(destroySeconds, TimeUnit.MILLISECONDS);
+            channel.shutdown().awaitTermination(SHUT_DOWN_WAIT_TIME_OUT, TimeUnit.MILLISECONDS);
 
             logger.info("gRpc-client destroy!");
         } catch (InterruptedException e) {

@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.CdcErrorStorage;
-import com.xforceplus.ultraman.oqsengine.devops.cdcerror.SQLCdcErrorStorage;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.CdcErrorStorage;
+import com.xforceplus.ultraman.oqsengine.cdc.cdcerror.SQLCdcErrorStorage;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.DevOpsRebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.RebuildIndexExecutor;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.storage.SQLTaskStorage;
@@ -31,8 +31,7 @@ public class DevOpsConfiguration {
             @Value("${storage.devOps.task.cache.expire:30}") long cacheExpireTime,
             @Value("${storage.devOps.task.cache.maxsize:500}") long cacheMaxSize,
             @Value("${storage.devOps.task.page.size:1000}") int pageSize) {
-        return new DevOpsRebuildIndexExecutor(splitPart, maxQueueSize, executionTimeout,
-                cacheExpireTime, cacheMaxSize, pageSize);
+        return new DevOpsRebuildIndexExecutor(splitPart, maxQueueSize, cacheExpireTime, cacheMaxSize);
     }
     @Bean(name = "lockExecutor")
     public LockExecutor lockExecutor() {

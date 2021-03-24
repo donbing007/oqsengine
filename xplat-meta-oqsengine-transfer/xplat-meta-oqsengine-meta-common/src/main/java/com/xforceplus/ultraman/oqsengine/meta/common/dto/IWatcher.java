@@ -26,9 +26,13 @@ public interface IWatcher<T> {
 
     boolean onWatch(WatchElement watchElement);
 
+    boolean isAlive(String uid);
+
     void addWatch(WatchElement watchElement);
 
     Map<String, WatchElement> watches();
+
+    boolean runWithCheck(Function<StreamObserver<T>, Boolean> function);
 
     /**
      * 执行supplier后remove
@@ -39,8 +43,9 @@ public interface IWatcher<T> {
 
     void release();
 
-    boolean isOnServe();
+    boolean isActive();
 
-    boolean runWithCheck(Function<StreamObserver<T>, Boolean> function);
+    void active();
 
+    void inActive();
 }

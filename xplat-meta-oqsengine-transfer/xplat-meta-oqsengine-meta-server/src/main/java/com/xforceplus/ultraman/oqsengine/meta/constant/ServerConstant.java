@@ -9,5 +9,5 @@ package com.xforceplus.ultraman.oqsengine.meta.constant;
  * @since : 1.8
  */
 public class ServerConstant {
-    public static final int SERVER_TASK_COUNT = 3;
+    public static final int SERVER_TASK_COUNT = 2;
 }

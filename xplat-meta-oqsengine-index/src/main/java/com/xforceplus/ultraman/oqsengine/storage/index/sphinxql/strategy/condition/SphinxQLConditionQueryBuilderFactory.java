@@ -8,6 +8,8 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.LtEqNotMatchDecimalConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.decimal.LtNotMatchDecimalConditionBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactory;
+import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -17,14 +19,14 @@ import java.util.concurrent.ConcurrentMap;
  * @version 0.1 2020/3/26 10:22
  * @since 1.8
  */
-public class SphinxQLConditionQueryBuilderFactory {
+public class SphinxQLConditionQueryBuilderFactory implements TokenizerFactoryAble {
 
     private StorageStrategyFactory storageStrategyFactory;
     private ConcurrentMap<String, SphinxQLConditionBuilder> builders;
+    private TokenizerFactory tokenizerFactory;
 
     public SphinxQLConditionQueryBuilderFactory(StorageStrategyFactory storageStrategyFactory) {
         this.storageStrategyFactory = storageStrategyFactory;
-        init();
     }
 
     private static String buildKey(FieldType fieldType, ConditionOperator operator, boolean match, boolean id) {
@@ -35,7 +37,7 @@ public class SphinxQLConditionQueryBuilderFactory {
      * @see FieldType
      * @see ConditionOperator
      */
-    private void init() {
+    public void init() {
         builders = new ConcurrentHashMap<>();
 
 
@@ -94,6 +96,12 @@ public class SphinxQLConditionQueryBuilderFactory {
             buildKey(FieldType.STRINGS, ConditionOperator.MULTIPLE_EQUALS, true, false),
             new MeqMatchConditionBuilder(storageStrategyFactory, FieldType.STRINGS, true)
         );
+
+        builders.values().stream().forEach(b -> {
+            if (TokenizerFactoryAble.class.isInstance(b)) {
+                ((TokenizerFactoryAble) b).setTokenizerFacotry(tokenizerFactory);
+            }
+        });
     }
 
     public SphinxQLConditionBuilder getQueryBuilder(Condition condition, boolean match) {
@@ -101,29 +109,28 @@ public class SphinxQLConditionQueryBuilderFactory {
         String key = buildKey(
             condition.getField().type(), condition.getOperator(), match, condition.getField().config().isIdentifie());
 
-        SphinxQLConditionBuilder builder = builders.get(key);
-        if (builder == null) {
+        SphinxQLConditionBuilder builder = builders.computeIfAbsent(key, k -> {
+            SphinxQLConditionBuilder b;
+            if (match) {
+                b = new MatchConditionBuilder(
+                    storageStrategyFactory, condition.getField().type(), condition.getOperator(), false);
+            } else {
 
-            synchronized (key) {
-                builder = builders.get(key);
-
-                if (builder == null) {
-
-                    if (match) {
-                        builder = new MatchConditionBuilder(
-                            storageStrategyFactory, condition.getField().type(), condition.getOperator(), false);
-                    } else {
-
-                        builder = new NotMatchConditionBuilder(
-                            storageStrategyFactory, condition.getField().type(), condition.getOperator());
-                    }
-
-                    builders.put(key, builder);
-                }
+                b = new NotMatchConditionBuilder(
+                    storageStrategyFactory, condition.getField().type(), condition.getOperator());
             }
 
-        }
+            if (TokenizerFactoryAble.class.isInstance(b)) {
+                ((TokenizerFactoryAble) b).setTokenizerFacotry(tokenizerFactory);
+            }
+            return b;
+        });
 
         return builder;
+    }
+
+    @Override
+    public void setTokenizerFacotry(TokenizerFactory tokenizerFacotry) {
+        this.tokenizerFactory = tokenizerFacotry;
     }
 }

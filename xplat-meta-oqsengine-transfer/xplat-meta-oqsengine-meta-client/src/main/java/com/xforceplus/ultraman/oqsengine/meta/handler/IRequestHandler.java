@@ -1,9 +1,10 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.handler.IObserverHandler;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 
-import java.util.AbstractMap;
 import java.util.List;
 
 /**
@@ -14,7 +15,7 @@ import java.util.List;
  * date : 2021/2/3
  * @since : 1.8
  */
-public interface IRequestHandler {
+public interface IRequestHandler extends IObserverHandler<EntityClassSyncResponse, Void> {
 
     /**
      * 注册一个appId，并开始监听
@@ -35,9 +36,12 @@ public interface IRequestHandler {
      */
     boolean reRegister();
 
+
     /**
-     * 接收处理返回结果
-     * @return boolean
+     * 获得当前IRequestWatchExecutor
+     * @return
      */
-    void accept(EntityClassSyncResponse entityClassSyncResponse);
+    IRequestWatchExecutor watchExecutor();
+
+
 }

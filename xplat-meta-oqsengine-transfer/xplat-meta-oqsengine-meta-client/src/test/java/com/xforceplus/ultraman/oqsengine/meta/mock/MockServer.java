@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.meta.mock;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncGrpc;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ public class MockServer extends EntityClassSyncGrpc.EntityClassSyncImplBase {
                      */
                     if (null != uid && isTestOk) {
                         EntityClassSyncResponse.Builder builder = EntityClassSyncResponse.newBuilder().setUid(uid)
-                                .setStatus(CONFIRM_REGISTER.ordinal())
+                                .setStatus(REGISTER_OK.ordinal())
                                 .setAppId(entityClassSyncRequest.getAppId())
                                 .setVersion(entityClassSyncRequest.getVersion());
 

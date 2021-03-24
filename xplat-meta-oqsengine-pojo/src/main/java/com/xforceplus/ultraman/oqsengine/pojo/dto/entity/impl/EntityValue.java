@@ -14,29 +14,19 @@ import java.util.function.Predicate;
  * @version 1.0 2020/3/26 15:10
  */
 public class EntityValue implements IEntityValue, Cloneable, Serializable {
-    /**
-     * 数据id
-     */
-    private long id;
 
     /**
      * Entity的值集合
      */
     private Map<Long, IValue> values;
 
-
-    public EntityValue(long id) {
-        this.id = id;
-    }
-
-    @Override
-    public long id() {
-        return id;
-    }
-
-    @Override
-    public void restId(long id) {
-        this.id = id;
+    /**
+     * 获得值实例.
+     *
+     * @return 实例.
+     */
+    public static IEntityValue build() {
+        return new EntityValue();
     }
 
     @Override
@@ -88,10 +78,10 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
     }
 
     @Override
-    public IValue remove(IEntityField field) {
+    public Optional<IValue> remove(IEntityField field) {
         lazyInit();
 
-        return values.remove(field.id());
+        return Optional.ofNullable(values.remove(field.id()));
     }
 
     @Override
@@ -111,8 +101,7 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        EntityValue cloneValue = new EntityValue(id);
-        cloneValue.addValues(values());
+        EntityValue cloneValue = (EntityValue) EntityValue.build().addValues(values());
         return cloneValue;
     }
 
@@ -132,12 +121,12 @@ public class EntityValue implements IEntityValue, Cloneable, Serializable {
             return false;
         }
         EntityValue that = (EntityValue) o;
-        return id == that.id && equalsValues(that);
+        return equalsValues(that);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, values);
+        return Objects.hash(values);
     }
 
     @Override

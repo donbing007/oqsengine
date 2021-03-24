@@ -12,16 +12,6 @@ import java.util.function.Predicate;
  * @version 1.0 2020/3/26 15:10
  */
 public interface IEntityValue extends Cloneable{
-    /**
-     * 获得数据对象的id
-     * @return 数据对象的id
-     */
-    public long id();
-
-    /**
-     * 重置 id.
-     */
-    public void restId(long id);
 
     /**
      * 获得该对象指定属性的数据
@@ -66,7 +56,7 @@ public interface IEntityValue extends Cloneable{
      * @param field 目标字段信息.
      * @return 被删除的值.
      */
-    public IValue remove(IEntityField field);
+    public Optional<IValue> remove(IEntityField field);
 
     /**
      * 根据条件过滤掉不需要的.

@@ -1,10 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.entity;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Entity结构对象
@@ -75,14 +77,31 @@ public interface IEntityClass {
      *
      * @return 父对象元信息.
      */
-    IEntityClass father();
+    Optional<IEntityClass> father();
+
+    /**
+     * 获取家族信息.
+     *
+     * @return 家族列表.顺序从祖先到子孙顺序.
+     */
+    Collection<IEntityClass> family();
 
     /**
      * 本对象的属性信息
      *
-     * @return 属性集合
+     * @return 字段列表.
      */
     Collection<IEntityField> fields();
+
+    /**
+     * 本对象的字段信息列表.
+     *
+     * @param filter 过滤器.
+     * @return 字段列表.
+     */
+    default Collection<IEntityField> fields(Predicate<? super IEntityField> filter) {
+        return fields().stream().filter(filter).collect(Collectors.toList());
+    }
 
     /**
      * 本地对象指定字段的信息.

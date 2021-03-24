@@ -22,6 +22,7 @@ public class RelationStorage {
     private String relationType;
     private boolean identity;
     private EntityField entityField;
+    private boolean belongToOwner;
 
     public RelationStorage() {
     }
@@ -90,6 +91,14 @@ public class RelationStorage {
         this.entityField = entityField;
     }
 
+    public boolean isBelongToOwner() {
+        return belongToOwner;
+    }
+
+    public void setBelongToOwner(boolean belongToOwner) {
+        this.belongToOwner = belongToOwner;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -102,11 +111,12 @@ public class RelationStorage {
                 Objects.equals(name, that.name) &&
                 Objects.equals(relOwnerClassName, that.relOwnerClassName) &&
                 Objects.equals(relationType, that.relationType) &&
-                Objects.equals(entityField, that.entityField);
+                Objects.equals(entityField, that.entityField) &&
+                Objects.equals(belongToOwner, that.belongToOwner);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, entityClassId, relOwnerClassId, relOwnerClassName, relationType, identity, entityField);
+        return Objects.hash(id, name, entityClassId, relOwnerClassId, relOwnerClassName, relationType, identity, entityField, belongToOwner);
     }
 }

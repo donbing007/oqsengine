@@ -1,14 +1,15 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.executor;
 
 import com.xforceplus.ultraman.oqsengine.common.executor.Executor;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
+import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Optional;
 
 /**
  * desc :
@@ -18,58 +19,55 @@ import java.util.Optional;
  * date : 2020/11/18
  * @since : 1.8
  */
-public class BatchQueryCountExecutor extends AbstractMasterExecutor<Long, Optional<Integer>> {
+public class BatchQueryCountExecutor extends AbstractMasterExecutor<Long, Integer> {
 
-    private long entity;
+    private IEntityClass entityClass;
     private long startTime;
     private long endTime;
 
     public BatchQueryCountExecutor(String tableName, TransactionResource<Connection> resource, long timeout,
-                                   long entity, long startTime, long endTime) {
+                                   IEntityClass entityClass, long startTime, long endTime) {
         super(tableName, resource, timeout);
-        this.entity = entity;
+        this.entityClass = entityClass;
         this.startTime = startTime;
         this.endTime = endTime;
     }
 
-    public static Executor<Long, Optional<Integer>> build(
-            String tableName, TransactionResource resource, long timeout,
-            long entity, long startTime, long endTime) {
-        return new BatchQueryCountExecutor(tableName, resource, timeout, entity, startTime, endTime);
+    public static Executor<Long, Integer> build(
+        String tableName, TransactionResource resource, long timeout,
+        IEntityClass entityClass, long startTime, long endTime) {
+        return new BatchQueryCountExecutor(tableName, resource, timeout, entityClass, startTime, endTime);
     }
 
     @Override
-    public Optional<Integer> execute(Long aLong) throws SQLException {
+    public Integer execute(Long aLong) throws SQLException {
         String sql = buildCountSQL();
         try (PreparedStatement st = getResource().value().prepareStatement(sql)) {
-            st.setLong(1, entity);
+            st.setBoolean(1, false);
             st.setLong(2, startTime);
             st.setLong(3, endTime);
 
             checkTimeout(st);
             try (ResultSet rs = st.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(rs.getInt(1));
-                } else {
-                    return Optional.empty();
-                }
+                rs.next();
+                return rs.getInt("count");
             }
         }
     }
 
     private String buildCountSQL() {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT COUNT(1) ");
-        sql.append(" FROM ")
-                .append(getTableName())
-                .append(" WHERE ")
-                .append(FieldDefine.ENTITY).append("=").append("?")
-                .append(" AND ")
-                .append(FieldDefine.DELETED).append("=").append("false")
-                .append(" AND ")
-                .append(FieldDefine.TIME).append(">=").append("?")
-                .append(" AND ")
-                .append(FieldDefine.TIME).append("<=").append("?");
+        sql.append("SELECT COUNT(1) AS count")
+            .append(" FROM ")
+            .append(getTableName())
+            .append(" WHERE ")
+            .append(EntityClassHelper.buildEntityClassQuerySql(entityClass))
+            .append(" AND ")
+            .append(FieldDefine.DELETED).append(" = ").append("?")
+            .append(" AND ")
+            .append(FieldDefine.UPDATE_TIME).append(" >= ").append("?")
+            .append(" AND ")
+            .append(FieldDefine.UPDATE_TIME).append(" <= ").append("?");
 
         return sql.toString();
     }

@@ -1,7 +1,5 @@
 package com.xforceplus.ultraman.oqsengine.storage.value;
 
-import com.xforceplus.ultraman.oqsengine.storage.StorageType;
-
 /**
  * 长整形的储存类值类型.
  * @author dongbin
@@ -12,10 +10,5 @@ public class LongStorageValue extends AbstractStorageValue<Long> {
 
     public LongStorageValue(String name, long value, boolean logicName) {
         super(name, value, logicName);
-    }
-
-    @Override
-    public StorageType type() {
-        return StorageType.LONG;
     }
 }

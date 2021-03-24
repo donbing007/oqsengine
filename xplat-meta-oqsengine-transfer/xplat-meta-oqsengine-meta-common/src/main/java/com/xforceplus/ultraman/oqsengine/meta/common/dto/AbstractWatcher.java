@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.meta.common.dto;
 
 import io.grpc.stub.StreamObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,6 +19,7 @@ import java.util.function.Supplier;
  */
 public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
+    private Logger logger = LoggerFactory.getLogger(AbstractWatcher.class);
     /**
      * 注册的uid;
      */
@@ -43,7 +46,7 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     /**
      * 当前是否已被清理状态
      */
-    private volatile boolean onServe = true;
+    private volatile boolean isActive = true;
 
 
     public AbstractWatcher(String uid, StreamObserver<T> streamObserver) {
@@ -51,11 +54,6 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
         this.streamObserver = streamObserver;
         this.heartBeat = System.currentTimeMillis();
         this.watches = new ConcurrentHashMap<>();
-    }
-
-    @Override
-    public StreamObserver<T> observer() {
-        return streamObserver;
     }
 
     @Override
@@ -75,14 +73,14 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     @Override
     public void resetHeartBeat() {
-        if (onServe) {
+        if (isActive) {
             heartBeat = System.currentTimeMillis();
         }
     }
 
     @Override
     public <S> void release(Supplier<S> supplier) {
-        notServer();
+        inActive();
         try {
             supplier.get();
         } catch (Exception e) {
@@ -97,8 +95,8 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
     }
 
     @Override
-    public boolean isOnServe() {
-        return onServe;
+    public boolean isActive() {
+        return isActive;
     }
 
     /**
@@ -111,24 +109,40 @@ public abstract class AbstractWatcher<T> implements IWatcher<T> {
 
     @Override
     public boolean runWithCheck(Function<StreamObserver<T>, Boolean> function) {
-        if (onServe) {
+        if (isActive) {
             return function.apply(streamObserver);
         }
-
+        logger.warn("uid [{}], offServe...", uid);
         return false;
     }
 
-    public abstract void reset(String uid, StreamObserver<T> streamObserver);
+    @Override
+    public StreamObserver<T> observer() {
+        return streamObserver;
+    }
 
-    public void onServe() {
-        onServe = true;
+    protected abstract void reset(String uid, StreamObserver<T> streamObserver);
+
+    @Override
+    public void release() {
+        try {
+            if (null != streamObserver) {
+                streamObserver.onCompleted();
+            }
+        } catch (Exception e) {
+            //  ignore
+        }
+    }
+    @Override
+    public void active() {
+        isActive = true;
         /**
          * 打开服务时设置一次heartbeat
          */
         resetHeartBeat();
     }
-
-    public void notServer() {
-        onServe = false;
+    @Override
+    public void inActive() {
+        isActive = false;
     }
 }

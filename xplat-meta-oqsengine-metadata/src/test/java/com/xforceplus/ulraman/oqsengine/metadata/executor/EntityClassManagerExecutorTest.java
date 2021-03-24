@@ -3,10 +3,10 @@ package com.xforceplus.ulraman.oqsengine.metadata.executor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler;
 import com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassInfo;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassManagerExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
@@ -14,7 +14,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.executor.ExpireExecutor;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
@@ -146,7 +146,7 @@ public class EntityClassManagerExecutorTest {
 
         EntityClassSyncResponse entityClassSyncResponse =
                 entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
-        mockRequestHandler.accept(entityClassSyncResponse);
+        mockRequestHandler.invoke(entityClassSyncResponse, null);
 
         Optional<IEntityClass> entityClassOp = entityClassManagerExecutor.load(expectedId);
         Assert.assertTrue(entityClassOp.isPresent());
@@ -236,7 +236,7 @@ public class EntityClassManagerExecutorTest {
         }
 
         if (null != entityClass.father()) {
-            return getEntityClass(expectedId, entityClass.father());
+            return getEntityClass(expectedId, entityClass.father().get());
         }
         return null;
     }
@@ -250,7 +250,7 @@ public class EntityClassManagerExecutorTest {
         Assert.assertEquals(expected.getName(), actual.name());
         if (expected.getFather() >= MIN_ID) {
             Assert.assertNotNull(actual.father());
-            Assert.assertEquals(expected.getFather(), actual.father().id());
+            Assert.assertEquals(expected.getFather(), actual.father().get().id());
         }
         Assert.assertEquals(expected.getLevel(), actual.level());
 
@@ -269,7 +269,9 @@ public class EntityClassManagerExecutorTest {
                 Assert.assertEquals(expectedRelation.getRelOwnerClassName(), actualRelation.getRelOwnerClassName());
                 Assert.assertEquals(expectedRelation.getRelationType(), actualRelation.getRelationType());
                 Assert.assertEquals(expectedRelation.getIdentity(), actualRelation.isIdentity());
-                Assert.assertEquals(expectedRelation.getEntityFieldCode(), actualRelation.getEntityField().name());
+                Assert.assertEquals(expectedRelation.getBelongToOwner(), actualRelation.isBelongToOwner());
+
+                assertEntityField(expectedRelation.getEntityField(), actualRelation.getEntityField());
             }
         }
 
@@ -287,33 +289,35 @@ public class EntityClassManagerExecutorTest {
                 IEntityField act = entityFieldMap.remove(exp.getId());
                 Assert.assertNotNull(act);
 
-                Assert.assertEquals(exp.getName(), act.name());
-                Assert.assertEquals(exp.getCname(), act.cnName());
-                Assert.assertEquals(exp.getFieldType().name(), act.type().name());
-                Assert.assertEquals(exp.getDictId(), act.dictId());
-                Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
-
-                //  check field Config
-                com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig efc = exp.getFieldConfig();
-                if (null != efc) {
-                    FieldConfig afc = act.config();
-                    Assert.assertNotNull(afc);
-
-                    Assert.assertEquals(efc.getSearchable(), afc.isSearchable());
-                    Assert.assertEquals(efc.getMax(), afc.getMax());
-                    Assert.assertEquals(efc.getMin(), afc.getMin());
-                    Assert.assertEquals(efc.getPrecision(), afc.getPrecision());
-                    Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
-                    Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
-                    Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
-                    Assert.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
-                    Assert.assertEquals(efc.getIsSplittable(), afc.isSplittable());
-                    Assert.assertEquals(efc.getDelimiter(), afc.getDelimiter());
-                    Assert.assertEquals(efc.getDisplayType(), afc.getDisplayType());
-                }
+                assertEntityField(exp, act);
             }
 
             Assert.assertEquals(0, entityFieldMap.size());
+        }
+    }
+
+    private void assertEntityField(EntityFieldInfo exp, IEntityField act) {
+        Assert.assertEquals(exp.getName(), act.name());
+        Assert.assertEquals(exp.getCname(), act.cnName());
+        Assert.assertEquals(exp.getFieldType().name(), act.type().name());
+        Assert.assertEquals(exp.getDictId(), act.dictId());
+        Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
+
+        //  check field Config
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig efc = exp.getFieldConfig();
+        if (null != efc) {
+            FieldConfig afc = act.config();
+            Assert.assertNotNull(afc);
+
+            Assert.assertEquals(efc.getSearchable(), afc.isSearchable());
+            Assert.assertEquals(efc.getMax(), afc.getMax());
+            Assert.assertEquals(efc.getMin(), afc.getMin());
+            Assert.assertEquals(efc.getPrecision(), afc.precision());
+            Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
+            Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
+            Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
+            Assert.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
+            Assert.assertEquals(efc.getDisplayType(), afc.getDisplayType());
         }
     }
 }

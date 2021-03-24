@@ -20,6 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.sql.SQLException;
 import java.util.concurrent.*;
 
+import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
 import static com.xforceplus.ultraman.oqsengine.pojo.cdc.constant.CDCConstant.ZERO;
 
 
@@ -141,9 +142,9 @@ public class FailOverTest extends CDCAbstractContainer {
     private void initData(IEntity[] datas, boolean replacement) throws SQLException {
         for (IEntity entity : datas) {
             if (!replacement) {
-                masterStorage.build(entity);
+                masterStorage.build(entity, getEntityClass(entity.id()));
             } else {
-                masterStorage.replace(entity);
+                masterStorage.replace(entity, getEntityClass(entity.id()));
             }
         }
     }

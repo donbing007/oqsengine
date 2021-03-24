@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option java_multiple_files = true;
 
-option java_package = "com.xforceplus.ultraman.oqsengine.meta.common.proto";
+option java_package = "com.xforceplus.ultraman.oqsengine.meta.common.proto.sync";
 
 option java_outer_classname = "EntityClassSyncProto";
 
@@ -42,8 +42,6 @@ message EntityClassInfo {
 	int32 version = 6;
 	repeated EntityFieldInfo entityFields = 7;
 	repeated RelationInfo relations = 8;
-	bool isAny = 9;
-	bool isDynamic = 10;
 }
 
 message EntityFieldInfo {
@@ -76,10 +74,8 @@ message FieldConfig {
 	bool identifier = 5;
 	bool isRequired = 6;
 	string validateRegexString = 7;
-	bool isSplittable = 8;
-	string delimiter = 9;
-	string displayType = 10;
-	MetaFieldSense metaFieldSense = 11;
+	string displayType = 8;
+	MetaFieldSense metaFieldSense = 9;
 
 	enum MetaFieldSense {
 			UNKNOWN = 0;
@@ -94,6 +90,11 @@ message FieldConfig {
 			UPDATE_USER_NAME = 9;
 			DELETE_FLAG = 10;
 	}
+
+	int32 fuzzyType = 10;
+	int32 wildcardMinWidth = 11;
+	int32 wildcardMaxWidth = 12;
+	string uniqueName = 13;
 }
 
 message RelationInfo {
@@ -104,5 +105,6 @@ message RelationInfo {
 	string relOwnerClassName = 5;
 	string relationType = 6;
 	bool identity = 7;
-	string entityFieldCode = 8;
+	EntityFieldInfo entityField = 8;
+	bool belongToOwner = 9;
 }

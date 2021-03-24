@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 
 import java.util.*;
 
@@ -186,8 +186,20 @@ public class EntityClass implements IEntityClass {
     }
 
     @Override
-    public IEntityClass father() {
-        return father;
+    public Optional<IEntityClass> father() {
+        return Optional.ofNullable(father);
+    }
+
+    @Override
+    public Collection<IEntityClass> family() {
+        List<IEntityClass> familyList = new ArrayList<>();
+        Optional<IEntityClass> current = Optional.of(this);
+        while (current.isPresent()) {
+            familyList.add(0, current.get());
+            current = current.get().father();
+        }
+
+        return familyList;
     }
 
     @Override
@@ -313,11 +325,10 @@ public class EntityClass implements IEntityClass {
         }
 
         public Builder withField(IEntityField field) {
-            if (Collections.emptyList().getClass().equals(this.fields)) {
-                this.fields = new ArrayList<>(fields);
-            } else {
-                this.fields.add(field);
+            if (Collections.emptyList().getClass().equals(this.fields.getClass())) {
+                this.fields = new ArrayList<>();
             }
+            this.fields.add(field);
             return this;
         }
 

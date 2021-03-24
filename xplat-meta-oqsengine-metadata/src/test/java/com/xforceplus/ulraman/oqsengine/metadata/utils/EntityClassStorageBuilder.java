@@ -2,12 +2,12 @@ package com.xforceplus.ulraman.oqsengine.metadata.utils;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.EntityClassStorage;
 import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.*;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -182,8 +182,6 @@ public class EntityClassStorageBuilder {
                 .setLevel(level)
                 .addAllEntityFields(entityFieldInfos)
                 .addAllRelations(relationInfos)
-                .setIsAny(false)
-                .setIsDynamic(false)
                 .build();
     }
 
@@ -194,7 +192,7 @@ public class EntityClassStorageBuilder {
                 .setCname(id + "_cname")
                 .setFieldType(fieldType)
                 .setDictId(id + "_dictId")
-                .setFieldConfig(fieldConfig(true, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense.NORMAL))
+                .setFieldConfig(fieldConfig(true, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense.NORMAL))
                 .build();
     }
 
@@ -205,14 +203,20 @@ public class EntityClassStorageBuilder {
                 .setEntityClassId(entityId)
                 .setRelOwnerClassId(ownerId)
                 .setRelationType(relationType)
-                .setEntityFieldCode(fieldId + "_name")
+                .setEntityField(EntityFieldInfo.newBuilder()
+                        .setId(fieldId)
+                        .setFieldType(EntityFieldInfo.FieldType.LONG)
+                        .setName(fieldId + "_name")
+                        .setFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder().setSearchable(true).build())
+                        .build())
+                .setBelongToOwner(id % 2 == 0)
                 .build();
 
     }
 
-    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig
-                fieldConfig(boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.MetaFieldSense systemFieldType) {
-        return com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig.newBuilder()
+    public static com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig
+                fieldConfig(boolean searchable, com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.MetaFieldSense systemFieldType) {
+        return com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder()
                 .setSearchable(searchable)
                 .setIsRequired(true)
                 .setMetaFieldSense(systemFieldType)

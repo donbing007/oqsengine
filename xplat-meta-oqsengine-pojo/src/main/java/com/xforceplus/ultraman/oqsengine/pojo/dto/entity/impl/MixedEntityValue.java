@@ -14,37 +14,16 @@ import java.util.function.Predicate;
 public class MixedEntityValue implements IEntityValue, Cloneable, Serializable {
 
     /**
-     * 数据id
-     */
-    private long id;
-
-    /**
      * Entity的值集合
      */
     private Map<String, IValue> values;
-
-
-    public MixedEntityValue(long id) {
-        this.id = id;
-    }
 
     /**
      * make sure entityValue has a complete field
      * @param entityValue
      */
     public MixedEntityValue(IEntityValue entityValue) {
-        this.id = entityValue.id();
         entityValue.values().forEach(this::addValue);
-    }
-
-    @Override
-    public long id() {
-        return id;
-    }
-
-    @Override
-    public void restId(long id) {
-        this.id = id;
     }
 
     @Override
@@ -83,10 +62,10 @@ public class MixedEntityValue implements IEntityValue, Cloneable, Serializable {
     }
 
     @Override
-    public IValue remove(IEntityField field) {
+    public Optional<IValue> remove(IEntityField field) {
         lazyInit();
 
-        return values.remove(field.name());
+        return Optional.ofNullable(values.remove(field.name()));
     }
 
     @Override
@@ -104,7 +83,7 @@ public class MixedEntityValue implements IEntityValue, Cloneable, Serializable {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        EntityValue cloneValue = new EntityValue(id);
+        EntityValue cloneValue = new EntityValue();
         cloneValue.addValues(values());
         return cloneValue;
     }
@@ -125,20 +104,11 @@ public class MixedEntityValue implements IEntityValue, Cloneable, Serializable {
             return false;
         }
         MixedEntityValue that = (MixedEntityValue) o;
-        return id == that.id &&
-                Objects.equals(values, that.values);
+        return Objects.equals(values, that.values);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, values);
-    }
-
-    @Override
-    public String toString() {
-        return "MixedEntityValue{" +
-                "id=" + id +
-                ", values=" + (values != null ? values.toString() : "NULL") +
-                '}';
+        return Objects.hash(values);
     }
 }

@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.meta.executor;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IWatchExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import io.grpc.stub.StreamObserver;
 
@@ -19,8 +19,6 @@ import java.util.Set;
  */
 public interface IResponseWatchExecutor extends IWatchExecutor {
 
-    void release(String uid);
-
     void add(String uid, StreamObserver<EntityClassSyncResponse> observer, WatchElement watchElement);
 
     boolean update(String uid, WatchElement watchElement);
@@ -29,7 +27,7 @@ public interface IResponseWatchExecutor extends IWatchExecutor {
 
     ResponseWatcher watcher(String uid);
 
-    void keepAliceCheck(long heartbeatTimeout);
+    void keepAliveCheck(long heartbeatTimeout);
 
     Set<String> appWatchers(String appId, String env);
 

@@ -154,6 +154,16 @@ public class SphinxQLDecimalStorageStrategy implements StorageStrategy {
     }
 
     @Override
+    public Collection<String> toStorageNames(IEntityField field, boolean shortName) {
+        String logicName = shortName ? Long.toString(field.id(), 36) : Long.toString(field.id());
+
+        return Arrays.asList(
+            logicName + storageType().getType() + "0",
+            logicName + storageType().getType() + "1"
+        );
+    }
+
+    @Override
     public boolean isMultipleStorageValue() {
         return true;
     }

@@ -191,6 +191,18 @@ public class PageTest {
         Assert.assertNull(scope);
     }
 
+    @Test
+    public void testEmptyPage() {
+        Page page = Page.emptyPage();
+        page.setTotalCount(1000);
+
+        Assert.assertEquals(0, page.getPageCount());
+        Assert.assertFalse(page.hasNextPage());
+        PageScope scope = page.getNextPage();
+        Assert.assertEquals(0, scope.getStartLine());
+        Assert.assertEquals(0, scope.getEndLine());
+    }
+
     /**
      * 计算总页数.
      *

@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.connect;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncGrpc;
 import com.xforceplus.ultraman.oqsengine.meta.mock.MockServer;
 import io.grpc.ManagedChannel;
 import io.grpc.inprocess.InProcessChannelBuilder;
@@ -28,7 +28,7 @@ public class MockGRpcClient implements GRpcClient {
     public GrpcCleanupRule gRpcCleanup = new GrpcCleanupRule();
 
     @Override
-    public void create() {
+    public void start() {
 
         serverName = InProcessServerBuilder.generateName();
 
@@ -42,7 +42,7 @@ public class MockGRpcClient implements GRpcClient {
     }
 
     @Override
-    public void destroy() {
+    public void stop() {
         isClientOpen = false;
     }
 

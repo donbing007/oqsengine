@@ -1,7 +1,8 @@
 package com.xforceplus.ulraman.oqsengine.metadata.mock;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.*;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.*;
+import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
 
@@ -41,8 +42,8 @@ public class MockRequestHandler implements IRequestHandler {
             watchElement.setVersion(EXIST_MIN_VERSION);
         }
 
-        accept(entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
-                                                        mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
+        invoke(entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
+                                                        mockSelfFatherAncestorsGenerate(System.currentTimeMillis())), null);
         return true;
     }
 
@@ -58,8 +59,8 @@ public class MockRequestHandler implements IRequestHandler {
 
         appIdEntries.forEach(
                 a -> {
-                    accept(entityClassSyncResponseGenerator(a.getAppId(), a.getVersion(),
-                            mockSelfFatherAncestorsGenerate(System.currentTimeMillis())));
+                    invoke(entityClassSyncResponseGenerator(a.getAppId(), a.getVersion(),
+                            mockSelfFatherAncestorsGenerate(System.currentTimeMillis())), null);
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {
@@ -77,8 +78,29 @@ public class MockRequestHandler implements IRequestHandler {
     }
 
     @Override
-    public void accept(EntityClassSyncResponse entityClassSyncResponse) {
+    public IRequestWatchExecutor watchExecutor() {
+        return null;
+    }
+
+
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void stop() {
+
+    }
+
+    @Override
+    public void invoke(EntityClassSyncResponse entityClassSyncResponse, Void aVoid) {
         syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
                 entityClassSyncResponse.getEntityClassSyncRspProto());
+    }
+
+    @Override
+    public boolean isShutDown() {
+        return false;
     }
 }

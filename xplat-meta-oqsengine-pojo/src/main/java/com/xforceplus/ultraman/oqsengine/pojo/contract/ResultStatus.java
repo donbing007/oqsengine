@@ -8,9 +8,26 @@ package com.xforceplus.ultraman.oqsengine.pojo.contract;
  */
 public enum ResultStatus {
 
+    /**
+     * 未知.
+     */
     UNKNOWN(0),
+    /**
+     * 成功.
+     */
     SUCCESS(1),
-    CONFLICT(2);
+    /**
+     * 竞争冲突.
+     */
+    CONFLICT(2),
+    /**
+     * 未找到.
+     */
+    NOT_FOUND(3),
+    /**
+     * 创建失败.
+     */
+    UNCREATED(4);
 
     private int value;
 

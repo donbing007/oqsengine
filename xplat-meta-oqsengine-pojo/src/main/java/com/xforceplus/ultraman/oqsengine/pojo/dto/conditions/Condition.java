@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 
@@ -20,7 +20,7 @@ public class Condition implements Serializable {
     /**
      * 条件字段属于的 entityClass.
      */
-    private IEntityClass entityClass;
+    private EntityClassRef entityClassRef;
     /**
      * 字段信息
      */
@@ -55,13 +55,13 @@ public class Condition implements Serializable {
     /**
      * 构造一个新的查询条件.
      *
-     * @param entityClass 字段所属于的 entity 类型信息.
+     * @param entityClassRef 字段所属于的 entity 类型信息.
      * @param field       字段.
      * @param operator    比较符号.
      * @param values      条件比较值列表.
      */
-    public Condition(IEntityClass entityClass, IEntityField field, ConditionOperator operator, IValue... values) {
-        this.entityClass = entityClass;
+    public Condition(EntityClassRef entityClassRef, IEntityField field, ConditionOperator operator, IValue... values) {
+        this.entityClassRef = entityClassRef;
         this.field = field;
         this.operator = operator;
         this.values = values;
@@ -77,8 +77,8 @@ public class Condition implements Serializable {
      *
      * @return entityClass 实例.
      */
-    public Optional<IEntityClass> getEntityClass() {
-        return Optional.ofNullable(entityClass);
+    public Optional<EntityClassRef> getEntityClassRef() {
+        return Optional.ofNullable(entityClassRef);
     }
 
     /**
@@ -136,7 +136,7 @@ public class Condition implements Serializable {
         }
         Condition condition = (Condition) o;
         return isRange() == condition.isRange() &&
-            Objects.equals(getEntityClass(), condition.getEntityClass()) &&
+            Objects.equals(getEntityClassRef(), condition.getEntityClassRef()) &&
             Objects.equals(getField(), condition.getField()) &&
             Arrays.equals(getValues(), condition.getValues()) &&
             getOperator() == condition.getOperator();
@@ -144,14 +144,14 @@ public class Condition implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(getEntityClass(), getField(), getOperator(), isRange());
+        int result = Objects.hash(getEntityClassRef(), getField(), getOperator(), isRange());
         result = 31 * result + Arrays.hashCode(getValues());
         return result;
     }
 
     @Override
     public String toString() {
-        String code = entityClass != null ? entityClass.code() : "";
+        String code = entityClassRef != null ? entityClassRef.getCode() : "";
         StringBuilder buff = new StringBuilder();
         if (code.length() > 0) {
             buff.append(code).append(".");

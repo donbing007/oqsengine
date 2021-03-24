@@ -12,17 +12,15 @@ public class WatchElement {
     private String appId;
     private String env;
     private int version;
-    private AppStatus status;
+    private ElementStatus status;
     private long registerTime;
 
-    public WatchElement(String appId, String env, int version, WatchElement.AppStatus status) {
+    public WatchElement(String appId, String env, int version, WatchElement.ElementStatus status) {
         this.appId = appId;
         this.version = version;
         this.env = env;
         this.status = status;
-        if (status == AppStatus.Register) {
-            registerTime = System.currentTimeMillis();
-        }
+        this.registerTime = System.currentTimeMillis();
     }
 
     public long getRegisterTime() {
@@ -53,11 +51,11 @@ public class WatchElement {
         this.env = env;
     }
 
-    public AppStatus getStatus() {
+    public ElementStatus getStatus() {
         return status;
     }
 
-    public void setStatus(AppStatus status) {
+    public void setStatus(ElementStatus status) {
         this.status = status;
     }
 
@@ -65,10 +63,10 @@ public class WatchElement {
      * 将版本设置为未确认状态
      */
     public void reset() {
-        status = AppStatus.Register;
+        status = ElementStatus.Register;
     }
 
-    public static enum AppStatus {
+    public static enum ElementStatus {
         Init,       //  表示当前由于错误处于初始化
         Register,   //  表示客户端发送注册
         Notice,     //  表示服务端关注
@@ -84,4 +82,6 @@ public class WatchElement {
                 ", registerTime=" + registerTime +
                 '}';
     }
+
+
 }

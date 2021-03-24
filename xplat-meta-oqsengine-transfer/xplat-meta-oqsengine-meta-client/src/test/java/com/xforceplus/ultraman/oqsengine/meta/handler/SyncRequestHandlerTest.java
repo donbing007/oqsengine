@@ -1,21 +1,19 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
-import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.BaseTest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.utils.ExecutorHelper;
+import io.grpc.stub.StreamObserver;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.UUID;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_OK;
@@ -30,74 +28,38 @@ import static com.xforceplus.ultraman.oqsengine.meta.utils.EntityClassSyncRespon
  * date : 2021/2/24
  * @since : 1.8
  */
-public class SyncRequestHandlerTest {
-
-    private IRequestHandler requestHandler;
-
-    private RequestWatchExecutor requestWatchExecutor;
-
-    private GRpcParamsConfig gRpcParamsConfig;
+public class SyncRequestHandlerTest extends BaseTest {
 
     @Before
     public void before() {
-        gRpcParamsConfig = gRpcParamsConfig();
-        requestWatchExecutor = requestWatchExecutor();
-        requestHandler = requestHandler();
+        baseInit();
     }
 
     @After
     public void after() {
-        requestWatchExecutor.stop();
+        requestHandler.stop();
+
+        ExecutorHelper.shutdownAndAwaitTermination(executorService, 3600);
     }
-
-    private GRpcParamsConfig gRpcParamsConfig() {
-        GRpcParamsConfig gRpcParamsConfig = new GRpcParamsConfig();
-        gRpcParamsConfig.setDefaultDelayTaskDuration(30_000);
-        gRpcParamsConfig.setKeepAliveSendDuration(5_000);
-        gRpcParamsConfig.setReconnectDuration(5_000);
-        gRpcParamsConfig.setDefaultHeartbeatTimeout(30_000);
-        gRpcParamsConfig.setMonitorSleepDuration(1_000);
-
-        return gRpcParamsConfig;
-    }
-
-    private RequestWatchExecutor requestWatchExecutor() {
-        RequestWatchExecutor requestWatchExecutor = new RequestWatchExecutor();
-        ReflectionTestUtils.setField(requestWatchExecutor, "gRpcParamsConfig", gRpcParamsConfig);
-        return requestWatchExecutor;
-    }
-
-    private IRequestHandler requestHandler() {
-        IRequestHandler requestHandler = new SyncRequestHandler();
-
-        SyncExecutor syncExecutor = new SyncExecutor() {
-            Map<String, Integer> stringIntegerMap = new HashMap<>();
-
-            @Override
-            public boolean sync(String appId, int version, EntityClassSyncRspProto entityClassSyncRspProto) {
-                stringIntegerMap.put(appId, version);
-                return true;
-            }
-
-            @Override
-            public int version(String appId) {
-                Integer version = stringIntegerMap.get(appId);
-                if (null == version) {
-                    return -1;
-                }
-                return version;
-            }
-        };
-
-        ReflectionTestUtils.setField(requestHandler, "syncExecutor", syncExecutor);
-        ReflectionTestUtils.setField(requestHandler, "requestWatchExecutor", requestWatchExecutor);
-
-        return requestHandler;
-    }
-
 
     @Test
     public void executorTest() throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        requestWatchExecutor.create(UUID.randomUUID().toString(), new StreamObserver<EntityClassSyncRequest>() {
+            @Override
+            public void onNext(EntityClassSyncRequest entityClassSyncRequest) {
+
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+
+            }
+        });
         String appId = "testExecutor";
         int version = 1;
         check(appId, version, SYNC_FAIL.ordinal(),
@@ -141,5 +103,4 @@ public class SyncRequestHandlerTest {
         Assert.assertEquals(version + 1, entityClassSyncRequest.getVersion());
         Assert.assertEquals(status, entityClassSyncRequest.getStatus());
     }
-
 }
