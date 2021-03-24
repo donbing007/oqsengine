@@ -1,13 +1,13 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncServerException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.MD5Utils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus.SYNC_FAIL;
@@ -61,7 +61,7 @@ public class SyncResponseHandler implements IResponseHandler {
     private ExecutorService taskExecutor;
 
     @Resource
-    private GRpcParamsConfig gRpcParamsConfig;
+    private GRpcParams gRpcParams;
 
     private List<Thread> longRunTasks = new ArrayList<>(SERVER_TASK_COUNT);
 
@@ -127,7 +127,7 @@ public class SyncResponseHandler implements IResponseHandler {
     }
 
     @Override
-    public void onNext(EntityClassSyncRequest entityClassSyncRequest,
+    public void invoke(EntityClassSyncRequest entityClassSyncRequest,
                        StreamObserver<EntityClassSyncResponse> responseStreamObserver) {
         if (entityClassSyncRequest.getStatus() == HEARTBEAT.ordinal()) {
             /**
@@ -293,7 +293,7 @@ public class SyncResponseHandler implements IResponseHandler {
                 if (e instanceof MetaSyncServerException &&
                         e.getMessage().equalsIgnoreCase(APP_UPDATE_PULL_ERROR.name())) {
                     retryExecutor.offer(
-                            new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
+                            new RetryExecutor.DelayTask(gRpcParams.getDefaultDelayTaskDuration(),
                                     new RetryExecutor.Element(
                                             new WatchElement(watchElement.getAppId(), watchElement.getEnv(),
                                                     watchElement.getVersion(), watchElement.getStatus()),
@@ -406,7 +406,7 @@ public class SyncResponseHandler implements IResponseHandler {
          */
         if (ret && !registerOrHeartBeat) {
             retryExecutor.offer(
-                    new RetryExecutor.DelayTask(gRpcParamsConfig.getDefaultDelayTaskDuration(),
+                    new RetryExecutor.DelayTask(gRpcParams.getDefaultDelayTaskDuration(),
                             new RetryExecutor.Element(new WatchElement(appId, env, version, Notice), watcher.uid())));
         }
         return ret;
@@ -497,11 +497,11 @@ public class SyncResponseHandler implements IResponseHandler {
      */
     private boolean keepAlive() {
         while (!isShutdown) {
-            responseWatchExecutor.keepAliveCheck(gRpcParamsConfig.getDefaultHeartbeatTimeout());
+            responseWatchExecutor.keepAliveCheck(gRpcParams.getDefaultHeartbeatTimeout());
             /**
              * 等待一秒进入下一次循环
              */
-            TimeWaitUtils.wakeupAfter(gRpcParamsConfig.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
+            TimeWaitUtils.wakeupAfter(gRpcParams.getMonitorSleepDuration(), TimeUnit.MILLISECONDS);
         }
 
         logger.info("keepAlive check has quited due to server shutdown...");

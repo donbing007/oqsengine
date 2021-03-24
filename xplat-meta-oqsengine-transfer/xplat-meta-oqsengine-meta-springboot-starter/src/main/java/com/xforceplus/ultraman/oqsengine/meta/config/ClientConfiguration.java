@@ -14,6 +14,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.annotation.PostConstruct;
+
 
 /**
  * desc :
@@ -26,6 +28,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConditionalOnProperty(name = "meta.grpc.type", havingValue = "client")
 public class ClientConfiguration {
+
+    private EntityClassSyncClient entityClassSyncClient;
 
     @Bean
     public GRpcClient gRpcClient(
@@ -47,11 +51,14 @@ public class ClientConfiguration {
 
     @Bean
     public EntityClassSyncClient entityClassSyncClient() {
-        return new EntityClassSyncClient();
+        entityClassSyncClient = new EntityClassSyncClient();
+
+        return entityClassSyncClient;
     }
 
     @Bean(name = "shutdown")
     public IShutDown clientShutDown() {
         return new ClientShutDown();
     }
+
 }

@@ -1,7 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRspProto;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncRequestHandler;
@@ -29,14 +29,14 @@ public class BaseTest {
 
     protected IRequestHandler requestHandler;
 
-    protected GRpcParamsConfig gRpcParamsConfig;
+    protected GRpcParams gRpcParams;
 
     protected RequestWatchExecutor requestWatchExecutor;
 
     protected ExecutorService executorService;
 
     protected void baseInit() {
-        gRpcParamsConfig = gRpcParamsConfig();
+        gRpcParams = gRpcParamsConfig();
         requestWatchExecutor = requestWatchExecutor();
 
         requestHandler = requestHandler();
@@ -47,8 +47,8 @@ public class BaseTest {
         return requestWatchExecutor;
     }
 
-    protected GRpcParamsConfig gRpcParamsConfig() {
-        GRpcParamsConfig gRpcParamsConfig = new GRpcParamsConfig();
+    protected GRpcParams gRpcParamsConfig() {
+        GRpcParams gRpcParamsConfig = new GRpcParams();
         gRpcParamsConfig.setDefaultDelayTaskDuration(30_000);
         gRpcParamsConfig.setKeepAliveSendDuration(5_000);
         gRpcParamsConfig.setReconnectDuration(5_000);
@@ -85,7 +85,7 @@ public class BaseTest {
 
         ReflectionTestUtils.setField(requestHandler, "syncExecutor", syncExecutor);
         ReflectionTestUtils.setField(requestHandler, "requestWatchExecutor", requestWatchExecutor);
-        ReflectionTestUtils.setField(requestHandler, "gRpcParamsConfig", gRpcParamsConfig);
+        ReflectionTestUtils.setField(requestHandler, "gRpcParams", gRpcParams);
         ReflectionTestUtils.setField(requestHandler, "executorService", executorService);
 
         return requestHandler;

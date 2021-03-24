@@ -1,17 +1,17 @@
 package com.xforceplus.ultraman.oqsengine.meta.connect;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
+
 
 /**
  * desc :
@@ -26,7 +26,7 @@ public class MetaSyncGRpcClient implements GRpcClient {
     private Logger logger = LoggerFactory.getLogger(MetaSyncGRpcClient.class);
 
     @Resource
-    private GRpcParamsConfig gRpcParamsConfig;
+    private GRpcParams gRpcParams;
 
     private ManagedChannel channel;
     private EntityClassSyncGrpc.EntityClassSyncStub stub;
@@ -45,8 +45,8 @@ public class MetaSyncGRpcClient implements GRpcClient {
 
         channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
-                .keepAliveTime(gRpcParamsConfig.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
-                .keepAliveTimeout(gRpcParamsConfig.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
+                .keepAliveTime(gRpcParams.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
+                .keepAliveTimeout(gRpcParams.getDefaultHeartbeatTimeout(), TimeUnit.MILLISECONDS)
                 .build();
 
         stub = EntityClassSyncGrpc.newStub(channel);

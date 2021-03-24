@@ -3,10 +3,10 @@ package com.xforceplus.ulraman.oqsengine.metadata.executor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler;
 import com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassInfo;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityFieldInfo;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.RelationInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityFieldInfo;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.CacheExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassManagerExecutor;
 import com.xforceplus.ultraman.oqsengine.metadata.executor.EntityClassSyncExecutor;
@@ -146,7 +146,7 @@ public class EntityClassManagerExecutorTest {
 
         EntityClassSyncResponse entityClassSyncResponse =
                 entityClassSyncResponseGenerator(expectedAppId, expectedVersion, expectedEntityStorageList);
-        mockRequestHandler.onNext(entityClassSyncResponse, null);
+        mockRequestHandler.invoke(entityClassSyncResponse, null);
 
         Optional<IEntityClass> entityClassOp = entityClassManagerExecutor.load(expectedId);
         Assert.assertTrue(entityClassOp.isPresent());
@@ -304,7 +304,7 @@ public class EntityClassManagerExecutorTest {
         Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
 
         //  check field Config
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.FieldConfig efc = exp.getFieldConfig();
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig efc = exp.getFieldConfig();
         if (null != efc) {
             FieldConfig afc = act.config();
             Assert.assertNotNull(afc);

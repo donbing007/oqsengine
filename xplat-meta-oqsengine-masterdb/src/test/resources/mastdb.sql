@@ -22,3 +22,21 @@ create table oqsbigentity
     KEY update_time_index (updatetime)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
+
+
+CREATE TABLE `oqsunique`
+(
+    `id`            bigint(20)  NOT NULL COMMENT '数据主键',
+    `entityclassl0` bigint(20)  NOT NULL COMMENT '数据家族中在0层的entityclass标识',
+    `entityclassl1` bigint(20)  NOT NULL COMMENT '数据家族中在0层的entityclass标识',
+    `entityclassl2` bigint(20)  NOT NULL COMMENT '数据家族中在0层的entityclass标识',
+    `entityclassl3` bigint(20)  NOT NULL COMMENT '数据家族中在0层的entityclass标识',
+    `entityclassl4` bigint(20)  NOT NULL COMMENT '数据家族中在0层的entityclass标识',
+    `unique_key`    varchar(64) NOT NULL COMMENT '业务主键1',
+    constraint IDX_T1 primary key (id),
+    constraint IDX_U1 unique key (`unique_key`, `entityclassl0`, `entityclassl1`, `entityclassl2`, `entityclassl3`,
+                                  `entityclassl4`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 20
+  DEFAULT CHARSET = utf8
+  ROW_FORMAT = DYNAMIC;

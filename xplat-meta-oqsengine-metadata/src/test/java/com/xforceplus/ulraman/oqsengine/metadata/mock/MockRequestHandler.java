@@ -1,7 +1,7 @@
 package com.xforceplus.ulraman.oqsengine.metadata.mock;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.*;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.*;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
@@ -42,7 +42,7 @@ public class MockRequestHandler implements IRequestHandler {
             watchElement.setVersion(EXIST_MIN_VERSION);
         }
 
-        onNext(entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
+        invoke(entityClassSyncResponseGenerator(watchElement.getAppId(), watchElement.getVersion(),
                                                         mockSelfFatherAncestorsGenerate(System.currentTimeMillis())), null);
         return true;
     }
@@ -59,7 +59,7 @@ public class MockRequestHandler implements IRequestHandler {
 
         appIdEntries.forEach(
                 a -> {
-                    onNext(entityClassSyncResponseGenerator(a.getAppId(), a.getVersion(),
+                    invoke(entityClassSyncResponseGenerator(a.getAppId(), a.getVersion(),
                             mockSelfFatherAncestorsGenerate(System.currentTimeMillis())), null);
                     try {
                         Thread.sleep(100);
@@ -94,7 +94,7 @@ public class MockRequestHandler implements IRequestHandler {
     }
 
     @Override
-    public void onNext(EntityClassSyncResponse entityClassSyncResponse, Void aVoid) {
+    public void invoke(EntityClassSyncResponse entityClassSyncResponse, Void aVoid) {
         syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(),
                 entityClassSyncResponse.getEntityClassSyncRspProto());
     }

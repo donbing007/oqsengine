@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option java_multiple_files = true;
 
-option java_package = "com.xforceplus.ultraman.oqsengine.meta.common.proto";
+option java_package = "com.xforceplus.ultraman.oqsengine.meta.common.proto.sync";
 
 option java_outer_classname = "EntityClassSyncProto";
 
@@ -94,6 +94,7 @@ message FieldConfig {
 	int32 fuzzyType = 10;
 	int32 wildcardMinWidth = 11;
 	int32 wildcardMaxWidth = 12;
+	string uniqueName = 13;
 }
 
 message RelationInfo {

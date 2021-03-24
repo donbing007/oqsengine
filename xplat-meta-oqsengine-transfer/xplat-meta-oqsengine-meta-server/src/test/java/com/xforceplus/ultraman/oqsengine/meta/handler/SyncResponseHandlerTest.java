@@ -1,11 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.meta.handler;
 
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
@@ -49,7 +49,7 @@ public class SyncResponseHandlerTest {
     private IDelayTaskExecutor<RetryExecutor.DelayTask> retryExecutor;
     private MockEntityClassGenerator entityClassGenerator;
     private ExecutorService executor;
-    private GRpcParamsConfig gRpcParamsConfig;
+    private GRpcParams gRpcParamsConfig;
 
     private SyncResponseHandler syncResponseHandler;
 
@@ -71,7 +71,7 @@ public class SyncResponseHandlerTest {
         ReflectionTestUtils.setField(syncResponseHandler, "retryExecutor", retryExecutor);
         ReflectionTestUtils.setField(syncResponseHandler, "entityClassGenerator", entityClassGenerator);
         ReflectionTestUtils.setField(syncResponseHandler, "taskExecutor", executor);
-        ReflectionTestUtils.setField(syncResponseHandler, "gRpcParamsConfig", gRpcParamsConfig);
+        ReflectionTestUtils.setField(syncResponseHandler, "gRpcParams", gRpcParamsConfig);
 
         syncResponseHandler.start();
     }
@@ -82,8 +82,8 @@ public class SyncResponseHandlerTest {
         ExecutorHelper.shutdownAndAwaitTermination(executor);
     }
 
-    private GRpcParamsConfig gRpcParamsConfig() {
-        GRpcParamsConfig gRpcParamsConfig = new GRpcParamsConfig();
+    private GRpcParams gRpcParamsConfig() {
+        GRpcParams gRpcParamsConfig = new GRpcParams();
         gRpcParamsConfig.setDefaultDelayTaskDuration(30_000);
         gRpcParamsConfig.setKeepAliveSendDuration(5_000);
         gRpcParamsConfig.setReconnectDuration(5_000);
@@ -109,7 +109,7 @@ public class SyncResponseHandlerTest {
 
         testCase.forEach(
                 tCase -> {
-                    syncResponseHandler.onNext(entityClassSyncRequest(tCase), tCase.getStreamObserver());
+                    syncResponseHandler.invoke(entityClassSyncRequest(tCase), tCase.getStreamObserver());
 
                     /**
                      * register
@@ -137,7 +137,7 @@ public class SyncResponseHandlerTest {
 
         testCase.forEach(
                 tCase -> {
-                    syncResponseHandler.onNext(entityClassSyncRequest(tCase), tCase.getStreamObserver());
+                    syncResponseHandler.invoke(entityClassSyncRequest(tCase), tCase.getStreamObserver());
 
                     /**
                      * register
@@ -154,7 +154,7 @@ public class SyncResponseHandlerTest {
         testCase.get(0).resetStatus(HEARTBEAT.ordinal());
         EntityClassSyncRequest entityClassSyncRequest = entityClassSyncRequest(testCase.get(0));
         while(count < 35) {
-            syncResponseHandler.onNext(entityClassSyncRequest, testCase.get(0).getStreamObserver());
+            syncResponseHandler.invoke(entityClassSyncRequest, testCase.get(0).getStreamObserver());
             Thread.sleep(1_000);
             count ++;
         }
@@ -170,14 +170,14 @@ public class SyncResponseHandlerTest {
         StreamObserver<EntityClassSyncResponse> responseStreamObserver1 = newStreamObserver();
 
         Case t = new Case(uid1, "appId1", "test", 1, REGISTER.ordinal(), responseStreamObserver1);
-        syncResponseHandler.onNext(entityClassSyncRequest(t), t.getStreamObserver());
+        syncResponseHandler.invoke(entityClassSyncRequest(t), t.getStreamObserver());
         Thread.sleep(1_000);
         Case t2 = new Case(uid1, "appId1", "test", 2, SYNC_OK.ordinal(), responseStreamObserver1);
 
         WatchElement w = responseWatchExecutor.watcher(uid1).watches().get(t.getAppId());
         Assert.assertNotEquals(Confirmed, w.getStatus());
 
-        syncResponseHandler.onNext(entityClassSyncRequest(t2), t2.getStreamObserver());
+        syncResponseHandler.invoke(entityClassSyncRequest(t2), t2.getStreamObserver());
 
         w = responseWatchExecutor.watcher(uid1).watches().get(t.getAppId());
         Assert.assertNotNull(w);
@@ -193,12 +193,12 @@ public class SyncResponseHandlerTest {
         StreamObserver<EntityClassSyncResponse> responseStreamObserver1 = newStreamObserver(uid1, appId, env, failedVersion);
 
         Case t = new Case(uid1, appId, env, 1, REGISTER.ordinal(), responseStreamObserver1);
-        syncResponseHandler.onNext(entityClassSyncRequest(t), t.getStreamObserver());
+        syncResponseHandler.invoke(entityClassSyncRequest(t), t.getStreamObserver());
         Thread.sleep(1_000);
         Case t2 = new Case(uid1, "appId1", "test", failedVersion, SYNC_FAIL.ordinal(), responseStreamObserver1);
 
         entityClassGenerator.reset(failedVersion, System.currentTimeMillis());
-        syncResponseHandler.onNext(entityClassSyncRequest(t2), t2.getStreamObserver());
+        syncResponseHandler.invoke(entityClassSyncRequest(t2), t2.getStreamObserver());
 
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid1);
         Assert.assertNotNull(watcher);

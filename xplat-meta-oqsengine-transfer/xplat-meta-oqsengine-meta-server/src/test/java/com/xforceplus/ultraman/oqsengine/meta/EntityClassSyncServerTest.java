@@ -2,10 +2,9 @@ package com.xforceplus.ultraman.oqsengine.meta;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.ResponseWatcher;
-import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandler;
 import com.xforceplus.ultraman.oqsengine.meta.mock.client.MockerSyncClient;
 import io.grpc.stub.StreamObserver;
 import org.junit.After;
@@ -74,7 +73,7 @@ public class EntityClassSyncServerTest extends BaseInit {
         observer.onNext(buildRequest(new WatchElement(appId, env, version, null), uid, RequestStatus.HEARTBEAT));
 
 
-        Thread.sleep(1_000);
+        Thread.sleep(2_000);
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
 
         Assert.assertNotNull(watcher);

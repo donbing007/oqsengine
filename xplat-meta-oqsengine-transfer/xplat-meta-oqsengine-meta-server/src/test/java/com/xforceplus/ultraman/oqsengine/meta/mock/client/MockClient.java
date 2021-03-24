@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.mock.client;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncGrpc;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 

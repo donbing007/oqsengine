@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.meta.dto;
 
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.AbstractWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import io.grpc.stub.StreamObserver;
 
 /**

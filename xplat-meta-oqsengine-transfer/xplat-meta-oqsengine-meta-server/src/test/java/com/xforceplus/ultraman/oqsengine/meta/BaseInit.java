@@ -1,11 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcServer;
 import com.xforceplus.ultraman.oqsengine.meta.executor.ResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
@@ -35,7 +36,7 @@ public class BaseInit {
     protected IDelayTaskExecutor<RetryExecutor.DelayTask> retryExecutor;
     protected MockEntityClassGenerator entityClassGenerator;
 
-    protected GRpcParamsConfig gRpcParamsConfig;
+    protected GRpcParams gRpcParamsConfig;
 
     protected SyncResponseHandler syncResponseHandler;
 
@@ -87,13 +88,13 @@ public class BaseInit {
         ReflectionTestUtils.setField(syncResponseHandler, "retryExecutor", retryExecutor);
         ReflectionTestUtils.setField(syncResponseHandler, "entityClassGenerator", entityClassGenerator);
         ReflectionTestUtils.setField(syncResponseHandler, "taskExecutor", taskExecutor);
-        ReflectionTestUtils.setField(syncResponseHandler, "gRpcParamsConfig", gRpcParamsConfig);
+        ReflectionTestUtils.setField(syncResponseHandler, "gRpcParams", gRpcParamsConfig);
 
         return syncResponseHandler;
     }
 
-    protected GRpcParamsConfig gRpcParamsConfig() {
-        GRpcParamsConfig gRpcParamsConfig = new GRpcParamsConfig();
+    protected GRpcParams gRpcParamsConfig() {
+        GRpcParams gRpcParamsConfig = new GRpcParams();
         gRpcParamsConfig.setDefaultDelayTaskDuration(30_000);
         gRpcParamsConfig.setKeepAliveSendDuration(5_000);
         gRpcParamsConfig.setReconnectDuration(5_000);

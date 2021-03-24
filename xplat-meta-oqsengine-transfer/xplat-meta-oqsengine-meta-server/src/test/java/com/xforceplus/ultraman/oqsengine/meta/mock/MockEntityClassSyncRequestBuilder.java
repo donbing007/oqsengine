@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.meta.mock;
 
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.handler.SyncResponseHandlerTest;
 
 /**

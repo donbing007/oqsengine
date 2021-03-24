@@ -1,11 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.meta;
 
 import com.google.common.util.concurrent.Uninterruptibles;
-import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig;
+import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IBasicSyncExecutor;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncRequest;
-import com.xforceplus.ultraman.oqsengine.meta.common.proto.EntityClassSyncResponse;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
+import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.ThreadUtils;
 import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.connect.GRpcClient;
@@ -19,7 +19,7 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParamsConfig.SHUT_DOWN_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
 
 
 /**
@@ -41,14 +41,12 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
     private IRequestHandler requestHandler;
 
     @Resource
-    private GRpcParamsConfig gRpcParamsConfig;
+    private GRpcParams gRpcParamsConfig;
 
     private Thread observerStreamMonitorThread;
 
-
-
-    @PostConstruct
     @Override
+    @PostConstruct
     public void start() {
         client.start();
 
@@ -163,7 +161,7 @@ public class EntityClassSyncClient implements IBasicSyncExecutor {
         return client.channelStub().register(new StreamObserver<EntityClassSyncResponse>() {
             @Override
             public void onNext(EntityClassSyncResponse entityClassSyncResponse) {
-                requestHandler.onNext(entityClassSyncResponse, null);
+                requestHandler.invoke(entityClassSyncResponse, null);
             }
 
             @Override
