@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.xforceplus.ultraman.oqsengine.meta.proto.test";
+option java_outer_classname = "MetadataResourceProto";
+
+service CheckService {
+  rpc check(ModuleUp) returns (ModuleUpResult);
+
+  rpc checkStreaming(Authorization) returns (stream ModuleUpResult);
+}
+
+message Authorization {
+  string tenantId = 1; // 租户标识
+  string appId = 2; //应用标识
+  string role = 3; // 角色标识
+  string env = 4; //环境标识
+  string branch = 5; //分支标识
+}
+
+message ModuleUp {
+  string moduleId = 1; // 传入的模块id.
+  string moduleVersion = 2; // 模块版本.
+  repeated Authorization authorization = 3; // 当前授权信息.
+}
+
+message ModuleUpResult {
+  int32 status = 1; // 状态码.
+  repeated BoUp boUps = 2; // BoList列表
+  string message = 3; // 响应的消息.
+  repeated string appIds = 4;
+  Authorization auth = 5;
+  int64 id = 6;
+  string version = 7;
+  string code = 8;
+}
+
+message BoUp {
+  string id = 1; // 对象id.
+  string code = 2; // 业务对象编码
+  repeated Api apis = 3; // ApiList列表
+  repeated Field fields = 4; // fieldList列表
+  repeated BoUp boUps = 5; // 子对象List列表
+  repeated Relation relations = 6; //关系信息列表
+  string createType = 7; //创建方式 2 是继承
+  string parentBoId = 8; //继承情况下该属性有值
+  string name = 9; //bo name
+  string rootFlag = 10;
+  string sysType = 11;
+  string domainCode = 12;
+  string domainName = 13;
+  int64 domainRootId = 14;
+}
+
+message Api {
+  string method = 1; // 请求方式
+  string url = 2; // URL地址
+  string code = 3; //api code
+  string param = 4;
+  string responseData = 5;
+}
+
+message Field {
+  string id = 1; //字段id
+  string name = 2; // 字段名称
+  string fieldType = 3; // 字段类型
+  string code = 4;
+  string displayType = 5;
+  string editable = 6;
+  string enumCode = 7;
+  string maxLength = 8;
+  string required = 9;
+  string searchable = 10;
+  string dictId = 11;
+  string defaultValue = 12;
+  int32 precision = 13;
+  string identifier = 14;
+  string validateRule = 15;
+  int32 describeType = 16;
+  string uniqueName = 17;
+  string indexFlag = 18;
+  string dimensionFlag = 19;
+}
+
+message Relation {
+  string id = 1;
+  string relationType = 2;
+  bool identity = 3;
+  string boId = 4;
+  string joinBoId = 5;
+  Field field = 6;  //ManyToOne 和 OneToOne 将joinBo的joinCode.id来命名字段，如果该id等于joinBoId，则将boCode.id来命名字段
+  string relName = 7;
+  int64 boField = 8;
+  int64 joinField = 9;
+}

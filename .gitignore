@@ -87,3 +87,4 @@ target/
 .vscode/
 
 xplat-meta-oqsengine-index/src/test/java/com/xforceplus/ultraman/oqsengine/storage/index/sphinxql/ExportMain.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/
