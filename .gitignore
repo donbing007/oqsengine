@@ -88,3 +88,20 @@ target/
 
 xplat-meta-oqsengine-index/src/test/java/com/xforceplus/ultraman/oqsengine/storage/index/sphinxql/ExportMain.java
 /xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/Api.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/ApiOrBuilder.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/Authorization.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/AuthorizationOrBuilder.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/BoUp.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/BoUpOrBuilder.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/CheckServiceGrpc.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/Field.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/FieldOrBuilder.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/MetadataResourceProto.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/ModuleUp.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/ModuleUpOrBuilder.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/ModuleUpResult.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/ModuleUpResultOrBuilder.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/Relation.java
+/xplat-meta-oqsengine-transfer/xplat-meta-oqsengine-meta-springboot-starter/src/main/java/com/xforceplus/ultraman/oqsengine/meta/proto/test/RelationOrBuilder.java

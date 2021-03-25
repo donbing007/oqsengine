@@ -92,9 +92,9 @@ public class EntityClassSyncResponseBuilder {
     public static RelationInfo relationInfo(long id, long entityId, long ownerId, String relationType, long fieldId) {
         return RelationInfo.newBuilder()
                 .setId(id)
-                .setName(id + "_name")
-                .setEntityClassId(entityId)
-                .setRelOwnerClassId(ownerId)
+                .setCode(id + "_name")
+                .setRightEntityClassId(entityId)
+                .setLeftEntityClassId(ownerId)
                 .setRelationType(relationType)
                 .setBelongToOwner(id % 2 == 0)
                 .setEntityField(EntityFieldInfo.newBuilder()
