@@ -27,6 +27,11 @@ public class Condition implements Serializable {
     private IEntityField field;
 
     /**
+     * 标识出和主对象的关系标识.
+     */
+    private long relationId;
+
+    /**
      * 条件值集合
      */
     private IValue[] values;
@@ -49,7 +54,7 @@ public class Condition implements Serializable {
      * @param values   条件比较值列表.
      */
     public Condition(IEntityField field, ConditionOperator operator, IValue... values) {
-        this(null, field, operator, values);
+        this(null, field, operator, Long.MIN_VALUE, values);
     }
 
     /**
@@ -60,10 +65,11 @@ public class Condition implements Serializable {
      * @param operator    比较符号.
      * @param values      条件比较值列表.
      */
-    public Condition(EntityClassRef entityClassRef, IEntityField field, ConditionOperator operator, IValue... values) {
+    public Condition(EntityClassRef entityClassRef, IEntityField field, ConditionOperator operator, long relationId, IValue... values) {
         this.entityClassRef = entityClassRef;
         this.field = field;
         this.operator = operator;
+        this.relationId = relationId;
         this.values = values;
         if (this.values == null || this.values.length == 0) {
             throw new IllegalArgumentException("Invalid query condition, must have at least one value.");
@@ -115,6 +121,15 @@ public class Condition implements Serializable {
      */
     public ConditionOperator getOperator() {
         return operator;
+    }
+
+    /**
+     * 返回和主对象的关系标识.
+     *
+     * @return 关系标识.
+     */
+    public long getRelationId() {
+        return relationId;
     }
 
     /**

@@ -7,6 +7,12 @@ import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityClassHelper;
+import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
+import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
+import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
+import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
@@ -61,6 +67,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Resource
     private MetaManager metaManager;
+
+    @Resource
+    private EventBus eventBus;
 
     /**
      * 可以接爱的最大心跳间隔.
@@ -191,6 +200,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 if (masterStorage.build(entity, entityClass) <= 0) {
                     return ResultStatus.UNCREATED;
                 }
+
+                eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(entity)));
+
                 return ResultStatus.SUCCESS;
 
             });
@@ -235,6 +247,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return ResultStatus.CONFLICT;
                 }
 
+                eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, new ReplacePayload(entity, targetEntity)));
+
                 return ResultStatus.SUCCESS;
             });
         } catch (Exception ex) {
@@ -268,6 +282,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     hint.setRollback(true);
                     return ResultStatus.CONFLICT;
                 }
+
+                eventBus.notify(new ActualEvent(EventType.ENTITY_DELETE, new DeletePayload(entity)));
 
                 return ResultStatus.SUCCESS;
             });

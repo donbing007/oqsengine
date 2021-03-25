@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.boot.config;
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.selector.Selector;
+import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoCreateTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
@@ -30,9 +31,16 @@ public class CustomTransactionConfiguration {
         LongIdGenerator snowflakeIdGenerator,
         LongIdGenerator redisIdGenerator,
         @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs,
-        CommitIdStatusService commitIdStatusService) {
-        return new DefaultTransactionManager(
-            transactionTimeoutMs, snowflakeIdGenerator, redisIdGenerator, commitIdStatusService, true);
+        CommitIdStatusService commitIdStatusService,
+        EventBus eventBus) {
+        return DefaultTransactionManager.Builder.aDefaultTransactionManager()
+            .withSurvivalTimeMs(transactionTimeoutMs)
+            .withTxIdGenerator(snowflakeIdGenerator)
+            .withCommitIdGenerator(redisIdGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withWaitCommitSync(true)
+            .withEventBus()
+            .build();
     }
 
     @Bean

@@ -32,6 +32,9 @@ threadPool:
       queue: 1000
   cdc:
     worker: 0
+  event:
+    worker: 3
+    queue: 1000
 
 maxVisibleNumber: 10000
 

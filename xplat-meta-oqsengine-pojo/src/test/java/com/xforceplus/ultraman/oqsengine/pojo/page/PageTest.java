@@ -199,8 +199,7 @@ public class PageTest {
         Assert.assertEquals(0, page.getPageCount());
         Assert.assertFalse(page.hasNextPage());
         PageScope scope = page.getNextPage();
-        Assert.assertEquals(0, scope.getStartLine());
-        Assert.assertEquals(0, scope.getEndLine());
+        Assert.assertNull(scope);
     }
 
     /**

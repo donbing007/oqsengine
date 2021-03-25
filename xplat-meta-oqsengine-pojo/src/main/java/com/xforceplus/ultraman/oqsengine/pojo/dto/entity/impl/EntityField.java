@@ -22,21 +22,22 @@ public class EntityField implements IEntityField, Serializable {
      * 表示主键字段.
      */
     public static final IEntityField ID_ENTITY_FIELD =
-        new EntityField(Long.MAX_VALUE, "id", FieldType.LONG, FieldConfig.build().identifie(true));
+        new EntityField(Long.MAX_VALUE, "id", FieldType.LONG,
+            FieldConfig.Builder.aFieldConfig().withIdentifie(true).build());
 
     /**
      * 表示创建时间字段.
      */
     public static final IEntityField CREATE_TIME_FILED =
-        new EntityField(Long.MAX_VALUE - 1, "createTime",
-            FieldType.LONG, FieldConfig.build().fieldSense(FieldConfig.FieldSense.CREATE_TIME));
+        new EntityField(Long.MAX_VALUE - 1, "createTime", FieldType.LONG,
+            FieldConfig.Builder.aFieldConfig().withFieldSense(FieldConfig.FieldSense.CREATE_TIME).build());
 
     /**
      * 表示最后更新时间字段.
      */
     public static final IEntityField UPDATE_TIME_FILED =
-        new EntityField(Long.MAX_VALUE - 2, "updateTime",
-            FieldType.LONG, FieldConfig.build().fieldSense(FieldConfig.FieldSense.UPDATE_TIME));
+        new EntityField(Long.MAX_VALUE - 2, "updateTime", FieldType.LONG,
+            FieldConfig.Builder.aFieldConfig().withFieldSense(FieldConfig.FieldSense.UPDATE_TIME).build());
 
     /**
      * 字段的标识.

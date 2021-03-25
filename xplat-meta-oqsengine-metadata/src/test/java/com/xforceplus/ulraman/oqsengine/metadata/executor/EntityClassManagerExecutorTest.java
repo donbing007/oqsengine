@@ -162,9 +162,9 @@ public class EntityClassManagerExecutorTest {
         if (null != re) {
             re.forEach(
                     s -> {
-                        IEntityClass e = s.getEntityClass();
+                        IEntityClass e = s.getRightEtntiyClass();
                         Assert.assertNotNull(e);
-                        Assert.assertEquals(s.getEntityClassId(), e.id());
+                        Assert.assertEquals(s.getRightEntityClassId(), e.id());
                     }
 
             );
@@ -185,9 +185,9 @@ public class EntityClassManagerExecutorTest {
         if (null != re) {
             re.forEach(
                     s -> {
-                        IEntityClass e = s.getEntityClass();
+                        IEntityClass e = s.getRightEtntiyClass();
                         Assert.assertNotNull(e);
-                        Assert.assertEquals(s.getEntityClassId(), e.id());
+                        Assert.assertEquals(s.getRightEntityClassId(), e.id());
                     }
 
             );
@@ -263,10 +263,10 @@ public class EntityClassManagerExecutorTest {
                 RelationInfo expectedRelation = expected.getRelationsList().get(i);
                 OqsRelation actualRelation = actualRelations.get(i);
                 Assert.assertEquals(expectedRelation.getId(), (long) actualRelation.getId());
-                Assert.assertEquals(expectedRelation.getName(), actualRelation.getName());
-                Assert.assertEquals(expectedRelation.getEntityClassId(), actualRelation.getEntityClassId());
-                Assert.assertEquals(expectedRelation.getRelOwnerClassId(), actualRelation.getRelOwnerClassId());
-                Assert.assertEquals(expectedRelation.getRelOwnerClassName(), actualRelation.getRelOwnerClassName());
+                Assert.assertEquals(expectedRelation.getName(), actualRelation.getCode());
+                Assert.assertEquals(expectedRelation.getEntityClassId(), actualRelation.getRightEntityClassId());
+                Assert.assertEquals(expectedRelation.getRelOwnerClassId(), actualRelation.getLeftEntityClassId());
+                Assert.assertEquals(expectedRelation.getRelOwnerClassName(), actualRelation.getLeftEntityClassCode());
                 Assert.assertEquals(expectedRelation.getRelationType(), actualRelation.getRelationType());
                 Assert.assertEquals(expectedRelation.getIdentity(), actualRelation.isIdentity());
                 Assert.assertEquals(expectedRelation.getBelongToOwner(), actualRelation.isBelongToOwner());

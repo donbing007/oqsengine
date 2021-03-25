@@ -96,6 +96,23 @@ public class CommonConfiguration {
         return buildThreadPool(useWorker, useQueue, "oqsengine-call-rebuild", false);
     }
 
+    @Bean("eventWorker")
+    public ExecutorService eventWorker(
+        @Value("${threadPool.event.worker:0}") int worker,
+        @Value("${threadPool.event.queue:500") int queue) {
+        int useWorker = worker;
+        int useQueue = queue;
+        if (useWorker <= 0) {
+            useWorker = Runtime.getRuntime().availableProcessors() + 1;
+        }
+
+        if (useQueue < 500) {
+            useQueue = 500;
+        }
+
+        return buildThreadPool(useWorker, useQueue, "oqsengine-call-rebuild", false);
+    }
+
     @Bean(value = "redisClient")
     public RedisClient redisClient(LettuceConfiguration configuration) {
         RedisClient redisClient = RedisClient.create(configuration.getUri());

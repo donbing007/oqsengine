@@ -22,7 +22,7 @@ public interface EntityManagementService {
 
     /**
      * 替换一个已经存在的 entity 的信息.
-     * 注意: 可能只包含需要替换的属性即可.
+     * 注意: 只包含需要替换的属性即可.
      * @param entity 目标 entity.
      */
     ResultStatus replace(IEntity entity) throws SQLException;

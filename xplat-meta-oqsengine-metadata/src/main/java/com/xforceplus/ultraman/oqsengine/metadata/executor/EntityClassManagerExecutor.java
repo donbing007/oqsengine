@@ -158,13 +158,13 @@ public class EntityClassManagerExecutor implements MetaManager {
                 r -> {
                     OqsRelation.Builder builder = OqsRelation.Builder.anOqsRelation()
                                                     .withId(r.getId())
-                                                    .withName(r.getName())
-                                                    .withRelOwnerClassId(r.getRelOwnerClassId())
-                                                    .withRelOwnerClassName(r.getRelOwnerClassName())
+                        .withCode(r.getName())
+                        .withLeftEntityClassId(r.getRelOwnerClassId())
+                        .withLeftEntityClassCode(r.getRelOwnerClassName())
                                                     .withRelationType(r.getRelationType())
                                                     .withIdentity(r.isIdentity())
-                                                    .withEntityClassId(r.getEntityClassId())
-                                                    .withFunction(this::load)
+                        .withRightEntityClassId(r.getEntityClassId())
+                        .withRightEntityClassLoader(this::load)
                                                     .withEntityField(r.getEntityField())
                                                     .withBelongToOwner(r.isBelongToOwner());
 

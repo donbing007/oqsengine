@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityRefComparator;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRefs;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -689,21 +688,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 .collect(toSet());
 
 
-            Page indexPage;
-            if (page.isEmptyPage()) {
-                indexPage = Page.emptyPage();
-            } else {
-                indexPage = new Page(page.getIndex(), page.getPageSize());
-            }
-
-            EntityRefs refs = indexStorage.select(
+            Collection<EntityRef> indexRefs = indexStorage.select(
                 conditions, entityClass,
                 SelectConfig.Builder.aSelectConfig()
                     .withSort(sort)
-                    .withPage(indexPage)
+                    .withPage(page)
                     .withExcludedIds(filterIdsFromMaster)
                     .withCommitId(commitId).build());
-            indexPage = refs.getPage();
+            indexRefs = fixNullSortValue(indexRefs, sort);
 
             Collection<EntityRef> masterRefsWithoutDeleted = masterRefs.stream().
                 filter(x -> x.getOp() != OperationType.DELETE.getValue()).collect(toList());
@@ -711,14 +703,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             Collection<EntityRef> retRefs;
             //combine two refs
             if (sort != null && !sort.isOutOfOrder()) {
-                retRefs = merge(masterRefsWithoutDeleted, refs.getRefs(), sort);
+                retRefs = merge(masterRefsWithoutDeleted, indexRefs, sort);
             } else {
-                retRefs = new ArrayList<>(masterRefsWithoutDeleted.size() + refs.size());
+                retRefs = new ArrayList<>(masterRefsWithoutDeleted.size() + indexRefs.size());
                 retRefs.addAll(masterRefsWithoutDeleted);
-                retRefs.addAll(refs.getRefs());
+                retRefs.addAll(indexRefs);
             }
 
-            page.setTotalCount(indexPage.getTotalCount() + masterRefsWithoutDeleted.size());
+            page.setTotalCount(page.getTotalCount() + masterRefsWithoutDeleted.size());
             if (page.isEmptyPage()) {
                 return Collections.emptyList();
             }
@@ -765,10 +757,14 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             if (sort != null && !sort.isOutOfOrder()) {
                 refs.parallelStream().forEach(r -> {
                     if (r.getOrderValue() == null || r.getOrderValue().isEmpty()) {
-                        r.setOrderValue(sortDefaultValue.get(sort.getField().type()));
-                        // 如果是意外的字段,那么设置为一个字符串0,数字和字符串都可以正常转型.
-                        if (r.getOrderValue() == null) {
-                            r.setOrderValue("0");
+                        if (sort.getField().config().isIdentifie()) {
+                            r.setOrderValue(Long.toString(r.getId()));
+                        } else {
+                            r.setOrderValue(sortDefaultValue.get(sort.getField().type()));
+                            // 如果是意外的字段,那么设置为一个字符串0,数字和字符串都可以正常转型.
+                            if (r.getOrderValue() == null) {
+                                r.setOrderValue("0");
+                            }
                         }
                     }
                 });

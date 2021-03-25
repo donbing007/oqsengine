@@ -63,6 +63,9 @@ data:
               queue: {{ .Values.storage.threadPool.call.rebuild.queue | default "500" }}
           cdc:
             worker: {{ .Values.storage.threadPool.cdc.worker | default "1" }}
+          event:
+            worker: {{ .Values.storage.threadPool.event.worker | default "0" }}
+            queue: {{ .Values.storage.threadPool.event.queue | default "1000" }}
         maxVisibleNumber: {{ .Values.storage.maxVisibleNumber | default "10000" }}
         meta:
           grpc:
