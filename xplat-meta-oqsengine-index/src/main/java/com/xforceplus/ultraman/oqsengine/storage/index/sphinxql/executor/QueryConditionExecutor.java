@@ -393,12 +393,15 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple6<IEntity
 
                                 IValue iValue = storageStrategy.toLogicValue(useSort.getField(), reduce.get());
 
-                                if (iValue.compareByString()) {
-                                    entityRef.setOrderValue(iValue.valueToString());
+                                if (iValue.getValue() == null) {
+                                    entityRef.setOrderValue(null);
                                 } else {
-                                    entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
+                                    if (iValue.compareByString()) {
+                                        entityRef.setOrderValue(iValue.valueToString());
+                                    } else {
+                                        entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
+                                    }
                                 }
-
                             }
                         }
                     }

@@ -3,7 +3,7 @@ package com.xforceplus.ultraman.oqsengine.changelog.relation;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.Changelog;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 
 import java.util.List;
 

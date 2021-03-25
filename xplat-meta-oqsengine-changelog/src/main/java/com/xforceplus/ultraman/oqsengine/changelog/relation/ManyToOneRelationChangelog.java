@@ -9,7 +9,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldLikeRelationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

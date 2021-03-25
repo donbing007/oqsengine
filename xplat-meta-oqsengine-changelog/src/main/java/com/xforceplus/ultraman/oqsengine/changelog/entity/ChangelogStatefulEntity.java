@@ -12,7 +12,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldLikeRelationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
@@ -287,7 +287,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
     private Changelog toRawChangelog(ChangedEvent changedEvent) {
         Changelog changelog = new Changelog();
         changelog.setId(entityDomain.getId());
-        changelog.setEntityClass(entityDomain.getEntity().entityClass().id());
+        changelog.setEntityClass(entityDomain.getEntity().entityClassRef().getId());
         changelog.setVersion(changedEvent.getCommitId());
         changelog.setUsername(changedEvent.getUsername());
         changelog.setComment(changedEvent.getComment());

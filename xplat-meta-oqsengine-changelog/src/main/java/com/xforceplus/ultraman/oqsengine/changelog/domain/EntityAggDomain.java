@@ -1,7 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.changelog.domain;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
+
 
 import java.util.HashMap;
 import java.util.LinkedList;

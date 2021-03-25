@@ -12,12 +12,10 @@ import com.xforceplus.ultraman.oqsengine.changelog.storage.write.SnapshotStorage
 import com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -322,10 +320,13 @@ public class ReplayServiceImpl implements ReplayService {
      */
     private EntityDomain replaySingleDomainWithSnapshot(IEntityClass entityClass, long id, ChangeSnapshot changeSnapshot, List<Changelog> changelogs) {
 
-        EntityValue entityValue = new EntityValue(id);
+        IEntityValue entityValue = EntityValue.build();
         IEntity entity = Entity.Builder.anEntity()
                 .withId(id)
-                .withEntityClass(entityClass)
+                .withEntityClassRef(EntityClassRef.Builder
+                        .anEntityClassRef()
+                        .withEntityClassId(entityClass.id())
+                        .build())
                 .withEntityValue(entityValue).build();
 
         Map<OqsRelation, List<Long>> referenceMap = new HashMap<>();

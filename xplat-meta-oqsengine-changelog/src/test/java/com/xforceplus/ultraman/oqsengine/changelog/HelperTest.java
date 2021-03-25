@@ -1,8 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.changelog;
 
 import com.xforceplus.ultraman.oqsengine.changelog.utils.EntityClassHelper;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import io.vavr.Tuple2;
 import org.junit.Test;
 
@@ -13,8 +13,6 @@ public class HelperTest {
 
     @Test
     public void testFindAssociateRelation(){
-
-
         OqsEntityClass example = OqsEntityClass.Builder.anEntityClass()
                 .withId(2L)
                 .withRelations(Arrays.asList(

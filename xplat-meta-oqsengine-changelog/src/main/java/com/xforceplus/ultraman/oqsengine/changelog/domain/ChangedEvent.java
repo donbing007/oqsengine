@@ -1,6 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.changelog.domain;
 
-import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 
 import java.util.Map;
 

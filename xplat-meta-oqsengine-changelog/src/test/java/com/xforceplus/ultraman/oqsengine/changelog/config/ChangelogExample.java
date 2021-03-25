@@ -7,10 +7,9 @@ import com.xforceplus.ultraman.oqsengine.common.id.IdGenerator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
-import org.apache.commons.collections4.list.TreeList;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -70,7 +69,7 @@ public class ChangelogExample {
                                         .withIdentity(true)
                                         .withRelOwnerClassId(A_Class)
                                         .withStrong(true)
-                                        .withFieldOwner(A_Class)
+                                        .withBelongToOwner(true)
                                         .withEntityField(EntityField.Builder.anEntityField()
                                                 .withId(A_B_OTO)
                                                 .withFieldType(FieldType.LONG)

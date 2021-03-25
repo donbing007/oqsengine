@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.changelog.utils;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldLikeRelationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;

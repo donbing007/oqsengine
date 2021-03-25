@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldLikeRelationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.oqs.OqsRelation;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 
 import java.math.BigDecimal;
@@ -59,9 +59,9 @@ public class ChangelogHelper {
      */
     public static boolean isReferenceSetInCurrentView(OqsRelation relation, Long entityClassId){
         if(relation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.MANY2ONE.getName())){
-            return entityClassId != relation.getFieldOwner();
+            return !relation.isBelongToOwner();
         } else if(relation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.ONE2MANY.getName())){
-            return entityClassId != relation.getFieldOwner();
+            return !relation.isBelongToOwner();
         }
 
         return false;

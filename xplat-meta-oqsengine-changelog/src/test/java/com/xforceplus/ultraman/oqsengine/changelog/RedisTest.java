@@ -14,7 +14,7 @@ import com.xforceplus.ultraman.oqsengine.changelog.handler.ChangelogEventHandler
 import com.xforceplus.ultraman.oqsengine.changelog.impl.RedisChangelogHandler;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.OperationType;
+import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import io.lettuce.core.RedisClient;
 import org.junit.Test;
 import org.junit.runner.RunWith;
