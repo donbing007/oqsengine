@@ -28,10 +28,11 @@ public class EntityClassStorageBuilder {
 
         RelationStorage r = new RelationStorage();
         r.setId(id);
-        r.setName(id + "_test");
-        r.setRelationType("order");
+        r.setCode(id + "_test");
+        r.setRelationType(1);
         r.setIdentity(false);
-        r.setEntityClassId(id + 1000);
+        r.setLeftEntityClassId(id);
+        r.setRightEntityClassId(id + 1000);
         r.setEntityField(entityFieldLong(fieldId));
 
         return r;
@@ -40,10 +41,11 @@ public class EntityClassStorageBuilder {
     public static RelationStorage relationString(long id, long fieldId) {
         RelationStorage r = new RelationStorage();
         r.setId(id);
-        r.setName(id + "_test");
-        r.setRelationType("order");
+        r.setCode(id + "_test");
+        r.setRelationType(1);
         r.setIdentity(false);
-        r.setEntityClassId(id + 1000);
+        r.setLeftEntityClassId(id);
+        r.setRightEntityClassId(id + 1000);
         r.setEntityField(entityFieldString(fieldId));
 
         return r;
@@ -169,7 +171,7 @@ public class EntityClassStorageBuilder {
         List<RelationInfo> relationInfos = new ArrayList<>();
         if (null != relationEntityId) {
             for (int i = 0; i < relationEntityId.size(); i++) {
-                relationInfos.add(relationInfo(id + i, relationEntityId.get(i), id, "toOne", id + i));
+                relationInfos.add(relationInfo(id + i, relationEntityId.get(i), id, 1, id + i));
             }
         }
 
@@ -196,12 +198,12 @@ public class EntityClassStorageBuilder {
                 .build();
     }
 
-    public static RelationInfo relationInfo(long id, long entityId, long ownerId, String relationType, long fieldId) {
+    public static RelationInfo relationInfo(long id, long entityId, long ownerId, int relationType, long fieldId) {
         return RelationInfo.newBuilder()
                 .setId(id)
-                .setName(id + "_name")
-                .setEntityClassId(entityId)
-                .setRelOwnerClassId(ownerId)
+                .setCode(id + "_name")
+                .setRightEntityClassId(entityId)
+                .setLeftEntityClassId(ownerId)
                 .setRelationType(relationType)
                 .setEntityField(EntityFieldInfo.newBuilder()
                         .setId(fieldId)
