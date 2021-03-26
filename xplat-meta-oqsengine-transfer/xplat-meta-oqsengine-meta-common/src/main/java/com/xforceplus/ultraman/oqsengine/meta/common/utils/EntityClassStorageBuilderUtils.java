@@ -67,16 +67,16 @@ public class EntityClassStorageBuilderUtils {
     }
 
     private static void relationCheck(long id, Map<Long, EntityClassStorage> entityClassStorageMap, RelationStorage relationStorage) {
-        if (!(relationStorage.getEntityClassId() > 0)) {
+        if (relationStorage.getRightEntityClassId() <= 0) {
             throw new MetaSyncClientException(
                     String.format("entityClass id [%d], relation entityClassId [%d] should not less than 0."
-                                            , id, relationStorage.getEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
+                                            , id, relationStorage.getRightEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
         }
 
-        if (null == entityClassStorageMap.get(relationStorage.getEntityClassId())) {
+        if (null == entityClassStorageMap.get(relationStorage.getRightEntityClassId())) {
             throw new MetaSyncClientException(
                     String.format("entityClass id [%d], relation entityClass [%d] missed."
-                            , id, relationStorage.getEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
+                            , id, relationStorage.getRightEntityClassId()), BUSINESS_HANDLER_ERROR.ordinal());
         }
     }
 
@@ -122,16 +122,17 @@ public class EntityClassStorageBuilderUtils {
             for (RelationInfo r : entityClassInfo.getRelationsList()) {
                 RelationStorage relation = new RelationStorage();
                 relation.setId(r.getId());
-                relation.setName(r.getName());
-                relation.setEntityClassId(r.getEntityClassId());
-                relation.setRelOwnerClassId(r.getRelOwnerClassId());
-                relation.setRelOwnerClassName(r.getRelOwnerClassName());
+                relation.setCode(r.getCode());
+                relation.setRightEntityClassId(r.getRightEntityClassId());
+                relation.setLeftEntityClassId(r.getLeftEntityClassId());
+                relation.setLeftEntityClassCode(r.getLeftEntityClassCode());
                 relation.setRelationType(r.getRelationType());
                 relation.setIdentity(r.getIdentity());
                 if (r.hasEntityField()) {
                     relation.setEntityField(toEntityField(r.getEntityField()));
                 }
                 relation.setBelongToOwner(r.getBelongToOwner());
+                relation.setStrong(r.getStrong());
 
                 relations.add(relation);
             }

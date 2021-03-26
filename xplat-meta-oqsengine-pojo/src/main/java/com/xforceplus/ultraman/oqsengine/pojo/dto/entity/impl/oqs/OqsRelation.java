@@ -19,6 +19,39 @@ import java.util.function.Function;
 public class OqsRelation {
 
     /**
+     * 关系类型.
+     */
+    public static enum RelationType {
+        UNKNOWN(0),
+        ONE_TO_ONE(1),
+        ONE_TO_MANY(2),
+        MANY_TO_ONE(3),
+        MANY_TO_MANY(4),
+        MULTI_VALUES(5);
+
+        private int value;
+
+        private RelationType(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        public static RelationType getInstance(int value) {
+            for (RelationType t : RelationType.values()) {
+                if (t.getValue() == value) {
+                    return t;
+                }
+            }
+
+            return RelationType.UNKNOWN;
+        }
+
+    }
+
+    /**
      * 关系唯一标识.
      */
     private long id;
@@ -46,7 +79,7 @@ public class OqsRelation {
     /**
      * 关系类型 - 使用关系的code填入
      */
-    private String relationType;
+    private RelationType relationType;
 
     /**
      * 是PrimaryKey还是UniqueKey
@@ -65,6 +98,12 @@ public class OqsRelation {
      * false 表示实际关系字段属于"右"对象.
      */
     private boolean belongToOwner;
+
+    /**
+     * true 表示为强关系.
+     * false 表示为弱关系.
+     */
+    private boolean strong;
 
     /**
      * "右"对象元信息定义的延迟加载方法.
@@ -118,7 +157,7 @@ public class OqsRelation {
         return rightEntityClassId;
     }
 
-    public String getRelationType() {
+    public RelationType getRelationType() {
         return relationType;
     }
 
@@ -134,6 +173,17 @@ public class OqsRelation {
         return belongToOwner;
     }
 
+    public boolean isSelfRelation(long entityClassId) {
+        return entityClassId == leftEntityClassId && belongToOwner;
+    }
+
+    public boolean isStrong() {
+        return strong;
+    }
+
+    /**
+     * builder
+     */
     public void setBelongToOwner(boolean belongToOwner) {
         this.belongToOwner = belongToOwner;
     }
@@ -171,6 +221,11 @@ public class OqsRelation {
         private Long leftEntityClassId;
         private String leftEntityClassCode;
         private Long rightEntityClassId;
+        private RelationType relationType;
+        private Boolean identity;
+        private IEntityField entityField;
+        private Boolean belongToOwner;
+        private boolean strong;
         private String relationType;
         private boolean identity;
         private long entityClassId;
@@ -213,7 +268,7 @@ public class OqsRelation {
             return this;
         }
 
-        public Builder withRelationType(String relationType) {
+        public Builder withRelationType(RelationType relationType) {
             this.relationType = relationType;
             return this;
         }
@@ -249,6 +304,11 @@ public class OqsRelation {
         }
 
 
+        public Builder withStrong(boolean strong) {
+            this.strong = strong;
+            return this;
+        }
+
         public Builder withRightEntityClassLoader(Function<Long, Optional<IEntityClass>> entityClassLoader) {
             this.entityClassLoader = entityClassLoader;
             return this;
@@ -266,6 +326,7 @@ public class OqsRelation {
             oqsRelation.rightEntityClassLoader = this.entityClassLoader;
             oqsRelation.entityField = this.entityField;
             oqsRelation.leftEntityClassCode = this.leftEntityClassCode;
+            oqsRelation.strong = this.strong;
             oqsRelation.belongToOwner = this.belongToOwner;
             oqsRelation.isStrong = this.isStrong;
             oqsRelation.isCompanion = this.isCompanion;

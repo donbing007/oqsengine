@@ -149,6 +149,7 @@ public class EntityClassManagerExecutor implements MetaManager {
 
     /**
      * 加载relation
+     *
      * @param relationStorageList
      * @return
      */
@@ -157,16 +158,17 @@ public class EntityClassManagerExecutor implements MetaManager {
         relationStorageList.forEach(
                 r -> {
                     OqsRelation.Builder builder = OqsRelation.Builder.anOqsRelation()
-                                                    .withId(r.getId())
-                        .withCode(r.getName())
-                        .withLeftEntityClassId(r.getRelOwnerClassId())
-                        .withLeftEntityClassCode(r.getRelOwnerClassName())
-                                                    .withRelationType(r.getRelationType())
-                                                    .withIdentity(r.isIdentity())
-                        .withRightEntityClassId(r.getEntityClassId())
-                        .withRightEntityClassLoader(this::load)
-                                                    .withEntityField(r.getEntityField())
-                                                    .withBelongToOwner(r.isBelongToOwner());
+                            .withId(r.getId())
+                            .withCode(r.getCode())
+                            .withLeftEntityClassId(r.getLeftEntityClassId())
+                            .withLeftEntityClassCode(r.getLeftEntityClassCode())
+                            .withRelationType(OqsRelation.RelationType.getInstance(r.getRelationType()))
+                            .withIdentity(r.isIdentity())
+                            .withStrong(r.isStrong())
+                            .withRightEntityClassId(r.getRightEntityClassId())
+                            .withRightEntityClassLoader(this::load)
+                            .withEntityField(r.getEntityField())
+                            .withBelongToOwner(r.isBelongToOwner());
 
                     oqsRelations.add(builder.build());
                 }

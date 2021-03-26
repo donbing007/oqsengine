@@ -2,8 +2,6 @@ package com.xforceplus.ultraman.oqsengine.meta.common.pojo;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 
-import java.util.Objects;
-
 /**
  * desc :
  * name : RelationStorage
@@ -15,14 +13,15 @@ import java.util.Objects;
 public class RelationStorage {
 
     private long id;
-    private String name;
-    private long entityClassId;
-    private long relOwnerClassId;
-    private String relOwnerClassName;
-    private String relationType;
+    private String code;
+    private long rightEntityClassId;
+    private long leftEntityClassId;
+    private String leftEntityClassCode;
+    private int relationType;
     private boolean identity;
     private EntityField entityField;
     private boolean belongToOwner;
+    private boolean strong;
 
     public RelationStorage() {
     }
@@ -35,44 +34,36 @@ public class RelationStorage {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getCode() {
+        return code;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setCode(String code) {
+        this.code = code;
     }
 
-    public long getEntityClassId() {
-        return entityClassId;
+    public long getRightEntityClassId() {
+        return rightEntityClassId;
     }
 
-    public void setEntityClassId(long entityClassId) {
-        this.entityClassId = entityClassId;
+    public void setRightEntityClassId(long rightEntityClassId) {
+        this.rightEntityClassId = rightEntityClassId;
     }
 
-    public long getRelOwnerClassId() {
-        return relOwnerClassId;
+    public long getLeftEntityClassId() {
+        return leftEntityClassId;
     }
 
-    public void setRelOwnerClassId(long relOwnerClassId) {
-        this.relOwnerClassId = relOwnerClassId;
+    public void setLeftEntityClassId(long leftEntityClassId) {
+        this.leftEntityClassId = leftEntityClassId;
     }
 
-    public String getRelOwnerClassName() {
-        return relOwnerClassName;
+    public String getLeftEntityClassCode() {
+        return leftEntityClassCode;
     }
 
-    public void setRelOwnerClassName(String relOwnerClassName) {
-        this.relOwnerClassName = relOwnerClassName;
-    }
-
-    public String getRelationType() {
-        return relationType;
-    }
-
-    public void setRelationType(String relationType) {
-        this.relationType = relationType;
+    public void setLeftEntityClassCode(String leftEntityClassCode) {
+        this.leftEntityClassCode = leftEntityClassCode;
     }
 
     public boolean isIdentity() {
@@ -99,24 +90,19 @@ public class RelationStorage {
         this.belongToOwner = belongToOwner;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        RelationStorage that = (RelationStorage) o;
-        return id == that.id &&
-                entityClassId == that.entityClassId &&
-                relOwnerClassId == that.relOwnerClassId &&
-                identity == that.identity &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(relOwnerClassName, that.relOwnerClassName) &&
-                Objects.equals(relationType, that.relationType) &&
-                Objects.equals(entityField, that.entityField) &&
-                Objects.equals(belongToOwner, that.belongToOwner);
+    public void setRelationType(int relationType) {
+        this.relationType = relationType;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name, entityClassId, relOwnerClassId, relOwnerClassName, relationType, identity, entityField, belongToOwner);
+    public boolean isStrong() {
+        return strong;
+    }
+
+    public int getRelationType() {
+        return relationType;
+    }
+
+    public void setStrong(boolean strong) {
+        this.strong = strong;
     }
 }

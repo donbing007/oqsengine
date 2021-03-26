@@ -189,7 +189,7 @@ public class EntityClassSyncServerTest extends BaseInit {
 
         observer.onNext(buildRequest(new WatchElement(appId, env, resetVersion, null), uid, RequestStatus.SYNC_FAIL));
 
-        waitForResult(40, resetVersion, appId);
+        waitForResult(50, resetVersion, appId);
         ThreadUtils.shutdown(t, 1);
     }
 

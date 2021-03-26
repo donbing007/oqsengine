@@ -63,8 +63,8 @@ public class EntityClassSyncResponseBuilder {
         entityFieldInfos.add(entityFieldInfo(id + 1, EntityFieldInfo.FieldType.STRING));
 
         List<RelationInfo> relationInfos = new ArrayList<>();
-        relationInfos.add(relationInfo(id, id + 2, id, "toOne", id));
-        relationInfos.add(relationInfo(id + 1, id + 2, id + 1, "toOne", id + 1));
+        relationInfos.add(relationInfo(id, id + 2, id, 1, id));
+        relationInfos.add(relationInfo(id + 1, id + 2, id + 1, 1, id + 1));
 
         return EntityClassInfo.newBuilder()
                 .setId(id)
@@ -89,12 +89,12 @@ public class EntityClassSyncResponseBuilder {
                 .build();
     }
 
-    public static RelationInfo relationInfo(long id, long entityId, long ownerId, String relationType, long fieldId) {
+    public static RelationInfo relationInfo(long id, long entityId, long ownerId, int relationType, long fieldId) {
         return RelationInfo.newBuilder()
                 .setId(id)
-                .setName(id + "_name")
-                .setEntityClassId(entityId)
-                .setRelOwnerClassId(ownerId)
+                .setCode(id + "_name")
+                .setRightEntityClassId(entityId)
+                .setLeftEntityClassId(ownerId)
                 .setRelationType(relationType)
                 .setBelongToOwner(id % 2 == 0)
                 .setEntityField(EntityFieldInfo.newBuilder()
@@ -103,6 +103,7 @@ public class EntityClassSyncResponseBuilder {
                         .setName(fieldId + "_name")
                         .setFieldConfig(FieldConfig.newBuilder().setSearchable(true).build())
                         .build())
+                .setStrong(true)
                 .build();
     }
 
