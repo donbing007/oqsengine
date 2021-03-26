@@ -135,6 +135,29 @@ public class CommonConfiguration {
         }
     }
 
+    /**
+     * TODO
+     * @param worker
+     * @param queue
+     * @return
+     */
+    @Bean("waitVersionExecutor")
+    public ExecutorService waitVersionExecutor(
+            @Value("${threadPool.call.read.worker:0}") int worker, @Value("${threadPool.call.read.queue:500}") int queue) {
+        int useWorker = worker;
+        int useQueue = queue;
+        if (useWorker == 0) {
+            useWorker = Runtime.getRuntime().availableProcessors() + 1;
+        }
+
+        if (useQueue < 500) {
+            useQueue = 500;
+        }
+
+        return buildThreadPool(useWorker, useQueue, "oqsengine-meta-version", false);
+    }
+
+
     private ExecutorService buildThreadPool(int worker, int queue, String namePrefix, boolean daemon) {
         return new ThreadPoolExecutor(worker, worker,
             0L, TimeUnit.MILLISECONDS,

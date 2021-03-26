@@ -100,7 +100,7 @@ public class ServerConfiguration implements ApplicationContextAware {
         return new EntityClassListener();
     }
 
-    @Bean(name = "shutdown")
+    @Bean(name = "grpcShutdown")
     public IShutDown serverShutDown() {
         return new ServerShutDown();
     }
