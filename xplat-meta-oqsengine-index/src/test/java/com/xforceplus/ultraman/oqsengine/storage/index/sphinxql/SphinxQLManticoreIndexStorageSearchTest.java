@@ -188,11 +188,12 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        transactionManager = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0),
-            new IncreasingOrderLongIdGenerator(0),
-            commitIdStatusService,
-            false);
+        transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+            .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
+            .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
+            .withCommitIdStatusService(commitIdStatusService)
+            .withWaitCommitSync(false)
+            .build();
 
         indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
 
@@ -254,6 +255,27 @@ public class SphinxQLManticoreIndexStorageSearchTest {
         redisClient.shutdown();
 
         ExecutorHelper.shutdownAndAwaitTermination(threadPool);
+    }
+
+    /**
+     * 测试如果使用Page.emptyPage()实例做为分页,那么page的数据总量还是会被填充的.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testEmptyPageCount() throws Exception {
+        Page page = Page.emptyPage();
+        storage.select(
+            Conditions.buildEmtpyConditions(),
+            l2EntityClass,
+            SelectConfig.Builder.aSelectConfig()
+                .withPage(page)
+                .withCommitId(0)
+                .withSort(Sort.buildAscSort(l2EntityClass.field("l1-long").get()))
+                .build()
+        );
+        Assert.assertEquals(page.getTotalCount(), expectedDatas.size());
+
     }
 
     @Test

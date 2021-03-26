@@ -61,7 +61,12 @@ public class MultiLocalTransactionTest {
     public void testCommit() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService, 0);
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.aMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withMaxWaitCommitIdSyncMs(0)
+            .build();
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -87,7 +92,11 @@ public class MultiLocalTransactionTest {
     public void testCommitWaitSync() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
 
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.aMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .build();
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -115,7 +124,11 @@ public class MultiLocalTransactionTest {
     @Test
     public void testRollback() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.aMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .build();
 
         List<MockResource> resources = buildResources(10, false);
 
@@ -132,7 +145,12 @@ public class MultiLocalTransactionTest {
     @Test
     public void testCommitEx() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService, 0);
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.aMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .withMaxWaitCommitIdSyncMs(0)
+            .build();
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交
@@ -169,7 +187,11 @@ public class MultiLocalTransactionTest {
     @Test
     public void testRollbackEx() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.aMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .build();
 
         List<MockResource> exResources = buildResources(2, true); // 这里提交会异常.
         List<MockResource> correctResources = buildResources(1, false); // 这里可以提交
@@ -201,7 +223,11 @@ public class MultiLocalTransactionTest {
     @Test
     public void testIsReady() throws Exception {
         LongIdGenerator idGenerator = new IncreasingOrderLongIdGenerator();
-        MultiLocalTransaction tx = new MultiLocalTransaction(1, idGenerator, commitIdStatusService);
+        MultiLocalTransaction tx = MultiLocalTransaction.Builder.aMultiLocalTransaction()
+            .withId(1)
+            .withLongIdGenerator(idGenerator)
+            .withCommitIdStatusService(commitIdStatusService)
+            .build();
         tx.getAccumulator().accumulateDelete(8);
         Assert.assertFalse(tx.isReadyOnly());
         tx.getAccumulator().reset();

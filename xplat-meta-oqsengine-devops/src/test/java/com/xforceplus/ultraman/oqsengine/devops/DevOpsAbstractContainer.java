@@ -82,8 +82,12 @@ public abstract class DevOpsAbstractContainer {
             commitIdStatusService.init();
 
 
-            transactionManager = new DefaultTransactionManager(
-                new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
+            transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+                .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
+                .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
+                .withCommitIdStatusService(commitIdStatusService)
+                .withWaitCommitSync(false)
+                .build();
         }
 
         idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0));

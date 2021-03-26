@@ -192,11 +192,12 @@ public class SphinxQLManticoreIndexStorageTest {
         // 等待加载完毕
         TimeUnit.SECONDS.sleep(1L);
 
-        transactionManager = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0),
-            new IncreasingOrderLongIdGenerator(0),
-            commitIdStatusService,
-            false);
+        transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+            .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
+            .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
+            .withCommitIdStatusService(commitIdStatusService)
+            .withWaitCommitSync(false)
+            .build();
 
         indexWriteIndexNameSelector = new SuffixNumberHashSelector("oqsindex", 2);
 

@@ -20,4 +20,14 @@ public class MapUtils {
     public static int calculateInitSize(int size, float loadFactor) {
         return (int) (size + (size * (1.0F - loadFactor)));
     }
+
+    /**
+     * 默认加载因子的初始化大小.
+     *
+     * @param size 目标元素数量.
+     * @return 实际大小.
+     */
+    public static int calculateInitSize(int size) {
+        return calculateInitSize(size, 0.75F);
+    }
 }

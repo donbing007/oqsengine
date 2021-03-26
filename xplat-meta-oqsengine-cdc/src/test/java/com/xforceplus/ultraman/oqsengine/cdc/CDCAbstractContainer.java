@@ -91,11 +91,11 @@ public abstract class CDCAbstractContainer {
             ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
             commitIdStatusService.init();
 
-            transactionManager = new DefaultTransactionManager(
-                new IncreasingOrderLongIdGenerator(0),
-                new IncreasingOrderLongIdGenerator(0),
-                commitIdStatusService,
-                false);
+            transactionManager = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+                .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
+                .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
+                .withCommitIdStatusService(commitIdStatusService)
+                .build();
         }
 
         initMaster();

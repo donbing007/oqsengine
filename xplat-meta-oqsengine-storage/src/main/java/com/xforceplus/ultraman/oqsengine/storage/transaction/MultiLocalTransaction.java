@@ -66,10 +66,14 @@ public class MultiLocalTransaction implements Transaction {
         transactionResourceHolder = new LinkedList<>();
         this.accumulator = new DefaultTransactionAccumulator();
 
-        eventBus.notify(
-            new ActualEvent(
-                EventType.TX_BEGIN,
-                new BeginPayload(id, msg)));
+        if (eventBus == null) {
+            eventBus = DoNothingEventBus.getInstance();
+        } else {
+            eventBus.notify(
+                new ActualEvent(
+                    EventType.TX_BEGIN,
+                    new BeginPayload(id, msg)));
+        }
     }
 
     @Override
