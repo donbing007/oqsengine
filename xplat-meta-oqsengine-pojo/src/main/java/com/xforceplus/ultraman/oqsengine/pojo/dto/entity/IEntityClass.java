@@ -120,6 +120,18 @@ public interface IEntityClass {
     Optional<IEntityField> field(long id);
 
     /**
+     * 获得当前元信息的指针.
+     *
+     * @return 指针.
+     */
+    default EntityClassRef ref() {
+        return EntityClassRef.Builder.anEntityClassRef()
+            .withEntityClassId(id())
+            .withEntityClassCode(code())
+            .build();
+    }
+
+    /**
      * 判断是否表示一个通用类型,和 JAVA 中 Object.class 相似的概念.
      *
      * @return true 是通用类型,false 不是通用类型.
