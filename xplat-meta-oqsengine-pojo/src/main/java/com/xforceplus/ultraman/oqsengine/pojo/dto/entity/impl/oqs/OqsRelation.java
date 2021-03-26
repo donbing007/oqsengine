@@ -86,12 +86,14 @@ public class OqsRelation {
     private long companionRelation;
 
     public OqsRelation() {
+
+    }
     /**
      * 获取到关系中相关联的entityClass实例.即关系"右"对象的元信息定义实例.
      *
      * @return entityClass 实例.
      */
-    public IEntityClass getRightEtntiyClass() {
+    public IEntityClass getRightEntityClass() {
         Optional<IEntityClass> entityClassOp = rightEntityClassLoader.apply(rightEntityClassId);
         return entityClassOp.orElse(null);
     }
@@ -136,14 +138,6 @@ public class OqsRelation {
         this.belongToOwner = belongToOwner;
     }
 
-    public Function<Long, Optional<IEntityClass>> getEntityClassLoader() {
-        return entityClassLoader;
-    }
-
-    public void setEntityClassLoader(Function<Long, Optional<IEntityClass>> entityClassLoader) {
-        this.entityClassLoader = entityClassLoader;
-    }
-
     public boolean isStrong() {
         return isStrong;
     }
@@ -166,43 +160,6 @@ public class OqsRelation {
 
     public void setCompanionRelation(long companionRelation) {
         this.companionRelation = companionRelation;
-    }
-
-    /**
-     * a relation is differ from id
-     * @param o
-     * @return
-     */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof OqsRelation)) {
-            return false;
-        }
-        OqsRelation relation = (OqsRelation) o;
-        return getEntityClass().id() == relation.getEntityClass().id() &&
-            isIdentity() == relation.isIdentity() &&
-            Objects.equals(getName(), relation.getName()) &&
-            Objects.equals(getRelationType(), relation.getRelationType()) &&
-            getEntityField().id() == relation.getEntityField().id();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getName(), getEntityClass().id(), getRelationType(), isIdentity(), getEntityField().id(), isBelongToOwner());
-    }
-
-    @Override
-    public String toString() {
-        return "Relation{" +
-            "name='" + name + '\'' +
-            ", entityClassId=" + getEntityClass().id() +
-            ", relationType='" + relationType + '\'' +
-            ", identity=" + identity +
-            ", entityFieldId =" + getEntityField().id() +
-            '}';
     }
 
     /**

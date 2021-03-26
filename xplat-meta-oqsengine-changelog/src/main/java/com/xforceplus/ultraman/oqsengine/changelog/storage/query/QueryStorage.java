@@ -17,7 +17,7 @@ public interface QueryStorage {
      * @param ids
      * @return
      */
-    Map<Long, Long> changeTimesMapping(List<Long> ids, boolean isSelf) throws SQLException;
+    Map<Long, Long> changeCountMapping(List<Long> ids, boolean isSelf) throws SQLException;
 
     /**
      * query changelog version for one id

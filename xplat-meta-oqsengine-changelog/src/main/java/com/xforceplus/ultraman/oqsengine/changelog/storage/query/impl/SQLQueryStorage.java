@@ -44,7 +44,7 @@ public class SQLQueryStorage implements QueryStorage {
      * @throws SQLException
      */
     @Override
-    public Map<Long, Long> changeTimesMapping(List<Long> ids, boolean isSelf) throws SQLException {
+    public Map<Long, Long> changeCountMapping(List<Long> ids, boolean isSelf) throws SQLException {
 
         Connection connection = changelogQueryDataSource.getConnection();
 
