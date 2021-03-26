@@ -162,7 +162,7 @@ public class EntityClassManagerExecutorTest {
         if (null != re) {
             re.forEach(
                     s -> {
-                        IEntityClass e = s.getRightEtntiyClass();
+                        IEntityClass e = s.getRightEntityClass();
                         Assert.assertNotNull(e);
                         Assert.assertEquals(s.getRightEntityClassId(), e.id());
                     }
@@ -185,7 +185,7 @@ public class EntityClassManagerExecutorTest {
         if (null != re) {
             re.forEach(
                     s -> {
-                        IEntityClass e = s.getRightEtntiyClass();
+                        IEntityClass e = s.getRightEntityClass();
                         Assert.assertNotNull(e);
                         Assert.assertEquals(s.getRightEntityClassId(), e.id());
                     }

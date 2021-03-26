@@ -17,6 +17,11 @@ public class StringValue extends AbstractValue<String> {
     }
 
     @Override
+    String fromString(String value) {
+        return value;
+    }
+
+    @Override
     public long valueToLong() {
         throw new UnsupportedOperationException("A string cannot be represented by a number.");
     }
@@ -39,6 +44,11 @@ public class StringValue extends AbstractValue<String> {
 
         return Objects.equals(getField(), that.getField()) &&
             Objects.equals(this.getValue(), that.getValue());
+    }
+
+    @Override
+    public IValue<String> shallowClone() {
+        return new StringValue(this.getField(), getValue());
     }
 
     @Override

@@ -19,6 +19,14 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
     }
 
     @Override
+    BigDecimal fromString(String value) {
+        if (value != null) {
+            return new BigDecimal(value);
+        }
+        return null;
+    }
+
+    @Override
     public long valueToLong() {
         return getValue().longValue();
     }
@@ -51,14 +59,19 @@ public class DecimalValue extends AbstractValue<BigDecimal> {
         DecimalValue that = (DecimalValue) o;
 
         return Objects.equals(getField(), that.getField()) &&
-            Objects.equals(this.getValue(), that.getValue());
+                Objects.equals(this.getValue(), that.getValue());
+    }
+
+    @Override
+    public IValue<BigDecimal> shallowClone() {
+        return new DecimalValue(this.getField(), getValue());
     }
 
     @Override
     public String toString() {
         return "DecimalValue{" +
-            "field=" + getField() +
-            ", value=" + getValue() +
-            '}';
+                "field=" + getField() +
+                ", value=" + getValue() +
+                '}';
     }
 }

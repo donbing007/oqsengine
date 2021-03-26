@@ -59,6 +59,12 @@ public class DataSourceConfiguration {
 
     @Bean
     @DependsOn("dataSourcePackage")
+    public DataSource changelogDataSource(DataSourcePackage dataSourcePackage) {
+        return dataSourcePackage.getChangelog();
+    }
+
+    @Bean
+    @DependsOn("dataSourcePackage")
     public DataSource masterDataSource(DataSourcePackage dataSourcePackage,
                                        @Value("${storage.master.name:oqsbigentity}") String baseName,
                                        @Value("${storage.master.shard.table.enabled:false}") boolean shard,

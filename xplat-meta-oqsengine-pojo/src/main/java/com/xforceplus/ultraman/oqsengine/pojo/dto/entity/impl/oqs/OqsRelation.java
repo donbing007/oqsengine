@@ -110,15 +110,22 @@ public class OqsRelation {
      */
     private Function<Long, Optional<IEntityClass>> rightEntityClassLoader;
 
-    private OqsRelation() {
-    }
+    /**
+     * 是否是伴生关系
+     */
+    private boolean isCompanion;
 
+    private long companionRelation;
+
+    public OqsRelation() {
+
+    }
     /**
      * 获取到关系中相关联的entityClass实例.即关系"右"对象的元信息定义实例.
      *
      * @return entityClass 实例.
      */
-    public IEntityClass getRightEtntiyClass() {
+    public IEntityClass getRightEntityClass() {
         Optional<IEntityClass> entityClassOp = rightEntityClassLoader.apply(rightEntityClassId);
         return entityClassOp.orElse(null);
     }
@@ -170,6 +177,29 @@ public class OqsRelation {
     /**
      * builder
      */
+    public void setBelongToOwner(boolean belongToOwner) {
+        this.belongToOwner = belongToOwner;
+    }
+
+    public boolean isCompanion() {
+        return isCompanion;
+    }
+
+    public void setCompanion(boolean companion) {
+        isCompanion = companion;
+    }
+
+    public long getCompanionRelation() {
+        return companionRelation;
+    }
+
+    public void setCompanionRelation(long companionRelation) {
+        this.companionRelation = companionRelation;
+    }
+
+    /**
+     * Builder
+     */
     public static final class Builder {
         private Long id;
         private String code;
@@ -181,7 +211,10 @@ public class OqsRelation {
         private IEntityField entityField;
         private Boolean belongToOwner;
         private boolean strong;
+        private long entityClassId;
         private Function<Long, Optional<IEntityClass>> entityClassLoader;
+        private boolean isCompanion;
+        private long companionRelation;
 
         private Builder() {
         }
@@ -235,6 +268,17 @@ public class OqsRelation {
             return this;
         }
 
+        public OqsRelation.Builder withCompanion(boolean isCompanion){
+            this.isCompanion = isCompanion;
+            return this;
+        }
+
+        public OqsRelation.Builder withCompanionRelation(long relationId){
+            this.companionRelation = relationId;
+            return this;
+        }
+
+
         public Builder withStrong(boolean strong) {
             this.strong = strong;
             return this;
@@ -258,6 +302,9 @@ public class OqsRelation {
             oqsRelation.entityField = this.entityField;
             oqsRelation.leftEntityClassCode = this.leftEntityClassCode;
             oqsRelation.strong = this.strong;
+            oqsRelation.belongToOwner = this.belongToOwner;
+            oqsRelation.isCompanion = this.isCompanion;
+            oqsRelation.companionRelation = this.companionRelation;
             return oqsRelation;
         }
     }

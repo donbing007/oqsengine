@@ -8,6 +8,7 @@ import java.io.Serializable;
  * 创建时间: 4/17/2020 10:20 AM
  * 功能描述:
  * 修改历史:
+ *
  * @author leo
  */
 public class StorageUniqueEntity implements Serializable {
@@ -56,7 +57,7 @@ public class StorageUniqueEntity implements Serializable {
     public String toString() {
         StringBuffer buffer = new StringBuffer();
         buffer.append("StorageEntity{").append("id=").append(id).append(",entityClasses=");
-        for(long classId : entityClasses) {
+        for (long classId : entityClasses) {
             buffer.append(classId).append(",");
         }
         buffer.append("key=").append(key).append("}");

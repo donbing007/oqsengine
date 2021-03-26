@@ -45,6 +45,10 @@ public enum FieldLikeRelationType {
         this.ownerSide = ownerSide;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public boolean isOwnerSide() {
         return ownerSide;
     }

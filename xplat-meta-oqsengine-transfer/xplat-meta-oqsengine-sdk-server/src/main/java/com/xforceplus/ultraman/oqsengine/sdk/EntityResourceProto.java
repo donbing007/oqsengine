@@ -87,53 +87,54 @@ public final class EntityResourceProto {
       " \003(\0132\021.FieldConditionUp\"s\n\013FieldSortUp\022\014" +
       "\n\004code\030\001 \001(\t\022!\n\005order\030\002 \001(\0162\022.FieldSortU" +
       "p.Order\022\027\n\005field\030\003 \001(\0132\010.FieldUp\"\032\n\005Orde" +
-      "r\022\007\n\003asc\020\000\022\010\n\004desc\020\001\"\356\001\n\020FieldConditionU" +
+      "r\022\007\n\003asc\020\000\022\010\n\004desc\020\001\"\202\002\n\020FieldConditionU" +
       "p\022\014\n\004code\030\001 \001(\t\022\'\n\toperation\030\002 \001(\0162\024.Fie" +
       "ldConditionUp.Op\022\016\n\006values\030\003 \003(\t\022\027\n\005fiel" +
-      "d\030\004 \001(\0132\010.FieldUp\"z\n\002Op\022\006\n\002eq\020\000\022\010\n\004like\020" +
-      "\001\022\006\n\002in\020\002\022\t\n\005ge_le\020\003\022\t\n\005ge_lt\020\004\022\t\n\005gt_le" +
-      "\020\005\022\t\n\005gt_lt\020\006\022\006\n\002gt\020\007\022\006\n\002ge\020\010\022\006\n\002lt\020\t\022\006\n" +
-      "\002le\020\n\022\006\n\002ne\020\013\022\006\n\002ni\020\014\"\375\001\n\017OperationResul" +
-      "t\022#\n\004code\030\001 \001(\0162\025.OperationResult.Code\022\017" +
-      "\n\007message\030\002 \001(\t\022\036\n\013queryResult\030\003 \003(\0132\t.E" +
-      "ntityUp\022\031\n\021transactionResult\030\004 \001(\t\022\023\n\013af" +
-      "fectedRow\030\005 \001(\005\022\013\n\003ids\030\006 \003(\003\022\020\n\010totalRow" +
-      "\030\007 \001(\005\"E\n\004Code\022\006\n\002OK\020\000\022\n\n\006FAILED\020\001\022\r\n\tEX" +
-      "CEPTION\020\002\022\017\n\013NETWORK_ERR\020\003\022\t\n\005OTHER\020\004\">\n" +
-      "\rTransactionUp\022\n\n\002id\030\001 \001(\t\022\017\n\007service\030\002 " +
-      "\001(\t\022\020\n\010tansType\030\003 \001(\t\"\361\001\n\010EntityUp\022\n\n\002id" +
-      "\030\001 \001(\003\022\035\n\010relation\030\002 \003(\0132\013.RelationUp\022 \n" +
-      "\rentityClasses\030\003 \003(\0132\t.EntityUp\022$\n\021exten" +
-      "dEntityClass\030\004 \001(\0132\t.EntityUp\022\030\n\006fields\030" +
-      "\005 \003(\0132\010.FieldUp\022\030\n\006values\030\006 \003(\0132\010.ValueU" +
-      "p\022\r\n\005objId\030\007 \001(\003\022\014\n\004code\030\010 \001(\t\022!\n\016subEnt" +
-      "ityClass\030\t \001(\0132\t.EntityUp\";\n\rQueryFields" +
-      "Up\022\014\n\004code\030\001 \001(\t\022\n\n\002id\030\002 \001(\003\022\020\n\010entityId" +
-      "\030\003 \001(\003\"\177\n\nRelationUp\022\014\n\004name\030\001 \001(\t\022\024\n\014re" +
-      "lationType\030\002 \001(\t\022\020\n\010identity\030\003 \001(\010\022\035\n\013en" +
-      "tityField\030\004 \001(\0132\010.FieldUp\022\034\n\024relatedEnti" +
-      "tyClassId\030\005 \001(\003\"J\n\007ValueUp\022\r\n\005value\030\001 \001(" +
-      "\t\022\014\n\004name\030\002 \001(\t\022\021\n\tfieldType\030\003 \001(\t\022\017\n\007fi" +
-      "eldId\030\004 \001(\003\"\226\002\n\007FieldUp\022\n\n\002id\030\001 \001(\003\022\014\n\004n" +
-      "ame\030\002 \001(\t\022\021\n\tfieldType\030\003 \001(\t\022\014\n\004code\030\004 \001" +
-      "(\t\022\023\n\013displayType\030\005 \001(\t\022\020\n\010editable\030\006 \001(" +
-      "\t\022\020\n\010enumCode\030\007 \001(\t\022\021\n\tmaxLength\030\010 \001(\t\022\020" +
-      "\n\010required\030\t \001(\t\022\022\n\nsearchable\030\n \001(\t\022\021\n\t" +
-      "minLength\030\013 \001(\t\022\016\n\006dictId\030\014 \001(\t\022\024\n\014defau" +
-      "ltValue\030\r \001(\t\022\021\n\tprecision\030\016 \001(\005\022\022\n\niden" +
-      "tifier\030\017 \001(\0102\253\003\n\rEntityService\022)\n\005begin\022" +
-      "\016.TransactionUp\032\020.OperationResult\022$\n\005bui" +
-      "ld\022\t.EntityUp\032\020.OperationResult\022&\n\007repla" +
-      "ce\022\t.EntityUp\032\020.OperationResult\022:\n\022repla" +
-      "ceByCondition\022\022.SelectByCondition\032\020.Oper" +
-      "ationResult\022%\n\006remove\022\t.EntityUp\032\020.Opera" +
-      "tionResult\022(\n\tselectOne\022\t.EntityUp\032\020.Ope" +
-      "rationResult\022:\n\022selectByConditions\022\022.Sel" +
-      "ectByCondition\032\020.OperationResult\022*\n\006comm" +
-      "it\022\016.TransactionUp\032\020.OperationResult\022,\n\010" +
-      "rollBack\022\016.TransactionUp\032\020.OperationResu" +
-      "ltB>\n%com.xforceplus.ultraman.oqsengine." +
-      "sdkB\023EntityResourceProtoP\001b\006proto3"
+      "d\030\004 \001(\0132\010.FieldUp\022\022\n\nrelationId\030\005 \001(\003\"z\n" +
+      "\002Op\022\006\n\002eq\020\000\022\010\n\004like\020\001\022\006\n\002in\020\002\022\t\n\005ge_le\020\003" +
+      "\022\t\n\005ge_lt\020\004\022\t\n\005gt_le\020\005\022\t\n\005gt_lt\020\006\022\006\n\002gt\020" +
+      "\007\022\006\n\002ge\020\010\022\006\n\002lt\020\t\022\006\n\002le\020\n\022\006\n\002ne\020\013\022\006\n\002ni\020" +
+      "\014\"\375\001\n\017OperationResult\022#\n\004code\030\001 \001(\0162\025.Op" +
+      "erationResult.Code\022\017\n\007message\030\002 \001(\t\022\036\n\013q" +
+      "ueryResult\030\003 \003(\0132\t.EntityUp\022\031\n\021transacti" +
+      "onResult\030\004 \001(\t\022\023\n\013affectedRow\030\005 \001(\005\022\013\n\003i" +
+      "ds\030\006 \003(\003\022\020\n\010totalRow\030\007 \001(\005\"E\n\004Code\022\006\n\002OK" +
+      "\020\000\022\n\n\006FAILED\020\001\022\r\n\tEXCEPTION\020\002\022\017\n\013NETWORK" +
+      "_ERR\020\003\022\t\n\005OTHER\020\004\">\n\rTransactionUp\022\n\n\002id" +
+      "\030\001 \001(\t\022\017\n\007service\030\002 \001(\t\022\020\n\010tansType\030\003 \001(" +
+      "\t\"\361\001\n\010EntityUp\022\n\n\002id\030\001 \001(\003\022\035\n\010relation\030\002" +
+      " \003(\0132\013.RelationUp\022 \n\rentityClasses\030\003 \003(\013" +
+      "2\t.EntityUp\022$\n\021extendEntityClass\030\004 \001(\0132\t" +
+      ".EntityUp\022\030\n\006fields\030\005 \003(\0132\010.FieldUp\022\030\n\006v" +
+      "alues\030\006 \003(\0132\010.ValueUp\022\r\n\005objId\030\007 \001(\003\022\014\n\004" +
+      "code\030\010 \001(\t\022!\n\016subEntityClass\030\t \001(\0132\t.Ent" +
+      "ityUp\";\n\rQueryFieldsUp\022\014\n\004code\030\001 \001(\t\022\n\n\002" +
+      "id\030\002 \001(\003\022\020\n\010entityId\030\003 \001(\003\"\177\n\nRelationUp" +
+      "\022\014\n\004name\030\001 \001(\t\022\024\n\014relationType\030\002 \001(\t\022\020\n\010" +
+      "identity\030\003 \001(\010\022\035\n\013entityField\030\004 \001(\0132\010.Fi" +
+      "eldUp\022\034\n\024relatedEntityClassId\030\005 \001(\003\"J\n\007V" +
+      "alueUp\022\r\n\005value\030\001 \001(\t\022\014\n\004name\030\002 \001(\t\022\021\n\tf" +
+      "ieldType\030\003 \001(\t\022\017\n\007fieldId\030\004 \001(\003\"\226\002\n\007Fiel" +
+      "dUp\022\n\n\002id\030\001 \001(\003\022\014\n\004name\030\002 \001(\t\022\021\n\tfieldTy" +
+      "pe\030\003 \001(\t\022\014\n\004code\030\004 \001(\t\022\023\n\013displayType\030\005 " +
+      "\001(\t\022\020\n\010editable\030\006 \001(\t\022\020\n\010enumCode\030\007 \001(\t\022" +
+      "\021\n\tmaxLength\030\010 \001(\t\022\020\n\010required\030\t \001(\t\022\022\n\n" +
+      "searchable\030\n \001(\t\022\021\n\tminLength\030\013 \001(\t\022\016\n\006d" +
+      "ictId\030\014 \001(\t\022\024\n\014defaultValue\030\r \001(\t\022\021\n\tpre" +
+      "cision\030\016 \001(\005\022\022\n\nidentifier\030\017 \001(\0102\253\003\n\rEnt" +
+      "ityService\022)\n\005begin\022\016.TransactionUp\032\020.Op" +
+      "erationResult\022$\n\005build\022\t.EntityUp\032\020.Oper" +
+      "ationResult\022&\n\007replace\022\t.EntityUp\032\020.Oper" +
+      "ationResult\022:\n\022replaceByCondition\022\022.Sele" +
+      "ctByCondition\032\020.OperationResult\022%\n\006remov" +
+      "e\022\t.EntityUp\032\020.OperationResult\022(\n\tselect" +
+      "One\022\t.EntityUp\032\020.OperationResult\022:\n\022sele" +
+      "ctByConditions\022\022.SelectByCondition\032\020.Ope" +
+      "rationResult\022*\n\006commit\022\016.TransactionUp\032\020" +
+      ".OperationResult\022,\n\010rollBack\022\016.Transacti" +
+      "onUp\032\020.OperationResultB>\n%com.xforceplus" +
+      ".ultraman.oqsengine.sdkB\023EntityResourceP" +
+      "rotoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -162,7 +163,7 @@ public final class EntityResourceProto {
     internal_static_FieldConditionUp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_FieldConditionUp_descriptor,
-        new java.lang.String[] { "Code", "Operation", "Values", "Field", });
+        new java.lang.String[] { "Code", "Operation", "Values", "Field", "RelationId", });
     internal_static_OperationResult_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_OperationResult_fieldAccessorTable = new

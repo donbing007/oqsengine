@@ -45,7 +45,7 @@ public class SyncRequestHandler implements IRequestHandler {
 
     private Logger logger = LoggerFactory.getLogger(SyncRequestHandler.class);
 
-    @Resource
+    @Resource(name = "grpcSyncExecutor")
     private SyncExecutor syncExecutor;
 
     @Resource

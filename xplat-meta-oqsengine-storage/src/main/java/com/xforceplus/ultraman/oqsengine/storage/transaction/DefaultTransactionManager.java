@@ -46,6 +46,9 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
     }
 
 
+    /**
+     * builder
+     */
     public static final class Builder {
         private LongIdGenerator txIdGenerator;
         private LongIdGenerator commitIdGenerator;
