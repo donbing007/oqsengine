@@ -102,12 +102,6 @@ public class EntityClassHelper {
         return entityValue;
     }
 
-    private List<ValueUp> toValues(IEntity entity) {
-
-
-    }
-
-
     public static EntityUp toEntityUp(IEntity entity) {
         EntityUp.Builder builder = EntityUp.newBuilder();
 
@@ -157,12 +151,19 @@ public class EntityClassHelper {
     }
 
     private static EntityUp toEntityUp(EntityDomain entityDomain) {
+
+        List<ValueUp> values = entityDomain.getEntity().entityValue()
+                .values()
+                .stream()
+                .map(x -> toValueUp(x))
+                .collect(Collectors.toList());
+
         EntityUp entityUp = EntityUp
                 .newBuilder()
                 .setVersion(entityDomain.getVersion())
                 .setId(entityDomain.getEntity().entityClassRef().getId())
                 .setObjId(entityDomain.getId())
-                .addAllValues(entityDomain.getEntity())
+                .addAllValues(values)
                 .build();
         return entityUp;
     }

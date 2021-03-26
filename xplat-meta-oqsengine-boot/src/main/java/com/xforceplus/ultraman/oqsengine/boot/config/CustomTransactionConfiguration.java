@@ -39,7 +39,7 @@ public class CustomTransactionConfiguration {
             .withCommitIdGenerator(redisIdGenerator)
             .withCommitIdStatusService(commitIdStatusService)
             .withWaitCommitSync(true)
-            .withEventBus()
+            //.withEventBus()
             .build();
     }
 
