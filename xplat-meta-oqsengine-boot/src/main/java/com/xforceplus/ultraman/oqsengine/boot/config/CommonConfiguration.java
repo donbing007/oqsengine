@@ -76,7 +76,7 @@ public class CommonConfiguration {
     @Bean("eventWorker")
     public ExecutorService eventWorker(
         @Value("${threadPool.event.worker:0}") int worker,
-        @Value("${threadPool.event.queue:500") int queue) {
+        @Value("${threadPool.event.queue:500}") int queue) {
         int useWorker = worker;
         int useQueue = queue;
         if (useWorker <= 0) {
@@ -87,7 +87,7 @@ public class CommonConfiguration {
             useQueue = 500;
         }
 
-        return buildThreadPool(useWorker, useQueue, "oqsengine-call-rebuild", false);
+        return buildThreadPool(useWorker, useQueue, "oqsengine-event", false);
     }
 
     @Bean(value = "redisClient")
