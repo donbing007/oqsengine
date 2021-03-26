@@ -26,14 +26,14 @@ public class CleanExecutor implements Executor<Long, Long> {
     static {
         StringBuilder buff = new StringBuilder();
         buff.append("DELETE FROM %s")
-            .append(" WHERE ")
-            .append(FieldDefine.MAINTAIN_ID).append(" != ?")
-            .append(" AND ")
-            .append(FieldDefine.UPDATE_TIME).append(" >= ?")
-            .append(" AND ")
-            .append(FieldDefine.UPDATE_TIME).append(" <= ?")
-            .append(" AND ")
-            .append("MATCH('(@").append(FieldDefine.ENTITYCLASSF).append(" =").append("\"%d\")')");
+                .append(" WHERE ")
+                .append(FieldDefine.MAINTAIN_ID).append(" != ?")
+                .append(" AND ")
+                .append(FieldDefine.UPDATE_TIME).append(" >= ?")
+                .append(" AND ")
+                .append(FieldDefine.UPDATE_TIME).append(" <= ?")
+                .append(" AND ")
+                .append("MATCH('(@").append(FieldDefine.ENTITYCLASSF).append(" =").append("\"%d\")')");
         sql = buff.toString();
     }
 
@@ -68,6 +68,9 @@ public class CleanExecutor implements Executor<Long, Long> {
         return String.format(sql, indexName, entityClassId);
     }
 
+    /**
+     * builder
+     */
     public static final class Builder {
         private IEntityClass entityClass;
         private long start;

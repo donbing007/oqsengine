@@ -478,7 +478,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             OperationResult result;
 
 
-
             try {
 
                 Entity targetEntity = Entity.Builder.anEntity().withId(in.getObjId()).build();
@@ -876,7 +875,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             long entityClassId = replayRequest.getEntityClassId();
             long objId = replayRequest.getObjId();
             long version = replayRequest.getVersion();
-            if(isSelf){
+            if (isSelf) {
                 EntityDomain entityDomain = replayService.replaySimpleDomain(entityClassId, objId, version);
                 return toOperationResult(entityDomain);
             } else {

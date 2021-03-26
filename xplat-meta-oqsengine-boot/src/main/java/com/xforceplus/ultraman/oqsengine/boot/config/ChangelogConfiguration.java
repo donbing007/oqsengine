@@ -11,6 +11,9 @@ import com.xforceplus.ultraman.oqsengine.changelog.storage.write.impl.SQLSnapsho
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * changelog configuration
+ */
 @Configuration
 public class ChangelogConfiguration {
 

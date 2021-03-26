@@ -15,6 +15,8 @@ import com.xforceplus.ultraman.oqsengine.sdk.OperationResult;
 import com.xforceplus.ultraman.oqsengine.sdk.ValueUp;
 import io.vavr.Tuple2;
 
+import java.util.List;
+import java.util.Queue;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -146,7 +148,7 @@ public class EntityClassHelper {
         String retVal
                 = Match(value)
                 .of(Case($(instanceOf(DateTimeValue.class)), x -> String.valueOf(x.valueToLong())),
-                    Case($(), IValue::valueToString));
+                        Case($(), IValue::valueToString));
         return retVal;
     }
 
@@ -183,7 +185,7 @@ public class EntityClassHelper {
 
         queue.offer(entityAggDomain);
 
-        while(!queue.isEmpty()){
+        while (!queue.isEmpty()) {
             EntityAggDomain next = queue.poll();
             next.getGraph().values().forEach(x -> x.forEach(queue::offer));
             IEntity rootIEntity = next.getRootIEntity();

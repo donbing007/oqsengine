@@ -9,6 +9,9 @@ import java.sql.SQLException;
  * @author : xujia
  * date : 2020/11/21
  * @since : 1.8
+ * @param <R>
+ * @param <T>
+ *
  */
 public interface CdcErrorExecutor<T, R> {
 

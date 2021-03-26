@@ -400,7 +400,9 @@ public class MultiLocalTransaction implements Transaction {
         }
     }
 
-
+    /**
+     * builder
+     */
     public static final class Builder {
         private long id;
         private boolean committed = false;

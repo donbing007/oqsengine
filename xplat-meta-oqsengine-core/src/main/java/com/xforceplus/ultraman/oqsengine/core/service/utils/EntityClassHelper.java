@@ -28,8 +28,8 @@ public class EntityClassHelper {
         Optional<IEntityClass> entityClassOptional = metaManager.load(entityClassRef.getId());
         if (!entityClassOptional.isPresent()) {
             throw new IllegalArgumentException(
-                String.format("Invalid meta information %d-%s.",
-                    entityClassRef.getId(), entityClassRef.getCode()));
+                    String.format("Invalid meta information %d-%s.",
+                            entityClassRef.getId(), entityClassRef.getCode()));
         }
 
         return entityClassOptional.get();
