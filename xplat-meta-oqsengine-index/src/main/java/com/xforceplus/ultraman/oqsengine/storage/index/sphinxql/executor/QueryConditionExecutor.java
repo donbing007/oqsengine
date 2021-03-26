@@ -294,7 +294,11 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple6<IEntity
         }
         PageScope scope = page.getNextPage();
 
-        if (scope == null) {
+        /**
+         * 当没有下一页,并且不是空页要求时直接空返回.
+         * 当是空页要求时,会继续计算但不会返回任何数据只是会填充数据总量.
+         */
+        if (scope == null && !page.isEmptyPage()) {
             return Collections.emptyList();
         }
 
@@ -307,28 +311,33 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple6<IEntity
             useSort = Sort.buildOutOfSort();
         }
 
-        if (!useSort.isOutOfOrder()) {
-            // id 排序处理.
-            if (useSort.getField().config().isIdentifie()) {
-                StringBuilder buff = new StringBuilder();
-                buff.append(SqlKeywordDefine.ORDER);
-                buff.append(" ").append(FieldDefine.ID);
-                buff.append(" ");
-                if (useSort.isAsc()) {
-                    buff.append(SqlKeywordDefine.ORDER_TYPE_ASC);
-                } else {
-                    buff.append(SqlKeywordDefine.ORDER_TYPE_DESC);
-                }
-                sortFields = Collections.emptyList();
-                orderBySqlSegment = buff.toString();
-                sortSelectValuesSegment = "";
+        /**
+         * 空页要求时不需要进行排序.
+         */
+        if (!page.isEmptyPage()) {
+            if (!useSort.isOutOfOrder()) {
+                // id 排序处理.
+                if (useSort.getField().config().isIdentifie()) {
+                    StringBuilder buff = new StringBuilder();
+                    buff.append(SqlKeywordDefine.ORDER);
+                    buff.append(" ").append(FieldDefine.ID);
+                    buff.append(" ");
+                    if (useSort.isAsc()) {
+                        buff.append(SqlKeywordDefine.ORDER_TYPE_ASC);
+                    } else {
+                        buff.append(SqlKeywordDefine.ORDER_TYPE_DESC);
+                    }
+                    sortFields = Collections.emptyList();
+                    orderBySqlSegment = buff.toString();
+                    sortSelectValuesSegment = "";
 
-            } else {
-                // 普通属性
-                storageStrategy = storageStrategyFactory.getStrategy(useSort.getField().type());
-                sortFields = buildSortValues(useSort);
-                orderBySqlSegment = buildOrderBySqlSegment(sortFields, useSort.isDes());
-                sortSelectValuesSegment = buildSortSelectValuesSegment(sortFields);
+                } else {
+                    // 普通属性
+                    storageStrategy = storageStrategyFactory.getStrategy(useSort.getField().type());
+                    sortFields = buildSortValues(useSort);
+                    orderBySqlSegment = buildOrderBySqlSegment(sortFields, useSort.isDes());
+                    sortSelectValuesSegment = buildSortSelectValuesSegment(sortFields);
+                }
             }
         }
 
@@ -393,12 +402,15 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple6<IEntity
 
                                 IValue iValue = storageStrategy.toLogicValue(useSort.getField(), reduce.get());
 
-                                if (iValue.compareByString()) {
-                                    entityRef.setOrderValue(iValue.valueToString());
+                                if (iValue.getValue() == null) {
+                                    entityRef.setOrderValue(null);
                                 } else {
-                                    entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
+                                    if (iValue.compareByString()) {
+                                        entityRef.setOrderValue(iValue.valueToString());
+                                    } else {
+                                        entityRef.setOrderValue(Long.toString(iValue.valueToLong()));
+                                    }
                                 }
-
                             }
                         }
                     }

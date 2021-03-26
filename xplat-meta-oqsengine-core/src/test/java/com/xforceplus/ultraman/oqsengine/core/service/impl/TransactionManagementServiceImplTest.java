@@ -57,6 +57,7 @@ public class TransactionManagementServiceImplTest {
 
         TransactionManager tm = mock(TransactionManager.class);
         when(tm.create(1000L)).thenReturn(t);
+        when(tm.create(1000L, null)).thenReturn(t);
 
         TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "transactionManager", tm);
@@ -85,8 +86,13 @@ public class TransactionManagementServiceImplTest {
 
         CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
         when(commitIdStatusService.save(0, true)).thenReturn(true);
-        TransactionManager tm = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
+
+        TransactionManager tm = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+            .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
+            .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
+            .withCommitIdStatusService(commitIdStatusService)
+            .withWaitCommitSync(false)
+            .build();
 
         TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "transactionManager", tm);
@@ -108,8 +114,12 @@ public class TransactionManagementServiceImplTest {
     public void testRollback() throws Exception {
         CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
         when(commitIdStatusService.save(0, true)).thenReturn(true);
-        TransactionManager tm = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
+        TransactionManager tm = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+            .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
+            .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
+            .withCommitIdStatusService(commitIdStatusService)
+            .withWaitCommitSync(false)
+            .build();
 
         TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "transactionManager", tm);
@@ -132,8 +142,12 @@ public class TransactionManagementServiceImplTest {
     public void testCompleted() throws Exception {
         CommitIdStatusService commitIdStatusService = mock(CommitIdStatusService.class);
         when(commitIdStatusService.save(0, true)).thenReturn(true);
-        TransactionManager tm = new DefaultTransactionManager(
-            new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
+        TransactionManager tm = DefaultTransactionManager.Builder.aDefaultTransactionManager()
+            .withTxIdGenerator(new IncreasingOrderLongIdGenerator(0))
+            .withCommitIdGenerator(new IncreasingOrderLongIdGenerator(0))
+            .withCommitIdStatusService(commitIdStatusService)
+            .withWaitCommitSync(false)
+            .build();
 
         TransactionManagementServiceImpl impl = new TransactionManagementServiceImpl();
         ReflectionTestUtils.setField(impl, "transactionManager", tm);

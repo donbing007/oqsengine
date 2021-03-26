@@ -72,6 +72,7 @@ message FieldConditionUp {
     Op operation = 2;
     repeated string values = 3;
     FieldUp field = 4;
+    int64 relationId = 5;
 }
 
 message OperationResult {

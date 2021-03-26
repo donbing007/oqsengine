@@ -434,10 +434,6 @@ public class Page implements Externalizable, Cloneable {
         if (isEmptyPage() != other.isEmptyPage()) {
             return false;
         }
-        //是否都是准备好的.
-        if (isReady() != other.isReady()) {
-            return false;
-        }
         //是否为单页
         if (isSinglePage() != other.isSinglePage()) {
             return false;
@@ -448,6 +444,11 @@ public class Page implements Externalizable, Cloneable {
         }
         //当前页号
         if (getIndex() != other.getIndex()) {
+            return false;
+        }
+
+        //是否都是准备好的.
+        if (isReady() != other.isReady()) {
             return false;
         }
 

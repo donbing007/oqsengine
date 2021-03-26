@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.core.service.impl;
 
+import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityClassHelper;
@@ -13,12 +14,12 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 import com.xforceplus.ultraman.oqsengine.pojo.page.PageScope;
-import com.xforceplus.ultraman.oqsengine.pojo.reader.IEntityClassReader;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.index.IndexStorage;
@@ -314,12 +315,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                  * 这些条件中的关联 entity 已经被替换成了合式的条件.
                  */
                 Collection<Conditions> subConditions = new ArrayList(safeNodes.size());
-                IEntityClassReader entityClassReader = new IEntityClassReader(entityClass);
 
                 for (ConditionNode safeNode : safeNodes) {
-
-                    subConditions.add(buildSafeNodeConditions(safeNode, entityClassReader, minUnSyncCommitId));
-
+                    subConditions.add(buildSafeNodeConditions(safeNode, minUnSyncCommitId));
                 }
 
                 useConditions = Conditions.buildEmtpyConditions();
@@ -329,7 +327,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     }
                 }
 
-                if (useConditions.size() == 0) {
+                if (useConditions.isEmtpy()) {
                     page.setTotalCount(0);
                     return Collections.emptyList();
                 }
@@ -421,7 +419,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      * 将安全条件结点处理成可查询的 Conditions 实例.
      * ignoreEntityClass 表示不需要处理的条件.
      */
-    private Conditions buildSafeNodeConditions(ConditionNode safeNode, IEntityClassReader entityClassReader, long commitId)
+    private Conditions buildSafeNodeConditions(ConditionNode safeNode, long commitId)
         throws SQLException {
 
         Conditions processConditions = new Conditions(safeNode);
@@ -432,9 +430,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             .collect(toList());
 
         // 按照驱动 entity 的 entityClass 和关联字段来分组条件.
-        Map<DriverEntityKey, Conditions> driverEntityConditionsGroup = splitEntityClassCondition(
-            driverConditionCollection,
-            entityClassReader);
+        Map<DriverEntityKey, Conditions> driverEntityConditionsGroup = splitEntityClassCondition(driverConditionCollection);
 
         // driver 数据收集 future.
         List<Future<Map.Entry<DriverEntityKey, Collection<EntityRef>>>> futures =
@@ -464,10 +460,10 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
                 conditions.addAnd(
                     new Condition(
-                        driverQueryResult.getKey().relationshipField,
+                        driverQueryResult.getKey().mainEntityClassField,
                         ConditionOperator.MULTIPLE_EQUALS,
                         driverQueryResult.getValue().stream()
-                            .map(ref -> new LongValue(driverQueryResult.getKey().relationshipField, ref.getId()))
+                            .map(ref -> new LongValue(driverQueryResult.getKey().mainEntityClassField, ref.getId()))
                             .toArray(LongValue[]::new)
                     ));
             } catch (Exception e) {
@@ -485,12 +481,21 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
         }
 
-
-        // 之前过滤掉了非 driver 的条件,这里需要加入.
-        processConditions.collectCondition().stream().filter(c -> !c.getEntityClassRef().isPresent()).forEach(c -> {
-                conditions.addAnd(c);
+        if (termination) {
+            // 驱动没有任何命中,整个安全树都不会有结果.所以这里空返回.
+            if (conditions.isEmtpy()) {
+                return conditions;
+            } else {
+                return Conditions.buildEmtpyConditions();
             }
-        );
+
+        } else {
+            // 之前过滤掉了非 driver 的条件,这里需要加入.
+            processConditions.collectCondition().stream().filter(c -> !c.getEntityClassRef().isPresent()).forEach(c -> {
+                    conditions.addAnd(c);
+                }
+            );
+        }
 
         return conditions;
     }
@@ -500,33 +505,41 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      * 不同的 entityClass 关联不同的 Field 将认为是不同的组.
      * 不能处理非 driver 的 entity 查询条件.
      */
-    private Map<DriverEntityKey, Conditions> splitEntityClassCondition(
-        Collection<Condition> conditionCollection, IEntityClassReader reader) throws SQLException {
+    private Map<DriverEntityKey, Conditions> splitEntityClassCondition(Collection<Condition> conditionCollection)
+        throws SQLException {
 
 
-        Map<DriverEntityKey, Conditions> result = new HashMap(conditionCollection.size());
+        Map<DriverEntityKey, Conditions> result = new HashMap(MapUtils.calculateInitSize(conditionCollection.size()));
 
-        Optional<IEntityClass> entityClassOptional = null;
-        Optional<IEntityField> relationshipFieldOptional = null;
-        IEntityClass entityClass;
+        /**
+         * 关系字段.最终驱动表的查询结果将使用此字段来进行in过滤.
+         */
+        IEntityField relationField = null;
+        IEntityClass driverEntityClass;
         DriverEntityKey key;
         Conditions driverConditions;
         for (Condition c : conditionCollection) {
             if (c.getEntityClassRef().isPresent()) {
-                entityClass = EntityClassHelper.checkEntityClass(metaManager, c.getEntityClassRef().get());
+                driverEntityClass = EntityClassHelper.checkEntityClass(metaManager, c.getEntityClassRef().get());
             } else {
                 throw new SQLException("An attempt was made to correlate the query, but the entityClass for the driver table was not set!");
             }
 
-            relationshipFieldOptional = reader.getRelatedOriginalField(c.getField());
-            if (relationshipFieldOptional.isPresent()) {
-                key = new DriverEntityKey(entityClass, relationshipFieldOptional.get());
+            Optional<OqsRelation> relationOp = driverEntityClass.oqsRelations().stream()
+                .filter(r -> r.getId() == c.getRelationId()).findFirst();
+            if (!relationOp.isPresent()) {
+                throw new SQLException(String.format("Unable to load the specified relationship.[id=%d]", c.getRelationId()));
+            }
+            OqsRelation relation = relationOp.get();
+            relationField = relation.getEntityField();
+            if (relationField != null) {
+                key = new DriverEntityKey(driverEntityClass, relationField);
                 driverConditions = result.get(key);
+
                 if (driverConditions == null) {
                     driverConditions = Conditions.buildEmtpyConditions();
                     result.put(key, driverConditions);
                 }
-
                 driverConditions.addAnd(c);
             }
         }
@@ -540,19 +553,19 @@ public class EntitySearchServiceImpl implements EntitySearchService {
      */
     private class DriverEntityKey {
         private IEntityClass entityClass;
-        private IEntityField relationshipField;
+        private IEntityField mainEntityClassField;
 
-        public DriverEntityKey(IEntityClass entityClass, IEntityField relationshipField) {
+        public DriverEntityKey(IEntityClass entityClass, IEntityField mainEntityClassField) {
             this.entityClass = entityClass;
-            this.relationshipField = relationshipField;
+            this.mainEntityClassField = mainEntityClassField;
         }
 
         public IEntityClass getEntityClass() {
             return entityClass;
         }
 
-        public IEntityField getRelationshipField() {
-            return relationshipField;
+        public IEntityField getMainEntityClassField() {
+            return mainEntityClassField;
         }
 
         @Override
@@ -567,7 +580,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             if (entityClass.id() != that.entityClass.id()) {
                 return false;
             }
-            if (relationshipField.id() != that.relationshipField.id()) {
+            if (mainEntityClassField.id() != that.mainEntityClassField.id()) {
                 return false;
             }
             return true;
@@ -575,7 +588,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         @Override
         public int hashCode() {
-            return Objects.hash(entityClass.id(), relationshipField.id());
+            return Objects.hash(entityClass.id(), mainEntityClassField.id());
         }
     }
 
@@ -596,28 +609,21 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
         @Override
         public Map.Entry<DriverEntityKey, Collection<EntityRef>> call() throws Exception {
-            long count = checkLineNumber();
-            if (count == 0) {
-                return new AbstractMap.SimpleEntry<>(key, Collections.emptyList());
-            }
-
             Page driverPage = Page.newSinglePage(maxJoinDriverLineNumber);
             driverPage.setVisibleTotalCount(maxJoinDriverLineNumber);
             Collection<EntityRef> refs = combinedStorage.select(
                 commitId, conditions, key.getEntityClass(), Sort.buildOutOfSort(), driverPage);
-            return new AbstractMap.SimpleEntry<>(key, refs);
-        }
 
-        // 检查命中数据集大小.
-        private long checkLineNumber() throws SQLException {
-            Page page = new Page(1, 1);
-            combinedStorage.select(commitId, conditions, key.getEntityClass(), Sort.buildOutOfSort(), page);
-            if (page.getTotalCount() > maxJoinDriverLineNumber) {
+            /**
+             * 确保驱动表的查询数据总量不超过 maxJoinDriverLineNumber.
+             * 由于上限定义最多会返回 maxJoinDriverLineNumber 数量,如果实际匹配数量超过阀值会造成结果不精确.
+             * 这里如果出现不精确以错误响应.
+             */
+            if (driverPage.getTotalCount() > maxJoinDriverLineNumber) {
                 throw new SQLException(String.format("Drives entity(%s) data exceeding %d.",
                     key.getEntityClass().code(), maxJoinDriverLineNumber));
             }
-
-            return page.getTotalCount();
+            return new AbstractMap.SimpleEntry<>(key, refs);
         }
     }
 
@@ -688,11 +694,18 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 .collect(toSet());
 
 
+            Page indexPage;
+            try {
+                indexPage = page.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new SQLException(e.getMessage(), e);
+            }
+
             Collection<EntityRef> indexRefs = indexStorage.select(
                 conditions, entityClass,
                 SelectConfig.Builder.aSelectConfig()
                     .withSort(sort)
-                    .withPage(page)
+                    .withPage(indexPage)
                     .withExcludedIds(filterIdsFromMaster)
                     .withCommitId(commitId).build());
             indexRefs = fixNullSortValue(indexRefs, sort);
@@ -710,7 +723,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 retRefs.addAll(indexRefs);
             }
 
-            page.setTotalCount(page.getTotalCount() + masterRefsWithoutDeleted.size());
+            page.setTotalCount(indexPage.getTotalCount() + masterRefsWithoutDeleted.size());
             if (page.isEmptyPage()) {
                 return Collections.emptyList();
             }
@@ -774,7 +787,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
         }
     }
 
-    // 判断是否为单条件标识查询.
+    /**
+     * 判断是否为单条件标识查询.
+     */
     private boolean isOneIdQuery(Conditions conditions) {
         // 只有一个条件.
         final int onlyOne = 1;

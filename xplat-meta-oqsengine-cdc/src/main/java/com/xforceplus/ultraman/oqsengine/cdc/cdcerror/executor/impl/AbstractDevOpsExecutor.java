@@ -15,6 +15,8 @@ import java.sql.SQLException;
  * @author : xujia
  * date : 2020/11/21
  * @since : 1.8
+ * @param <T>
+ * @param <R>
  */
 public abstract class AbstractDevOpsExecutor<T, R> implements CdcErrorExecutor<T, R> {
 

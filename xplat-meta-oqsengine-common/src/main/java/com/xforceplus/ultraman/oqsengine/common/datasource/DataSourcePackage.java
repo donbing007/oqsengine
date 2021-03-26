@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * 数据源包装.
+ *
  * @author dongbin
  * @version 0.1 2020/2/23 16:35
  * @since 1.8
@@ -17,12 +18,14 @@ public class DataSourcePackage {
     private List<DataSource> indexWriter;
     private List<DataSource> indexSearch;
     private DataSource devOps;
+    private DataSource changelog;
 
-    public DataSourcePackage(List<DataSource> master, List<DataSource> indexWriter, List<DataSource> indexSearch, DataSource devOps) {
+    public DataSourcePackage(List<DataSource> master, List<DataSource> indexWriter, List<DataSource> indexSearch, DataSource devOps, DataSource changelog) {
         this.master = master;
         this.indexWriter = indexWriter;
         this.indexSearch = indexSearch;
         this.devOps = devOps;
+        this.changelog = changelog;
     }
 
     public List<DataSource> getMaster() {
@@ -41,6 +44,10 @@ public class DataSourcePackage {
         return devOps;
     }
 
+    public DataSource getChangelog() {
+        return changelog;
+    }
+
     public void close() {
         if (master != null) {
             doClose(master);
@@ -56,6 +63,10 @@ public class DataSourcePackage {
 
         if (null != devOps) {
             ((HikariDataSource) devOps).close();
+        }
+
+        if (changelog != null) {
+            ((HikariDataSource) changelog).close();
         }
     }
 

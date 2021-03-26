@@ -11,10 +11,10 @@
 
     <artifactId>xplat-meta-oqsengine-boot</artifactId>
 
-
     <properties>
         <checkstyle.skip>false</checkstyle.skip>
         <deployment.skip>true</deployment.skip>
+        <common.version>1.0.1-SNAPSHOT</common.version>
     </properties>
 
     <dependencies>
@@ -56,6 +56,11 @@
         </dependency>
 
         <dependency>
+            <groupId>com.xforceplus.ultraman.common</groupId>
+            <artifactId>oqsengine-sdk-server</artifactId>
+            <version>${common.version}</version>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>xplat-meta-oqsengine-masterdb</artifactId>
             <version>${project.version}</version>
@@ -84,11 +89,11 @@
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>xplat-meta-oqsengine-sdk-server</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>${project.groupId}</groupId>-->
+<!--            <artifactId>xplat-meta-oqsengine-sdk-server</artifactId>-->
+<!--            <version>${project.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -132,6 +137,11 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>xplat-meta-oqsengine-changelog</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.shardingsphere</groupId>

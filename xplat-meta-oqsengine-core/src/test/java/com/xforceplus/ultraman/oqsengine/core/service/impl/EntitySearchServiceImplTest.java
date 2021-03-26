@@ -89,7 +89,6 @@ public class EntitySearchServiceImplTest {
             ));
 
         Page indexPage = Page.emptyPage();
-        indexPage.setTotalCount(0);
         when(indexStorage.select(
             Conditions.buildEmtpyConditions(),
             MockMetaManager.l1EntityClass,
@@ -99,10 +98,13 @@ public class EntitySearchServiceImplTest {
                 .withExcludedIds(new HashSet())
                 .withSort(Sort.buildAscSort(EntityField.ID_ENTITY_FIELD))
                 .build()
-        )).thenReturn(Collections.emptyList());
+        )).thenAnswer((invocation) -> {
+            SelectConfig selectConfig = invocation.getArgument(2, SelectConfig.class);
+            selectConfig.getPage().setTotalCount(0);
+            return Collections.emptyList();
+        });
 
         Page page = Page.emptyPage();
-        page.setTotalCount(0);
         Collection<IEntity> entities = impl.selectByConditions(
             Conditions.buildEmtpyConditions(),
             EntityClassRef.Builder.anEntityClassRef()
@@ -141,7 +143,6 @@ public class EntitySearchServiceImplTest {
         );
 
         Page page = Page.newSinglePage(1000);
-        page.setTotalCount(0);
         when(indexStorage.select(
             Conditions.buildEmtpyConditions(),
             MockMetaManager.l1EntityClass,
@@ -153,7 +154,11 @@ public class EntitySearchServiceImplTest {
                 .withExcludeId(3)
                 .withExcludeId(4)
                 .build()
-        )).thenReturn(Collections.emptyList());
+        )).thenAnswer(invocation -> {
+            SelectConfig selectConfig = invocation.getArgument(2, SelectConfig.class);
+            selectConfig.getPage().setTotalCount(0);
+            return Collections.emptyList();
+        });
 
 
         Collection<IEntity> entities = impl.selectByConditions(

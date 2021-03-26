@@ -31,7 +31,7 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
 
     @Override
     public long begin(long timeoutMs) throws SQLException {
-        return begin(timeoutMs);
+        return begin(timeoutMs, null);
     }
 
     @Override

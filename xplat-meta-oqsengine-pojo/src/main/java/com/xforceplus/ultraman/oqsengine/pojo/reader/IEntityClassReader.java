@@ -34,6 +34,7 @@ import static com.xforceplus.ultraman.oqsengine.pojo.reader.FieldScope.ALL;
  *
  * @author luye
  */
+@Deprecated
 public class IEntityClassReader {
 
     private Logger logger = LoggerFactory.getLogger(IEntityClassReader.class);

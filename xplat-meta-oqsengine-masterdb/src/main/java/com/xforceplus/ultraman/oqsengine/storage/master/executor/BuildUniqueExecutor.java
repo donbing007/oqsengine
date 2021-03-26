@@ -16,7 +16,7 @@ import java.util.Collections;
  * 作者(@author): liwei
  * 创建时间: 2021/3/19 4:55 PM
  */
-public class BuildUniqueExecutor extends AbstractMasterExecutor<StorageUniqueEntity,Integer> {
+public class BuildUniqueExecutor extends AbstractMasterExecutor<StorageUniqueEntity, Integer> {
 
     public static Executor<StorageUniqueEntity, Integer> build(
             String tableName, TransactionResource resource, long timeout) {

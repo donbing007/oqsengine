@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.id.LongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator.TransactionAccumulator;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
@@ -18,6 +19,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 /**
@@ -239,7 +241,7 @@ public class AbstractTransactionManagerTest {
         }
 
         @Override
-        public Transaction doCreate() {
+        public Transaction doCreate(String msg) {
 
             long id = idGenerator.next();
             return new MockTransaction(id, waitMs, commitIdGenerator, this.commitIdStatusService);
@@ -247,30 +249,91 @@ public class AbstractTransactionManagerTest {
         }
     }
 
-    static class MockTransaction extends MultiLocalTransaction {
+    static class MockTransaction implements Transaction {
 
+        private MultiLocalTransaction transaction;
         private long waitMs = 0;
         private int commitNumber;
         private int rollbackNumber;
 
         public MockTransaction(
             long id, long watiMs, LongIdGenerator longIdGenerator, CommitIdStatusService commitIdStatusService) {
-            super(id, longIdGenerator, commitIdStatusService);
             this.waitMs = watiMs;
+
+            transaction = MultiLocalTransaction.Builder.aMultiLocalTransaction()
+                .withId(id)
+                .withLongIdGenerator(longIdGenerator)
+                .withCommitIdStatusService(commitIdStatusService)
+                .build();
+        }
+
+        @Override
+        public long id() {
+            return transaction.id();
         }
 
         @Override
         public void commit() throws SQLException {
             commitNumber++;
-            super.commit();
+            transaction.commit();
             sleep();
         }
 
         @Override
         public void rollback() throws SQLException {
             rollbackNumber++;
-            super.rollback();
+            transaction.rollback();
             sleep();
+        }
+
+        @Override
+        public boolean isCommitted() {
+            return transaction.isCommitted();
+        }
+
+        @Override
+        public boolean isRollback() {
+            return transaction.isRollback();
+        }
+
+        @Override
+        public boolean isCompleted() {
+            return transaction.isCompleted();
+        }
+
+        @Override
+        public void join(TransactionResource transactionResource) throws SQLException {
+            transaction.join(transactionResource);
+        }
+
+        @Override
+        public Optional<TransactionResource> query(String key) {
+            return transaction.query(key);
+        }
+
+        @Override
+        public long attachment() {
+            return transaction.attachment();
+        }
+
+        @Override
+        public void attach(long id) {
+            transaction.attach(id);
+        }
+
+        @Override
+        public boolean isReadyOnly() {
+            return transaction.isReadyOnly();
+        }
+
+        @Override
+        public TransactionAccumulator getAccumulator() {
+            return transaction.getAccumulator();
+        }
+
+        @Override
+        public void exclusiveAction(TransactionExclusiveAction action) throws SQLException {
+            transaction.exclusiveAction(action);
         }
 
         public int getCommitNumber() {
@@ -290,6 +353,8 @@ public class AbstractTransactionManagerTest {
                 }
             }
         }
+
+
     }
 
 } 

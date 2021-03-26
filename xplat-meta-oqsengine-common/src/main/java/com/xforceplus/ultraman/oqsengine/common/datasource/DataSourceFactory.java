@@ -61,6 +61,7 @@ public class DataSourceFactory {
     private static final String INDEX_SEARCH_PATH = "dataSources.index.search";
     private static final String MASTER_PATH = "dataSources.master";
     private static final String DEV_OPS_PATH = MASTER_PATH;
+    private static final String CHANGE_LOG_PATH = MASTER_PATH;
 
     public static DataSourcePackage build() {
         return build(false);
@@ -120,7 +121,20 @@ public class DataSourceFactory {
             devOpsDataSource = null;
         }
 
-        return new DataSourcePackage(master, indexWrite, indexSearch, devOpsDataSource);
+        DataSource changelogDataSource;
+        if (config.hasPath(CHANGE_LOG_PATH)) {
+            List<DataSource> devOps =
+                    buildDataSources("master", (List<Config>) config.getConfigList(CHANGE_LOG_PATH), showSql);
+            if (devOps.size() > 0) {
+                changelogDataSource = devOps.get(0);
+            } else {
+                throw new RuntimeException("devOps dataSource was been configure, but not init success");
+            }
+        } else {
+            changelogDataSource = null;
+        }
+
+        return new DataSourcePackage(master, indexWrite, indexSearch, devOpsDataSource, changelogDataSource);
     }
 
     private static List<DataSource> buildDataSources(String baseName, List<Config> configs, boolean showSql) {

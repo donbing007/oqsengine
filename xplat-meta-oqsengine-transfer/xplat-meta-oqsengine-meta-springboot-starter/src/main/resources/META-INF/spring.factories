@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.xforceplus.ultraman.oqsengine.meta.config.ClientConfiguration, \
+  com.xforceplus.ultraman.oqsengine.meta.config.ServerConfiguration, \
+  com.xforceplus.ultraman.oqsengine.meta.config.CommonConfiguration

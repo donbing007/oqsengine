@@ -46,13 +46,16 @@ public class DefaultTransactionManager extends AbstractTransactionManager {
     }
 
 
+    /**
+     * builder
+     */
     public static final class Builder {
         private LongIdGenerator txIdGenerator;
         private LongIdGenerator commitIdGenerator;
         private CommitIdStatusService commitIdStatusService;
-        private boolean waitCommitSync;
+        private boolean waitCommitSync = true;
         private EventBus eventBus;
-        private int survivalTimeMs;
+        private int survivalTimeMs = 30000;
 
         private Builder() {
         }
