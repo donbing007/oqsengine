@@ -58,9 +58,9 @@ public class ChangelogHelper {
      * @return
      */
     public static boolean isReferenceSetInCurrentView(OqsRelation relation, Long entityClassId){
-        if(relation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.MANY2ONE.getName())){
+        if(relation.getRelationType() == OqsRelation.RelationType.MANY_TO_ONE){
             return !relation.isBelongToOwner();
-        } else if(relation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.ONE2MANY.getName())){
+        } else if(relation.getRelationType() == OqsRelation.RelationType.ONE_TO_MANY){
             return !relation.isBelongToOwner();
         }
 

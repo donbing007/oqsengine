@@ -110,13 +110,6 @@ public class OqsRelation {
      */
     private Function<Long, Optional<IEntityClass>> rightEntityClassLoader;
 
-
-
-    /**
-     * 是否强关系
-     */
-    private boolean isStrong;
-
     /**
      * 是否是伴生关系
      */
@@ -188,14 +181,6 @@ public class OqsRelation {
         this.belongToOwner = belongToOwner;
     }
 
-    public boolean isStrong() {
-        return isStrong;
-    }
-
-    public void setStrong(boolean strong) {
-        isStrong = strong;
-    }
-
     public boolean isCompanion() {
         return isCompanion;
     }
@@ -226,13 +211,8 @@ public class OqsRelation {
         private IEntityField entityField;
         private Boolean belongToOwner;
         private boolean strong;
-        private String relationType;
-        private boolean identity;
         private long entityClassId;
         private Function<Long, Optional<IEntityClass>> entityClassLoader;
-        private IEntityField entityField;
-        private boolean belongToOwner;
-        private boolean isStrong;
         private boolean isCompanion;
         private long companionRelation;
 
@@ -288,11 +268,6 @@ public class OqsRelation {
             return this;
         }
 
-        public OqsRelation.Builder withStrong(boolean isStrong){
-            this.isStrong = isStrong;
-            return this;
-        }
-
         public OqsRelation.Builder withCompanion(boolean isCompanion){
             this.isCompanion = isCompanion;
             return this;
@@ -328,7 +303,6 @@ public class OqsRelation {
             oqsRelation.leftEntityClassCode = this.leftEntityClassCode;
             oqsRelation.strong = this.strong;
             oqsRelation.belongToOwner = this.belongToOwner;
-            oqsRelation.isStrong = this.isStrong;
             oqsRelation.isCompanion = this.isCompanion;
             oqsRelation.companionRelation = this.companionRelation;
             return oqsRelation;

@@ -81,9 +81,9 @@ public abstract class DevOpsAbstractContainer {
             ReflectionTestUtils.setField(commitIdStatusService, "redisClient", redisClient);
             commitIdStatusService.init();
 
-
-            transactionManager = new DefaultTransactionManager(
-                new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
+            transactionManager = null;
+//            transactionManager = new DefaultTransactionManager(
+//                new IncreasingOrderLongIdGenerator(0), new IncreasingOrderLongIdGenerator(0), commitIdStatusService);
         }
 
         idGenerator = new SnowflakeLongIdGenerator(new StaticNodeIdGenerator(0));

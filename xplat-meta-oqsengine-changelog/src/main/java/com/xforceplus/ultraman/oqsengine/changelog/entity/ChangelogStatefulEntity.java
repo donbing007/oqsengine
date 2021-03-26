@@ -341,9 +341,9 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
 
             //amend relation many to one and
             relatedEntity.oqsRelations().stream()
-                    .filter(x -> x.getEntityClassId() == entityClass.id())
+                    .filter(x -> x.getRightEntityClassId() == entityClass.id())
                     .forEach(oqsRelation -> {
-                        if (oqsRelation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.ONE2ONE.getName())) {
+                        if (oqsRelation.getRelationType() == OqsRelation.RelationType.ONE_TO_ONE) {
                             ValueWrapper iValue = changedEvent.getValueMap().get(oqsRelation.getEntityField().id());
                             if (iValue != null && iValue.valueToLong() != entityDomain.getId()) {
                                 ChangeValue changeValue = new ChangeValue();
@@ -366,7 +366,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
                                     changeValues.add(changeValue);
                                 }
                             }
-                        } else if (oqsRelation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.MANY2ONE.getName())) {
+                        } else if (oqsRelation.getRelationType() == OqsRelation.RelationType.MANY_TO_ONE) {
 
                             List<Long> currentValues = getCurrentRelatedValue(mapping, oqsRelation);
                             //TODO find related value
@@ -396,7 +396,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
                                     changeValues.add(changeValue);
                                 }
                             }
-                        } else if (oqsRelation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.ONE2MANY.getName())) {
+                        } else if (oqsRelation.getRelationType() == OqsRelation.RelationType.ONE_TO_MANY) {
                             //do nothing now
                         }
                     });
@@ -613,8 +613,8 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
                 .stream()
                 .filter(x -> {
                     OqsRelation rel = x.getKey();
-                    return rel.getRelOwnerClassId() == entityClass.id()
-                            && !rel.getRelationType().equalsIgnoreCase(FieldLikeRelationType.ONE2MANY.getName());
+                    return rel.getLeftEntityClassId() == entityClass.id()
+                            && rel.getRelationType() != OqsRelation.RelationType.ONE_TO_MANY;
                 }).forEach(entry -> {
             OqsRelation key = entry.getKey();
             List<Long> value = entry.getValue();

@@ -233,7 +233,7 @@ public class ReplayServiceImpl implements ReplayService {
                 entityDomain.getReferenceMap().forEach((key, value) -> {
                     //put in
                     value.forEach(eachId -> {
-                        taskQueue.offer(Tuple.of(key.getEntityClassId(), eachId, version));
+                        taskQueue.offer(Tuple.of(key.getRightEntityClassId(), eachId, version));
                     });
                 });
             }

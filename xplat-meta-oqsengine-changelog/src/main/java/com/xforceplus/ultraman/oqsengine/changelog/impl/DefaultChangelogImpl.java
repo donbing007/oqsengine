@@ -71,9 +71,9 @@ public class DefaultChangelogImpl implements ChangelogService {
         changeLogs.addAll(sourceChangelog);
         List<Changelog> records = entityClass.oqsRelations().stream().filter(x -> x.isCompanion()).flatMap(x -> {
             /**
-             * entityclass is self
+             * entityclass is self ? TODO
              */
-            return handleEvent(changedEvent, x.getEntityClass(), x).stream();
+            return handleEvent(changedEvent, x.getRightEntityClass(), x).stream();
         }).collect(Collectors.toList());
 
         changeLogs.addAll(records);
@@ -189,7 +189,7 @@ public class DefaultChangelogImpl implements ChangelogService {
                 EntityRelation mainRelation = replayService.replayRelation(entityClass, objId, relatedChangelog);
                 //search next values
                 mainRelation.getRelatedIds().forEach((key, value) -> {
-                    long childEntity = key.getEntityClassId();
+                    long childEntity = key.getRightEntityClassId();
                     value.forEach(valueLife -> {
                         String idValue = valueLife.getValue();
                         if(idValue != null) {
@@ -202,7 +202,7 @@ public class DefaultChangelogImpl implements ChangelogService {
                                 logger.error("{}", ex);
                             }
                         } else {
-                            logger.warn("REL on {} removed", key.getRelOwnerClassId());
+                            logger.warn("REL on {} removed", key.getLeftEntityClassId());
                         }
                     });
                 });

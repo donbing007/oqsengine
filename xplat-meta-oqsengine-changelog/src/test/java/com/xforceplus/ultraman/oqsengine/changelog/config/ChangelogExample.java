@@ -62,12 +62,12 @@ public class ChangelogExample {
                                 OqsRelation
                                         .Builder
                                         .anOqsRelation()
-                                        .withRelationType("onetoone")
-                                        .withName("A_B")
-                                        .withEntityClassId(B_Class)
+                                        .withRelationType(OqsRelation.RelationType.ONE_TO_ONE)
+                                        .withCode("A_B")
+                                        .withRightEntityClassId(B_Class)
                                         .withId(A_B_OTO)
                                         .withIdentity(true)
-                                        .withRelOwnerClassId(A_Class)
+                                        .withLeftEntityClassId(A_Class)
                                         .withStrong(true)
                                         .withBelongToOwner(true)
                                         .withEntityField(EntityField.Builder.anEntityField()

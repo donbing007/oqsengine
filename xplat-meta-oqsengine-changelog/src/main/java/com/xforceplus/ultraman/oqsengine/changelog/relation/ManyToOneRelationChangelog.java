@@ -38,7 +38,7 @@ public class ManyToOneRelationChangelog implements RelationAwareChangelog {
     //TODO
     @Override
     public boolean require(OqsRelation relation) {
-        return FieldLikeRelationType.MANY2ONE.getName().equalsIgnoreCase(relation.getRelationType());
+        return relation.getRelationType() == OqsRelation.RelationType.MANY_TO_ONE;
     }
 
     /**
@@ -69,7 +69,7 @@ public class ManyToOneRelationChangelog implements RelationAwareChangelog {
 
     private boolean noChanges(OqsRelation relation, ChangedEvent changedEvent) {
         long changedEntityClass = changedEvent.getEntityClassId();
-        return relation.getEntityClassId() != changedEntityClass;
+        return relation.getRightEntityClassId() != changedEntityClass;
     }
 
     /**

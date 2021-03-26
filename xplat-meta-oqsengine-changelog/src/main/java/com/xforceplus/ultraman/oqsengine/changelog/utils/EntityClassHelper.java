@@ -3,7 +3,6 @@ package com.xforceplus.ultraman.oqsengine.changelog.utils;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldLikeRelationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 
@@ -50,16 +49,16 @@ public class EntityClassHelper {
     }
 
     /**
-     * find
+     * find associated entityClassId
      * @param oqsRelation
      * @return
      */
     public static Long findIdAssociatedEntityClassId(OqsRelation oqsRelation){
-        if(oqsRelation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.MANY2ONE.getName())
-                || oqsRelation.getRelationType().equalsIgnoreCase(FieldLikeRelationType.ONE2ONE.getName())){
-            return oqsRelation.getEntityClassId();
+        if(oqsRelation.getRelationType() == OqsRelation.RelationType.MANY_TO_ONE
+                || oqsRelation.getRelationType() == OqsRelation.RelationType.ONE_TO_ONE){
+            return oqsRelation.getRightEntityClassId();
         } else {
-            return oqsRelation.getRelOwnerClassId();
+            return oqsRelation.getLeftEntityClassId();
         }
     }
 
@@ -82,7 +81,7 @@ public class EntityClassHelper {
         Map<String, OqsRelation> temp = new HashMap<>();
         entityClass.oqsRelations().forEach(oqsRelation -> {
 
-            String relName = oqsRelation.getName();
+            String relName = oqsRelation.getCode();
 
             if(relName.endsWith(MTO)){
                 relName = relName.substring(0, relName.length() - MTO.length());
@@ -90,12 +89,11 @@ public class EntityClassHelper {
 
             OqsRelation retOqsRelation = temp.putIfAbsent(relName, oqsRelation);
             if(retOqsRelation != null){
-                String manyToOne = FieldLikeRelationType.MANY2ONE.getName();
                 //find out which is associate
-                if(retOqsRelation.getRelationType().equalsIgnoreCase(manyToOne)
+                if(retOqsRelation.getRelationType() == OqsRelation.RelationType.MANY_TO_ONE
                         && isRelationOwner(entityClass.id(), retOqsRelation)){
                     oqsRelations.add(Tuple.of(oqsRelation, retOqsRelation));
-                }else if(oqsRelation.getRelationType().equalsIgnoreCase(manyToOne)
+                }else if(retOqsRelation.getRelationType() == OqsRelation.RelationType.MANY_TO_ONE
                         && isRelationOwner(entityClass.id(), oqsRelation)){
                     oqsRelations.add(Tuple.of(retOqsRelation, oqsRelation));
                 }
@@ -108,7 +106,7 @@ public class EntityClassHelper {
     }
 
     private static boolean isRelationOwner(long id, OqsRelation relation){
-        return id == relation.getRelOwnerClassId();
+        return id == relation.getLeftEntityClassId();
     }
 
 }
