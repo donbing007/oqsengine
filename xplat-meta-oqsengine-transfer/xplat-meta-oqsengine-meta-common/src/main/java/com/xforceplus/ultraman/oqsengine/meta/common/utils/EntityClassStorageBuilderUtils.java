@@ -132,6 +132,7 @@ public class EntityClassStorageBuilderUtils {
                     relation.setEntityField(toEntityField(r.getEntityField()));
                 }
                 relation.setBelongToOwner(r.getBelongToOwner());
+                relation.setStrong(r.getStrong());
 
                 relations.add(relation);
             }

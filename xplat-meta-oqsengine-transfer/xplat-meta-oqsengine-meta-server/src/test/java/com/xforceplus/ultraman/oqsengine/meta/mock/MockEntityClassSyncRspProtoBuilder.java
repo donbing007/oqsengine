@@ -41,8 +41,8 @@ public class MockEntityClassSyncRspProtoBuilder {
         entityFieldInfos.add(entityFieldInfo(id + 1, EntityFieldInfo.FieldType.STRING));
 
         List<RelationInfo> relationInfos = new ArrayList<>();
-        relationInfos.add(relationInfo(id, id + 2, id, "toOne", id));
-        relationInfos.add(relationInfo(id + 1, id + 2, id + 1, "toOne", id + 1));
+        relationInfos.add(relationInfo(id, id + 2, id, 0, id));
+        relationInfos.add(relationInfo(id + 1, id + 2, id + 1, 0, id + 1));
 
         return EntityClassInfo.newBuilder()
                 .setId(id)
@@ -67,13 +67,14 @@ public class MockEntityClassSyncRspProtoBuilder {
                 .build();
     }
 
-    public static RelationInfo relationInfo(long id, long entityId, long ownerId, String relationType, long fieldId) {
+    public static RelationInfo relationInfo(long id, long entityId, long ownerId, int relationType, long fieldId) {
         return RelationInfo.newBuilder()
                 .setId(id)
                 .setCode(id + "_name")
                 .setRightEntityClassId(entityId)
                 .setLeftEntityClassId(ownerId)
                 .setRelationType(relationType)
+                .setStrong(true)
                 .setEntityField(EntityFieldInfo.newBuilder()
                         .setId(fieldId)
                         .setFieldType(EntityFieldInfo.FieldType.LONG)

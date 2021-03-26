@@ -21,9 +21,10 @@ private static final long serialVersionUID = 0L;
     rightEntityClassId_ = 0L;
     leftEntityClassId_ = 0L;
     leftEntityClassCode_ = "";
-    relationType_ = "";
+    relationType_ = 0;
     identity_ = false;
     belongToOwner_ = false;
+    strong_ = false;
   }
 
   @java.lang.Override
@@ -84,10 +85,9 @@ private static final long serialVersionUID = 0L;
             leftEntityClassCode_ = s;
             break;
           }
-          case 50: {
-            java.lang.String s = input.readStringRequireUtf8();
+          case 48: {
 
-            relationType_ = s;
+            relationType_ = input.readInt32();
             break;
           }
           case 56: {
@@ -111,6 +111,11 @@ private static final long serialVersionUID = 0L;
           case 72: {
 
             belongToOwner_ = input.readBool();
+            break;
+          }
+          case 80: {
+
+            strong_ = input.readBool();
             break;
           }
         }
@@ -233,37 +238,12 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int RELATIONTYPE_FIELD_NUMBER = 6;
-  private volatile java.lang.Object relationType_;
+  private int relationType_;
   /**
-   * <code>string relationType = 6;</code>
+   * <code>int32 relationType = 6;</code>
    */
-  public java.lang.String getRelationType() {
-    java.lang.Object ref = relationType_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      relationType_ = s;
-      return s;
-    }
-  }
-  /**
-   * <code>string relationType = 6;</code>
-   */
-  public com.google.protobuf.ByteString
-      getRelationTypeBytes() {
-    java.lang.Object ref = relationType_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      relationType_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
+  public int getRelationType() {
+    return relationType_;
   }
 
   public static final int IDENTITY_FIELD_NUMBER = 7;
@@ -305,6 +285,15 @@ private static final long serialVersionUID = 0L;
     return belongToOwner_;
   }
 
+  public static final int STRONG_FIELD_NUMBER = 10;
+  private boolean strong_;
+  /**
+   * <code>bool strong = 10;</code>
+   */
+  public boolean getStrong() {
+    return strong_;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -332,8 +321,8 @@ private static final long serialVersionUID = 0L;
     if (!getLeftEntityClassCodeBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 5, leftEntityClassCode_);
     }
-    if (!getRelationTypeBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 6, relationType_);
+    if (relationType_ != 0) {
+      output.writeInt32(6, relationType_);
     }
     if (identity_ != false) {
       output.writeBool(7, identity_);
@@ -343,6 +332,9 @@ private static final long serialVersionUID = 0L;
     }
     if (belongToOwner_ != false) {
       output.writeBool(9, belongToOwner_);
+    }
+    if (strong_ != false) {
+      output.writeBool(10, strong_);
     }
     unknownFields.writeTo(output);
   }
@@ -370,8 +362,9 @@ private static final long serialVersionUID = 0L;
     if (!getLeftEntityClassCodeBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, leftEntityClassCode_);
     }
-    if (!getRelationTypeBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, relationType_);
+    if (relationType_ != 0) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt32Size(6, relationType_);
     }
     if (identity_ != false) {
       size += com.google.protobuf.CodedOutputStream
@@ -384,6 +377,10 @@ private static final long serialVersionUID = 0L;
     if (belongToOwner_ != false) {
       size += com.google.protobuf.CodedOutputStream
         .computeBoolSize(9, belongToOwner_);
+    }
+    if (strong_ != false) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(10, strong_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -411,8 +408,8 @@ private static final long serialVersionUID = 0L;
         == other.getLeftEntityClassId());
     result = result && getLeftEntityClassCode()
         .equals(other.getLeftEntityClassCode());
-    result = result && getRelationType()
-        .equals(other.getRelationType());
+    result = result && (getRelationType()
+        == other.getRelationType());
     result = result && (getIdentity()
         == other.getIdentity());
     result = result && (hasEntityField() == other.hasEntityField());
@@ -422,6 +419,8 @@ private static final long serialVersionUID = 0L;
     }
     result = result && (getBelongToOwner()
         == other.getBelongToOwner());
+    result = result && (getStrong()
+        == other.getStrong());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -447,7 +446,7 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + LEFTENTITYCLASSCODE_FIELD_NUMBER;
     hash = (53 * hash) + getLeftEntityClassCode().hashCode();
     hash = (37 * hash) + RELATIONTYPE_FIELD_NUMBER;
-    hash = (53 * hash) + getRelationType().hashCode();
+    hash = (53 * hash) + getRelationType();
     hash = (37 * hash) + IDENTITY_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getIdentity());
@@ -458,6 +457,9 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + BELONGTOOWNER_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getBelongToOwner());
+    hash = (37 * hash) + STRONG_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getStrong());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -597,7 +599,7 @@ private static final long serialVersionUID = 0L;
 
       leftEntityClassCode_ = "";
 
-      relationType_ = "";
+      relationType_ = 0;
 
       identity_ = false;
 
@@ -608,6 +610,8 @@ private static final long serialVersionUID = 0L;
         entityFieldBuilder_ = null;
       }
       belongToOwner_ = false;
+
+      strong_ = false;
 
       return this;
     }
@@ -644,6 +648,7 @@ private static final long serialVersionUID = 0L;
         result.entityField_ = entityFieldBuilder_.build();
       }
       result.belongToOwner_ = belongToOwner_;
+      result.strong_ = strong_;
       onBuilt();
       return result;
     }
@@ -702,9 +707,8 @@ private static final long serialVersionUID = 0L;
         leftEntityClassCode_ = other.leftEntityClassCode_;
         onChanged();
       }
-      if (!other.getRelationType().isEmpty()) {
-        relationType_ = other.relationType_;
-        onChanged();
+      if (other.getRelationType() != 0) {
+        setRelationType(other.getRelationType());
       }
       if (other.getIdentity() != false) {
         setIdentity(other.getIdentity());
@@ -714,6 +718,9 @@ private static final long serialVersionUID = 0L;
       }
       if (other.getBelongToOwner() != false) {
         setBelongToOwner(other.getBelongToOwner());
+      }
+      if (other.getStrong() != false) {
+        setStrong(other.getStrong());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -958,71 +965,28 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object relationType_ = "";
+    private int relationType_ ;
     /**
-     * <code>string relationType = 6;</code>
+     * <code>int32 relationType = 6;</code>
      */
-    public java.lang.String getRelationType() {
-      java.lang.Object ref = relationType_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        relationType_ = s;
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
+    public int getRelationType() {
+      return relationType_;
     }
     /**
-     * <code>string relationType = 6;</code>
+     * <code>int32 relationType = 6;</code>
      */
-    public com.google.protobuf.ByteString
-        getRelationTypeBytes() {
-      java.lang.Object ref = relationType_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        relationType_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>string relationType = 6;</code>
-     */
-    public Builder setRelationType(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  
+    public Builder setRelationType(int value) {
+      
       relationType_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>string relationType = 6;</code>
+     * <code>int32 relationType = 6;</code>
      */
     public Builder clearRelationType() {
       
-      relationType_ = getDefaultInstance().getRelationType();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>string relationType = 6;</code>
-     */
-    public Builder setRelationTypeBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      
-      relationType_ = value;
+      relationType_ = 0;
       onChanged();
       return this;
     }
@@ -1192,6 +1156,32 @@ private static final long serialVersionUID = 0L;
     public Builder clearBelongToOwner() {
       
       belongToOwner_ = false;
+      onChanged();
+      return this;
+    }
+
+    private boolean strong_ ;
+    /**
+     * <code>bool strong = 10;</code>
+     */
+    public boolean getStrong() {
+      return strong_;
+    }
+    /**
+     * <code>bool strong = 10;</code>
+     */
+    public Builder setStrong(boolean value) {
+      
+      strong_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>bool strong = 10;</code>
+     */
+    public Builder clearStrong() {
+      
+      strong_ = false;
       onChanged();
       return this;
     }

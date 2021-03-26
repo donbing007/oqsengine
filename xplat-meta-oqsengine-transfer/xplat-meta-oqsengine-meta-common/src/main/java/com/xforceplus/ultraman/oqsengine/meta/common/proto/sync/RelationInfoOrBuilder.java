@@ -43,14 +43,9 @@ public interface RelationInfoOrBuilder extends
       getLeftEntityClassCodeBytes();
 
   /**
-   * <code>string relationType = 6;</code>
+   * <code>int32 relationType = 6;</code>
    */
-  java.lang.String getRelationType();
-  /**
-   * <code>string relationType = 6;</code>
-   */
-  com.google.protobuf.ByteString
-      getRelationTypeBytes();
+  int getRelationType();
 
   /**
    * <code>bool identity = 7;</code>
@@ -74,4 +69,9 @@ public interface RelationInfoOrBuilder extends
    * <code>bool belongToOwner = 9;</code>
    */
   boolean getBelongToOwner();
+
+  /**
+   * <code>bool strong = 10;</code>
+   */
+  boolean getStrong();
 }

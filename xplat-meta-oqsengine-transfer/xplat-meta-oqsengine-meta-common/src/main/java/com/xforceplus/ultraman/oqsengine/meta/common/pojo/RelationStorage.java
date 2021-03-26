@@ -17,10 +17,11 @@ public class RelationStorage {
     private long rightEntityClassId;
     private long leftEntityClassId;
     private String leftEntityClassCode;
-    private String relationType;
+    private int relationType;
     private boolean identity;
     private EntityField entityField;
     private boolean belongToOwner;
+    private boolean strong;
 
     public RelationStorage() {
     }
@@ -65,14 +66,6 @@ public class RelationStorage {
         this.leftEntityClassCode = leftEntityClassCode;
     }
 
-    public String getRelationType() {
-        return relationType;
-    }
-
-    public void setRelationType(String relationType) {
-        this.relationType = relationType;
-    }
-
     public boolean isIdentity() {
         return identity;
     }
@@ -97,5 +90,19 @@ public class RelationStorage {
         this.belongToOwner = belongToOwner;
     }
 
+    public void setRelationType(int relationType) {
+        this.relationType = relationType;
+    }
 
+    public boolean isStrong() {
+        return strong;
+    }
+
+    public int getRelationType() {
+        return relationType;
+    }
+
+    public void setStrong(boolean strong) {
+        this.strong = strong;
+    }
 }
