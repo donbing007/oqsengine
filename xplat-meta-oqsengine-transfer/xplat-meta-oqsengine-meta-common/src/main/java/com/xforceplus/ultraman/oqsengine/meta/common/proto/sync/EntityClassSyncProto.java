@@ -91,18 +91,18 @@ public final class EntityClassSyncProto {
       "\020\002\022\017\n\013TENANT_CODE\020\003\022\017\n\013CREATE_TIME\020\004\022\017\n\013" +
       "UPDATE_TIME\020\005\022\022\n\016CREATE_USER_ID\020\006\022\022\n\016UPD" +
       "ATE_USER_ID\020\007\022\024\n\020CREATE_USER_NAME\020\010\022\024\n\020U" +
-      "PDATE_USER_NAME\020\t\022\017\n\013DELETE_FLAG\020\n\"\342\001\n\014R" +
+      "PDATE_USER_NAME\020\t\022\017\n\013DELETE_FLAG\020\n\"\362\001\n\014R" +
       "elationInfo\022\n\n\002id\030\001 \001(\003\022\014\n\004code\030\002 \001(\t\022\032\n" +
       "\022rightEntityClassId\030\003 \001(\003\022\031\n\021leftEntityC" +
       "lassId\030\004 \001(\003\022\033\n\023leftEntityClassCode\030\005 \001(" +
-      "\t\022\024\n\014relationType\030\006 \001(\t\022\020\n\010identity\030\007 \001(" +
+      "\t\022\024\n\014relationType\030\006 \001(\005\022\020\n\010identity\030\007 \001(" +
       "\010\022%\n\013entityField\030\010 \001(\0132\020.EntityFieldInfo" +
-      "\022\025\n\rbelongToOwner\030\t \001(\0102V\n\017EntityClassSy" +
-      "nc\022C\n\010register\022\027.EntityClassSyncRequest\032" +
-      "\030.EntityClassSyncResponse\"\000(\0010\001BR\n8com.x" +
-      "forceplus.ultraman.oqsengine.meta.common" +
-      ".proto.syncB\024EntityClassSyncProtoP\001b\006pro" +
-      "to3"
+      "\022\025\n\rbelongToOwner\030\t \001(\010\022\016\n\006strong\030\n \001(\0102" +
+      "V\n\017EntityClassSync\022C\n\010register\022\027.EntityC" +
+      "lassSyncRequest\032\030.EntityClassSyncRespons" +
+      "e\"\000(\0010\001BR\n8com.xforceplus.ultraman.oqsen" +
+      "gine.meta.common.proto.syncB\024EntityClass" +
+      "SyncProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -157,7 +157,7 @@ public final class EntityClassSyncProto {
     internal_static_RelationInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_RelationInfo_descriptor,
-        new java.lang.String[] { "Id", "Code", "RightEntityClassId", "LeftEntityClassId", "LeftEntityClassCode", "RelationType", "Identity", "EntityField", "BelongToOwner", });
+        new java.lang.String[] { "Id", "Code", "RightEntityClassId", "LeftEntityClassId", "LeftEntityClassCode", "RelationType", "Identity", "EntityField", "BelongToOwner", "Strong", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

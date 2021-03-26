@@ -100,6 +100,12 @@ public class OqsRelation {
     private boolean belongToOwner;
 
     /**
+     * true 表示为强关系.
+     * false 表示为弱关系.
+     */
+    private boolean strong;
+
+    /**
      * "右"对象元信息定义的延迟加载方法.
      */
     private Function<Long, Optional<IEntityClass>> rightEntityClassLoader;
@@ -157,6 +163,10 @@ public class OqsRelation {
         return entityClassId == leftEntityClassId && belongToOwner;
     }
 
+    public boolean isStrong() {
+        return strong;
+    }
+
     /**
      * builder
      */
@@ -170,6 +180,7 @@ public class OqsRelation {
         private Boolean identity;
         private IEntityField entityField;
         private Boolean belongToOwner;
+        private boolean strong;
         private Function<Long, Optional<IEntityClass>> entityClassLoader;
 
         private Builder() {
@@ -224,6 +235,11 @@ public class OqsRelation {
             return this;
         }
 
+        public Builder withStrong(boolean strong) {
+            this.strong = strong;
+            return this;
+        }
+
         public Builder withRightEntityClassLoader(Function<Long, Optional<IEntityClass>> entityClassLoader) {
             this.entityClassLoader = entityClassLoader;
             return this;
@@ -241,6 +257,7 @@ public class OqsRelation {
             oqsRelation.rightEntityClassLoader = this.entityClassLoader;
             oqsRelation.entityField = this.entityField;
             oqsRelation.leftEntityClassCode = this.leftEntityClassCode;
+            oqsRelation.strong = this.strong;
             return oqsRelation;
         }
     }

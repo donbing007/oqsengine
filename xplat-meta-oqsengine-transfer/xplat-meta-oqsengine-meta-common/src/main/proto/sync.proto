@@ -103,8 +103,9 @@ message RelationInfo {
 	int64 rightEntityClassId = 3;
 	int64 leftEntityClassId = 4;
 	string leftEntityClassCode = 5;
-	string relationType = 6;
+	int32 relationType = 6;
 	bool identity = 7;
 	EntityFieldInfo entityField = 8;
 	bool belongToOwner = 9;
+	bool strong = 10;
 }
