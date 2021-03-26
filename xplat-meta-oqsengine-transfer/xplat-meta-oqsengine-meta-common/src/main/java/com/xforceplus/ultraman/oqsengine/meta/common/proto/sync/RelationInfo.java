@@ -17,10 +17,10 @@ private static final long serialVersionUID = 0L;
   }
   private RelationInfo() {
     id_ = 0L;
-    name_ = "";
-    entityClassId_ = 0L;
-    relOwnerClassId_ = 0L;
-    relOwnerClassName_ = "";
+    code_ = "";
+    rightEntityClassId_ = 0L;
+    leftEntityClassId_ = 0L;
+    leftEntityClassCode_ = "";
     relationType_ = "";
     identity_ = false;
     belongToOwner_ = false;
@@ -65,23 +65,23 @@ private static final long serialVersionUID = 0L;
           case 18: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            name_ = s;
+            code_ = s;
             break;
           }
           case 24: {
 
-            entityClassId_ = input.readInt64();
+            rightEntityClassId_ = input.readInt64();
             break;
           }
           case 32: {
 
-            relOwnerClassId_ = input.readInt64();
+            leftEntityClassId_ = input.readInt64();
             break;
           }
           case 42: {
             java.lang.String s = input.readStringRequireUtf8();
 
-            relOwnerClassName_ = s;
+            leftEntityClassCode_ = s;
             break;
           }
           case 50: {
@@ -146,86 +146,86 @@ private static final long serialVersionUID = 0L;
     return id_;
   }
 
-  public static final int NAME_FIELD_NUMBER = 2;
-  private volatile java.lang.Object name_;
+  public static final int CODE_FIELD_NUMBER = 2;
+  private volatile java.lang.Object code_;
   /**
-   * <code>string name = 2;</code>
+   * <code>string code = 2;</code>
    */
-  public java.lang.String getName() {
-    java.lang.Object ref = name_;
+  public java.lang.String getCode() {
+    java.lang.Object ref = code_;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      name_ = s;
+      code_ = s;
       return s;
     }
   }
   /**
-   * <code>string name = 2;</code>
+   * <code>string code = 2;</code>
    */
   public com.google.protobuf.ByteString
-      getNameBytes() {
-    java.lang.Object ref = name_;
+      getCodeBytes() {
+    java.lang.Object ref = code_;
     if (ref instanceof java.lang.String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
-      name_ = b;
+      code_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
     }
   }
 
-  public static final int ENTITYCLASSID_FIELD_NUMBER = 3;
-  private long entityClassId_;
+  public static final int RIGHTENTITYCLASSID_FIELD_NUMBER = 3;
+  private long rightEntityClassId_;
   /**
-   * <code>int64 entityClassId = 3;</code>
+   * <code>int64 rightEntityClassId = 3;</code>
    */
-  public long getEntityClassId() {
-    return entityClassId_;
+  public long getRightEntityClassId() {
+    return rightEntityClassId_;
   }
 
-  public static final int RELOWNERCLASSID_FIELD_NUMBER = 4;
-  private long relOwnerClassId_;
+  public static final int LEFTENTITYCLASSID_FIELD_NUMBER = 4;
+  private long leftEntityClassId_;
   /**
-   * <code>int64 relOwnerClassId = 4;</code>
+   * <code>int64 leftEntityClassId = 4;</code>
    */
-  public long getRelOwnerClassId() {
-    return relOwnerClassId_;
+  public long getLeftEntityClassId() {
+    return leftEntityClassId_;
   }
 
-  public static final int RELOWNERCLASSNAME_FIELD_NUMBER = 5;
-  private volatile java.lang.Object relOwnerClassName_;
+  public static final int LEFTENTITYCLASSCODE_FIELD_NUMBER = 5;
+  private volatile java.lang.Object leftEntityClassCode_;
   /**
-   * <code>string relOwnerClassName = 5;</code>
+   * <code>string leftEntityClassCode = 5;</code>
    */
-  public java.lang.String getRelOwnerClassName() {
-    java.lang.Object ref = relOwnerClassName_;
+  public java.lang.String getLeftEntityClassCode() {
+    java.lang.Object ref = leftEntityClassCode_;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      relOwnerClassName_ = s;
+      leftEntityClassCode_ = s;
       return s;
     }
   }
   /**
-   * <code>string relOwnerClassName = 5;</code>
+   * <code>string leftEntityClassCode = 5;</code>
    */
   public com.google.protobuf.ByteString
-      getRelOwnerClassNameBytes() {
-    java.lang.Object ref = relOwnerClassName_;
+      getLeftEntityClassCodeBytes() {
+    java.lang.Object ref = leftEntityClassCode_;
     if (ref instanceof java.lang.String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
-      relOwnerClassName_ = b;
+      leftEntityClassCode_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
@@ -320,17 +320,17 @@ private static final long serialVersionUID = 0L;
     if (id_ != 0L) {
       output.writeInt64(1, id_);
     }
-    if (!getNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, name_);
+    if (!getCodeBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, code_);
     }
-    if (entityClassId_ != 0L) {
-      output.writeInt64(3, entityClassId_);
+    if (rightEntityClassId_ != 0L) {
+      output.writeInt64(3, rightEntityClassId_);
     }
-    if (relOwnerClassId_ != 0L) {
-      output.writeInt64(4, relOwnerClassId_);
+    if (leftEntityClassId_ != 0L) {
+      output.writeInt64(4, leftEntityClassId_);
     }
-    if (!getRelOwnerClassNameBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, relOwnerClassName_);
+    if (!getLeftEntityClassCodeBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, leftEntityClassCode_);
     }
     if (!getRelationTypeBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 6, relationType_);
@@ -356,19 +356,19 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(1, id_);
     }
-    if (!getNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, name_);
+    if (!getCodeBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, code_);
     }
-    if (entityClassId_ != 0L) {
+    if (rightEntityClassId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(3, entityClassId_);
+        .computeInt64Size(3, rightEntityClassId_);
     }
-    if (relOwnerClassId_ != 0L) {
+    if (leftEntityClassId_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(4, relOwnerClassId_);
+        .computeInt64Size(4, leftEntityClassId_);
     }
-    if (!getRelOwnerClassNameBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, relOwnerClassName_);
+    if (!getLeftEntityClassCodeBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, leftEntityClassCode_);
     }
     if (!getRelationTypeBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, relationType_);
@@ -403,14 +403,14 @@ private static final long serialVersionUID = 0L;
     boolean result = true;
     result = result && (getId()
         == other.getId());
-    result = result && getName()
-        .equals(other.getName());
-    result = result && (getEntityClassId()
-        == other.getEntityClassId());
-    result = result && (getRelOwnerClassId()
-        == other.getRelOwnerClassId());
-    result = result && getRelOwnerClassName()
-        .equals(other.getRelOwnerClassName());
+    result = result && getCode()
+        .equals(other.getCode());
+    result = result && (getRightEntityClassId()
+        == other.getRightEntityClassId());
+    result = result && (getLeftEntityClassId()
+        == other.getLeftEntityClassId());
+    result = result && getLeftEntityClassCode()
+        .equals(other.getLeftEntityClassCode());
     result = result && getRelationType()
         .equals(other.getRelationType());
     result = result && (getIdentity()
@@ -436,16 +436,16 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + ID_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
         getId());
-    hash = (37 * hash) + NAME_FIELD_NUMBER;
-    hash = (53 * hash) + getName().hashCode();
-    hash = (37 * hash) + ENTITYCLASSID_FIELD_NUMBER;
+    hash = (37 * hash) + CODE_FIELD_NUMBER;
+    hash = (53 * hash) + getCode().hashCode();
+    hash = (37 * hash) + RIGHTENTITYCLASSID_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        getEntityClassId());
-    hash = (37 * hash) + RELOWNERCLASSID_FIELD_NUMBER;
+        getRightEntityClassId());
+    hash = (37 * hash) + LEFTENTITYCLASSID_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        getRelOwnerClassId());
-    hash = (37 * hash) + RELOWNERCLASSNAME_FIELD_NUMBER;
-    hash = (53 * hash) + getRelOwnerClassName().hashCode();
+        getLeftEntityClassId());
+    hash = (37 * hash) + LEFTENTITYCLASSCODE_FIELD_NUMBER;
+    hash = (53 * hash) + getLeftEntityClassCode().hashCode();
     hash = (37 * hash) + RELATIONTYPE_FIELD_NUMBER;
     hash = (53 * hash) + getRelationType().hashCode();
     hash = (37 * hash) + IDENTITY_FIELD_NUMBER;
@@ -589,13 +589,13 @@ private static final long serialVersionUID = 0L;
       super.clear();
       id_ = 0L;
 
-      name_ = "";
+      code_ = "";
 
-      entityClassId_ = 0L;
+      rightEntityClassId_ = 0L;
 
-      relOwnerClassId_ = 0L;
+      leftEntityClassId_ = 0L;
 
-      relOwnerClassName_ = "";
+      leftEntityClassCode_ = "";
 
       relationType_ = "";
 
@@ -632,10 +632,10 @@ private static final long serialVersionUID = 0L;
     public com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo buildPartial() {
       com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo result = new com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.RelationInfo(this);
       result.id_ = id_;
-      result.name_ = name_;
-      result.entityClassId_ = entityClassId_;
-      result.relOwnerClassId_ = relOwnerClassId_;
-      result.relOwnerClassName_ = relOwnerClassName_;
+      result.code_ = code_;
+      result.rightEntityClassId_ = rightEntityClassId_;
+      result.leftEntityClassId_ = leftEntityClassId_;
+      result.leftEntityClassCode_ = leftEntityClassCode_;
       result.relationType_ = relationType_;
       result.identity_ = identity_;
       if (entityFieldBuilder_ == null) {
@@ -688,18 +688,18 @@ private static final long serialVersionUID = 0L;
       if (other.getId() != 0L) {
         setId(other.getId());
       }
-      if (!other.getName().isEmpty()) {
-        name_ = other.name_;
+      if (!other.getCode().isEmpty()) {
+        code_ = other.code_;
         onChanged();
       }
-      if (other.getEntityClassId() != 0L) {
-        setEntityClassId(other.getEntityClassId());
+      if (other.getRightEntityClassId() != 0L) {
+        setRightEntityClassId(other.getRightEntityClassId());
       }
-      if (other.getRelOwnerClassId() != 0L) {
-        setRelOwnerClassId(other.getRelOwnerClassId());
+      if (other.getLeftEntityClassId() != 0L) {
+        setLeftEntityClassId(other.getLeftEntityClassId());
       }
-      if (!other.getRelOwnerClassName().isEmpty()) {
-        relOwnerClassName_ = other.relOwnerClassName_;
+      if (!other.getLeftEntityClassCode().isEmpty()) {
+        leftEntityClassCode_ = other.leftEntityClassCode_;
         onChanged();
       }
       if (!other.getRelationType().isEmpty()) {
@@ -768,192 +768,192 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object name_ = "";
+    private java.lang.Object code_ = "";
     /**
-     * <code>string name = 2;</code>
+     * <code>string code = 2;</code>
      */
-    public java.lang.String getName() {
-      java.lang.Object ref = name_;
+    public java.lang.String getCode() {
+      java.lang.Object ref = code_;
       if (!(ref instanceof java.lang.String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        name_ = s;
+        code_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>string name = 2;</code>
+     * <code>string code = 2;</code>
      */
     public com.google.protobuf.ByteString
-        getNameBytes() {
-      java.lang.Object ref = name_;
+        getCodeBytes() {
+      java.lang.Object ref = code_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        name_ = b;
+        code_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
     /**
-     * <code>string name = 2;</code>
+     * <code>string code = 2;</code>
      */
-    public Builder setName(
+    public Builder setCode(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
   
-      name_ = value;
+      code_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>string name = 2;</code>
+     * <code>string code = 2;</code>
      */
-    public Builder clearName() {
+    public Builder clearCode() {
       
-      name_ = getDefaultInstance().getName();
+      code_ = getDefaultInstance().getCode();
       onChanged();
       return this;
     }
     /**
-     * <code>string name = 2;</code>
+     * <code>string code = 2;</code>
      */
-    public Builder setNameBytes(
+    public Builder setCodeBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
       
-      name_ = value;
+      code_ = value;
       onChanged();
       return this;
     }
 
-    private long entityClassId_ ;
+    private long rightEntityClassId_ ;
     /**
-     * <code>int64 entityClassId = 3;</code>
+     * <code>int64 rightEntityClassId = 3;</code>
      */
-    public long getEntityClassId() {
-      return entityClassId_;
+    public long getRightEntityClassId() {
+      return rightEntityClassId_;
     }
     /**
-     * <code>int64 entityClassId = 3;</code>
+     * <code>int64 rightEntityClassId = 3;</code>
      */
-    public Builder setEntityClassId(long value) {
+    public Builder setRightEntityClassId(long value) {
       
-      entityClassId_ = value;
+      rightEntityClassId_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>int64 entityClassId = 3;</code>
+     * <code>int64 rightEntityClassId = 3;</code>
      */
-    public Builder clearEntityClassId() {
+    public Builder clearRightEntityClassId() {
       
-      entityClassId_ = 0L;
-      onChanged();
-      return this;
-    }
-
-    private long relOwnerClassId_ ;
-    /**
-     * <code>int64 relOwnerClassId = 4;</code>
-     */
-    public long getRelOwnerClassId() {
-      return relOwnerClassId_;
-    }
-    /**
-     * <code>int64 relOwnerClassId = 4;</code>
-     */
-    public Builder setRelOwnerClassId(long value) {
-      
-      relOwnerClassId_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>int64 relOwnerClassId = 4;</code>
-     */
-    public Builder clearRelOwnerClassId() {
-      
-      relOwnerClassId_ = 0L;
+      rightEntityClassId_ = 0L;
       onChanged();
       return this;
     }
 
-    private java.lang.Object relOwnerClassName_ = "";
+    private long leftEntityClassId_ ;
     /**
-     * <code>string relOwnerClassName = 5;</code>
+     * <code>int64 leftEntityClassId = 4;</code>
      */
-    public java.lang.String getRelOwnerClassName() {
-      java.lang.Object ref = relOwnerClassName_;
+    public long getLeftEntityClassId() {
+      return leftEntityClassId_;
+    }
+    /**
+     * <code>int64 leftEntityClassId = 4;</code>
+     */
+    public Builder setLeftEntityClassId(long value) {
+      
+      leftEntityClassId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>int64 leftEntityClassId = 4;</code>
+     */
+    public Builder clearLeftEntityClassId() {
+      
+      leftEntityClassId_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object leftEntityClassCode_ = "";
+    /**
+     * <code>string leftEntityClassCode = 5;</code>
+     */
+    public java.lang.String getLeftEntityClassCode() {
+      java.lang.Object ref = leftEntityClassCode_;
       if (!(ref instanceof java.lang.String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        relOwnerClassName_ = s;
+        leftEntityClassCode_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>string relOwnerClassName = 5;</code>
+     * <code>string leftEntityClassCode = 5;</code>
      */
     public com.google.protobuf.ByteString
-        getRelOwnerClassNameBytes() {
-      java.lang.Object ref = relOwnerClassName_;
+        getLeftEntityClassCodeBytes() {
+      java.lang.Object ref = leftEntityClassCode_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        relOwnerClassName_ = b;
+        leftEntityClassCode_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
     /**
-     * <code>string relOwnerClassName = 5;</code>
+     * <code>string leftEntityClassCode = 5;</code>
      */
-    public Builder setRelOwnerClassName(
+    public Builder setLeftEntityClassCode(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
   
-      relOwnerClassName_ = value;
+      leftEntityClassCode_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>string relOwnerClassName = 5;</code>
+     * <code>string leftEntityClassCode = 5;</code>
      */
-    public Builder clearRelOwnerClassName() {
+    public Builder clearLeftEntityClassCode() {
       
-      relOwnerClassName_ = getDefaultInstance().getRelOwnerClassName();
+      leftEntityClassCode_ = getDefaultInstance().getLeftEntityClassCode();
       onChanged();
       return this;
     }
     /**
-     * <code>string relOwnerClassName = 5;</code>
+     * <code>string leftEntityClassCode = 5;</code>
      */
-    public Builder setRelOwnerClassNameBytes(
+    public Builder setLeftEntityClassCodeBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
       
-      relOwnerClassName_ = value;
+      leftEntityClassCode_ = value;
       onChanged();
       return this;
     }

@@ -13,34 +13,34 @@ public interface RelationInfoOrBuilder extends
   long getId();
 
   /**
-   * <code>string name = 2;</code>
+   * <code>string code = 2;</code>
    */
-  java.lang.String getName();
+  java.lang.String getCode();
   /**
-   * <code>string name = 2;</code>
+   * <code>string code = 2;</code>
    */
   com.google.protobuf.ByteString
-      getNameBytes();
+      getCodeBytes();
 
   /**
-   * <code>int64 entityClassId = 3;</code>
+   * <code>int64 rightEntityClassId = 3;</code>
    */
-  long getEntityClassId();
+  long getRightEntityClassId();
 
   /**
-   * <code>int64 relOwnerClassId = 4;</code>
+   * <code>int64 leftEntityClassId = 4;</code>
    */
-  long getRelOwnerClassId();
+  long getLeftEntityClassId();
 
   /**
-   * <code>string relOwnerClassName = 5;</code>
+   * <code>string leftEntityClassCode = 5;</code>
    */
-  java.lang.String getRelOwnerClassName();
+  java.lang.String getLeftEntityClassCode();
   /**
-   * <code>string relOwnerClassName = 5;</code>
+   * <code>string leftEntityClassCode = 5;</code>
    */
   com.google.protobuf.ByteString
-      getRelOwnerClassNameBytes();
+      getLeftEntityClassCodeBytes();
 
   /**
    * <code>string relationType = 6;</code>

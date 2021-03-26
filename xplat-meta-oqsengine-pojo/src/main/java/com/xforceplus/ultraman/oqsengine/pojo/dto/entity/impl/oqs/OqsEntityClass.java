@@ -123,6 +123,15 @@ public class OqsEntityClass implements IEntityClass {
             List<IEntityField> entityFields = new ArrayList<>();
             entityFields.addAll(fields);
             entityFields.addAll(father.fields());
+
+            relations.forEach(
+                    r -> {
+                        if (r.isSelfRelation(id)) {
+                            entityFields.add(r.getEntityField());
+                        }
+                    }
+            );
+
             return entityFields;
         } else {
             return fields;
@@ -148,11 +157,22 @@ public class OqsEntityClass implements IEntityClass {
             fields.stream().filter(f -> id == f.id()).findFirst();
 
         //  找到或者没有父类
-        if (entityFieldOp.isPresent() || null == father) {
+        if (entityFieldOp.isPresent()) {
             return entityFieldOp;
+        } else {
+            for (OqsRelation relation : relations) {
+                if (relation.getEntityField().id() == id) {
+                    return Optional.of(relation.getEntityField());
+                }
+            }
         }
-        //  从父类找
-        return father.field(id);
+
+        //  从父类寻找
+        if (null != father) {
+            return father.field(id);
+        }
+
+        return entityFieldOp;
     }
 
     @Override

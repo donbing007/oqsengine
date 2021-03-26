@@ -153,6 +153,13 @@ public class OqsRelation {
         return belongToOwner;
     }
 
+    public boolean isSelfRelation(long entityClassId) {
+        return entityClassId == leftEntityClassId && belongToOwner;
+    }
+
+    /**
+     * builder
+     */
     public static final class Builder {
         private Long id;
         private String code;

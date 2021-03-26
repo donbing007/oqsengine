@@ -263,10 +263,10 @@ public class EntityClassManagerExecutorTest {
                 RelationInfo expectedRelation = expected.getRelationsList().get(i);
                 OqsRelation actualRelation = actualRelations.get(i);
                 Assert.assertEquals(expectedRelation.getId(), (long) actualRelation.getId());
-                Assert.assertEquals(expectedRelation.getName(), actualRelation.getCode());
-                Assert.assertEquals(expectedRelation.getEntityClassId(), actualRelation.getRightEntityClassId());
-                Assert.assertEquals(expectedRelation.getRelOwnerClassId(), actualRelation.getLeftEntityClassId());
-                Assert.assertEquals(expectedRelation.getRelOwnerClassName(), actualRelation.getLeftEntityClassCode());
+                Assert.assertEquals(expectedRelation.getCode(), actualRelation.getCode());
+                Assert.assertEquals(expectedRelation.getRightEntityClassId(), actualRelation.getRightEntityClassId());
+                Assert.assertEquals(expectedRelation.getLeftEntityClassId(), actualRelation.getLeftEntityClassId());
+                Assert.assertEquals(expectedRelation.getLeftEntityClassCode(), actualRelation.getLeftEntityClassCode());
                 Assert.assertEquals(expectedRelation.getRelationType(), actualRelation.getRelationType());
                 Assert.assertEquals(expectedRelation.getIdentity(), actualRelation.isIdentity());
                 Assert.assertEquals(expectedRelation.getBelongToOwner(), actualRelation.isBelongToOwner());

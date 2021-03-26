@@ -99,10 +99,10 @@ message FieldConfig {
 
 message RelationInfo {
 	int64 id = 1;
-	string name = 2;
-	int64 entityClassId = 3;
-	int64 relOwnerClassId = 4;
-	string relOwnerClassName = 5;
+	string code = 2;
+	int64 rightEntityClassId = 3;
+	int64 leftEntityClassId = 4;
+	string leftEntityClassCode = 5;
 	string relationType = 6;
 	bool identity = 7;
 	EntityFieldInfo entityField = 8;
