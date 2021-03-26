@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.boot.health;
 
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -32,10 +33,7 @@ public class HealthCheck implements HealthIndicator {
     @Resource
     private CommitIdStatusService commitIdStatusService;
 
-    private EntityClassRef entityClassRef = EntityClassRef.Builder.anEntityClassRef()
-        .withEntityClassId(1)
-        .withEntityClassCode("test")
-        .build();
+    private EntityClassRef entityClassRef = HealthCheckEntityClass.getInstance().ref();
 
     @Override
     public Health health() {
