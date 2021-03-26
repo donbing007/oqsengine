@@ -317,9 +317,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 Collection<Conditions> subConditions = new ArrayList(safeNodes.size());
 
                 for (ConditionNode safeNode : safeNodes) {
-
                     subConditions.add(buildSafeNodeConditions(safeNode, minUnSyncCommitId));
-
                 }
 
                 useConditions = Conditions.buildEmtpyConditions();
@@ -329,7 +327,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                     }
                 }
 
-                if (useConditions.size() == 0) {
+                if (useConditions.isEmtpy()) {
                     page.setTotalCount(0);
                     return Collections.emptyList();
                 }
@@ -483,12 +481,21 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             }
         }
 
-
-        // 之前过滤掉了非 driver 的条件,这里需要加入.
-        processConditions.collectCondition().stream().filter(c -> !c.getEntityClassRef().isPresent()).forEach(c -> {
-                conditions.addAnd(c);
+        if (termination) {
+            // 驱动没有任何命中,整个安全树都不会有结果.所以这里空返回.
+            if (conditions.isEmtpy()) {
+                return conditions;
+            } else {
+                return Conditions.buildEmtpyConditions();
             }
-        );
+
+        } else {
+            // 之前过滤掉了非 driver 的条件,这里需要加入.
+            processConditions.collectCondition().stream().filter(c -> !c.getEntityClassRef().isPresent()).forEach(c -> {
+                    conditions.addAnd(c);
+                }
+            );
+        }
 
         return conditions;
     }
@@ -687,11 +694,18 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 .collect(toSet());
 
 
+            Page indexPage;
+            try {
+                indexPage = page.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new SQLException(e.getMessage(), e);
+            }
+
             Collection<EntityRef> indexRefs = indexStorage.select(
                 conditions, entityClass,
                 SelectConfig.Builder.aSelectConfig()
                     .withSort(sort)
-                    .withPage(page)
+                    .withPage(indexPage)
                     .withExcludedIds(filterIdsFromMaster)
                     .withCommitId(commitId).build());
             indexRefs = fixNullSortValue(indexRefs, sort);
@@ -709,7 +723,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 retRefs.addAll(indexRefs);
             }
 
-            page.setTotalCount(page.getTotalCount() + masterRefsWithoutDeleted.size());
+            page.setTotalCount(indexPage.getTotalCount() + masterRefsWithoutDeleted.size());
             if (page.isEmptyPage()) {
                 return Collections.emptyList();
             }
