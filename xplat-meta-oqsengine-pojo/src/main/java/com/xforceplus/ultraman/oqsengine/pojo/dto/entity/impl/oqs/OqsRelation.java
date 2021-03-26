@@ -19,6 +19,39 @@ import java.util.function.Function;
 public class OqsRelation {
 
     /**
+     * 关系类型.
+     */
+    public static enum RelationType {
+        UNKNOWN(0),
+        ONE_TO_ONE(1),
+        ONE_TO_MANY(2),
+        MANY_TO_ONE(3),
+        MANY_TO_MANY(4),
+        MULTI_VALUES(5);
+
+        private int value;
+
+        private RelationType(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        public static RelationType getInstance(int value) {
+            for (RelationType t : RelationType.values()) {
+                if (t.getValue() == value) {
+                    return t;
+                }
+            }
+
+            return RelationType.UNKNOWN;
+        }
+
+    }
+
+    /**
      * 关系唯一标识.
      */
     private long id;
@@ -46,7 +79,7 @@ public class OqsRelation {
     /**
      * 关系类型 - 使用关系的code填入
      */
-    private String relationType;
+    private RelationType relationType;
 
     /**
      * 是PrimaryKey还是UniqueKey
@@ -104,7 +137,7 @@ public class OqsRelation {
         return rightEntityClassId;
     }
 
-    public String getRelationType() {
+    public RelationType getRelationType() {
         return relationType;
     }
 
@@ -126,7 +159,7 @@ public class OqsRelation {
         private Long leftEntityClassId;
         private String leftEntityClassCode;
         private Long rightEntityClassId;
-        private String relationType;
+        private RelationType relationType;
         private Boolean identity;
         private IEntityField entityField;
         private Boolean belongToOwner;
@@ -164,7 +197,7 @@ public class OqsRelation {
             return this;
         }
 
-        public Builder withRelationType(String relationType) {
+        public Builder withRelationType(RelationType relationType) {
             this.relationType = relationType;
             return this;
         }

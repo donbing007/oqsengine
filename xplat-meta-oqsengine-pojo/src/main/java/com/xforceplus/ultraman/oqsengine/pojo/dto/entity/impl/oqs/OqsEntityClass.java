@@ -7,8 +7,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Relation;
 import java.util.*;
 
 /**
- * desc :
- * name : OqsEntityClass
+ * 一个元信息定义,OQS内部使用的对象元信息定义.
  *
  * @author : xujia
  * date : 2021/2/18
@@ -43,7 +42,7 @@ public class OqsEntityClass implements IEntityClass {
     /**
      * 关系信息
      */
-    private List<OqsRelation> relations;
+    private Collection<OqsRelation> relations;
 
     /**
      * 继承的对象类型.
@@ -83,6 +82,7 @@ public class OqsEntityClass implements IEntityClass {
         return level;
     }
 
+    @Deprecated
     @Override
     public Collection<Relation> relations() {
         return null;
@@ -93,6 +93,7 @@ public class OqsEntityClass implements IEntityClass {
         return relations;
     }
 
+    @Deprecated
     @Override
     public Collection<IEntityClass> relationsEntityClasss() {
         return null;
@@ -105,7 +106,7 @@ public class OqsEntityClass implements IEntityClass {
 
     @Override
     public Collection<IEntityClass> family() {
-        List<IEntityClass> familyList = new ArrayList<>();
+        List<IEntityClass> familyList = new ArrayList<>(level);
         Optional<IEntityClass> current = Optional.of(this);
         while (current.isPresent()) {
             familyList.add(0, current.get());
@@ -202,7 +203,7 @@ public class OqsEntityClass implements IEntityClass {
         private String code;
         private int version;
         private int level;
-        private List<OqsRelation> relations;
+        private Collection<OqsRelation> relations = Collections.emptyList();
         private IEntityClass father;
         private Collection<IEntityField> fields = Collections.emptyList();
 
@@ -238,7 +239,7 @@ public class OqsEntityClass implements IEntityClass {
             return this;
         }
 
-        public OqsEntityClass.Builder withRelations(List<OqsRelation> relations) {
+        public OqsEntityClass.Builder withRelations(Collection<OqsRelation> relations) {
             this.relations = relations;
             return this;
         }
