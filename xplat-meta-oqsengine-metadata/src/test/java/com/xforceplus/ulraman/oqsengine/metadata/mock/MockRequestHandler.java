@@ -26,7 +26,7 @@ public class MockRequestHandler implements IRequestHandler {
 
     public static final int EXIST_MIN_VERSION = 0;
 
-    @Resource
+    @Resource(name = "grpcSyncExecutor")
     private SyncExecutor syncExecutor;
 
 

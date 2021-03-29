@@ -17,8 +17,8 @@ server:
 meta:
   grpc:
     type: client
-    host: 169.254.106.127
-    port: 8082
+    host: 127.0.0.1
+    port: 8081
     seconds:
       heartbeatTimeout: 30
       delaytaskTimeout: 30

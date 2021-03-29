@@ -24,7 +24,7 @@ import static com.xforceplus.ultraman.oqsengine.meta.common.utils.EntityClassSto
  * date : 2021/3/3
  * @since : 1.8
  */
-@Component
+@Component("grpcSyncExecutor")
 public class MockSyncExecutor implements SyncExecutor {
     private Logger logger = LoggerFactory.getLogger(MockSyncExecutor.class);
 
