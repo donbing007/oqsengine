@@ -119,11 +119,8 @@ public class OqsEntityClass implements IEntityClass {
     @Override
     public Collection<IEntityField> fields() {
         //  获取自己 + 父类的所有IEntityField
-        if (null != father) {
-            List<IEntityField> entityFields = new ArrayList<>();
-            entityFields.addAll(fields);
-            entityFields.addAll(father.fields());
-
+        List<IEntityField> entityFields = new ArrayList<>(fields);
+        if (null != relations) {
             relations.forEach(
                     r -> {
                         if (r.isSelfRelation(id)) {
@@ -131,11 +128,13 @@ public class OqsEntityClass implements IEntityClass {
                         }
                     }
             );
-
-            return entityFields;
-        } else {
-            return fields;
         }
+
+        if (null != father) {
+            entityFields.addAll(father.fields());
+        }
+
+        return entityFields;
     }
 
     @Override

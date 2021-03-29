@@ -171,7 +171,12 @@ public class EntityClassStorageBuilder {
         List<RelationInfo> relationInfos = new ArrayList<>();
         if (null != relationEntityId) {
             for (int i = 0; i < relationEntityId.size(); i++) {
-                relationInfos.add(relationInfo(id + i, relationEntityId.get(i), id, 1, id + i));
+                RelationInfo relationInfo = relationInfo(id + i, relationEntityId.get(i), id, 1, id + i);
+                relationInfos.add(relationInfo);
+
+                if (id == relationInfo.getLeftEntityClassId() && relationInfo.getBelongToOwner()) {
+                    entityFieldInfos.add(relationInfo.getEntityField());
+                }
             }
         }
 
