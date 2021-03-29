@@ -694,6 +694,15 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 .collect(toSet());
 
 
+            /**
+             * 这里在查询索引时新创建一个page的原因是在查询索引时会调用page.getNextPage()造成当前页增加.相当于如下.
+             * Page page = new Page(1,20);
+             * page.getNextPage();
+             * page.getNextPage();
+             *
+             * 第二次的调用会造成错误的读取后一页.
+             * 为了让getNextPage()方法一个Page实例只能调用一次.
+             */
             Page indexPage;
             try {
                 indexPage = page.clone();

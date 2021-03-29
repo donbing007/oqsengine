@@ -5,7 +5,7 @@ instance:
 
 grpc:
   server:
-    port: 8081
+    port: 8090
 server:
   port: 8086
 
@@ -141,9 +141,9 @@ cdc:
 meta:
   grpc:
     type: client
-    #    host: localhost
-    host: 169.254.106.127
-    port: 8082
+    host: localhost
+    #host: 169.254.106.127
+    port: 8081
     seconds:
       heartbeatTimeout: 30
       delaytaskTimeout: 30

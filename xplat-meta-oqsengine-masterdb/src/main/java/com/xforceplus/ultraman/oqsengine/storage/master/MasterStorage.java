@@ -7,7 +7,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.Storage;
-import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
 
 import java.sql.SQLException;
@@ -45,7 +44,7 @@ public interface MasterStorage extends Storage {
     Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException;
 
     /**
-     * 同时查找多个不同类型的不同实例.
+     * 同时查找多个不同类型的不同实例.返回结果不保证和ids顺序一致.
      *
      * @param ids 不同类型的不同实例的映射.
      * @param entityClass 对象元信息.
