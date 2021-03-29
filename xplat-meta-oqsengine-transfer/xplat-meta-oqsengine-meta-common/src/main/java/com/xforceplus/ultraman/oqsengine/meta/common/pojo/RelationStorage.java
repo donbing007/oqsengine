@@ -2,6 +2,8 @@ package com.xforceplus.ultraman.oqsengine.meta.common.pojo;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 
+import java.util.Objects;
+
 /**
  * desc :
  * name : RelationStorage
@@ -104,5 +106,27 @@ public class RelationStorage {
 
     public void setStrong(boolean strong) {
         this.strong = strong;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RelationStorage that = (RelationStorage) o;
+        return id == that.id &&
+                rightEntityClassId == that.rightEntityClassId &&
+                leftEntityClassId == that.leftEntityClassId &&
+                relationType == that.relationType &&
+                identity == that.identity &&
+                belongToOwner == that.belongToOwner &&
+                strong == that.strong &&
+                Objects.equals(code, that.code) &&
+                Objects.equals(leftEntityClassCode, that.leftEntityClassCode) &&
+                Objects.equals(entityField.id(), that.entityField.id());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, code, rightEntityClassId, leftEntityClassId, leftEntityClassCode, relationType, identity, entityField, belongToOwner, strong);
     }
 }
