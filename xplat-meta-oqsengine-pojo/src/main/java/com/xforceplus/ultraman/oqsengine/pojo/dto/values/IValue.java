@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.pojo.dto.values;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 
 /**
@@ -24,6 +26,8 @@ public interface IValue<T> {
      */
     public void setField(IEntityField field);
 
+    public void setValue(String value);
+
     /**
      * 根据属性名拿到值
      * @return 值.
@@ -41,6 +45,10 @@ public interface IValue<T> {
      * @return
      */
     public long valueToLong();
+
+
+
+    IValue<T> shallowClone();
 
     /**
      * 是否可能转型成字符串表示.

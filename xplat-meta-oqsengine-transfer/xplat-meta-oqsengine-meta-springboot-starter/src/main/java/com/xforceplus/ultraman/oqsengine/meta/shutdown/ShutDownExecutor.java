@@ -13,7 +13,7 @@ import javax.annotation.Resource;
  */
 public class ShutDownExecutor {
 
-    @Resource(name = "shutdown")
+    @Resource(name = "grpcShutdown")
     private IShutDown shutDown;
 
     @PreDestroy

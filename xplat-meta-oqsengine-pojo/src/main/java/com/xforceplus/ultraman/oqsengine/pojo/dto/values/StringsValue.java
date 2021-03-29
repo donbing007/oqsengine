@@ -12,8 +12,15 @@ import java.util.Objects;
  */
 public class StringsValue extends AbstractValue<String[]> {
 
-    public StringsValue(IEntityField field, String ...value) {
+    private static final String DELIMITER = ",";
+
+    public StringsValue(IEntityField field, String... value) {
         super(field, value);
+    }
+
+    @Override
+    String[] fromString(String value) {
+        return value == null ? null : value.split(DELIMITER);
     }
 
     @Override
@@ -22,8 +29,13 @@ public class StringsValue extends AbstractValue<String[]> {
     }
 
     @Override
+    public IValue<String[]> shallowClone() {
+        return new StringsValue(this.getField(), this.getValue());
+    }
+
+    @Override
     public String valueToString() {
-        return String.join(",", getValue());
+        return String.join(DELIMITER, getValue());
     }
 
     @Override
@@ -40,7 +52,7 @@ public class StringsValue extends AbstractValue<String[]> {
             return false;
         }
 
-        boolean found = false;
+        boolean found;
         for (String v : this.getValue()) {
             found = true;
             for (String tv : thatValues) {
@@ -58,6 +70,7 @@ public class StringsValue extends AbstractValue<String[]> {
         return true;
     }
 
+
     @Override
     public int hashCode() {
         return Objects.hash(getField(), getValue());
@@ -66,8 +79,8 @@ public class StringsValue extends AbstractValue<String[]> {
     @Override
     public String toString() {
         return "StringValue{" +
-            "field=" + getField() +
-            ", value=" + Arrays.toString(this.getValue()) +
-            '}';
+                "field=" + getField() +
+                ", value=" + Arrays.toString(this.getValue()) +
+                '}';
     }
 }

@@ -56,7 +56,7 @@ public class ClientConfiguration {
         return entityClassSyncClient;
     }
 
-    @Bean(name = "shutdown")
+    @Bean(name = "grpcShutdown")
     public IShutDown clientShutDown() {
         return new ClientShutDown();
     }

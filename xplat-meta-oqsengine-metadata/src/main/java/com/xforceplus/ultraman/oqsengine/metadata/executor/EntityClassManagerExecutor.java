@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.pojo.RelationStorage;
 import com.xforceplus.ultraman.oqsengine.meta.handler.IRequestHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.cache.ICacheExecutor;
+import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
@@ -24,6 +25,7 @@ import java.util.function.Supplier;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
 import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.COMMON_WAIT_TIME_OUT;
+import static com.xforceplus.ultraman.oqsengine.metadata.constant.Constant.HEALTH_CHECK_ENTITY_ID;
 
 /**
  * desc :
@@ -53,6 +55,9 @@ public class EntityClassManagerExecutor implements MetaManager {
     @Override
     public Optional<IEntityClass> load(long id) {
         try {
+            if (id == HEALTH_CHECK_ENTITY_ID) {
+                return Optional.of(HealthCheckEntityClass.getInstance());
+            }
             Map<Long, EntityClassStorage> entityClassStorageMaps = cacheExecutor.read(id);
             return Optional.of(toEntityClass(id, entityClassStorageMaps));
         } catch (Exception e) {

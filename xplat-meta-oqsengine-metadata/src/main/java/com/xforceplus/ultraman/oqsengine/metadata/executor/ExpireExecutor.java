@@ -24,6 +24,7 @@ public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCl
 
     private static DelayQueue<DelayCleanEntity> delayTasks = new DelayQueue<DelayCleanEntity>();
 
+    @Override
     public DelayCleanEntity take() {
         if (isActive) {
             try {
@@ -35,6 +36,7 @@ public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCl
         return null;
     }
 
+    @Override
     public void offer(DelayCleanEntity task) {
         if (isActive) {
             try {
@@ -82,6 +84,9 @@ public class ExpireExecutor implements IDelayTaskExecutor<ExpireExecutor.DelayCl
         }
     }
 
+    /**
+     *
+     */
     public static class Expired {
         private String appId;
         private int version;
