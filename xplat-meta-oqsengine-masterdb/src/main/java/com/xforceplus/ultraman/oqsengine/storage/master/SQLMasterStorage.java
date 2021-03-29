@@ -146,7 +146,7 @@ public class SQLMasterStorage implements MasterStorage {
             );
 
 
-            return storageEntities.parallelStream().map(se -> {
+            Map<Long, IEntity> entityMap = storageEntities.parallelStream().map(se -> {
                 Optional<IEntity> op;
                 try {
                     op = buildEntityFromStorageEntity(se, entityClass);
@@ -155,7 +155,9 @@ public class SQLMasterStorage implements MasterStorage {
                 }
 
                 return op.get();
-            }).collect(Collectors.toList());
+            }).collect(Collectors.toMap(e -> e.id(), e -> e, (e0, e1) -> e0));
+
+            return Arrays.stream(ids).mapToObj(id -> entityMap.get(id)).collect(Collectors.toList());
 
         } finally {
             Metrics.timer(MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, "initiator", "master", "action", "multiple")

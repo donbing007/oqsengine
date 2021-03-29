@@ -344,6 +344,14 @@ public class SQLMasterStorageTest {
         }
     }
 
+    @Test
+    public void testExist() throws Exception {
+        IEntity targetEntity = expectedEntitys.get(2);
+        Assert.assertTrue(storage.exist(targetEntity.id()));
+
+        Assert.assertFalse(storage.exist(-1));
+    }
+
     // 初始化数据
     private List<IEntity> initData(SQLMasterStorage storage, int size) throws Exception {
         List<IEntity> expectedEntitys = new ArrayList<>(size);

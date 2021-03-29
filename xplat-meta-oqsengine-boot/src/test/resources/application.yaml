@@ -23,11 +23,20 @@ transaction:
 threadPool:
   # 0 or not exist use cpu core + 1
   call:
-    worker: 0
-    queue: 1000
+    read:
+      worker: 0
+      queue: 1000
+    write:
+      worker: 0
+      queue: 1000
+    rebuild:
+      worker: 0
+      queue: 1000
   cdc:
-    # 0 or not exist use cpu core + 1
     worker: 0
+  event:
+    worker: 3
+    queue: 1000
 
 maxVisibleNumber: 10000
 
@@ -36,6 +45,11 @@ sync:
   allowMaxUnSyncCommitIdSize: 100
 
 storage:
+  tokenizer:
+    segmentation:
+      lexicon:
+        # 字典URL
+        url: "-"
   debug:
     showsql: true
   timeoutMs:

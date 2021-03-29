@@ -54,7 +54,7 @@ public class ExistExecutor extends AbstractMasterExecutor<Long, Boolean> {
             .append(getTableName())
             .append(" WHERE ")
             .append(FieldDefine.ID).append(" = ?")
-            .append("AND ")
+            .append(" AND ")
             .append(FieldDefine.DELETED).append(" = ?")
             .append(")")
             .append(" AS ").append(RESULT);
