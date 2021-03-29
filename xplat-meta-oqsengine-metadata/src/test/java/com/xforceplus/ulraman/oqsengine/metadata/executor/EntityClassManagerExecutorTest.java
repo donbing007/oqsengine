@@ -35,8 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ulraman.oqsengine.metadata.mock.MockRequestHandler.EXIST_MIN_VERSION;
-import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.entityClassSyncResponseGenerator;
-import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.mockSelfFatherAncestorsGenerate;
+import static com.xforceplus.ulraman.oqsengine.metadata.utils.EntityClassStorageBuilder.*;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.MIN_ID;
 
 /**
@@ -297,27 +296,29 @@ public class EntityClassManagerExecutorTest {
     }
 
     private void assertEntityField(EntityFieldInfo exp, IEntityField act) {
-        Assert.assertEquals(exp.getName(), act.name());
-        Assert.assertEquals(exp.getCname(), act.cnName());
-        Assert.assertEquals(exp.getFieldType().name(), act.type().name());
-        Assert.assertEquals(exp.getDictId(), act.dictId());
-        Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
+        if (!exp.getName().startsWith(relationEntityName)) {
+            Assert.assertEquals(exp.getName(), act.name());
+            Assert.assertEquals(exp.getCname(), act.cnName());
+            Assert.assertEquals(exp.getFieldType().name(), act.type().name());
+            Assert.assertEquals(exp.getDictId(), act.dictId());
+            Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
 
-        //  check field Config
-        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig efc = exp.getFieldConfig();
-        if (null != efc) {
-            FieldConfig afc = act.config();
-            Assert.assertNotNull(afc);
+            //  check field Config
+            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig efc = exp.getFieldConfig();
+            if (null != efc) {
+                FieldConfig afc = act.config();
+                Assert.assertNotNull(afc);
 
-            Assert.assertEquals(efc.getSearchable(), afc.isSearchable());
-            Assert.assertEquals(efc.getMax(), afc.getMax());
-            Assert.assertEquals(efc.getMin(), afc.getMin());
-            Assert.assertEquals(efc.getPrecision(), afc.precision());
-            Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
-            Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
-            Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
-            Assert.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
-            Assert.assertEquals(efc.getDisplayType(), afc.getDisplayType());
+                Assert.assertEquals(efc.getSearchable(), afc.isSearchable());
+                Assert.assertEquals(efc.getMax(), afc.getMax());
+                Assert.assertEquals(efc.getMin(), afc.getMin());
+                Assert.assertEquals(efc.getPrecision(), afc.precision());
+                Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
+                Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
+                Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
+                Assert.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
+                Assert.assertEquals(efc.getDisplayType(), afc.getDisplayType());
+            }
         }
     }
 }

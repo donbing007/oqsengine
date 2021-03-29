@@ -203,6 +203,7 @@ public class EntityClassStorageBuilder {
                 .build();
     }
 
+    public static String relationEntityName = "relation:";
     public static RelationInfo relationInfo(long id, long entityId, long ownerId, int relationType, long fieldId) {
         return RelationInfo.newBuilder()
                 .setId(id)
@@ -213,7 +214,7 @@ public class EntityClassStorageBuilder {
                 .setEntityField(EntityFieldInfo.newBuilder()
                         .setId(fieldId)
                         .setFieldType(EntityFieldInfo.FieldType.LONG)
-                        .setName(fieldId + "_name")
+                        .setName(relationEntityName + fieldId + "_name")
                         .setFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder().setSearchable(true).build())
                         .build())
                 .setBelongToOwner(id % 2 == 0)
