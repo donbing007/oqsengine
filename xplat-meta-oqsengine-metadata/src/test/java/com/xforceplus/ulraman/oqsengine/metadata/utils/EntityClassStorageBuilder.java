@@ -173,10 +173,6 @@ public class EntityClassStorageBuilder {
             for (int i = 0; i < relationEntityId.size(); i++) {
                 RelationInfo relationInfo = relationInfo(id + i, relationEntityId.get(i), id, 1, id + i);
                 relationInfos.add(relationInfo);
-
-                if (id == relationInfo.getLeftEntityClassId() && relationInfo.getBelongToOwner()) {
-                    entityFieldInfos.add(relationInfo.getEntityField());
-                }
             }
         }
 
@@ -203,7 +199,6 @@ public class EntityClassStorageBuilder {
                 .build();
     }
 
-    public static String relationEntityName = "relation:";
     public static RelationInfo relationInfo(long id, long entityId, long ownerId, int relationType, long fieldId) {
         return RelationInfo.newBuilder()
                 .setId(id)
@@ -214,7 +209,7 @@ public class EntityClassStorageBuilder {
                 .setEntityField(EntityFieldInfo.newBuilder()
                         .setId(fieldId)
                         .setFieldType(EntityFieldInfo.FieldType.LONG)
-                        .setName(relationEntityName + fieldId + "_name")
+                        .setName(fieldId + "_name")
                         .setFieldConfig(com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig.newBuilder().setSearchable(true).build())
                         .build())
                 .setBelongToOwner(id % 2 == 0)

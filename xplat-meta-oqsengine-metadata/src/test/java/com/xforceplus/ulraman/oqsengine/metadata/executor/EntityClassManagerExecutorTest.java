@@ -257,6 +257,7 @@ public class EntityClassManagerExecutorTest {
         if (null != expected.getRelationsList()) {
             Assert.assertNotNull(actual.oqsRelations());
             List<OqsRelation> actualRelations = new ArrayList<>(actual.oqsRelations());
+
             Assert.assertEquals(expected.getRelationsList().size(), actualRelations.size());
             for (int i = 0; i < expected.getRelationsList().size(); i++) {
                 RelationInfo expectedRelation = expected.getRelationsList().get(i);
@@ -278,7 +279,7 @@ public class EntityClassManagerExecutorTest {
         List<EntityFieldInfo> expectedList = fieldMaps.get(expected.getId());
         Collection<IEntityField> actualList = actual.fields();
         if (null != expectedList) {
-            Assert.assertEquals(expectedList.size(), actualList.size());
+            Assert.assertTrue(expectedList.size() <= actualList.size());
 
             Map<Long, IEntityField> entityFieldMap =
                     actual.fields().stream().collect(Collectors.toMap(IEntityField::id, f1 -> f1, (f1, f2) -> f1));
@@ -296,29 +297,27 @@ public class EntityClassManagerExecutorTest {
     }
 
     private void assertEntityField(EntityFieldInfo exp, IEntityField act) {
-        if (!exp.getName().startsWith(relationEntityName)) {
-            Assert.assertEquals(exp.getName(), act.name());
-            Assert.assertEquals(exp.getCname(), act.cnName());
-            Assert.assertEquals(exp.getFieldType().name(), act.type().name());
-            Assert.assertEquals(exp.getDictId(), act.dictId());
-            Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
+        Assert.assertEquals(exp.getName(), act.name());
+        Assert.assertEquals(exp.getCname(), act.cnName());
+        Assert.assertEquals(exp.getFieldType().name(), act.type().name());
+        Assert.assertEquals(exp.getDictId(), act.dictId());
+        Assert.assertEquals(exp.getDefaultValue(), act.defaultValue());
 
-            //  check field Config
-            com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig efc = exp.getFieldConfig();
-            if (null != efc) {
-                FieldConfig afc = act.config();
-                Assert.assertNotNull(afc);
+        //  check field Config
+        com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.FieldConfig efc = exp.getFieldConfig();
+        if (null != efc) {
+            FieldConfig afc = act.config();
+            Assert.assertNotNull(afc);
 
-                Assert.assertEquals(efc.getSearchable(), afc.isSearchable());
-                Assert.assertEquals(efc.getMax(), afc.getMax());
-                Assert.assertEquals(efc.getMin(), afc.getMin());
-                Assert.assertEquals(efc.getPrecision(), afc.precision());
-                Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
-                Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
-                Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
-                Assert.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
-                Assert.assertEquals(efc.getDisplayType(), afc.getDisplayType());
-            }
+            Assert.assertEquals(efc.getSearchable(), afc.isSearchable());
+            Assert.assertEquals(efc.getMax(), afc.getMax());
+            Assert.assertEquals(efc.getMin(), afc.getMin());
+            Assert.assertEquals(efc.getPrecision(), afc.precision());
+            Assert.assertEquals(efc.getIdentifier(), afc.isIdentifie());
+            Assert.assertEquals(efc.getIsRequired(), afc.isRequired());
+            Assert.assertEquals(efc.getMetaFieldSenseValue(), afc.getFieldSense().ordinal());
+            Assert.assertEquals(efc.getValidateRegexString(), afc.getValidateRegexString());
+            Assert.assertEquals(efc.getDisplayType(), afc.getDisplayType());
         }
     }
 }
