@@ -809,11 +809,23 @@ public class EntityServiceOqs implements EntityServicePowerApi {
     @Override
     public CompletionStage<OperationResult> prepare(EntityUp entityUp, Metadata metadata) {
         return asyncRead(() -> {
-            return OperationResult
-                    .newBuilder()
-                    .setCode(OperationResult.Code.UNRECOGNIZED)
-                    .setMessage("Not Implemented")
-                    .build();
+
+            Optional<String> appId = metadata.getText("appid");
+            Optional<String> env = metadata.getText("env");
+            if(appId.isPresent() && env.isPresent()){
+                int need = metaManager.need(appId.get(), env.get());
+                return OperationResult
+                        .newBuilder()
+                        .setCode(OperationResult.Code.OK)
+                        .setMessage("OK:" + need)
+                        .build();
+            } else {
+                return OperationResult
+                        .newBuilder()
+                        .setCode(OperationResult.Code.FAILED)
+                        .setMessage("FAILED: not registered")
+                        .build();
+            }
         });
     }
 
