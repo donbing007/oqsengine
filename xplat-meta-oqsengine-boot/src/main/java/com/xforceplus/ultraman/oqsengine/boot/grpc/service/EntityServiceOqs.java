@@ -812,7 +812,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             Optional<String> appId = metadata.getText("appid");
             Optional<String> env = metadata.getText("env");
-            if(appId.isPresent() && env.isPresent()){
+            if (appId.isPresent() && env.isPresent()) {
                 int need = metaManager.need(appId.get(), env.get());
                 return OperationResult
                         .newBuilder()
