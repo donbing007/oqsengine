@@ -50,13 +50,19 @@ public class JcsegTokenizer implements Tokenizer {
     private final void init() throws IOException {
         config = new SegmenterConfig(true);
         dic = DictionaryFactory.createDefaultDictionary(config, false);
+
+        /**
+         * 没有使用自带的
+         * dic.loadClassPath()
+         * 原因是其没法正确处理jar路径中的字典文件.
+         */
         initFromDict();
     }
 
     private void initFromDict() throws IOException {
         ClassLoader cl = this.getClass().getClassLoader();
         ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(cl);
-        Resource[] resources = new Resource[0];
+        Resource[] resources;
         resources = resolver.getResources("classpath*:/lexicon/*.lex");
         for (Resource resource : resources) {
             dic.load(resource.getInputStream());
