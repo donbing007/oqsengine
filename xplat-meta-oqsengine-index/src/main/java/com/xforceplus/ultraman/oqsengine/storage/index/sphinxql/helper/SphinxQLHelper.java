@@ -17,11 +17,17 @@ import java.util.Iterator;
  */
 public class SphinxQLHelper {
 
-    private static final int[] IGNORE_SYMBOLS = {
+    /**
+     * 半角空格不可过滤,只有全角空格需要过滤.
+     */
+    protected static final int[] IGNORE_SYMBOLS = {
         '\'', '\\', '\"', '\n', '\r', '\0', '+', '-', '#', '%', '.', '~', '_', '±', '×', '÷', '=', '≠', '≡', '≌', '≈',
         '<', '>', '≮', '≯', '≤', '≥', '‰', '∞', '∝', '√', '∵', '∴', '∷', '∠', '⌒', '⊙', '○', 'π', '△', '⊥', '∪', '∩',
         '∫', '∑', '°', '′', '″', '℃', '{', '}', '(', ')', '[', ']', '|', '‖', '*', '/', ':', ';', '?', '!', '&', '～',
         '§', '→', '^', '$', '@', '`', '❤', '❥', '︼', '﹄', '﹂', 'ˉ', '︾', '︺', '﹀', '︸', '︶', '︻', '﹃', '﹁',
+        // 全角
+        '！', '＂', '＃', '＄', '％', '＆', '＇', '（', '）', '＊', '＋', '－', '．', '／', '：', '；', '＜', '＝', '＞', '？',
+        '＠', '［', '＼', '］', '＾', '＿', '｀', '｛', '｜', '｝', '～', '　',
     };
 
     static {
@@ -29,12 +35,12 @@ public class SphinxQLHelper {
     }
 
     /**
-     * 编码处理全文搜索字符.
+     * 过滤所有不合式的符号.
      *
      * @param value 目标字串.
      * @return 结果.
      */
-    public static String encodeFullSearchCharset(String value) {
+    public static String filterSymbols(String value) {
         if (value == null || value.isEmpty()) {
             return value;
         }
@@ -50,6 +56,7 @@ public class SphinxQLHelper {
 
     /**
      * JSON储存字符编码处理.
+     *
      * @param value 目标字符.
      * @return 处理结果.
      */
@@ -79,7 +86,7 @@ public class SphinxQLHelper {
         ShortStorageName shortStorageName = value.shortStorageName();
 
         buff.append(shortStorageName.getPrefix())
-            .append(encodeFullSearchCharset(value.value().toString()));
+            .append(filterSymbols(value.value().toString()));
         if (useGroupName) {
             buff.append(shortStorageName.getNoLocationSuffix()).append("*");
         } else {
@@ -94,14 +101,14 @@ public class SphinxQLHelper {
      * 只能处理StorageValue.STRING类型.
      *
      * @param tokenizer 分词器.
-     * @see StorageType
      * @return 查询语法.
+     * @see StorageType
      */
     public static String buildSegmentationQuery(StorageValue value, Tokenizer tokenizer) {
         StringBuilder buff = new StringBuilder();
         ShortStorageName shortStorageName = value.shortStorageName();
 
-        String strValue = encodeFullSearchCharset(value.value().toString());
+        String strValue = filterSymbols(value.value().toString());
         Iterator<String> words = tokenizer.tokenize(strValue);
         buff.append('(');
         int emptyLen = buff.length();

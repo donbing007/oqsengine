@@ -138,6 +138,7 @@ public abstract class DevOpsAbstractContainer {
         ReflectionTestUtils.setField(masterStorage, "storageStrategyFactory", masterStorageStrategyFactory);
         ReflectionTestUtils.setField(masterStorage, "conditionsBuilderFactory", sqlJsonConditionsBuilderFactory);
         masterStorage.setTableName(tableName);
+        masterStorage.setQueryTimeout(30000);
         masterStorage.init();
     }
 

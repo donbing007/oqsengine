@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.enums.BatchStatus;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.exception.DevopsTaskExistException;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.AnyDevOpsTaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.DefaultDevOpsTaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.model.DevOpsTaskInfo;
@@ -140,7 +141,7 @@ public class DevOpsRebuildIndexExecutor implements RebuildIndexExecutor {
             logger.warn("task {} has been recovered or finished, resumeIndex will be ignore...", taskId);
         }
 
-        throw new SQLException("task not exists or not suitable to resume.");
+        return new AnyDevOpsTaskHandler();
     }
 
     private boolean canResumeIndex(int status) {
