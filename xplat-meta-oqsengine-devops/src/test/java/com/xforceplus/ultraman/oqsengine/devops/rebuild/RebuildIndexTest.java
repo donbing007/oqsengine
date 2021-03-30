@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.devops.rebuild;
 
 import com.xforceplus.ultraman.oqsengine.devops.DevOpsAbstractContainer;
 import com.xforceplus.ultraman.oqsengine.devops.EntityGenerateTooBar;
+import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.DefaultDevOpsTaskHandler;
 import com.xforceplus.ultraman.oqsengine.devops.rebuild.handler.TaskHandler;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
@@ -169,7 +170,9 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
 
             taskHandler = taskExecutor.resumeIndex(preparePauseResumeEntityClass, taskHandler.devOpsTaskInfo().id(), 0);
 
-            Assert.assertNotNull(taskHandler.devOpsTaskInfo());
+            if (taskHandler instanceof DefaultDevOpsTaskHandler) {
+                Assert.assertNotNull(taskHandler.devOpsTaskInfo());
+            }
         }
     }
 
