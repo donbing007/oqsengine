@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.grpc.utils;
 
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -308,7 +309,7 @@ public class ConditionHelper {
         return conditions;
     }
 
-    public static Optional<Conditions> toConditions(IEntityClass mainClass, ConditionsUp conditionsUp, List<Long> ids) {
+    public static Optional<Conditions> toConditions(IEntityClass mainClass, ConditionsUp conditionsUp, List<Long> ids, MetaManager manager) {
 
         Optional<Conditions> conditions = conditionsUp.getFieldsList().stream().map(x -> {
             /**
@@ -316,6 +317,10 @@ public class ConditionHelper {
              */
             long fieldId = x.getField().getId();
             Optional<IEntityField> fieldOp = findFieldById(mainClass, fieldId);
+
+            if(!fieldOp.isPresent() && x.getRelationId() > 0){
+                fieldOp = manager.load(x.getRelationId()).flatMap(related -> findFieldById(related, fieldId));
+            }
 
             return toOneConditions(fieldOp, x, mainClass);
         }).reduce((a, b) -> a.addAnd(b, true));
