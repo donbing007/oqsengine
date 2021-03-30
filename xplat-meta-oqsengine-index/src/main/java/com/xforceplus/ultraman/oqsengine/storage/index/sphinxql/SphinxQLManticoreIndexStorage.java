@@ -43,6 +43,7 @@ import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -165,13 +166,14 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
 
         Collection<OriginalEntitySection> sections = split(originalEntities);
 
-        final long retryDurationMs = 3000;
         /**
-         * 交由线程池并行执行.
+         * 失败重试间隔毫秒.
          */
+        final long retryDurationMs = 3000;
+
         CountDownLatch latch = new CountDownLatch(sections.size());
         for (OriginalEntitySection section : sections) {
-            threadPool.submit(new HandlerTask(section, latch, retryDurationMs));
+            threadPool.submit(new HandlerTask(section, latch, retryDurationMs, false));
         }
 
         try {
@@ -192,41 +194,48 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
     /**
      * 实际的执行任务.
      */
-    private class HandlerTask implements Runnable {
+    private class HandlerTask implements Callable<Boolean> {
 
         private OriginalEntitySection section;
         private CountDownLatch latch;
         private long retryDurationMs;
+        private boolean stopWhenFail;
 
-        public HandlerTask(OriginalEntitySection section, CountDownLatch latch, long retryDurationMs) {
+        public HandlerTask(OriginalEntitySection section, CountDownLatch latch, long retryDurationMs, boolean stopWhenFail) {
             this.section = section;
             this.latch = latch;
             this.retryDurationMs = retryDurationMs;
+            this.stopWhenFail = stopWhenFail;
         }
 
-        /**
-         * 无限次数的重试.
-         */
         @Override
-        public void run() {
+        public Boolean call() throws Exception {
             boolean exit = false;
+            boolean error = false;
             try {
                 while (!exit) {
                     try {
                         doSave();
                         exit = true;
+                        error = false;
                     } catch (Exception ex) {
                         logger.error(ex.getMessage(), ex);
                         logger.error("Batch write error, wait {} milliseconds to try again.", retryDurationMs);
-                        exit = false;
+                        if (stopWhenFail) {
+                            exit = true;
+                        } else {
+                            exit = false;
+                        }
+                        error = true;
 
                         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(retryDurationMs));
-
                     }
                 }
             } finally {
                 latch.countDown();
             }
+
+            return error;
         }
 
         private int doSave() throws SQLException {
@@ -329,7 +338,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
             StorageValue anyStorageValue = AnyStorageValue.getInstance(attr.getKey());
 
             IEntityClass entityClass = originalEntity.getEntityClass();
-            if (!needField(entityClass, anyStorageValue)) {
+            if (!needField(entityClass, anyStorageValue, true)) {
                 continue;
             }
 
@@ -379,7 +388,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 }
             }
 
-            if (!needField(entityClass, anyStorageValue)) {
+            if (!needField(entityClass, anyStorageValue, false)) {
                 continue;
             }
 
@@ -561,12 +570,16 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
         }
     }
 
-    // 判断字段是否是需要的,存在定义并且可搜索.
-    private boolean needField(IEntityClass entityClass, StorageValue storageValue) {
+    /**
+     * 需要的判断依据如下.
+     * 1. 可搜索字段.
+     * 2. 字段存在.
+     */
+    private boolean needField(IEntityClass entityClass, StorageValue storageValue, boolean attr) {
         Optional<IEntityField> fieldOp = entityClass.field(Long.parseLong(storageValue.logicName()));
         boolean result;
         if (!fieldOp.isPresent()) {
-            result = false;
+            return false;
         } else {
             IEntityField field = fieldOp.get();
             result = field.config().isSearchable();
@@ -575,6 +588,21 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                 if (!result) {
                     logger.debug("Field {} is filtered out because it is not searchable or does not exist.",
                         fieldOp.get().name());
+                }
+            }
+
+            // 通用检查表示需要.
+            if (result) {
+                if (attr) {
+                    /**
+                     * 检查是否需要出现在属性中.检查如下.
+                     * 1. 是否可排序.
+                     */
+                    result = storageStrategyFactory.getStrategy(field.type()).isSortable();
+
+                } else {
+                    // 检查是否需要出现在全文属性中.
+                    result = true;
                 }
             }
         }

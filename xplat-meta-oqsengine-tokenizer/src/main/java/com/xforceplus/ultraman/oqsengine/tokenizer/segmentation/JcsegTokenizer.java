@@ -8,6 +8,9 @@ import org.lionsoul.jcseg.IWord;
 import org.lionsoul.jcseg.dic.ADictionary;
 import org.lionsoul.jcseg.dic.DictionaryFactory;
 import org.lionsoul.jcseg.segmenter.SegmenterConfig;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,8 +50,17 @@ public class JcsegTokenizer implements Tokenizer {
     private final void init() throws IOException {
         config = new SegmenterConfig(true);
         dic = DictionaryFactory.createDefaultDictionary(config, false);
+        initFromDict();
+    }
 
-        dic.loadClassPath();
+    private void initFromDict() throws IOException {
+        ClassLoader cl = this.getClass().getClassLoader();
+        ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(cl);
+        Resource[] resources = new Resource[0];
+        resources = resolver.getResources("classpath*:/lexicon/*.lex");
+        for (Resource resource : resources) {
+            dic.load(resource.getInputStream());
+        }
     }
 
     @Override
