@@ -279,7 +279,7 @@ public class EntityClassManagerExecutorTest {
         List<EntityFieldInfo> expectedList = fieldMaps.get(expected.getId());
         Collection<IEntityField> actualList = actual.fields();
         if (null != expectedList) {
-            Assert.assertTrue(expectedList.size() <= actualList.size());
+            Assert.assertEquals(expectedList.size(), actualList.size());
 
             Map<Long, IEntityField> entityFieldMap =
                     actual.fields().stream().collect(Collectors.toMap(IEntityField::id, f1 -> f1, (f1, f2) -> f1));
