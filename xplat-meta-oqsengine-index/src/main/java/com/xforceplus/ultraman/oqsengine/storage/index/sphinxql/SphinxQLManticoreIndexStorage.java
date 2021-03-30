@@ -426,7 +426,7 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
          * fuzzyType只有字符串才会处理.
          */
         if (StorageType.STRING == storageType) {
-            String strValue = SphinxQLHelper.encodeFullSearchCharset(value.toString());
+            String strValue = SphinxQLHelper.filterSymbols(value.toString());
 
             if (FieldConfig.FuzzyType.SEGMENTATION == field.config().getFuzzyType()
                 || FieldConfig.FuzzyType.WILDCARD == field.config().getFuzzyType()) {

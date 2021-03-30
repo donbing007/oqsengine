@@ -21,13 +21,6 @@ import java.util.Arrays;
  */
 public class SphinxQLHelperTest {
 
-    private static final int[] IGNORE_SYMBOLS = {
-        '\'', '\"', '\n', '\r', '\0', '\\', '+', '-', '#', '%', '.', '~', '_', '±', '×', '÷', '=', '≠', '≡', '≌', '≈',
-        '<', '>', '≮', '≯', '≤', '≥', '‰', '∞', '∝', '√', '∵', '∴', '∷', '∠', '⌒', '⊙', '○', 'π', '△', '⊥', '∪', '∩',
-        '∫', '∑', '°', '′', '″', '℃', '{', '}', '(', ')', '[', ']', '|', '‖', '*', '/', ':', ';', '?', '!', '&', '～',
-        '§', '→', '^', '$', '@', '`', '❤', '❥', '︼', '﹄', '﹂', 'ˉ', '︾', '︺', '﹀', '︸', '︶', '︻', '﹃', '﹁',
-    };
-
     @Before
     public void before() throws Exception {
     }
@@ -37,27 +30,27 @@ public class SphinxQLHelperTest {
     }
 
     @Test
-    public void testEncodeFullSearchCharset() throws Exception {
+    public void testFilterSymbols() throws Exception {
         StringBuilder buff = new StringBuilder();
-        Arrays.stream(IGNORE_SYMBOLS).forEach(c -> {
+        Arrays.stream(SphinxQLHelper.IGNORE_SYMBOLS).forEach(c -> {
             buff.append((char) c);
         });
         buff.insert(0, "before");
         buff.append("after");
 
-        Assert.assertEquals("beforeafter", SphinxQLHelper.encodeFullSearchCharset(buff.toString()));
+        Assert.assertEquals("beforeafter", SphinxQLHelper.filterSymbols(buff.toString()));
     }
 
     @Test
     public void testEncodeJsonCharset() throws Exception {
         StringBuilder buff = new StringBuilder();
-        Arrays.stream(IGNORE_SYMBOLS).forEach(c -> {
+        Arrays.stream(SphinxQLHelper.IGNORE_SYMBOLS).forEach(c -> {
             buff.append((char) c);
         });
         String value = buff.toString();
 
         buff.delete(0, buff.length());
-        Arrays.stream(IGNORE_SYMBOLS).forEach(c -> {
+        Arrays.stream(SphinxQLHelper.IGNORE_SYMBOLS).forEach(c -> {
             if ('\'' == c) {
                 buff.append('\\');
             }
