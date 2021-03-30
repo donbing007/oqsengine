@@ -43,7 +43,7 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.Constant
 public class RebuildIndexTest extends DevOpsAbstractContainer {
 
     private int totalSize = 1024;
-    private int testResumeCount = 15000;
+    private int testResumeCount = 20000;
     private int defaultSleepInterval = 3_000;
     private int maxSleepWaitLoops = 100;
     long txId = 0;
@@ -152,7 +152,7 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
             if (taskHandler.getProgressPercentage() == ONE_HUNDRED_PERCENT) {
                 break;
             }
-            Thread.sleep(10 * 1000);
+            Thread.sleep(5 * 1000);
             cancelResumeByCondition(taskHandler.id());
             wakeUp += sleepForWaitStatusOk(wakeUp, "resumeTest");
         }
@@ -166,7 +166,7 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
         if (task.isPresent()) {
             TaskHandler taskHandler = task.get();
             taskHandler.cancel();
-            Thread.sleep(10 * 1000);
+            Thread.sleep(5 * 1000);
 
             taskHandler = taskExecutor.resumeIndex(preparePauseResumeEntityClass, taskHandler.devOpsTaskInfo().id(), 0);
 
