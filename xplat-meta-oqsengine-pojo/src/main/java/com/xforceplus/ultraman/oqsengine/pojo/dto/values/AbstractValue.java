@@ -37,7 +37,7 @@ public abstract class AbstractValue<V> implements IValue<V>, Serializable {
     }
 
     @Override
-    public void setValue(String value) {
+    public void setStringValue(String value) {
         this.value = fromString(value);
     }
 

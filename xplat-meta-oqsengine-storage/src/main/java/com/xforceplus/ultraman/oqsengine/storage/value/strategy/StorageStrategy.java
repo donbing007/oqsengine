@@ -74,5 +74,13 @@ public interface StorageStrategy {
      */
     boolean isMultipleStorageValue();
 
+    /**
+     * 表示是否可排序.
+     *
+     * @return true 可排序,false不可排序.
+     */
+    default boolean isSortable() {
+        return true;
+    }
 
 }

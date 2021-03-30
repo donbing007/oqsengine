@@ -8,7 +8,6 @@ import com.xforceplus.ultraman.oqsengine.changelog.event.*;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldLikeRelationType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
@@ -429,7 +428,7 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
                 //has old value
                 //TODO copy value
                 IValue iValue = value.get().shallowClone();
-                iValue.setValue(x.getRawValue());
+                iValue.setStringValue(x.getRawValue());
                 entityValue.addValue(iValue);
             } else {
                 Optional<IEntityField> field = entityClass.field(x.getFieldId());

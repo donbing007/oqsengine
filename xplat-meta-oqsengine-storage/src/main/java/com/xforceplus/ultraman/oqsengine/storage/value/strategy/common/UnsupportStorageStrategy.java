@@ -37,6 +37,11 @@ public class UnsupportStorageStrategy implements StorageStrategy {
 
     @Override
     public boolean isMultipleStorageValue() {
-        return false;
+        throw new UnsupportedOperationException("Unknown logical attribute that cannot be handled.");
+    }
+
+    @Override
+    public boolean isSortable() {
+        throw new UnsupportedOperationException("Unknown logical attribute that cannot be handled.");
     }
 }
