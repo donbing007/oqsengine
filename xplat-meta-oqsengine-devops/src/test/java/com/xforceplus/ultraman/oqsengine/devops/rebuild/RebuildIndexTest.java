@@ -42,7 +42,7 @@ import static com.xforceplus.ultraman.oqsengine.devops.rebuild.constant.Constant
 public class RebuildIndexTest extends DevOpsAbstractContainer {
 
     private int totalSize = 1024;
-    private int testResumeCount = 50000;
+    private int testResumeCount = 15000;
     private int defaultSleepInterval = 3_000;
     private int maxSleepWaitLoops = 100;
     long txId = 0;
