@@ -71,4 +71,9 @@ public class StringsStorageStrategy implements StorageStrategy {
     public boolean isMultipleStorageValue() {
         return true;
     }
+
+    @Override
+    public boolean isSortable() {
+        return false;
+    }
 }
