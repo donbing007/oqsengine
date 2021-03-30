@@ -166,7 +166,7 @@ public class RebuildIndexTest extends DevOpsAbstractContainer {
         if (task.isPresent()) {
             TaskHandler taskHandler = task.get();
             taskHandler.cancel();
-            Thread.sleep(5 * 1000);
+            Thread.sleep(2 * 1000);
 
             taskHandler = taskExecutor.resumeIndex(preparePauseResumeEntityClass, taskHandler.devOpsTaskInfo().id(), 0);
 
