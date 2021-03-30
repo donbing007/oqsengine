@@ -137,8 +137,6 @@ public class EntityClassStorageBuilder {
      */
     public static EntityClassSyncResponse entityClassSyncResponseGenerator(String appId, int version,
                                         List<EntityClassStorageBuilder.ExpectedEntityStorage> expectedEntityStorages) {
-
-
         return EntityClassSyncResponse.newBuilder()
                 .setAppId(appId)
                 .setVersion(version + 1)
@@ -150,30 +148,13 @@ public class EntityClassStorageBuilder {
         /**
          * 生成爷爷
          */
-        List<EntityClassInfo.Builder> builders = new ArrayList<>();
+        List<EntityClassInfo> entityClassInfos = new ArrayList<>();
         expectedEntityStorages.forEach(
                 e -> {
-                    builders.add(entityClassInfo(e.getSelf(), e.getFather(), e.getRelationIds(),
+                    entityClassInfos.add(entityClassInfo(e.getSelf(), e.getFather(), e.getRelationIds(),
                             null != e.getAncestors() ? e.getAncestors().size() : 0));
                 }
         );
-
-        //  将relation中的EntityField加入到Fields中
-        builders.forEach(
-                e -> {
-                    List<EntityFieldInfo> entityFieldInfos = new ArrayList<>();
-
-                    entityFieldInfos.add(entityFieldInfo(e.getId(), EntityFieldInfo.FieldType.LONG));
-                    entityFieldInfos.add(entityFieldInfo(e.getId() + 1, EntityFieldInfo.FieldType.STRING));
-
-                    relationToFields(e.getId(), entityFieldInfos, builders);
-
-                    e.addAllEntityFields(entityFieldInfos);
-                }
-        );
-
-        List<EntityClassInfo> entityClassInfos =
-                builders.stream().map(EntityClassInfo.Builder::build).collect(Collectors.toList());
 
         return EntityClassSyncRspProto.newBuilder()
                 .addAllEntityClasses(entityClassInfos)
@@ -197,8 +178,13 @@ public class EntityClassStorageBuilder {
         }
     }
 
-    public static EntityClassInfo.Builder entityClassInfo(long id, long father, List<Long> relationEntityIds, int level) {
+    public static EntityClassInfo entityClassInfo(long id, long father, List<Long> relationEntityIds, int level) {
         List<RelationInfo> relationInfos = new ArrayList<>();
+        List<EntityFieldInfo> entityFieldInfos = new ArrayList<>();
+
+        entityFieldInfos.add(entityFieldInfo(id, EntityFieldInfo.FieldType.LONG));
+        entityFieldInfos.add(entityFieldInfo(id + 1, EntityFieldInfo.FieldType.STRING));
+
         if (null != relationEntityIds) {
             for (int i = 0; i < relationEntityIds.size(); i++) {
                 RelationInfo relationInfo = relationInfo(id + i, relationEntityIds.get(i), id, 1, id + i);
@@ -213,7 +199,9 @@ public class EntityClassStorageBuilder {
                 .setName(id + "_level" + level + "_name")
                 .setFather(father)
                 .setLevel(level)
-                .addAllRelations(relationInfos);
+                .addAllEntityFields(entityFieldInfos)
+                .addAllRelations(relationInfos)
+                .build();
     }
 
     public static EntityFieldInfo entityFieldInfo(long id, EntityFieldInfo.FieldType fieldType) {
