@@ -111,6 +111,7 @@ public class EntityClassHelper {
         builder.addAllValues(entity.entityValue().values().stream()
                 .map(EntityClassHelper::toValueUp)
                 .collect(Collectors.toList()));
+        builder.setId(entity.entityClassRef().getId());
         return builder.build();
     }
 
