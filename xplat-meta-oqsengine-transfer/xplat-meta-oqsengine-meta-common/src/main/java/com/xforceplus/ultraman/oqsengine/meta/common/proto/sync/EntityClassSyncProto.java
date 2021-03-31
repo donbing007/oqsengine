@@ -64,8 +64,8 @@ public final class EntityClassSyncProto {
       "e\030\006 \001(\010\"\272\001\n\027EntityClassSyncResponse\022\r\n\005a" +
       "ppId\030\001 \001(\t\022\017\n\007version\030\002 \001(\005\022\013\n\003uid\030\003 \001(\t" +
       "\022\016\n\006status\030\004 \001(\005\022\013\n\003env\030\005 \001(\t\022\013\n\003md5\030\006 \001" +
-      "(\t\022\r\n\005force\030\007 \001(\010\0229\n\027entityClassSyncRspP" +
-      "roto\030\010 \001(\0132\030.EntityClassSyncRspProto\"B\n\027" +
+      "(\t\0229\n\027entityClassSyncRspProto\030\007 \001(\0132\030.En" +
+      "tityClassSyncRspProto\022\r\n\005force\030\010 \001(\010\"B\n\027" +
       "EntityClassSyncRspProto\022\'\n\rentityClasses" +
       "\030\001 \003(\0132\020.EntityClassInfo\"\263\001\n\017EntityClass" +
       "Info\022\014\n\004code\030\001 \001(\t\022\n\n\002id\030\002 \001(\003\022\014\n\004name\030\003" +
@@ -128,7 +128,7 @@ public final class EntityClassSyncProto {
     internal_static_EntityClassSyncResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_EntityClassSyncResponse_descriptor,
-        new java.lang.String[] { "AppId", "Version", "Uid", "Status", "Env", "Md5", "Force", "EntityClassSyncRspProto", });
+        new java.lang.String[] { "AppId", "Version", "Uid", "Status", "Env", "Md5", "EntityClassSyncRspProto", "Force", });
     internal_static_EntityClassSyncRspProto_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_EntityClassSyncRspProto_fieldAccessorTable = new
