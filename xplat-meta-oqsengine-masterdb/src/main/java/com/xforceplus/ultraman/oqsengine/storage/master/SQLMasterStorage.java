@@ -5,12 +5,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xforceplus.ultraman.oqsengine.common.iterator.DataIterator;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
@@ -18,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.executor.*;
 import com.xforceplus.ultraman.oqsengine.storage.master.pojo.MasterStorageEntity;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.commit.CommitHelper;
@@ -59,6 +60,9 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Resource(name = "masterConditionsBuilderFactory")
     private SQLJsonConditionsBuilderFactory conditionsBuilderFactory;
+
+    @Resource
+    private MetaManager metaManager;
 
     private String tableName;
 
@@ -396,21 +400,36 @@ public class SQLMasterStorage implements MasterStorage {
         long dataEntityClassId = dataEntityClassIds[level];
         if (entityClass.id() != dataEntityClassId) {
             throw new SQLException(
-                String.format(
-                    "The incorrect Entity type is expected to be %d, but the actual data type is %d."
-                    , entityClass.id(), dataEntityClassId));
+                    String.format(
+                            "The incorrect Entity type is expected to be %d, but the actual data type is %d."
+                            , entityClass.id(), dataEntityClassId));
         }
 
+        /**
+         * 实际的类型
+         */
+        long actualEntityClassId = 0;
+        for (int i = dataEntityClassIds.length - 1; i >= 0; i--) {
+            if (dataEntityClassIds[i] > 0) {
+                actualEntityClassId = dataEntityClassIds[i];
+                break;
+            }
+        }
+
+        Optional<IEntityClass> actualEntityClassOp = metaManager.load(actualEntityClassId);
+        if (!actualEntityClassOp.isPresent()) {
+            throw new SQLException(
+                    String.format("Unable to find the expected EntityClass.[%d]", actualEntityClassId));
+        }
+        IEntityClass actualEntityClass = actualEntityClassOp.get();
+
         Entity.Builder entityBuilder = Entity.Builder.anEntity()
-            .withId(se.getId())
-            .withTime(se.getUpdateTime())
-            .withEntityClassRef(
-                EntityClassRef.Builder.anEntityClassRef()
-                    .withEntityClassId(entityClass.id())
-                    .withEntityClassCode(entityClass.code()).build())
-            .withVersion(se.getVersion())
-            .withEntityValue(toEntityValue(se, entityClass))
-            .withMajor(se.getOqsMajor());
+                .withId(se.getId())
+                .withTime(se.getUpdateTime())
+                .withEntityClassRef(actualEntityClass.ref())
+                .withVersion(se.getVersion())
+                .withEntityValue(toEntityValue(se, entityClass))
+                .withMajor(se.getOqsMajor());
 
         return Optional.of(entityBuilder.build());
     }

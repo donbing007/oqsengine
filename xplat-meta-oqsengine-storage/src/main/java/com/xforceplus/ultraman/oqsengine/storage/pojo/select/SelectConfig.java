@@ -1,5 +1,6 @@
-package com.xforceplus.ultraman.oqsengine.pojo.dto.select;
+package com.xforceplus.ultraman.oqsengine.storage.pojo.select;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.facet.Facet;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 
@@ -22,23 +23,9 @@ public class SelectConfig implements Serializable {
     private Sort sort;
     private Page page;
     private Set<Long> excludedIds;
+    private Facet facet;
 
     public SelectConfig() {
-        if (commitId < 0) {
-            commitId = 0;
-        }
-
-        if (sort == null) {
-            sort = Sort.buildOutOfSort();
-        }
-
-        if (excludedIds == null) {
-            excludedIds = Collections.emptySet();
-        }
-
-        if (page == null) {
-            page = Page.emptyPage();
-        }
     }
 
     public long getCommitId() {
@@ -57,36 +44,40 @@ public class SelectConfig implements Serializable {
         return excludedIds;
     }
 
+    public Facet getFacet() {
+        return facet;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof SelectConfig)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         SelectConfig that = (SelectConfig) o;
-
-        boolean result = getCommitId() == that.getCommitId() &&
-            Objects.equals(getSort(), that.getSort()) &&
-            Objects.equals(getPage(), that.getPage()) &&
-            Objects.equals(getExcludedIds(), that.getExcludedIds());
-        return result;
+        return commitId == that.commitId
+                && Objects.equals(sort, that.sort)
+                && Objects.equals(page, that.page)
+                && Objects.equals(excludedIds, that.excludedIds)
+                && Objects.equals(facet, that.facet);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getCommitId(), getSort(), getPage(), getExcludedIds());
+        return Objects.hash(commitId, sort, page, excludedIds, facet);
     }
 
     /**
      * builder
      */
     public static final class Builder {
-        private long commitId;
-        private Sort sort;
-        private Page page;
-        private Set<Long> excludedIds;
+        private long commitId = 0;
+        private Sort sort = Sort.buildOutOfSort();
+        private Page page = Page.emptyPage();
+        private Set<Long> excludedIds = Collections.emptySet();
+        private Facet facet = Facet.build();
 
         private Builder() {
         }
@@ -107,6 +98,11 @@ public class SelectConfig implements Serializable {
 
         public Builder withPage(Page page) {
             this.page = page;
+            return this;
+        }
+
+        public Builder withFacet(Facet facet) {
+            this.facet = facet;
             return this;
         }
 
@@ -134,6 +130,7 @@ public class SelectConfig implements Serializable {
             selectConfig.commitId = this.commitId;
             selectConfig.page = this.page;
             selectConfig.excludedIds = this.excludedIds;
+            selectConfig.facet = this.facet;
             return selectConfig;
         }
     }
