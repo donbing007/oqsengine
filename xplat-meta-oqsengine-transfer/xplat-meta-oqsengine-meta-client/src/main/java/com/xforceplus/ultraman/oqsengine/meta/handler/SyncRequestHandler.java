@@ -98,72 +98,69 @@ public class SyncRequestHandler implements IRequestHandler {
     }
 
     @Override
-    public boolean register(WatchElement watchElement) {
-        return register(Collections.singletonList(watchElement));
-    }
-
-    @Override
-    public synchronized boolean register(List<WatchElement> appIdEntries) {
+    public synchronized boolean register(WatchElement watchElement) {
         RequestWatcher watcher = requestWatchExecutor.watcher();
         /**
          * 这里只判断是否watcher为空，如果服务watcher不为空
          */
 
         if (null == watcher) {
-            logger.warn("current gRpc-client is not init, can't offer appIds:{}."
-                    , appIdEntries.stream().map(WatchElement::getAppId).collect(Collectors.toList()));
-            forgotQueue.addAll(appIdEntries);
+            logger.warn("current gRpc-client is not init, can't offer appIds:{}.", watchElement);
+            forgotQueue.add(watchElement);
 
             return false;
         }
 
         AtomicBoolean ret = new AtomicBoolean(true);
-        appIdEntries.stream()
-                .filter(s -> {
-                    if (watcher.watches().containsKey(s.getAppId())) {
-                        logger.info("appId : {} is already in watchList, will ignore...", s.getAppId());
-                        return false;
-                    } else {
-                        logger.info("add appId : {} in watchList", s.getAppId());
-                        return true;
-                    }
-                })
-                .forEach(
-                        v -> {
-                            /**
-                             * 当前requestWatch不可用或发生UID切换时,先加入forgot列表
-                             */
-                            if (!requestWatchExecutor.isAlive(watcher.uid())) {
-                                forgotQueue.add(v);
-                                ret.set(false);
-                            } else {
-                                EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
 
-                                EntityClassSyncRequest entityClassSyncRequest =
-                                        builder.setUid(watcher.uid())
-                                                .setAppId(v.getAppId())
-                                                .setEnv(v.getEnv())
-                                                .setVersion(v.getVersion())
-                                                .setStatus(RequestStatus.REGISTER.ordinal()).build();
+        WatchElement w = watcher.watches().get(watchElement.getAppId());
+        if (null != w) {
+            if (!w.getEnv().equals(watchElement.getEnv())) {
+                logger.warn("can't register same appId [{}] with another env [{}], env [{}] already registered."
+                        , w.getAppId(), watchElement.getEnv(), w.getEnv());
+            }
 
-                                requestWatchExecutor.add(v);
+            if (watchElement.getVersion() == NOT_EXIST_VERSION) {
+                return sendRegister(watcher.uid(), true, w);
+            }
 
-                                try {
-                                    sendRequestWithALiveCheck(requestWatchExecutor.watcher(), entityClassSyncRequest);
-
-                                    logger.info("register success uid [{}], appId [{}], env [{}], version [{}]."
-                                            , watcher.uid(), v.getAppId(), v.getEnv(), v.getVersion());
-                                } catch (Exception e) {
-                                    v.setStatus(Init);
-                                    ret.set(false);
-                                }
-                            }
-                        }
-                );
-
-        logger.info("current watchList status : {}", watcher.watches().toString());
+            logger.info("current watchList has this watchElement, appId [{}], ignore register...", watchElement.getAppId());
+            return true;
+        } else {
+            if (!requestWatchExecutor.isAlive(watcher.uid())) {
+                forgotQueue.add(watchElement);
+            } else {
+                return sendRegister(watcher.uid(), false, watchElement);
+            }
+        }
 
         return ret.get();
+    }
+
+    private boolean sendRegister(String uid, boolean force, WatchElement v) {
+        EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
+
+        EntityClassSyncRequest entityClassSyncRequest =
+                builder.setUid(uid)
+                        .setAppId(v.getAppId())
+                        .setEnv(v.getEnv())
+                        .setVersion(v.getVersion())
+                        .setForce(force)
+                        .setStatus(RequestStatus.REGISTER.ordinal()).build();
+
+        requestWatchExecutor.add(v);
+
+        try {
+            sendRequestWithALiveCheck(requestWatchExecutor.watcher(), entityClassSyncRequest);
+
+            logger.info("register success uid [{}], appId [{}], env [{}], version [{}]."
+                    , uid, v.getAppId(), v.getEnv(), v.getVersion());
+
+            return true;
+        } catch (Exception e) {
+            v.setStatus(Init);
+            return false;
+        }
     }
 
     /**
@@ -185,6 +182,7 @@ public class SyncRequestHandler implements IRequestHandler {
                                     .setEnv(e.getValue().getEnv())
                                     .setVersion(e.getValue().getVersion())
                                     .setUid(requestWatcher.uid())
+                                    .setForce(false)
                                     .setStatus(RequestStatus.REGISTER.ordinal()).build();
 
                     sendRequest(requestWatcher, entityClassSyncRequest);
@@ -269,12 +267,13 @@ public class SyncRequestHandler implements IRequestHandler {
             logger.warn("execute data sync fail, [{}]", entityClassSyncRequestBuilder.build().toString());
             return;
         }
-        /**
-         * 回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
-         */
-        sendRequestWithALiveCheck(requestWatchExecutor.watcher(),
-                            entityClassSyncRequestBuilder.setUid(entityClassSyncResponse.getUid()).build());
-
+        if (!entityClassSyncResponse.getForce()) {
+            /**
+             * 回写处理结果, entityClassSyncRequest为空则代表传输存在问题.
+             */
+            sendRequestWithALiveCheck(requestWatchExecutor.watcher(),
+                    entityClassSyncRequestBuilder.setUid(entityClassSyncResponse.getUid()).build());
+        }
 
         logger.debug("sync data fin, uid [{}], appId [{}], env [{}], version [{}], status[{}].",
                 entityClassSyncResponse.getUid(), entityClassSyncResponse.getAppId(),
@@ -283,7 +282,6 @@ public class SyncRequestHandler implements IRequestHandler {
 
     /**
      * 执行方法
-     *
      * @param entityClassSyncResponse
      * @return EntityClassSyncRequest.Builder
      */
@@ -315,7 +313,7 @@ public class SyncRequestHandler implements IRequestHandler {
                     /**
                      * 当前关注此版本
                      */
-                    if (requestWatchExecutor.watcher().onWatch(w)) {
+                    if (entityClassSyncResponse.getForce() || requestWatchExecutor.watcher().onWatch(w)) {
                         /**
                          * 执行外部传入的执行器
                          */

@@ -58,15 +58,20 @@ public interface EntityClassSyncResponseOrBuilder extends
       getMd5Bytes();
 
   /**
-   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
+   * <code>bool force = 7;</code>
+   */
+  boolean getForce();
+
+  /**
+   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 8;</code>
    */
   boolean hasEntityClassSyncRspProto();
   /**
-   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
+   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 8;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto getEntityClassSyncRspProto();
   /**
-   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 7;</code>
+   * <code>.EntityClassSyncRspProto entityClassSyncRspProto = 8;</code>
    */
   com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProtoOrBuilder getEntityClassSyncRspProtoOrBuilder();
 }

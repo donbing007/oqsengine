@@ -357,7 +357,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 if (!sortField.isPresent()) {
-                    Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList());
+                    Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList(), metaManager);
                     if (consOp.isPresent()) {
                         entities = entitySearchService.selectByConditions(consOp.get(), entityClassRef, page);
                     } else {
@@ -373,7 +373,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         sortParam = Sort.buildDescSort(sortField.get());
                     }
 
-                    Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList());
+                    Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList(), metaManager);
                     if (consOp.isPresent()) {
 
                         entities = entitySearchService.selectByConditions(consOp.get(), entityClassRef, sortParam, page);
@@ -480,7 +480,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
 
-                Entity targetEntity = Entity.Builder.anEntity().withId(in.getObjId()).build();
+                Entity targetEntity = Entity.Builder.anEntity().withId(in.getObjId()).withEntityClassRef(entityClassRef).build();
 
                 if (!Boolean.parseBoolean(force)) {
                     ResultStatus deleteStatus = entityManagementService.delete(targetEntity);
@@ -684,7 +684,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 if (!sortField.isPresent()) {
-                    Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList());
+                    Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList(), metaManager);
                     if (consOp.isPresent()) {
                         entities = entitySearchService.selectByConditions(consOp.get(), entityClassRef, page);
                     } else {
@@ -700,7 +700,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         sortParam = Sort.buildDescSort(sortField.get());
                     }
 
-                    Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList());
+                    Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList(), metaManager);
                     if (consOp.isPresent()) {
                         entities = entitySearchService.selectByConditions(
                                 consOp.get(), entityClassRef, sortParam, page);

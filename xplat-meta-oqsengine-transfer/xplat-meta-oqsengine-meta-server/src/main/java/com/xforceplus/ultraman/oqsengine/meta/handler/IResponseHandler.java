@@ -23,7 +23,7 @@ public interface IResponseHandler extends IObserverHandler<EntityClassSyncReques
      * @param watchElement
      * @param requestStatus
      */
-    void pull(String uid, WatchElement watchElement, RequestStatus requestStatus);
+    void pull(String uid, boolean force, WatchElement watchElement, RequestStatus requestStatus);
 
     boolean push(AppUpdateEvent event);
 }

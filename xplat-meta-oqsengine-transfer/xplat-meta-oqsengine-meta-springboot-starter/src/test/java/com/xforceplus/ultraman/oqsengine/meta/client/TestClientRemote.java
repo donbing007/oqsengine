@@ -46,12 +46,12 @@ public class TestClientRemote {
     @Test
     public void test() throws InterruptedException {
         if (ifTest) {
-//            boolean ret =
-//                    requestHandler.register(new WatchElement("7", "0", -1, WatchElement.AppStatus.Register));
+            boolean ret =
+                    requestHandler.register(new WatchElement("7", "0", -1, Register));
 //
 //            Assert.assertTrue(ret);
 
-            boolean ret = requestHandler.register(new WatchElement("1", "0", -1, Register));
+            ret = requestHandler.register(new WatchElement("1", "0", -1, Register));
 
             Thread.sleep(10000_000);
         }
