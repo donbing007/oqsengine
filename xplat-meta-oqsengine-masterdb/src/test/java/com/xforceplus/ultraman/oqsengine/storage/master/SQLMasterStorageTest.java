@@ -15,7 +15,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
 import com.xforceplus.ultraman.oqsengine.storage.executor.AutoJoinTransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
@@ -38,7 +37,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
@@ -191,11 +189,11 @@ public class SQLMasterStorageTest {
 
         transactionManager.finish();
 
-        Connection conn = dataSource.getConnection();
-        Statement stat = conn.createStatement();
-        stat.execute("truncate table oqsbigentity");
-        stat.close();
-        conn.close();
+        try (Connection conn = dataSource.getConnection()) {
+            try (Statement stat = conn.createStatement()) {
+                stat.execute("truncate table oqsbigentity");
+            }
+        }
 
         ((HikariDataSource) dataSource).close();
 
@@ -296,23 +294,7 @@ public class SQLMasterStorageTest {
 
         Assert.assertFalse(storage.selectOne(targetEntity.id(), l2EntityClass).isPresent());
 
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ")
-            .append(FieldDefine.DELETED)
-            .append(",")
-            .append(FieldDefine.VERSION)
-            .append(" FROM oqsbigentity WHERE ")
-            .append(FieldDefine.ID).append("=").append(targetEntity.id());
-
-        try (Connection conn = dataSource.getConnection()) {
-            try (Statement statement = conn.createStatement()) {
-                try (ResultSet rs = statement.executeQuery(sql.toString())) {
-                    rs.next();
-                    Assert.assertTrue(rs.getBoolean(FieldDefine.DELETED));
-                    Assert.assertEquals(targetEntity.version() + 1, rs.getInt(FieldDefine.VERSION));
-                }
-            }
-        }
+        Assert.assertFalse(storage.exist(targetEntity.id()));
     }
 
     @Test
@@ -324,24 +306,7 @@ public class SQLMasterStorageTest {
 
         Assert.assertEquals(1, storage.delete(targetEntity, l2EntityClass));
         Assert.assertFalse(storage.selectOne(targetEntity.id(), l2EntityClass).isPresent());
-
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ")
-            .append(FieldDefine.DELETED)
-            .append(",")
-            .append(FieldDefine.VERSION)
-            .append(" FROM oqsbigentity WHERE ")
-            .append(FieldDefine.ID).append("=").append(targetEntity.id());
-
-        try (Connection conn = dataSource.getConnection()) {
-            try (Statement statement = conn.createStatement()) {
-                try (ResultSet rs = statement.executeQuery(sql.toString())) {
-                    rs.next();
-                    Assert.assertTrue(rs.getBoolean(FieldDefine.DELETED));
-                    Assert.assertEquals(VersionHelp.OMNIPOTENCE_VERSION, rs.getInt(FieldDefine.VERSION));
-                }
-            }
-        }
+        Assert.assertFalse(storage.exist(targetEntity.id()));
     }
 
     @Test
