@@ -11,7 +11,9 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.EmptyTypedValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
+import com.xforceplus.ultraman.oqsengine.pojo.reader.record.EmptyValue;
 import com.xforceplus.ultraman.oqsengine.storage.define.OperationType;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.executor.*;
@@ -373,6 +375,11 @@ public class SQLMasterStorage implements MasterStorage {
         StorageStrategy storageStrategy;
         StorageValue storageValue;
         for (IValue logicValue : value.values()) {
+
+            if(logicValue != null && logicValue.getValue() == EmptyValue.emptyValue){
+                continue;
+            }
+
             storageStrategy = storageStrategyFactory.getStrategy(logicValue.getField().type());
             storageValue = storageStrategy.toStorageValue(logicValue);
             while (storageValue != null) {
