@@ -434,7 +434,7 @@ public class SQLMasterStorage implements MasterStorage {
                 .withTime(se.getUpdateTime())
                 .withEntityClassRef(actualEntityClass.ref())
                 .withVersion(se.getVersion())
-                .withEntityValue(toEntityValue(se, entityClass))
+                .withEntityValue(toEntityValue(se, actualEntityClass))
                 .withMajor(se.getOqsMajor());
 
         return Optional.of(entityBuilder.build());
