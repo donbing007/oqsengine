@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.datasource.DataSourcePackage;
 import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerator;
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
@@ -14,7 +15,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsEntityClass;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 import com.xforceplus.ultraman.oqsengine.status.impl.CommitIdStatusServiceImpl;
@@ -24,6 +24,7 @@ import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJ
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterDecimalStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.value.MasterStringsStorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
@@ -48,12 +49,12 @@ import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author dongbin
@@ -116,9 +117,6 @@ public class SQLMasterStorageQueryTest {
         .withField(l0DecimalField)
         .withField(l0DatetimeField)
         .build();
-    private EntityClassRef l0EntityClassRef =
-        EntityClassRef.Builder.anEntityClassRef()
-            .withEntityClassId(l0EntityClass.id()).withEntityClassCode(l0EntityClass.code()).build();
 
     //-------------level 1--------------------
     private IEntityField l1LongField = EntityField.Builder.anEntityField()
@@ -142,9 +140,6 @@ public class SQLMasterStorageQueryTest {
         .withField(l1StringField)
         .withFather(l0EntityClass)
         .build();
-    private EntityClassRef l1EntityClassRef =
-        EntityClassRef.Builder.anEntityClassRef()
-            .withEntityClassId(l1EntityClass.id()).withEntityClassCode(l1EntityClass.code()).build();
 
     //-------------level 2--------------------
     private IEntityField l2LongField = EntityField.Builder.anEntityField()
@@ -165,9 +160,6 @@ public class SQLMasterStorageQueryTest {
         .withField(l2StringField)
         .withFather(l1EntityClass)
         .build();
-    private EntityClassRef l2EntityClassRef =
-        EntityClassRef.Builder.anEntityClassRef()
-            .withEntityClassId(l2EntityClass.id()).withEntityClassCode(l2EntityClass.code()).build();
 
     private List<IEntity> entityes;
 
@@ -195,8 +187,8 @@ public class SQLMasterStorageQueryTest {
             .build();
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
-            new NoSelector<>(ds), new NoSelector<>("oqsbigentity"));
+                transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
+                new NoSelector<>(ds), new NoSelector<>("oqsbigentity"));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
@@ -207,10 +199,16 @@ public class SQLMasterStorageQueryTest {
         sqlJsonConditionsBuilderFactory.setStorageStrategy(storageStrategyFactory);
         sqlJsonConditionsBuilderFactory.init();
 
+        MetaManager metaManager = mock(MetaManager.class);
+        when(metaManager.load(l0EntityClass.id())).thenReturn(Optional.of(l0EntityClass));
+        when(metaManager.load(l1EntityClass.id())).thenReturn(Optional.of(l1EntityClass));
+        when(metaManager.load(l2EntityClass.id())).thenReturn(Optional.of(l2EntityClass));
+
         storage = new SQLMasterStorage();
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
         ReflectionTestUtils.setField(storage, "conditionsBuilderFactory", sqlJsonConditionsBuilderFactory);
+        ReflectionTestUtils.setField(storage, "metaManager", metaManager);
         storage.setTableName("oqsbigentity");
         storage.setQueryTimeout(100000000);
         storage.init();
@@ -257,6 +255,19 @@ public class SQLMasterStorageQueryTest {
         redisClient.shutdown();
     }
 
+    @Test
+    public void testActualEntityClass() throws Exception {
+        Optional<IEntity> entityOp = storage.selectOne(entityes.get(0).id(), l0EntityClass);
+        Assert.assertTrue(entityOp.isPresent());
+        IEntity entity = entityOp.get();
+        Assert.assertEquals(l2EntityClass.ref(), entity.entityClassRef());
+
+        Collection<IEntity> entities = storage.selectMultiple(new long[]{entityes.get(1).id()}, l0EntityClass);
+        for (IEntity e : entities) {
+            Assert.assertEquals(l2EntityClass.ref(), e.entityClassRef());
+        }
+    }
+
     /**
      * 测试事务内查询,以测试事务隔离.
      *
@@ -265,8 +276,8 @@ public class SQLMasterStorageQueryTest {
     @Test
     public void testUncommittedTransactionSelect() throws Exception {
         IEntity uncommitEntity = Entity.Builder.anEntity()
-            .withId(1000000)
-            .withEntityClassRef(l2EntityClassRef)
+                .withId(1000000)
+                .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
                     2021, Month.FEBRUARY, 27, 12, 32, 20)
@@ -730,7 +741,7 @@ public class SQLMasterStorageQueryTest {
     // 初始化数据
     private void initData(SQLMasterStorage storage) throws Exception {
         buildData();
-        ;
+
         try {
             entityes.stream().forEach(e -> {
                 try {
@@ -758,8 +769,8 @@ public class SQLMasterStorageQueryTest {
 
         long baseId = 1000;
         entityes.add(Entity.Builder.anEntity() // 1000
-            .withId(baseId++)
-            .withEntityClassRef(l2EntityClassRef)
+                .withId(baseId++)
+                .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
                     2021, Month.FEBRUARY, 26, 12, 15, 20)
@@ -783,8 +794,8 @@ public class SQLMasterStorageQueryTest {
             )).build());
 
         entityes.add(Entity.Builder.anEntity() // 1001
-            .withId(baseId++)
-            .withEntityClassRef(l2EntityClassRef)
+                .withId(baseId++)
+                .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
                     2021, Month.FEBRUARY, 27, 12, 15, 20)
@@ -808,8 +819,8 @@ public class SQLMasterStorageQueryTest {
             )).build());
 
         entityes.add(Entity.Builder.anEntity() // 1002
-            .withId(baseId++)
-            .withEntityClassRef(l2EntityClassRef)
+                .withId(baseId++)
+                .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
                     2021, Month.FEBRUARY, 27, 12, 32, 20)
@@ -833,8 +844,8 @@ public class SQLMasterStorageQueryTest {
             )).build());
 
         entityes.add(Entity.Builder.anEntity() // 1003
-            .withId(baseId++)
-            .withEntityClassRef(l2EntityClassRef)
+                .withId(baseId++)
+                .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
                     2021, Month.FEBRUARY, 27, 12, 32, 20)
@@ -858,8 +869,8 @@ public class SQLMasterStorageQueryTest {
             )).build());
 
         entityes.add(Entity.Builder.anEntity() // 1004
-            .withId(baseId++)
-            .withEntityClassRef(l2EntityClassRef)
+                .withId(baseId++)
+                .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
                     2021, Month.FEBRUARY, 27, 12, 32, 20)
