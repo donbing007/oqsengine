@@ -146,11 +146,14 @@ public class SyncResponseHandler implements IResponseHandler {
                             entityClassSyncRequest.getVersion(), Register);
 
             responseWatchExecutor.add(entityClassSyncRequest.getUid(), responseStreamObserver, w);
+            if (entityClassSyncRequest.getForce()) {
+                pull(entityClassSyncRequest.getUid(), entityClassSyncRequest.getForce(), w, SYNC_OK);
 
-            /**
-             * 确认注册信息
-             */
-            if (confirmRegister(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
+                logger.debug("force pull uid [{}], appId [{}], env [{}]...",
+                        entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
+                        entityClassSyncRequest.getEnv());
+
+            } else if (confirmRegister(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
                     entityClassSyncRequest.getVersion(), entityClassSyncRequest.getUid())) {
 
                 /**
@@ -162,7 +165,7 @@ public class SyncResponseHandler implements IResponseHandler {
                 if (null == currentVersion ||
                         NOT_EXIST_VERSION == entityClassSyncRequest.getVersion() ||
                         currentVersion < entityClassSyncRequest.getVersion()) {
-                    pull(entityClassSyncRequest.getUid(), w, SYNC_OK);
+                    pull(entityClassSyncRequest.getUid(), entityClassSyncRequest.getForce(), w, SYNC_OK);
                     logger.debug("pull data success on SYNC_OK, uid [{}], appId [{}], env [{}], version [{}]",
                             entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
                             entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
@@ -207,12 +210,12 @@ public class SyncResponseHandler implements IResponseHandler {
      * @return
      */
     @Override
-    public void pull(String uid, WatchElement watchElement, RequestStatus requestStatus) {
+    public void pull(String uid, boolean force, WatchElement watchElement, RequestStatus requestStatus) {
         /**
          * 这里异步执行
          */
         taskExecutor.submit(() -> {
-            internalPull(uid, watchElement, requestStatus);
+            internalPull(uid, force, watchElement, requestStatus);
         });
     }
 
@@ -243,7 +246,7 @@ public class SyncResponseHandler implements IResponseHandler {
                     taskExecutor.submit(() -> {
                         try {
                             EntityClassSyncResponse response = generateResponse(r.uid(), event.getAppId(), event.getEnv(), event.getVersion(),
-                                    RequestStatus.SYNC, event.getEntityClassSyncRspProto());
+                                    RequestStatus.SYNC, event.getEntityClassSyncRspProto(), false);
                             responseByWatch(event.getAppId(), event.getEnv(), event.getVersion(), response, r, false);
                         } catch (Exception e) {
                             logger.warn("push event failed..., uid [{}], event [{}], message [{}]", r.uid(), event.toString(), e.getMessage());
@@ -261,7 +264,7 @@ public class SyncResponseHandler implements IResponseHandler {
         return true;
     }
 
-    private boolean internalPull(String uid, WatchElement watchElement, RequestStatus requestStatus) {
+    private boolean internalPull(String uid, boolean force, WatchElement watchElement, RequestStatus requestStatus) {
         ResponseWatcher watcher = responseWatchExecutor.watcher(uid);
 
         /**
@@ -271,17 +274,16 @@ public class SyncResponseHandler implements IResponseHandler {
             try {
                 AppUpdateEvent appUpdateEvent =
                         entityClassGenerator.pull(watchElement.getAppId(), watchElement.getEnv());
-
-                if (isNeedEvent(watchElement.getVersion(), appUpdateEvent.getVersion(), requestStatus)) {
+                if (force || isNeedEvent(watchElement.getVersion(), appUpdateEvent.getVersion(), requestStatus)) {
 
                     /**
                      * 主动拉取不会更新当前的appVersion
                      */
                     EntityClassSyncResponse response =
                             generateResponse(uid, appUpdateEvent.getAppId(), appUpdateEvent.getEnv(), appUpdateEvent.getVersion(),
-                                    RequestStatus.SYNC, appUpdateEvent.getEntityClassSyncRspProto());
+                                    RequestStatus.SYNC, appUpdateEvent.getEntityClassSyncRspProto(), force);
                     return responseByWatch(appUpdateEvent.getAppId(), appUpdateEvent.getEnv(),
-                            appUpdateEvent.getVersion(), response, watcher, false);
+                            appUpdateEvent.getVersion(), response, watcher, force);
                 }
                 logger.info("current notice version [{}] is large than updateVersion [{}], event will be ignore..."
                         , watchElement.getVersion(), appUpdateEvent.getVersion());
@@ -451,7 +453,7 @@ public class SyncResponseHandler implements IResponseHandler {
      * @return
      */
     private EntityClassSyncResponse generateResponse(String uid, String appId, String env, int version,
-                                                     RequestStatus requestStatus, EntityClassSyncRspProto result) {
+                                                     RequestStatus requestStatus, EntityClassSyncRspProto result, boolean force) {
         return EntityClassSyncResponse.newBuilder()
                 .setMd5(MD5Utils.getMD5(result.toByteArray()))
                 .setUid(uid)
@@ -460,6 +462,7 @@ public class SyncResponseHandler implements IResponseHandler {
                 .setVersion(version)
                 .setStatus(requestStatus.ordinal())
                 .setEntityClassSyncRspProto(result)
+                .setForce(force)
                 .build();
     }
 
@@ -480,7 +483,7 @@ public class SyncResponseHandler implements IResponseHandler {
                     /**
                      * 直接拉取
                      */
-                    pull(task.element().getUid(), w, SYNC_FAIL);
+                    pull(task.element().getUid(), false, w, SYNC_FAIL);
                     logger.debug("delay task re-pull success, uid [{}], appId [{}], env [{}], version [{}] success.",
                             watcher.uid(), w.getAppId(), w.getEnv(), w.getVersion());
                 }

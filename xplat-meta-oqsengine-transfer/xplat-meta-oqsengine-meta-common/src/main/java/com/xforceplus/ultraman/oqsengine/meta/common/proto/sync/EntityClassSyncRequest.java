@@ -21,6 +21,7 @@ private static final long serialVersionUID = 0L;
     version_ = 0;
     status_ = 0;
     env_ = "";
+    force_ = false;
   }
 
   @java.lang.Override
@@ -80,6 +81,11 @@ private static final long serialVersionUID = 0L;
             java.lang.String s = input.readStringRequireUtf8();
 
             env_ = s;
+            break;
+          }
+          case 48: {
+
+            force_ = input.readBool();
             break;
           }
         }
@@ -226,6 +232,15 @@ private static final long serialVersionUID = 0L;
     }
   }
 
+  public static final int FORCE_FIELD_NUMBER = 6;
+  private boolean force_;
+  /**
+   * <code>bool force = 6;</code>
+   */
+  public boolean getForce() {
+    return force_;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -253,6 +268,9 @@ private static final long serialVersionUID = 0L;
     if (!getEnvBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 5, env_);
     }
+    if (force_ != false) {
+      output.writeBool(6, force_);
+    }
     unknownFields.writeTo(output);
   }
 
@@ -277,6 +295,10 @@ private static final long serialVersionUID = 0L;
     }
     if (!getEnvBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, env_);
+    }
+    if (force_ != false) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(6, force_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -304,6 +326,8 @@ private static final long serialVersionUID = 0L;
         == other.getStatus());
     result = result && getEnv()
         .equals(other.getEnv());
+    result = result && (getForce()
+        == other.getForce());
     result = result && unknownFields.equals(other.unknownFields);
     return result;
   }
@@ -325,6 +349,9 @@ private static final long serialVersionUID = 0L;
     hash = (53 * hash) + getStatus();
     hash = (37 * hash) + ENV_FIELD_NUMBER;
     hash = (53 * hash) + getEnv().hashCode();
+    hash = (37 * hash) + FORCE_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getForce());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -464,6 +491,8 @@ private static final long serialVersionUID = 0L;
 
       env_ = "";
 
+      force_ = false;
+
       return this;
     }
 
@@ -491,6 +520,7 @@ private static final long serialVersionUID = 0L;
       result.version_ = version_;
       result.status_ = status_;
       result.env_ = env_;
+      result.force_ = force_;
       onBuilt();
       return result;
     }
@@ -549,6 +579,9 @@ private static final long serialVersionUID = 0L;
       if (!other.getEnv().isEmpty()) {
         env_ = other.env_;
         onChanged();
+      }
+      if (other.getForce() != false) {
+        setForce(other.getForce());
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -832,6 +865,32 @@ private static final long serialVersionUID = 0L;
   checkByteStringIsUtf8(value);
       
       env_ = value;
+      onChanged();
+      return this;
+    }
+
+    private boolean force_ ;
+    /**
+     * <code>bool force = 6;</code>
+     */
+    public boolean getForce() {
+      return force_;
+    }
+    /**
+     * <code>bool force = 6;</code>
+     */
+    public Builder setForce(boolean value) {
+      
+      force_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>bool force = 6;</code>
+     */
+    public Builder clearForce() {
+      
+      force_ = false;
       onChanged();
       return this;
     }

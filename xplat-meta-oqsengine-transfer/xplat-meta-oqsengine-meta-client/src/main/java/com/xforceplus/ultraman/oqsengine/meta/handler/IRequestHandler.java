@@ -24,13 +24,6 @@ public interface IRequestHandler extends IObserverHandler<EntityClassSyncRespons
     boolean register(WatchElement watchElement);
 
     /**
-     * 注册多个appId，并开始监听
-     * @param appIdEntries
-     * @return boolean
-     */
-    boolean register(List<WatchElement> appIdEntries);
-
-    /**
      * 断流自动重新注册
      * @return boolean
      */

@@ -47,31 +47,6 @@ public class MockRequestHandler implements IRequestHandler {
         return true;
     }
 
-
-    @Override
-    public boolean register(List<WatchElement> appIdEntries) {
-
-        try {
-            Thread.sleep(mockResponseTimeDuration);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        appIdEntries.forEach(
-                a -> {
-                    invoke(entityClassSyncResponseGenerator(a.getAppId(), a.getVersion(),
-                            mockSelfFatherAncestorsGenerate(System.currentTimeMillis())), null);
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-        );
-
-        return true;
-    }
-
     @Override
     public boolean reRegister() {
         return false;

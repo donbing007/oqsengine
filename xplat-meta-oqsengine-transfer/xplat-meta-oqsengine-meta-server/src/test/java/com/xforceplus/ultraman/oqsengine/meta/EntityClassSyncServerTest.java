@@ -183,7 +183,7 @@ public class EntityClassSyncServerTest extends BaseInit {
 
         int resetVersion = expectedVersion + 1;
         entityClassGenerator.reset(resetVersion, entityId);
-        syncResponseHandler.pull(uid, new WatchElement(appId, env, resetVersion - 1, null), RequestStatus.SYNC_OK);
+        syncResponseHandler.pull(uid, false, new WatchElement(appId, env, resetVersion - 1, null), RequestStatus.SYNC_OK);
 
         Thread.sleep(5_000);
 

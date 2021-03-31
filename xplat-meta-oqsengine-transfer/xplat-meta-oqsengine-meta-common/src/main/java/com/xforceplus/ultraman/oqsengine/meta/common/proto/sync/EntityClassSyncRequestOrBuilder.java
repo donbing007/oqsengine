@@ -46,4 +46,9 @@ public interface EntityClassSyncRequestOrBuilder extends
    */
   com.google.protobuf.ByteString
       getEnvBytes();
+
+  /**
+   * <code>bool force = 6;</code>
+   */
+  boolean getForce();
 }
