@@ -13,7 +13,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import com.xforceplus.ultraman.oqsengine.sdk.ConditionsUp;
 import com.xforceplus.ultraman.oqsengine.sdk.FieldConditionUp;
-import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +23,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper.findFieldById;
-import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper.isRelatedField;
 
 /**
  * TODO build condition
@@ -107,7 +105,7 @@ public class ConditionHelper {
                     break;
                 case ge:
                     conditions = new Conditions(new Condition(
-                              classRef
+                            classRef
                             , originField
                             , ConditionOperator.GREATER_THAN_EQUALS
                             , relationId
@@ -115,7 +113,7 @@ public class ConditionHelper {
                     break;
                 case gt:
                     conditions = new Conditions(new Condition(
-                              classRef
+                            classRef
                             , originField
                             , ConditionOperator.GREATER_THAN
                             , relationId
@@ -124,14 +122,14 @@ public class ConditionHelper {
                 case ge_le:
                     if (nonNullValueList.size() > 1) {
                         Condition left = new Condition(
-                                  classRef
+                                classRef
                                 , originField
                                 , ConditionOperator.GREATER_THAN_EQUALS
                                 , relationId
                                 , toTypedValue(fieldOp.get(), nonNullValueList.get(0)).toArray(new IValue[]{}));
 
                         Condition right = new Condition(
-                                  classRef
+                                classRef
                                 , originField
                                 , ConditionOperator.LESS_THAN_EQUALS
                                 , relationId
@@ -318,7 +316,7 @@ public class ConditionHelper {
             long fieldId = x.getField().getId();
             Optional<IEntityField> fieldOp = findFieldById(mainClass, fieldId);
 
-            if(!fieldOp.isPresent() && x.getRelationId() > 0){
+            if (!fieldOp.isPresent() && x.getRelationId() > 0) {
                 fieldOp = manager.load(x.getRelationId()).flatMap(related -> findFieldById(related, fieldId));
             }
 
