@@ -40,4 +40,11 @@ public class BuildPayload implements Serializable {
     public int hashCode() {
         return Objects.hash(getEntity());
     }
+
+    @Override
+    public String toString() {
+        return "BuildPayload{" +
+                "entity=" + entity +
+                '}';
+    }
 }
