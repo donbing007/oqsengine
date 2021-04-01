@@ -14,14 +14,20 @@ import java.util.Objects;
  */
 public class BuildPayload implements Serializable {
 
+    private long txId;
     private IEntity entity;
 
-    public BuildPayload(IEntity entity) {
+    public BuildPayload(long txId, IEntity entity) {
+        this.txId = txId;
         this.entity = entity;
     }
 
     public IEntity getEntity() {
         return entity;
+    }
+
+    public long getTxId() {
+        return txId;
     }
 
     @Override
