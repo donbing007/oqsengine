@@ -29,7 +29,7 @@ import static com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper.
  */
 public class DefaultChangelogImpl implements ChangelogService {
 
-    @Autowired
+    @Autowired(required = false)
     private List<RelationAwareChangelog> relationAwareChangeLogs;
 
     @Resource
