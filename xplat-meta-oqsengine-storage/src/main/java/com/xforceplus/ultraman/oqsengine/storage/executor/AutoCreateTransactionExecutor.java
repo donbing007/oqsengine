@@ -44,7 +44,7 @@ public class AutoCreateTransactionExecutor implements TransactionExecutor {
         ExecutorHint hint = new DefaultExecutorHint(tx.getAccumulator());
         try {
 
-            Object res = resourceTask.run(null, hint);
+            Object res = resourceTask.run(tx, null, hint);
 
             if (localTx) {
 

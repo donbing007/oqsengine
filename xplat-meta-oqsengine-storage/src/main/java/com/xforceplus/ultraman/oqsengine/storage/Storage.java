@@ -15,24 +15,6 @@ import java.sql.SQLException;
 public interface Storage {
 
     /**
-     * 初始化.
-     *
-     * @throws SQLException 初始化失败.
-     */
-    default void init() throws SQLException {
-
-    }
-
-    /**
-     * 清理.
-     *
-     * @throws SQLException 清理失败.
-     */
-    default void destroy() throws SQLException {
-
-    }
-
-    /**
      * Create a new Entity.
      * @param entity target entity.
      * @throws SQLException Storage error.

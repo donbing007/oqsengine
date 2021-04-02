@@ -24,7 +24,6 @@ import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -190,7 +189,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         try {
 
-            return (ResultStatus) transactionExecutor.execute((resource, hint) -> {
+            return (ResultStatus) transactionExecutor.execute((tx, resource, hint) -> {
 
                 if (entity.id() <= 0) {
                     long newId = idGenerator.next();
@@ -203,7 +202,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return ResultStatus.UNCREATED;
                 }
 
-                noticeEvent(resource, EventType.ENTITY_BUILD, entity);
+                noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
                 return ResultStatus.SUCCESS;
 
@@ -232,7 +231,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
         try {
-            return (ResultStatus) transactionExecutor.execute((resource, hint) -> {
+            return (ResultStatus) transactionExecutor.execute((tx, resource, hint) -> {
 
                 Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
                 if (!targetEntityOp.isPresent()) {
@@ -249,7 +248,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return ResultStatus.CONFLICT;
                 }
 
-                noticeEvent(resource, EventType.ENTITY_REPLACE, entity);
+                noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
 
                 return ResultStatus.SUCCESS;
             });
@@ -274,7 +273,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
         try {
-            return (ResultStatus) transactionExecutor.execute((resource, hint) -> {
+            return (ResultStatus) transactionExecutor.execute((tx, resource, hint) -> {
 
                 if (!masterStorage.exist(entity.id())) {
                     return ResultStatus.NOT_FOUND;
@@ -285,7 +284,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return ResultStatus.CONFLICT;
                 }
 
-                noticeEvent(resource, EventType.ENTITY_DELETE, entity);
+                noticeEvent(tx, EventType.ENTITY_DELETE, entity);
 
                 return ResultStatus.SUCCESS;
             });
@@ -353,12 +352,13 @@ public class EntityManagementServiceImpl implements EntityManagementService {
      * 发布事件.
      * entities 在 ENTITY_REPLACE 事件中会传递两个IEntity实例,第一个表示旧的,第二个表示新的.
      */
-    private void noticeEvent(TransactionResource resource, EventType type, IEntity... entities) {
-        Optional<Transaction> transactionOp = resource.getTransaction();
+    private void noticeEvent(Transaction tx, EventType type, IEntity... entities) {
         long txId = 0;
-        if (transactionOp.isPresent()) {
-            Transaction transaction = transactionOp.get();
-            txId = transaction.id();
+        if (tx != null) {
+            txId = tx.id();
+        } else {
+            logger.warn("No transaction found, object change event cannot be published.");
+            return;
         }
 
         switch (type) {

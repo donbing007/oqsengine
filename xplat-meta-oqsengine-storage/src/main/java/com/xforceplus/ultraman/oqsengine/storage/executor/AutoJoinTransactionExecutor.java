@@ -67,24 +67,14 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
                 /**
                  * 资源不存在,重新创建.
                  */
-                Connection conn = targetDataSource.getConnection();
-
-                try {
-                    resource = this.transactionResourceFactory.build(dbKey, conn, false);
-                } catch (Exception ex) {
-                    throw new SQLException(ex.getMessage(), ex);
-                }
+                resource = buildResource(targetDataSource, dbKey, false);
 
                 tx.get().join(resource);
             }
         } else {
 
-            Connection conn = targetDataSource.getConnection();
-            try {
-                resource = this.transactionResourceFactory.build(dbKey, conn, true);
-            } catch (Exception ex) {
-                throw new SQLException(ex.getMessage(), ex);
-            }
+            // 无事务执行.
+            resource = buildResource(targetDataSource, dbKey, true);
         }
 
         ExecutorHint hint;
@@ -94,7 +84,11 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
             hint = new DefaultExecutorHint();
         }
         try {
-            return resourceTask.run(resource, hint);
+            if (tx.isPresent()) {
+                return resourceTask.run(tx.get(), resource, hint);
+            } else {
+                return resourceTask.run(null, resource, hint);
+            }
         } finally {
 
             if (!tx.isPresent()) {
@@ -107,4 +101,12 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
         return dataSource.toString() + "." + tableName;
     }
 
+    private TransactionResource buildResource(DataSource ds, String dbKey, boolean autocommit) throws SQLException {
+        Connection conn = ds.getConnection();
+        try {
+            return this.transactionResourceFactory.build(dbKey, conn, autocommit);
+        } catch (Exception ex) {
+            throw new SQLException(ex.getMessage(), ex);
+        }
+    }
 }
