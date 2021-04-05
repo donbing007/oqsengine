@@ -1,11 +1,9 @@
 package com.xforceplus.ultraman.oqsengine.storage.index;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.storage.Storage;
+import com.xforceplus.ultraman.oqsengine.storage.ConditionsSelectStorage;
 import com.xforceplus.ultraman.oqsengine.storage.pojo.OriginalEntity;
-import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 
 import java.sql.SQLException;
 import java.util.Collection;
@@ -17,19 +15,7 @@ import java.util.Collection;
  * @version 0.1 2020/2/13 19:44
  * @since 1.8
  */
-public interface IndexStorage extends Storage {
-
-    /**
-     * 条件搜索 entity 的指针信息.
-     * 如果没有某个条件没有指定 entityClass,那么将假定为和返回 entityClass 一致.
-     *
-     * @param conditions  搜索条件.
-     * @param entityClass 搜索目标的 entityClass.
-     * @param config      搜索配置.
-     * @return 搜索结果列表.
-     * @throws SQLException
-     */
-    Collection<EntityRef> select(Conditions conditions, IEntityClass entityClass, SelectConfig config) throws SQLException;
+public interface IndexStorage extends ConditionsSelectStorage, Lifecycle {
 
     /**
      * 维护接口,时间范围清理.

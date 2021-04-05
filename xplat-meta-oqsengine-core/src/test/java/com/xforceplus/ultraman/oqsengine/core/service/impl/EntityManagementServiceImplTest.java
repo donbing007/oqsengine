@@ -318,7 +318,7 @@ public class EntityManagementServiceImplTest {
 
         @Override
         public Object execute(ResourceTask storageTask) throws SQLException {
-            return storageTask.run(null, new DefaultExecutorHint());
+            return storageTask.run(null, null, new DefaultExecutorHint());
         }
     }
 
