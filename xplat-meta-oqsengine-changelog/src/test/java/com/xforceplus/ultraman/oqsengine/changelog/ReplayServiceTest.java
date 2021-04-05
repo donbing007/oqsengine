@@ -143,7 +143,7 @@ public class ReplayServiceTest {
 //        Optional<IEntityField> field = example.A.field(A_B_OTO);
         Optional<IEntityField> field1 = example.A.field(A_Field1);
 //        mapValue.put(A_B_OTO, new LongValue(field.get(), 22222L));
-        mapValue.put(example.A_B_OTO, new ValueWrapper(8292032L, FieldType.LONG, field1.get().id()));
+        mapValue.put(example.A_B_OTO, new ValueWrapper("8292032", FieldType.LONG, field1.get().id()));
         changedEvent.setValueMap(mapValue);
         changedEvent.setUsername("luye");
         changedEvent.setComment("Test Reference");

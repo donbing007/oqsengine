@@ -36,9 +36,9 @@ public class SnapshotStorageCommand {
 
         String sql;
         if( version < 0){
-            sql = String.format(SQL.SAVE_SNAPSHOT, tableName, objId);
+            sql = String.format(SQL.FIND_SNAPSHOT_SQL, tableName, objId);
         } else {
-            sql = String.format(SQL.SAVE_SNAPSHOT, tableName, objId, version);
+            sql = String.format(SQL.FIND_SNAPSHOT_SQL_VERSION, tableName, objId, version);
         }
         Connection connection = dataSource.getConnection();
         try {

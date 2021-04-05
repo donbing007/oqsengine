@@ -8,10 +8,7 @@ import com.xforceplus.ultraman.oqsengine.changelog.SnapshotService;
 import com.xforceplus.ultraman.oqsengine.changelog.gateway.Gateway;
 import com.xforceplus.ultraman.oqsengine.changelog.gateway.impl.DefaultChangelogGateway;
 import com.xforceplus.ultraman.oqsengine.changelog.handler.ChangelogCommandHandler;
-import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.DefaultChangelogCommandHandler;
-import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.PersistentEventHandler;
-import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.PropagationEventHandler;
-import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.SnapshotEventHandler;
+import com.xforceplus.ultraman.oqsengine.changelog.handler.impl.*;
 import com.xforceplus.ultraman.oqsengine.changelog.impl.DefaultChangelogImpl;
 import com.xforceplus.ultraman.oqsengine.changelog.impl.DefaultSnapshotServiceImpl;
 import com.xforceplus.ultraman.oqsengine.changelog.impl.RedisChangelogHandler;
@@ -76,6 +73,10 @@ public class ChangelogConfiguration {
         return new SnapshotEventHandler();
     }
 
+    @Bean
+    public VersionEventHandler versionEventHandler() {
+        return new VersionEventHandler();
+    }
 
     @Bean
     public SnapshotService snapshotService(){
@@ -94,7 +95,9 @@ public class ChangelogConfiguration {
             , Gateway gateway
             , ObjectMapper mapper
     ){
-        return new RedisChangelogHandler(nodeIdGenerator.next().toString(), queueName, redisClient, gateway, mapper);
+        RedisChangelogHandler redisChangelogHandler = new RedisChangelogHandler(nodeIdGenerator.next().toString(), queueName, redisClient, gateway, mapper);
+        redisChangelogHandler.prepareConsumer();
+        return redisChangelogHandler;
     }
 
     @Bean

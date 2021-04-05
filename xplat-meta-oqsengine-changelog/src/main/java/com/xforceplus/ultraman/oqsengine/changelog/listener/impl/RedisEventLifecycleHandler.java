@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.TransactionalChangelogEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ValueWrapper;
 import com.xforceplus.ultraman.oqsengine.changelog.listener.EventLifecycleAware;
+import com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper;
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
@@ -161,6 +162,7 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
             List<ChangedEvent> changedEvents = popQueue(txId);
             TransactionalChangelogEvent changelogEvent = toTransactionalChangelogEvent(commitId, time, msg.orElse(""), changedEvents);
             changelogHandler.handle(changelogEvent);
+            dropQueue(txId);
         });
     }
 
@@ -184,7 +186,17 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
      * @return
      */
     private ChangedEvent entityToChangedEvent(IEntity entity) {
-        return null;
+        ChangedEvent changedEvent = new ChangedEvent();
+        changedEvent.setEntityClassId(entity.entityClassRef().getId());
+        changedEvent.setTimestamp(entity.time());
+        changedEvent.setId(entity.id());
+        Map<Long, ValueWrapper> valueMap = new HashMap<>();
+        changedEvent.setValueMap(valueMap);
+        entity.entityValue().values().stream().forEach(x -> {
+            ValueWrapper valueWrapper = new ValueWrapper(ChangelogHelper.serialize(x), x.getField().type(), x.getField().id());
+            valueMap.put(x.getField().id(), valueWrapper);
+        });
+        return changedEvent;
     }
 
 
@@ -209,6 +221,10 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
         TransactionalChangelogEvent transactionalChangelogEvent = new TransactionalChangelogEvent();
         transactionalChangelogEvent.setCommitId(commitId);
 
+        //update commitId
+        changedEventList.forEach( x -> x.setCommitId(commitId));
+
+
         Map<Long, Optional<ChangedEvent>> groupedEvent = changedEventList
                 .stream()
                 .collect(Collectors.groupingBy(x -> x.getId(), Collectors.reducing((prev, next) -> {
@@ -218,6 +234,7 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
                     changedEvent.setComment(comment);
                     changedEvent.setUsername(getUsername(prev));
                     changedEvent.setTimestamp(timestamp);
+                    changedEvent.setCommitId(commitId);
                     Map<Long, ValueWrapper> prevValueMap = prev.getValueMap();
                     Map<Long, ValueWrapper> nextValueMap = next.getValueMap();
 
@@ -291,7 +308,7 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
         String queue = QUEUE_PREFIX.concat(Long.toString(txId));
         List<String> orderedList = syncCommands.lrange(queue, 0, -1);
 
-        List<ChangedEvent> changedEvents = orderedList.stream().filter(x -> StringUtils.isEmpty(x)).map(x -> {
+        List<ChangedEvent> changedEvents = orderedList.stream().filter(x -> !StringUtils.isEmpty(x)).map(x -> {
             try {
                 ChangedEvent changedEvent = mapper.readValue(x, ChangedEvent.class);
                 return changedEvent;
