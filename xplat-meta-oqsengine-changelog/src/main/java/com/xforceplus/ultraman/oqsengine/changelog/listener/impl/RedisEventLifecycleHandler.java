@@ -195,10 +195,12 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
             QueueFlow<Void> flow = flowRegistry.flow(Long.toString(txId));
             CompletableFuture<Void> future = new CompletableFuture<>();
             flow.feed(Tuple.of(future, () -> {
-                Optional<String> msg = commitPayload.getMsg();
                 List<ChangedEvent> changedEvents = popQueue(txId);
-                TransactionalChangelogEvent changelogEvent = toTransactionalChangelogEvent(commitId, time, msg.orElse(""), changedEvents);
-                changelogHandler.handle(changelogEvent);
+                if(changedEvents.size() > 0) {
+                    String comment = changedEvents.get(0).getComment();
+                    TransactionalChangelogEvent changelogEvent = toTransactionalChangelogEvent(commitId, time, Optional.ofNullable(comment).orElse(""), changedEvents);
+                    changelogHandler.handle(changelogEvent);
+                }
                 dropQueue(txId);
                 return null;
             }));
@@ -252,6 +254,7 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
     private void createQueueIfNotExists(long txId, String msg) {
         String queue = QUEUE_PREFIX.concat(Long.toString(txId));
         if(syncCommands.llen(queue) == 0) {
+            logger.debug("create tx {} with {}", txId, msg);
             syncCommands.rpush(queue, msg);
         }
     }
@@ -357,6 +360,8 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
         if(orderedList.size() > 0){
             comment = orderedList.get(0);
         }
+
+        logger.debug("comment in {} is {}", txId, comment);
 
         String finalComment = comment;
         List<ChangedEvent> changedEvents = orderedList.stream().skip(1).map(x -> {
