@@ -52,6 +52,7 @@ public class SQLSnapshotStorage implements SnapshotStorage {
             return Optional.of(new SnapshotStorageCommand(tableName, mapper)
                     .querySnapshot(changelogDatasource, objId, version));
         } catch (SQLException ex) {
+
             return Optional.empty();
         }
     }

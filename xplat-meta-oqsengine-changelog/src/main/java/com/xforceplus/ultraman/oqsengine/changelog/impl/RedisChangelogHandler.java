@@ -339,7 +339,12 @@ public class RedisChangelogHandler<T> implements ChangelogHandler<T> {
         xreadgroup.forEach(x -> {
             toChangeCommandList(x).forEach(command -> {
                 logger.info("got changeCommand and deliver to the gateway");
-                gateway.fireAndForget(command, new HashMap<>());
+                try {
+                    gateway.fireAndForget(command, new HashMap<>());
+                } catch (Exception ex){
+                    logger.error("{}", ex);
+                }
+
                 syncCommands.xack(queueStreamName, "group", x.getId());
             });
         });

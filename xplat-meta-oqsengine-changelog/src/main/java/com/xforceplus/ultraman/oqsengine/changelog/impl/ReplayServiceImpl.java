@@ -403,7 +403,7 @@ public class ReplayServiceImpl implements ReplayService {
         Optional.ofNullable(entityClass.oqsRelations()).orElse(Collections.emptyList()).forEach(rel -> {
 //            if (rel.getFieldOwner() != entityClass.id()) {
                 //current entityClass do not have this field
-                List<ChangeValue> changeValues = finalMappedValue.get(rel.getEntityField().id());
+                List<ChangeValue> changeValues = Optional.ofNullable(finalMappedValue.get(rel.getEntityField().id())).orElseGet(Collections::emptyList);
                 if (isReferenceSetInCurrentView(rel, entityClass.id())) {
                     List<Long> ids = new LinkedList<>();
                     changeValues.forEach(changeValue -> {

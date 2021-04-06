@@ -57,4 +57,11 @@ public class BuildPayload implements Serializable {
                 ", entity=" + entity +
                 '}';
     }
+
+    @Override
+    public String toString() {
+        return "BuildPayload{" +
+                "entity=" + entity +
+                '}';
+    }
 }

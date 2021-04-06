@@ -18,7 +18,7 @@ public class SQL {
 
     public static final String SAVE_VERSION_SQL =
             "insert into %s (vid, id, comment, version, timestamp, user, source)" +
-                    "values (?, ? , ?, ?, ?, ?)";
+                    "values (?, ? , ?, ?, ?, ?, ?)";
 
     public static final String FIND_SQL =
             "select * from %s where id = %s and version >= %s order by version desc";

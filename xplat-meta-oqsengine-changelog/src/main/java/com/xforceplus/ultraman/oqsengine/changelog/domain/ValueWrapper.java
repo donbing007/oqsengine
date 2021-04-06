@@ -6,15 +6,17 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.*;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 
 /**
  * value wrapper
  */
 public class ValueWrapper {
 
-    private Object value;
+    private String value;
 
     private FieldType type;
 
@@ -27,7 +29,7 @@ public class ValueWrapper {
     public ValueWrapper() {
     }
 
-    public ValueWrapper(Object value, FieldType type, Long fieldId) {
+    public ValueWrapper(String value, FieldType type, Long fieldId) {
         this.value = value;
         this.type = type;
         this.fieldId = fieldId;
@@ -41,19 +43,24 @@ public class ValueWrapper {
     public IValue getIValue(){
         switch (type){
             case LONG:
-                return new LongValue(null, (Long)value);
+                return new LongValue(null, Long.parseLong(value));
             case DECIMAL:
-                return new DecimalValue(null, (BigDecimal) value);
+                return new DecimalValue(null, new BigDecimal(value));
             case DATETIME:
-                return new DateTimeValue(null, (LocalDateTime)value);
+                long timestamp = Long.parseLong(value);
+                LocalDateTime time =
+                        LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp),
+                                DateTimeValue.zoneId);
+                return new DateTimeValue(null, time);
             case BOOLEAN:
-                return new BooleanValue(null, (Boolean) value);
+                boolean b = Boolean.parseBoolean(value);
+                return new BooleanValue(null, b);
             case ENUM:
-                return new EnumValue(null, (String)value);
+                return new EnumValue(null, value);
             case STRINGS:
-                return new StringsValue(null, (String[])value);
+                return new StringsValue(null, Optional.ofNullable(value).orElse("").split(","));
             case STRING:
-                return new StringValue(null, (String)value);
+                return new StringValue(null, value);
             default:
                 throw new UnsupportedOperationException("Cannnot convert to ivalue");
         }
@@ -64,11 +71,11 @@ public class ValueWrapper {
     }
 
     @JsonGetter
-    public Object getValue() {
+    public String getValue() {
         return value;
     }
 
-    public void setValue(Object value) {
+    public void setValue(String value) {
         this.value = value;
     }
 

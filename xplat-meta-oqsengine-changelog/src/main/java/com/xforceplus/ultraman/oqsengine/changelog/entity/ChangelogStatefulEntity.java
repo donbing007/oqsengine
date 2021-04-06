@@ -11,6 +11,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.oqs.OqsRelation;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.DateTimeValue;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.values.IValue;
@@ -423,6 +424,10 @@ public class ChangelogStatefulEntity implements StatefulEntity<EntityDomain, Cha
     private void updateEntityDomainState(List<ChangeValue> changeValues) {
         changeValues.forEach(x -> {
             IEntityValue entityValue = entityDomain.getEntity().entityValue();
+            if(entityValue == null){
+                entityValue = new EntityValue();
+                entityDomain.getEntity().resetEntityValue(entityValue);
+            }
             Optional<IValue> value = entityValue.getValue(x.getFieldId());
             if (value.isPresent()) {
                 //has old value

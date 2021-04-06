@@ -12,4 +12,5 @@ public class DeletePayload extends BuildPayload {
     public DeletePayload(long txId, long number, IEntity entity) {
         super(txId, number, entity);
     }
+
 }
