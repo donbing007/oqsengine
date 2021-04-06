@@ -40,7 +40,7 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
 
         try {
             if (DEFAULT_TRANSACTION_TIMEOUT == timeoutMs) {
-                txId = transactionManager.create().id();
+                txId = transactionManager.create(msg).id();
             } else if (timeoutMs > DEFAULT_TRANSACTION_TIMEOUT) {
                 txId = transactionManager.create(timeoutMs, msg).id();
             } else {
