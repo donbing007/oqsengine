@@ -191,11 +191,18 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
 
         logger.debug(NO_OPERATION, preCommit.type());
 
+
+    }
+
+    @Override
+    public void onTxCommitted(ActualEvent<CommitPayload> committed) {
+        logger.debug("Got tx committed");
+
         //trigger a combine
-        extract(preCommit, commitPayload -> {
+        extract(committed, commitPayload -> {
             long txId = commitPayload.getTxId();
             long commitId = commitPayload.getCommitId();
-            long time = preCommit.time();
+            long time = committed.time();
 
             inProgressTX.decrementAndGet();
 
@@ -212,17 +219,18 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
                 return null;
             }));
         });
-
-    }
-
-    @Override
-    public void onTxCommitted(ActualEvent<CommitPayload> committed) {
-        logger.debug("Got tx committed");
     }
 
     @Override
     public void onTxPreRollBack(ActualEvent<RollbackPayload> preRollBack) {
-        logger.debug("Got tx pre rollback");
+
+        logger.debug(NO_OPERATION, preRollBack.type());
+    }
+
+    @Override
+    public void onTxRollBack(ActualEvent<RollbackPayload> preRollBack) {
+        logger.debug("Got tx rollback");
+
         extract(preRollBack, payload -> {
 
             inProgressTX.decrementAndGet();
@@ -235,12 +243,6 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
                 return null;
             }));
         });
-    }
-
-    @Override
-    public void onTxRollBack(ActualEvent<RollbackPayload> preRollBack) {
-
-        logger.debug(NO_OPERATION, preRollBack.type());
     }
 
     /**
