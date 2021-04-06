@@ -78,8 +78,8 @@ public class ReplayServiceImpl implements ReplayService {
      * @return
      */
     @Override
-    public List<Changelog> getRelatedChangelog(long id, long endVersion, long startVersion) {
-        return changelogStorage.findById(id, endVersion, startVersion);
+    public List<Changelog> getRelatedChangelog(long id, long startVersion, long endVersion) {
+        return changelogStorage.findById(id, startVersion, endVersion);
     }
 
     @Override
@@ -105,7 +105,7 @@ public class ReplayServiceImpl implements ReplayService {
             startVersion = changeSnapshot.getVersion();
         }
 
-        List<Changelog> relatedChangelogs = this.getRelatedChangelog(id, endVersion, startVersion);
+        List<Changelog> relatedChangelogs = this.getRelatedChangelog(id, startVersion, endVersion);
         return Tuple.of(snapshotOp.orElse(null), relatedChangelogs);
     }
 

@@ -175,6 +175,7 @@ public class EntityClassHelper {
     public static OperationResult toOperationResult(EntityDomain entityDomain) {
         return OperationResult.newBuilder()
                 .setCode(OperationResult.Code.OK)
+                .setTotalRow(1)
                 .addQueryResult(toEntityUp(entityDomain.getEntity()))
                 .build();
     }
@@ -195,6 +196,7 @@ public class EntityClassHelper {
 
         return OperationResult.newBuilder()
                 .setCode(OperationResult.Code.OK)
+                .setTotalRow(result.size())
                 .addAllQueryResult(result)
                 .build();
     }

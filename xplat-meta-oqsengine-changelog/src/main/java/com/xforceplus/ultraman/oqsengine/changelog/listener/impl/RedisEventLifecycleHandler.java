@@ -121,10 +121,12 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
         logger.debug("Got tx create");
         extract(begin, payload -> {
             long txId = payload.getTxId();
+            String msg = payload.getMsg();
+            logger.debug("Got message {}", msg);
             QueueFlow<Void> flow = flowRegistry.flow(Long.toString(txId));
             CompletableFuture<Void> future = new CompletableFuture<>();
             flow.feed(Tuple.of(future, () -> {
-                createQueueIfNotExists(txId);
+                createQueueIfNotExists(txId, msg);
                 return null;
             }));
         });
@@ -247,10 +249,10 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
      * TODO which queue
      * create the tx queue
      */
-    private void createQueueIfNotExists(long txId) {
+    private void createQueueIfNotExists(long txId, String msg) {
         String queue = QUEUE_PREFIX.concat(Long.toString(txId));
         if(syncCommands.llen(queue) == 0) {
-            syncCommands.rpush(queue, "");
+            syncCommands.rpush(queue, msg);
         }
     }
 
@@ -351,9 +353,16 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
         String queue = QUEUE_PREFIX.concat(Long.toString(txId));
         List<String> orderedList = syncCommands.lrange(queue, 0, -1);
 
-        List<ChangedEvent> changedEvents = orderedList.stream().filter(x -> !StringUtils.isEmpty(x)).map(x -> {
+        String comment = "";
+        if(orderedList.size() > 0){
+            comment = orderedList.get(0);
+        }
+
+        String finalComment = comment;
+        List<ChangedEvent> changedEvents = orderedList.stream().skip(1).map(x -> {
             try {
                 ChangedEvent changedEvent = mapper.readValue(x, ChangedEvent.class);
+                changedEvent.setComment(finalComment);
                 return changedEvent;
             } catch (JsonProcessingException e) {
                 logger.error("{}", e);
