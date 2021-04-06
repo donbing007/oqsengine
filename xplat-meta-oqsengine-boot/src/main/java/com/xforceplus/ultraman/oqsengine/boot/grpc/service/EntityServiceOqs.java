@@ -104,13 +104,13 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             long transId;
 
             if (timeout.isPresent() && timeout.get() > 0) {
-                if(comment.isPresent()){
+                if (comment.isPresent()) {
                     transId = transactionManagementService.begin(timeout.get(), comment.get());
                 } else {
                     transId = transactionManagementService.begin(timeout.get());
                 }
             } else {
-                if(comment.isPresent()) {
+                if (comment.isPresent()) {
                     transId = transactionManagementService.begin(DEFAULT_TRANSACTION_TIMEOUT, comment.get());
                 } else {
                     transId = transactionManagementService.begin(DEFAULT_TRANSACTION_TIMEOUT);
