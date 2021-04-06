@@ -103,8 +103,8 @@ public class MultiLocalTransaction implements Transaction {
                 }
 
                 eventBus.notify(
-                    new ActualEvent(EventType.TX_PREPAREDNESS_COMMIT,
-                        new CommitPayload(id, commitId, msg, false)));
+                        new ActualEvent(EventType.TX_PREPAREDNESS_COMMIT,
+                                new CommitPayload(id, commitId, msg, false, this.getAccumulator().operationNumber())));
 
                 /**
                  * 主库事务为主事务,成功与否决定了OQS事务是否成功.
@@ -161,8 +161,8 @@ public class MultiLocalTransaction implements Transaction {
                 }
 
                 eventBus.notify(
-                    new ActualEvent(EventType.TX_COMMITED,
-                        new CommitPayload(id, commitId, msg, false)));
+                        new ActualEvent(EventType.TX_COMMITED,
+                                new CommitPayload(id, commitId, msg, false, this.getAccumulator().operationNumber())));
             } else {
 
                 if (logger.isDebugEnabled()) {
@@ -170,8 +170,8 @@ public class MultiLocalTransaction implements Transaction {
                 }
 
                 eventBus.notify(
-                    new ActualEvent(EventType.TX_PREPAREDNESS_COMMIT,
-                        new CommitPayload(id, commitId, msg, true)));
+                        new ActualEvent(EventType.TX_PREPAREDNESS_COMMIT,
+                                new CommitPayload(id, commitId, msg, true, this.getAccumulator().operationNumber())));
 
             }
         } finally {
@@ -188,8 +188,8 @@ public class MultiLocalTransaction implements Transaction {
         check();
 
         eventBus.notify(
-            new ActualEvent(EventType.TX_PREPAREDNESS_ROLLBACK,
-                new RollbackPayload(id, msg)));
+                new ActualEvent(EventType.TX_PREPAREDNESS_ROLLBACK,
+                        new RollbackPayload(id, getAccumulator().operationNumber(), msg)));
 
         try {
             List<SQLException> exHolder = new ArrayList<>(transactionResourceHolder.size());
@@ -204,8 +204,8 @@ public class MultiLocalTransaction implements Transaction {
             throwSQLExceptionIfNecessary(exHolder);
 
             eventBus.notify(
-                new ActualEvent(EventType.TX_ROLLBACKED,
-                    new RollbackPayload(id, msg)));
+                    new ActualEvent(EventType.TX_ROLLBACKED,
+                            new RollbackPayload(id, getAccumulator().operationNumber(), msg)));
         } finally {
             doEnd(false);
         }

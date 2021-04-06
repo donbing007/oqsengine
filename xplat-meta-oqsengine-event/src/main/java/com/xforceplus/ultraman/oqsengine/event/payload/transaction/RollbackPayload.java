@@ -11,11 +11,13 @@ import java.util.Objects;
 public class RollbackPayload implements Serializable {
 
     private long txId;
+    private long maxOpNumber;
     private String msg;
 
-    public RollbackPayload(long txId, String msg) {
+    public RollbackPayload(long txId, long maxOpNumber, String msg) {
         this.txId = txId;
         this.msg = msg;
+        this.maxOpNumber = maxOpNumber;
     }
 
     public long getTxId() {
@@ -26,30 +28,29 @@ public class RollbackPayload implements Serializable {
         return msg;
     }
 
+    public long getMaxOpNumber() {
+        return maxOpNumber;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof RollbackPayload)) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         RollbackPayload that = (RollbackPayload) o;
-        return getTxId() == that.getTxId() &&
-            Objects.equals(getMsg(), that.getMsg());
+        return txId == that.txId && maxOpNumber == that.maxOpNumber && Objects.equals(msg, that.msg);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getTxId(), getMsg());
+        return Objects.hash(txId, maxOpNumber, msg);
     }
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("TransactionRollbackPayload{");
-        sb.append("txId=").append(txId);
-        sb.append(", msg='").append(msg).append('\'');
-        sb.append('}');
-        return sb.toString();
+        return "RollbackPayload{" +
+                "txId=" + txId +
+                ", maxOpNumber=" + maxOpNumber +
+                ", msg='" + msg + '\'' +
+                '}';
     }
 }

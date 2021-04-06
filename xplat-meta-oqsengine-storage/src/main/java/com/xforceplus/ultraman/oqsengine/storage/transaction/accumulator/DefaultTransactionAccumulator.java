@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.LongStream;
 
 /**
  * 累加器的默认实现.
@@ -23,14 +22,16 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
 
     private AtomicLong buildNumbers = new AtomicLong(0);
     private AtomicLong replaceNumbers = new AtomicLong(0);
-    private AtomicLong deleteNumbers = new AtomicLong(0);
+    private AtomicLong deleteNumbers = new AtomicLong(-1);
 
     private volatile Set<Long> processIds = null;
     private final Object processIdsLock = new Object();
+    private AtomicLong opNumber = new AtomicLong(0);
 
     @Override
     public void accumulateBuild(long id) {
         buildNumbers.incrementAndGet();
+        opNumber.incrementAndGet();
 
         if (logger.isDebugEnabled()) {
             logger.debug("Transaction Accumulator: create number +1.[{}]", id);
@@ -40,6 +41,7 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
     @Override
     public void accumulateReplace(long id) {
         replaceNumbers.incrementAndGet();
+        opNumber.incrementAndGet();
 
         getProcessIdsIdsSet(true).add(id);
 
@@ -53,6 +55,8 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
         deleteNumbers.incrementAndGet();
 
         getProcessIdsIdsSet(true).add(id);
+
+        opNumber.incrementAndGet();
 
         if (logger.isDebugEnabled()) {
             logger.debug("Transaction Accumulator: delete number +1.[{}]", id);
@@ -90,6 +94,12 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
         buildNumbers.set(0);
         replaceNumbers.set(0);
         deleteNumbers.set(0);
+        opNumber.set(0);
+    }
+
+    @Override
+    public long operationNumber() {
+        return opNumber.get();
     }
 
     private Set<Long> getProcessIdsIdsSet(boolean build) {

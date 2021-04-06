@@ -16,12 +16,14 @@ public class CommitPayload implements Serializable {
     private long commitId;
     private String msg;
     private boolean readonly;
+    private long maxOpNumber;
 
-    public CommitPayload(long txId, long commitId, String msg, boolean readonly) {
+    public CommitPayload(long txId, long commitId, String msg, boolean readonly, long maxOpNumber) {
         this.txId = txId;
         this.commitId = commitId;
         this.msg = msg;
         this.readonly = readonly;
+        this.maxOpNumber = maxOpNumber;
     }
 
     public long getTxId() {
@@ -36,36 +38,39 @@ public class CommitPayload implements Serializable {
         return Optional.ofNullable(msg);
     }
 
+    public long getMaxOpNumber() {
+        return maxOpNumber;
+    }
+
     public boolean isReadonly() {
         return readonly;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof CommitPayload)) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         CommitPayload that = (CommitPayload) o;
-        return getTxId() == that.getTxId() &&
-            getCommitId() == that.getCommitId() &&
-            Objects.equals(getMsg(), that.getMsg());
+        return txId == that.txId
+                && commitId == that.commitId
+                && readonly == that.readonly
+                && maxOpNumber == that.maxOpNumber
+                && Objects.equals(msg, that.msg);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getTxId(), getCommitId(), getMsg());
+        return Objects.hash(txId, commitId, msg, readonly, maxOpNumber);
     }
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("TransactionPayload{");
-        sb.append("txId=").append(txId);
-        sb.append(", commitId=").append(commitId);
-        sb.append(", msg='").append(msg).append('\'');
-        sb.append('}');
-        return sb.toString();
+        return "CommitPayload{" +
+                "txId=" + txId +
+                ", commitId=" + commitId +
+                ", msg='" + msg + '\'' +
+                ", readonly=" + readonly +
+                ", maxOpNumber=" + maxOpNumber +
+                '}';
     }
 }

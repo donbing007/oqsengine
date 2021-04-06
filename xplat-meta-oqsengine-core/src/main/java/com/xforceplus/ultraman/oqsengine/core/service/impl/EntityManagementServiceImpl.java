@@ -141,7 +141,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 long uncommentSize = commitIdStatusService.size();
                 if (uncommentSize > allowMaxUnSyncCommitIdSize) {
                     setReadOnlyMode(
-                        String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
+                            String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
                     return;
                 }
 
@@ -361,17 +361,19 @@ public class EntityManagementServiceImpl implements EntityManagementService {
             return;
         }
 
+        long number = tx.getAccumulator().operationNumber();
+
         switch (type) {
             case ENTITY_BUILD: {
-                eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(txId, entities[0])));
+                eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(txId, number, entities[0])));
                 break;
             }
             case ENTITY_REPLACE: {
-                eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, new ReplacePayload(txId, entities[0])));
+                eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, new ReplacePayload(txId, number, entities[0])));
                 break;
             }
             case ENTITY_DELETE: {
-                eventBus.notify(new ActualEvent(EventType.ENTITY_DELETE, new DeletePayload(txId, entities[0])));
+                eventBus.notify(new ActualEvent(EventType.ENTITY_DELETE, new DeletePayload(txId, number, entities[0])));
                 break;
             }
             default: {

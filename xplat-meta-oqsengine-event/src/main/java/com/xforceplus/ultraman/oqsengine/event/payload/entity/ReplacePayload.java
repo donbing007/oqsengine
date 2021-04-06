@@ -8,7 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
  * @since 1.8
  */
 public class ReplacePayload extends BuildPayload {
-    public ReplacePayload(long txId, IEntity entity) {
-        super(txId, entity);
+    public ReplacePayload(long txId, long number, IEntity entity) {
+        super(txId, number, entity);
     }
 }
