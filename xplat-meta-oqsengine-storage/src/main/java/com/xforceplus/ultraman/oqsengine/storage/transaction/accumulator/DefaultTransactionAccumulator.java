@@ -22,11 +22,11 @@ public class DefaultTransactionAccumulator implements TransactionAccumulator {
 
     private AtomicLong buildNumbers = new AtomicLong(0);
     private AtomicLong replaceNumbers = new AtomicLong(0);
-    private AtomicLong deleteNumbers = new AtomicLong(-1);
+    private AtomicLong deleteNumbers = new AtomicLong(0);
 
     private volatile Set<Long> processIds = null;
     private final Object processIdsLock = new Object();
-    private AtomicLong opNumber = new AtomicLong(0);
+    private AtomicLong opNumber = new AtomicLong(-1);
 
     @Override
     public void accumulateBuild(long id) {

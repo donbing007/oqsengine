@@ -7,6 +7,8 @@ import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.TransactionalChangelogEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.ValueWrapper;
 import com.xforceplus.ultraman.oqsengine.changelog.listener.EventLifecycleAware;
+import com.xforceplus.ultraman.oqsengine.changelog.listener.flow.FlowRegistry;
+import com.xforceplus.ultraman.oqsengine.changelog.listener.flow.QueueFlow;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper;
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
@@ -23,6 +25,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.vavr.Tuple;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +34,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -59,14 +64,18 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
 
     private MetaManager metaManager;
 
+    private FlowRegistry flowRegistry;
+
     @Resource
     private EventBus eventBus;
 
-    public RedisEventLifecycleHandler(RedisClient redisClient, ChangelogHandler changelogHandler, ObjectMapper mapper) {
+    public RedisEventLifecycleHandler(RedisClient redisClient, ChangelogHandler changelogHandler, ObjectMapper mapper, FlowRegistry flowRegistry, MetaManager manager) {
         this.redisClient = redisClient;
         this.syncCommands = redisClient.connect().sync();
         this.changelogHandler = changelogHandler;
         this.mapper = mapper;
+        this.flowRegistry = flowRegistry;
+        this.metaManager = manager;
     }
 
     @PostConstruct
@@ -109,25 +118,43 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
      */
     @Override
     public void onTxCreate(ActualEvent<BeginPayload> begin) {
+        logger.debug("Got tx create");
         extract(begin, payload -> {
             long txId = payload.getTxId();
-            createQueueIfNotExists(txId);
+            QueueFlow<Void> flow = flowRegistry.flow(Long.toString(txId));
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            flow.feed(Tuple.of(future, () -> {
+                createQueueIfNotExists(txId);
+                return null;
+            }));
         });
     }
 
     @Override
     public void onEntityCreate(ActualEvent<BuildPayload> create) {
+        logger.debug("Got entity create");
         extract(create, createPayload -> {
             long txId = createPayload.getTxId();
-            pushQueue(txId, entityToChangedEvent(createPayload.getEntity()));
+            QueueFlow<Void> flow = flowRegistry.flow(Long.toString(txId));
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            flow.feed(Tuple.of(future, () -> {
+                pushQueue(txId, entityToChangedEvent(createPayload.getEntity()));
+                return null;
+            }));
         });
     }
 
     @Override
     public void onEntityUpdate(ActualEvent<ReplacePayload> update) {
+        logger.debug("Got entity update");
         extract(update, updatePayload -> {
             long txId = updatePayload.getTxId();
-            pushQueue(txId, entityToChangedEvent(updatePayload.getEntity()));
+            QueueFlow<Void> flow = flowRegistry.flow(Long.toString(txId));
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            flow.feed(Tuple.of(future, () -> {
+                pushQueue(txId, entityToChangedEvent(updatePayload.getEntity()));
+                return null;
+            }));
         });
     }
 
@@ -143,39 +170,55 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
 //            pushQueue(txId, entityToChangedEvent(deletePayload.getEntity()));
 //        });
 
+        logger.debug("Got entity delete");
         //TODO if delete should consider in changelog
     }
 
     @Override
     public void onTxPreCommit(ActualEvent<CommitPayload> preCommit) {
-        logger.info(NO_OPERATION, preCommit.type());
+        logger.debug(NO_OPERATION, preCommit.type());
     }
 
     @Override
     public void onTxCommitted(ActualEvent<CommitPayload> committed) {
+
+        logger.debug("Got tx committed");
+
         //trigger a combine
         extract(committed, commitPayload -> {
             long txId = commitPayload.getTxId();
             long commitId = commitPayload.getCommitId();
             long time = committed.time();
-            Optional<String> msg = commitPayload.getMsg();
-            List<ChangedEvent> changedEvents = popQueue(txId);
-            TransactionalChangelogEvent changelogEvent = toTransactionalChangelogEvent(commitId, time, msg.orElse(""), changedEvents);
-            changelogHandler.handle(changelogEvent);
-            dropQueue(txId);
+
+            QueueFlow<Void> flow = flowRegistry.flow(Long.toString(txId));
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            flow.feed(Tuple.of(future, () -> {
+                Optional<String> msg = commitPayload.getMsg();
+                List<ChangedEvent> changedEvents = popQueue(txId);
+                TransactionalChangelogEvent changelogEvent = toTransactionalChangelogEvent(commitId, time, msg.orElse(""), changedEvents);
+                changelogHandler.handle(changelogEvent);
+                dropQueue(txId);
+                return null;
+            }));
         });
     }
 
     @Override
     public void onTxPreRollBack(ActualEvent<RollbackPayload> preRollBack) {
-        logger.info(NO_OPERATION, preRollBack.type());
+        logger.debug(NO_OPERATION, preRollBack.type());
     }
 
     @Override
     public void onTxRollBack(ActualEvent<RollbackPayload> preRollBack) {
+        logger.debug("Got tx rollback");
         extract(preRollBack, payload -> {
             long txId = payload.getTxId();
-            dropQueue(txId);
+            QueueFlow<Void> flow = flowRegistry.flow(Long.toString(txId));
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            flow.feed(Tuple.of(future, () -> {
+                dropQueue(txId);
+                return null;
+            }));
         });
     }
 
