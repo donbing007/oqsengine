@@ -97,4 +97,18 @@ public class MetricsDefine {
      */
     public static final String MODE = PREFIX + ".mode";
 
+    /**
+     * 当前未进入消费流的
+     */
+    public static final String CHANGELOG_IN_QUEUE = PREFIX + ".changelog.in-queue";
+
+    /**
+     * 当前未进入消费流的
+     */
+    public static final String CHANGELOG_IN_STREAM = PREFIX + ".changelog.in-stream";
+
+    /**
+     * 当前处理的TX
+     */
+    public static final String CHANGELOG_CONCURRENT_TX = PREFIX + ".changelog.in-progress-tx";
 }

@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.changelog.listener.EventLifecycleAware;
 import com.xforceplus.ultraman.oqsengine.changelog.listener.flow.FlowRegistry;
 import com.xforceplus.ultraman.oqsengine.changelog.listener.flow.QueueFlow;
 import com.xforceplus.ultraman.oqsengine.changelog.utils.ChangelogHelper;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
@@ -25,6 +26,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;
 import io.vavr.Tuple;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -35,7 +38,7 @@ import javax.annotation.Resource;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -65,6 +68,8 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
     private MetaManager metaManager;
 
     private FlowRegistry flowRegistry;
+
+    private AtomicInteger inProgressTX = Metrics.gauge(MetricsDefine.CHANGELOG_CONCURRENT_TX, new AtomicInteger(0));
 
     @Resource
     private EventBus eventBus;
@@ -120,6 +125,7 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
     public void onTxCreate(ActualEvent<BeginPayload> begin) {
         logger.debug("Got tx create");
         extract(begin, payload -> {
+            inProgressTX.getAndIncrement();
             long txId = payload.getTxId();
             String msg = payload.getMsg();
             logger.debug("Got message {}", msg);
@@ -176,21 +182,22 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
         //TODO if delete should consider in changelog
     }
 
+    /**
+     * move committed logic here
+     * @param preCommit
+     */
     @Override
     public void onTxPreCommit(ActualEvent<CommitPayload> preCommit) {
+
         logger.debug(NO_OPERATION, preCommit.type());
-    }
-
-    @Override
-    public void onTxCommitted(ActualEvent<CommitPayload> committed) {
-
-        logger.debug("Got tx committed");
 
         //trigger a combine
-        extract(committed, commitPayload -> {
+        extract(preCommit, commitPayload -> {
             long txId = commitPayload.getTxId();
             long commitId = commitPayload.getCommitId();
-            long time = committed.time();
+            long time = preCommit.time();
+
+            inProgressTX.decrementAndGet();
 
             QueueFlow<Void> flow = flowRegistry.flow(Long.toString(txId));
             CompletableFuture<Void> future = new CompletableFuture<>();
@@ -205,17 +212,21 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
                 return null;
             }));
         });
+
+    }
+
+    @Override
+    public void onTxCommitted(ActualEvent<CommitPayload> committed) {
+        logger.debug("Got tx committed");
     }
 
     @Override
     public void onTxPreRollBack(ActualEvent<RollbackPayload> preRollBack) {
-        logger.debug(NO_OPERATION, preRollBack.type());
-    }
-
-    @Override
-    public void onTxRollBack(ActualEvent<RollbackPayload> preRollBack) {
-        logger.debug("Got tx rollback");
+        logger.debug("Got tx pre rollback");
         extract(preRollBack, payload -> {
+
+            inProgressTX.decrementAndGet();
+
             long txId = payload.getTxId();
             QueueFlow<Void> flow = flowRegistry.flow(Long.toString(txId));
             CompletableFuture<Void> future = new CompletableFuture<>();
@@ -224,6 +235,12 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
                 return null;
             }));
         });
+    }
+
+    @Override
+    public void onTxRollBack(ActualEvent<RollbackPayload> preRollBack) {
+
+        logger.debug(NO_OPERATION, preRollBack.type());
     }
 
     /**
@@ -270,13 +287,14 @@ public class RedisEventLifecycleHandler implements EventLifecycleAware {
         transactionalChangelogEvent.setCommitId(commitId);
 
         //update commitId
-        changedEventList.forEach( x -> x.setCommitId(commitId));
-
+        changedEventList.forEach( x -> {
+            x.setCommitId(commitId);
+            x.setUsername(getUsername(x));
+        });
 
         Map<Long, Optional<ChangedEvent>> groupedEvent = changedEventList
                 .stream()
                 .collect(Collectors.groupingBy(x -> x.getId(), Collectors.reducing((prev, next) -> {
-
                     ChangedEvent changedEvent = new ChangedEvent();
                     changedEvent.setEntityClassId(prev.getEntityClassId());
                     changedEvent.setComment(comment);
