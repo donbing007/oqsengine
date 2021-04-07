@@ -14,30 +14,47 @@ import java.util.Objects;
  */
 public class BuildPayload implements Serializable {
 
+    private long txId;
+    private long number;
     private IEntity entity;
 
-    public BuildPayload(IEntity entity) {
+    public BuildPayload(long txId, long number, IEntity entity) {
+        this.txId = txId;
         this.entity = entity;
+        this.number = number;
     }
 
     public IEntity getEntity() {
         return entity;
     }
 
+    public long getTxId() {
+        return txId;
+    }
+
+    public long getNumber() {
+        return number;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof BuildPayload)) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         BuildPayload that = (BuildPayload) o;
-        return Objects.equals(getEntity(), that.getEntity());
+        return txId == that.txId && number == that.number && Objects.equals(entity, that.entity);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getEntity());
+        return Objects.hash(txId, number, entity);
+    }
+
+    @Override
+    public String toString() {
+        return "BuildPayload{" +
+                "txId=" + txId +
+                ", number=" + number +
+                ", entity=" + entity +
+                '}';
     }
 }

@@ -21,10 +21,19 @@ public interface TransactionManager {
 
     /**
      * 创建一个事务,在指定时间后超时.
+     *
      * @param timeoutMs 超时时间.(毫秒)
      * @return 新事务.
      */
     Transaction create(long timeoutMs);
+
+    /**
+     * 创建一个事务,指定了事务消息,并使用默认的超时时间.
+     *
+     * @param message 事务说明消息.
+     * @return 新事务.
+     */
+    Transaction create(String message);
 
     /**
      * 创建一个事务,在指定时间后超时.

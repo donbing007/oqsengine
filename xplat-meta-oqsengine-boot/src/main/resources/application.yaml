@@ -11,9 +11,10 @@ server:
 
 logging:
   level:
-    root: debug
+    root: info
     io:
       lettuce: info
+    com.xforceplus.ultraman.oqsengine.changelog: debug
 
 transaction:
   timeoutMs: 3000
@@ -67,7 +68,7 @@ storage:
     write:
       name: "oqsindex"
       shard:
-        enabled: true
+        enabled: false
         size: 3
   devOps:
     cdc:
@@ -141,12 +142,19 @@ cdc:
 meta:
   grpc:
     type: client
-    host: localhost
+    host: 120.55.249.44
     #host: 169.254.106.127
-    port: 8081
+#    host: localhost
+#    port: 8081
+    port: 23145
     seconds:
       heartbeatTimeout: 30
       delaytaskTimeout: 30
       keepAliveDuration: 5
       monitorDuration: 1
       reconnectDuration: 5
+
+changelog:
+  enabled: true
+  queue: local
+

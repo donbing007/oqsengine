@@ -23,6 +23,7 @@ import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
 import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import com.xforceplus.ultraman.oqsengine.storage.executor.TransactionExecutor;
 import com.xforceplus.ultraman.oqsengine.storage.master.MasterStorage;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.Transaction;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
@@ -140,7 +141,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 long uncommentSize = commitIdStatusService.size();
                 if (uncommentSize > allowMaxUnSyncCommitIdSize) {
                     setReadOnlyMode(
-                        String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
+                            String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
                     return;
                 }
 
@@ -188,7 +189,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         try {
 
-            return (ResultStatus) transactionExecutor.execute((resource, hint) -> {
+            return (ResultStatus) transactionExecutor.execute((tx, resource, hint) -> {
 
                 if (entity.id() <= 0) {
                     long newId = idGenerator.next();
@@ -201,7 +202,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return ResultStatus.UNCREATED;
                 }
 
-                eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(entity)));
+                noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
                 return ResultStatus.SUCCESS;
 
@@ -230,7 +231,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
         try {
-            return (ResultStatus) transactionExecutor.execute((resource, hint) -> {
+            return (ResultStatus) transactionExecutor.execute((tx, resource, hint) -> {
 
                 Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
                 if (!targetEntityOp.isPresent()) {
@@ -247,7 +248,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return ResultStatus.CONFLICT;
                 }
 
-                eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, new ReplacePayload(entity, targetEntity)));
+                noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
 
                 return ResultStatus.SUCCESS;
             });
@@ -272,7 +273,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
         try {
-            return (ResultStatus) transactionExecutor.execute((resource, hint) -> {
+            return (ResultStatus) transactionExecutor.execute((tx, resource, hint) -> {
 
                 if (!masterStorage.exist(entity.id())) {
                     return ResultStatus.NOT_FOUND;
@@ -283,7 +284,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return ResultStatus.CONFLICT;
                 }
 
-                eventBus.notify(new ActualEvent(EventType.ENTITY_DELETE, new DeletePayload(entity)));
+                noticeEvent(tx, EventType.ENTITY_DELETE, entity);
 
                 return ResultStatus.SUCCESS;
             });
@@ -344,6 +345,40 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
         if (logger.isWarnEnabled()) {
             logger.warn("Set to read-only mode because [{}].", msg);
+        }
+    }
+
+    /**
+     * 发布事件.
+     * entities 在 ENTITY_REPLACE 事件中会传递两个IEntity实例,第一个表示旧的,第二个表示新的.
+     */
+    private void noticeEvent(Transaction tx, EventType type, IEntity... entities) {
+        long txId = 0;
+        if (tx != null) {
+            txId = tx.id();
+        } else {
+            logger.warn("No transaction found, object change event cannot be published.");
+            return;
+        }
+
+        long number = tx.getAccumulator().operationNumber();
+
+        switch (type) {
+            case ENTITY_BUILD: {
+                eventBus.notify(new ActualEvent(EventType.ENTITY_BUILD, new BuildPayload(txId, number, entities[0])));
+                break;
+            }
+            case ENTITY_REPLACE: {
+                eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, new ReplacePayload(txId, number, entities[0])));
+                break;
+            }
+            case ENTITY_DELETE: {
+                eventBus.notify(new ActualEvent(EventType.ENTITY_DELETE, new DeletePayload(txId, number, entities[0])));
+                break;
+            }
+            default: {
+                logger.warn("Cannot handle event type, cannot publish event.[{}]", type.name());
+            }
         }
     }
 

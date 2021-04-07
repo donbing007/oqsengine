@@ -1,8 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.transaction.accumulator;
 
 import java.util.Set;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 /**
  * 事务累加器.
@@ -63,4 +61,11 @@ public interface TransactionAccumulator {
      * 重置累加器.
      */
     public void reset();
+
+    /**
+     * 当前操作序号,从0开始.保证有序且偏序.
+     *
+     * @return 当前最大序号.
+     */
+    public long operationNumber();
 }

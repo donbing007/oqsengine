@@ -9,10 +9,13 @@ import com.xforceplus.ultraman.oqsengine.changelog.domain.ChangedEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.domain.TransactionalChangelogEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.event.ChangelogEvent;
 import com.xforceplus.ultraman.oqsengine.changelog.gateway.Gateway;
+import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +30,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
@@ -103,6 +108,13 @@ public class RedisChangelogHandler<T> implements ChangelogHandler<T> {
                     "    end\n" +
                     "    return result;\n" +
                     "end; \n";
+
+    //in queue
+    private AtomicLong inQueue = Metrics.gauge(MetricsDefine.CHANGELOG_IN_QUEUE, new AtomicLong(0));
+
+    //in stream
+    private AtomicLong inStream = Metrics.gauge(MetricsDefine.CHANGELOG_IN_STREAM, new AtomicLong(0));
+
 
 
     /**
@@ -259,11 +271,26 @@ public class RedisChangelogHandler<T> implements ChangelogHandler<T> {
 
     private void startMover() {
         mover.scheduleAtFixedRate(() -> {
+
+            //read current queue and stream
+            Long zcount = syncCommands.zcount(queueName, Range.unbounded());
+            Long xlen = syncCommands.xlen(queueStreamName);
+
+            inQueue.set(zcount);
+            inStream.set(xlen);
+
             if (isLeader.get()) {
                 logger.info("{}:Leader is me", nodeName);
                 doMove();
             }
         }, initDelay, period, TimeUnit.SECONDS);
+    }
+
+    /**
+     * update metrics
+     */
+    private void updateMetrics(){
+
     }
 
 
@@ -337,9 +364,15 @@ public class RedisChangelogHandler<T> implements ChangelogHandler<T> {
          * dispatch the command
          */
         xreadgroup.forEach(x -> {
+            syncCommands.xack(queueStreamName, "group", x.getId());
             toChangeCommandList(x).forEach(command -> {
                 logger.info("got changeCommand and deliver to the gateway");
-                gateway.fireAndForget(command, new HashMap<>());
+                try {
+                    gateway.fireAndForget(command, new HashMap<>());
+                } catch (Exception ex){
+                    logger.error("{}", ex);
+                }
+
                 syncCommands.xack(queueStreamName, "group", x.getId());
             });
         });

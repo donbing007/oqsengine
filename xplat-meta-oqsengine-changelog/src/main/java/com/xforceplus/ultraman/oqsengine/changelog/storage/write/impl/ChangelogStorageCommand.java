@@ -41,43 +41,45 @@ public class ChangelogStorageCommand {
      * @return
      * @throws SQLException
      */
-    public List<Changelog> findChangelogById(DataSource dataSource, long id, long endVersion, long startVersion) throws SQLException {
+    public List<Changelog> findChangelogById(DataSource dataSource, long id, long startVersion, long endVersion) throws SQLException {
 
         String sql;
-        if(endVersion < 0){
-            sql = String.format(SQL.FIND_SQL, tableName, id, startVersion);
+        if(startVersion < 0){
+            sql = String.format(SQL.FIND_SQL, tableName, id, endVersion);
         } else {
-            sql = String.format(SQL.FIND_SQL_VERSION, tableName, id, endVersion, startVersion);
+            sql = String.format(SQL.FIND_SQL_VERSION, tableName, id, startVersion, endVersion);
         }
 
-        Connection connection = dataSource.getConnection();
         List<Changelog> retList = new LinkedList<>();
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            try (ResultSet resultSet = st.executeQuery()){
-                while(resultSet.next()){
-                    long cid = resultSet.getLong("cid");
-                    long recordId = resultSet.getLong("id");
-                    String comment = resultSet.getString("comment");
-                    long createTime = resultSet.getLong("create_time");
-                    String json = resultSet.getString("changes");
-                    long entity = resultSet.getLong("entity");
-                    long version = resultSet.getLong("version");
+        try(Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement st = connection.prepareStatement(sql)) {
+                try (ResultSet resultSet = st.executeQuery()) {
+                    while (resultSet.next()) {
+                        long cid = resultSet.getLong("cid");
+                        long recordId = resultSet.getLong("id");
+                        String comment = resultSet.getString("comment");
+                        long createTime = resultSet.getLong("create_time");
+                        String json = resultSet.getString("changes");
+                        long entity = resultSet.getLong("entity");
+                        long version = resultSet.getLong("version");
 
-                    Changelog changelog = new Changelog();
-                    changelog.setcId(cid);
-                    changelog.setId(recordId);
-                    changelog.setComment(comment);
-                    changelog.setCreateTime(createTime);
-                    changelog.setVersion(version);
-                    changelog.setEntityClass(entity);
-                    List<ChangeValue> changeValues = Collections.emptyList();
-                    try {
-                        changeValues = mapper.readValue(json, new TypeReference<List<ChangeValue>>() {});
-                    } catch (JsonProcessingException e) {
-                        e.printStackTrace();
+                        Changelog changelog = new Changelog();
+                        changelog.setcId(cid);
+                        changelog.setId(recordId);
+                        changelog.setComment(comment);
+                        changelog.setCreateTime(createTime);
+                        changelog.setVersion(version);
+                        changelog.setEntityClass(entity);
+                        List<ChangeValue> changeValues = Collections.emptyList();
+                        try {
+                            changeValues = mapper.readValue(json, new TypeReference<List<ChangeValue>>() {
+                            });
+                        } catch (JsonProcessingException e) {
+                            e.printStackTrace();
+                        }
+                        changelog.setChangeValues(changeValues);
+                        retList.add(changelog);
                     }
-                    changelog.setChangeValues(changeValues);
-                    retList.add(changelog);
                 }
             }
         }

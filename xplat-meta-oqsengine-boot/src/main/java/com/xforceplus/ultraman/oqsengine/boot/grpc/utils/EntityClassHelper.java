@@ -111,6 +111,7 @@ public class EntityClassHelper {
         builder.addAllValues(entity.entityValue().values().stream()
                 .map(EntityClassHelper::toValueUp)
                 .collect(Collectors.toList()));
+        builder.setId(entity.entityClassRef().getId());
         return builder.build();
     }
 
@@ -174,6 +175,7 @@ public class EntityClassHelper {
     public static OperationResult toOperationResult(EntityDomain entityDomain) {
         return OperationResult.newBuilder()
                 .setCode(OperationResult.Code.OK)
+                .setTotalRow(1)
                 .addQueryResult(toEntityUp(entityDomain.getEntity()))
                 .build();
     }
@@ -194,6 +196,7 @@ public class EntityClassHelper {
 
         return OperationResult.newBuilder()
                 .setCode(OperationResult.Code.OK)
+                .setTotalRow(result.size())
                 .addAllQueryResult(result)
                 .build();
     }

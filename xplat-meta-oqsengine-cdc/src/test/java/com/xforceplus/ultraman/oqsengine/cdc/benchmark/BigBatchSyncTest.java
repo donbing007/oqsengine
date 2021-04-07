@@ -6,17 +6,12 @@ import com.xforceplus.ultraman.oqsengine.cdc.consumer.ConsumerRunner;
 import com.xforceplus.ultraman.oqsengine.cdc.consumer.callback.MockRedisCallbackService;
 import com.xforceplus.ultraman.oqsengine.cdc.metrics.CDCMetricsService;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
-import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
-import com.xforceplus.ultraman.oqsengine.storage.master.executor.AbstractMasterExecutor;
-import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.testcontainer.container.ContainerStarter;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import static com.xforceplus.ultraman.oqsengine.cdc.EntityClassBuilder.getEntityClass;
@@ -100,41 +95,9 @@ public class BigBatchSyncTest extends CDCAbstractContainer {
         mockRedisCallbackService.reset();
         Thread.sleep(5_000);
         Assert.assertEquals(ZERO, mockRedisCallbackService.getExecuted().get());
-
-//        //  额外测试单条数据不存在父类的情况,需要从主库查询
-//        IEntity entity = testNoPref(333L);
-//        Transaction tx = transactionManager.create();
-//        transactionManager.bind(tx.id());
-//        try {
-//            build(entity);
-//        } catch (Exception e) {
-//            tx.rollback();
-//            throw e;
-//        }
-//        tx.commit();
-//        transactionManager.finish();
-//
-//        while (true) {
-//            if (mockRedisCallbackService.getExecuted().get() == 1) {
-//                break;
-//            }
-//        }
-//        Assert.assertTrue(mockRedisCallbackService.getExecuted().get() > 0);
     }
-//
-//    private IEntity testNoPref(long id) {
-//        IEntityValue values = new EntityValue(id);
-//        values.addValues(Arrays.asList(new LongValue(longField, 1L), new StringValue(stringField, "v1"),
-//                new BooleanValue(boolField, true),
-//                new DateTimeValue(dateTimeField, LocalDateTime.of(2020, 1, 1, 0, 0, 1)),
-//                new DecimalValue(decimalField, new BigDecimal("0.0")), new EnumValue(enumField, "1"),
-//                new StringsValue(stringsField, "value1", "value2")));
-//        return new Entity(id, entityClass, values, new EntityFamily(2, 0), 0, 0);
-//    }
 
     private void initData() throws SQLException {
-//        Transaction tx = transactionManager.create();
-//        transactionManager.bind(tx.id());
         try {
             int i = 1;
             for (; i < maxTestSize; ) {
@@ -145,57 +108,8 @@ public class BigBatchSyncTest extends CDCAbstractContainer {
                 expectedSize += entities.length;
                 i += entities.length;
             }
-//            tx.commit();
         } catch (Exception e) {
-//            tx.rollback();
             throw e;
-        } finally {
-//            transactionManager.finish();
-        }
-    }
-
-
-    private int replace(long commitId) throws SQLException {
-        return (Integer) masterTransactionExecutor.execute(
-            (resource, hint) -> {
-                BigBatchSyncExecutor bigBatchSyncExecutor = new BigBatchSyncExecutor(tableName, resource, 3000);
-                return bigBatchSyncExecutor.execute(commitId);
-            });
-    }
-
-    private class BigBatchSyncExecutor extends AbstractMasterExecutor<Long, Integer> {
-
-        public BigBatchSyncExecutor(String tableName, TransactionResource<Connection> resource, long timeoutMs) {
-            super(tableName, resource, timeoutMs);
-        }
-
-        @Override
-        public Integer execute(Long commitId) throws SQLException {
-            String sql = buildSQL();
-            PreparedStatement st = getResource().value().prepareStatement(sql);
-            st.setLong(1, commitId);
-
-            checkTimeout(st);
-
-            if (logger.isDebugEnabled()) {
-                logger.debug(st.toString());
-            }
-
-            try {
-                return st.executeUpdate();
-            } finally {
-                if (st != null) {
-                    st.close();
-                }
-            }
-        }
-
-        private String buildSQL() {
-            StringBuilder sql = new StringBuilder();
-            sql.append("UPDATE ").append(getTableName())
-                .append(" SET ")
-                .append(FieldDefine.COMMITID).append("=").append("?");
-            return sql.toString();
         }
     }
 }

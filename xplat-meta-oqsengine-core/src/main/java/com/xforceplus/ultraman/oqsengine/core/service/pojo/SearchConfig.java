@@ -65,7 +65,9 @@ public class SearchConfig {
                 '}';
     }
 
-
+    /**
+     * builder
+     */
     public static final class Builder {
         private Page page = Page.emptyPage();
         private Sort sort = Sort.buildOutOfSort();

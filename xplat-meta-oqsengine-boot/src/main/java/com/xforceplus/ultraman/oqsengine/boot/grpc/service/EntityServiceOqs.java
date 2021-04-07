@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.ConditionHelper.toConditions;
 import static com.xforceplus.ultraman.oqsengine.boot.grpc.utils.EntityClassHelper.*;
+import static com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService.DEFAULT_TRANSACTION_TIMEOUT;
 
 /**
  * grpc server
@@ -99,12 +100,21 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         try {
 
             Optional<Integer> timeout = metadata.getText("timeout").map(Integer::parseInt);
+            Optional<String> comment = metadata.getText("comment");
             long transId;
 
             if (timeout.isPresent() && timeout.get() > 0) {
-                transId = transactionManagementService.begin(timeout.get());
+                if (comment.isPresent()) {
+                    transId = transactionManagementService.begin(timeout.get(), comment.get());
+                } else {
+                    transId = transactionManagementService.begin(timeout.get());
+                }
             } else {
-                transId = transactionManagementService.begin();
+                if (comment.isPresent()) {
+                    transId = transactionManagementService.begin(DEFAULT_TRANSACTION_TIMEOUT, comment.get());
+                } else {
+                    transId = transactionManagementService.begin(DEFAULT_TRANSACTION_TIMEOUT);
+                }
             }
 
             return CompletableFuture.completedFuture(OperationResult.newBuilder()
@@ -865,10 +875,10 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 return ChangelogResponseList.newBuilder().addAllResponse(changeVersions.stream().map(x ->
                         ChangelogResponse
                                 .newBuilder()
-                                .setComment(x.getComment())
+                                .setComment(Optional.ofNullable(x.getComment()).orElse(""))
                                 .setId(x.getId())
                                 .setSource(x.getSource())
-                                .setUsername(x.getUsername())
+                                .setUsername(Optional.ofNullable(x.getUsername()).orElse(""))
                                 .setVersion(x.getVersion())
                                 .setTimestamp(x.getTimestamp())
                                 .build()).collect(Collectors.toList())).build();

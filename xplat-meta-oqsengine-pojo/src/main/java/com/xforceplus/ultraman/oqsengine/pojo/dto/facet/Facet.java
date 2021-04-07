@@ -22,16 +22,14 @@ public class Facet {
         return new Facet();
     }
 
-    public Facet() {
+    private Facet() {
     }
 
-    public Facet(Set<IEntityField> fields) {
-        lazyInit();
-
-        fields.addAll(fields);
-
-    }
-
+    /**
+     * 获得分面的字段信息.
+     *
+     * @return 分面的字段列表.
+     */
     public Set<IEntityField> getFields() {
         if (fields == null) {
             return Collections.emptySet();
@@ -40,6 +38,12 @@ public class Facet {
         }
     }
 
+    /**
+     * 为分面增加目标字段.
+     *
+     * @param field 目标字段.
+     * @return 当前分面.
+     */
     public Facet addField(IEntityField field) {
 
         lazyInit();
@@ -49,6 +53,7 @@ public class Facet {
         return this;
     }
 
+    // 延迟初始化
     private void lazyInit() {
         if (fields == null) {
             fields = new HashSet<>();

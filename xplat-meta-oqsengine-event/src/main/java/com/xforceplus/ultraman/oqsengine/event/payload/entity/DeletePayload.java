@@ -9,7 +9,8 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
  */
 public class DeletePayload extends BuildPayload {
 
-    public DeletePayload(IEntity entity) {
-        super(entity);
+    public DeletePayload(long txId, long number, IEntity entity) {
+        super(txId, number, entity);
     }
+
 }

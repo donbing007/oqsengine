@@ -96,7 +96,7 @@ public class SQLMasterStorage implements MasterStorage {
             throws SQLException {
         long startMs = System.currentTimeMillis();
         try {
-            return (Collection<EntityRef>) transactionExecutor.execute((resource, hint) -> {
+            return (Collection<EntityRef>) transactionExecutor.execute((tx, resource, hint) -> {
                 return QueryLimitCommitidByConditionsExecutor.build(
                         tableName,
                         resource,
@@ -115,7 +115,7 @@ public class SQLMasterStorage implements MasterStorage {
 
     @Override
     public boolean exist(long id) throws SQLException {
-        return (boolean) transactionExecutor.execute(((resource, hint) ->
+        return (boolean) transactionExecutor.execute(((tx, resource, hint) ->
                 ExistExecutor.build(tableName, resource, queryTimeout).execute(id)));
     }
 
@@ -123,7 +123,7 @@ public class SQLMasterStorage implements MasterStorage {
     public Optional<IEntity> selectOne(long id, IEntityClass entityClass) throws SQLException {
         long startMs = System.currentTimeMillis();
         try {
-            return (Optional<IEntity>) transactionExecutor.execute((resource, hint) -> {
+            return (Optional<IEntity>) transactionExecutor.execute((tx, resource, hint) -> {
                 Optional<MasterStorageEntity> seOP =
                         QueryExecutor.buildHaveDetail(tableName, resource, entityClass, queryTimeout).execute(id);
                 if (seOP.isPresent()) {
@@ -144,7 +144,7 @@ public class SQLMasterStorage implements MasterStorage {
 
         try {
             Collection<MasterStorageEntity> storageEntities = (Collection<MasterStorageEntity>) transactionExecutor.execute(
-                    (resource, hint) -> {
+                    (tx, resource, hint) -> {
 
                         return MultipleQueryExecutor.build(tableName, resource, entityClass, queryTimeout).execute(ids);
                     }
@@ -178,7 +178,7 @@ public class SQLMasterStorage implements MasterStorage {
             checkId(entity);
 
             return (int) transactionExecutor.execute(
-                    (resource, hint) -> {
+                    (tx, resource, hint) -> {
 
                         long createTime = findTime(entity, FieldConfig.FieldSense.CREATE_TIME);
                         long updateTIme = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
@@ -225,7 +225,7 @@ public class SQLMasterStorage implements MasterStorage {
             checkId(entity);
 
             return (int) transactionExecutor.execute(
-                    (resource, hint) -> {
+                    (tx, resource, hint) -> {
 
                         long updateTime = findTime(entity, FieldConfig.FieldSense.UPDATE_TIME);
                         /**
@@ -270,7 +270,7 @@ public class SQLMasterStorage implements MasterStorage {
             checkId(entity);
 
             return (int) transactionExecutor.execute(
-                    (resource, hint) -> {
+                    (tx, resource, hint) -> {
                         /**
                          * 删除数据时不再关心字段信息.
                          */
@@ -434,7 +434,7 @@ public class SQLMasterStorage implements MasterStorage {
                 .withTime(se.getUpdateTime())
                 .withEntityClassRef(actualEntityClass.ref())
                 .withVersion(se.getVersion())
-                .withEntityValue(toEntityValue(se, entityClass))
+                .withEntityValue(toEntityValue(se, actualEntityClass))
                 .withMajor(se.getOqsMajor());
 
         return Optional.of(entityBuilder.build());
@@ -512,7 +512,7 @@ public class SQLMasterStorage implements MasterStorage {
         }
 
         private void load() throws SQLException {
-            transactionExecutor.execute((resource, hint) -> {
+            transactionExecutor.execute((tx, resource, hint) -> {
                 Collection<MasterStorageEntity> storageEntities =
                         BatchQueryExecutor.build(tableName, resource, queryTimeout, entityClass, startTime, endTime, pageSize)
                                 .execute(startId);
@@ -549,7 +549,7 @@ public class SQLMasterStorage implements MasterStorage {
         @Override
         public int size() {
             try {
-                return (int) transactionExecutor.execute((resource, hint) -> {
+                return (int) transactionExecutor.execute((tx, resource, hint) -> {
                     return BatchQueryCountExecutor.build(tableName, resource, queryTimeout, entityClass, startTime, endTime)
                             .execute(0L);
                 });

@@ -36,4 +36,13 @@ public class ActualEvent<T extends Serializable> implements Event<T> {
     public long time() {
         return time;
     }
+
+    @Override
+    public String toString() {
+        return "ActualEvent{" +
+                "type=" + type +
+                ", payload=" + payload +
+                ", time=" + time +
+                '}';
+    }
 }

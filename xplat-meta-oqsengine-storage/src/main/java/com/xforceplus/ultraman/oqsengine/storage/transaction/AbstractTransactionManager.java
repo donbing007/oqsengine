@@ -101,6 +101,11 @@ public abstract class AbstractTransactionManager implements TransactionManager {
     }
 
     @Override
+    public Transaction create(String message) {
+        return create(this.survivalTimeMs, message);
+    }
+
+    @Override
     public Transaction create(long timeoutMs) {
         return create(timeoutMs, null);
     }

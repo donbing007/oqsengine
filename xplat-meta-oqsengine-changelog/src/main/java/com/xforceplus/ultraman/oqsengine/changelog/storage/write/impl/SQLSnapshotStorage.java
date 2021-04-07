@@ -25,7 +25,7 @@ public class SQLSnapshotStorage implements SnapshotStorage {
     @Resource
     private ObjectMapper mapper;
 
-    private String tableName = "snapshot";
+    private String tableName = "changelogsnapshot";
 
     public String getTableName() {
         return tableName;
@@ -52,6 +52,7 @@ public class SQLSnapshotStorage implements SnapshotStorage {
             return Optional.of(new SnapshotStorageCommand(tableName, mapper)
                     .querySnapshot(changelogDatasource, objId, version));
         } catch (SQLException ex) {
+
             return Optional.empty();
         }
     }
