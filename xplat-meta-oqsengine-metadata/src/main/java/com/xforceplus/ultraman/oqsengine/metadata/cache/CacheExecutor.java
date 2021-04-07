@@ -603,6 +603,10 @@ public class CacheExecutor implements ICacheExecutor {
         return true;
     }
 
+    @Override
+    public void invalidateLocal() {
+        entityClassStorageCache.invalidateAll();
+    }
 
     /**
      * 删除过期版本的EntityClass信息
@@ -620,17 +624,17 @@ public class CacheExecutor implements ICacheExecutor {
         }
 
         //  删除本地
-        delFromLocal(entityId, version);
+        invalidateFromLocal(entityId, version);
 
         //  删除redis
-        boolean isDelete = delFromRemote(entityId, version);
+        boolean isDelete = invalidateFromRemote(entityId, version);
         if (!isDelete) {
             logger.warn("delete remote failed, entityId:[{}], version:[{}]", entityId, version);
         }
         return true;
     }
 
-    private boolean delFromRemote(Long entityId, int version) {
+    private boolean invalidateFromRemote(Long entityId, int version) {
 
         /**
          * 获取当前的Key
@@ -738,7 +742,8 @@ public class CacheExecutor implements ICacheExecutor {
         }
     }
 
-    private void delFromLocal(long entityId, int version) {
+
+    private void invalidateFromLocal(long entityId, int version) {
         try {
             entityClassStorageCache.invalidate(generateEntityCacheKey(entityId, version));
         } catch (Exception e) {
