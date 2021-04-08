@@ -104,6 +104,7 @@ public class SQLQueryStorage implements QueryStorage {
                     cv.setComment(resultSet.getString(ChangeVersionTable.COMMENT));
                     cv.setUsername(resultSet.getString(ChangeVersionTable.USER));
                     cv.setVersion(resultSet.getLong(ChangeVersionTable.VERSION));
+                    cv.setSource(resultSet.getLong(ChangeVersionTable.SOURCE));
                     changeVersionList.add(cv);
                 }
             }

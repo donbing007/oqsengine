@@ -39,4 +39,6 @@ public interface ICacheExecutor {
     boolean appEnvSet(String appId, String env);
 
     boolean appEnvRemove(String appId);
+
+    void invalidateLocal();
 }
