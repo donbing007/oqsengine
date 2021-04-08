@@ -141,7 +141,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 long uncommentSize = commitIdStatusService.size();
                 if (uncommentSize > allowMaxUnSyncCommitIdSize) {
                     setReadOnlyMode(
-                            String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
+                        String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
                     return;
                 }
 
@@ -202,6 +202,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     return ResultStatus.UNCREATED;
                 }
 
+                tx.getAccumulator().accumulateBuild(entity.id());
+
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
                 return ResultStatus.SUCCESS;
@@ -217,6 +219,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         } finally {
 
             inserCountTotal.increment();
+
 
         }
     }
@@ -247,6 +250,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     hint.setRollback(true);
                     return ResultStatus.CONFLICT;
                 }
+
+                tx.getAccumulator().accumulateReplace(entity.id());
 
                 noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
 
@@ -283,6 +288,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                     hint.setRollback(true);
                     return ResultStatus.CONFLICT;
                 }
+
+                tx.getAccumulator().accumulateDelete(entity.id());
 
                 noticeEvent(tx, EventType.ENTITY_DELETE, entity);
 

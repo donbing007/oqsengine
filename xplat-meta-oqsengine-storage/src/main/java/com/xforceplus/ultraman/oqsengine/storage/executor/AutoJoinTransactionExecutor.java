@@ -77,12 +77,7 @@ public class AutoJoinTransactionExecutor implements TransactionExecutor {
             resource = buildResource(targetDataSource, dbKey, true);
         }
 
-        ExecutorHint hint;
-        if (tx.isPresent()) {
-            hint = new DefaultExecutorHint(tx.get().getAccumulator());
-        } else {
-            hint = new DefaultExecutorHint();
-        }
+        ExecutorHint hint = new DefaultExecutorHint();
         try {
             if (tx.isPresent()) {
                 return resourceTask.run(tx.get(), resource, hint);

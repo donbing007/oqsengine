@@ -15,11 +15,6 @@ import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 public class EmptyConditionsBuilder implements ConditionsBuilder<String> {
 
     @Override
-    public void init() {
-
-    }
-
-    @Override
     public String build(IEntityClass entityClass, Conditions conditions) {
         StringBuilder buff = new StringBuilder();
         buff.append("MATCH('@")

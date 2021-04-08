@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.pojo.select;
 
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.facet.Facet;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
@@ -23,6 +24,7 @@ public class SelectConfig implements Serializable {
     private Sort sort;
     private Page page;
     private Set<Long> excludedIds;
+    private Conditions dataAccessFilterCondtitions;
     private Facet facet;
 
     public SelectConfig() {
@@ -48,25 +50,26 @@ public class SelectConfig implements Serializable {
         return facet;
     }
 
+    public Conditions getDataAccessFilterCondtitions() {
+        return dataAccessFilterCondtitions;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         SelectConfig that = (SelectConfig) o;
         return commitId == that.commitId
-                && Objects.equals(sort, that.sort)
-                && Objects.equals(page, that.page)
-                && Objects.equals(excludedIds, that.excludedIds)
-                && Objects.equals(facet, that.facet);
+            && Objects.equals(sort, that.sort)
+            && Objects.equals(page, that.page)
+            && Objects.equals(excludedIds, that.excludedIds)
+            && Objects.equals(dataAccessFilterCondtitions, that.dataAccessFilterCondtitions)
+            && Objects.equals(facet, that.facet);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(commitId, sort, page, excludedIds, facet);
+        return Objects.hash(commitId, sort, page, excludedIds, dataAccessFilterCondtitions, facet);
     }
 
     /**
@@ -78,6 +81,7 @@ public class SelectConfig implements Serializable {
         private Page page = Page.emptyPage();
         private Set<Long> excludedIds = Collections.emptySet();
         private Facet facet = Facet.build();
+        private Conditions dataAccessFilterConditions = Conditions.buildEmtpyConditions();
 
         private Builder() {
         }
@@ -106,6 +110,11 @@ public class SelectConfig implements Serializable {
             return this;
         }
 
+        public Builder withDataAccessFitlerCondtitons(Conditions conditions) {
+            this.dataAccessFilterConditions = conditions;
+            return this;
+        }
+
         public Builder withExcludedIds(Set<Long> excludedIds) {
             if (this.excludedIds == null) {
                 this.excludedIds = new HashSet(excludedIds);
@@ -131,6 +140,7 @@ public class SelectConfig implements Serializable {
             selectConfig.page = this.page;
             selectConfig.excludedIds = this.excludedIds;
             selectConfig.facet = this.facet;
+            selectConfig.dataAccessFilterCondtitions = this.dataAccessFilterConditions;
             return selectConfig;
         }
     }

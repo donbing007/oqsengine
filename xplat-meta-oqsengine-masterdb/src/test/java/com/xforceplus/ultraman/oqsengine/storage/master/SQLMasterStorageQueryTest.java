@@ -187,8 +187,8 @@ public class SQLMasterStorageQueryTest {
             .build();
 
         TransactionExecutor executor = new AutoJoinTransactionExecutor(
-                transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
-                new NoSelector<>(ds), new NoSelector<>("oqsbigentity"));
+            transactionManager, new SqlConnectionTransactionResourceFactory("oqsbigentity"),
+            new NoSelector<>(ds), new NoSelector<>("oqsbigentity"));
 
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
@@ -276,8 +276,8 @@ public class SQLMasterStorageQueryTest {
     @Test
     public void testUncommittedTransactionSelect() throws Exception {
         IEntity uncommitEntity = Entity.Builder.anEntity()
-                .withId(1000000)
-                .withEntityClassRef(l2EntityClass.ref())
+            .withId(1000000)
+            .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
                     2021, Month.FEBRUARY, 27, 12, 32, 20)
@@ -336,7 +336,8 @@ public class SQLMasterStorageQueryTest {
             Collection<EntityRef> refs = null;
             try {
                 refs = storage.select(c.conditions, c.entityClass,
-                    SelectConfig.Builder.aSelectConfig().withCommitId(0).withSort(c.sort).build());
+                    SelectConfig.Builder.aSelectConfig()
+                        .withDataAccessFitlerCondtitons(c.filterConditions).withCommitId(0).withSort(c.sort).build());
             } catch (SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
@@ -702,6 +703,54 @@ public class SQLMasterStorageQueryTest {
                     long[] expectedIds = {};
                     assertSelect(expectedIds, result, false);
                 })
+            ,
+            // emtpy condition data access
+            new Case(Conditions.buildEmtpyConditions(),
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l2-string").get(),
+                        ConditionOperator.EQUALS,
+                        new StringValue(l2EntityClass.field("l2-string").get(), "Mozambique")
+                    )),
+                l2EntityClass,
+                result -> {
+                    long[] expectedIds = {
+                        1004
+                    };
+                    assertSelect(expectedIds, result, false);
+                },
+                Sort.buildOutOfSort()
+            )
+            ,
+            // stringsField in with condition data access
+            new Case(
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l0-strings").get(),
+                            ConditionOperator.MULTIPLE_EQUALS,
+                            new StringsValue(l2EntityClass.field("l0-strings").get(), "RMB"),
+                            new StringsValue(l2EntityClass.field("l0-strings").get(), "JPY"))),
+                Conditions.buildEmtpyConditions()
+                    .addAnd(new Condition(
+                        l2EntityClass.field("l2-string").get(),
+                        ConditionOperator.NOT_EQUALS,
+                        new StringValue(l2EntityClass.field("l2-string").get(), "Trinidad")
+                    )).addAnd(
+                    new Condition(
+                        l2EntityClass.field("l2-string").get(),
+                        ConditionOperator.NOT_EQUALS,
+                        new StringValue(l2EntityClass.field("l2-string").get(), "Lithuania")
+                    )
+                ),
+                l2EntityClass,
+                result -> {
+                    long[] expectedIds = {
+                        1000, 1001
+                    };
+                    assertSelect(expectedIds, result, false);
+                },
+                Sort.buildOutOfSort())
         );
     }
 
@@ -717,17 +766,27 @@ public class SQLMasterStorageQueryTest {
 
     private static class Case {
         private Conditions conditions;
+        private Conditions filterConditions;
         private IEntityClass entityClass;
         private Sort sort;
         private Consumer<? super Collection<EntityRef>> check;
 
         public Case(Conditions conditions, IEntityClass entityClass, Consumer<? super Collection<EntityRef>> check) {
-            this(conditions, entityClass, check, null);
+            this(conditions, Conditions.buildEmtpyConditions(), entityClass, check, Sort.buildOutOfSort());
         }
 
-        public Case(Conditions conditions, IEntityClass entityClass, Consumer<? super Collection<EntityRef>> check,
-                    Sort sort) {
+        public Case(Conditions conditions, IEntityClass entityClass, Consumer<? super Collection<EntityRef>> check, Sort sort) {
+            this(conditions, Conditions.buildEmtpyConditions(), entityClass, check, sort);
+        }
+
+        public Case(
+            Conditions conditions,
+            Conditions filterConditions,
+            IEntityClass entityClass,
+            Consumer<? super Collection<EntityRef>> check,
+            Sort sort) {
             this.conditions = conditions;
+            this.filterConditions = filterConditions;
             this.entityClass = entityClass;
             this.check = check;
             if (sort == null) {
@@ -769,8 +828,8 @@ public class SQLMasterStorageQueryTest {
 
         long baseId = 1000;
         entityes.add(Entity.Builder.anEntity() // 1000
-                .withId(baseId++)
-                .withEntityClassRef(l2EntityClass.ref())
+            .withId(baseId++)
+            .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
                     2021, Month.FEBRUARY, 26, 12, 15, 20)
@@ -794,8 +853,8 @@ public class SQLMasterStorageQueryTest {
             )).build());
 
         entityes.add(Entity.Builder.anEntity() // 1001
-                .withId(baseId++)
-                .withEntityClassRef(l2EntityClass.ref())
+            .withId(baseId++)
+            .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
                     2021, Month.FEBRUARY, 27, 12, 15, 20)
@@ -819,8 +878,8 @@ public class SQLMasterStorageQueryTest {
             )).build());
 
         entityes.add(Entity.Builder.anEntity() // 1002
-                .withId(baseId++)
-                .withEntityClassRef(l2EntityClass.ref())
+            .withId(baseId++)
+            .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
                     2021, Month.FEBRUARY, 27, 12, 32, 20)
@@ -844,8 +903,8 @@ public class SQLMasterStorageQueryTest {
             )).build());
 
         entityes.add(Entity.Builder.anEntity() // 1003
-                .withId(baseId++)
-                .withEntityClassRef(l2EntityClass.ref())
+            .withId(baseId++)
+            .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
                     2021, Month.FEBRUARY, 27, 12, 32, 20)
@@ -869,8 +928,8 @@ public class SQLMasterStorageQueryTest {
             )).build());
 
         entityes.add(Entity.Builder.anEntity() // 1004
-                .withId(baseId++)
-                .withEntityClassRef(l2EntityClass.ref())
+            .withId(baseId++)
+            .withEntityClassRef(l2EntityClass.ref())
             .withTime(
                 LocalDateTime.of(
                     2021, Month.FEBRUARY, 27, 12, 32, 20)

@@ -53,6 +53,7 @@ public class Conditions implements Serializable {
 
     /**
      * 构造一个唯一条件.
+     *
      * @param condition 新条件.
      */
     public Conditions(Condition condition) {
@@ -64,6 +65,7 @@ public class Conditions implements Serializable {
 
     /**
      * 使用结点树构造一个新的条件.
+     *
      * @param head 条件树.
      */
     public Conditions(ConditionNode head) {
@@ -86,10 +88,10 @@ public class Conditions implements Serializable {
      * 增加一组条件.
      *
      * @param conditions 条件组.
-     * @param isolation  是否要封闭新的条件组.true 封闭,false 不封闭.
+     * @param close      是否要封闭新的条件组.true 封闭,false 不封闭.
      */
-    public Conditions addAnd(Conditions conditions, boolean isolation) {
-        return doAdd(ConditionLink.AND, conditions, isolation);
+    public Conditions addAnd(Conditions conditions, boolean close) {
+        return doAdd(ConditionLink.AND, conditions, close);
     }
 
     /**
@@ -107,11 +109,11 @@ public class Conditions implements Serializable {
      * 以 OR 连接一组新的条件.
      *
      * @param conditions 新条件.
-     * @param isolation  true 封闭新条件,false 不封闭.
+     * @param close      true 封闭新条件,false 不封闭.
      */
-    public Conditions addOr(Conditions conditions, boolean isolation) {
+    public Conditions addOr(Conditions conditions, boolean close) {
 
-        return doAdd(ConditionLink.OR, conditions, isolation);
+        return doAdd(ConditionLink.OR, conditions, close);
     }
 
     /**
@@ -133,11 +135,36 @@ public class Conditions implements Serializable {
     }
 
     /**
+     * 扫描所有条件结点,结点以左中右的顺序出现.并对每一个结点执行预定的动作.
+     *
+     * @param linkAction       连接结点处理.
+     * @param valueAction      值结点处理.
+     * @param parentheseAction 括号结点处理.
+     */
+    public void scan(
+        Consumer<LinkConditionNode> linkAction,
+        Consumer<ValueConditionNode> valueAction,
+        Consumer<ParentheseConditionNode> parentheseAction) {
+        iterTree(c -> true, c -> {
+            if (Conditions.isLinkNode(c)) {
+                linkAction.accept((LinkConditionNode) c);
+            }
+            if (Conditions.isValueNode(c)) {
+                valueAction.accept((ValueConditionNode) c);
+            }
+            if (Conditions.isParentheseNode(c)) {
+                parentheseAction.accept((ParentheseConditionNode) c);
+            }
+        }, false);
+    }
+
+    /**
      * 迭代
+     *
      * @return 集合.
      */
     public Collection<ConditionNode> collect() {
-        List<ConditionNode> nodes = new ArrayList(size);
+        List<ConditionNode> nodes = new LinkedList<>();
         iterTree(c -> true, c -> nodes.add(c), false);
         return nodes;
     }
@@ -148,25 +175,26 @@ public class Conditions implements Serializable {
      * @return 所有条件平面返回.
      */
     public Collection<Condition> collectCondition() {
-        List<Condition> conditionList = new ArrayList(size);
+        List<Condition> conditionList = new LinkedList<>();
         iterTree(c -> isValueNode(c), c -> conditionList.add(((ValueConditionNode) c).getCondition()), false);
         return conditionList;
     }
 
     /**
      * 查找符合条件的子树.
-     *
+     * <p>
      * 假如这样的一个条件树.
-     *     and(red)               //1
+     * and(red)               //1
      * c1        or(red)            //2
-     *       c2      and(green)        //3
-     *            c4     c5
+     * c2              and(green)        //3
+     * c4                c5
+     * <p>
+     * 给出条件 c -> !c.isRed()
+     * 表示所有红色结点的开始的子树
+     * 那么将返回 //3 处的那个结点开始的树.
      *
-     *  给出条件 c -> !c.isRed()
-     *  表示所有红色结点的开始的子树
-     *  那么将返回 //3 处的那个结点开始的树.
      * @param predicate 断言.匹配需要的结点.
-     * @param brake 是否匹配首个后当前结点后的所有不再匹配.
+     * @param brake     是否匹配首个后当前结点后的所有不再匹配.
      * @return 收集结果.
      */
     public Collection<ConditionNode> collectSubTree(Predicate<? super ConditionNode> predicate, boolean brake) {
@@ -187,7 +215,7 @@ public class Conditions implements Serializable {
     /**
      * 封闭已有条件.
      */
-    public Conditions insulate() {
+    public Conditions close() {
         if (head != null) {
             head.setClosed(true);
         }
@@ -235,6 +263,16 @@ public class Conditions implements Serializable {
      */
     public static boolean isValueNode(ConditionNode node) {
         return node instanceof ValueConditionNode;
+    }
+
+    /**
+     * 是否为一个括号结点.
+     *
+     * @param node 目标结点.
+     * @return true 括号结点,false不是.
+     */
+    public static boolean isParentheseNode(ConditionNode node) {
+        return node instanceof ParentheseConditionNode;
     }
 
     /**
@@ -306,9 +344,9 @@ public class Conditions implements Serializable {
         }
     }
 
-    private Conditions doAdd(ConditionLink link, Conditions conditions, boolean isolation) {
+    private Conditions doAdd(ConditionLink link, Conditions conditions, boolean close) {
 
-        doAddNode(conditions.head, link, isolation);
+        doAddNode(conditions.head, link, close);
 
         if (ConditionLink.OR == link && size > 0) {
 
@@ -330,12 +368,12 @@ public class Conditions implements Serializable {
     /**
      * 增加新的结点.
      */
-    private void doAddNode(ConditionNode newNode, ConditionLink link, boolean isolation) {
+    private void doAddNode(ConditionNode newNode, ConditionLink link, boolean close) {
         if (size == 0) {
             head = newNode;
         } else {
 
-            if (isolation) {
+            if (close) {
                 if (isLinkNode(newNode)) {
                     newNode.setClosed(true);
                 }
@@ -406,19 +444,51 @@ public class Conditions implements Serializable {
         while (!stack.isEmpty()) {
             node = stack.pop();
 
-            if (predicate.test(node)) {
-                consumer.accept(node);
-                if (brake) {
-                    continue;
+            if (Conditions.isLinkNode(node)) {
+                LinkConditionNode linkNode = (LinkConditionNode) node;
+
+                // 如果是影子结点,即表示已经迭代过了.直接处理.
+                if (linkNode.isShadow()) {
+                    if (predicate.test(linkNode)) {
+                        consumer.accept(linkNode);
+                        if (brake) {
+                            break;
+                        }
+                    }
+                } else {
+
+                    if (predicate.test(linkNode) && brake) {
+                        stack.push(linkNode.buildShadow());
+                    } else {
+
+                        // 封闭,先压入右括号.
+                        if (linkNode.isClosed()) {
+                            stack.push(ParentheseConditionNode.buildRight());
+                        }
+
+                        // 先压入右结点.
+                        if (linkNode.hasRight()) {
+                            stack.push(linkNode.getRight());
+                        }
+                        // 将自己的影子结点压入.
+                        stack.push(linkNode.buildShadow());
+
+                        // 压入左结点,左结点会被先处理.
+                        if (linkNode.hasLeft()) {
+                            stack.push(linkNode.getLeft());
+                        }
+
+                        if (linkNode.isClosed()) {
+                            stack.push(ParentheseConditionNode.buildLeft());
+                        }
+                    }
+                }
+            } else {
+                if (predicate.test(node)) {
+                    consumer.accept(node);
                 }
             }
 
-            if (node.getRight() != null) {
-                stack.push(node.getRight());
-            }
-            if (node.getLeft() != null) {
-                stack.push(node.getLeft());
-            }
         }
     }
 }

@@ -3,7 +3,8 @@ package com.xforceplus.ultraman.oqsengine.pojo.dto.conditions;
 import java.util.Objects;
 
 /**
- * 表示一个符号操作结点.
+ * 表示不同条件的连接符号.
+ * 其可以产生多个影子结点,影子结点并不是真实的连接结点其只在迭代时占位使用.
  *
  * @author dongbin
  * @version 0.1 2020/2/20 15:58
@@ -15,6 +16,7 @@ public class LinkConditionNode extends ConditionNode {
      * 条件连接方式
      */
     private ConditionLink link;
+    private boolean shadow;
 
     /**
      * 构造方法
@@ -26,6 +28,32 @@ public class LinkConditionNode extends ConditionNode {
     public LinkConditionNode(ConditionNode l, ConditionNode r, ConditionLink link) {
         super(l, r);
         this.link = link;
+        this.shadow = false;
+    }
+
+    /**
+     * 构造一个影子结点.
+     *
+     * @return 影子结点.
+     */
+    public LinkConditionNode buildShadow() {
+        if (!shadow) {
+            LinkConditionNode shadowNode = new LinkConditionNode(getLeft(), getRight(), getLink());
+            shadowNode.shadow = true;
+            shadowNode.setRed(this.isRed());
+            return shadowNode;
+        } else {
+            return this;
+        }
+    }
+
+    /**
+     * 是否为一个连接结点影子.
+     *
+     * @return true 是,false不是.
+     */
+    public boolean isShadow() {
+        return shadow;
     }
 
     /**

@@ -10,10 +10,6 @@ import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
  * @since 1.8
  */
 public class HaveOrHaveRanageConditionsBuilder implements ConditionsBuilder<String> {
-    @Override
-    public void init() {
-
-    }
 
     @Override
     public String build(IEntityClass entityClass, Conditions conditions) {

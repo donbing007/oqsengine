@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions;
 
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -22,7 +23,8 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
  * @version 0.1 2020/2/22 17:27
  * @since 1.8
  */
-public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>, StorageStrategyFactoryAble, TokenizerFactoryAble {
+public class NoOrNoRanageConditionsBuilder
+    implements ConditionsBuilder<String>, StorageStrategyFactoryAble, TokenizerFactoryAble, Lifecycle {
 
     private StorageStrategyFactory storageStrategyFactory;
 
@@ -42,6 +44,9 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
      */
     @Override
     public String build(IEntityClass entityClass, Conditions conditions) {
+        if (conditions.isEmtpy()) {
+            return "";
+        }
 
         StringBuilder idBuff = new StringBuilder();
         StringBuilder buff = new StringBuilder();
@@ -81,7 +86,7 @@ public class NoOrNoRanageConditionsBuilder implements ConditionsBuilder<String>,
 
             buff.append(") (@")
                 .append(FieldDefine.ENTITYCLASSF)
-                .append(" =\"").append(entityClass.id()).append("\")");
+                .append(" =").append(entityClass.id()).append(")");
             buff.append("')");
 
             StringBuilder temp = new StringBuilder();
