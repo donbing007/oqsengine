@@ -403,10 +403,12 @@ public class SyncResponseHandler implements IResponseHandler {
          * 发送
          */
         boolean ret = observerOnNext(response, watcher);
+
         /**
          * 成功且不是注册确认，则加入到DelayTaskQueue中进行监听
          */
         if (ret && !registerOrHeartBeat) {
+            logger.info("observer onNext, appId [{}], response [{}]", appId, response.toString());
             retryExecutor.offer(
                     new RetryExecutor.DelayTask(gRpcParams.getDefaultDelayTaskDuration(),
                             new RetryExecutor.Element(new WatchElement(appId, env, version, Notice), watcher.uid())));
