@@ -1,5 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.event.storage.cache;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
@@ -12,6 +14,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
+import io.lettuce.core.Range;
 import io.lettuce.core.RedisClient;
 import org.junit.*;
 import org.junit.runner.RunWith;
@@ -47,20 +50,30 @@ public class RedisEventHandlerTest extends MiddleWare {
 
     private ExecutorService cacheWorker;
 
+    @BeforeClass
+    public static void beforeClass() {
+        initRedis();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        closeRedis();
+    }
+
     @Before
     public void before() throws Exception {
-        initRedis();
 
         cacheWorker = Executors.newFixedThreadPool(10);
-        cacheEventHandler = redisEventHandler(redisClient, cacheWorker);
+
+        cacheEventHandler = redisEventHandler(redisClient, cacheWorker,
+                new ObjectMapper().configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false));
         cacheEventHandler.init();
     }
 
     @After
     public void after() {
-        closeRedis();
+        clearRedis();
     }
-
 
     @Test
     public void onEventCreateTest() {
@@ -82,7 +95,6 @@ public class RedisEventHandlerTest extends MiddleWare {
             new RandomTXEventType(expectedTxId.get(1), ENTITY_BUILD), new RandomTXEventType(expectedTxId.get(1), ENTITY_REPLACE), new RandomTXEventType(expectedTxId.get(1), ENTITY_DELETE),
             new RandomTXEventType(expectedTxId.get(2), ENTITY_BUILD), new RandomTXEventType(expectedTxId.get(2), ENTITY_REPLACE), new RandomTXEventType(expectedTxId.get(2), ENTITY_DELETE));
 
-
     @Test
     public void onEventEntityOperationMultiThread() throws InterruptedException {
 
@@ -103,7 +115,36 @@ public class RedisEventHandlerTest extends MiddleWare {
         for (Map.Entry<Long, AtomicInteger> entry : expectSizeByTxId.entrySet()) {
             Assert.assertTrue(checkWithExpire(entry.getKey(), entry.getValue().get(), 100));
         }
+    }
 
+    private String TX_EXPIRE_ZSORT_KEY = "com.xforceplus.ultraman.oqsengine.event.tx.zsort";
+    private String TX_EXPIRE_HASH_KEY = "com.xforceplus.ultraman.oqsengine.event.tx.hash";
+    @Test
+    public void onEventBegin() {
+        long txId = Long.MAX_VALUE - 1;
+
+        long startTime = System.currentTimeMillis();
+        int testSize = 10;
+
+
+        for (int i = 0; i < testSize; i++) {
+            Event<BeginPayload> payloadEvent = eventBeginGenerator(txId--);
+            boolean result = cacheEventHandler.onEventBegin(payloadEvent);
+            Assert.assertTrue(result);
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
+        }
+        long endTime = System.currentTimeMillis() + 1;
+        Range<Long> r = Range.create(startTime, endTime);
+        List<String> needCleans = syncCommands.zrangebyscore(TX_EXPIRE_ZSORT_KEY, r);
+        Assert.assertTrue(null != needCleans && needCleans.size() == testSize);
+
+        Map<String, String> result = syncCommands.hgetall(TX_EXPIRE_HASH_KEY);
+        Assert.assertEquals(testSize, result.size());
+        for (int i = 1; i <= testSize; i++) {
+            String v = result.get(String.format("%s", txId + i));
+            Assert.assertNotNull(v);
+            Assert.assertTrue(Long.parseLong(v) > startTime && Long.parseLong(v) < endTime);
+        }
     }
 
     private Map<Long, AtomicInteger> expectSizeByTxId() {
@@ -134,8 +175,8 @@ public class RedisEventHandlerTest extends MiddleWare {
     }
 
 
-    private RedisEventHandler redisEventHandler(RedisClient redisClient, ExecutorService cacheWorker) {
-        return new RedisEventHandler(redisClient, cacheWorker);
+    private RedisEventHandler redisEventHandler(RedisClient redisClient, ExecutorService cacheWorker, ObjectMapper objectMapper) {
+        return new RedisEventHandler(redisClient, cacheWorker, objectMapper);
     }
 
     private boolean checkWithExpire(long txId, long expected, long duration) {
@@ -169,27 +210,12 @@ public class RedisEventHandlerTest extends MiddleWare {
         return new ActualEvent(ENTITY_DELETE, new DeletePayload(txId, number, Entity.Builder.anEntity().withId(id).build()));
     }
 
+    private Event<BeginPayload> eventBeginGenerator(long txId) {
+        return new ActualEvent(TX_BEGIN, new BeginPayload(txId, TX_BEGIN.name()));
+    }
 
-    private Event eventGenerator(EventType eventType, long txId, long number) {
-        ActualEvent actualEvent = null;
-        switch (eventType) {
-            case ENTITY_BUILD :
-                actualEvent = new ActualEvent(ENTITY_BUILD, new BuildPayload(txId, number, new Entity()));
-                break;
-            case ENTITY_REPLACE :
-                actualEvent = new ActualEvent(ENTITY_REPLACE, new ReplacePayload(txId, number, new Entity(), new Entity()));
-                break;
-            case ENTITY_DELETE :
-                actualEvent = new ActualEvent(ENTITY_DELETE, new DeletePayload(txId, number, new Entity()));
-                break;
-            case TX_BEGIN :
-                actualEvent = new ActualEvent(TX_BEGIN, new BeginPayload(txId, TX_BEGIN.name()));
-                break;
-            case TX_COMMITED :
-                actualEvent = new ActualEvent(TX_COMMITED, new CommitPayload(txId, 1, TX_COMMITED.name(), false, number));
-                break;
-        }
-        return actualEvent;
+    private Event<CommitPayload> eventCommitGenerator(long txId, long number) {
+        return new ActualEvent(TX_COMMITED, new CommitPayload(txId, 1, TX_COMMITED.name(), false, number));
     }
 
     private static class RandomTXEventType {
@@ -199,14 +225,6 @@ public class RedisEventHandlerTest extends MiddleWare {
         public RandomTXEventType(long txId, EventType eventType) {
             this.txId = txId;
             this.eventType = eventType;
-        }
-
-        public long getTxId() {
-            return txId;
-        }
-
-        public EventType getEventType() {
-            return eventType;
         }
     }
 }

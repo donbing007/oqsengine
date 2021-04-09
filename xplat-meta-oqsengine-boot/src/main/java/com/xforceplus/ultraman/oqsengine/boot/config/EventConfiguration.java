@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.event.DefaultEventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.storage.EventStorage;
@@ -33,8 +34,8 @@ public class EventConfiguration {
     }
 
     @Bean
-    public ICacheEventHandler cacheEventHandler(RedisClient redisClient, ExecutorService eventCacheRetry) {
-        return new RedisEventHandler(redisClient, eventCacheRetry);
+    public ICacheEventHandler cacheEventHandler(RedisClient redisClient, ExecutorService eventCacheRetry, ObjectMapper objectMapper) {
+        return new RedisEventHandler(redisClient, eventCacheRetry, objectMapper);
     }
 
     @Bean

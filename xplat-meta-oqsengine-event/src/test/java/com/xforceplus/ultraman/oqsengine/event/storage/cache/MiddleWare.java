@@ -2,7 +2,7 @@ package com.xforceplus.ultraman.oqsengine.event.storage.cache;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
-
+import io.lettuce.core.api.sync.RedisCommands;
 
 
 /**
@@ -14,20 +14,22 @@ import io.lettuce.core.RedisURI;
  * @since : 1.8
  */
 public class MiddleWare {
-    public RedisClient redisClient;
-
-    public void initRedis() {
+    public static RedisClient redisClient;
+    public static RedisCommands<String, String> syncCommands;
+    public static void initRedis() {
         /**
          * init RedisClient
          */
         String redisIp = System.getProperty("REDIS_HOST");
         int redisPort = Integer.parseInt(System.getProperty("REDIS_PORT"));
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
+
+        syncCommands = redisClient.connect().sync();
+        syncCommands.clientSetname("oqs.event.test");
     }
 
-    public void closeRedis() {
-
-        redisClient.connect().sync().flushall();
+    public static void closeRedis() {
+        syncCommands.flushall();
         redisClient.shutdown();
         redisClient = null;
     }
