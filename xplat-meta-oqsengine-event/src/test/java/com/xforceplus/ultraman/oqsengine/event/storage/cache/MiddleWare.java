@@ -14,9 +14,9 @@ import io.lettuce.core.RedisURI;
  * @since : 1.8
  */
 public class MiddleWare {
-    public static RedisClient redisClient;
+    public RedisClient redisClient;
 
-    public static void initRedis() {
+    public void initRedis() {
         /**
          * init RedisClient
          */
@@ -25,7 +25,7 @@ public class MiddleWare {
         redisClient = RedisClient.create(RedisURI.Builder.redis(redisIp, redisPort).build());
     }
 
-    public static void closeRedis() {
+    public void closeRedis() {
 
         redisClient.connect().sync().flushall();
         redisClient.shutdown();
