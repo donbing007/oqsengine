@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions;
 
+import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
@@ -9,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.tokenizer.TokenizerFactoryAble;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,7 +27,8 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
 
     private Map<Integer, ConditionsBuilder> builderMap;
 
-    private ConditionsBuilder emptyConditionsBuilder;
+    private ConditionsBuilder<String> emptyConditionsBuilder;
+    private ConditionsBuilder<String> attributeFilterConditionsBuilder;
 
     @Resource(name = "indexStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
@@ -36,10 +39,10 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
     @PostConstruct
     public void init() {
         builderMap = new HashMap<>();
-        builderMap.put(0, new NoOrNoRanageConditionsBuilder());
-        builderMap.put(1, new NoOrHaveRanageConditionsBuilder());
-        builderMap.put(2, new HaveOrNoRanageConditionsBuilder());
-        builderMap.put(3, new HaveOrHaveRanageConditionsBuilder());
+        builderMap.put(0, new NoOrNoRanageConditionsBuilder());     // 0000
+        builderMap.put(1, new NoOrHaveRanageConditionsBuilder());   // 0001
+        builderMap.put(2, new HaveOrNoRanageConditionsBuilder());   // 0010
+        builderMap.put(3, new HaveOrHaveRanageConditionsBuilder()); // 0011
 
         emptyConditionsBuilder = new EmptyConditionsBuilder();
 
@@ -51,12 +54,17 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
                 ((TokenizerFactoryAble) b).setTokenizerFacotry(tokenizerFactory);
             }
 
-            b.init();
+            if (Lifecycle.class.isInstance(b)) {
+                try {
+                    ((Lifecycle) b).init();
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex.getMessage(), ex);
+                }
+            }
         });
     }
 
     public ConditionsBuilder<String> getBuilder(Conditions conditions) {
-
         if (conditions.isEmtpy()) {
             return emptyConditionsBuilder;
         }

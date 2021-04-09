@@ -38,6 +38,24 @@ public abstract class ConditionNode {
     }
 
     /**
+     * 判断是否有左结点.
+     *
+     * @return true 有,false 没有.
+     */
+    public boolean hasLeft() {
+        return getLeft() != null;
+    }
+
+    /**
+     * 判断是否有右结点.
+     *
+     * @return true 有, false没有.
+     */
+    public boolean hasRight() {
+        return getRight() != null;
+    }
+
+    /**
      * 返回左条件结点.
      *
      * @return 左条件结点.

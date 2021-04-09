@@ -127,6 +127,11 @@ public class EntityClassManagerExecutor implements MetaManager {
 
     }
 
+    @Override
+    public void invalidateLocal() {
+        cacheExecutor.invalidateLocal();
+    }
+
     private IEntityClass toEntityClass(long id, Map<Long, EntityClassStorage> entityClassStorageMaps) throws SQLException {
         EntityClassStorage entityClassStorage = entityClassStorageMaps.get(id);
         if (null == entityClassStorage) {

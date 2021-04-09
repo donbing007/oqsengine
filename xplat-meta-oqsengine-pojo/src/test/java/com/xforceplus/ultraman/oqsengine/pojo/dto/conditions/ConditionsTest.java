@@ -33,6 +33,54 @@ public class ConditionsTest {
     }
 
     @Test
+    public void testScan() throws Exception {
+        Conditions conditions = Conditions.buildEmtpyConditions();
+
+        conditions.addAnd(
+            new Condition(
+                EntityField.UPDATE_TIME_FILED,
+                ConditionOperator.EQUALS,
+                new LongValue(EntityField.UPDATE_TIME_FILED, 100L)
+            )
+        ).addAnd(
+            new Condition(
+                EntityField.UPDATE_TIME_FILED,
+                ConditionOperator.EQUALS,
+                new LongValue(EntityField.UPDATE_TIME_FILED, 200L)
+            )
+        );
+
+        conditions.addAnd(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        EntityField.CREATE_TIME_FILED,
+                        ConditionOperator.NOT_EQUALS,
+                        new LongValue(EntityField.CREATE_TIME_FILED, 3000L)
+                    )
+                ).addOr(
+                new Condition(
+                    EntityField.CREATE_TIME_FILED,
+                    ConditionOperator.NOT_EQUALS,
+                    new LongValue(EntityField.CREATE_TIME_FILED, 5000L)
+                )
+            ),
+            true
+        );
+
+        StringBuilder buff = new StringBuilder();
+        conditions.scan(
+            c -> buff.append(" ").append(c.getLink().name()).append(" "),
+            c -> buff.append(c.toString()),
+            c -> buff.append(c.toString())
+        );
+
+        Assert.assertEquals(
+            "updateTime = 100 AND updateTime = 200 AND (createTime != 3000 OR createTime != 5000)", buff.toString());
+    }
+
+
+    @Test
     public void testAndOrFlag() throws Exception {
         Conditions conditions = Conditions.buildEmtpyConditions();
 
@@ -108,7 +156,7 @@ public class ConditionsTest {
 
         List<ConditionNode> nodes = new ArrayList(conditions.collectSubTree(c -> !c.isRed(), true));
         Assert.assertEquals(2, nodes.size());
-        String[] expectedStrings = new String[] {
+        String[] expectedStrings = new String[]{
             "c1 = 100",
             "c2 = 100 AND c3 = 100"
         };
@@ -152,7 +200,7 @@ public class ConditionsTest {
 
         nodes = new ArrayList(conditions.collectSubTree(c -> !c.isRed(), true));
         Assert.assertEquals(3, nodes.size());
-        expectedStrings = new String[] {
+        expectedStrings = new String[]{
             "c1 = 100",
             "c2 = 100",
             "c3 = 100 AND c4 = 100"
@@ -313,7 +361,7 @@ public class ConditionsTest {
                             )
                         )
                         , false
-                    ).insulate().addAnd(
+                    ).close().addAnd(
                     Conditions.buildEmtpyConditions().addAnd(
                         new Condition(
                             new EntityField(3, "c3", FieldType.LONG),

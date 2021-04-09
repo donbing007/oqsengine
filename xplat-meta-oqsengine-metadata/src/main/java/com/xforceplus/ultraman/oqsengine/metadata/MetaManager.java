@@ -37,5 +37,9 @@ public interface MetaManager {
      */
     int need(String appId, String env);
 
-
+    /**
+     * 清空本地缓存
+     * 这个操作将强制将本地缓存清除
+     */
+    void invalidateLocal();
 }

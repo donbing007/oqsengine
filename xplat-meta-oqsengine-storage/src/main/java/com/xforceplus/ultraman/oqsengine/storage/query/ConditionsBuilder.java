@@ -13,8 +13,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
  */
 public interface ConditionsBuilder<V> {
 
-    void init();
-
     /**
      * 构造出条件的字符串表示.
      *

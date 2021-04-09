@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.SQLConditionQueryBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
@@ -22,22 +21,21 @@ public class SQLJsonConditionsBuilder implements ConditionsBuilder<String>, Stor
     private SQLConditionQueryBuilderFactory sqlConditionQueryBuilderFactory;
 
     @Override
-    public void init() {
-    }
-
-    @Override
     public String build(IEntityClass entityClass, Conditions conditions) {
-        StringBuilder sql = new StringBuilder();
-        ConditionBuilder<String> cb;
-        for (Condition condition : conditions.collectCondition()) {
-            cb = sqlConditionQueryBuilderFactory.getQueryBuilder(condition);
-
-            if (sql.length() > 0) {
-                sql.append(" AND ");
-            }
-
-            sql.append(cb.build(condition));
+        if (conditions.isEmtpy()) {
+            return "";
         }
+
+        StringBuilder sql = new StringBuilder();
+        conditions.scan(
+            link -> sql.append(" ").append(link.getLink().name()).append(" "),
+            value -> {
+                Condition condition = value.getCondition();
+                ConditionBuilder<String> cb = sqlConditionQueryBuilderFactory.getQueryBuilder(condition);
+                sql.append(cb.build(condition));
+            },
+            parenthese -> sql.append(parenthese.toString())
+        );
 
         return sql.toString();
     }
@@ -47,5 +45,30 @@ public class SQLJsonConditionsBuilder implements ConditionsBuilder<String>, Stor
         this.storageStrategyFactory = storageStrategyFactory;
 
         this.sqlConditionQueryBuilderFactory = new SQLConditionQueryBuilderFactory(this.storageStrategyFactory);
+    }
+
+    private void build(StringBuilder buff, ConditionNode node) {
+        if (Conditions.isLinkNode(node)) {
+            LinkConditionNode linkNode = (LinkConditionNode) node;
+            if (linkNode.isClosed()) {
+                buff.append("(");
+            }
+
+            build(buff, linkNode.getLeft());
+            buff.append(" ").append(linkNode.getLink().name());
+            if (linkNode.getRight() != null) {
+                buff.append(" ");
+                build(buff, linkNode.getRight());
+            }
+
+            if (linkNode.isClosed()) {
+                buff.append(")");
+            }
+        } else {
+            ValueConditionNode vNode = (ValueConditionNode) node;
+            Condition condition = vNode.getCondition();
+            ConditionBuilder<String> cb = sqlConditionQueryBuilderFactory.getQueryBuilder(condition);
+            buff.append(cb.build(condition));
+        }
     }
 }

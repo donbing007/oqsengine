@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.common.id.IncreasingOrderLongIdGenerato
 import com.xforceplus.ultraman.oqsengine.common.selector.NoSelector;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.common.version.VersionHelp;
+import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.*;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
@@ -45,6 +46,9 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 /**
  * SQLMasterStorage Tester.
  *
@@ -60,6 +64,7 @@ public class SQLMasterStorageTest {
 
     private TransactionManager transactionManager;
     private RedisClient redisClient;
+    private MetaManager metaManager;
     private CommitIdStatusServiceImpl commitIdStatusService;
 
     private DataSource dataSource;
@@ -144,6 +149,11 @@ public class SQLMasterStorageTest {
     @Before
     public void before() throws Exception {
 
+        metaManager = mock(MetaManager.class);
+        when(metaManager.load(l0EntityClass.id())).thenReturn(Optional.of(l0EntityClass));
+        when(metaManager.load(l1EntityClass.id())).thenReturn(Optional.of(l1EntityClass));
+        when(metaManager.load(l2EntityClass.id())).thenReturn(Optional.of(l2EntityClass));
+
         dataSource = buildDataSource("./src/test/resources/sql_master_storage_build.conf");
 
         // 等待加载完毕
@@ -174,6 +184,7 @@ public class SQLMasterStorageTest {
         storage = new SQLMasterStorage();
         ReflectionTestUtils.setField(storage, "transactionExecutor", executor);
         ReflectionTestUtils.setField(storage, "storageStrategyFactory", storageStrategyFactory);
+        ReflectionTestUtils.setField(storage, "metaManager", metaManager);
         storage.setTableName("oqsbigentity");
         storage.setQueryTimeout(100000000);
         storage.init();
@@ -241,7 +252,7 @@ public class SQLMasterStorageTest {
     @Test
     public void testSelectMultiple() throws Exception {
         long[] ids = expectedEntitys.stream().mapToLong(e -> e.id()).toArray();
-        Collection<IEntity> entities = storage.selectMultiple(ids, l2EntityClass);
+        Collection<IEntity> entities = storage.selectMultiple(ids, l1EntityClass);
 
         Map<Long, IEntity> expectedEntityMap =
             expectedEntitys.stream().collect(Collectors.toMap(e -> e.id(), e -> e, (e0, e1) -> e0));
@@ -255,6 +266,8 @@ public class SQLMasterStorageTest {
                 String.format("An instance of the %d object should be found, but not found.", e.id()), expectedEntity);
 
             Assert.assertEquals(expectedEntity, e);
+            // 实际类型是l2EntityClass.
+            Assert.assertEquals(l2EntityClass.ref(), e.entityClassRef());
 
         }
     }

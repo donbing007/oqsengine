@@ -220,4 +220,9 @@ public class MockMetaManager implements MetaManager {
     public int need(String appId, String env) {
         return 0;
     }
+
+    @Override
+    public void invalidateLocal() {
+
+    }
 }

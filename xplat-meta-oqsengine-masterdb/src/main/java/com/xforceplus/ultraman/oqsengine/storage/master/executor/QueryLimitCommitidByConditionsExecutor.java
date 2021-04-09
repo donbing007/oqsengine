@@ -8,6 +8,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.storage.master.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions.SQLJsonConditionsBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.master.utils.EntityClassHelper;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.AnyStorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
@@ -32,9 +33,8 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
 
     private static final String SELECT_SORT_COLUMN = "sort";
 
-    private long commitid;
+    private SelectConfig config;
     private IEntityClass entityClass;
-    private Sort sort;
     private SQLJsonConditionsBuilderFactory conditionsBuilderFactory;
     private StorageStrategyFactory storageStrategyFactory;
 
@@ -42,16 +42,14 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
         String tableName,
         TransactionResource<Connection> resource,
         IEntityClass entityClass,
-        Sort sort,
-        long commitid,
+        SelectConfig config,
         long timeoutMs,
         SQLJsonConditionsBuilderFactory conditionsBuilderFactory,
         StorageStrategyFactory storageStrategyFactory) {
         QueryLimitCommitidByConditionsExecutor executor =
             new QueryLimitCommitidByConditionsExecutor(tableName, resource, timeoutMs);
-        executor.setCommitid(commitid);
+        executor.setConfig(config);
         executor.setEntityClass(entityClass);
-        executor.setSort(sort);
         executor.setConditionsBuilderFactory(conditionsBuilderFactory);
         executor.setStorageStrategyFactory(storageStrategyFactory);
         return executor;
@@ -65,16 +63,12 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
         super(tableName, resource, timeoutMs);
     }
 
-    public void setCommitid(long commitid) {
-        this.commitid = commitid;
+    public void setConfig(SelectConfig config) {
+        this.config = config;
     }
 
     public void setEntityClass(IEntityClass entityClass) {
         this.entityClass = entityClass;
-    }
-
-    public void setSort(Sort sort) {
-        this.sort = sort;
     }
 
     public void setConditionsBuilderFactory(SQLJsonConditionsBuilderFactory conditionsBuilderFactory) {
@@ -87,20 +81,25 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
 
     @Override
     public Collection<EntityRef> execute(Conditions conditions) throws SQLException {
+        if (!config.getDataAccessFilterCondtitions().isEmtpy()) {
+            conditions.addAnd(config.getDataAccessFilterCondtitions(), true);
+        }
+        // 当前查询条件.
         String where = conditionsBuilderFactory.getBuilder().build(entityClass, conditions);
+
         String sql = buildSQL(where);
 
         try (PreparedStatement st = getResource().value().prepareStatement(
             sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
 
-            st.setLong(1, commitid);
+            st.setLong(1, config.getCommitId());
 
             checkTimeout(st);
 
             try (ResultSet rs = st.executeQuery()) {
                 Collection<EntityRef> refs = new ArrayList<>();
                 while (rs.next()) {
-                    refs.add(buildEntityRef(rs, sort));
+                    refs.add(buildEntityRef(rs, config.getSort()));
                 }
 
                 return refs;
@@ -136,6 +135,7 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
                     ",",
                     FieldDefine.ID,
                     FieldDefine.OP, FieldDefine.OQS_MAJOR));
+        Sort sort = config.getSort();
         if (sort != null && !sort.isOutOfOrder() && !sort.getField().config().isIdentifie()) {
 
             /**
