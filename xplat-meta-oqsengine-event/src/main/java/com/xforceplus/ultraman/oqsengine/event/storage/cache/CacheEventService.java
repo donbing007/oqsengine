@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
 import java.util.Collection;
 
 /**
@@ -28,10 +27,8 @@ public class CacheEventService implements ICacheEventService {
 
     final static Logger logger = LoggerFactory.getLogger(CacheEventService.class);
 
-    @Resource
     private EventBus eventBus;
 
-    @Resource
     private ICacheEventHandler cacheEventHandler;
 
     private Thread thread;
@@ -42,6 +39,11 @@ public class CacheEventService implements ICacheEventService {
     private static final long CLEAN_BUFFER_TIME = 3 * 60 * 60 * 1000;
     private static final long CLOSE_WAIT_DURATION = 1000;
     private static final long CLOSE_WAIT_MAX_LOOP = 60;
+
+    public CacheEventService(EventBus eventBus, ICacheEventHandler cacheEventHandler) {
+        this.eventBus = eventBus;
+        this.cacheEventHandler = cacheEventHandler;
+    }
 
     @PostConstruct
     public void init(){

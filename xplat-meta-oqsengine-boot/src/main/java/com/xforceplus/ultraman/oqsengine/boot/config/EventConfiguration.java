@@ -33,14 +33,12 @@ public class EventConfiguration {
     }
 
     @Bean
-    public ICacheEventService cacheEventAware() {
-        return new CacheEventService();
+    public ICacheEventHandler cacheEventHandler(RedisClient redisClient, ExecutorService eventCacheRetry) {
+        return new RedisEventHandler(redisClient, eventCacheRetry);
     }
 
     @Bean
-    public ICacheEventHandler cacheEventHandler(RedisClient redisClient, ExecutorService worker) {
-        return new RedisEventHandler(redisClient, worker);
+    public ICacheEventService cacheEventService(EventBus eventBus, ICacheEventHandler cacheEventHandler) {
+        return new CacheEventService(eventBus, cacheEventHandler);
     }
-
-
 }

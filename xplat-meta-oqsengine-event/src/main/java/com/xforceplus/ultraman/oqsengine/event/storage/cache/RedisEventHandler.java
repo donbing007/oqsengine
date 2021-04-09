@@ -1,6 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.event.storage.cache;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
@@ -51,7 +53,8 @@ public class RedisEventHandler implements ICacheEventHandler {
 
     private RedisClient redisClient;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper()
+            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
     private StatefulRedisConnection<String, String> syncConnect;
 
@@ -84,7 +87,7 @@ public class RedisEventHandler implements ICacheEventHandler {
     @Override
     public boolean onEventCreate(Event<BuildPayload> event) {
         if (null != event && event.payload().isPresent()) {
-            if (!eventChange(event.payload().get().getTxId(), event.payload().get().getEntity().id()
+            if (!storage(event.payload().get().getTxId(), event.payload().get().getEntity().id()
                     , event.payload().get().getEntity().version(), event)) {
                 worker.submit(new ReCover(this::onEventCreate, event));
             }
@@ -96,7 +99,7 @@ public class RedisEventHandler implements ICacheEventHandler {
     @Override
     public boolean onEventUpdate(Event<ReplacePayload> event) {
         if (null != event && event.payload().isPresent()) {
-            if(!eventChange(event.payload().get().getTxId(), event.payload().get().getEntity().id()
+            if(!storage(event.payload().get().getTxId(), event.payload().get().getEntity().id()
                     , event.payload().get().getEntity().version(), event)) {
                 worker.submit(new ReCover(this::onEventUpdate, event));
             }
@@ -108,7 +111,7 @@ public class RedisEventHandler implements ICacheEventHandler {
     @Override
     public boolean onEventDelete(Event<DeletePayload> event) {
         if (null != event && event.payload().isPresent()) {
-            if(!eventChange(event.payload().get().getTxId(), event.payload().get().getEntity().id()
+            if(!storage(event.payload().get().getTxId(), event.payload().get().getEntity().id()
                     , event.payload().get().getEntity().version(), event)) {
                 worker.submit(new ReCover(this::onEventDelete, event));
             }
@@ -157,7 +160,7 @@ public class RedisEventHandler implements ICacheEventHandler {
                         //  短暂等待1毫秒后重试
                         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
                     }
-                    throw new RuntimeException(String.format("rPushX [%d] error, reach max wait, add to retry...", event.payload().get().getTxId()));
+                    throw new RuntimeException(String.format("xAdd [%d] error, reach max wait, add to retry...", event.payload().get().getTxId()));
                 } catch (Exception e) {
                     logger.warn(e.getMessage());
 
@@ -221,13 +224,13 @@ public class RedisEventHandler implements ICacheEventHandler {
         syncCommands.del(eventKeyGenerate(txIdString));
     }
 
-    private boolean eventChange(long txId, long id, long version, Event<?> event) {
+    private boolean storage(long txId, long id, long version, Event<?> event) {
         try {
             String json = objectMapper.writeValueAsString(event);
 
             return syncCommands.hset(eventKeyGenerate(txId), eventFieldGenerate(id, version, event.type().getValue()), json);
         } catch (Exception e) {
-            logger.warn("eventChange error, [{}-{}-{}-{}], add to retry... ", txId, event.type(), id, version);
+            logger.warn("storage error, [txId:{}-type:{}-id:{}-version:{}-message:{}], add to retry... ", txId, event.type(), id, version, e.getMessage());
 
             return false;
         }

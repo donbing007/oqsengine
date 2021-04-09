@@ -12,7 +12,12 @@
     <artifactId>xplat-meta-oqsengine-event</artifactId>
 
     <dependencies>
-
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>xplat-meta-oqsengine-testcontainer</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
