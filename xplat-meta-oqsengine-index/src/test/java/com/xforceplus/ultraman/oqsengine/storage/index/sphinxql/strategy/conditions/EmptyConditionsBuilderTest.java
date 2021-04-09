@@ -6,7 +6,6 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,10 +44,9 @@ public class EmptyConditionsBuilderTest {
     public void testBuild() throws Exception {
 
         EmptyConditionsBuilder emptyConditionsBuilder = new EmptyConditionsBuilder();
-        String where = emptyConditionsBuilder.build(entityClass, Conditions.buildEmtpyConditions());
+        String where = emptyConditionsBuilder.build(entityClass, Conditions.buildEmtpyConditions()).toString();
 
-        logger.info("Actual where is {}", where);
-        Assert.assertEquals(String.format("MATCH('@%s =\"%s\"')", FieldDefine.ENTITYCLASSF, Long.toString(entityClass.id())), where);
+        Assert.assertTrue(where.isEmpty());
     }
 
 

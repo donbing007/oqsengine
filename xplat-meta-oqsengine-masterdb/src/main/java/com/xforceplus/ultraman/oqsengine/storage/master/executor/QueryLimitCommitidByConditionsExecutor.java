@@ -134,7 +134,8 @@ public class QueryLimitCommitidByConditionsExecutor extends AbstractMasterExecut
                 String.join(
                     ",",
                     FieldDefine.ID,
-                    FieldDefine.OP, FieldDefine.OQS_MAJOR));
+                    FieldDefine.OP,
+                    FieldDefine.OQS_MAJOR));
         Sort sort = config.getSort();
         if (sort != null && !sort.isOutOfOrder() && !sort.getField().config().isIdentifie()) {
 

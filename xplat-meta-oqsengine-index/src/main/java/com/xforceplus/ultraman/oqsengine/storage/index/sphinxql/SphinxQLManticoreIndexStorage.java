@@ -126,13 +126,21 @@ public class SphinxQLManticoreIndexStorage implements IndexStorage {
                     useFilterIds = config.getExcludedIds();
                 }
 
+                SelectConfig useConfig = SelectConfig.Builder.aSelectConfig()
+                    .withCommitId(config.getCommitId())
+                    .withSort(config.getSort())
+                    .withPage(config.getPage())
+                    .withExcludedIds(useFilterIds)
+                    .withDataAccessFitlerCondtitons(config.getDataAccessFilterCondtitions())
+                    .withFacet(config.getFacet()).build();
+
                 return QueryConditionExecutor.build(
-                        getSearchIndexName(),
-                        resource,
-                        sphinxQLConditionsBuilderFactory,
-                        storageStrategyFactory,
-                        getMaxSearchTimeoutMs()).execute(
-                        Tuple.of(entityClass, conditions, config.getPage(), config.getSort(), useFilterIds, config.getCommitId()));
+                    getSearchIndexName(),
+                    resource,
+                    sphinxQLConditionsBuilderFactory,
+                    storageStrategyFactory,
+                    getMaxSearchTimeoutMs()).execute(
+                    Tuple.of(entityClass, conditions, useConfig));
             });
 
             return refs;

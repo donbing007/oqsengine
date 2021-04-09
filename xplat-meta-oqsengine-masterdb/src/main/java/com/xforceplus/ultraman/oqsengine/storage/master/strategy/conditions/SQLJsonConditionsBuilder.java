@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.storage.master.strategy.conditions;
 
-import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.*;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.storage.master.strategy.condition.SQLConditionQueryBuilderFactory;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionBuilder;
@@ -45,30 +46,5 @@ public class SQLJsonConditionsBuilder implements ConditionsBuilder<String>, Stor
         this.storageStrategyFactory = storageStrategyFactory;
 
         this.sqlConditionQueryBuilderFactory = new SQLConditionQueryBuilderFactory(this.storageStrategyFactory);
-    }
-
-    private void build(StringBuilder buff, ConditionNode node) {
-        if (Conditions.isLinkNode(node)) {
-            LinkConditionNode linkNode = (LinkConditionNode) node;
-            if (linkNode.isClosed()) {
-                buff.append("(");
-            }
-
-            build(buff, linkNode.getLeft());
-            buff.append(" ").append(linkNode.getLink().name());
-            if (linkNode.getRight() != null) {
-                buff.append(" ");
-                build(buff, linkNode.getRight());
-            }
-
-            if (linkNode.isClosed()) {
-                buff.append(")");
-            }
-        } else {
-            ValueConditionNode vNode = (ValueConditionNode) node;
-            Condition condition = vNode.getCondition();
-            ConditionBuilder<String> cb = sqlConditionQueryBuilderFactory.getQueryBuilder(condition);
-            buff.append(cb.build(condition));
-        }
     }
 }

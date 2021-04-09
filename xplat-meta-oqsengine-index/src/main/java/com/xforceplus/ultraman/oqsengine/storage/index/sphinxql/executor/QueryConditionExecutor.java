@@ -14,27 +14,26 @@ import com.xforceplus.ultraman.oqsengine.storage.StorageType;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.constant.SQLConstant;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions.SphinxQLConditionsBuilderFactory;
+import com.xforceplus.ultraman.oqsengine.storage.pojo.select.SelectConfig;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionResource;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValue;
 import com.xforceplus.ultraman.oqsengine.storage.value.StorageValueFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategy;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
-import io.vavr.Tuple6;
+import io.vavr.Tuple3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.util.stream.Collectors.joining;
-
 /**
  * Query condition Executor
  */
-public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple6<IEntityClass, Conditions, Page, Sort, Set<Long>, Long>, List<EntityRef>> {
+public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntityClass, Conditions, SelectConfig>, List<EntityRef>> {
 
     Logger logger = LoggerFactory.getLogger(QueryConditionExecutor.class);
 
@@ -54,7 +53,7 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple6<IEntity
         this.storageStrategyFactory = storageStrategyFactory;
     }
 
-    public static Executor<Tuple6<IEntityClass, Conditions, Page, Sort, Set<Long>, Long>, List<EntityRef>> build(
+    public static Executor<Tuple3<IEntityClass, Conditions, SelectConfig>, List<EntityRef>> build(
         String indexTableName
         , TransactionResource<Connection> resource
         , SphinxQLConditionsBuilderFactory conditionsBuilderFactory
@@ -257,37 +256,57 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple6<IEntity
     }
 
     @Override
-    public List<EntityRef> execute(Tuple6<IEntityClass, Conditions, Page, Sort, Set<Long>, Long> queryCondition) throws SQLException {
+    public List<EntityRef> execute(Tuple3<IEntityClass, Conditions, SelectConfig> queryCondition) throws SQLException {
 
         Conditions conditions = queryCondition._2();
         IEntityClass entityClass = queryCondition._1();
-        Page page = queryCondition._3();
-        Sort sort = queryCondition._4();
-        Set<Long> filterIds = queryCondition._5();
-        Long commitId = queryCondition._6();
+        Page page = queryCondition._3().getPage();
+        Sort sort = queryCondition._3().getSort();
+        Set<Long> filterIds = queryCondition._3().getExcludedIds();
+        long commitId = queryCondition._3().getCommitId();
+        Conditions filterConditions = queryCondition._3().getDataAccessFilterCondtitions();
 
-        String whereCondition = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);
+        SphinxQLWhere where = null;
+        // 如果有数据过滤要求
+        if (!filterConditions.isEmtpy()) {
+            /**
+             * 没有范围查询,和原始条件使用And合并.
+             * 如果原始查询无条件,那么直接替换.
+             *
+             * 如果含有范围查询,直接在的始查询中追加非全文的查询.
+             */
+            if (!filterConditions.haveRangeCondition()) {
+                if (!conditions.isEmtpy()) {
+                    conditions.close().addAnd(filterConditions, true);
+                } else {
+                    conditions = filterConditions;
+                }
+
+                where = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);
+
+            } else {
+                // 以非全文的方式增加过滤.
+                where = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);
+                where.addWhere(conditionsBuilderFactory.getBuilder(filterConditions).build(entityClass, filterConditions), true);
+            }
+        } else {
+
+            where = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);
+
+        }
+
 
         if (filterIds != null && !filterIds.isEmpty()) {
-            String ids = filterIds.stream().map(Object::toString).collect(joining(","));
-            String filterCondition = String.format(SQLConstant.FILTER_IDS, ids);
-            if (StringUtils.isEmpty(whereCondition)) {
-                whereCondition = filterCondition;
-            } else {
-                whereCondition = whereCondition.concat(" and ").concat(filterCondition);
+            for (long id : filterIds) {
+                where.addFilterId(id);
             }
         }
 
-        if (commitId != null && commitId > 0) {
-            String commitFilterId = String.format(SQLConstant.FILTER_COMMIT, commitId);
-
-            if (StringUtils.isEmpty(whereCondition)) {
-                whereCondition = commitFilterId;
-            } else {
-                whereCondition = commitFilterId.concat(" AND ").concat(whereCondition);
-            }
-
+        if (commitId > 0) {
+            where.setCommitId(commitId);
         }
+
+        where.setEntityClass(entityClass);
 
         if (!page.isSinglePage()) {
             page.setTotalCount(Long.MAX_VALUE);
@@ -341,7 +360,8 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple6<IEntity
             }
         }
 
-        String sql = String.format(SQLConstant.SELECT_SQL, sortSelectValuesSegment, getIndexName(), whereCondition, orderBySqlSegment);
+        String sql = String.format(
+            SQLConstant.SELECT_SQL, sortSelectValuesSegment, getIndexName(), where.toString(), orderBySqlSegment);
 
         try (PreparedStatement st = getTransactionResource().value().prepareStatement(sql)) {
             st.setLong(1, 0);
@@ -350,9 +370,8 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple6<IEntity
             } else {
                 st.setLong(2, page.getPageSize() * (page.getIndex() - 1));
             }
-            st.setLong(3, page.hasVisibleTotalCountLimit() ?
-                page.getVisibleTotalCount()
-                : page.getPageSize() * page.getIndex());
+            st.setLong(3,
+                page.hasVisibleTotalCountLimit() ? page.getVisibleTotalCount() : page.getPageSize() * page.getIndex());
             // 设置manticore的查询超时时间.
             st.setLong(4, getTimeoutMs());
 

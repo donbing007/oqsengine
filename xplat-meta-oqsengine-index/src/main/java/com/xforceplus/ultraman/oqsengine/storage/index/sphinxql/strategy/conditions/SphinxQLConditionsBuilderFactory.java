@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
@@ -27,8 +28,7 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
 
     private Map<Integer, ConditionsBuilder> builderMap;
 
-    private ConditionsBuilder<String> emptyConditionsBuilder;
-    private ConditionsBuilder<String> attributeFilterConditionsBuilder;
+    private ConditionsBuilder<SphinxQLWhere> emptyConditionsBuilder;
 
     @Resource(name = "indexStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
@@ -64,7 +64,7 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
         });
     }
 
-    public ConditionsBuilder<String> getBuilder(Conditions conditions) {
+    public ConditionsBuilder<SphinxQLWhere> getBuilder(Conditions conditions) {
         if (conditions.isEmtpy()) {
             return emptyConditionsBuilder;
         }
