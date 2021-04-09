@@ -79,18 +79,6 @@ public class RedisEventHandler implements ICacheEventHandler {
         syncConnect = redisClient.connect();
         syncCommands = syncConnect.sync();
         syncCommands.clientSetname("oqs.event");
-
-
-    }
-
-    private void initStream() {
-        String type = syncCommands.type(STREAM_TX_ID);
-        if (type != null && !type.equals("stream")) {
-            syncCommands.del(STREAM_TX_ID);
-        }
-        if (type == null) {
-
-        }
     }
 
     @Override
