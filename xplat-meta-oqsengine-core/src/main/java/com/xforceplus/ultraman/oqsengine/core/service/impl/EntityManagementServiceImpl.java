@@ -17,6 +17,7 @@ import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.enums.CDCStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.cdc.metrics.CDCAckMetrics;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
 import com.xforceplus.ultraman.oqsengine.status.CDCStatusService;
@@ -72,6 +73,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
     @Resource
     private EventBus eventBus;
 
+    private static final int UN_KNOW_VERSION = -1;
+    private static final int BUILD_VERSION = 0;
+    private static final int INCREMENT_POS = 1;
     /**
      * 可以接爱的最大心跳间隔.
      */
@@ -180,7 +184,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "build"})
     @Override
-    public ResultStatus build(IEntity entity) throws SQLException {
+    public OperationResult build(IEntity entity) throws SQLException {
         checkReady();
 
         markTime(entity);
@@ -188,8 +192,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
         try {
-
-            return (ResultStatus) transactionExecutor.execute((tx, resource, hint) -> {
+            return (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
                 if (entity.id() <= 0) {
                     long newId = idGenerator.next();
@@ -199,15 +202,14 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 entity.restMaintainId(0);
 
                 if (masterStorage.build(entity, entityClass) <= 0) {
-                    return ResultStatus.UNCREATED;
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.UNCREATED);
                 }
 
                 tx.getAccumulator().accumulateBuild(entity.id());
 
                 noticeEvent(tx, EventType.ENTITY_BUILD, entity);
 
-                return ResultStatus.SUCCESS;
-
+                return new OperationResult(tx.id(), entity.id(), BUILD_VERSION, EventType.ENTITY_BUILD.getValue(), ResultStatus.SUCCESS);
             });
         } catch (Exception ex) {
 
@@ -226,7 +228,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "replace"})
     @Override
-    public ResultStatus replace(IEntity entity) throws SQLException {
+    public OperationResult replace(IEntity entity) throws SQLException {
         checkReady();
 
         markTime(entity);
@@ -234,11 +236,11 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
         try {
-            return (ResultStatus) transactionExecutor.execute((tx, resource, hint) -> {
+            return (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
                 Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
                 if (!targetEntityOp.isPresent()) {
-                    return ResultStatus.NOT_FOUND;
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.NOT_FOUND);
                 }
 
                 IEntity targetEntity = targetEntityOp.get();
@@ -248,14 +250,17 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 if (isConflict(masterStorage.replace(targetEntity, entityClass))) {
                     hint.setRollback(true);
-                    return ResultStatus.CONFLICT;
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.CONFLICT);
                 }
 
                 tx.getAccumulator().accumulateReplace(entity.id());
 
-                noticeEvent(tx, EventType.ENTITY_REPLACE, entity);
+                //  这里将版本+1，使得外部获取的版本为当前成功版本
+                targetEntity.resetVersion(targetEntity.version() + INCREMENT_POS);
 
-                return ResultStatus.SUCCESS;
+                noticeEvent(tx, EventType.ENTITY_REPLACE, targetEntity, entity);
+
+                return new OperationResult(tx.id(), entity.id(), targetEntity.version(), EventType.ENTITY_REPLACE.getValue(), ResultStatus.SUCCESS);
             });
         } catch (Exception ex) {
 
@@ -270,7 +275,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "delete"})
     @Override
-    public ResultStatus delete(IEntity entity) throws SQLException {
+    public OperationResult delete(IEntity entity) throws SQLException {
         checkReady();
 
         markTime(entity);
@@ -278,22 +283,22 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entity.entityClassRef());
 
         try {
-            return (ResultStatus) transactionExecutor.execute((tx, resource, hint) -> {
+            return (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
                 if (!masterStorage.exist(entity.id())) {
-                    return ResultStatus.NOT_FOUND;
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.NOT_FOUND);
                 }
 
                 if (isConflict(masterStorage.delete(entity, entityClass))) {
                     hint.setRollback(true);
-                    return ResultStatus.CONFLICT;
+                    return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.CONFLICT);
                 }
 
                 tx.getAccumulator().accumulateDelete(entity.id());
 
                 noticeEvent(tx, EventType.ENTITY_DELETE, entity);
 
-                return ResultStatus.SUCCESS;
+                return new OperationResult(tx.id(), entity.id(), entity.version(), EventType.ENTITY_DELETE.getValue(), ResultStatus.SUCCESS);
             });
         } catch (Exception ex) {
 
@@ -308,7 +313,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "deleteforce"})
     @Override
-    public ResultStatus deleteForce(IEntity entity) throws SQLException {
+    public OperationResult deleteForce(IEntity entity) throws SQLException {
         /**
          * 设置万能版本,表示和所有的版本都匹配.
          */
@@ -376,7 +381,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 break;
             }
             case ENTITY_REPLACE: {
-                eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, new ReplacePayload(txId, number, entities[0])));
+                eventBus.notify(new ActualEvent(EventType.ENTITY_REPLACE, new ReplacePayload(txId, number, entities[0], entities[1])));
                 break;
             }
             case ENTITY_DELETE: {

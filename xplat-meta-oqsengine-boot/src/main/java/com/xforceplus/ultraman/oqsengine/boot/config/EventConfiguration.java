@@ -4,6 +4,11 @@ import com.xforceplus.ultraman.oqsengine.event.DefaultEventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.storage.EventStorage;
 import com.xforceplus.ultraman.oqsengine.event.storage.MemoryEventStorage;
+import com.xforceplus.ultraman.oqsengine.event.storage.cache.CacheEventService;
+import com.xforceplus.ultraman.oqsengine.event.storage.cache.ICacheEventHandler;
+import com.xforceplus.ultraman.oqsengine.event.storage.cache.ICacheEventService;
+import com.xforceplus.ultraman.oqsengine.event.storage.cache.RedisEventHandler;
+import io.lettuce.core.RedisClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,5 +31,16 @@ public class EventConfiguration {
     public EventStorage eventStorage() {
         return new MemoryEventStorage();
     }
+
+    @Bean
+    public ICacheEventService cacheEventAware() {
+        return new CacheEventService();
+    }
+
+    @Bean
+    public ICacheEventHandler cacheEventHandler(RedisClient redisClient, ExecutorService worker) {
+        return new RedisEventHandler(redisClient, worker);
+    }
+
 
 }
