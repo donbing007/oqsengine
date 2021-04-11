@@ -1,5 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.event.storage.cache;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
@@ -50,6 +51,8 @@ public class RedisEventHandlerTest extends MiddleWare {
 
     private ExecutorService cacheWorker;
 
+    private ObjectMapper objectMapper;
+
     @BeforeClass
     public static void beforeClass() {
         initRedis();
@@ -65,8 +68,9 @@ public class RedisEventHandlerTest extends MiddleWare {
 
         cacheWorker = Executors.newFixedThreadPool(10);
 
-        cacheEventHandler = redisEventHandler(redisClient, cacheWorker,
-                new ObjectMapper().configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false));
+        objectMapper = new ObjectMapper().configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+
+        cacheEventHandler = redisEventHandler(redisClient, cacheWorker, objectMapper);
         cacheEventHandler.init();
     }
 
@@ -75,18 +79,25 @@ public class RedisEventHandlerTest extends MiddleWare {
         clearRedis();
     }
 
+    private static final long testSize = 10;
+
+    /**
+     * 测试单线程写入10条数据是否符合预期
+     */
     @Test
-    public void onEventCreateTest() {
-        long expectedSize = 10;
+    public void onEventCreate() {
         long expectedTxId = 1;
-        for (long i = 0; i < 10; i ++) {
+        for (int i = 0; i < testSize; i ++) {
             Event<BuildPayload> payloadEvent = eventBuildGenerator(expectedTxId, i, i);
             cacheEventHandler.onEventCreate(payloadEvent);
         }
-        Assert.assertTrue(checkWithExpire(expectedTxId, expectedSize, 1000));
+        Assert.assertTrue(checkWithExpire(expectedTxId, testSize, 1000));
     }
 
 
+    /**
+     * 测试多线程并发CUD对于多个TXID的写入
+     */
     private List<Integer> expectedTxId = Arrays.asList(3, 5, 20);
     private Map<Long, AtomicInteger> expectSizeByTxId = expectSizeByTxId();
 
@@ -100,10 +111,12 @@ public class RedisEventHandlerTest extends MiddleWare {
 
         int threads = 3;
         Thread[] handler = new Thread[threads];
-        int expectedSize = 10;
+
         for (int i = 0; i < threads; i++) {
             final int pos = i;
-            handler[i] = new Thread(() -> {supply(pos * expectedSize, expectedSize);});
+            handler[i] = new Thread(() -> {
+                supply(pos * (int)testSize, (int)testSize);
+            });
         }
 
         for (int i = 0; i < threads; i++) {
@@ -117,6 +130,9 @@ public class RedisEventHandlerTest extends MiddleWare {
         }
     }
 
+    /**
+     * 测试onEventBegin
+     */
     private String TX_EXPIRE_ZSORT_KEY = "com.xforceplus.ultraman.oqsengine.event.tx.zsort";
     private String TX_EXPIRE_HASH_KEY = "com.xforceplus.ultraman.oqsengine.event.tx.hash";
     @Test
@@ -124,8 +140,6 @@ public class RedisEventHandlerTest extends MiddleWare {
         long txId = Long.MAX_VALUE - 1;
 
         long startTime = System.currentTimeMillis();
-        int testSize = 10;
-
 
         for (int i = 0; i < testSize; i++) {
             Event<BeginPayload> payloadEvent = eventBeginGenerator(txId--);
@@ -145,6 +159,139 @@ public class RedisEventHandlerTest extends MiddleWare {
             Assert.assertNotNull(v);
             Assert.assertTrue(Long.parseLong(v) > startTime && Long.parseLong(v) < endTime);
         }
+    }
+
+
+    /**
+     * 测试onEventCommit
+     */
+    @Test
+    public void onEventCommit() {
+        //  测试正常写入10条数据然后提交
+
+
+        //  测试写入9条数据、commit的maxOpNumber为10时，等待10毫秒写入第10条数据然后提交
+
+
+        //  测试写入9条数据、commit的maxOpNumber为10时，等待120毫秒写入第10条数据然后提交，主要测试重试task是否执行
+    }
+
+
+    /**
+     * 测试删除
+     */
+    private String CUD_PAYLOAD_HASH_KEY_PREFIX = "com.xforceplus.ultraman.oqsengine.event.payload";
+    @Test
+    public void eventClean() {
+        Long[] expectedDeleteTx = new Long[2];
+        expectedDeleteTx[0] = Long.MAX_VALUE - 1;
+        expectedDeleteTx[1] = Long.MAX_VALUE - 2;
+
+        long start = System.currentTimeMillis();
+        long end = 0;
+        int existStart = 0;
+        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
+
+        for (int i = 0; i < testSize; i ++) {
+            long txId = 0;
+            if (i < expectedDeleteTx.length) {
+                txId = expectedDeleteTx[i];
+            } else {
+                txId = i;
+            }
+            Event<BeginPayload> payloadEvent = eventBeginGenerator(txId);
+            boolean result = cacheEventHandler.onEventBegin(payloadEvent);
+            Assert.assertTrue(result);
+
+            if (i == expectedDeleteTx.length) {
+                end = payloadEvent.time() - 5;
+                existStart = i;
+            }
+
+            for (int j = 0; j < testSize; j++) {
+                result = cacheEventHandler.onEventCreate(eventBuildGenerator(txId, j, j));
+                Assert.assertTrue(result);
+            }
+
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
+        }
+
+        int removes = cacheEventHandler.eventCleanByRange(start, end);
+        Assert.assertEquals(expectedDeleteTx.length, removes);
+
+        Range<Long> r = Range.create(start, end);
+        List<String> ret = syncCommands.zrangebyscore(TX_EXPIRE_ZSORT_KEY, r);
+        Assert.assertEquals(0, ret.size());
+
+        for (int i = 0; i < expectedDeleteTx.length; i++) {
+            cleanNotExistAssert(expectedDeleteTx[i] + "");
+        }
+
+        // 将existStart删除，测试cleanByTxId
+        cacheEventHandler.eventCleanByTxId(existStart);
+
+        for (int i = existStart; i < testSize; i ++) {
+            String key = i + "";
+            if (i == existStart) {
+                cleanNotExistAssert(key);
+            } else {
+                String result = syncCommands.hget(TX_EXPIRE_HASH_KEY, key);
+                Assert.assertNotNull(result);
+
+                Map<String, String> stringMap = syncCommands.hgetall(String.format("%s.%s", CUD_PAYLOAD_HASH_KEY_PREFIX, key));
+                Assert.assertEquals(stringMap.size(), testSize);
+            }
+        }
+    }
+
+    /**
+     * 测试查询
+     */
+    @Test
+    public void query() throws JsonProcessingException {
+        Map<Long, List<QueryCondition>> expectedTxValueMap = new HashMap<>();
+        for (int i = 0; i < testSize; i ++) {
+            Event<BeginPayload> payloadEvent = eventBeginGenerator(i);
+            boolean result = cacheEventHandler.onEventBegin(payloadEvent);
+            Assert.assertTrue(result);
+
+            for (int j = 0; j < testSize; j++) {
+                Event<BuildPayload> event = eventBuildGenerator(i, j, j);
+
+                String json = objectMapper.writeValueAsString(event);
+
+                result = cacheEventHandler.onEventCreate(event);
+                Assert.assertTrue(result);
+
+                expectedTxValueMap.computeIfAbsent((long) i, t -> new ArrayList<>()).add(new QueryCondition((long) j, j, ENTITY_BUILD.getValue(), json));
+            }
+
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
+        }
+
+        for (Map.Entry<Long, List<QueryCondition>> v : expectedTxValueMap.entrySet()) {
+            //  这里传入2个-1是为了测试判断条件是否进入eventType check
+            Collection<String> ret = cacheEventHandler.eventsQuery(v.getKey(), -1L, -1, null);
+            Assert.assertEquals(testSize, ret.size());
+
+            for (QueryCondition q : v.getValue()) {
+                Collection<String> result = cacheEventHandler.eventsQuery(v.getKey(), q.id, q.version, q.eventType);
+                Assert.assertEquals(1, result.size());
+
+                Iterator<String> it = result.iterator();
+                Assert.assertTrue(it.hasNext());
+                Assert.assertEquals(q.expectValue, it.next());
+            }
+        }
+
+    }
+
+    private void cleanNotExistAssert(String key) {
+        String result = syncCommands.hget(TX_EXPIRE_HASH_KEY, key);
+        Assert.assertNull(result);
+
+        result = syncCommands.get(String.format("%s.%s", CUD_PAYLOAD_HASH_KEY_PREFIX, key));
+        Assert.assertNull(result);
     }
 
     private Map<Long, AtomicInteger> expectSizeByTxId() {
@@ -197,24 +344,24 @@ public class RedisEventHandlerTest extends MiddleWare {
         return false;
     }
 
-    private Event<BuildPayload> eventBuildGenerator(long txId, long number, long id) {
-        return new ActualEvent(ENTITY_BUILD, new BuildPayload(txId, number, Entity.Builder.anEntity().withId(id).build()));
+    private Event<BuildPayload> eventBuildGenerator(long txId, int number, long id) {
+        return new ActualEvent(ENTITY_BUILD, new BuildPayload(txId, number, Entity.Builder.anEntity().withId(id).withVersion(number).build()));
     }
 
-    private Event<ReplacePayload> eventReplaceGenerator(long txId, long number, long id) {
+    private Event<ReplacePayload> eventReplaceGenerator(long txId, int number, long id) {
         return new ActualEvent(ENTITY_REPLACE, new ReplacePayload(txId, number
-                , Entity.Builder.anEntity().withId(id).build(), Entity.Builder.anEntity().withId(id).build()));
+                , Entity.Builder.anEntity().withId(id).build(), Entity.Builder.anEntity().withId(id).withVersion(number).build()));
     }
 
-    private Event<DeletePayload> eventDeleteGenerator(long txId, long number, long id) {
-        return new ActualEvent(ENTITY_DELETE, new DeletePayload(txId, number, Entity.Builder.anEntity().withId(id).build()));
+    private Event<DeletePayload> eventDeleteGenerator(long txId, int number, long id) {
+        return new ActualEvent(ENTITY_DELETE, new DeletePayload(txId, number, Entity.Builder.anEntity().withId(id).withVersion(number).build()));
     }
 
     private Event<BeginPayload> eventBeginGenerator(long txId) {
         return new ActualEvent(TX_BEGIN, new BeginPayload(txId, TX_BEGIN.name()));
     }
 
-    private Event<CommitPayload> eventCommitGenerator(long txId, long number) {
+    private Event<CommitPayload> eventCommitGenerator(long txId, int number) {
         return new ActualEvent(TX_COMMITED, new CommitPayload(txId, 1, TX_COMMITED.name(), false, number));
     }
 
@@ -225,6 +372,20 @@ public class RedisEventHandlerTest extends MiddleWare {
         public RandomTXEventType(long txId, EventType eventType) {
             this.txId = txId;
             this.eventType = eventType;
+        }
+    }
+
+    private static class QueryCondition {
+        Long id;
+        Integer version;
+        Integer eventType;
+        String expectValue;
+
+        public QueryCondition(Long id, Integer version, Integer eventType, String expectValue) {
+            this.id = id;
+            this.version = version;
+            this.eventType = eventType;
+            this.expectValue = expectValue;
         }
     }
 }

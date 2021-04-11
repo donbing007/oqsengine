@@ -119,8 +119,7 @@ public class CacheEventService implements ICacheEventService {
             while (!closed) {
                 int count = 0;
                 try {
-                    count =
-                            cacheEventHandler.eventCleanByRange(0, System.currentTimeMillis() - CLEAN_BUFFER_TIME);
+                    count = cacheEventHandler.eventCleanByRange(0, System.currentTimeMillis() - CLEAN_BUFFER_TIME);
                 } catch (Exception e) {
                     logger.warn(e.getMessage());
                 }
