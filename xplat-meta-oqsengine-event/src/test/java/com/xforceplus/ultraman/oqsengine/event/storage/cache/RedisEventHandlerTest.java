@@ -17,6 +17,8 @@ import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
 import io.lettuce.core.Range;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.StreamMessage;
+import io.lettuce.core.XReadArgs;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -53,6 +55,8 @@ public class RedisEventHandlerTest extends MiddleWare {
 
     private ObjectMapper objectMapper;
 
+    private Map<Long, List<QueryCondition>> expectedTxValueMap = new HashMap<>();
+
     @BeforeClass
     public static void beforeClass() {
         initRedis();
@@ -77,9 +81,10 @@ public class RedisEventHandlerTest extends MiddleWare {
     @After
     public void after() {
         clearRedis();
+        expectedTxValueMap.clear();
     }
 
-    private static final long testSize = 10;
+    private static final int testSize = 10;
 
     /**
      * 测试单线程写入10条数据是否符合预期
@@ -166,14 +171,38 @@ public class RedisEventHandlerTest extends MiddleWare {
      * 测试onEventCommit
      */
     @Test
-    public void onEventCommit() {
+    public void onEventCommit() throws JsonProcessingException, InterruptedException {
         //  测试正常写入10条数据然后提交
+        long expectTx = 1;
+        initBeginWithBuild(expectTx);
+        cacheEventHandler.onEventCommit(eventCommitGenerator(expectTx, testSize));
+        consumerCheck(expectTx + "");
 
+        //  测试写入10条数据、commit的maxOpNumber为11时，等待10毫秒写入第10条数据然后提交
+        final long otTx = 2;
+        initBeginWithBuild(otTx);
+        Thread onCommitThread = new Thread(() -> {
+            cacheEventHandler.onEventCommit(eventCommitGenerator(otTx, testSize + 1));
 
-        //  测试写入9条数据、commit的maxOpNumber为10时，等待10毫秒写入第10条数据然后提交
+        });
+        Thread buildOneThread = new Thread(() -> {
+            try {
+                buildOne(otTx, testSize);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        });
+        //  确保commit线程产生exception并执行recover
+        onCommitThread.start();
+        onCommitThread.join();
 
+        //  将最后一个补齐
+        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
+        buildOneThread.start();
+        buildOneThread.join();
+        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
 
-        //  测试写入9条数据、commit的maxOpNumber为10时，等待120毫秒写入第10条数据然后提交，主要测试重试task是否执行
+        consumerCheck(otTx + "");
     }
 
 
@@ -249,23 +278,9 @@ public class RedisEventHandlerTest extends MiddleWare {
      */
     @Test
     public void query() throws JsonProcessingException {
-        Map<Long, List<QueryCondition>> expectedTxValueMap = new HashMap<>();
+
         for (int i = 0; i < testSize; i ++) {
-            Event<BeginPayload> payloadEvent = eventBeginGenerator(i);
-            boolean result = cacheEventHandler.onEventBegin(payloadEvent);
-            Assert.assertTrue(result);
-
-            for (int j = 0; j < testSize; j++) {
-                Event<BuildPayload> event = eventBuildGenerator(i, j, j);
-
-                String json = objectMapper.writeValueAsString(event);
-
-                result = cacheEventHandler.onEventCreate(event);
-                Assert.assertTrue(result);
-
-                expectedTxValueMap.computeIfAbsent((long) i, t -> new ArrayList<>()).add(new QueryCondition((long) j, j, ENTITY_BUILD.getValue(), json));
-            }
-
+            initBeginWithBuild(i);
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
         }
 
@@ -283,7 +298,42 @@ public class RedisEventHandlerTest extends MiddleWare {
                 Assert.assertEquals(q.expectValue, it.next());
             }
         }
+    }
 
+    private String STREAM_TX_ID = "com.xforceplus.ultraman.oqsengine.event.stream.tx";
+    private void consumerCheck(String txIdStr) {
+        List<StreamMessage<String, String>> streamSmsSend = syncCommands.xread(XReadArgs.StreamOffset.from(STREAM_TX_ID, "0"));
+
+        boolean find = false;
+        for (StreamMessage<String, String> message : streamSmsSend) {
+            String messageValue = message.getBody().get(txIdStr);
+            if (null != messageValue) {
+                find = true;
+                break;
+            }
+        }
+        Assert.assertTrue(find);
+
+    }
+
+    private void initBeginWithBuild(long txId) throws JsonProcessingException {
+        Event<BeginPayload> payloadEvent = eventBeginGenerator(txId);
+        boolean result = cacheEventHandler.onEventBegin(payloadEvent);
+        Assert.assertTrue(result);
+
+        for (int j = 0; j < testSize; j++) {
+            buildOne(txId, j);
+        }
+    }
+
+    private void buildOne(long txId, int current) throws JsonProcessingException {
+        Event<BuildPayload> event = eventBuildGenerator(txId, current, current);
+
+        String json = objectMapper.writeValueAsString(event);
+
+        boolean result = cacheEventHandler.onEventCreate(event);
+        Assert.assertTrue(result);
+        expectedTxValueMap.computeIfAbsent(txId, t -> new ArrayList<>()).add(new QueryCondition((long) current, current, ENTITY_BUILD.getValue(), json));
     }
 
     private void cleanNotExistAssert(String key) {
@@ -323,7 +373,7 @@ public class RedisEventHandlerTest extends MiddleWare {
 
 
     private RedisEventHandler redisEventHandler(RedisClient redisClient, ExecutorService cacheWorker, ObjectMapper objectMapper) {
-        return new RedisEventHandler(redisClient, cacheWorker, objectMapper);
+        return new RedisEventHandler(redisClient, cacheWorker, objectMapper, 0);
     }
 
     private boolean checkWithExpire(long txId, long expected, long duration) {

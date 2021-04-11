@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.event.storage.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
@@ -67,7 +66,11 @@ public class RedisEventHandler implements ICacheEventHandler {
     //  记录当前正在重试队列中等待的events
     private AtomicInteger retryEvents = Metrics.gauge(MetricsDefine.CACHE_EVENT_CURRENT_RETRY_WAIT, new AtomicInteger(0));
 
-    public RedisEventHandler(RedisClient redisClient, ExecutorService worker, ObjectMapper objectMapper) {
+    //  3小时过期
+    public static final long CLEAN_BUFFER_TIME = 3 * 60 * 60 * 1000;
+    private long expiredDuration = CLEAN_BUFFER_TIME;
+
+    public RedisEventHandler(RedisClient redisClient, ExecutorService worker, ObjectMapper objectMapper, long expiredDuration) {
         this.redisClient = redisClient;
         this.worker = worker;
         this.objectMapper = objectMapper;
@@ -78,6 +81,10 @@ public class RedisEventHandler implements ICacheEventHandler {
 
         if (worker == null) {
             throw new IllegalArgumentException("Invalid ExecutorService instance.");
+        }
+
+        if (expiredDuration > 0) {
+            this.expiredDuration = expiredDuration;
         }
     }
 
@@ -94,8 +101,7 @@ public class RedisEventHandler implements ICacheEventHandler {
 
     @Override
     public boolean onEventCreate(Event<BuildPayload> event) {
-
-        if (null != event && event.payload().isPresent()) {
+        if (needStorage(event)) {
             if (!storage(event.payload().get().getTxId(), event.payload().get().getEntity().id()
                     , event.payload().get().getEntity().version(), event)) {
                 worker.submit(new ReCover(this::onEventCreate, event, retryEvents));
@@ -107,7 +113,7 @@ public class RedisEventHandler implements ICacheEventHandler {
 
     @Override
     public boolean onEventUpdate(Event<ReplacePayload> event) {
-        if (null != event && event.payload().isPresent()) {
+        if (needStorage(event)) {
             if(!storage(event.payload().get().getTxId(), event.payload().get().getEntity().id()
                     , event.payload().get().getEntity().version(), event)) {
                 worker.submit(new ReCover(this::onEventUpdate, event, retryEvents));
@@ -119,7 +125,7 @@ public class RedisEventHandler implements ICacheEventHandler {
 
     @Override
     public boolean onEventDelete(Event<DeletePayload> event) {
-        if (null != event && event.payload().isPresent()) {
+        if (needStorage(event)) {
             if(!storage(event.payload().get().getTxId(), event.payload().get().getEntity().id()
                     , event.payload().get().getEntity().version(), event)) {
                 worker.submit(new ReCover(this::onEventDelete, event, retryEvents));
@@ -131,7 +137,7 @@ public class RedisEventHandler implements ICacheEventHandler {
 
     @Override
     public boolean onEventBegin(Event<BeginPayload> event) {
-        if (null != event && event.payload().isPresent()) {
+        if (needStorage(event)) {
             try {
                 activeEvents.incrementAndGet();
 
@@ -160,16 +166,18 @@ public class RedisEventHandler implements ICacheEventHandler {
 
     @Override
     public boolean onEventCommit(Event<CommitPayload> event) {
-        if (null != event && event.payload().isPresent()) {
+        if (needStorage(event)) {
             if (event.payload().get().getMaxOpNumber() > 0) {
                 try {
                     activeEvents.incrementAndGet();
 
+                    String key = eventKeyGenerate(event.payload().get().getTxId());
                     for (int i = 0; i < MAX_WAIT_LOOP; i++) {
-                        Long len = syncCommands.hlen(eventKeyGenerate(event.payload().get().getTxId()));
+                        Long len = syncCommands.hlen(key);
                         if (null != len && len == event.payload().get().getMaxOpNumber()) {
                             //  将txId加入到stream中
-                            syncCommands.xadd(STREAM_TX_ID, Long.toString(event.payload().get().getTxId()), event.time());
+                            syncCommands.xadd(STREAM_TX_ID, Long.toString(event.payload().get().getTxId()), Long.toString(event.time()));
+                            logger.debug("xAdd success, [{}].", event.payload().get().getTxId());
                             return true;
                         }
                         //  短暂等待1毫秒后重试
@@ -213,6 +221,11 @@ public class RedisEventHandler implements ICacheEventHandler {
     }
 
     @Override
+    public long expiredDuration() {
+        return expiredDuration;
+    }
+
+    @Override
     public Collection<String> eventsQuery(long txId, Long id, Integer version, Integer eventType) {
 
         if (null == id || null == version || invalidQueryEventType(eventType)) {
@@ -239,6 +252,12 @@ public class RedisEventHandler implements ICacheEventHandler {
 
         //  清理event
         syncCommands.del(eventKeyGenerate(txIdString));
+    }
+
+    private boolean needStorage(Event<?> event) {
+        return null != event &&
+                event.payload().isPresent() &&
+                (System.currentTimeMillis() - event.time() < expiredDuration);
     }
 
     private boolean storage(long txId, long id, long version, Event<?> event) {

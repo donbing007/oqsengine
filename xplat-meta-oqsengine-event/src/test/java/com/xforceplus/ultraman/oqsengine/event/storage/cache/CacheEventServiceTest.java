@@ -263,6 +263,11 @@ public class CacheEventServiceTest {
         public void eventCleanByTxId(long txId) {
 
         }
+
+        @Override
+        public long expiredDuration() {
+            return 3600 * 1000;
+        }
     }
 
 }

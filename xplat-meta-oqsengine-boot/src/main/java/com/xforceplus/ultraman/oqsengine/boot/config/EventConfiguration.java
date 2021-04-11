@@ -10,6 +10,7 @@ import com.xforceplus.ultraman.oqsengine.event.storage.cache.ICacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.event.storage.cache.ICacheEventService;
 import com.xforceplus.ultraman.oqsengine.event.storage.cache.RedisEventHandler;
 import io.lettuce.core.RedisClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -34,8 +35,11 @@ public class EventConfiguration {
     }
 
     @Bean
-    public ICacheEventHandler cacheEventHandler(RedisClient redisClient, ExecutorService eventCacheRetry, ObjectMapper objectMapper) {
-        return new RedisEventHandler(redisClient, eventCacheRetry, objectMapper);
+    public ICacheEventHandler cacheEventHandler(RedisClient redisClient,
+                                                ExecutorService eventCacheRetry,
+                                                ObjectMapper objectMapper,
+                                                @Value("${cache.event.expire:0}") long expire) {
+        return new RedisEventHandler(redisClient, eventCacheRetry, objectMapper, expire);
     }
 
     @Bean

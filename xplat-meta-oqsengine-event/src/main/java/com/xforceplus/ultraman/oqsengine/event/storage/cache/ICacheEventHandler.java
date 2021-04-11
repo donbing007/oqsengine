@@ -1,7 +1,6 @@
 package com.xforceplus.ultraman.oqsengine.event.storage.cache;
 
 import com.xforceplus.ultraman.oqsengine.event.Event;
-import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
@@ -37,4 +36,6 @@ public interface ICacheEventHandler {
     public int eventCleanByRange(long start, long end);
 
     public void eventCleanByTxId(long txId);
+
+    public long expiredDuration();
 }

@@ -35,8 +35,6 @@ public class CacheEventService implements ICacheEventService {
 
     private static volatile boolean closed;
 
-    //  3小时过期
-    private static final long CLEAN_BUFFER_TIME = 3 * 60 * 60 * 1000;
     private static final long CLOSE_WAIT_DURATION = 1000;
     private static final long CLOSE_WAIT_MAX_LOOP = 60;
 
@@ -45,12 +43,13 @@ public class CacheEventService implements ICacheEventService {
         this.cacheEventHandler = cacheEventHandler;
     }
 
+
     @PostConstruct
     public void init(){
         closed = false;
 
         if (null == thread) {
-            thread = new Thread(new Cleaner(cacheEventHandler));
+            thread = new Thread(new Cleaner(cacheEventHandler, cacheEventHandler.expiredDuration()));
             thread.start();
         }
 
@@ -109,9 +108,11 @@ public class CacheEventService implements ICacheEventService {
         final Logger logger = LoggerFactory.getLogger(Cleaner.class);
 
         private ICacheEventHandler cacheEventHandler;
+        private long cleanDuration;
 
-        public Cleaner(ICacheEventHandler cacheEventHandler) {
+        public Cleaner(ICacheEventHandler cacheEventHandler, long cleanDuration) {
             this.cacheEventHandler = cacheEventHandler;
+            this.cleanDuration = cleanDuration;
         }
 
         @Override
@@ -119,7 +120,7 @@ public class CacheEventService implements ICacheEventService {
             while (!closed) {
                 int count = 0;
                 try {
-                    count = cacheEventHandler.eventCleanByRange(0, System.currentTimeMillis() - CLEAN_BUFFER_TIME);
+                    count = cacheEventHandler.eventCleanByRange(0, System.currentTimeMillis() - cleanDuration);
                 } catch (Exception e) {
                     logger.warn(e.getMessage());
                 }
