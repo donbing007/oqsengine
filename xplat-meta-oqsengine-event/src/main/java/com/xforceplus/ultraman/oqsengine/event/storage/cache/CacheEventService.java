@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
 import java.util.Collection;
 
 /**
@@ -28,27 +27,29 @@ public class CacheEventService implements ICacheEventService {
 
     final static Logger logger = LoggerFactory.getLogger(CacheEventService.class);
 
-    @Resource
     private EventBus eventBus;
 
-    @Resource
     private ICacheEventHandler cacheEventHandler;
 
     private Thread thread;
 
     private static volatile boolean closed;
 
-    //  3小时过期
-    private static final long CLEAN_BUFFER_TIME = 3 * 60 * 60 * 1000;
     private static final long CLOSE_WAIT_DURATION = 1000;
     private static final long CLOSE_WAIT_MAX_LOOP = 60;
+
+    public CacheEventService(EventBus eventBus, ICacheEventHandler cacheEventHandler) {
+        this.eventBus = eventBus;
+        this.cacheEventHandler = cacheEventHandler;
+    }
+
 
     @PostConstruct
     public void init(){
         closed = false;
 
         if (null == thread) {
-            thread = new Thread(new Cleaner(cacheEventHandler));
+            thread = new Thread(new Cleaner(cacheEventHandler, cacheEventHandler.expiredDuration()));
             thread.start();
         }
 
@@ -107,9 +108,11 @@ public class CacheEventService implements ICacheEventService {
         final Logger logger = LoggerFactory.getLogger(Cleaner.class);
 
         private ICacheEventHandler cacheEventHandler;
+        private long cleanDuration;
 
-        public Cleaner(ICacheEventHandler cacheEventHandler) {
+        public Cleaner(ICacheEventHandler cacheEventHandler, long cleanDuration) {
             this.cacheEventHandler = cacheEventHandler;
+            this.cleanDuration = cleanDuration;
         }
 
         @Override
@@ -117,8 +120,7 @@ public class CacheEventService implements ICacheEventService {
             while (!closed) {
                 int count = 0;
                 try {
-                    count =
-                            cacheEventHandler.eventCleanByRange(0, System.currentTimeMillis() - CLEAN_BUFFER_TIME);
+                    count = cacheEventHandler.eventCleanByRange(0, System.currentTimeMillis() - cleanDuration);
                 } catch (Exception e) {
                     logger.warn(e.getMessage());
                 }
