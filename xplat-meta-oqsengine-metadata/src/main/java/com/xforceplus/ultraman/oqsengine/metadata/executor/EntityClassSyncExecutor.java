@@ -70,28 +70,36 @@ public class EntityClassSyncExecutor implements SyncExecutor {
 
         // step1 prepare
         if (cacheExecutor.prepare(appId, version)) {
+            int expiredVersion = -1;
             try {
-                int expiredVersion = version(appId);
+                try {
+                    expiredVersion = version(appId);
+                } catch (Exception e) {
+                    logger.warn(e.getMessage());
+                    return false;
+                }
 
                 // step2 convert to storage
                 List<EntityClassStorage> entityClassStorageList = protoToStorageList(entityClassSyncRspProto);
 
-                // step3 update new Hash in redis
-                if (!cacheExecutor.save(appId, version, entityClassStorageList)) {
-                    throw new MetaSyncClientException(
-                            String.format("save batches failed, appId : [%s], version : [%d]", appId, version), false
-                    );
-                }
-                //  step4 set into expired clean task
-                if (expiredVersion != NOT_EXIST_VERSION) {
-                    expireExecutor.offer(new ExpireExecutor.DelayCleanEntity(COMMON_WAIT_TIME_OUT,
-                                                    new ExpireExecutor.Expired(appId, expiredVersion)));
-                }
+                try {
+                    // step3 update new Hash in redis
+                    if (!cacheExecutor.save(appId, version, entityClassStorageList)) {
+                        throw new MetaSyncClientException(
+                                String.format("save batches failed, appId : [%s], version : [%d]", appId, version), false
+                        );
+                    }
+                    //  step4 set into expired clean task
+                    if (expiredVersion != NOT_EXIST_VERSION) {
+                        expireExecutor.offer(new ExpireExecutor.DelayCleanEntity(COMMON_WAIT_TIME_OUT,
+                                new ExpireExecutor.Expired(appId, expiredVersion)));
+                    }
 
-                return true;
-            } catch (Exception e) {
-                logger.warn(e.getMessage());
-                return false;
+                    return true;
+                } catch (Exception e) {
+                    logger.warn(e.getMessage());
+                    return false;
+                }
             } finally {
                 cacheExecutor.endPrepare(appId);
             }

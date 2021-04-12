@@ -4,6 +4,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams;
 import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncClientException;
+import com.xforceplus.ultraman.oqsengine.meta.common.metrics.ConnectorMetricsDefine;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
@@ -12,6 +13,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.utils.TimeWaitUtils;
 import com.xforceplus.ultraman.oqsengine.meta.dto.RequestWatcher;
 import com.xforceplus.ultraman.oqsengine.meta.executor.IRequestWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.SyncExecutor;
+import io.micrometer.core.instrument.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +23,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
@@ -61,6 +64,12 @@ public class SyncRequestHandler implements IRequestHandler {
     private List<Thread> longRunTasks = new ArrayList<>(CLIENT_TASK_COUNT);
 
     private volatile boolean isShutdown = false;
+
+    private AtomicInteger acceptDataHandleErrorCounter =
+            Metrics.gauge(ConnectorMetricsDefine.CLIENT_ACCEPT_DATA_HANDLER_ERROR, new AtomicInteger(0));
+
+    private AtomicInteger acceptDataFormatCounter =
+            Metrics.gauge(ConnectorMetricsDefine.CLIENT_ACCEPT_DATA_FORMAT_ERROR, new AtomicInteger(0));
 
     @Override
     public void start() {
@@ -205,13 +214,6 @@ public class SyncRequestHandler implements IRequestHandler {
 
     @Override
     public void invoke(EntityClassSyncResponse entityClassSyncResponse, Void nil) {
-        /**
-         * 重启中所有的Response将被忽略
-         * 不是同批次请求将被忽略
-         */
-        if (!requestWatchExecutor.isAlive(entityClassSyncResponse.getUid())) {
-            return;
-        }
 
         /**
          * reset heartbeat
@@ -287,7 +289,7 @@ public class SyncRequestHandler implements IRequestHandler {
      */
     @SuppressWarnings("unchecked")
     private EntityClassSyncRequest.Builder execute(EntityClassSyncResponse entityClassSyncResponse) {
-        int status = SYNC_FAIL.ordinal();
+        RequestStatus status = SYNC_FAIL;
         EntityClassSyncRequest.Builder builder = EntityClassSyncRequest.newBuilder();
         try {
             if (null == entityClassSyncResponse.getAppId() || entityClassSyncResponse.getAppId().isEmpty() ||
@@ -319,19 +321,19 @@ public class SyncRequestHandler implements IRequestHandler {
                          */
                         try {
                             status = syncExecutor.sync(entityClassSyncResponse.getAppId(), entityClassSyncResponse.getVersion(), result) ?
-                                    RequestStatus.SYNC_OK.ordinal() : SYNC_FAIL.ordinal();
+                                    RequestStatus.SYNC_OK : SYNC_FAIL;
                         } catch (Exception e) {
-                            status = DATA_ERROR.ordinal();
+                            status = DATA_ERROR;
                             logger.warn(e.getMessage());
                         }
 
-                        if (status == RequestStatus.SYNC_OK.ordinal()) {
+                        if (status == RequestStatus.SYNC_OK) {
                             requestWatchExecutor.update(w);
                         }
                     } else {
                         logger.warn("current oqs-version bigger than sync-version : {}, will ignore...",
                                 entityClassSyncResponse.getVersion());
-                        status = RequestStatus.SYNC_OK.ordinal();
+                        status = RequestStatus.SYNC_OK;
                     }
                 }
 
@@ -340,9 +342,26 @@ public class SyncRequestHandler implements IRequestHandler {
             }
         } catch (Exception e) {
             logger.warn("handle entityClassSyncResponse failed, message : {}", e.getMessage());
+        } finally {
+            metrics(status);
         }
 
-        return builder.setStatus(status);
+        return builder.setStatus(status.ordinal());
+    }
+
+    private void metrics(RequestStatus status) {
+        switch (status) {
+            case SYNC_OK:
+                acceptDataHandleErrorCounter.set(0);
+                acceptDataFormatCounter.set(0);
+                break;
+            case SYNC_FAIL:
+                acceptDataHandleErrorCounter.incrementAndGet();
+                break;
+            case DATA_ERROR:
+                acceptDataFormatCounter.incrementAndGet();
+                break;
+        }
     }
 
     private boolean md5Check(String md5, EntityClassSyncRspProto entityClassSyncRspProto) {
