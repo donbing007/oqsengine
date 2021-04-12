@@ -5,9 +5,7 @@ import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
 import com.xforceplus.ultraman.oqsengine.event.payload.cache.CachePayload;
-import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
-import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
-import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
+
 import com.xforceplus.ultraman.oqsengine.event.payload.transaction.BeginPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.transaction.CommitPayload;
 import io.lettuce.core.Range;
