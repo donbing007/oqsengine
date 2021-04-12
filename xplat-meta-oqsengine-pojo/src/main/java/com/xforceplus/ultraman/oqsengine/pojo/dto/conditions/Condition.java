@@ -208,8 +208,14 @@ public class Condition implements Serializable {
 
     /**
      * 判断是否含有范围查询符号.
+     * 特殊,如果查询字段类型为标示类型那么也认为是range.
      */
     private void checkRange() {
+
+        if (field.config().isIdentifie()) {
+            range = true;
+            return;
+        }
 
         switch (getOperator()) {
             case LESS_THAN:

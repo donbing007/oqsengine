@@ -2,6 +2,7 @@ package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condit
 
 import com.xforceplus.ultraman.oqsengine.common.lifecycle.Lifecycle;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
 import com.xforceplus.ultraman.oqsengine.storage.query.ConditionsBuilder;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactory;
 import com.xforceplus.ultraman.oqsengine.storage.value.strategy.StorageStrategyFactoryAble;
@@ -27,8 +28,7 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
 
     private Map<Integer, ConditionsBuilder> builderMap;
 
-    private ConditionsBuilder<String> emptyConditionsBuilder;
-    private ConditionsBuilder<String> attributeFilterConditionsBuilder;
+    private ConditionsBuilder<SphinxQLWhere> emptyConditionsBuilder;
 
     @Resource(name = "indexStorageStrategy")
     private StorageStrategyFactory storageStrategyFactory;
@@ -64,18 +64,30 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
         });
     }
 
-    public ConditionsBuilder<String> getBuilder(Conditions conditions) {
+    public ConditionsBuilder<SphinxQLWhere> getBuilder(Conditions conditions) {
         if (conditions.isEmtpy()) {
             return emptyConditionsBuilder;
         }
+
+        return getBuilder(conditions.haveOrLink(), conditions.haveRangeCondition());
+    }
+
+    /**
+     * 由外部指定是否含有or和范围查询.
+     *
+     * @param or    true 含有or连接符.
+     * @param range true 含有范围查询.
+     * @return 条件构造器.
+     */
+    public ConditionsBuilder<SphinxQLWhere> getBuilder(boolean or, boolean range) {
 
         /**
          * or 字节低位开始第2位.
          * ranage 字节低位开始第1位.
          */
-        int or = conditions.haveOrLink() ? 2 : 0;
-        int range = conditions.haveRangeCondition() ? 1 : 0;
-        return builderMap.get(or | range);
+        int o = or ? 2 : 0;
+        int r = range ? 1 : 0;
+        return builderMap.get(o | r);
     }
 
 

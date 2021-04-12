@@ -19,10 +19,10 @@ import java.util.Collection;
 
 /**
  * @author dongbin
- * @version 0.1 2021/04/07 16:54
+ * @version 0.1 2021/04/09 11:45
  * @since 1.8
  */
-public class HaveOrNoRanageConditionsBuilderTest {
+public class HaveOrHaveRanageConditionsBuilderTest {
 
     private static IEntityClass entityClass = EntityClass.Builder.anEntityClass()
         .withId(Long.MAX_VALUE)
@@ -33,7 +33,7 @@ public class HaveOrNoRanageConditionsBuilderTest {
 
     @Test
     public void testBuild() throws Exception {
-        HaveOrNoRanageConditionsBuilder builder = new HaveOrNoRanageConditionsBuilder();
+        HaveOrHaveRanageConditionsBuilder builder = new HaveOrHaveRanageConditionsBuilder();
 
         StorageStrategyFactory storageStrategyFactory = StorageStrategyFactory.getDefaultFactory();
         storageStrategyFactory.register(FieldType.DECIMAL, new SphinxQLDecimalStorageStrategy());
@@ -65,8 +65,8 @@ public class HaveOrNoRanageConditionsBuilderTest {
                         new LongValue(EntityField.UPDATE_TIME_FILED, 200L)
                     )
                 ),
-                String.format("MATCH('((@%s 1y2p0ij10032e8e6L) | (@%s =%d @%s -1y2p0ij20032e8e5L))')",
-                    FieldDefine.ATTRIBUTEF, FieldDefine.ENTITYCLASSF, entityClass.id(), FieldDefine.ATTRIBUTEF)
+                String.format("(%s.1y2p0ij32e8e6L = 100 OR %s.1y2p0ij32e8e5L != 200)",
+                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE)
             )
             ,
             // c1 or c2 or (c3 and c4)
@@ -102,10 +102,8 @@ public class HaveOrNoRanageConditionsBuilderTest {
                     true
                 ),
                 String.format(
-                    "MATCH('((@%s 1y2p0ij10032e8e6L) | (@%s =9223372036854775807 @%s -1y2p0ij20032e8e5L)" +
-                        " | ((@%s 1y2p0ij30032e8e5L) (@%s 1y2p0ij40032e8e5L)))')",
-                    FieldDefine.ATTRIBUTEF, FieldDefine.ENTITYCLASSF, FieldDefine.ATTRIBUTEF,
-                    FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF
+                    "(%s.1y2p0ij32e8e6L = 100 OR %s.1y2p0ij32e8e5L != 200 OR (%s.1y2p0ij32e8e5L = 300 AND %s.1y2p0ij32e8e5L = 400))",
+                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE
                 )
             )
             ,
@@ -131,9 +129,8 @@ public class HaveOrNoRanageConditionsBuilderTest {
                         new LongValue(EntityField.CREATE_TIME_FILED, 500L)
                     )
                 ),
-                String.format("MATCH('(((@%s 1y2p0ij10032e8e5L) (@%s 1y2p0ij30032e8e6L)) " +
-                        "| (@%s 1y2p0ij50032e8e6L))')",
-                    FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF
+                String.format("((%s.1y2p0ij32e8e5L = 100 AND %s.1y2p0ij32e8e6L = 300) OR %s.1y2p0ij32e8e6L = 500)",
+                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE
                 )
             )
             ,
@@ -169,9 +166,8 @@ public class HaveOrNoRanageConditionsBuilderTest {
                     ),
                     true
                 ),
-                String.format("MATCH('(((@%s 1y2p0ij10032e8e5L) (@%s 1y2p0ij30032e8e6L)) " +
-                        "| ((@%s 1y2p0ij50032e8e6L) (@%s 1y2p0ij60032e8e6L)))')",
-                    FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF, FieldDefine.ATTRIBUTEF
+                String.format("((%s.1y2p0ij32e8e5L = 100 AND %s.1y2p0ij32e8e6L = 300) OR (%s.1y2p0ij32e8e6L = 500 AND %s.1y2p0ij32e8e6L = 600))",
+                    FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE, FieldDefine.ATTRIBUTE
                 )
             )
         );
@@ -186,4 +182,5 @@ public class HaveOrNoRanageConditionsBuilderTest {
             this.expected = expected;
         }
     }
+
 }

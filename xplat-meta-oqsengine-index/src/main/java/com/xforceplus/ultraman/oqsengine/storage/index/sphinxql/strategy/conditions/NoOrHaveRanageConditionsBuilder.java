@@ -1,11 +1,12 @@
 package com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditions;
 
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ValueConditionNode;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityClass;
-import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.FieldDefine;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.define.SqlKeywordDefine;
+import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.pojo.SphinxQLWhere;
 import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.condition.SphinxQLConditionBuilder;
 
 /**
@@ -18,50 +19,51 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.strategy.conditi
 public class NoOrHaveRanageConditionsBuilder extends NoOrNoRanageConditionsBuilder {
 
     @Override
-    public String build(IEntityClass entityClass, Conditions conditions) {
-        if (conditions.isEmtpy()) {
-            return "";
-        }
-
-        StringBuilder buff = new StringBuilder();
-
-        // 非范围的,将交由父类处理.
+    public SphinxQLWhere build(IEntityClass entityClass, Conditions conditions) {
         Conditions eqConditions = Conditions.buildEmtpyConditions();
-        conditions.collect().stream().forEach(cn -> {
-
-            if (Conditions.isValueNode(cn)) {
-                Condition condition = ((ValueConditionNode) cn).getCondition();
-
-                if (condition.isRange()) {
-
-                    if (buff.length() != 0) {
-                        buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
+        SphinxQLWhere where = new SphinxQLWhere();
+        conditions.scan(
+            linkNode -> {
+                if (where.attrFilterSize() > 0) {
+                    /**
+                     * 检查下个节点是否为值结点同时为非range查询.
+                     * 只有后继节点是range查询或者非值结点时才打印.
+                     */
+                    ConditionNode rNode = linkNode.getRight();
+                    if (rNode != null) {
+                        if (Conditions.isLinkNode(rNode)) {
+                            // 连接结点
+                            where.addAttrFilter(" ").addAttrFilter(SqlKeywordDefine.AND).addAttrFilter(" ");
+                        } else if (Conditions.isValueNode(rNode)) {
+                            // 值结点,只有范围查询才输出连接符.
+                            Condition condition = ((ValueConditionNode) rNode).getCondition();
+                            if (condition.isRange()) {
+                                where.addAttrFilter(" ").addAttrFilter(SqlKeywordDefine.AND).addAttrFilter(" ");
+                            }
+                        }
                     }
+                }
+            },
+            valueNode -> {
+
+                Condition condition = valueNode.getCondition();
+                if (condition.isRange()) {
                     SphinxQLConditionBuilder builder =
                         getConditionQueryBuilderFactory().getQueryBuilder(condition, false);
-
-                    buff.append(builder.build(condition));
-
-
+                    where.addAttrFilter(builder.build(condition));
                 } else {
                     eqConditions.addAnd(condition);
                 }
+
+            },
+            parentheseNode -> {
             }
-        });
+        );
 
         if (!eqConditions.isEmtpy()) {
-            if (buff.length() > 0) {
-                buff.append(" ").append(SqlKeywordDefine.AND).append(" ");
-            }
-            buff.append(super.build(entityClass, eqConditions));
-        } else {
-            buff.append(" ").append(SqlKeywordDefine.AND).append(" ")
-                .append("MATCH('@")
-                .append(FieldDefine.ENTITYCLASSF)
-                .append(" =\"")
-                .append(entityClass.id())
-                .append("\"')");
+            where.addWhere(super.build(entityClass, eqConditions), true);
         }
-        return buff.toString();
+
+        return where;
     }
 }
