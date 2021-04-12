@@ -29,4 +29,14 @@ public class ConnectorMetricsDefine {
      * 数据格式错误
      */
     public static final String CLIENT_ACCEPT_DATA_HANDLER_ERROR = PREFIX + ".connector.client.data-handler-error";
+
+    /**
+     * 数据格式错误
+     */
+    public static final String SERVER_RESPONSE_HANDLE_FAILED_ERROR = PREFIX + ".connector.server.handle-failed-error";
+
+    /**
+     * 数据格式错误
+     */
+    public static final String SERVER_RESPONSE_DATA_FORMAT_ERROR = PREFIX + ".connector.server.data-format-error";
 }

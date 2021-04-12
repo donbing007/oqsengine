@@ -5,6 +5,7 @@ import com.xforceplus.ultraman.oqsengine.meta.common.constant.RequestStatus;
 import com.xforceplus.ultraman.oqsengine.meta.common.dto.WatchElement;
 import com.xforceplus.ultraman.oqsengine.meta.common.exception.MetaSyncServerException;
 import com.xforceplus.ultraman.oqsengine.meta.common.executor.IDelayTaskExecutor;
+import com.xforceplus.ultraman.oqsengine.meta.common.metrics.ConnectorMetricsDefine;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRequest;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncResponse;
 import com.xforceplus.ultraman.oqsengine.meta.common.proto.sync.EntityClassSyncRspProto;
@@ -17,6 +18,7 @@ import com.xforceplus.ultraman.oqsengine.meta.executor.IResponseWatchExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.executor.RetryExecutor;
 import com.xforceplus.ultraman.oqsengine.meta.provider.outter.EntityClassGenerator;
 import io.grpc.stub.StreamObserver;
+import io.micrometer.core.instrument.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +26,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.xforceplus.ultraman.oqsengine.meta.common.config.GRpcParams.SHUT_DOWN_WAIT_TIME_OUT;
 import static com.xforceplus.ultraman.oqsengine.meta.common.constant.Constant.NOT_EXIST_VERSION;
@@ -66,6 +69,12 @@ public class SyncResponseHandler implements IResponseHandler {
     private List<Thread> longRunTasks = new ArrayList<>(SERVER_TASK_COUNT);
 
     private volatile boolean isShutdown = false;
+
+    private AtomicInteger dataHandleFailedCounter =
+            Metrics.gauge(ConnectorMetricsDefine.SERVER_RESPONSE_HANDLE_FAILED_ERROR, new AtomicInteger(0));
+
+    private AtomicInteger dataFormatErrorCounter =
+            Metrics.gauge(ConnectorMetricsDefine.SERVER_RESPONSE_DATA_FORMAT_ERROR, new AtomicInteger(0));
 
     @Override
     public void start() {
@@ -175,24 +184,38 @@ public class SyncResponseHandler implements IResponseHandler {
                     entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
                     entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
         } else if (entityClassSyncRequest.getStatus() == SYNC_OK.ordinal()) {
-            /**
-             * 处理返回结果成功
-             */
-            WatchElement w =
-                    new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
-                            entityClassSyncRequest.getVersion(), Confirmed);
+            try {
+                /**
+                 * 处理返回结果成功
+                 */
+                WatchElement w =
+                        new WatchElement(entityClassSyncRequest.getAppId(), entityClassSyncRequest.getEnv(),
+                                entityClassSyncRequest.getVersion(), Confirmed);
 
-            boolean ret = responseWatchExecutor.update(entityClassSyncRequest.getUid(), w);
-            if (ret) {
-                logger.debug("sync data success, uid [{}], appId [{}], env [{}], version [{}] success.",
-                        entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
-                        entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
+                boolean ret = responseWatchExecutor.update(entityClassSyncRequest.getUid(), w);
+                if (ret) {
+                    logger.debug("sync data success, uid [{}], appId [{}], env [{}], version [{}] success.",
+                            entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
+                            entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
+                }
+            } finally {
+                dataHandleFailedCounter.set(0);
+                dataFormatErrorCounter.set(0);
             }
-        }
-        else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
-            logger.warn("sync data failed, uid [{}], appId [{}], env [{}], version [{}] success.",
+        } else if (entityClassSyncRequest.getStatus() == SYNC_FAIL.ordinal()) {
+            dataHandleFailedCounter.incrementAndGet();
+
+            logger.warn("sync data handle failed, uid [{}], appId [{}], env [{}], version [{}] success.",
                     entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
                     entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
+
+        } else if (entityClassSyncRequest.getStatus() == DATA_ERROR.ordinal()) {
+            dataFormatErrorCounter.incrementAndGet();
+
+            logger.warn("sync data format error, uid [{}], appId [{}], env [{}], version [{}] success.",
+                    entityClassSyncRequest.getUid(), entityClassSyncRequest.getAppId(),
+                    entityClassSyncRequest.getEnv(), entityClassSyncRequest.getVersion());
+
         }
     }
 
