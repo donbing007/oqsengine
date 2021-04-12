@@ -12,6 +12,7 @@ import com.xforceplus.ultraman.oqsengine.storage.index.sphinxql.transaction.Sphi
 import com.xforceplus.ultraman.oqsengine.storage.master.transaction.SqlConnectionTransactionResourceFactory;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.DefaultTransactionManager;
 import com.xforceplus.ultraman.oqsengine.storage.transaction.TransactionManager;
+import com.xforceplus.ultraman.oqsengine.storage.transaction.cache.CacheEventService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,19 +29,21 @@ public class CustomTransactionConfiguration {
 
     @Bean
     public TransactionManager transactionManager(
-        LongIdGenerator snowflakeIdGenerator,
-        LongIdGenerator redisIdGenerator,
-        @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs,
-        CommitIdStatusService commitIdStatusService,
-        EventBus eventBus) {
+            LongIdGenerator snowflakeIdGenerator,
+            LongIdGenerator redisIdGenerator,
+            @Value("${transaction.timeoutMs:3000}") int transactionTimeoutMs,
+            CommitIdStatusService commitIdStatusService,
+            EventBus eventBus,
+            CacheEventService cacheEventService) {
         return DefaultTransactionManager.Builder.aDefaultTransactionManager()
-            .withSurvivalTimeMs(transactionTimeoutMs)
-            .withTxIdGenerator(snowflakeIdGenerator)
-            .withCommitIdGenerator(redisIdGenerator)
-            .withCommitIdStatusService(commitIdStatusService)
-            .withWaitCommitSync(true)
-            .withEventBus(eventBus)
-            .build();
+                .withSurvivalTimeMs(transactionTimeoutMs)
+                .withTxIdGenerator(snowflakeIdGenerator)
+                .withCommitIdGenerator(redisIdGenerator)
+                .withCommitIdStatusService(commitIdStatusService)
+                .withWaitCommitSync(true)
+                .withEventBus(eventBus)
+                .withCacheEventService(cacheEventService)
+                .build();
     }
 
     @Bean
@@ -50,30 +53,30 @@ public class CustomTransactionConfiguration {
 
     @Bean
     public TransactionExecutor sphinxQLSearchTransactionExecutor(
-        SphinxQLTransactionResourceFactory factory,
-        TransactionManager tm,
-        DataSource indexSearchDataSource,
-        @Value("${storage.index.search.name:oqsindex}") String searchTableName) {
+            SphinxQLTransactionResourceFactory factory,
+            TransactionManager tm,
+            DataSource indexSearchDataSource,
+            @Value("${storage.index.search.name:oqsindex}") String searchTableName) {
         return new AutoJoinTransactionExecutor(
-            tm,
-            factory,
-            new NoSelector(indexSearchDataSource),
-            new NoSelector(searchTableName)
+                tm,
+                factory,
+                new NoSelector(indexSearchDataSource),
+                new NoSelector(searchTableName)
         );
     }
 
     @Bean
     public TransactionExecutor sphinxQLWriteTransactionExecutor(
-        SphinxQLTransactionResourceFactory factory,
-        TransactionManager tm,
-        Selector<DataSource> indexWriteDataSourceSelector,
-        Selector<String> indexWriteIndexNameSelector) {
+            SphinxQLTransactionResourceFactory factory,
+            TransactionManager tm,
+            Selector<DataSource> indexWriteDataSourceSelector,
+            Selector<String> indexWriteIndexNameSelector) {
         return new AutoJoinTransactionExecutor(tm, factory, indexWriteDataSourceSelector, indexWriteIndexNameSelector);
     }
 
     @Bean
     public SqlConnectionTransactionResourceFactory connectionTransactionResourceFactory(
-        @Value("${storage.master.name:oqsbigentity}") String tableName) {
+            @Value("${storage.master.name:oqsbigentity}") String tableName) {
         return new SqlConnectionTransactionResourceFactory(tableName);
     }
 
@@ -82,10 +85,10 @@ public class CustomTransactionConfiguration {
      */
     @Bean
     public TransactionExecutor storageJDBCTransactionExecutor(
-        SqlConnectionTransactionResourceFactory factory,
-        TransactionManager tm,
-        DataSource masterDataSource,
-        @Value("${storage.master.name:oqsbigentity}") String tableName) {
+            SqlConnectionTransactionResourceFactory factory,
+            TransactionManager tm,
+            DataSource masterDataSource,
+            @Value("${storage.master.name:oqsbigentity}") String tableName) {
         return new AutoJoinTransactionExecutor(tm, factory, new NoSelector(masterDataSource), new NoSelector(tableName));
     }
 
