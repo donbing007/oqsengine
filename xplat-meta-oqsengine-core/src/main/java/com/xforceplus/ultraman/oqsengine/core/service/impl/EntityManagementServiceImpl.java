@@ -285,7 +285,8 @@ public class EntityManagementServiceImpl implements EntityManagementService {
         try {
             return (OperationResult) transactionExecutor.execute((tx, resource, hint) -> {
 
-                if (!masterStorage.exist(entity.id())) {
+                Optional<IEntity> targetEntityOp = masterStorage.selectOne(entity.id(), entityClass);
+                if (!targetEntityOp.isPresent()) {
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_DELETE.getValue(), ResultStatus.NOT_FOUND);
                 }
 
@@ -296,9 +297,9 @@ public class EntityManagementServiceImpl implements EntityManagementService {
 
                 tx.getAccumulator().accumulateDelete(entity.id());
 
-                noticeEvent(tx, EventType.ENTITY_DELETE, entity);
+                noticeEvent(tx, EventType.ENTITY_DELETE, targetEntityOp.get());
 
-                return new OperationResult(tx.id(), entity.id(), entity.version(), EventType.ENTITY_DELETE.getValue(), ResultStatus.SUCCESS);
+                return new OperationResult(tx.id(), entity.id(), targetEntityOp.get().version(), EventType.ENTITY_DELETE.getValue(), ResultStatus.SUCCESS);
             });
         } catch (Exception ex) {
 

@@ -10,6 +10,8 @@ import com.xforceplus.ultraman.oqsengine.changelog.storage.query.QueryStorage;
 import com.xforceplus.ultraman.oqsengine.core.service.EntityManagementService;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.TransactionManagementService;
+import com.xforceplus.ultraman.oqsengine.event.EventType;
+import com.xforceplus.ultraman.oqsengine.event.storage.cache.ICacheEventHandler;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -55,6 +57,9 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
     @Autowired(required = false)
     private TransactionManagementService transactionManagementService;
+
+    @Autowired
+    private ICacheEventHandler iCacheEventHandler;
 
     private static final String ENTITYCLASS_NOT_FOUND = "Requested EntityClass not found in current OqsEngine";
 
@@ -188,14 +193,16 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
             try {
                 IEntity entity = toEntity(entityClassRef, entityClass, in);
-                ResultStatus resultStatus = entityManagementService.build(entity);
+                com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult  operationResult = entityManagementService.build(entity);
+                long txId = operationResult.getTxId();
+                long version = operationResult.getVersion();
+                ResultStatus resultStatus = operationResult.getResultStatus();
                 if (resultStatus == ResultStatus.SUCCESS) {
                     OperationResult.Builder builder = OperationResult.newBuilder()
-                            .addIds(entity.id());
-//TODO father and son
-//                if (entity.family() != null && entity.family().parent() > 0) {
-//                    builder.addIds(entity.family().parent());
-//                }
+                            .addIds(entity.id())
+                            .addIds(txId)
+                            .addIds(version);
+
                     result = builder.setCode(OperationResult.Code.OK).buildPartial();
                 } else {
                     throw new RuntimeException();
@@ -231,7 +238,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
             }
         });
     }
-
 
     @Override
     public CompletionStage<OperationResult> replace(EntityUp in, Metadata metadata) {
@@ -270,12 +276,17 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 }
 
                 //side effect
-                ResultStatus replaceStatus = entityManagementService.replace(entity);
+                com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult  operationResult  = entityManagementService.replace(entity);
+                long txId = operationResult.getTxId();
+                int version = operationResult.getVersion();
+                ResultStatus replaceStatus = operationResult.getResultStatus();
                 switch (replaceStatus) {
                     case SUCCESS:
                         result = OperationResult.newBuilder()
                                 .setAffectedRow(1)
                                 .setCode(OperationResult.Code.OK)
+                                .addIds(txId)
+                                .addIds(version)
                                 .buildPartial();
                         break;
                     case CONFLICT:
@@ -314,6 +325,12 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         });
     }
 
+    /**
+     * TODO need to return affected ids
+     * @param in
+     * @param metadata
+     * @return
+     */
     @Override
     public CompletionStage<OperationResult> replaceByCondition(SelectByCondition in, Metadata metadata) {
         return asyncWrite(() -> {
@@ -385,9 +402,7 @@ public class EntityServiceOqs implements EntityServicePowerApi {
 
                     Optional<Conditions> consOp = toConditions(entityClass, conditions, in.getIdsList(), metaManager);
                     if (consOp.isPresent()) {
-
                         entities = entitySearchService.selectByConditions(consOp.get(), entityClassRef, sortParam, page);
-
                     } else {
                         entities = entitySearchService.selectByConditions(
                                 Conditions.buildEmtpyConditions(), entityClassRef, page);
@@ -484,22 +499,25 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                 logger.error("{}", ex);
             }
 
-
             OperationResult result;
-
 
             try {
 
                 Entity targetEntity = Entity.Builder.anEntity().withId(in.getObjId()).withEntityClassRef(entityClassRef).build();
 
                 if (!Boolean.parseBoolean(force)) {
-                    ResultStatus deleteStatus = entityManagementService.delete(targetEntity);
+                    com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult operationResult = entityManagementService.delete(targetEntity);
+                    long txId = operationResult.getTxId();
+                    long version = operationResult.getVersion();
+                    ResultStatus deleteStatus = operationResult.getResultStatus();
 
                     switch (deleteStatus) {
                         case SUCCESS:
                             result = OperationResult.newBuilder()
                                     .setAffectedRow(1)
                                     .setCode(OperationResult.Code.OK)
+                                    .addIds(txId)
+                                    .addIds(version)
                                     .buildPartial();
                             break;
                         case CONFLICT:
@@ -528,12 +546,17 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                                     .buildPartial();
                     }
                 } else {
-                    ResultStatus resultStatus = entityManagementService.deleteForce(targetEntity);
+                    com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult operationResult = entityManagementService.delete(targetEntity);
+                    long txId = operationResult.getTxId();
+                    long version = operationResult.getVersion();
+                    ResultStatus resultStatus = operationResult.getResultStatus();
                     switch (resultStatus) {
                         case SUCCESS:
                             result = OperationResult.newBuilder()
                                     .setAffectedRow(1)
                                     .setCode(OperationResult.Code.OK)
+                                    .addIds(txId)
+                                    .addIds(version)
                                     .buildPartial();
                             break;
                         case NOT_FOUND:
@@ -753,7 +776,6 @@ public class EntityServiceOqs implements EntityServicePowerApi {
         OperationResult result = null;
 
         try {
-
             transactionManagementService.restore(id);
             transactionManagementService.commit();
             result = OperationResult.newBuilder()
@@ -936,6 +958,24 @@ public class EntityServiceOqs implements EntityServicePowerApi {
                         .addAllCount(Collections.emptyList())
                         .build();
             }
+        });
+    }
+
+    @Override
+    public CompletionStage<OperationResult> expand(TransRequest transRequest, Metadata metadata) {
+        return asyncRead(() -> {
+            long txId = transRequest.getTxId();
+            //ver is 0
+            long ver = transRequest.getVer();
+            long objId = transRequest.getObjId();
+            int transType = transRequest.getTransType();
+            String type = transRequest.getType();
+            EventType eventType = EventType.valueOf(type);
+            Collection<String> payloads = iCacheEventHandler.eventsQuery(txId, objId, ver == 0 ? null : Long.valueOf(ver).intValue(), eventType.ordinal());
+            return OperationResult.newBuilder()
+                    .setCode(OperationResult.Code.OK)
+                    .setMessage("[" + payloads.stream().collect(Collectors.joining(",")) + "]")
+                    .build();
         });
     }
 

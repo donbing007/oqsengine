@@ -2,16 +2,23 @@ package com.xforceplus.ultraman.oqsengine.event.storage.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+
 import com.xforceplus.ultraman.oqsengine.event.ActualEvent;
 import com.xforceplus.ultraman.oqsengine.event.Event;
 import com.xforceplus.ultraman.oqsengine.event.EventType;
-import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
-import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
-import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
+import com.xforceplus.ultraman.oqsengine.event.payload.cache.CachePayload;
+
 import com.xforceplus.ultraman.oqsengine.event.payload.transaction.BeginPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.transaction.CommitPayload;
-import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntityField;
+
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.StringValue;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerRunner;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.ContainerType;
 import com.xforceplus.ultraman.oqsengine.testcontainer.junit4.DependentContainers;
@@ -72,7 +79,7 @@ public class RedisEventHandlerTest extends MiddleWare {
 
         cacheWorker = Executors.newFixedThreadPool(10);
 
-        objectMapper = new ObjectMapper().configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        objectMapper = new ObjectMapper();
 
         cacheEventHandler = redisEventHandler(redisClient, cacheWorker, objectMapper);
         cacheEventHandler.init();
@@ -93,7 +100,7 @@ public class RedisEventHandlerTest extends MiddleWare {
     public void onEventCreate() {
         long expectedTxId = 1;
         for (int i = 0; i < testSize; i ++) {
-            Event<BuildPayload> payloadEvent = eventBuildGenerator(expectedTxId, i, i);
+            Event<CachePayload> payloadEvent = cacheEventGenerator(ENTITY_BUILD, expectedTxId, i, i);
             cacheEventHandler.onEventCreate(payloadEvent);
         }
         Assert.assertTrue(checkWithExpire(expectedTxId, testSize, 1000));
@@ -205,6 +212,14 @@ public class RedisEventHandlerTest extends MiddleWare {
         consumerCheck(otTx + "");
     }
 
+    @Test
+    public void testSerial() throws JsonProcessingException {
+        Event<CachePayload> res = cacheEventGenerator(ENTITY_BUILD, 1L, 2, 3L);
+
+        String result = objectMapper.writeValueAsString(res);
+
+        logger.info(result);
+    }
 
     /**
      * 测试删除
@@ -238,7 +253,7 @@ public class RedisEventHandlerTest extends MiddleWare {
             }
 
             for (int j = 0; j < testSize; j++) {
-                result = cacheEventHandler.onEventCreate(eventBuildGenerator(txId, j, j));
+                result = cacheEventHandler.onEventCreate(cacheEventGenerator(ENTITY_BUILD, txId, j, j));
                 Assert.assertTrue(result);
             }
 
@@ -327,7 +342,7 @@ public class RedisEventHandlerTest extends MiddleWare {
     }
 
     private void buildOne(long txId, int current) throws JsonProcessingException {
-        Event<BuildPayload> event = eventBuildGenerator(txId, current, current);
+        Event<CachePayload> event = cacheEventGenerator(ENTITY_BUILD, txId, current, current);
 
         String json = objectMapper.writeValueAsString(event);
 
@@ -359,13 +374,13 @@ public class RedisEventHandlerTest extends MiddleWare {
 
             switch (r.eventType) {
                 case ENTITY_BUILD :
-                    cacheEventHandler.onEventCreate(eventBuildGenerator(r.txId, i, i));
+                    cacheEventHandler.onEventCreate(cacheEventGenerator(ENTITY_BUILD, r.txId, i, i));
                     break;
                 case ENTITY_REPLACE :
-                    cacheEventHandler.onEventUpdate(eventReplaceGenerator(r.txId, i, i));
+                    cacheEventHandler.onEventUpdate(cacheEventGenerator(ENTITY_REPLACE, r.txId, i, i));
                     break;
                 case ENTITY_DELETE :
-                    cacheEventHandler.onEventDelete(eventDeleteGenerator(r.txId, i, i));
+                    cacheEventHandler.onEventDelete(cacheEventGenerator(ENTITY_DELETE, r.txId, i, i));
                     break;
             }
         }
@@ -394,17 +409,30 @@ public class RedisEventHandlerTest extends MiddleWare {
         return false;
     }
 
-    private Event<BuildPayload> eventBuildGenerator(long txId, int number, long id) {
-        return new ActualEvent(ENTITY_BUILD, new BuildPayload(txId, number, Entity.Builder.anEntity().withId(id).withVersion(number).build()));
+    public static Event<CachePayload> cacheEventGenerator(EventType eventType,long txId, int number, long id) {
+        return new ActualEvent(eventType, new CachePayload(txId, number, id, number, randomFixEntityValues(id)));
     }
 
-    private Event<ReplacePayload> eventReplaceGenerator(long txId, int number, long id) {
-        return new ActualEvent(ENTITY_REPLACE, new ReplacePayload(txId, number
-                , Entity.Builder.anEntity().withId(id).build(), Entity.Builder.anEntity().withId(id).withVersion(number).build()));
+    private static final int randomPlusNumber = 13149267;
+    private static Map<IEntityField, Object> randomFixEntityValues(long id) {
+        Map<IEntityField, Object> map = new HashMap<>();
+        IEntityField entityFieldLong = genEntity(id, FieldType.LONG);
+        map.put(entityFieldLong, new LongValue(entityFieldLong, id));
+
+        IEntityField entityFieldString = genEntity(id + randomPlusNumber, FieldType.STRING);
+        map.put(entityFieldString, new StringValue(entityFieldString, id + randomPlusNumber + ""));
+        return map;
     }
 
-    private Event<DeletePayload> eventDeleteGenerator(long txId, int number, long id) {
-        return new ActualEvent(ENTITY_DELETE, new DeletePayload(txId, number, Entity.Builder.anEntity().withId(id).withVersion(number).build()));
+
+    private static IEntityField genEntity(long id, FieldType fieldType) {
+        return EntityField.Builder.anEntityField()
+                                .withId(id)
+                                .withCnName("id" + "_name")
+                                .withFieldType(fieldType)
+                                .withConfig(
+                                        FieldConfig.Builder.aFieldConfig().build()
+                                ).build();
     }
 
     private Event<BeginPayload> eventBeginGenerator(long txId) {

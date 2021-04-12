@@ -1,6 +1,7 @@
 package com.xforceplus.ultraman.oqsengine.event.storage.cache;
 
 import com.xforceplus.ultraman.oqsengine.event.*;
+import com.xforceplus.ultraman.oqsengine.event.payload.cache.CachePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
@@ -8,7 +9,13 @@ import com.xforceplus.ultraman.oqsengine.event.payload.transaction.BeginPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.transaction.CommitPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.transaction.RollbackPayload;
 import com.xforceplus.ultraman.oqsengine.event.storage.MemoryEventStorage;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldConfig;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.FieldType;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.IEntity;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.Entity;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityField;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.impl.EntityValue;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.values.LongValue;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -99,19 +106,19 @@ public class CacheEventServiceTest {
                     ActualEvent actualEvent;
                     switch (eventType) {
                         case ENTITY_BUILD :
-                            actualEvent = new ActualEvent(ENTITY_BUILD, new BuildPayload(i, count, new Entity()));
+                            actualEvent = new ActualEvent(ENTITY_BUILD, new BuildPayload(i, count, genEntity(i, count)));
                             eventBus.notify(actualEvent);
                             expectMap.computeIfAbsent(i, t -> new CopyOnWriteArrayList<>()).add(actualEvent);
                             expectedSize ++;
                             break;
                         case ENTITY_REPLACE :
-                            actualEvent = new ActualEvent(ENTITY_REPLACE, new ReplacePayload(i, count, new Entity(), new Entity()));
+                            actualEvent = new ActualEvent(ENTITY_REPLACE, new ReplacePayload(i, count, genEntity(i, count), genEntity(i, count - 1)));
                             eventBus.notify(actualEvent);
                             expectMap.computeIfAbsent(i, t -> new CopyOnWriteArrayList<>()).add(actualEvent);
                             expectedSize ++;
                             break;
                         case ENTITY_DELETE :
-                            actualEvent = new ActualEvent(ENTITY_DELETE, new DeletePayload(i, count, new Entity()));
+                            actualEvent = new ActualEvent(ENTITY_DELETE, new DeletePayload(i, count, genEntity(i, count)));
                             eventBus.notify(actualEvent);
                             expectMap.computeIfAbsent(i, t -> new CopyOnWriteArrayList<>()).add(actualEvent);
                             expectedSize ++;
@@ -147,6 +154,18 @@ public class CacheEventServiceTest {
         }
     }
 
+    private IEntity genEntity(long id, int version) {
+        return Entity.Builder.anEntity().withId(id).withVersion(version).withEntityValue(
+                EntityValue.build().addValue(
+                        new LongValue(EntityField.Builder.anEntityField()
+                                            .withId(id)
+                                            .withFieldType(FieldType.LONG)
+                                            .withConfig(
+                                                FieldConfig.Builder.aFieldConfig().build()
+                                            ).build(),
+                                        id))).build();
+    }
+
     private void initAll() {
         eventBus.init();
         eventService.init();
@@ -165,7 +184,7 @@ public class CacheEventServiceTest {
 
 
         @Override
-        public boolean onEventCreate(Event<BuildPayload> event) {
+        public boolean onEventCreate(Event<CachePayload> event) {
             try {
                 Assert.assertNotNull(event);
                 Assert.assertEquals(EventType.ENTITY_BUILD, event.type());
@@ -181,7 +200,7 @@ public class CacheEventServiceTest {
         }
 
         @Override
-        public boolean onEventUpdate(Event<ReplacePayload> event) {
+        public boolean onEventUpdate(Event<CachePayload> event) {
             try {
                 Assert.assertNotNull(event);
                 Assert.assertEquals(ENTITY_REPLACE, event.type());
@@ -197,7 +216,7 @@ public class CacheEventServiceTest {
         }
 
         @Override
-        public boolean onEventDelete(Event<DeletePayload> event) {
+        public boolean onEventDelete(Event<CachePayload> event) {
             try {
                 Assert.assertNotNull(event);
                 Assert.assertEquals(EventType.ENTITY_DELETE, event.type());

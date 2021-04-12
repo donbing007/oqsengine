@@ -1,9 +1,8 @@
 package com.xforceplus.ultraman.oqsengine.event.storage.cache;
 
 import com.xforceplus.ultraman.oqsengine.event.Event;
-import com.xforceplus.ultraman.oqsengine.event.payload.entity.BuildPayload;
-import com.xforceplus.ultraman.oqsengine.event.payload.entity.DeletePayload;
-import com.xforceplus.ultraman.oqsengine.event.payload.entity.ReplacePayload;
+import com.xforceplus.ultraman.oqsengine.event.payload.cache.CachePayload;
+
 import com.xforceplus.ultraman.oqsengine.event.payload.transaction.BeginPayload;
 import com.xforceplus.ultraman.oqsengine.event.payload.transaction.CommitPayload;
 
@@ -19,11 +18,11 @@ import java.util.Collection;
  */
 public interface ICacheEventHandler {
 
-    public boolean onEventCreate(Event<BuildPayload> event);
+    public boolean onEventCreate(Event<CachePayload> event);
 
-    public boolean onEventUpdate(Event<ReplacePayload> event);
+    public boolean onEventUpdate(Event<CachePayload> event);
 
-    public boolean onEventDelete(Event<DeletePayload> event);
+    public boolean onEventDelete(Event<CachePayload> event);
 
     public boolean onEventBegin(Event<BeginPayload> event);
 
