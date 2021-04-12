@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import com.xforceplus.ultraman.oqsengine.common.map.MapUtils;
 import com.xforceplus.ultraman.oqsengine.common.metrics.MetricsDefine;
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityClassHelper;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.EntityRefComparator;
 import com.xforceplus.ultraman.oqsengine.core.service.utils.StreamMerger;
@@ -201,7 +202,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
     @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
     @Override
-    public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Page page) throws SQLException {
+    public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Page page)
+        throws SQLException {
         return selectByConditions(conditions, entityClassRef, Sort.buildOutOfSort(), page);
     }
 
@@ -209,13 +211,34 @@ public class EntitySearchServiceImpl implements EntitySearchService {
     @Override
     public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Sort sort, Page page)
         throws SQLException {
+        return selectByConditions(conditions, entityClassRef,
+            SearchConfig.Builder.aSearchConfig().withSort(sort).withPage(page).build());
+    }
 
+    @Timed(value = MetricsDefine.PROCESS_DELAY_LATENCY_SECONDS, extraTags = {"initiator", "all", "action", "condition"})
+    @Override
+    public Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, SearchConfig config)
+        throws SQLException {
         if (conditions == null) {
             throw new SQLException("Incorrect query condition.");
         }
 
         if (entityClassRef == null) {
             throw new SQLException("Invalid entityClass.");
+        }
+
+        if (config == null) {
+            throw new SQLException("Invalid search config.");
+        }
+
+        /**
+         * 数据过滤不会使有和含有模糊搜索的条件.
+         */
+        if (config.getFilter().isPresent()) {
+            Conditions filterCondtiton = config.getFilter().get();
+            if (filterCondtiton.haveFuzzyCondition()) {
+                throw new SQLException("Data filtering conditions cannot use fuzzy operators.");
+            }
         }
 
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entityClassRef);
@@ -230,7 +253,8 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 checkResult = checkCanSearch(c, entityClass);
             }
             if (!checkResult) {
-                if (page != null) {
+                if (config.getPage().isPresent()) {
+                    Page page = config.getPage().get();
                     page.setTotalCount(0);
                 }
                 return Collections.emptyList();
@@ -250,19 +274,21 @@ public class EntitySearchServiceImpl implements EntitySearchService {
 
 
         Conditions useConditions = conditions;
-        Sort useSort = sort;
-        if (useSort == null || useSort.isOutOfOrder()) {
-            // 如果没有指定排序,以id降序排列.
-            useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
-        } else {
-            if (!useSort.getField().config().isSearchable()) {
+        Sort useSort = null;
+        if (config.getSort().isPresent()) {
+            Sort sort = config.getSort().get();
+            if (!sort.getField().config().isSearchable()) {
                 useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
             }
+        } else {
+            useSort = Sort.buildAscSort(EntityField.ID_ENTITY_FIELD);
         }
 
-        Page usePage = page;
-        if (usePage == null) {
+        Page usePage;
+        if (!config.getPage().isPresent()) {
             usePage = new Page();
+        } else {
+            usePage = config.getPage().get();
         }
         usePage.setVisibleTotalCount(maxVisibleTotalCount);
 
@@ -328,7 +354,9 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                 }
 
                 if (useConditions.isEmtpy()) {
-                    page.setTotalCount(0);
+                    if (config.getPage().isPresent()) {
+                        config.getPage().get().setTotalCount(0);
+                    }
                     return Collections.emptyList();
                 }
             }
@@ -348,7 +376,7 @@ public class EntitySearchServiceImpl implements EntitySearchService {
                         if (e == null) {
                             logger.info("Select conditions result: [NULL]");
                         } else {
-                            logger.info("Select conditions result: [{}],totalCount:[{}]", e.toString(), page.getTotalCount());
+                            logger.info("Select conditions result: [{}],totalCount:[{}]", e.toString(), usePage.getTotalCount());
                         }
                     });
                 }

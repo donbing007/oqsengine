@@ -34,6 +34,11 @@ public class Conditions implements Serializable {
     private boolean range;
 
     /**
+     * 是否含有模糊查询.
+     */
+    private boolean fuzzy;
+
+    /**
      * 条件树根结点.
      */
     private ConditionNode head;
@@ -60,6 +65,7 @@ public class Conditions implements Serializable {
         validate(condition);
         head = new ValueConditionNode(condition);
         range = condition.isRange();
+        fuzzy = condition.getOperator() == ConditionOperator.LIKE;
         size = 1;
     }
 
@@ -73,6 +79,8 @@ public class Conditions implements Serializable {
         Collection<Condition> conditionCollection = collectCondition();
         this.size = conditionCollection.size();
         this.range = conditionCollection.stream().mapToInt(c -> c.isRange() ? 1 : 0).sum() > 0 ? true : false;
+        this.fuzzy = conditionCollection.stream()
+            .mapToInt(c -> c.getOperator() == ConditionOperator.LIKE ? 1 : 0).sum() > 0 ? true : false;
     }
 
     /**
@@ -132,6 +140,15 @@ public class Conditions implements Serializable {
      */
     public boolean haveRangeCondition() {
         return range;
+    }
+
+    /**
+     * 是否含有模糊查询条件.
+     *
+     * @return ture 有, false没有.
+     */
+    public boolean haveFuzzyCondition() {
+        return fuzzy;
     }
 
     /**
@@ -332,6 +349,10 @@ public class Conditions implements Serializable {
             range = condition.isRange();
         }
 
+        if (!fuzzy) {
+            fuzzy = condition.getOperator() == ConditionOperator.LIKE;
+        }
+
         return this;
     }
 
@@ -340,7 +361,7 @@ public class Conditions implements Serializable {
             ConditionOperatorFieldValidationFactory.getValidation(condition.getField().type());
 
         if (!validation.validate(condition)) {
-            throw new IllegalArgumentException(String.format("Wrong conditions.[%s]", condition.toString()));
+            throw new IllegalArgumentException(String.format("Wrong conditions.[%s]", condition));
         }
     }
 
@@ -359,6 +380,10 @@ public class Conditions implements Serializable {
 
         if (!range) {
             range = conditions.haveRangeCondition();
+        }
+
+        if (!fuzzy) {
+            fuzzy = conditions.haveFuzzyCondition();
         }
 
         size += conditions.size();
@@ -432,7 +457,15 @@ public class Conditions implements Serializable {
 
     /**
      * 迭代条件树.
-     * brake true 时表示是否匹配某个结点就直接停止迭代.
+     * brake true 时表示是否匹配某个结点就直接停止迭代之后的子结点退回上层结点选择另一个分支进行迭代.
+     *          or
+     *     c1          and
+     *            c2        c3
+     *  如果设置的条件为非or结点,那么第一个OR结点之后的结点不会再迭代,反之会继承迭代到 and c2 c3这个子树.
+     *
+     *  最终迭代的目的是保持这样一个顺序.
+     *   左结点 当前结点  右结点. 以上述的树为例,最后迭代顺序如下.
+     *   c1 or c2 and c3
      */
     private void iterTree(Predicate<? super ConditionNode> predicate, Consumer<? super ConditionNode> consumer, boolean brake) {
         if (head == null) {

@@ -106,6 +106,7 @@
         <module>xplat-meta-oqsengine-common</module>
         <module>xplat-meta-oqsengine-pojo</module>
         <module>xplat-meta-oqsengine-tokenizer</module>
+        <module>xplat-meta-oqsengine-event</module>
         <module>xplat-meta-oqsengine-status</module>
         <module>xplat-meta-oqsengine-storage</module>
         <module>xplat-meta-oqsengine-testcontainer</module>
@@ -116,10 +117,9 @@
         <module>xplat-meta-oqsengine-cdc</module>
         <module>xplat-meta-oqsengine-core</module>
         <module>xplat-meta-oqsengine-transfer</module>
+        <module>xplat-meta-oqsengine-changelog</module>
         <module>xplat-meta-oqsengine-boot</module>
         <module>xplat-meta-oqsengine-testreport</module>
-        <module>xplat-meta-oqsengine-changelog</module>
-        <module>xplat-meta-oqsengine-event</module>
     </modules>
 
     <distributionManagement>
