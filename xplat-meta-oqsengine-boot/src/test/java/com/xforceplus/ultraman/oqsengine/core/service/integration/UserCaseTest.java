@@ -7,6 +7,7 @@ import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
 import com.xforceplus.ultraman.oqsengine.core.service.integration.mock.MockMetaManager;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.contract.ResultStatus;
+import com.xforceplus.ultraman.oqsengine.pojo.dto.OperationResult;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.ConditionOperator;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
@@ -372,7 +373,9 @@ public class UserCaseTest {
             entity.entityValue().addValue(
                 new StringValue(MockMetaManager.l2EntityClass.field("l2-string").get(), Long.toString(i))
             );
-            ResultStatus status = entityManagementService.replace(entity);
+
+            OperationResult opResult = entityManagementService.replace(entity);
+            ResultStatus status = opResult.getResultStatus();
             Assert.assertTrue(ResultStatus.SUCCESS == status);
 
             Page page = Page.newSinglePage(100);

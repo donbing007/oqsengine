@@ -807,6 +807,159 @@ public class SphinxQLManticoreIndexStorageSearchTest {
                     Long.MAX_VALUE - 8, Long.MAX_VALUE - 9
                 }
             )
+            ,
+            new Case(
+                "l0-long or l0-long",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l0-long").get(),
+                            ConditionOperator.EQUALS,
+                            new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
+                        )
+                    ).addOr(
+                    new Condition(
+                        l2EntityClass.field("l0-long").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
+                    )
+                ),
+                l2EntityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[]{
+                    Long.MAX_VALUE, Long.MAX_VALUE - 7,
+                }
+            )
+            ,
+            new Case(
+                "l0-long eq or l0-long no eq",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l0-long").get(),
+                            ConditionOperator.EQUALS,
+                            new LongValue(l2EntityClass.field("l0-long").get(), 3065636258020209152L)
+                        )
+                    ).addOr(
+                    new Condition(
+                        l2EntityClass.field("l0-long").get(),
+                        ConditionOperator.NOT_EQUALS,
+                        new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
+                    )
+                ),
+                l2EntityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[]{
+                    Long.MAX_VALUE - 1, Long.MAX_VALUE - 2, Long.MAX_VALUE - 3, Long.MAX_VALUE - 4,
+                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 6, Long.MAX_VALUE - 7, Long.MAX_VALUE - 8,
+                    Long.MAX_VALUE - 9
+                }
+            )
+            ,
+            new Case(
+                "l0-long > or l0-long =",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l0-long").get(),
+                            ConditionOperator.GREATER_THAN,
+                            new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
+                        )
+                    ).addOr(
+                    new Condition(
+                        l2EntityClass.field("l0-long").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(l2EntityClass.field("l0-long").get(), 2305210501598537472L)
+                    )
+                ),
+                l2EntityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .build(),
+                new long[]{
+                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 4, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
+                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 2, Long.MAX_VALUE
+                }
+            )
+            ,
+            new Case(
+                "l0-long > or l0-long = (filter l0-long !=)",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l0-long").get(),
+                            ConditionOperator.GREATER_THAN,
+                            new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
+                        )
+                    ).addOr(
+                    new Condition(
+                        l2EntityClass.field("l0-long").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(l2EntityClass.field("l0-long").get(), 2305210501598537472L)
+                    )
+                ),
+                l2EntityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .withDataAccessFitlerCondtitons(
+                        Conditions.buildEmtpyConditions()
+                            .addAnd(
+                                new Condition(
+                                    l2EntityClass.field("l0-long").get(),
+                                    ConditionOperator.NOT_EQUALS,
+                                    new LongValue(l2EntityClass.field("l0-long").get(), 8044778060371018752L)
+                                )
+                            )
+                    )
+                    .build(),
+                new long[]{
+                    Long.MAX_VALUE - 3, Long.MAX_VALUE - 4, Long.MAX_VALUE - 6, Long.MAX_VALUE - 8, Long.MAX_VALUE - 9,
+                    Long.MAX_VALUE - 5, Long.MAX_VALUE - 2
+                }
+            )
+            ,
+            new Case(
+                "l0-long = and l0-long = (filter l0-long !=)",
+                Conditions.buildEmtpyConditions()
+                    .addAnd(
+                        new Condition(
+                            l2EntityClass.field("l0-long").get(),
+                            ConditionOperator.EQUALS,
+                            new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
+                        )
+                    ).addAnd(
+                    new Condition(
+                        l2EntityClass.field("l1-long").get(),
+                        ConditionOperator.EQUALS,
+                        new LongValue(l2EntityClass.field("l0-long").get(), 162L)
+                    )
+                ),
+                l2EntityClass,
+                SelectConfig.Builder.aSelectConfig()
+                    .withPage(Page.newSinglePage(1000))
+                    .withSort(Sort.buildDescSort(EntityField.ID_ENTITY_FIELD))
+                    .withDataAccessFitlerCondtitons(
+                        Conditions.buildEmtpyConditions()
+                            .addAnd(
+                                new Condition(
+                                    l2EntityClass.field("l0-long").get(),
+                                    ConditionOperator.NOT_EQUALS,
+                                    new LongValue(l2EntityClass.field("l0-long").get(), 5120579758453153792L)
+                                )
+                            )
+                    )
+                    .build(),
+                new long[]{
+                }
+            )
         );
     }
 
