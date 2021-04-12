@@ -6,6 +6,7 @@ import com.xforceplus.ultraman.oqsengine.pojo.dto.sort.Sort;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 搜索配置.
@@ -23,20 +24,20 @@ public class SearchConfig {
     public SearchConfig() {
     }
 
-    public Page getPage() {
-        return page;
+    public Optional<Page> getPage() {
+        return Optional.ofNullable(page);
     }
 
-    public Sort getSort() {
-        return sort;
+    public Optional<Sort> getSort() {
+        return Optional.ofNullable(sort);
     }
 
-    public Facet getFacet() {
-        return facet;
+    public Optional<Facet> getFacet() {
+        return Optional.ofNullable(facet);
     }
 
-    public Conditions getFilter() {
-        return filter;
+    public Optional<Conditions> getFilter() {
+        return Optional.ofNullable(filter);
     }
 
     @Override
@@ -45,9 +46,9 @@ public class SearchConfig {
         if (o == null || getClass() != o.getClass()) return false;
         SearchConfig that = (SearchConfig) o;
         return Objects.equals(page, that.page)
-                && Objects.equals(sort, that.sort)
-                && Objects.equals(facet, that.facet)
-                && Objects.equals(filter, that.filter);
+            && Objects.equals(sort, that.sort)
+            && Objects.equals(facet, that.facet)
+            && Objects.equals(filter, that.filter);
     }
 
     @Override
@@ -58,21 +59,21 @@ public class SearchConfig {
     @Override
     public String toString() {
         return "SearchConfig{" +
-                "page=" + page +
-                ", sort=" + sort +
-                ", facet=" + facet +
-                ", secondFilter=" + filter +
-                '}';
+            "page=" + page +
+            ", sort=" + sort +
+            ", facet=" + facet +
+            ", secondFilter=" + filter +
+            '}';
     }
 
     /**
      * builder
      */
     public static final class Builder {
-        private Page page = Page.emptyPage();
-        private Sort sort = Sort.buildOutOfSort();
-        private Facet facet = Facet.build();
-        private Conditions filter = Conditions.buildEmtpyConditions();
+        private Page page;
+        private Sort sort;
+        private Facet facet;
+        private Conditions filter;
 
         private Builder() {
         }

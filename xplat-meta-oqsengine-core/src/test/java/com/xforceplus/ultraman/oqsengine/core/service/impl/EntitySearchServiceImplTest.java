@@ -3,6 +3,7 @@ package com.xforceplus.ultraman.oqsengine.core.service.impl;
 import com.xforceplus.ultraman.oqsengine.common.pool.ExecutorHelper;
 import com.xforceplus.ultraman.oqsengine.common.version.OqsVersion;
 import com.xforceplus.ultraman.oqsengine.core.service.impl.mock.MockMetaManager;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.MetaManager;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.EntityRef;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Condition;
@@ -111,7 +112,7 @@ public class EntitySearchServiceImplTest {
                 .withEntityClassId(MockMetaManager.l1EntityClass.id())
                 .withEntityClassCode(MockMetaManager.l1EntityClass.code())
                 .build(),
-            page
+            SearchConfig.Builder.aSearchConfig().withPage(page).build()
         );
 
         Assert.assertEquals(0, entities.size());
@@ -167,7 +168,7 @@ public class EntitySearchServiceImplTest {
                 .withEntityClassId(MockMetaManager.l1EntityClass.id())
                 .withEntityClassCode(MockMetaManager.l1EntityClass.code())
                 .build(),
-            page
+            SearchConfig.Builder.aSearchConfig().withPage(page).build()
         );
 
         Assert.assertEquals(3, entities.size());
@@ -227,7 +228,9 @@ public class EntitySearchServiceImplTest {
             EntityClassRef.Builder.anEntityClassRef()
                 .withEntityClassId(MockMetaManager.l2EntityClass.id())
                 .withEntityClassCode(MockMetaManager.l2EntityClass.code())
-                .build(), Page.newSinglePage(100));
+                .build(),
+            SearchConfig.Builder.aSearchConfig().withPage(Page.newSinglePage(1000)).build()
+        );
 
         Assert.assertEquals(1, entities.size());
         Assert.assertEquals(100L, entities.stream().findFirst().get().id());
@@ -283,7 +286,7 @@ public class EntitySearchServiceImplTest {
         List<IEntity> entities = new ArrayList<>(impl.selectByConditions(
             conditions,
             new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()),
-            page
+            SearchConfig.Builder.aSearchConfig().withPage(page).build()
         ));
 
         Assert.assertEquals(3, entities.size());

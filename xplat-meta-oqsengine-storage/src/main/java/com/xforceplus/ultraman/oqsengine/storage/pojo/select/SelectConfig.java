@@ -116,7 +116,7 @@ public class SelectConfig implements Serializable {
         }
 
         public Builder withExcludedIds(Set<Long> excludedIds) {
-            if (this.excludedIds == null) {
+            if (Collections.emptySet().getClass().equals(this.excludedIds.getClass())) {
                 this.excludedIds = new HashSet(excludedIds);
             } else {
                 this.excludedIds.clear();
@@ -126,7 +126,7 @@ public class SelectConfig implements Serializable {
         }
 
         public Builder withExcludeId(long excludeId) {
-            if (this.excludedIds == null) {
+            if (Collections.emptySet().getClass().equals(this.excludedIds.getClass())) {
                 this.excludedIds = new HashSet<>();
             }
             this.excludedIds.add(excludeId);
