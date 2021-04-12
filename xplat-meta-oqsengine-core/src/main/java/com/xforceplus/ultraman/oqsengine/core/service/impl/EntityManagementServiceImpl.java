@@ -145,7 +145,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 long uncommentSize = commitIdStatusService.size();
                 if (uncommentSize > allowMaxUnSyncCommitIdSize) {
                     setReadOnlyMode(
-                        String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
+                            String.format("Not synchronizing the submission number over %d.", allowMaxUnSyncCommitIdSize));
                     return;
                 }
 
@@ -267,7 +267,7 @@ public class EntityManagementServiceImpl implements EntityManagementService {
                 //  这里将版本+1，使得外部获取的版本为当前成功版本
                 targetEntity.resetVersion(targetEntity.version() + INCREMENT_POS);
 
-                if(!tx.getAccumulator().accumulateReplace(targetEntity, oldEntity)) {
+                if (!tx.getAccumulator().accumulateReplace(targetEntity, oldEntity)) {
                     hint.setRollback(true);
                     return new OperationResult(tx.id(), entity.id(), UN_KNOW_VERSION, EventType.ENTITY_REPLACE.getValue(), ResultStatus.UNACCUMULATE);
                 }

@@ -30,7 +30,7 @@ import static com.xforceplus.ultraman.oqsengine.event.EventType.*;
  */
 public class RedisEventService implements CacheEventService {
 
-    final static Logger logger = LoggerFactory.getLogger(CacheEventService.class);
+    static final Logger logger = LoggerFactory.getLogger(CacheEventService.class);
 
     private CacheEventHandler cacheEventHandler;
 
