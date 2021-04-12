@@ -1,11 +1,11 @@
 package com.xforceplus.ultraman.oqsengine.boot.health;
 
 import com.xforceplus.ultraman.oqsengine.core.service.EntitySearchService;
+import com.xforceplus.ultraman.oqsengine.core.service.pojo.SearchConfig;
 import com.xforceplus.ultraman.oqsengine.metadata.dto.HealthCheckEntityClass;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.conditions.Conditions;
 import com.xforceplus.ultraman.oqsengine.pojo.dto.entity.EntityClassRef;
 import com.xforceplus.ultraman.oqsengine.pojo.page.Page;
-import com.xforceplus.ultraman.oqsengine.status.CommitIdStatusService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
@@ -30,28 +30,19 @@ public class HealthCheck implements HealthIndicator {
     @Resource
     private EntitySearchService entitySearchService;
 
-    @Resource
-    private CommitIdStatusService commitIdStatusService;
-
     private EntityClassRef entityClassRef = HealthCheckEntityClass.getInstance().ref();
+
+    private Conditions conditions = Conditions.buildEmtpyConditions();
+    private SearchConfig config = SearchConfig.Builder.aSearchConfig().withPage(Page.emptyPage()).build();
 
     @Override
     public Health health() {
 
-
-        Conditions conditions = Conditions.buildEmtpyConditions();
-
         try {
-            entitySearchService.selectByConditions(conditions, entityClassRef, Page.emptyPage());
+            entitySearchService.selectByConditions(conditions, entityClassRef, config);
         } catch (SQLException e) {
             logger.error(e.getMessage(), e);
             return Health.down(e).build();
-        }
-
-        try {
-            commitIdStatusService.getMin();
-        } catch (Exception ex) {
-            return Health.down(ex).build();
         }
 
         return Health.up().build();

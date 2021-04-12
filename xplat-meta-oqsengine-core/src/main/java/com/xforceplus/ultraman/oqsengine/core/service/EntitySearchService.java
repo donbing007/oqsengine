@@ -48,7 +48,6 @@ public interface EntitySearchService {
      * @return 目标 entity 列表.
      * @deprecated 请使用带有searchconfig的方法.
      */
-    @Deprecated
     Collection<IEntity> selectByConditions(Conditions conditions, EntityClassRef entityClassRef, Page page)
         throws SQLException;
 

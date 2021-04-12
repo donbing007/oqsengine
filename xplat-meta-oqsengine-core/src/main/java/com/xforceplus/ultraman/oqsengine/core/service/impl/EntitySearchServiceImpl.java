@@ -227,6 +227,20 @@ public class EntitySearchServiceImpl implements EntitySearchService {
             throw new SQLException("Invalid entityClass.");
         }
 
+        if (config == null) {
+            throw new SQLException("Invalid search config.");
+        }
+
+        /**
+         * 数据过滤不会使有和含有模糊搜索的条件.
+         */
+        if (config.getFilter().isPresent()) {
+            Conditions filterCondtiton = config.getFilter().get();
+            if (filterCondtiton.haveFuzzyCondition()) {
+                throw new SQLException("Data filtering conditions cannot use fuzzy operators.");
+            }
+        }
+
         IEntityClass entityClass = EntityClassHelper.checkEntityClass(metaManager, entityClassRef);
 
         // 检查是否有非可搜索的字段,如果有将空返回.

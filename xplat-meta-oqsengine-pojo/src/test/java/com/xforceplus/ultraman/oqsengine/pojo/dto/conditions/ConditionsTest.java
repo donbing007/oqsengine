@@ -104,6 +104,48 @@ public class ConditionsTest {
     }
 
     @Test
+    public void testFuzzyFlag() throws Exception {
+        Conditions conditions = Conditions.buildEmtpyConditions();
+        Assert.assertFalse(conditions.haveFuzzyCondition());
+
+        IEntityField field = new EntityField(1, "test", FieldType.STRING);
+
+        // 增加一个等值条件.
+        conditions.addAnd(
+            new Condition(
+                field,
+                ConditionOperator.EQUALS,
+                new StringValue(field, "test")
+            )
+        );
+        Assert.assertFalse(conditions.haveFuzzyCondition());
+
+        // 增加一个模糊查询条件.
+        conditions.addAnd(
+            new Condition(
+                field,
+                ConditionOperator.LIKE,
+                new StringValue(field, "test")
+            )
+        );
+        Assert.assertTrue(conditions.haveFuzzyCondition());
+
+        // 增加一个条件组,条件组本身没有模糊,但当前条件组已经含有模糊,最终结果仍为模糊.
+        conditions.addAnd(
+            Conditions.buildEmtpyConditions()
+                .addAnd(
+                    new Condition(
+                        field,
+                        ConditionOperator.EQUALS,
+                        new StringValue(field, "test")
+                    )
+                ), false
+        );
+        Assert.assertTrue(conditions.haveFuzzyCondition());
+
+    }
+
+    @Test
     public void testValidation() throws Exception {
         Condition wrongCondition = new Condition(
             new EntityField(1, "test", FieldType.STRING),

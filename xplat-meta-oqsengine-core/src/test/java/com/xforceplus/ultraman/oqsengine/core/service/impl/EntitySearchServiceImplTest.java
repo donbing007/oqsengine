@@ -28,6 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -164,10 +165,7 @@ public class EntitySearchServiceImplTest {
 
         Collection<IEntity> entities = impl.selectByConditions(
             Conditions.buildEmtpyConditions(),
-            EntityClassRef.Builder.anEntityClassRef()
-                .withEntityClassId(MockMetaManager.l1EntityClass.id())
-                .withEntityClassCode(MockMetaManager.l1EntityClass.code())
-                .build(),
+            MockMetaManager.l2EntityClass.ref(),
             SearchConfig.Builder.aSearchConfig().withPage(page).build()
         );
 
@@ -180,10 +178,7 @@ public class EntitySearchServiceImplTest {
         when(masterStorage.selectOne(1, MockMetaManager.l0EntityClass)).thenReturn(
             Optional.of(Entity.Builder.anEntity().withId(1).build())
         );
-        Optional<IEntity> entityOp = impl.selectOne(1,
-            EntityClassRef.Builder.anEntityClassRef()
-                .withEntityClassId(MockMetaManager.l0EntityClass.id())
-                .withEntityClassCode(MockMetaManager.l0EntityClass.code()).build());
+        Optional<IEntity> entityOp = impl.selectOne(1, MockMetaManager.l0EntityClass.ref());
 
         Assert.assertTrue(entityOp.isPresent());
         Assert.assertEquals(1, entityOp.get().id());
@@ -202,9 +197,7 @@ public class EntitySearchServiceImplTest {
             )
         );
 
-        Collection<IEntity> entities = impl.selectMultiple(ids, EntityClassRef.Builder.anEntityClassRef()
-            .withEntityClassId(MockMetaManager.l2EntityClass.id())
-            .withEntityClassCode(MockMetaManager.l2EntityClass.code()).build());
+        Collection<IEntity> entities = impl.selectMultiple(ids, MockMetaManager.l2EntityClass.ref());
 
         Assert.assertEquals(ids.length, entities.size());
         List<IEntity> entityList = new ArrayList<>(entities);
@@ -225,10 +218,7 @@ public class EntitySearchServiceImplTest {
         ));
 
         Collection<IEntity> entities = impl.selectByConditions(conditions,
-            EntityClassRef.Builder.anEntityClassRef()
-                .withEntityClassId(MockMetaManager.l2EntityClass.id())
-                .withEntityClassCode(MockMetaManager.l2EntityClass.code())
-                .build(),
+            MockMetaManager.l2EntityClass.ref(),
             SearchConfig.Builder.aSearchConfig().withPage(Page.newSinglePage(1000)).build()
         );
 
@@ -285,7 +275,7 @@ public class EntitySearchServiceImplTest {
 
         List<IEntity> entities = new ArrayList<>(impl.selectByConditions(
             conditions,
-            new EntityClassRef(MockMetaManager.l2EntityClass.id(), MockMetaManager.l2EntityClass.code()),
+            MockMetaManager.l2EntityClass.ref(),
             SearchConfig.Builder.aSearchConfig().withPage(page).build()
         ));
 
@@ -296,5 +286,24 @@ public class EntitySearchServiceImplTest {
         for (int i = 0; i < expectedIds.length; i++) {
             Assert.assertEquals(expectedIds[i], entities.get(i).id());
         }
+    }
+
+    @Test(expected = SQLException.class)
+    public void testHaveFuzzyFilterConditions() throws Exception {
+        impl.selectByConditions(
+            Conditions.buildEmtpyConditions(),
+            MockMetaManager.l2EntityClass.ref(),
+            SearchConfig.Builder.aSearchConfig()
+                .withFilter(
+                    Conditions.buildEmtpyConditions()
+                        .addAnd(
+                            new Condition(
+                                MockMetaManager.l2EntityClass.field("l0-string").get(),
+                                ConditionOperator.LIKE,
+                                new StringValue(MockMetaManager.l2EntityClass.field("l0-string").get(), "123")
+                            )
+                        )
+                ).build()
+        );
     }
 }
