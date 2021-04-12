@@ -111,4 +111,15 @@ public class MetricsDefine {
      * 当前处理的TX
      */
     public static final String CHANGELOG_CONCURRENT_TX = PREFIX + ".changelog.in-progress-tx";
+
+
+    /**
+     * 当前cache-event-handler中的活动数量
+     */
+    public static final String CACHE_EVENT_CURRENT_ACTIVE = PREFIX + ".event.cache.active-events";
+
+    /**
+     * 当前cache-event-handler本地线程队列中的等待重试数量
+     */
+    public static final String CACHE_EVENT_CURRENT_RETRY_WAIT = PREFIX + ".event.cache.retry-wait-events";
 }

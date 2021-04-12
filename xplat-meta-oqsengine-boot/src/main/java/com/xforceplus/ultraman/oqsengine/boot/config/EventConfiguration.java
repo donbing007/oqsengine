@@ -1,9 +1,16 @@
 package com.xforceplus.ultraman.oqsengine.boot.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xforceplus.ultraman.oqsengine.event.DefaultEventBus;
 import com.xforceplus.ultraman.oqsengine.event.EventBus;
 import com.xforceplus.ultraman.oqsengine.event.storage.EventStorage;
 import com.xforceplus.ultraman.oqsengine.event.storage.MemoryEventStorage;
+import com.xforceplus.ultraman.oqsengine.event.storage.cache.CacheEventService;
+import com.xforceplus.ultraman.oqsengine.event.storage.cache.ICacheEventHandler;
+import com.xforceplus.ultraman.oqsengine.event.storage.cache.ICacheEventService;
+import com.xforceplus.ultraman.oqsengine.event.storage.cache.RedisEventHandler;
+import io.lettuce.core.RedisClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -27,4 +34,16 @@ public class EventConfiguration {
         return new MemoryEventStorage();
     }
 
+    @Bean
+    public ICacheEventHandler cacheEventHandler(RedisClient redisClient,
+                                                ExecutorService eventCacheRetry,
+                                                ObjectMapper objectMapper,
+                                                @Value("${cache.event.expire:0}") long expire) {
+        return new RedisEventHandler(redisClient, eventCacheRetry, objectMapper, expire);
+    }
+
+    @Bean
+    public ICacheEventService cacheEventService(EventBus eventBus, ICacheEventHandler cacheEventHandler) {
+        return new CacheEventService(eventBus, cacheEventHandler);
+    }
 }
