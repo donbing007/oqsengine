@@ -890,7 +890,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
             )
             ,
             new Case(
-                "l0-long > or l0-long = (filter l0-long)",
+                "l0-long > or l0-long = (filter l0-long !=)",
                 Conditions.buildEmtpyConditions()
                     .addAnd(
                         new Condition(
@@ -927,7 +927,7 @@ public class SphinxQLManticoreIndexStorageSearchTest {
             )
             ,
             new Case(
-                "l0-long = and l0-long = (filter l0-long)",
+                "l0-long = and l0-long = (filter l0-long !=)",
                 Conditions.buildEmtpyConditions()
                     .addAnd(
                         new Condition(

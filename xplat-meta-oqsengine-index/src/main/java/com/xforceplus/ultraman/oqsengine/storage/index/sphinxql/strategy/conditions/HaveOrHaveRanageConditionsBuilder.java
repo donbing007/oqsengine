@@ -39,6 +39,9 @@ public class HaveOrHaveRanageConditionsBuilder extends AbstractConditionsBuilder
 
                 Condition condition = valueNode.getCondition();
 
+                /**
+                 * 为了和 HaveOrNoRange 保持一致,所有含有OR的查询不能使用ID.
+                 */
                 if (condition.getField().config().isIdentifie()) {
                     throw new IllegalArgumentException("Cannot use primary key queries in queries containing OR.");
                 }

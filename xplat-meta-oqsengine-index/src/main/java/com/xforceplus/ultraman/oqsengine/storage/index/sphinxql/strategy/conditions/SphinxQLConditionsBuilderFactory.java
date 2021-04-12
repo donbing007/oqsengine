@@ -69,13 +69,25 @@ public class SphinxQLConditionsBuilderFactory implements StorageStrategyFactoryA
             return emptyConditionsBuilder;
         }
 
+        return getBuilder(conditions.haveOrLink(), conditions.haveRangeCondition());
+    }
+
+    /**
+     * 由外部指定是否含有or和范围查询.
+     *
+     * @param or    true 含有or连接符.
+     * @param range true 含有范围查询.
+     * @return 条件构造器.
+     */
+    public ConditionsBuilder<SphinxQLWhere> getBuilder(boolean or, boolean range) {
+
         /**
          * or 字节低位开始第2位.
          * ranage 字节低位开始第1位.
          */
-        int or = conditions.haveOrLink() ? 2 : 0;
-        int range = conditions.haveRangeCondition() ? 1 : 0;
-        return builderMap.get(or | range);
+        int o = or ? 2 : 0;
+        int r = range ? 1 : 0;
+        return builderMap.get(o | r);
     }
 
 

@@ -266,32 +266,16 @@ public class QueryConditionExecutor extends AbstractIndexExecutor<Tuple3<IEntity
         long commitId = queryCondition._3().getCommitId();
         Conditions filterConditions = queryCondition._3().getDataAccessFilterCondtitions();
 
-        SphinxQLWhere where = null;
-        // 如果有数据过滤要求
+        SphinxQLWhere where = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);
+        /**
+         * 如果有数据过滤条件,那么将默认以OR=true,range=true的方式找到条件构造器.
+         * 目的是防止进入全文字段.
+         */
         if (!filterConditions.isEmtpy()) {
-            /**
-             * 没有范围查询,和原始条件使用And合并.
-             * 如果原始查询无条件,那么直接替换.
-             *
-             * 如果含有范围查询,直接在的始查询中追加非全文的查询.
-             */
-            if (!filterConditions.haveRangeCondition()) {
-                if (!conditions.isEmtpy()) {
-                    conditions.close().addAnd(filterConditions, true);
-                } else {
-                    conditions = filterConditions;
-                }
+            SphinxQLWhere filterWhere =
+                conditionsBuilderFactory.getBuilder(true, true).build(entityClass, filterConditions);
 
-                where = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);
-
-            } else {
-                // 以非全文的方式增加过滤.
-                where = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);
-                where.addWhere(conditionsBuilderFactory.getBuilder(filterConditions).build(entityClass, filterConditions), true);
-            }
-        } else {
-
-            where = conditionsBuilderFactory.getBuilder(conditions).build(entityClass, conditions);
+            where.addWhere(filterWhere, true);
 
         }
 
